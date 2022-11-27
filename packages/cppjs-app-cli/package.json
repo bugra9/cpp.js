@@ -1,0 +1,21 @@
+{
+    "name": "cpp.js",
+    "version": "0.1.0",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "test": "mocha"
+    },
+    "bin": {
+        "cpp.js": "./src/bin.js"
+    },
+    "main": "/src/index.js",
+    "dependencies": {
+        "commander": "^9.4.1",
+        "glob": "^8.0.3"
+    },
+    "devDependencies": {
+        "mocha": "^10.2.0",
+        "cppjs-lib-sample-web": "workspace:^"
+    }
+}

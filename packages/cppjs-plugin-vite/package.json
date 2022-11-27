@@ -1,0 +1,10 @@
+{
+    "name": "vite-plugin-cppjs",
+    "version": "0.1.0",
+    "license": "MIT",
+    "type": "module",
+    "main": "index.js",
+    "dependencies": {
+        "rollup-plugin-cppjs": "workspace:^"
+    }
+}

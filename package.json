@@ -1,0 +1,6 @@
+{
+    "devDependencies": {
+        "cpp.js": "workspace:^",
+        "prettier": "^2.6.2"
+    }
+}

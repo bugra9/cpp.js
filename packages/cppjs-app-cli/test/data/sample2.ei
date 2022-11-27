@@ -1,0 +1,12 @@
+#ifndef _SAMPLE2_I
+#define _SAMPLE2_I
+
+%module SAMPLE2
+
+%{
+#include "sample2.h"
+%}
+
+%include "sample2.h"
+
+#endif
