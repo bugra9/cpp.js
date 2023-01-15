@@ -2,6 +2,23 @@
 
 cpp.js is a framework for building tiny, blazingly fast binaries for all major desktop, mobile and web platforms. Developers can integrate any front-end framework that compiles to HTML, JS and CSS for building their user interface. The backend of the application is a cpp-sourced binary with an API that the front-end can interact with.
 
+## Motivation
+**js:**
+- You can output to all platforms with a single source.
+- Easy ui development
+- Slowly
+
+**c++:**
+- You can output to all platforms with a single source.
+- Native performance
+
+**js + c++**
+- You can output to all platforms with a single source.
+- Easy ui development
+- Native performance
+
+Using javascript and react native, we can create applications for android, ios, web and desktops with a single source. But application performance remains low. Can we overcome this problem by adding c++ next to javascript and developing the main code with c++ and the ui side with javascript?
+
 ## Guide
 ### Installation
 - Install and start docker. Add user to docker group.
@@ -26,15 +43,16 @@ Check out the [Sample app](https://github.com/bugra9/cpp.js/tree/main/packages/c
 - [x] Implement wasm generator
 - [x] Create rollup plugin
 - [x] Create vite plugin for development
-- [ ] Create webpack plugin
+- [x] Create webpack plugin
 - [ ] Create turbopack plugin
 - [x] Create vite + vue example
 - [ ] Create vite + react example
-- [ ] Create webpack + react example
+- [x] Create webpack + react example
 - [ ] Handle other cpp formats (h, hpp, hh, c, cpp, cc, cxx)
 - [ ] Use user defined interface file if available.
 - [x] Use user defined CMakeLists.txt if available.
 - [ ] Implement Hot Module Replacement (HMR) for the Vite plugin.
+- [ ] Implement Hot Module Replacement (HMR) for the Webpack plugin.
 
 ### Important
 - [ ] Implement swig-jsi integration
