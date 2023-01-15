@@ -30,7 +30,8 @@ Using javascript and react native, we can create applications for android, ios, 
 - Create .h and .cpp files as you like.
 - If you want to use a library, just install it. (e.g: yarn add cppjs-lib-sample-web)
 
-Check out the [Sample app](https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-vite-vue).
+Check out the [Vue Sample app (Vite + Rollup)](https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-vue-vite).  
+Check out the [React Sample app (CRA + Webpack)](https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-react-cra).  
 
 ## TODO
 
