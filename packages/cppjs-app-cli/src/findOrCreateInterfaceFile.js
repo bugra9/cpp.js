@@ -1,7 +1,12 @@
 import fs from 'fs';
+import { getBaseInfo, getPathInfo } from './utils.js';
 
-export default function findOrCreateInterfaceFile(filePath, outputPath) {
-    const temp = filePath.match(/^(.*)\..+?$/);
+export default function findOrCreateInterfaceFile(filePath, outputPath, basePath = process.cwd()) {
+    const input = getPathInfo(filePath, basePath);
+    const output = getPathInfo(outputPath, basePath);
+    const base = getBaseInfo(basePath);
+
+    const temp = input.relative.match(/^(.*)\..+?$/);
     if (temp.length < 2) return null;
 
     const filePathWithoutExt = temp[1];
@@ -10,7 +15,7 @@ export default function findOrCreateInterfaceFile(filePath, outputPath) {
     if (fs.existsSync(interfaceFile)) return interfaceFile;
 
     const fileName = filePathWithoutExt.split('/').at(-1);
-    const fileNameWithExt = filePath.split('/').at(-1);
+    const fileNameWithExt = input.relative.split('/').at(-1);
 
     const content =
 `#ifndef _${fileName.toUpperCase()}_I
@@ -22,12 +27,11 @@ export default function findOrCreateInterfaceFile(filePath, outputPath) {
 #include "${fileNameWithExt}"
 %}
 
-%include "/live${filePath}"
+%include "${fileNameWithExt}"
 
 #endif
 `;
-
-    const outputFilePath = outputPath+'/'+fileName+'.i';
+    const outputFilePath = base.withSlash + output.relative+'/'+fileName+'.i';
     fs.writeFileSync(outputFilePath, content);
     return outputFilePath;
 }

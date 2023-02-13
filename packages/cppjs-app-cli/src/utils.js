@@ -1,6 +1,6 @@
 import fs from 'fs';
 import p, {dirname} from 'path';
-import { tmpdir } from "os";
+import os, { tmpdir } from "os";
 import * as url from 'node:url';
 
 export const __filename = url.fileURLToPath(import.meta.url);
@@ -53,4 +53,49 @@ export async function getConfig(projectPath) {
     }
 
     return config;
+}
+
+let osUserAndGroupId;
+export function getOsUserAndGroupId() {
+    const userInfo = os.userInfo();
+    if (!osUserAndGroupId) {
+        osUserAndGroupId = `${userInfo.uid}:${userInfo.gid}`;
+    }
+    return osUserAndGroupId;
+}
+
+export function getBaseInfo(base) {
+    let basePath = base;
+
+    const output = {
+        withSlash: '/',
+        withoutSlash: '/',
+    };
+    if (basePath && basePath !== '/') {
+        if (basePath.at(-1) !== '/') basePath += '/';
+
+        output.withSlash = basePath;
+        output.withoutSlash = basePath.substring(0, basePath.length - 1);
+    }
+    return output;
+}
+
+
+export function getPathInfo(path, base) {
+    let basePath = base;
+
+    const output = {
+        relative: path,
+        absolute: path,
+    };
+    if (basePath) {
+        if (basePath.at(-1) !== '/') basePath += '/';
+
+        if (path.substring(0, basePath.length) === basePath) {
+            output.relative = path.substring(basePath.length);
+        } else {
+            output.absolute = basePath + path;
+        }
+    }
+    return output;
 }

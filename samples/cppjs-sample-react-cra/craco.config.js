@@ -1,9 +1,8 @@
 const p = require('path');
 const fs = require('fs');
-const { tmpdir } = require('os');
 
 function createTempDir(folder) {
-    let path = p.join(tmpdir(), "cppjs-app-cli");
+    let path = p.join(process.cwd(), 'node_modules', ".cppjs");
     if (folder) path = p.join(path, folder);
 
     if (fs.existsSync(path)) fs.rmSync(path, { recursive: true, force: true });
@@ -18,14 +17,14 @@ module.exports = async function () {
     return {
         webpack: {
             plugins: {
-                add: [new CppjsWebpackPlugin({ tempDir })],
+                add: [new CppjsWebpackPlugin({ tempDir, basePath: '../..' })],
             },
             configure: (config) => {
                 config.module.rules[1].oneOf = [
                     {
                         test: /\.h$/,
                         loader: 'cppjs-loader',
-                        options: { tempDir }
+                        options: { tempDir, basePath: '../..' }
                     },
                     ...config.module.rules[1].oneOf,
                 ];

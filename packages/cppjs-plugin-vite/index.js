@@ -6,7 +6,7 @@ import p from 'path';
 import { tmpdir } from "os";
 
 function createTempDir(folder) {
-    let path = p.join(tmpdir(), "cppjs-app-cli");
+    let path = p.join(process.cwd(), 'node_modules', ".cppjs");
     if (folder) path = p.join(path, folder);
 
     if (fs.existsSync(path)) fs.rmSync(path, { recursive: true, force: true });
@@ -17,6 +17,7 @@ function createTempDir(folder) {
 
 const viteCppjsPlugin = (options = {}) => {
     let isServe = false;
+    const basePath = options.basePath ? p.resolve(options.basePath) : process.cwd();
 
     return [
         rollupCppjsPlugin(options),
@@ -25,7 +26,7 @@ const viteCppjsPlugin = (options = {}) => {
             load(source) {
                 if (isServe && source === '/cpp.js') {
                     const cMakeListsFilePath = findCMakeListsFile();
-                    createWasm(cMakeListsFilePath, options.tempDir, options.tempDir);
+                    createWasm(cMakeListsFilePath, options.tempDir, options.tempDir, {}, basePath);
                     return fs.readFileSync(`${options.tempDir}/cpp.js`, {encoding:'utf8', flag:'r'});
                 }
             },

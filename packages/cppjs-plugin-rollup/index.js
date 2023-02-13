@@ -2,10 +2,9 @@ import { createBridge, findCMakeListsFile, findOrCreateInterfaceFile, createWasm
 
 import fs from 'fs';
 import p from 'path';
-import { tmpdir } from "os";
 
 function createTempDir(folder) {
-    let path = p.join(tmpdir(), "cppjs-app-cli");
+    let path = p.join(process.cwd(), 'node_modules', ".cppjs");
     if (folder) path = p.join(path, folder);
 
     if (fs.existsSync(path)) fs.rmSync(path, { recursive: true, force: true });
@@ -15,6 +14,7 @@ function createTempDir(folder) {
 }
 
 const rollupCppjsPlugin = (options = {}) => {
+    const basePath = options.basePath ? p.resolve(options.basePath) : process.cwd();
     return {
         name: 'rollup-plugin-cppjs',
         buildStart() {
@@ -31,14 +31,14 @@ const rollupCppjsPlugin = (options = {}) => {
                 return
             }
 
-            const interfaceFile = findOrCreateInterfaceFile(path, options.tempDir);
-            createBridge(interfaceFile, options.tempDir);
+            const interfaceFile = findOrCreateInterfaceFile(path, options.tempDir, basePath);
+            createBridge(interfaceFile, options.tempDir, basePath);
 
             return "export default function() { return new Promise((resolve, reject) => import('/cpp.js').then(n => n.default(resolve))); }";
         },
         generateBundle() {
             const cMakeListsFilePath = findCMakeListsFile();
-            createWasm(cMakeListsFilePath, options.tempDir, options.tempDir, { cc: ['-O3'] });
+            createWasm(cMakeListsFilePath, options.tempDir, options.tempDir, { cc: ['-O3'] }, basePath);
             this.emitFile({
                 type: "asset",
                 source: fs.readFileSync(`${options.tempDir}/cpp.js`),
