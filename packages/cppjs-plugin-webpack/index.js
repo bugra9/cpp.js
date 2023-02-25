@@ -1,12 +1,13 @@
 import fs from 'fs';
 import p from 'path';
-import { createWasm, findCMakeListsFile } from 'cpp.js';
+import CppjsCompiler from 'cpp.js';
 
 export default class CppjsWebpackPlugin {
     static defaultOptions = {};
 
     constructor(options = {}) {
         this.options = { ...CppjsWebpackPlugin.defaultOptions, ...options };
+        this.compiler = new CppjsCompiler();
     }
 
     apply(compiler) {
@@ -15,13 +16,17 @@ export default class CppjsWebpackPlugin {
     }
 
     onDone({ compilation }) {
-        const basePath = this.options.basePath ? p.resolve(this.options.basePath) : process.cwd();
         const isDev = compilation.options.mode === 'development';
-        const outputPath = isDev ? this.options.tempDir : compilation.options.output.path;
-        const cMakeListsFilePath = findCMakeListsFile();
-        createWasm(cMakeListsFilePath, outputPath, this.options.tempDir, { cc: ['-O3'] }, basePath);
-        if (!isDev && this.options.tempDir) {
-            fs.rmSync(this.options.tempDir, { recursive: true, force: true });
+        this.compiler.createBridge();
+        this.compiler.createWasm({ cc: ['-O3'] });
+        if (!isDev) {
+            fs.copyFileSync(`${this.compiler.config.paths.temp}/${this.compiler.config.general.name}.js`, `${compilation.options.output.path}/cpp.js`);
+            fs.copyFileSync(`${this.compiler.config.paths.temp}/${this.compiler.config.general.name}.wasm`, `${compilation.options.output.path}/cpp.wasm`);
+            fs.rmSync(this.compiler.config.paths.temp, { recursive: true, force: true });
         }
+    }
+
+    getCompiler() {
+        return this.compiler;
     }
 }

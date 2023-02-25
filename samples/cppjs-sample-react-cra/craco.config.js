@@ -13,18 +13,20 @@ function createTempDir(folder) {
 
 module.exports = async function () {
     const { default: CppjsWebpackPlugin } = await import('cppjs-webpack-plugin');
-    const tempDir = createTempDir('a' + Math.random());
+    const cppjsWebpackPlugin = new CppjsWebpackPlugin();
+    const compiler = cppjsWebpackPlugin.getCompiler();
+
     return {
         webpack: {
             plugins: {
-                add: [new CppjsWebpackPlugin({ tempDir, basePath: '../..' })],
+                add: [cppjsWebpackPlugin],
             },
             configure: (config) => {
                 config.module.rules[1].oneOf = [
                     {
                         test: /\.h$/,
                         loader: 'cppjs-loader',
-                        options: { tempDir, basePath: '../..' }
+                        options: { compiler },
                     },
                     ...config.module.rules[1].oneOf,
                 ];
@@ -38,11 +40,11 @@ module.exports = async function () {
                 }
 
                 devServer.app.get('/cpp.js', function (req, res) {
-                  res.sendFile(`${tempDir}/cpp.js`);
+                  res.sendFile(`${compiler.config.paths.temp}/${compiler.config.general.name}.js`);
                 });
 
                 devServer.app.get('/cpp.wasm', function (req, res) {
-                    res.send(fs.readFileSync(`${tempDir}/cpp.wasm`));
+                    res.send(fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`));
                 });
             };
 

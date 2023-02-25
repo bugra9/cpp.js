@@ -62,6 +62,15 @@ importers:
     dependencies:
       cpp.js: link:../cppjs-app-cli
 
+  samples/cppjs-sample-lib:
+    specifiers:
+      cpp.js: workspace:^
+      cppjs-lib-sample-web: workspace:^
+    dependencies:
+      cppjs-lib-sample-web: link:../../packages/cppjs-lib-sample-web
+    devDependencies:
+      cpp.js: link:../../packages/cppjs-app-cli
+
   samples/cppjs-sample-react-cra:
     specifiers:
       '@craco/craco': ^7.0.0

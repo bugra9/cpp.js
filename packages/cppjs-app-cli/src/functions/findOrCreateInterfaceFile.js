@@ -1,10 +1,11 @@
 import fs from 'fs';
-import { getBaseInfo, getPathInfo } from './utils.js';
+import getBaseInfo from '../utils/getBaseInfo.js';
+import getPathInfo from '../utils/getPathInfo.js';
 
-export default function findOrCreateInterfaceFile(filePath, outputPath, basePath = process.cwd()) {
-    const input = getPathInfo(filePath, basePath);
-    const output = getPathInfo(outputPath, basePath);
-    const base = getBaseInfo(basePath);
+export default function findOrCreateInterfaceFile(compiler, filePath) {
+    const input = getPathInfo(filePath, compiler.config.paths.base);
+    const output = getPathInfo(compiler.config.paths.temp+'/interface', compiler.config.paths.base);
+    const base = getBaseInfo(compiler.config.paths.base);
 
     const temp = input.relative.match(/^(.*)\..+?$/);
     if (temp.length < 2) return null;
@@ -33,5 +34,8 @@ export default function findOrCreateInterfaceFile(filePath, outputPath, basePath
 `;
     const outputFilePath = base.withSlash + output.relative+'/'+fileName+'.i';
     fs.writeFileSync(outputFilePath, content);
+
+    compiler.interfaces.push(outputFilePath);
+
     return outputFilePath;
 }

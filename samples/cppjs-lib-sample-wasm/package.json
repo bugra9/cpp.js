@@ -1,0 +1,15 @@
+{
+  "name": "cppjs-lib-sample-wasm",
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "cpp.js generate lib"
+  },
+  "dependencies": {
+    "cppjs-lib-sample-web": "workspace:^"
+  },
+  "devDependencies": {
+    "cpp.js": "workspace:^"
+  }
+}

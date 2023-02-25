@@ -4,5 +4,5 @@ import viteCppjsPlugin from 'vite-plugin-cppjs'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue(), viteCppjsPlugin({ basePath: '../..' })]
+  plugins: [vue(), viteCppjsPlugin()]
 });
