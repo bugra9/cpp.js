@@ -62,7 +62,7 @@ importers:
     dependencies:
       cpp.js: link:../cppjs-app-cli
 
-  samples/cppjs-sample-lib:
+  samples/cppjs-lib-sample-wasm:
     specifiers:
       cpp.js: workspace:^
       cppjs-lib-sample-web: workspace:^

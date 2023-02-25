@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
-import packageJSON from '../package.json' assert { type: 'json' };
 import { Command, Argument } from 'commander';
 import fs from 'fs';
 import glob from 'glob';
 import { createDir } from './utils/createTempDir.js';
+
+const packageJSON = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url)));
 
 import CppjsCompiler from './index.js';
 

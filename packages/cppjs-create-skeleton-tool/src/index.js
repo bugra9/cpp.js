@@ -16,21 +16,35 @@ async function main() {
 	console.log(gray(`\ncreate-cppjs version ${version}`));
 	console.log(disclaimer);
 
+    const { name } = await prompts({
+        type: 'text',
+        name: 'name',
+        message: 'Project Name',
+        initial: 'sample',
+        validate: value => value && value.length > 0
+    }, {
+        onCancel: () => {
+            process.exit(1);
+        }
+    });
+
 	let cwd = process.argv[2] || '.';
 
 	if (cwd === '.') {
-		const opts = await prompts({
+		const { dir } = await prompts({
 				type: 'text',
 				name: 'dir',
-				message: 'Where should we create your project?\n  (leave blank to use current directory)'
+				message: 'Where should we create your project?\n  (leave blank to use current directory)',
+                initial: name,
+                validate: value => value && value.length > 0
 			}, {
             onCancel: () => {
                 process.exit(1);
             }
         });
 
-		if (opts.dir) {
-			cwd = opts.dir;
+		if (dir) {
+			cwd = dir;
 		}
 	}
 
@@ -54,15 +68,17 @@ async function main() {
 	}
 
     const templates = {}
-    fs.readdirSync(getPath('src/templates')).forEach((dir) => {
-        const [_, type, platform, bundler] = dir.split('-');
+    fs.readdirSync(getPath('src/templates'), { withFileTypes: true })
+    .filter((dir) => dir.isDirectory())
+    .forEach((dir) => {
+        const [_, type, platform, bundler] = dir.name.split('-');
         if (!templates[type]) templates[type] = {};
         if (!templates[type][platform]) templates[type][platform] = {};
         if (bundler) {
             if (!templates[type][platform][bundler]) templates[type][platform][bundler] = {};
-            templates[type][platform][bundler] = getPath(`src/templates/${dir}`);
+            templates[type][platform][bundler] = getPath(`src/templates/${dir.name}`);
         } else {
-            templates[type][platform] = getPath(`src/templates/${dir}`);
+            templates[type][platform] = getPath(`src/templates/${dir.name}`);
         }
 
     })
@@ -110,11 +126,16 @@ async function main() {
     let templatePath;
     if (selectedBundler) {
         templatePath = templates[selectedType][selectedPlatform][selectedBundler];
-     } else {
+    } else {
         templatePath = templates[selectedType][selectedPlatform];
-     }
+    }
 
-     fse.copySync(templatePath, cwd, { overwrite: true });
+    fse.copySync(templatePath, cwd, { overwrite: true });
+
+    const packageJsonFilePath = `${cwd}/package.json`;
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonFilePath, 'utf-8'));
+    packageJson.name = selectedType === 'app' ? name : `cppjs-lib-${name}-${selectedPlatform}`;
+    fs.writeFileSync(packageJsonFilePath, JSON.stringify(packageJson, null, 2));
 
 	console.log(bold(green('\nYour project is ready!')));
 
@@ -127,7 +148,12 @@ async function main() {
 	}
 
 	console.log(`  ${i++}: ${bold(cyan(`${pkgManager} install`))}`);
-	console.log(`  ${i++}: ${bold(cyan(`${pkgManager} run dev`))}`);
+    if (selectedType === 'app') {
+        console.log(`  ${i++}: ${bold(cyan(`${pkgManager} run dev`))}`);
+    }
+    if (selectedType === 'lib') {
+        console.log(`  ${i++}: ${bold(cyan(`${pkgManager} run build`))}`);
+    }
 
 	console.log(`\nTo close the dev server, hit ${bold(cyan('Ctrl-C'))}`);;
 }
