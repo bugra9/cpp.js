@@ -1,0 +1,15 @@
+{
+  "name": "cppjs-lib-wasm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "cpp.js generate lib"
+  },
+  "devDependencies": {
+    "cpp.js": "0.3.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
