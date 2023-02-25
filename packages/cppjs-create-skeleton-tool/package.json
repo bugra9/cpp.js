@@ -1,5 +1,5 @@
 {
-  "name": "create-cppjs",
+  "name": "create-cpp.js",
   "version": "1.0.0",
   "description": "",
   "bin": "src/index.js",
