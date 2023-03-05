@@ -7,7 +7,7 @@
     "build": "cpp.js generate lib"
   },
   "devDependencies": {
-    "cpp.js": "0.4.0"
+    "cpp.js": "0.4.1"
   },
   "keywords": [],
   "author": "",
