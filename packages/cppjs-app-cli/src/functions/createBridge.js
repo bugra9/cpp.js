@@ -16,10 +16,10 @@ export default function createBridge(compiler) {
         const base = getBaseInfo(compiler.config.paths.base);
 
         const includePath = [
-            glob.sync("node_modules/cppjs-lib-*-web/include", { absolute: false }),
-            glob.sync("native", { absolute: false }),
-            glob.sync("src/native", { absolute: false }),
-        ].filter(path => !!path.toString()).map(path => `-I/live/${projectPath.relative}/${path}`);
+            ...glob.sync("node_modules/cppjs-lib-*/include", { absolute: true, cwd: compiler.config.paths.project }),
+            ...glob.sync("node_modules/cppjs-lib-*/node_modules/cppjs-lib-*/include", { absolute: true, cwd: compiler.config.paths.project }),
+            ...compiler.config.paths.header,
+        ].filter(path => !!path.toString()).map(path => `-I/live/${getPathInfo(path, compiler.config.paths.base).relative}`);
 
         const options = { cwd: output.absolute, stdio : 'pipe' };
         const args = [

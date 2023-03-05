@@ -1,5 +1,6 @@
 {
 	"paths": {
-		"base": "../.."
+		"base": "../..",
+        "native": ["native"]
 	}
 }

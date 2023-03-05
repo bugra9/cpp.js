@@ -1,7 +1,7 @@
 import { execFileSync } from 'child_process';
 
 export default function pullDockerImage() {
-    const isImageExist = execFileSync("docker", ["images", "-q", "bugra9/cpp.js"], {encoding: 'utf-8'}).trim() !== '';
+    const isImageExist = execFileSync("docker", ["images", "-q", "bugra9/cpp.js:0.2.0"], {encoding: 'utf-8'}).trim() !== '';
 
     if (!isImageExist) {
         console.log('');
