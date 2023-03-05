@@ -1,7 +1,7 @@
 import { execFileSync } from 'child_process';
 
 export default function pullDockerImage() {
-    const isImageExist = execFileSync("docker", ["images", "-q", "bugra9/cpp.js:0.2.0"], {encoding: 'utf-8'}).trim() !== '';
+    const isImageExist = execFileSync("docker", ["images", "-q", getDockerImage()], {encoding: 'utf-8'}).trim() !== '';
 
     if (!isImageExist) {
         console.log('');
@@ -9,9 +9,13 @@ export default function pullDockerImage() {
         console.log('============= Downloading the docker image... =============');
         console.log('===========================================================');
         console.log('');
-        execFileSync("docker", ["pull", "bugra9/cpp.js"], {stdio: 'inherit'});
+        execFileSync("docker", ["pull", getDockerImage], {stdio: 'inherit'});
         console.log('');
         console.log('===========================================================');
         console.log('');
     }
+}
+
+export function getDockerImage() {
+    return "bugra9/cpp.js:0.2.0";
 }
