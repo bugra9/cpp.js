@@ -1,6 +1,6 @@
 import glob from 'glob';
 import { execFileSync } from 'child_process';
-import pullDockerImage from '../utils/pullDockerImage.js';
+import pullDockerImage, { getDockerImage } from '../utils/pullDockerImage.js';
 import getBaseInfo from '../utils/getBaseInfo.js';
 import getPathInfo from '../utils/getPathInfo.js';
 import getOsUserAndGroupId from '../utils/getOsUserAndGroupId.js';
@@ -23,7 +23,7 @@ export default function createBridge(compiler) {
 
         const options = { cwd: output.absolute, stdio : 'pipe' };
         const args = [
-            "run", "--user", getOsUserAndGroupId(), "-v", `${base.withoutSlash}:/live`, "bugra9/cpp.js",
+            "run", "--user", getOsUserAndGroupId(), "-v", `${base.withoutSlash}:/live`, getDockerImage(),
             "swig", "-c++", '-emscripten', '-o', `/live/${output.relative}/${filePath.split('/').at(-1)}.cpp`, ...includePath, `/live/${input.relative}`
         ];
         execFileSync("docker", args, options);

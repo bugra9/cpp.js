@@ -1,6 +1,6 @@
 import { execFileSync } from 'child_process';
 import glob from 'glob';
-import pullDockerImage from '../utils/pullDockerImage.js';
+import pullDockerImage, { getDockerImage } from '../utils/pullDockerImage.js';
 import getBaseInfo from '../utils/getBaseInfo.js';
 import getPathInfo from '../utils/getPathInfo.js';
 import getOsUserAndGroupId from '../utils/getOsUserAndGroupId.js';
@@ -54,7 +54,7 @@ class CppjsCompiler {
         cMakeParentPath.pop();
         cMakeParentPath = cMakeParentPath.join('/');
         const args = [
-            "run", "--user", getOsUserAndGroupId(), "-v", `${base.withoutSlash}:/live`, "-v", `${cMakeParentPath}:/cmake`, "--workdir", `/live/${output.relative}`, "bugra9/cpp.js",
+            "run", "--user", getOsUserAndGroupId(), "-v", `${base.withoutSlash}:/live`, "-v", `${cMakeParentPath}:/cmake`, "--workdir", `/live/${output.relative}`, getDockerImage(),
             "emcmake", "cmake", "/cmake", '-DCMAKE_BUILD_TYPE=Release',
             `-DBASE_DIR=/live/${projectPath.relative}`,
             `-DNATIVE_GLOB=${this.config.ext.source.map(ext => `${native}/*.${ext}`).join(';')}`,
@@ -75,7 +75,7 @@ class CppjsCompiler {
         cMakeParentPath.pop();
         cMakeParentPath = cMakeParentPath.join('/');
         const args = [
-            "run", "--user", getOsUserAndGroupId(), "-v", `${base.withoutSlash}:/live`, "-v", `${cMakeParentPath}:/cmake`, "--workdir", `/live/${output.relative}`, "bugra9/cpp.js",
+            "run", "--user", getOsUserAndGroupId(), "-v", `${base.withoutSlash}:/live`, "-v", `${cMakeParentPath}:/cmake`, "--workdir", `/live/${output.relative}`, getDockerImage(),
             "emmake", "make", "install"
         ];
         const options = { cwd: this.config.paths.temp, stdio : 'pipe' };
@@ -88,7 +88,7 @@ class CppjsCompiler {
         const output = getPathInfo(this.config.paths.temp, this.config.paths.base);
         const base = getBaseInfo(this.config.paths.base);
         const args = [
-            "run", "--user", getOsUserAndGroupId(), "-v", `${base.withoutSlash}:/live`, "-v", `${this.config.paths.cli}:/cli`, "bugra9/cpp.js",
+            "run", "--user", getOsUserAndGroupId(), "-v", `${base.withoutSlash}:/live`, "-v", `${this.config.paths.cli}:/cli`, getDockerImage(),
             "emcc", "-lembind", "-Wl,--whole-archive", ...this.libs, ...(this.options.cc || []), "-s", "WASM=1", "-s", "MODULARIZE=1", '-o', `/live/${output.relative}/${this.config.general.name}.js`, '--extern-post-js', '/cli/assets/extern-post.js'
         ];
         const options = { cwd: this.config.paths.temp, stdio : 'pipe' };
