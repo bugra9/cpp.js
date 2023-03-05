@@ -1,4 +1,5 @@
 import { execFileSync } from 'child_process';
+import glob from 'glob';
 import pullDockerImage from '../utils/pullDockerImage.js';
 import getBaseInfo from '../utils/getBaseInfo.js';
 import getPathInfo from '../utils/getPathInfo.js';
@@ -6,40 +7,36 @@ import getOsUserAndGroupId from '../utils/getOsUserAndGroupId.js';
 
 export default function createWasm(compiler, options = {}) {
     const compiler2 = new CppjsCompiler(
-        compiler.config.paths.cmake,
-        compiler.config.paths.output,
-        compiler.config.paths.temp,
-        compiler.config.paths.cli,
-        compiler.config.general.name,
+        compiler.config,
         options,
-        compiler.config.paths.base
     );
     return compiler2.compile();
 }
 
 class CppjsCompiler {
-    constructor(cMakeFilePath, outputPath, tempPath, cliPath, name, options = {}, basePath = process.cwd()) {
-        this.cMakeFilePath = cMakeFilePath;
-        this.outputPath = tempPath;
-        this.tempPath = tempPath;
-        this.cliPath = cliPath;
+    constructor(config, options) {
+        this.config = config;
         this.options = options;
-        this.basePath = basePath;
-        this.name = name;
     }
 
     compile() {
         pullDockerImage();
 
-        this.cmake(this.name, true, false);
+        this.cmake(this.config.general.name, true, false);
         this.make();
-        this.cmake(this.name+'bridge', false, true);
+        this.cmake(this.config.general.name+'bridge', false, true);
         this.make();
-        this.libs = [`lib${this.name}.a`, `lib${this.name}bridge.a`];
+
+        this.libs = [
+            `${this.config.paths.temp}/lib${this.config.general.name}.a`,
+            `${this.config.paths.temp}/lib${this.config.general.name}bridge.a`,
+            ...glob.sync("node_modules/cppjs-lib-*-wasm/lib/lib*.a", { absolute: true, cwd: this.config.paths.project }),
+            ...glob.sync("node_modules/cppjs-lib-*-wasm/node_modules/cppjs-lib-*-wasm/lib/lib*.a", { absolute: true, cwd: this.config.paths.project }),
+        ].filter(path => !!path.toString()).map(path => `/live/${getPathInfo(path, this.config.paths.base).relative}`);
 
         this.cc();
 
-        return this.outputPath;
+        return this.config.paths.temp;
     }
 
     cmake(name, isBuildSource, isBuildBridge) {
@@ -47,49 +44,55 @@ class CppjsCompiler {
         if (isBuildSource) params.push('-DBUILD_SOURCE=TRUE');
         if (isBuildBridge) params.push('-DBUILD_BRIDGE=TRUE');
 
-        const output = getPathInfo(this.outputPath, this.basePath);
-        const projectPath = getPathInfo(process.cwd(), this.basePath);
-        const base = getBaseInfo(this.basePath);
+        const output = getPathInfo(this.config.paths.temp, this.config.paths.base);
+        const projectPath = getPathInfo(process.cwd(), this.config.paths.base);
+        const native = this.config.paths.native.map(p => `/live/${getPathInfo(p, this.config.paths.base).relative}`).join(';');
+        const header = this.config.paths.header.map(p => `/live/${getPathInfo(p, this.config.paths.base).relative}`).join(';');
+        const base = getBaseInfo(this.config.paths.base);
 
-        let cMakeParentPath = this.cMakeFilePath.split('/');
+        let cMakeParentPath = this.config.paths.cmake.split('/');
         cMakeParentPath.pop();
         cMakeParentPath = cMakeParentPath.join('/');
         const args = [
             "run", "--user", getOsUserAndGroupId(), "-v", `${base.withoutSlash}:/live`, "-v", `${cMakeParentPath}:/cmake`, "--workdir", `/live/${output.relative}`, "bugra9/cpp.js",
-            "emcmake", "cmake", "/cmake", `-DBASE_DIR=/live/${projectPath.relative}`,
+            "emcmake", "cmake", "/cmake", '-DCMAKE_BUILD_TYPE=Release',
+            `-DBASE_DIR=/live/${projectPath.relative}`,
+            `-DNATIVE_GLOB=${this.config.ext.source.map(ext => `${native}/*.${ext}`).join(';')}`,
+            `-DHEADER_GLOB=${this.config.ext.header.map(ext => `${header}/*.${ext}`).join(';')}`,
+            `-DHEADER_DIR=${header}`,
             `-DCMAKE_INSTALL_PREFIX=/live/${output.relative}`, `-DBRIDGE_DIR=/live/${output.relative}/bridge`, `-DPROJECT_NAME=${name}`, ...params,
         ];
-        const options = { cwd: this.outputPath, stdio : 'pipe' };
+        const options = { cwd: this.config.paths.temp, stdio : 'pipe' };
         execFileSync("docker", args, options);
-        return this.outputPath;
+        return this.config.paths.temp;
     }
 
     make() {
-        const output = getPathInfo(this.outputPath, this.basePath);
-        const base = getBaseInfo(this.basePath);
+        const output = getPathInfo(this.config.paths.temp, this.config.paths.base);
+        const base = getBaseInfo(this.config.paths.base);
 
-        let cMakeParentPath = this.cMakeFilePath.split('/');
+        let cMakeParentPath = this.config.paths.cmake.split('/');
         cMakeParentPath.pop();
         cMakeParentPath = cMakeParentPath.join('/');
         const args = [
             "run", "--user", getOsUserAndGroupId(), "-v", `${base.withoutSlash}:/live`, "-v", `${cMakeParentPath}:/cmake`, "--workdir", `/live/${output.relative}`, "bugra9/cpp.js",
-            "emmake", "make"
+            "emmake", "make", "install"
         ];
-        const options = { cwd: this.outputPath, stdio : 'pipe' };
+        const options = { cwd: this.config.paths.temp, stdio : 'pipe' };
         execFileSync("docker", args, options);
-        return this.outputPath;
+        return this.config.paths.temp;
     }
 
     cc() {
-        const input = getPathInfo(this.tempPath, this.basePath);
-        const output = getPathInfo(this.outputPath, this.basePath);
-        const base = getBaseInfo(this.basePath);
+        const input = getPathInfo(this.config.paths.temp, this.config.paths.base);
+        const output = getPathInfo(this.config.paths.temp, this.config.paths.base);
+        const base = getBaseInfo(this.config.paths.base);
         const args = [
-            "run", "--user", getOsUserAndGroupId(), "-v", `${base.withoutSlash}:/live`, "-v", `${this.cliPath}:/cli`, "bugra9/cpp.js",
-            "emcc", "-lembind", "-Wl,--whole-archive", ...this.libs.map(lib => `/live/${input.relative}/${lib}`), ...(this.options.cc || []), "-s", "WASM=1", "-s", "MODULARIZE=1", '-o', `/live/${output.relative}/${this.name}.js`, '--extern-post-js', '/cli/assets/extern-post.js'
+            "run", "--user", getOsUserAndGroupId(), "-v", `${base.withoutSlash}:/live`, "-v", `${this.config.paths.cli}:/cli`, "bugra9/cpp.js",
+            "emcc", "-lembind", "-Wl,--whole-archive", ...this.libs, ...(this.options.cc || []), "-s", "WASM=1", "-s", "MODULARIZE=1", '-o', `/live/${output.relative}/${this.config.general.name}.js`, '--extern-post-js', '/cli/assets/extern-post.js'
         ];
-        const options = { cwd: this.tempPath, stdio : 'pipe' };
+        const options = { cwd: this.config.paths.temp, stdio : 'pipe' };
         execFileSync("docker", args, options);
-        return this.outputPath;
+        return this.config.paths.temp;
     }
 }

@@ -1,7 +1,7 @@
 #ifndef _NATIVE_H
 #define _NATIVE_H
 
-#include "sample.h"
+#include <cppjs-lib-samplecomplex/samplecomplex.h>
 #include <string>
 
 class Native {

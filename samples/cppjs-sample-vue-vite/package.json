@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "vue": "^3.2.41",
-    "cppjs-lib-sample-web": "workspace:^"
+    "cppjs-lib-samplecomplex-wasm": "workspace:^"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^3.2.0",

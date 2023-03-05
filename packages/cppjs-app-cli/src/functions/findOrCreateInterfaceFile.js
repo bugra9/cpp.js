@@ -16,7 +16,10 @@ export default function findOrCreateInterfaceFile(compiler, filePath) {
     if (fs.existsSync(interfaceFile)) return interfaceFile;
 
     const fileName = filePathWithoutExt.split('/').at(-1);
-    const fileNameWithExt = input.relative.split('/').at(-1);
+
+    let headerPath = compiler.config.paths.header.find(path => filePath.startsWith(path));
+    if (headerPath) headerPath = filePath.substr(headerPath.length+1);
+    else headerPath = input.relative.split('/').at(-1);
 
     const content =
 `#ifndef _${fileName.toUpperCase()}_I
@@ -25,10 +28,10 @@ export default function findOrCreateInterfaceFile(compiler, filePath) {
 %module ${fileName.toUpperCase()}
 
 %{
-#include "${fileNameWithExt}"
+#include "${headerPath}"
 %}
 
-%include "${fileNameWithExt}"
+%include "${headerPath}"
 
 #endif
 `;

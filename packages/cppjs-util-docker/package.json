@@ -1,0 +1,6 @@
+{
+    "scripts": {
+        "build": "docker build -t bugra9/cpp.js .",
+        "publish": "docker push bugra9/cpp.js:latest"
+    }
+}

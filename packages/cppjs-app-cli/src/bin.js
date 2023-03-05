@@ -45,19 +45,21 @@ function generateLib(platform, output, base) {
 
     const compiler = new CppjsCompiler();
     compiler.config.paths.header.forEach(headerPath => {
-        headers.push(glob.sync("*.h", { absolute: true, cwd: headerPath }));
+        headers.push(glob.sync("**/*.h", { absolute: true, cwd: headerPath }));
     });
     headers = headers.filter(path => !!path.toString()).flat();
 
     headers.forEach(header => {
         compiler.findOrCreateInterfaceFile(header);
-        compiler.createBridge();
-        compiler.createWasm({ cc: ['-O3'] });
-        createDir('lib', compiler.config.paths.output);
-        fs.copyFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.js`, `${compiler.config.paths.output}/${compiler.config.general.name}.js`);
-        fs.copyFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`, `${compiler.config.paths.output}/${compiler.config.general.name}.wasm`);
-        fs.copyFileSync(`${compiler.config.paths.temp}/lib${compiler.config.general.name}.a`, `${compiler.config.paths.output}/lib/lib${compiler.config.general.name}.a`);
-        fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
     });
 
+    compiler.createBridge();
+    compiler.createWasm({ cc: ['-O3'] });
+    createDir('lib', compiler.config.paths.output);
+    fs.copyFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.js`, `${compiler.config.paths.output}/${compiler.config.general.name}.js`);
+    fs.copyFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`, `${compiler.config.paths.output}/${compiler.config.general.name}.wasm`);
+    fs.copyFileSync(`${compiler.config.paths.temp}/lib${compiler.config.general.name}.a`, `${compiler.config.paths.output}/lib/lib${compiler.config.general.name}.a`);
+    fs.rmSync(`${compiler.config.paths.output}/include`, { recursive: true, force: true });
+    fs.renameSync(`${compiler.config.paths.temp}/include`, `${compiler.config.paths.output}/include`);
+    fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
 }

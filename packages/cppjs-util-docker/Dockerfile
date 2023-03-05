@@ -16,4 +16,7 @@ RUN make
 RUN make install
 
 WORKDIR /home/emscripten
+RUN wget -qO- "https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2-linux-x86_64.tar.gz" | tar --strip-components=1 -xz -C /usr/local
+
+WORKDIR /home/emscripten
 RUN rm -rf emscripten-support.zip mobile-swig-emscripten-support

@@ -14,7 +14,7 @@ const require = createRequire(import.meta.url);
  * @typedef {Object} Config
  * @property {string} general General
  * @property {ConfigPaths} paths Paths
- * @property {ConfigExtensions} extensions Extensions
+ * @property {ConfigExtensions} ext Extensions
  */
 
 /**
@@ -22,7 +22,7 @@ const require = createRequire(import.meta.url);
  * @property {string} project Project path.
  * @property {string} base Base path (Use for monorepo structure)
  * @property {string} temp Temp path.
- * @property {string} native Native path (default: ['native', 'src/native']).
+ * @property {string} native Native path (default: ['src/native']).
  * @property {string} module Module path (default: native path)
  * @property {string} header Header path (default: native path)
  * @property {string} bridge Bridge path (default: native and temp path)
@@ -43,7 +43,7 @@ const require = createRequire(import.meta.url);
  */
 
 export default function getConfig(param) {
-    let tempConfig = { general: {}, paths: {}, extensions: {} };
+    let tempConfig = { general: {}, paths: {}, ext: {} };
 
     if (!param || (typeof param === 'string' || param instanceof String)) {
         const ext = (param || '').split('.').at(-1)
@@ -79,7 +79,7 @@ function forceToConfigSchema(tempConfig) {
     const config = {
         general: tempConfig && tempConfig.general ? tempConfig.general : {},
         paths: tempConfig && tempConfig.paths ? tempConfig.paths : {},
-        extensions: tempConfig && tempConfig.extensions ? tempConfig.extensions : {},
+        ext: tempConfig && tempConfig.ext ? tempConfig.ext : {},
     };
     return config;
 }
@@ -103,7 +103,7 @@ function fillConfig(tempConfig) {
         paths: {
             project: getAbsolutePath(null, tempConfig.paths.project) || process.cwd(),
         },
-        extensions: {},
+        ext: {},
     };
 
     if (!config.general.name) {
@@ -121,7 +121,7 @@ function fillConfig(tempConfig) {
 
     config.paths.base = getPath(tempConfig.paths.base) || config.paths.project;
     config.paths.temp = getPath(tempConfig.paths.temp) || createTempDir(undefined, config.paths.project)
-    config.paths.native = (tempConfig.paths.native || ['native', 'src/native']).map(p => getPath(p));
+    config.paths.native = (tempConfig.paths.native || ['src/native']).map(p => getPath(p));
     config.paths.module = (tempConfig.paths.module || config.paths.native).map(p => getPath(p));
     config.paths.header = (tempConfig.paths.header || config.paths.native).map(p => getPath(p));
     config.paths.bridge = (tempConfig.paths.bridge || [...config.paths.native, config.paths.temp]).map(p => getPath(p));
@@ -129,9 +129,9 @@ function fillConfig(tempConfig) {
     config.paths.cmake = getPath(tempConfig.paths.cmake || findCMakeListsFile(config.paths.project));
     config.paths.cli = __dirname;
 
-    config.extensions.header = tempConfig.extensions.header || ['h', 'hpp', 'hxx', 'hh'];
-    config.extensions.source = tempConfig.extensions.source || ['c', 'cpp', 'cxx', 'cc'];
-    config.extensions.module = tempConfig.extensions.module || ['i'];
+    config.ext.header = tempConfig.ext.header || ['h', 'hpp', 'hxx', 'hh'];
+    config.ext.source = tempConfig.ext.source || ['c', 'cpp', 'cxx', 'cc'];
+    config.ext.module = tempConfig.ext.module || ['i'];
 
     createDir('interface', config.paths.temp);
     createDir('bridge', config.paths.temp);

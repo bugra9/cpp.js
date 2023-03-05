@@ -15,7 +15,6 @@
         "glob": "^8.0.3"
     },
     "devDependencies": {
-        "mocha": "^10.2.0",
-        "cppjs-lib-sample-web": "workspace:^"
+        "mocha": "^10.2.0"
     }
 }
