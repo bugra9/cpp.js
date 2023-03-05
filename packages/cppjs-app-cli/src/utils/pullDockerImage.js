@@ -9,7 +9,7 @@ export default function pullDockerImage() {
         console.log('============= Downloading the docker image... =============');
         console.log('===========================================================');
         console.log('');
-        execFileSync("docker", ["pull", getDockerImage], {stdio: 'inherit'});
+        execFileSync("docker", ["pull", getDockerImage()], {stdio: 'inherit'});
         console.log('');
         console.log('===========================================================');
         console.log('');
