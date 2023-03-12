@@ -1,15 +1,4 @@
-const p = require('path');
 const fs = require('fs');
-
-function createTempDir(folder) {
-    let path = p.join(process.cwd(), 'node_modules', ".cppjs");
-    if (folder) path = p.join(path, folder);
-
-    if (fs.existsSync(path)) fs.rmSync(path, { recursive: true, force: true });
-    fs.mkdirSync(path, { recursive: true });
-
-    return path;
-}
 
 module.exports = async function () {
     const { default: CppjsWebpackPlugin } = await import('cppjs-webpack-plugin');
@@ -34,6 +23,7 @@ module.exports = async function () {
             },
         },
         devServer: (devServerConfig) => {
+            devServerConfig.watchFiles = compiler.config.paths.native;
             devServerConfig.onBeforeSetupMiddleware = (devServer) => {
                 if (!devServer) {
                   throw new Error('webpack-dev-server is not defined');
