@@ -13,6 +13,12 @@ export default class CppjsWebpackPlugin {
     apply(compiler) {
         const pluginName = this.constructor.name;
         compiler.hooks.done.tap(pluginName, this.onDone.bind(this));
+        compiler.hooks.afterCompile.tapAsync(pluginName, this.afterCompile.bind(this));
+    }
+
+    afterCompile(compilation, callback) {
+        this.compiler.config.paths.native.map(file => compilation.contextDependencies.add(file))
+        callback();
     }
 
     onDone({ compilation }) {
