@@ -6,6 +6,8 @@ import fs from 'fs';
 const viteCppjsPlugin = (options, _compiler) => {
     let isServe = false;
     const compiler = _compiler || new CppjsCompiler(options);
+    const headerRegex = new RegExp(`.(${compiler.config.ext.header.join('|')})$`);
+    const sourceRegex = new RegExp(`.(${compiler.config.ext.source.join('|')})$`);
 
     return [
         rollupCppjsPlugin(options, compiler),
@@ -32,6 +34,15 @@ const viteCppjsPlugin = (options, _compiler) => {
                     });
                 }
             },
+            handleHotUpdate({file, server}) {
+                if (headerRegex.test(file)) {
+                    compiler.findOrCreateInterfaceFile(file);
+                    compiler.createBridge();
+                } else if (sourceRegex.test(file)) {
+                    compiler.createWasm();
+                    server.ws.send({ type: 'full-reload' })
+                }
+            }
         }
     ]
 };
