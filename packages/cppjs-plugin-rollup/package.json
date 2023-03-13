@@ -1,6 +1,6 @@
 {
     "name": "rollup-plugin-cppjs",
-    "version": "0.4.3",
+    "version": "0.5.0",
     "license": "MIT",
     "type": "module",
     "main": "index.js",

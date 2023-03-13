@@ -31,6 +31,9 @@ export default function findOrCreateInterfaceFile(compiler, filePath) {
 #include "${headerPath}"
 %}
 
+%feature("shared_ptr");
+%feature("polymorphic_shared_ptr");
+
 %include "${headerPath}"
 
 #endif
