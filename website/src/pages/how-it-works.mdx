@@ -1,0 +1,54 @@
+import Link from '@docusaurus/Link';
+
+# How it works?
+This project aims to create a universe for developers, adding my perspective to the new technologies currently in the alpha/beta phase. My goal is to demonstrate that seemingly impossible things can be achieved by utilizing technology correctly. Due to the highly advanced technical level of this project, I will describe its progress from beginning to end in a step-by-step manner.
+
+## Embind
+To enable communication between the C++ language and JavaScript, it is necessary to write a bridge. The bridge methods provided by platforms are low-level and have limited capabilities. Therefore, throughout the project, I have utilized Embind, a high-level bridge wrapper that encompasses most of C++'s features. Embind is one of the most exquisite projects I have come across, although it does have some shortcomings. One of these is the lack of support for function overloading based on parameter types. To address this, I ensured its support by creating a Pull Request (PR) in the Emscripten project.
+
+**Doc:** <https://emscripten.org/docs/porting/connecting_cpp_and_javascript/embind.html>  
+**PR:** <https://github.com/emscripten-core/emscripten/pull/17445/files>  
+
+## Mobile Swig
+In order for the C++ files to be readable from the JavaScript side, a bridge for C++ needed to be created, as indicated in the Embind documentation. Swig is a remarkable project that automatically generates bridges to various languages from C++. However, Swig does not support Embind. To address this, I forked Swig and added support for Embind.
+
+**Doc:** <https://www.swig.org/Doc4.1/Contents.html>  
+**PR:** <https://github.com/CartoDB/mobile-swig/pull/3/files>  
+
+## CMake
+I used CMake to compile the C++ files and prepared the CMakeLists.txt file. Additionally, I planned and implemented how other cpp.js libraries would be used.
+
+**Doc:** <https://cmake.org/cmake/help/latest/guide/tutorial/index.html>  
+**CMakeLists.txt:** <https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-app-cli/src/assets/CMakeLists.txt>
+
+## Docker
+To ensure that the project runs properly with the necessary software such as Swig and Emscripten, including the patches I wrote, I prepared a Dockerfile. This avoids potential errors that could arise from manual setups.
+
+**Dockerfile:** <https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-util-docker/Dockerfile>  
+**Docker Image:** <https://hub.docker.com/r/bugra9/cpp.js>  
+
+## cppjs-app-cli
+To manage the project effectively, I needed a central package that would handle configurations, access relevant applications via Docker image, and execute compilation commands sequentially. Moreover, it should be callable from both the command-line interface (CLI) and triggered by node.js. With these requirements in mind, I created the cppjs-app-cli project, encompassing all these functionalities.
+
+**Source code:** <https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-app-cli/src>
+
+## cppjs-create-skeleton-tool
+In order to allow users to quickly begin their projects and download sample projects based on their choices, I required a script. Together with my friend Korhan Özbek, I developed this script.
+
+**Source code:** <https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-create-skeleton-tool/src/index.js>  
+
+## Last Words
+The above-mentioned software components constitute the main elements of the project. Further software components will be tailored to the specific platforms they will be used on, and I have explained them separately on distinct pages.
+
+<div className="mt-10 flex gap-5 justify-center">
+    <Link
+        className="w-40 text-center bg-[#fb9700] hover:bg-[#ffa40c] text-white hover:text-white hover:no-underline font-bold py-2 px-4 rounded-full"
+        to="/web">
+        Web
+    </Link>
+    <Link
+        className="w-40 text-center bg-teal-400 hover:bg-teal-500 text-white hover:text-white hover:no-underline font-bold py-2 px-4 rounded-full"
+        to="/react-native">
+        React Native
+    </Link>
+</div>

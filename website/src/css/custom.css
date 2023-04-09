@@ -1,0 +1,57 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+@tailwind utilities;
+
+:root {
+  --ifm-color-primary: #fb9700;
+  --ifm-color-primary-dark: #29784c;
+  --ifm-color-primary-darker: #277148;
+  --ifm-color-primary-darkest: #205d3b;
+  --ifm-color-primary-light: #33925d;
+  --ifm-color-primary-lighter: #359962;
+  --ifm-color-primary-lightest: #3cad6e;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --ifm-heading-color: black;
+  --ifm-font-color-base-inverse: black;
+  --ifm-footer-padding-vertical: 0.75rem;
+  --ifm-tabs-color-active: --ifm-tabs-color;
+  --ifm-link-color: black;
+  --ifm-border-color: rgb(209 213 219);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  --ifm-heading-color: #f3f3f3;
+  --ifm-font-color-base-inverse: #f3f3f3;
+  --ifm-link-color: #f3f3f3;
+  --ifm-navbar-background-color: #22262e;
+  --ifm-footer-background-color: #17191e;
+  --ifm-border-color: rgb(107 114 128);
+}
+
+.hero--primary {
+    --ifm-hero-background-color: var(--ifm-navbar-background-color);
+}
+
+.footer__copyright {
+    font-size: 0.75rem;
+}
+
+.footer__copyright a {
+    font-weight: bold;
+}
+
+.simple-button {
+    border-color: var(--ifm-border-color);
+}
+
+.simple-button:hover {
+    background-color: var(--ifm-footer-background-color);
+}
