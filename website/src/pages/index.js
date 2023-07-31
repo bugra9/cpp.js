@@ -117,7 +117,7 @@ export default function Home() {
   const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      description="Description will go into a meta tag in <head />">
+      description="Bind c++ libraries to js on web and mobile.">
       <HomepageHeader />
       <main>
       </main>
