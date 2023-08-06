@@ -1,6 +1,6 @@
 {
   "name": "create-cpp.js",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "",
   "bin": "src/index.js",
   "main": "src/index.js",
@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cppjs-samples": "workspace:^",
     "fs-extra": "^11.1.0",
     "kleur": "^4.1.5",
     "prompts": "^2.4.2"
