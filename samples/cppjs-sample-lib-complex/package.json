@@ -1,8 +1,9 @@
 {
   "name": "cppjs-lib-samplecomplex-wasm",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "type": "module",
+  "main": "cpp.js",
   "scripts": {
     "build": "cpp.js generate lib"
   },

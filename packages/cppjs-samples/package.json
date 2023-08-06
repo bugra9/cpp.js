@@ -1,0 +1,15 @@
+{
+    "name": "cppjs-samples",
+    "version": "0.5.0",
+    "description": "Cpp.js Samples",
+    "author": "Buğra Sarı <git.bugra@gmail.com>",
+    "license": "MIT",
+    "type": "module",
+    "main": "index.js",
+    "dependencies": {
+        "cppjs-lib-samplebasic-wasm": "workspace:^",
+        "cppjs-lib-samplecomplex-wasm": "workspace:^",
+        "cppjs-sample-react-cra": "workspace:^",
+        "cppjs-sample-vue-vite": "workspace:^"
+    }
+}

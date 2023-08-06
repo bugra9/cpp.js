@@ -18,8 +18,9 @@ export function getPath(path) {
 
 const titles = {
     rn: 'react native',
+    cra: 'create react app (cra)'
 };
 
 export const getTitle = (str) => {
-    (titles[str] || str).split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    return (titles[str] || str).split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
 }

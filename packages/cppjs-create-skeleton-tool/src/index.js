@@ -2,6 +2,7 @@
 import fs from 'fs';
 import fse from 'fs-extra';
 import path from 'path';
+import samplePaths from 'cppjs-samples';
 import { bold, cyan, gray, green } from 'kleur/colors';
 import prompts from 'prompts';
 import { pkgManager, getPath, getTitle } from './utils.js'
@@ -68,19 +69,17 @@ async function main() {
 	}
 
     const templates = {}
-    fs.readdirSync(getPath('src/templates'), { withFileTypes: true })
-    .filter((dir) => dir.isDirectory())
-    .forEach((dir) => {
-        const [_, type, platform, bundler] = dir.name.split('-');
+    samplePaths.forEach((dir) => {
+        const dirName = dir.split('/').pop();
+        const [_, __, type, platform, bundler] = dirName.split('-');
         if (!templates[type]) templates[type] = {};
         if (!templates[type][platform]) templates[type][platform] = {};
         if (bundler) {
             if (!templates[type][platform][bundler]) templates[type][platform][bundler] = {};
-            templates[type][platform][bundler] = getPath(`src/templates/${dir.name}`);
+            templates[type][platform][bundler] = dir;
         } else {
-            templates[type][platform] = getPath(`src/templates/${dir.name}`);
+            templates[type][platform] = dir;
         }
-
     })
 
     const {templateType: selectedType} = await prompts({
@@ -98,7 +97,7 @@ async function main() {
     const {appPlatformType: selectedPlatform} = await prompts({
             type: 'select',
             name: 'appPlatformType',
-            message: 'Which Cpp.js platform type?',
+            message: 'Which framework?',
             initial: false,
             choices: Object.keys(templates[selectedType]).map(k => ({ title: getTitle(k), value: k })),
         }, {
@@ -112,7 +111,7 @@ async function main() {
         const result = await prompts({
                 type: 'select',
                 name: 'bundler',
-                message: `Which ${getTitle(selectedPlatform)} bundler ?`,
+                message: `Which tool?`,
                 initial: false,
                 choices: Object.keys(templates[selectedType][selectedPlatform]).map(k => ({ title: getTitle(k), value: k })),
             }, {
