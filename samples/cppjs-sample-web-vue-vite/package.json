@@ -1,6 +1,6 @@
 {
   "name": "cppjs-sample-vue-vite",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "vue": "^3.2.41",
+    "cpp.js": "workspace:^",
     "cppjs-lib-samplecomplex-wasm": "workspace:^"
   },
   "devDependencies": {
