@@ -4,7 +4,7 @@ import fs from 'fs';
 import p from "path";
 
 const rollupCppjsPlugin = (options, _compiler) => {
-    const compiler = _compiler || new CppjsCompiler(options);
+    const compiler = _compiler || new CppjsCompiler();
     const headerRegex = new RegExp(`.(${compiler.config.ext.header.join('|')})$`);
 
     return {

@@ -90,13 +90,35 @@ importers:
 
   packages/cppjs-util-docker: {}
 
-  samples/cppjs-sample-lib-basic: {}
+  samples/cppjs-sample-lib-basic:
+    dependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../packages/cppjs-app-cli
+
+  samples/cppjs-sample-lib-basic-cmake:
+    dependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../packages/cppjs-app-cli
+
+  samples/cppjs-sample-lib-basic-prebuilt:
+    dependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../packages/cppjs-app-cli
 
   samples/cppjs-sample-lib-complex:
     dependencies:
       cppjs-lib-samplebasic-wasm:
         specifier: workspace:^
         version: link:../cppjs-sample-lib-basic
+      cppjs-lib-samplebasiccmake-wasm:
+        specifier: workspace:^
+        version: link:../cppjs-sample-lib-basic-cmake
+      cppjs-lib-samplebasicprebuilt-wasm:
+        specifier: workspace:^
+        version: link:../cppjs-sample-lib-basic-prebuilt
     devDependencies:
       cpp.js:
         specifier: workspace:^

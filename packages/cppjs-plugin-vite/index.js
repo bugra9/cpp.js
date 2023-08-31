@@ -5,7 +5,7 @@ import fs from 'fs';
 
 const viteCppjsPlugin = (options, _compiler) => {
     let isServe = false;
-    const compiler = _compiler || new CppjsCompiler(options);
+    const compiler = _compiler || new CppjsCompiler();
     const headerRegex = new RegExp(`.(${compiler.config.ext.header.join('|')})$`);
     const sourceRegex = new RegExp(`.(${compiler.config.ext.source.join('|')})$`);
 

@@ -8,5 +8,9 @@ export default function findCMakeListsFile(basePath = process.cwd()) {
     }
 
     if (temp.length > 0) return temp[0];
+    return getCliCMakeListsFile();
+}
+
+export function getCliCMakeListsFile() {
     return getCliPath() + '/assets/CMakeLists.txt';
 }

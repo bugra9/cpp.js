@@ -2,7 +2,7 @@ import fs from 'fs';
 import p from 'path';
 
 export default function createTempDir(folder = 'a'+Math.random(), base = process.cwd()) {
-    const path = p.join(base, 'node_modules', ".cppjs");
+    const path = p.join(base, ".cppjs");
     return createDir(folder, path);
 }
 

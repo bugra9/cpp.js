@@ -4,8 +4,8 @@ import createWasm from './functions/createWasm.js';
 import getConfig from './utils/getConfig.js';
 
 export default class CppjsCompiler {
-    constructor(param) {
-        this.config = getConfig(param);
+    constructor() {
+        this.config = getConfig();
         this.interfaces = [];
     }
 
