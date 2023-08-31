@@ -55,11 +55,14 @@ function generateLib(platform, output, base) {
 
     compiler.createBridge();
     compiler.createWasm({ cc: ['-O3'] });
-    createDir('lib', compiler.config.paths.output);
+    createDir('prebuilt', compiler.config.paths.output);
     fs.copyFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.js`, `${compiler.config.paths.output}/${compiler.config.general.name}.js`);
     fs.copyFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`, `${compiler.config.paths.output}/${compiler.config.general.name}.wasm`);
-    fs.copyFileSync(`${compiler.config.paths.temp}/lib${compiler.config.general.name}.a`, `${compiler.config.paths.output}/lib/lib${compiler.config.general.name}.a`);
-    fs.rmSync(`${compiler.config.paths.output}/include`, { recursive: true, force: true });
-    fs.renameSync(`${compiler.config.paths.temp}/include`, `${compiler.config.paths.output}/include`);
+    fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
+    fs.renameSync(`${compiler.config.paths.temp}/prebuilt`, `${compiler.config.paths.output}/prebuilt`);
+
+    const distCmakeContent = fs.readFileSync(`${compiler.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
+        .replace('___PROJECT_NAME___', compiler.config.general.name);
+    fs.writeFileSync(`${compiler.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
     fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
 }

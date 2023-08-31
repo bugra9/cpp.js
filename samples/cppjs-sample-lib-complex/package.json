@@ -1,14 +1,15 @@
 {
   "name": "cppjs-lib-samplecomplex-wasm",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "license": "MIT",
   "type": "module",
-  "main": "cpp.js",
   "scripts": {
     "build": "cpp.js generate lib"
   },
   "dependencies": {
-    "cppjs-lib-samplebasic-wasm": "workspace:^"
+    "cppjs-lib-samplebasic-wasm": "workspace:^",
+    "cppjs-lib-samplebasiccmake-wasm": "workspace:^",
+    "cppjs-lib-samplebasicprebuilt-wasm": "workspace:^"
   },
   "devDependencies": {
     "cpp.js": "workspace:^"

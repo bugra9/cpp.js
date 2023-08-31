@@ -3,16 +3,15 @@ import createTempDir, { createDir } from './createTempDir.js';
 import findCMakeListsFile from './findCMakeListsFile.js';
 import p from 'path';
 import * as url from 'node:url';
-import { createRequire } from 'module';
 
 const __filename = url.fileURLToPath(import.meta.url);
 const temp = __filename.split('/'); temp.pop(); temp.pop();
 const __dirname = temp.join('/');
-const require = createRequire(import.meta.url);
 
 /**
  * @typedef {Object} Config
  * @property {string} general General
+ * @property {any[]} dependencies Dependencies
  * @property {ConfigPaths} paths Paths
  * @property {ConfigExtensions} ext Extensions
  */
@@ -42,44 +41,37 @@ const require = createRequire(import.meta.url);
  * @property {string} name Project name
  */
 
-export default function getConfig(param) {
-    let tempConfig = { general: {}, paths: {}, ext: {} };
+let tempConfig = { general: {}, dependencies: [], paths: {}, ext: {}, export: {} };
+await initDefaultConfigFile();
 
-    if (!param || (typeof param === 'string' || param instanceof String)) {
-        const ext = (param || '').split('.').at(-1)
-        let filePath;
+async function initDefaultConfigFile() {
+    let filePath;
+    ['json', 'js', 'mjs', 'cjs', 'ts'].some(e => {
+        filePath = `${process.cwd()}/cppjs.config.${e}`;
+        if (!fs.existsSync(filePath)) filePath = null;
+        else return true;
+    });
 
-        if (param && ['json', 'js', 'mjs', 'cjs', 'ts'].includes(ext)) {
-            filePath = `${process.cwd()}/${param}`;
-            if (!fs.existsSync(filePath)) filePath = null;
-        } else {
-            filePath = `${process.cwd()}/.cppjs.config.json`;
-            if (!fs.existsSync(filePath)) filePath = null;
+    if (filePath) {
+        let file = await import(filePath);
+        if (file.default) file = file.default;
 
-            /* filePath = `${process.cwd()}/.cpp.config.js`;
-            if (!fs.existsSync(filePath)) filePath = null; */
-        }
-
-        if (filePath) {
-            const file = require(filePath);
-            if (file.default) file = file.default;
-            if (typeof file === 'function') tempConfig = file();
-            else if (typeof file === "object") tempConfig = file;
-        }
-    } else if (typeof param === "object") {
-        tempConfig = param;
-    } else {
-        console.error('Error');
+        if (typeof file === 'function') tempConfig = file();
+        else if (typeof file === "object") tempConfig = file;
     }
+}
 
+export default function getConfig() {
     return fillConfig(forceToConfigSchema(tempConfig));
 }
 
 function forceToConfigSchema(tempConfig) {
     const config = {
         general: tempConfig && tempConfig.general ? tempConfig.general : {},
+        dependencies: tempConfig && tempConfig.dependencies ? tempConfig.dependencies : [],
         paths: tempConfig && tempConfig.paths ? tempConfig.paths : {},
         ext: tempConfig && tempConfig.ext ? tempConfig.ext : {},
+        export: tempConfig && tempConfig.export ? tempConfig.export : {},
     };
     return config;
 }
@@ -97,13 +89,15 @@ function getAbsolutePath(projectPath, path) {
     return p.resolve(path);
 }
 
-function fillConfig(tempConfig) {
+function fillConfig(tempConfig, options = {}) {
     const config = {
         general: {},
+        dependencies: tempConfig.dependencies ? tempConfig.dependencies.map(d => fillConfig(forceToConfigSchema(d), { depend: true })) : [],
         paths: {
             project: getAbsolutePath(null, tempConfig.paths.project) || process.cwd(),
         },
         ext: {},
+        export: {},
     };
 
     if (!config.general.name) {
@@ -126,12 +120,17 @@ function fillConfig(tempConfig) {
     config.paths.header = (tempConfig.paths.header || config.paths.native).map(p => getPath(p));
     config.paths.bridge = (tempConfig.paths.bridge || [...config.paths.native, config.paths.temp]).map(p => getPath(p));
     config.paths.output = getPath(tempConfig.paths.output) || config.paths.temp;
-    config.paths.cmake = getPath(tempConfig.paths.cmake || findCMakeListsFile(config.paths.project));
+    config.paths.cmake = options.depend ? findCMakeListsFile(config.paths.output) : getPath(tempConfig.paths.cmake || findCMakeListsFile(config.paths.project));
     config.paths.cli = __dirname;
 
     config.ext.header = tempConfig.ext.header || ['h', 'hpp', 'hxx', 'hh'];
     config.ext.source = tempConfig.ext.source || ['c', 'cpp', 'cxx', 'cc'];
     config.ext.module = tempConfig.ext.module || ['i'];
+
+    config.export.type = tempConfig.export.type || 'cmake';
+    config.export.header = tempConfig.export.header || 'include';
+    config.export.libPath = getPath(tempConfig.export.libPath || 'lib');
+    config.export.libName = tempConfig.export.libName || [`lib${config.general.name}.a`];
 
     createDir('interface', config.paths.temp);
     createDir('bridge', config.paths.temp);
