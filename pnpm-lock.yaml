@@ -135,6 +135,9 @@ importers:
       '@testing-library/user-event':
         specifier: ^13.5.0
         version: 13.5.0(@testing-library/dom@8.19.1)
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../packages/cppjs-app-cli
       cppjs-lib-samplecomplex-wasm:
         specifier: workspace:^
         version: link:../cppjs-sample-lib-complex
@@ -163,6 +166,9 @@ importers:
 
   samples/cppjs-sample-web-vue-vite:
     dependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../packages/cppjs-app-cli
       cppjs-lib-samplecomplex-wasm:
         specifier: workspace:^
         version: link:../cppjs-sample-lib-complex
