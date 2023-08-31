@@ -1,11 +1,12 @@
 {
   "name": "cppjs-sample-react-cra",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "cpp.js": "workspace:^",
     "cppjs-lib-samplecomplex-wasm": "workspace:^",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
