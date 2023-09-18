@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
+set(CMAKE_CXX_STANDARD 17)
 project("${PROJECT_NAME}")
 set(PACKAGE_HOST "${CMAKE_SYSTEM_NAME}-${CMAKE_HOST_SYSTEM_PROCESSOR}")
 
@@ -18,7 +19,7 @@ if (BUILD_BRIDGE)
 endif(BUILD_BRIDGE)
 
 set(SRC_FILES "${BUILD_SRC_FILES}" "${BRIDGE_SRC_FILES}")
-add_library("${PROJECT_NAME}" STATIC ${SRC_FILES})
+add_library("${PROJECT_NAME}" "${BUILD_TYPE}" ${SRC_FILES})
 
 if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "")
     target_link_libraries("${PROJECT_NAME}" "${DEPENDS_CMAKE_NAMES}")

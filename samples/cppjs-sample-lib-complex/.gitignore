@@ -1,3 +1,6 @@
+# cpp.js
+.cppjs
+
 lib
 include
 cppjs-lib-*.js

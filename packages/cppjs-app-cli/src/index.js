@@ -1,6 +1,6 @@
 import createBridge from './functions/createBridge.js';
 import findOrCreateInterfaceFile from './functions/findOrCreateInterfaceFile.js';
-import createWasm from './functions/createWasm.js';
+import createWasm, { getCmakeParams } from './functions/createWasm.js';
 import getConfig from './utils/getConfig.js';
 
 export default class CppjsCompiler {
@@ -19,5 +19,9 @@ export default class CppjsCompiler {
 
     createWasm(options) {
         return createWasm(this, options);
+    }
+
+    getCmakeParams() {
+        return getCmakeParams(this);
     }
 }
