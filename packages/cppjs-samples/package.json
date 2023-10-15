@@ -1,6 +1,6 @@
 {
     "name": "cppjs-samples",
-    "version": "0.6.1",
+    "version": "0.6.2",
     "description": "Cpp.js Samples",
     "author": "Buğra Sarı <git.bugra@gmail.com>",
     "license": "MIT",
@@ -10,6 +10,7 @@
         "cppjs-lib-samplebasic-wasm": "workspace:^",
         "cppjs-lib-samplecomplex-wasm": "workspace:^",
         "cppjs-sample-react-cra": "workspace:^",
-        "cppjs-sample-vue-vite": "workspace:^"
+        "cppjs-sample-vue-vite": "workspace:^",
+        "cppjs-sample-reactnative": "0.0.2"
     }
 }
