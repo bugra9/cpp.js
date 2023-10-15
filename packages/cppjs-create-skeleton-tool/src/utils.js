@@ -18,7 +18,8 @@ export function getPath(path) {
 
 const titles = {
     rn: 'react native',
-    cra: 'create react app (cra)'
+    cra: 'create react app (cra)',
+    reactnative: 'react native',
 };
 
 export const getTitle = (str) => {
