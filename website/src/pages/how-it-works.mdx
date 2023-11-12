@@ -1,54 +1,123 @@
-import Link from '@docusaurus/Link';
-
 # How it works?
-This project aims to create a universe for developers, adding my perspective to the new technologies currently in the alpha/beta phase. My goal is to demonstrate that seemingly impossible things can be achieved by utilizing technology correctly. Due to the highly advanced technical level of this project, I will describe its progress from beginning to end in a step-by-step manner.
 
-## Embind
-To enable communication between the C++ language and JavaScript, it is necessary to write a bridge. The bridge methods provided by platforms are low-level and have limited capabilities. Therefore, throughout the project, I have utilized Embind, a high-level bridge wrapper that encompasses most of C++'s features. Embind is one of the most exquisite projects I have come across, although it does have some shortcomings. One of these is the lack of support for function overloading based on parameter types. To address this, I ensured its support by creating a Pull Request (PR) in the Emscripten project.
+## Docker Image
+Cpp.js downloads the bugra9/cpp.js docker image before running. This docker image contains Emscripten, Swig, Cmake and patches prepared for them. 
+Thus, the necessary applications can be accessed through this image.
 
-**Doc:** <https://emscripten.org/docs/porting/connecting_cpp_and_javascript/embind.html>  
-**PR:** <https://github.com/emscripten-core/emscripten/pull/17445/files>  
+:::note Links
+- **Docker Image:** https://hub.docker.com/r/bugra9/cpp.js  
+- **Dockerfile:** https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-util-docker/Dockerfile
+:::
 
-## Mobile Swig
-In order for the C++ files to be readable from the JavaScript side, a bridge for C++ needed to be created, as indicated in the Embind documentation. Swig is a remarkable project that automatically generates bridges to various languages from C++. However, Swig does not support Embind. To address this, I forked Swig and added support for Embind.
+<br /><br />
 
-**Doc:** <https://www.swig.org/Doc4.1/Contents.html>  
-**PR:** <https://github.com/CartoDB/mobile-swig/pull/3/files>  
+## Browser
+Cpp.js performs the binding process in the browser with bundler plugins. These plugins; webpack (cppjs-webpack-plugin, cppjs-loader), rollup (rollup-plugin-cppjs), vite (vite-plugin-cppjs).
 
-## CMake
-I used CMake to compile the C++ files and prepared the CMakeLists.txt file. Additionally, I planned and implemented how other cpp.js libraries would be used.
+During import parsing, the plugins create the swig interface for the imported header files and change the import line to import cpp.js.
 
-**Doc:** <https://cmake.org/cmake/help/latest/guide/tutorial/index.html>  
-**CMakeLists.txt:** <https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-app-cli/src/assets/CMakeLists.txt>
+During the bundle creation, bridge files are created for the swig interfaces and all codes are compiled to create wasm and js files in the dist directory.
 
-## Docker
-To ensure that the project runs properly with the necessary software such as Swig and Emscripten, including the patches I wrote, I prepared a Dockerfile. This avoids potential errors that could arise from manual setups.
+In development mode, wasm and js files are served from the temp directory.
 
-**Dockerfile:** <https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-util-docker/Dockerfile>  
-**Docker Image:** <https://hub.docker.com/r/bugra9/cpp.js>  
+```mermaid
+flowchart TD
+    Browser --> 
+    id2["Bundlers (Webpack, Rollup, Vite)"] -- Transform -->
+    id3["Detect imported c++ headers"] -->
+    id4["Create swig interface for imported headers."]
+    id2 -- Bundle -->
+    id5["Generate bridges using swig"] -->
+    id6["Generate wasm and js files using emscripten"]
+```
+<br />
 
-## cppjs-app-cli
-To manage the project effectively, I needed a central package that would handle configurations, access relevant applications via Docker image, and execute compilation commands sequentially. Moreover, it should be callable from both the command-line interface (CLI) and triggered by node.js. With these requirements in mind, I created the cppjs-app-cli project, encompassing all these functionalities.
+:::note Links
+- **cppjs-webpack-plugin:** https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-plugin-webpack/index.js 
+- **cppjs-loader:** https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-plugin-webpack-loader/index.js
 
-**Source code:** <https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-app-cli/src>
 
-## cppjs-create-skeleton-tool
-In order to allow users to quickly begin their projects and download sample projects based on their choices, I required a script. Together with my friend Korhan Özbek, I developed this script.
+- **rollup-plugin-cppjs:** https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-plugin-rollup/index.js
+- **vite-plugin-cppjs:** https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-plugin-vite/index.js
+:::
 
-**Source code:** <https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-create-skeleton-tool/src/index.js>  
+<br /><br />
 
-## Last Words
-The above-mentioned software components constitute the main elements of the project. Further software components will be tailored to the specific platforms they will be used on, and I have explained them separately on distinct pages.
+## React Native
+Cpp.js is designed to bind the same on all platforms. In browsers, embind is used for bind, so embind is also used on React Native.
 
-<div className="mt-10 flex gap-5 justify-center">
-    <Link
-        className="w-40 text-center bg-[#fb9700] hover:bg-[#ffa40c] text-white hover:text-white hover:no-underline font-bold py-2 px-4 rounded-full"
-        to="/web">
-        Web
-    </Link>
-    <Link
-        className="w-40 text-center bg-teal-400 hover:bg-teal-500 text-white hover:text-white hover:no-underline font-bold py-2 px-4 rounded-full"
-        to="/react-native">
-        React Native
-    </Link>
-</div>
+For this, Embind was moved from Emscripten to a separate package called react-native-embind and the webassembly integration was replaced with JSI. 
+
+The react-native-cppjs package was created for easy integration with React native. This package runs a node script on build.gradle to get the cmake parameters in cpp.js and the path to the CMakeLists.txt file. Using these, the compilation process is performed on the android ecosystem.
+
+```mermaid
+flowchart TD
+    id1["React Native"] --> 
+    id2["react-native-cppjs"] -- Android -->
+    id3["Create swig interface for all headers."] -->
+    id4["Generate bridges using swig"] -->
+    id5["Generate .so library"]
+    id2["react-native-cppjs"] -- IOS -->
+    id7["Not implemented yet"]
+```
+<br />
+
+:::note Links
+- **react-native-embind:** https://github.com/bugra9/react-native-embind/tree/main/react-native-embind 
+- **react-native-cppjs:** https://github.com/bugra9/react-native-embind/tree/main/react-native-cppjs
+- **react-native-sample:** https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-mobile-reactnative
+:::
+
+<br /><br />
+
+## Cpp.js Build
+Cpp.js has a config system for customization. Most information such as path of native code, file extensions, dependencies are defined in the cppjs.config.js file in the project directory. If the file does not exist or attributes are not defined, it continues with default values.
+
+Cpp.js prepares the parameters needed for compilation, such as files to be compiled using the values in config.
+
+Compilation is done by giving CMakeLists.txt in cpp.js and the previously prepared parameters to cmake.
+
+As a final step, just for webassembly, the output library is converted into wasm and js files using Emscripten
+
+
+```mermaid
+flowchart TD
+    id2["Cpp.js"] -- Prepare -->
+    id3["Find all project and dependencies headers"] -->
+    id4["Find all project and dependencies c/c++ files"] -->
+    id5["Find all project and dependencies CMakeLists.txt"]
+    id2["Cpp.js"] -- Build with Cmake -->
+    id7["Create Cmake params"] -->
+    id8["Add dependencies to cmake"] -- Wasm -->
+    id9["Create static wasm lib using Emscripten"]
+    id2["Cpp.js"] -- Create Wasm and js files -->
+    id10["Create Wasm and js files using Emscripten"]
+    id8["Add dependencies to cmake"] -- Android -->
+    id11["Create dynamic (.so) library"]
+```
+<br />
+
+:::note Links
+- **cpp.js:** https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-app-cli/src
+
+
+- **Sample Config:** https://github.com/bugra9/cpp.js/blob/main/samples/cppjs-sample-web-vue-vite/cppjs.config.js
+- **getConfig:** https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-app-cli/src/utils/getConfig.js
+
+
+- **CMakeLists.txt:** https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-app-cli/src/assets/CMakeLists.txt
+- **build:** https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-app-cli/src/functions/createWasm.js
+:::
+<br />
+
+:::note Samples
+- **React Native:** https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-mobile-reactnative
+- **Vite + Vue:** https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-web-vue-vite
+- **Webpack + React:** https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-web-react-cra
+
+
+- **Basic Lib** https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-lib-basic
+- **Complex Lib:** https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-lib-complex
+- **Cmake Lib:** https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-lib-basic-cmake
+- **Prebuilt Lib:** https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-lib-basic-prebuilt
+:::

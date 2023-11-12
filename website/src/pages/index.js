@@ -9,25 +9,26 @@ import styles from './index.module.css';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-function HomepageHeader() {
+import SeamlessIntegration from './seamless-integration.mdx';
+
+function HomepageIntro() {
   const {siteConfig} = useDocusaurusContext();
   return (
-    <header className={clsx('hero hero--primary', styles.heroBanner)}>
-      <div className="container flex flex-wrap min-h-[calc(100vh-11.75rem)] gap-20">
+    <div className={clsx('hero hero--primary', styles.heroBanner)}>
+      <div className="container flex flex-wrap gap-20 min-h-[820px]">
         <div class="flex-1 justify-self-center self-center min-w-[23rem]">
             <h1 className="hero__title mb-3">{siteConfig.title}</h1>
-            <p className="hero__subtitle mb-1 text-2xl">Bind c++ libraries to js on web and mobile.</p>
-            <p className="hero__subtitle mb-16 text-2xl">Created by Buğra Sarı.</p>
+            <p className="hero__subtitle mb-16 text-2xl">Bind C++ codes to JS on the web and react native without writing extra code.</p>
             <p className="hero__subtitle mb-2"><b>Why Cpp.js?</b></p>
-            <p className="hero__subtitle mb-1 text-xl">- Perfect harmony of c++ and javascript</p>
-            <p className="hero__subtitle mb-1 text-xl">- Exceed native performance</p>
+            <p className="hero__subtitle mb-1 text-xl">- Seamless integration of C++ and JavaScript</p>
+            <p className="hero__subtitle mb-1 text-xl">- Power of native performance</p>
+            <p className="hero__subtitle mb-1 text-xl">- Use or create prebuilt cpp.js libraries</p>
             <p className="hero__subtitle mb-1 text-xl">- Cross Platform</p>
-            <p className="hero__subtitle mb-1 text-xl">- Use libraries from another platform.</p>
 
             <div className="mt-10 flex gap-5">
                 <Link
                     className="bg-[#fb9700] hover:bg-[#ffa40c] text-white hover:text-white hover:no-underline font-bold py-2 px-4 rounded-full"
-                    to="/docs/Getting%20Started/Installation/prerequisites">
+                    to="/docs/Getting%20Started/prerequisites">
                     Get Started
                 </Link>
                 <Link
@@ -66,7 +67,7 @@ public:
         if (number < 0) return -1;
 
         int result = 1;
-        for (int i = 2; i <= number; i++) {
+        for (int i = 2; i <= number; i += 1) {
             result *= i;
         }
         return result;
@@ -79,7 +80,7 @@ public:
                         language="js"
                         title="/src/index.js"
                         showLineNumbers>
-{`import { Factorial } from './Factorial.js
+{`import { Factorial } from './Factorial.js';
 
 const factorial = new Factorial(99999);
 const result = factorial.calculate();
@@ -98,7 +99,7 @@ console.log(result); // execution time: 54s`}
     if (this.number < 0) return -1;
 
     let result = 1;
-    for (let i = 2; i <= this.number; i++) {
+    for (let i = 2; i <= this.number; i += 1) {
       result *= i;
     }
     return result;
@@ -109,18 +110,20 @@ console.log(result); // execution time: 54s`}
             </Tabs>
         </div>
       </div>
-    </header>
+    </div>
   );
 }
 
 export default function Home() {
   const {siteConfig} = useDocusaurusContext();
   return (
-    <Layout
-      description="Bind c++ libraries to js on web and mobile.">
-      <HomepageHeader />
-      <main>
-      </main>
+    <Layout description="Bind c++ libraries to js on web and mobile.">
+        <HomepageIntro />
+        <div className={clsx('hero hero--primary mt-1', styles.heroBanner)}>
+            <div className="container home-markdown text-lg max-w-3xl text-justify">
+                <SeamlessIntegration />
+            </div>
+        </div>
     </Layout>
   );
 }

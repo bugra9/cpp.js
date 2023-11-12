@@ -1,8 +1,8 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 ---
 
-# CLI - Start a new cpp.js project
+# Create a project
 A CLI for creating new cpp.js projects. Quickly creates integrated projects for you to try out. Just run
 
 ```bash npm2yarn

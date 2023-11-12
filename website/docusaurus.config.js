@@ -42,10 +42,6 @@ const config = {
             [require('@docusaurus/remark-plugin-npm2yarn'), {sync: true}],
           ],
           sidebarPath: require.resolve('./sidebars.js'),
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
         },
         pages: {
           remarkPlugins: [require('@docusaurus/remark-plugin-npm2yarn')],
@@ -83,15 +79,15 @@ const config = {
         },
         items: [
           {to: '/how-it-works', label: 'How It Works?', position: 'left'},
-          {to: '/web', label: 'Web', position: 'left'},
-          {to: '/react-native', label: 'React Native', position: 'left'},
+          {to: '/integrations', label: 'Integrations', position: 'left'},
+          {to: '/showcase', label: 'Showcase', position: 'left'},
           {
             type: 'docSidebar',
             sidebarId: 'tutorialSidebar',
             position: 'left',
             label: 'Docs',
           },
-          // {to: '/blog', label: 'Blog', position: 'right'},
+          {to: '/changelogs', label: 'Changelogs', position: 'right'},
           {
             href: 'https://github.com/bugra9/cpp.js',
             label: 'GitHub',
