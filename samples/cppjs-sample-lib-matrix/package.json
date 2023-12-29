@@ -1,0 +1,12 @@
+{
+    "name": "cppjs-lib-matrix-wasm",
+    "version": "0.2.0",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "build": "cpp.js generate lib"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^"
+    }
+}

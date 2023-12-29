@@ -1,0 +1,16 @@
+{
+    "name": "cppjs-package-tiff",
+    "version": "4.6.0-1.0.0",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "build": "node build.js"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^",
+        "cppjs-package-zlib": "workspace:^",
+        "decompress": "4.2.1",
+        "decompress-targz": "4.1.1",
+        "follow-redirects":"1.15.3"
+    }
+}

@@ -1,6 +1,8 @@
 packages:
+  - 'core/*'
   - 'packages/*'
+  - 'plugins/*'
   - 'samples/*'
+  - 'website'
   - '!samples/cppjs-sample-mobile-reactnative'
   - '!**/test/**'
-  - 'website'

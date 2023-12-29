@@ -50,7 +50,7 @@ function HomepageIntro() {
 
 const factorial = new Factorial(99999);
 const result = factorial.calculate();
-console.log(result); // execution time: 2s`}
+console.log(result); // execution time: 0.863s`}
                     </CodeBlock>
                     <CodeBlock
                         language="cpp"
@@ -84,7 +84,7 @@ public:
 
 const factorial = new Factorial(99999);
 const result = factorial.calculate();
-console.log(result); // execution time: 54s`}
+console.log(result); // execution time: 2.314s`}
                     </CodeBlock>
                     <CodeBlock
                         language="js"
