@@ -3,7 +3,7 @@ import { execFileSync } from 'child_process';
 let isDockerImageAvailable = false;
 
 export function getDockerImage() {
-    return 'bugra9/cpp.js:0.2.2';
+    return 'bugra9/cpp.js:0.2.4';
 }
 
 export default function pullDockerImage() {

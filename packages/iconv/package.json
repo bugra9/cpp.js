@@ -7,7 +7,9 @@
         "build": "node build.js"
     },
     "dependencies": {
-        "cpp.js": "workspace:^",
+        "cpp.js": "workspace:^"
+    },
+    "devDependencies": {
         "decompress": "4.2.1",
         "decompress-targz": "4.1.1"
     }

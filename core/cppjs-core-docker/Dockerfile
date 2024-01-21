@@ -4,6 +4,10 @@ RUN apt-get update
 WORKDIR /emsdk/upstream/emscripten/src/embind
 RUN wget https://raw.githubusercontent.com/bugra9/emscripten/embind-overloading-support/src/embind/embind.js -O embind.js
 
+WORKDIR /emsdk/upstream/emscripten
+RUN sed -i 's/smart_ptr<SmartPtr>(smartPtrName);/ /g' ./system/include/emscripten/bind.h;
+RUN sed -i 's/smart_ptr<SmartPtr>(smartPtrName);/ /g' ./cache/sysroot/include/emscripten/bind.h;
+
 WORKDIR /home/emscripten
 RUN wget https://github.com/bugra9/mobile-swig/archive/refs/heads/emscripten-support.zip
 RUN unzip emscripten-support.zip

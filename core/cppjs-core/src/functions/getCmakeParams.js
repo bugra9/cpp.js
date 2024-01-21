@@ -40,7 +40,7 @@ export function getDependencyParams(config, pathPrefix) {
     const sourceFilter = (d) => d === config || d.export.type === 'source';
     let headerPathWithDepends = [];
     setPath(headerPathWithDepends, config, 'header', sourceFilter);
-    headerPathWithDepends = headerPathWithDepends.map((p) => getPath(config, p, pathPrefix)).join(';');
+    headerPathWithDepends = [...new Set(headerPathWithDepends.map((p) => getPath(config, p, pathPrefix)))].join(';');
 
     const headerGlob = [];
     headerPathWithDepends.split(';').forEach((h) => {
@@ -51,7 +51,7 @@ export function getDependencyParams(config, pathPrefix) {
 
     let nativePathWithDepends = [];
     setPath(nativePathWithDepends, config, 'native', sourceFilter);
-    nativePathWithDepends = nativePathWithDepends.map((p) => getPath(config, p, pathPrefix)).join(';');
+    nativePathWithDepends = [...new Set(nativePathWithDepends.map((p) => getPath(config, p, pathPrefix)))].join(';');
 
     const nativeGlob = [];
     nativePathWithDepends.split(';').forEach((h) => {
@@ -62,13 +62,14 @@ export function getDependencyParams(config, pathPrefix) {
 
     const cliCMakeListsFile = getCliCMakeListsFile();
     const cmakeFilter = (d) => d !== config && d.export.type === 'cmake' && d.paths.cmake !== cliCMakeListsFile;
-    const cmakeDepends = [];
+    let cmakeDepends = [];
     setPath(cmakeDepends, config, 'this', cmakeFilter);
+    cmakeDepends = [...new Set(cmakeDepends)];
 
-    const pathsOfCmakeDepends = cmakeDepends
+    const pathsOfCmakeDepends = [...new Set(cmakeDepends
         .map((d) => getParentPath(d.paths.cmake))
-        .map((p) => getPath(config, p, pathPrefix)).join(';');
-    const nameOfCmakeDepends = cmakeDepends.map((d) => d.general.name).join(';');
+        .map((p) => getPath(config, p, pathPrefix)))].join(';');
+    const nameOfCmakeDepends = [...new Set(cmakeDepends.map((d) => d.general.name))].join(';');
 
     dependencyParams = {
         nativeGlob,

@@ -34,13 +34,15 @@ await decompress(`${compiler.config.paths.temp}/libiconv-${ICONV_VERSION}.tar.gz
 const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
 const workdir = `${tempPath}/libiconv-${ICONV_VERSION}`;
 const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/Emscripten-x86_64/lib`;
+const includedir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/Emscripten-x86_64/include`;
 
 fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
 await mkdir(libdir, { recursive: true });
+await mkdir(includedir, { recursive: true });
 
 compiler.run('emconfigure', ['./configure', `--prefix=${tempPath}`, '--enable-shared=no', '--host=wasm32-unknown-emscripten'], { workdir, console: true });
 compiler.run('emmake', ['make', 'lib/localcharset.h'], { workdir, console: true });
-compiler.run('emmake', ['make', 'install', `prefix='${tempPath}'`, `exec_prefix='${tempPath}'`, `libdir='/live/${libdir}'`], { workdir: `${workdir}/lib`, console: true });
+compiler.run('emmake', ['make', '-j4', 'install', `prefix='${tempPath}'`, `exec_prefix='${tempPath}'`, `libdir='/live/${libdir}'`], { workdir: `${workdir}/lib`, console: true });
 
 const distCmakeContent = fs.readFileSync(`${compiler.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
     .replace('___PROJECT_NAME___', compiler.config.general.name);

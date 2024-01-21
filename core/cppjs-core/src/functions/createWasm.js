@@ -1,6 +1,7 @@
 import run from './run.js';
 import getCmakeParams from './getCmakeParams.js';
 import getLibs from './getLibs.js';
+import getData from './getData.js';
 import getPathInfo from '../utils/getPathInfo.js';
 
 export default function createWasm(compiler, options) {
@@ -25,12 +26,15 @@ export default function createWasm(compiler, options) {
     run(compiler, 'emmake', ['make', 'install']);
 
     const libs = getLibs(compiler.config, '/live/');
+    const data = Object.entries(getData(compiler.config, 'data', '/live/')).map(([key, value]) => ['--preload-file', `${key}@${value}`]).flat();
     run(compiler, 'emcc', [
         '-lembind', '-Wl,--whole-archive',
         ...libs, ...(options.cc || []),
         '-s', 'WASM=1', '-s', 'MODULARIZE=1',
+        '-s', 'EXPORTED_RUNTIME_METHODS=["FS", "ENV"]',
         '-o', `${output}/${compiler.config.general.name}.js`,
         '--extern-post-js', '/cli/assets/extern-post.js',
+        ...data,
     ]);
 
     return compiler.config.paths.temp;

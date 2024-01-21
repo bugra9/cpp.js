@@ -1,15 +1,18 @@
 import CppjsCompiler from 'cpp.js';
 
 import fs from 'fs';
-import p from "path";
+import p from 'path';
+
+const platform = 'Emscripten-x86_64';
 
 const rollupCppjsPlugin = (options, _compiler) => {
     const compiler = _compiler || new CppjsCompiler();
+    const env = JSON.stringify(compiler.getData('env'));
     const headerRegex = new RegExp(`.(${compiler.config.ext.header.join('|')})$`);
 
     return {
         name: 'rollup-plugin-cppjs',
-        resolveId ( source ) {
+        resolveId(source) {
             if (source === '/cpp.js') {
                 return { id: source, external: true };
             }
@@ -22,14 +25,14 @@ const rollupCppjsPlugin = (options, _compiler) => {
 
             compiler.findOrCreateInterfaceFile(path);
 
-            return "export default function() { return new Promise((resolve, reject) => import('/cpp.js').then(n => n.default({paths: {wasm: 'cpp.wasm'}})).then(resolve)); }";
+            return `export default function() { return new Promise((resolve, reject) => import('/cpp.js').then(n => n.default({env: ${env}, paths: {wasm: 'cpp.wasm', data: 'cpp.data'}})).then(resolve)); }`;
         },
         buildStart() {
             const watch = (dirs) => {
-                dirs.forEach(dir => {
+                dirs.forEach((dir) => {
                     const filesToWatch = fs.readdirSync(dir);
 
-                    for (let file of filesToWatch) {
+                    for (const file of filesToWatch) {
                         const fullPath = p.join(dir, file);
                         const stats = fs.statSync(fullPath);
 
@@ -48,21 +51,29 @@ const rollupCppjsPlugin = (options, _compiler) => {
             compiler.createBridge();
             compiler.createWasm({ cc: ['-O3'] });
             this.emitFile({
-                type: "asset",
+                type: 'asset',
                 source: fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.js`),
-                fileName: "cpp.js"
+                fileName: 'cpp.js',
             });
             this.emitFile({
-                type: "asset",
+                type: 'asset',
                 source: fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`),
-                fileName: "cpp.wasm"
+                fileName: 'cpp.wasm',
             });
+            const dataFilePath = `${compiler.config.paths.temp}/${compiler.config.general.name}.data`;
+            if (fs.existsSync(dataFilePath)) {
+                this.emitFile({
+                    type: 'asset',
+                    source: fs.readFileSync(dataFilePath),
+                    fileName: 'cpp.data',
+                });
+            }
             const isWatching = process.argv.includes('-w') || process.argv.includes('--watch');
             if (!isWatching) {
                 fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
             }
         },
-    }
+    };
 };
 
 export default rollupCppjsPlugin;

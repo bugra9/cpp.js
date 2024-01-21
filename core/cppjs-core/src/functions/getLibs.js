@@ -11,16 +11,22 @@ function getPath(config, path, pathPrefix) {
 }
 
 export default function getLibs(config, pathPrefix) {
-    const dependLibs = [
+    let dependLibs = [
         ...glob.sync(`${config.paths.temp}/dependencies/**/*.a`, { absolute: true, cwd: config.paths.project }),
     ];
     getDependencyParams(config, pathPrefix).cmakeDepends.forEach((d) => {
-        dependLibs.push(...glob.sync(`${d.paths.output}/prebuilt/Emscripten-x86_64/**/*.a`, { absolute: true, cwd: d.paths.project }));
+        if (d.export.libName) {
+            d.export.libName.forEach((fileName) => {
+                dependLibs.push(...glob.sync(`${d.paths.output}/prebuilt/Emscripten-x86_64/lib/${fileName}`, { absolute: true, cwd: d.paths.project }));
+            });
+        }
     });
 
-    return [
+    dependLibs = [...new Set(dependLibs)];
+
+    return [...new Set([
         `${config.paths.temp}/lib${config.general.name}.a`,
         `${config.paths.temp}/lib${config.general.name}bridge.a`,
         ...dependLibs,
-    ].filter((path) => !!path.toString()).map((path) => getPath(config, path, pathPrefix));
+    ].filter((path) => !!path.toString()).map((path) => getPath(config, path, pathPrefix)))];
 }

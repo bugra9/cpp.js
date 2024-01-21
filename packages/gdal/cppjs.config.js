@@ -11,6 +11,9 @@ import webp from 'cppjs-package-webp/cppjs.config.js';
 import zlib from 'cppjs-package-zlib/cppjs.config.js';
 
 export default {
+    general: {
+        name: 'gdal',
+    },
     export: {
         type: 'cmake',
     },
@@ -30,5 +33,21 @@ export default {
         base: '../..',
         project: getDirName(import.meta.url),
         output: 'dist',
+    },
+    platform: {
+        'Emscripten-x86_64': {
+            data: {
+                'share/gdal': '/usr/share/gdal',
+            },
+            env: {
+                PROJ_LIB: '/usr/share/proj',
+                GDAL_DATA: '/usr/share/gdal',
+                DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
+                GDAL_NUM_THREADS: '0',
+                GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
+                // CPL_DEBUG: 'ON',
+                CPL_LOG_ERRORS: 'ON',
+            },
+        },
     },
 };

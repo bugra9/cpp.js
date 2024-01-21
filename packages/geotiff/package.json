@@ -10,7 +10,9 @@
         "cpp.js": "workspace:^",
         "cppjs-package-proj": "workspace:^",
         "cppjs-package-tiff": "workspace:^",
-        "cppjs-package-zlib": "workspace:^",
+        "cppjs-package-zlib": "workspace:^"
+    },
+    "devDependencies": {
         "decompress": "4.2.1",
         "decompress-targz": "4.1.1",
         "follow-redirects":"1.15.3"

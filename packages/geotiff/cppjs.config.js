@@ -4,6 +4,9 @@ import tiff from 'cppjs-package-tiff/cppjs.config.js';
 import zlib from 'cppjs-package-zlib/cppjs.config.js';
 
 export default {
+    general: {
+        name: 'geotiff',
+    },
     export: {
         type: 'cmake',
     },

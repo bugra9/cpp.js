@@ -1,19 +1,16 @@
 import getDirName from 'cpp.js/src/utils/getDirName.js';
-import zlib from 'cppjs-package-zlib/cppjs.config.js';
+import Gdal from 'cppjs-package-gdal/cppjs.config.js';
 
 export default {
-    general: {
-        name: 'tiff',
-    },
-    export: {
-        type: 'cmake',
-    },
     dependencies: [
-        zlib,
+        Gdal,
     ],
     paths: {
         base: '../..',
         project: getDirName(import.meta.url),
-        output: 'dist',
+        native: ['src/native'],
+    },
+    general: {
+        name: 'cppjs-package-gdal3js',
     },
 };

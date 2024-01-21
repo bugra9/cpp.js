@@ -47,7 +47,7 @@ compiler.run('emconfigure', ['./configure', `--prefix=/live/${libdir}`, '--enabl
         '-e', `LDFLAGS=-L${zlibPath}/lib`,
     ],
 });
-compiler.run('emmake', ['make', 'install'], { workdir, console: true });
+compiler.run('emmake', ['make', '-j4', 'install'], { workdir, console: true });
 
 const distCmakeContent = fs.readFileSync(`${compiler.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
     .replace('___PROJECT_NAME___', compiler.config.general.name);

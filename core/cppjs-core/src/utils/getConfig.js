@@ -42,7 +42,7 @@ const dirname = temp.join('/');
  */
 
 let tempConfigDefault = {
-    general: {}, dependencies: [], paths: {}, ext: {}, export: {},
+    general: {}, dependencies: [], paths: {}, ext: {}, export: {}, platform: {},
 };
 await initDefaultConfigFile();
 
@@ -77,6 +77,7 @@ function forceToConfigSchema(tempConfig) {
         paths: tempConfig && tempConfig.paths ? tempConfig.paths : {},
         ext: tempConfig && tempConfig.ext ? tempConfig.ext : {},
         export: tempConfig && tempConfig.export ? tempConfig.export : {},
+        platform: tempConfig && tempConfig.platform ? tempConfig.platform : {},
     };
     return config;
 }
@@ -103,9 +104,12 @@ function fillConfig(tempConfig, options = {}) {
         },
         ext: {},
         export: {},
+        platform: {},
     };
 
-    if (!config.general.name) {
+    if (tempConfig?.general?.name) {
+        config.general.name = tempConfig.general.name;
+    } else {
         config.general.name = 'cppjssample';
         const packageJsonPath = `${config.paths.project}/package.json`;
         if (fs.existsSync(packageJsonPath)) {
@@ -138,6 +142,8 @@ function fillConfig(tempConfig, options = {}) {
     config.export.header = tempConfig.export.header || 'include';
     config.export.libPath = getPath(tempConfig.export.libPath || 'lib');
     config.export.libName = tempConfig.export.libName || [`lib${config.general.name}.a`];
+
+    config.platform['Emscripten-x86_64'] = tempConfig.platform['Emscripten-x86_64'] || {};
 
     createDir('interface', config.paths.temp);
     createDir('bridge', config.paths.temp);

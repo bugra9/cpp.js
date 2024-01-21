@@ -22,6 +22,17 @@ export default function initCppJs(config = {}) {
                 if (output.substring(0, 4) !== 'http' && output[0] !== '/') output = `/${output}`;
                 return output;
             },
+
+            preRun: [
+                ({ ENV }) => {
+                    if (ENV && config && config.env) {
+                        Object.entries(config.env).forEach(([key, value]) => {
+                            // eslint-disable-next-line no-param-reassign
+                            ENV[key] = value;
+                        });
+                    }
+                },
+            ],
         };
         Module(m).then(resolve).catch(reject);
     });
