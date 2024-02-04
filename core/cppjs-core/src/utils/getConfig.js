@@ -148,5 +148,14 @@ function fillConfig(tempConfig, options = {}) {
     createDir('interface', config.paths.temp);
     createDir('bridge', config.paths.temp);
 
+    // eslint-disable-next-line max-len
+    config.getAllDependencies = () => {
+        const output = {};
+        [...config.dependencies, ...config.dependencies.map((d) => d.getAllDependencies()).flat()].forEach((d) => {
+            output[d.paths.project] = d;
+        });
+        return Object.values(output);
+    };
+
     return config;
 }

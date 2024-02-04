@@ -42,7 +42,7 @@ await mkdir(includedir, { recursive: true });
 
 compiler.run('emconfigure', ['./configure', `--prefix=${tempPath}`, '--enable-shared=no', '--host=wasm32-unknown-emscripten'], { workdir, console: true });
 compiler.run('emmake', ['make', 'lib/localcharset.h'], { workdir, console: true });
-compiler.run('emmake', ['make', '-j4', 'install', `prefix='${tempPath}'`, `exec_prefix='${tempPath}'`, `libdir='/live/${libdir}'`], { workdir: `${workdir}/lib`, console: true });
+compiler.run('emmake', ['make', '-j4', 'install', `prefix='${tempPath}'`, `exec_prefix='${tempPath}'`, `libdir='/live/${libdir}'`, `includedir='/live/${includedir}'`], { workdir: `${workdir}/lib`, console: true });
 
 const distCmakeContent = fs.readFileSync(`${compiler.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
     .replace('___PROJECT_NAME___', compiler.config.general.name);
