@@ -8,7 +8,7 @@ import CppjsCompiler from 'cpp.js';
 import getPathInfo from 'cpp.js/src/utils/getPathInfo.js';
 import { mkdir } from 'node:fs/promises';
 
-const VERSION = '1.3';
+const VERSION = '1.3.1';
 const url = `https://zlib.net/zlib-${VERSION}.tar.gz`;
 
 function downloadFile(url, folder) {
@@ -54,10 +54,11 @@ const options = {
         STRIP: `${t}/llvm-strip`,
         NM: `${t}/llvm-nm`,
         CFLAGS: `--sysroot=${t2}/sysroot`,
+        LDFLAGS: '-Wl,-soname,libz.so',
     },
 };
-console.log(options);
-execFileSync('./configure', [`--prefix=${libdir}`, '--static'], options);
+
+execFileSync('./configure', [`--prefix=${libdir}`], options);
 execFileSync('make', ['-j4', 'install'], options);
 
 // fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });

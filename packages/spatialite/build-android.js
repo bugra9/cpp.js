@@ -1,6 +1,7 @@
 import fr from 'follow-redirects';
 import fs from 'fs';
 import path from 'path';
+import replace from 'replace';
 import { execFileSync } from 'child_process';
 import decompress from 'decompress';
 import decompressTargz from 'decompress-targz';
@@ -36,8 +37,15 @@ const compiler = new CppjsCompiler();
 await downloadFile(url, compiler.config.paths.temp);
 await decompress(`${compiler.config.paths.temp}/libspatialite-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
 
+const workdirReal = `${compiler.config.paths.temp}/libspatialite-${VERSION}`;
 const libdir = `${compiler.config.paths.output}/prebuilt/Android-arm64-v8a`;
 await mkdir(libdir, { recursive: true });
+
+replace({
+    regex: '-lpthread', replacement: '', paths: [`${workdirReal}/configure`, `${workdirReal}/configure.ac`, `${workdirReal}/src/Makefile.in`, `${workdirReal}/src/Makefile.am`], recursive: false, silent: true,
+});
+
+fs.cpSync(`${compiler.config.paths.project}/config.sub`, `${workdirReal}/config.sub`);
 
 const geosPath = `${getPathInfo(geosConfig.paths.project, compiler.config.paths.base).absolute}/dist/prebuilt/Android-arm64-v8a`;
 const projPath = `${getPathInfo(projConfig.paths.project, compiler.config.paths.base).absolute}/dist/prebuilt/Android-arm64-v8a`;
@@ -70,7 +78,7 @@ const cFlags = allDeps.map((d) => `-I${d.paths.project}/dist/prebuilt/Android-ar
 const ldFlags = allDeps.map((d) => `-L${d.paths.project}/dist/prebuilt/Android-arm64-v8a/lib`).join(' ');
 
 execFileSync('./configure', [
-    `--prefix=${libdir}`, '--enable-shared=no', '--host=x86_64-pc-linux-gnu',
+    `--prefix=${libdir}`, '--host=aarch64-linux-android',
     `SQLITE3_CFLAGS=-I${sqlite3Path}/include`, `SQLITE3_LIBS=-L${sqlite3Path}/lib`, `--with-geosconfig=${geosPath}/bin/geos-config`,
     '--enable-geosadvanced=yes', '--enable-geopackage=yes', '--enable-examples=no', '--enable-minizip=no',
     '--enable-libxml2=no', '--disable-rttopo', '--enable-freexl=no',

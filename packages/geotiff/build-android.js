@@ -68,7 +68,7 @@ const cFlags = allDeps.map((d) => `-I${d.paths.project}/dist/prebuilt/Android-ar
 const ldFlags = allDeps.map((d) => `-L${d.paths.project}/dist/prebuilt/Android-arm64-v8a/lib`).join(' ');
 
 execFileSync('./configure', [
-    `--prefix=${libdir}`, '--enable-shared=no', '--host=aarch64-linux-android',
+    `--prefix=${libdir}`, '--host=aarch64-linux-android',
     `--with-proj=${projPath}`, `--with-libtiff=${tiffPath}`, `--with-zlib=${zlibPath}`,
     `CFLAGS=${cFlags}`, `CPPFLAGS=${cFlags}`, `LDFLAGS=${ldFlags} -lstdc++`,
 ], options);

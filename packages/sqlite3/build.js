@@ -7,8 +7,8 @@ import CppjsCompiler from 'cpp.js';
 import getPathInfo from 'cpp.js/src/utils/getPathInfo.js';
 import zlibConfig from 'cppjs-package-zlib/cppjs.config.js';
 
-const VERSION = '3440200';
-const url = `https://www.sqlite.org/2023/sqlite-autoconf-${VERSION}.tar.gz`;
+const VERSION = '3450100';
+const url = `https://www.sqlite.org/2024/sqlite-autoconf-${VERSION}.tar.gz`;
 
 function downloadFile(url, folder) {
     return new Promise((resolve) => {

@@ -60,6 +60,6 @@ const options = {
     },
 };
 
-execFileSync('./configure', [`--prefix=${tempPath}`, '--enable-shared=no', '--host=aarch64-linux-android'], options);
+execFileSync('./configure', [`--prefix=${tempPath}`, '--host=aarch64-linux-android'], options);
 execFileSync('make', ['lib/localcharset.h'], options);
 execFileSync('make', ['-j4', 'install', `prefix='${tempPath}'`, `exec_prefix='${tempPath}'`, `libdir='${libdir}'`, `includedir='${includedir}'`], options);

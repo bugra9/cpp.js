@@ -70,47 +70,30 @@ const tiffPath = `${getPathInfo(tiffConfig.paths.project, compiler.config.paths.
 const webpPath = `${getPathInfo(webpConfig.paths.project, compiler.config.paths.base).absolute}/dist/prebuilt/Android-arm64-v8a`;
 const zlibPath = `${getPathInfo(zlibConfig.paths.project, compiler.config.paths.base).absolute}/dist/prebuilt/Android-arm64-v8a`;
 
-const CROSSCOMPILER = 'aarch64-linux-android33';
 const ANDROID_NDK = '/home/bugra/Documents/App/Android/Sdk/ndk/25.2.9519653';
-const t = `${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin`;
-const t2 = `${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64`;
 
 const options = {
     cwd: `${compiler.config.paths.temp}/gdal-${VERSION}`,
     stdio: 'inherit',
-    env: {
-        ...process.env,
-        AR: `${t}/llvm-ar`,
-        AS: `${t}/llvm-as`,
-        CC: `${t}/${CROSSCOMPILER}-clang`,
-        CXX: `${t}/${CROSSCOMPILER}-clang++`,
-        LD: `${t}/ld`,
-        RANLIB: `${t}/llvm-ranlib`,
-        STRIP: `${t}/llvm-strip`,
-        NM: `${t}/llvm-nm`,
-        CFLAGS: `--sysroot=${t2}/sysroot`,
-    },
 };
 
 execFileSync('cmake', [
-    '.', `-DCMAKE_INSTALL_PREFIX=${libdir}`, '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_BUILD_TYPE=Release',
+    '.', `-DCMAKE_INSTALL_PREFIX=${libdir}`, '-DCMAKE_BUILD_TYPE=Release',
     `-DCMAKE_PREFIX_PATH=${libdir}`, `-DCMAKE_FIND_ROOT_PATH=${libdir}`, '-DACCEPT_MISSING_SQLITE3_RTREE=ON',
+    '-DCMAKE_SYSTEM_NAME=Android', '-DCMAKE_SYSTEM_VERSION=33', '-DCMAKE_ANDROID_ARCH_ABI=arm64-v8a',
+    `-DCMAKE_ANDROID_NDK=${ANDROID_NDK}`,
     '-DBUILD_APPS=OFF', '-DGDAL_ENABLE_DRIVER_PDS=OFF',
     '-DGDAL_USE_HDF5=OFF', '-DGDAL_USE_HDFS=OFF', '-DACCEPT_MISSING_SQLITE3_MUTEX_ALLOC=ON',
-    `-DSQLite3_INCLUDE_DIR=${sqlite3Path}/include`, `-DSQLite3_LIBRARY=${sqlite3Path}/lib/libsqlite3.a`,
-    `-DPROJ_INCLUDE_DIR=${projPath}/include`, `-DPROJ_LIBRARY_RELEASE=${projPath}/lib/libproj.a`,
-    `-DTIFF_INCLUDE_DIR=${tiffPath}/include`, `-DTIFF_LIBRARY_RELEASE=${tiffPath}/lib/libtiff.a`,
-    `-DGEOTIFF_INCLUDE_DIR=${geotiffPath}/include`, `-DGEOTIFF_LIBRARY_RELEASE=${geotiffPath}/lib/libgeotiff.a`,
-    `-DZLIB_INCLUDE_DIR=${zlibPath}/include`, `-DZLIB_LIBRARY_RELEASE=${zlibPath}/lib/libz.a`,
-    `-DSPATIALITE_INCLUDE_DIR=${spatialitePath}/include`, `-DSPATIALITE_LIBRARY=${spatialitePath}/lib/libspatialite.a`,
-    `-DGEOS_INCLUDE_DIR=${geosPath}/include`, `-DGEOS_LIBRARY=${geosPath}/lib/libgeos.a`,
-    `-DWEBP_INCLUDE_DIR=${webpPath}/include`, `-DWEBP_LIBRARY=${webpPath}/lib/libwebp.a`,
-    `-DEXPAT_INCLUDE_DIR=${expatPath}/include`, `-DEXPAT_LIBRARY=${expatPath}/lib/libexpat.a`,
-    `-DIconv_INCLUDE_DIR=${iconvPath}/include`, `-DIconv_LIBRARY=${iconvPath}/lib/libiconv.a`,
-    '-DCMAKE_SYSTEM_NAME=Android',
-    '-DCMAKE_SYSTEM_VERSION=33',
-    '-DCMAKE_ANDROID_ARCH_ABI=arm64-v8a',
-    `-DCMAKE_ANDROID_NDK=${ANDROID_NDK}`,
-    '-DCMAKE_ANDROID_STL_TYPE=c++_static',
+    `-DSQLite3_INCLUDE_DIR=${sqlite3Path}/include`, `-DSQLite3_LIBRARY=${sqlite3Path}/lib/libsqlite3.so`,
+    `-DPROJ_INCLUDE_DIR=${projPath}/include`, `-DPROJ_LIBRARY_RELEASE=${projPath}/lib/libproj.so`,
+    `-DTIFF_INCLUDE_DIR=${tiffPath}/include`, `-DTIFF_LIBRARY_RELEASE=${tiffPath}/lib/libtiff.so`,
+    `-DGEOTIFF_INCLUDE_DIR=${geotiffPath}/include`, `-DGEOTIFF_LIBRARY_RELEASE=${geotiffPath}/lib/libgeotiff.so`,
+    `-DZLIB_INCLUDE_DIR=${zlibPath}/include`, `-DZLIB_LIBRARY_RELEASE=${zlibPath}/lib/libz.so`,
+    `-DSPATIALITE_INCLUDE_DIR=${spatialitePath}/include`, `-DSPATIALITE_LIBRARY=${spatialitePath}/lib/libspatialite.so`,
+    `-DGEOS_INCLUDE_DIR=${geosPath}/include`, `-DGEOS_LIBRARY=${geosPath}/lib/libgeos.so`,
+    `-DWEBP_INCLUDE_DIR=${webpPath}/include`, `-DWEBP_LIBRARY=${webpPath}/lib/libwebp.so`,
+    `-DEXPAT_INCLUDE_DIR=${expatPath}/include`, `-DEXPAT_LIBRARY=${expatPath}/lib/libexpat.so`,
+    `-DIconv_INCLUDE_DIR=${iconvPath}/include`, `-DIconv_LIBRARY=${iconvPath}/lib/libiconv.so`,
+    '-DCMAKE_ANDROID_STL_TYPE=c++_shared',
 ], options);
 execFileSync('make', ['-j4', 'install'], options);

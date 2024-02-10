@@ -57,7 +57,7 @@ const options = {
     },
 };
 
-execFileSync('./configure', [`--prefix=${libdir}`, '--enable-shared=no', '--host=aarch64-linux-android'], options);
+execFileSync('./configure', [`--prefix=${libdir}`, '--host=aarch64-linux-android'], options);
 execFileSync('make', ['-j4', 'install'], options);
 
 // fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });

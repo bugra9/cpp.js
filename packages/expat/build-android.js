@@ -8,7 +8,7 @@ import CppjsCompiler from 'cpp.js';
 import getPathInfo from 'cpp.js/src/utils/getPathInfo.js';
 import { mkdir } from 'node:fs/promises';
 
-const VERSION = '2.5.0';
+const VERSION = '2.6.0';
 const url = `https://github.com/libexpat/libexpat/releases/download/R_${VERSION.replaceAll('.', '_')}/expat-${VERSION}.tar.gz`;
 
 function downloadFile(url, folder) {
@@ -57,7 +57,7 @@ const options = {
     },
 };
 
-execFileSync('./configure', [`--prefix=${libdir}`, '--enable-shared=no', '--host=aarch64-linux-android', '--without-getrandom', '--without-sys-getrandom'], options);
+execFileSync('./configure', [`--prefix=${libdir}`, '--host=aarch64-linux-android', '--without-getrandom', '--without-sys-getrandom'], options);
 execFileSync('make', ['-j4', 'install'], options);
 
 // fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });

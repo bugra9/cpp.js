@@ -60,7 +60,7 @@ const options = {
 };
 
 execFileSync('./configure', [
-    `--prefix=${libdir}`, '--enable-shared=no', '--disable-docs', '--host=aarch64-linux-android',
+    `--prefix=${libdir}`, '--disable-docs', '--host=aarch64-linux-android',
     `--with-zlib-include-dir=${zlibPath}/include`, `--with-zlib-lib-dir=${zlibPath}/lib`,
 ], options);
 execFileSync('make', ['-j4', 'install'], options);

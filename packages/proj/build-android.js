@@ -40,30 +40,17 @@ await mkdir(libdir, { recursive: true });
 const tiffPath = `${getPathInfo(tiffConfig.paths.project, compiler.config.paths.base).absolute}/dist/prebuilt/Android-arm64-v8a`;
 const sqlite3Path = `${getPathInfo(sqlite3Config.paths.project, compiler.config.paths.base).absolute}/dist/prebuilt/Android-arm64-v8a`;
 
-const CROSSCOMPILER = 'aarch64-linux-android33';
 const ANDROID_NDK = '/home/bugra/Documents/App/Android/Sdk/ndk/25.2.9519653';
-const t = `${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin`;
-const t2 = `${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64`;
 const options = {
     cwd: `${compiler.config.paths.temp}/proj-${VERSION}`,
-    env: {
-        ...process.env,
-        AR: `${t}/llvm-ar`,
-        AS: `${t}/llvm-as`,
-        CC: `${t}/${CROSSCOMPILER}-clang`,
-        CXX: `${t}/${CROSSCOMPILER}-clang++`,
-        LD: `${t}/ld`,
-        RANLIB: `${t}/llvm-ranlib`,
-        STRIP: `${t}/llvm-strip`,
-        NM: `${t}/llvm-nm`,
-        CFLAGS: `--sysroot=${t2}/sysroot`,
-    },
 };
 
 execFileSync('cmake', [
     '.', `-DCMAKE_INSTALL_PREFIX=${libdir}`,
-    '-DENABLE_CURL=OFF', '-DBUILD_TESTING=OFF', '-DBUILD_SHARED_LIBS=OFF', '-DBUILD_APPS=OFF',
-    `-DSQLITE3_INCLUDE_DIR=${sqlite3Path}/include`, `-DSQLITE3_LIBRARY=${sqlite3Path}/lib/libsqlite3.a`,
-    `-DTIFF_INCLUDE_DIR=${tiffPath}/include`, `-DTIFF_LIBRARY_RELEASE=${tiffPath}/lib/libtiff.a`,
+    '-DENABLE_CURL=OFF', '-DBUILD_TESTING=OFF', '-DBUILD_APPS=OFF',
+    '-DCMAKE_SYSTEM_NAME=Android', '-DCMAKE_SYSTEM_VERSION=33', '-DCMAKE_ANDROID_ARCH_ABI=arm64-v8a',
+    `-DCMAKE_ANDROID_NDK=${ANDROID_NDK}`,
+    `-DSQLITE3_INCLUDE_DIR=${sqlite3Path}/include`, `-DSQLITE3_LIBRARY=${sqlite3Path}/lib/libsqlite3.so`,
+    `-DTIFF_INCLUDE_DIR=${tiffPath}/include`, `-DTIFF_LIBRARY_RELEASE=${tiffPath}/lib/libtiff.so`,
 ], options);
 execFileSync('make', ['-j4', 'install'], options);

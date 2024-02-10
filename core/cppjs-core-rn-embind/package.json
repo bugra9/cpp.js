@@ -1,0 +1,13 @@
+
+{
+    "name": "cppjs-core-rn-embind",
+    "version": "0.3.0",
+    "main": "js/embind.js",
+    "peerDependencies": {
+        "@babel/runtime": "^7.20.7",
+        "react-native": "^0.72.0"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^"
+    }
+}

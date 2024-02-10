@@ -35,30 +35,17 @@ await decompress(`${compiler.config.paths.temp}/geos-${VERSION}.tar.bz2`, compil
 const libdir = `${compiler.config.paths.output}/prebuilt/Android-arm64-v8a`;
 await mkdir(libdir, { recursive: true });
 
-const CROSSCOMPILER = 'aarch64-linux-android33';
 const ANDROID_NDK = '/home/bugra/Documents/App/Android/Sdk/ndk/25.2.9519653';
-const t = `${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin`;
-const t2 = `${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64`;
 
 const options = {
     cwd: `${compiler.config.paths.temp}/geos-${VERSION}`,
     stdio: 'inherit',
-    env: {
-        ...process.env,
-        AR: `${t}/llvm-ar`,
-        AS: `${t}/llvm-as`,
-        CC: `${t}/${CROSSCOMPILER}-clang`,
-        CXX: `${t}/${CROSSCOMPILER}-clang++`,
-        LD: `${t}/ld`,
-        RANLIB: `${t}/llvm-ranlib`,
-        STRIP: `${t}/llvm-strip`,
-        NM: `${t}/llvm-nm`,
-        CFLAGS: `--sysroot=${t2}/sysroot`,
-    },
 };
 
 execFileSync('cmake', [
     '.', `-DCMAKE_INSTALL_PREFIX=${libdir}`, '-DCMAKE_BUILD_TYPE=Release',
-    '-DBUILD_SHARED_LIBS=OFF', '-DBUILD_TESTING=OFF',
+    '-DCMAKE_SYSTEM_NAME=Android', '-DCMAKE_SYSTEM_VERSION=33', '-DCMAKE_ANDROID_ARCH_ABI=arm64-v8a',
+    `-DCMAKE_ANDROID_NDK=${ANDROID_NDK}`,
+    '-DBUILD_TESTING=OFF',
 ], options);
 execFileSync('make', ['-j4', 'install'], options);
