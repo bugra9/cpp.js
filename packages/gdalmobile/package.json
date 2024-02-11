@@ -14,7 +14,7 @@
     "react-native": "0.73.4",
     "cppjs-plugin-react-native": "workspace:^",
     "cppjs-core-rn-embind": "workspace:^",
-    "cppjs-package-sqlite3": "workspace:^"
+    "cppjs-package-gdal": "workspace:^"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

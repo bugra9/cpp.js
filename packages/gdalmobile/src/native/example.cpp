@@ -1,5 +1,7 @@
 #include "example.h"
-#include "sqlite3.h"
+// #include "sqlite3.h"
+#include "ogrsf_frmts.h"
+#include "gdal.h"
 
 int bugra_a(int a) {
   return 8;
@@ -27,7 +29,8 @@ int Bugra3Class::oo(int d) {
 }
 
 int Bugra3Class::getSqliteVersion() {
-    return sqlite3_libversion_number();
+    GDALAllRegister();
+    return GDALGetDriverCount();
 }
 
 std::vector<int> myIntVector = {3, 5, 7};

@@ -311,9 +311,9 @@ importers:
       cppjs-core-rn-embind:
         specifier: workspace:^
         version: link:../../core/cppjs-core-rn-embind
-      cppjs-package-sqlite3:
+      cppjs-package-gdal:
         specifier: workspace:^
-        version: link:../sqlite3
+        version: link:../gdal
       cppjs-plugin-react-native:
         specifier: workspace:^
         version: link:../../plugins/cppjs-plugin-react-native

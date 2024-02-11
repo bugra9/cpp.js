@@ -90,7 +90,7 @@ execFileSync('cmake', [
     `-DGEOTIFF_INCLUDE_DIR=${geotiffPath}/include`, `-DGEOTIFF_LIBRARY_RELEASE=${geotiffPath}/lib/libgeotiff.so`,
     `-DZLIB_INCLUDE_DIR=${zlibPath}/include`, `-DZLIB_LIBRARY_RELEASE=${zlibPath}/lib/libz.so`,
     `-DSPATIALITE_INCLUDE_DIR=${spatialitePath}/include`, `-DSPATIALITE_LIBRARY=${spatialitePath}/lib/libspatialite.so`,
-    `-DGEOS_INCLUDE_DIR=${geosPath}/include`, `-DGEOS_LIBRARY=${geosPath}/lib/libgeos.so`,
+    `-DGEOS_INCLUDE_DIR=${geosPath}/include`, `-DGEOS_LIBRARY=${geosPath}/lib/libgeos_c.so`,
     `-DWEBP_INCLUDE_DIR=${webpPath}/include`, `-DWEBP_LIBRARY=${webpPath}/lib/libwebp.so`,
     `-DEXPAT_INCLUDE_DIR=${expatPath}/include`, `-DEXPAT_LIBRARY=${expatPath}/lib/libexpat.so`,
     `-DIconv_INCLUDE_DIR=${iconvPath}/include`, `-DIconv_LIBRARY=${iconvPath}/lib/libiconv.so`,
