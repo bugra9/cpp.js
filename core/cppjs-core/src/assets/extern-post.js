@@ -4,6 +4,12 @@ export default function initCppJs(config = {}) {
 
     cppJsPromise = new Promise((resolve, reject) => {
         const m = {
+            print(text) {
+                console.debug(`gdal stdout: ${text}`);
+            },
+            printErr(text) {
+                console.error(`gdal stderr: ${text}`);
+            },
             locateFile(fileName) {
                 let path = fileName;
                 if (config.paths && config.paths.wasm && fileName.split('.').pop() === 'wasm') {

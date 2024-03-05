@@ -29,6 +29,8 @@ export default function createWasm(compiler, options) {
     const data = Object.entries(getData(compiler.config, 'data', '/live/')).map(([key, value]) => ['--preload-file', `${key}@${value}`]).flat();
     run(compiler, 'emcc', [
         '-lembind', '-Wl,--whole-archive',
+        '/live/packages/geos/dist/prebuilt/Emscripten-x86_64/lib/libgeos_c.a',
+        '/live/packages/webp/dist/prebuilt/Emscripten-x86_64/lib/libsharpyuv.a',
         ...libs, ...(options.cc || []),
         '-s', 'WASM=1', '-s', 'MODULARIZE=1',
         '-s', 'EXPORTED_RUNTIME_METHODS=["FS", "ENV"]',

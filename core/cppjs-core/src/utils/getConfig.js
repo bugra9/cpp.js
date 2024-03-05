@@ -105,19 +105,21 @@ function fillConfig(tempConfig, options = {}) {
         ext: {},
         export: {},
         platform: {},
+        package: {},
     };
+
+    const packageJsonPath = `${config.paths.project}/package.json`;
+    if (fs.existsSync(packageJsonPath)) {
+        const file = JSON.parse(fs.readFileSync(packageJsonPath));
+        if (file && typeof file === 'object' && file.name) {
+            config.package = file;
+        }
+    }
 
     if (tempConfig?.general?.name) {
         config.general.name = tempConfig.general.name;
     } else {
-        config.general.name = 'cppjssample';
-        const packageJsonPath = `${config.paths.project}/package.json`;
-        if (fs.existsSync(packageJsonPath)) {
-            const file = JSON.parse(fs.readFileSync(packageJsonPath));
-            if (file && typeof file === 'object' && file.name) {
-                config.general.name = file.name;
-            }
-        }
+        config.general.name = config.package.name || 'cppjssample';
     }
 
     const getPath = getAbsolutePath.bind(null, config.paths.project);

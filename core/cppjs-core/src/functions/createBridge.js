@@ -3,6 +3,8 @@ import getBaseInfo from '../utils/getBaseInfo.js';
 import getPathInfo from '../utils/getPathInfo.js';
 import run from './run.js';
 
+const platform = 'Emscripten-x86_64';
+
 export default function createBridge(compiler) {
     const bridges = [];
     compiler.interfaces.forEach((filePath) => {
@@ -11,14 +13,16 @@ export default function createBridge(compiler) {
         const base = getBaseInfo(compiler.config.paths.base);
 
         const includePath = [
-            ...glob.sync('node_modules/cppjs-lib-*/include', { absolute: true, cwd: compiler.config.paths.project }),
-            ...glob.sync('node_modules/cppjs-lib-*/node_modules/cppjs-lib-*/include', { absolute: true, cwd: compiler.config.paths.project }),
+            ...compiler.config.getAllDependencies().map((d) => `${d.paths.output}/prebuilt/${platform}/include`),
+            ...compiler.config.getAllDependencies().map((d) => `${d.paths.output}/prebuilt/${platform}/swig`),
             ...compiler.config.paths.header,
         ].filter((path) => !!path.toString()).map((path) => `-I/live/${getPathInfo(path, compiler.config.paths.base).relative}`);
 
+        console.log('includePath', includePath);
+
         run(compiler, 'swig', [
             '-c++',
-            '-emscripten',
+            '-embind',
             '-o', `/live/${output.relative}/${filePath.split('/').at(-1)}.cpp`,
             ...includePath,
             `/live/${input.relative}`,

@@ -9,6 +9,8 @@ const rollupCppjsPlugin = (options, _compiler) => {
     const compiler = _compiler || new CppjsCompiler();
     const env = JSON.stringify(compiler.getData('env'));
     const headerRegex = new RegExp(`.(${compiler.config.ext.header.join('|')})$`);
+    const moduleRegex = new RegExp(`.(${compiler.config.ext.module.join('|')})$`);
+    const dependPackageNames = compiler.config.getAllDependencies();
 
     return {
         name: 'rollup-plugin-cppjs',
@@ -16,10 +18,24 @@ const rollupCppjsPlugin = (options, _compiler) => {
             if (source === '/cpp.js') {
                 return { id: source, external: true };
             }
+
+            const dependPackage = dependPackageNames.find((d) => source.startsWith(d.package.name));
+            if (dependPackage) {
+                const filePath = source.substring(dependPackage.package.name.length + 1);
+
+                let path = `${dependPackage.paths.output}/prebuilt/${platform}/${filePath}`;
+                if (headerRegex.test(source)) {
+                    path = `${dependPackage.paths.output}/prebuilt/${platform}/include/${filePath}`;
+                } else if (moduleRegex.test(source)) {
+                    path = `${dependPackage.paths.output}/prebuilt/${platform}/swig/${filePath}`;
+                }
+
+                return path;
+            }
             return null;
         },
         async transform(code, path) {
-            if (!headerRegex.test(path)) {
+            if (!headerRegex.test(path) && !moduleRegex.test(path)) {
                 return;
             }
 
@@ -70,7 +86,7 @@ const rollupCppjsPlugin = (options, _compiler) => {
             }
             const isWatching = process.argv.includes('-w') || process.argv.includes('--watch');
             if (!isWatching) {
-                fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
+                // fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
             }
         },
     };

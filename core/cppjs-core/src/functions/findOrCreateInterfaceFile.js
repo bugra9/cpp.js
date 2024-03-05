@@ -3,6 +3,12 @@ import getBaseInfo from '../utils/getBaseInfo.js';
 import getPathInfo from '../utils/getPathInfo.js';
 
 export default function findOrCreateInterfaceFile(compiler, filePath) {
+    const moduleRegex = new RegExp(`.(${compiler.config.ext.module.join('|')})$`);
+    if (moduleRegex.test(filePath) && fs.existsSync(filePath)) {
+        compiler.interfaces.push(filePath);
+        return filePath;
+    }
+
     const input = getPathInfo(filePath, compiler.config.paths.base);
     const output = getPathInfo(`${compiler.config.paths.temp}/interface`, compiler.config.paths.base);
     const base = getBaseInfo(compiler.config.paths.base);
@@ -13,7 +19,10 @@ export default function findOrCreateInterfaceFile(compiler, filePath) {
     const filePathWithoutExt = temp[1];
     const interfaceFile = `${filePathWithoutExt}.i`;
 
-    if (fs.existsSync(interfaceFile)) return interfaceFile;
+    if (fs.existsSync(interfaceFile)) {
+        compiler.interfaces.push(interfaceFile);
+        return interfaceFile;
+    }
 
     const fileName = filePathWithoutExt.split('/').at(-1);
 

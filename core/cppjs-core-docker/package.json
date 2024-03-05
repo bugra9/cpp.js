@@ -1,8 +1,8 @@
 {
     "name": "cppjs-docker",
-    "version": "0.2.4",
+    "version": "0.2.6",
     "scripts": {
-        "build": "docker build -t bugra9/cpp.js:latest -t bugra9/cpp.js:0.2.4 .",
+        "build": "docker build --no-cache -t bugra9/cpp.js:latest -t bugra9/cpp.js:0.2.6 .",
         "push": "docker push bugra9/cpp.js --all-tags"
     }
 }

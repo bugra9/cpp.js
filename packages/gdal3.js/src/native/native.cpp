@@ -1,5 +1,4 @@
 #include "native.h"
-#include <ogr_spatialref.h>
 
 std::string Native::sample() {
     OGRSpatialReference srFrom;
@@ -17,4 +16,8 @@ std::string Native::sample() {
 
     int reprojected = coordTrans->Transform(1, &x1, &y1);
     return "This message comes from cpp and " + std::to_string(x1);
+}
+
+int getVersion() {
+    return 1;
 }
