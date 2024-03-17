@@ -1,4 +1,5 @@
 import fr from 'follow-redirects';
+import os from 'os';
 import fs from 'fs';
 import path from 'path';
 import decompress from 'decompress';
@@ -6,6 +7,8 @@ import decompressTargz from 'decompress-targz';
 import CppjsCompiler from 'cpp.js';
 import getPathInfo from 'cpp.js/src/utils/getPathInfo.js';
 import zlibConfig from 'cppjs-package-zlib/cppjs.config.js';
+
+const cpuCount = os.cpus().length - 1;
 
 const VERSION = '3450100';
 const url = `https://www.sqlite.org/2024/sqlite-autoconf-${VERSION}.tar.gz`;
@@ -47,7 +50,7 @@ compiler.run('emconfigure', ['./configure', `--prefix=/live/${libdir}`, '--enabl
         '-e', `LDFLAGS=-L${zlibPath}/lib`,
     ],
 });
-compiler.run('emmake', ['make', '-j4', 'install'], { workdir, console: true });
+compiler.run('emmake', ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
 
 const distCmakeContent = fs.readFileSync(`${compiler.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
     .replace('___PROJECT_NAME___', compiler.config.general.name);

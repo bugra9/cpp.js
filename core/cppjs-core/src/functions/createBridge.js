@@ -18,8 +18,6 @@ export default function createBridge(compiler) {
             ...compiler.config.paths.header,
         ].filter((path) => !!path.toString()).map((path) => `-I/live/${getPathInfo(path, compiler.config.paths.base).relative}`);
 
-        console.log('includePath', includePath);
-
         run(compiler, 'swig', [
             '-c++',
             '-embind',

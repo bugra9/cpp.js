@@ -1,4 +1,5 @@
 import fr from 'follow-redirects';
+import os from 'os';
 import fs from 'fs';
 import path from 'path';
 import decompress from 'decompress';
@@ -7,6 +8,8 @@ import CppjsCompiler from 'cpp.js';
 import getPathInfo from 'cpp.js/src/utils/getPathInfo.js';
 import zlibConfig from 'cppjs-package-zlib/cppjs.config.js';
 import { mkdir } from 'node:fs/promises';
+
+const cpuCount = os.cpus().length - 1;
 
 const VERSION = '4.6.0';
 const url = `https://download.osgeo.org/libtiff/tiff-${VERSION}.tar.gz`;
@@ -43,7 +46,7 @@ compiler.run('emconfigure', [
     './configure', `--prefix=/live/${libdir}`, '--enable-shared=no', '--disable-docs', '--host=wasm32-unknown-emscripten',
     `--with-zlib-include-dir=${zlibPath}/include`, `--with-zlib-lib-dir=${zlibPath}/lib`,
 ], { workdir, console: true });
-compiler.run('emmake', ['make', '-j4', 'install'], { workdir, console: true });
+compiler.run('emmake', ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
 
 const distCmakeContent = fs.readFileSync(`${compiler.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
     .replace('___PROJECT_NAME___', compiler.config.general.name);

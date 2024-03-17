@@ -20,7 +20,7 @@ Native5().then(async ({
     FS.mkdir('input');
     FS.writeFile('/input/simple-polygon-line-point.tif', new Int8Array(data));
 
-    const dataset = Gdal.OpenEx('/input/simple-polygon-line-point.tif', 0, papszAllowedDrivers, papszOpenOptions, papszSiblingFiles);
+    const dataset = Gdal.openEx('/input/simple-polygon-line-point.tif', 0, papszAllowedDrivers, papszOpenOptions, papszSiblingFiles);
     if (dataset) {
         console.log(dataset.getRasterXSize());
     }

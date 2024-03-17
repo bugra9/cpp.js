@@ -6,6 +6,7 @@ export default {
     },
     export: {
         type: 'cmake',
+        libName: ['libgeos.a', 'libgeos_c.a'],
     },
     paths: {
         base: '../..',

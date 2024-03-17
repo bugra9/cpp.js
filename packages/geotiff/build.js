@@ -1,4 +1,5 @@
 import fr from 'follow-redirects';
+import os from 'os';
 import fs from 'fs';
 import path from 'path';
 import decompress from 'decompress';
@@ -8,6 +9,8 @@ import getPathInfo from 'cpp.js/src/utils/getPathInfo.js';
 import projConfig from 'cppjs-package-proj/cppjs.config.js';
 import tiffConfig from 'cppjs-package-tiff/cppjs.config.js';
 import zlibConfig from 'cppjs-package-zlib/cppjs.config.js';
+
+const cpuCount = os.cpus().length - 1;
 
 const VERSION = '1.7.1';
 const url = `https://download.osgeo.org/geotiff/libgeotiff/libgeotiff-${VERSION}.tar.gz`;
@@ -55,7 +58,7 @@ compiler.run('emconfigure', [
         '-e', `LDFLAGS=-L${projPath}/lib -L${tiffPath}/lib -L${zlibPath}/lib`,
     ],
 });
-compiler.run('emmake', ['make', '-j4', 'install'], { workdir, console: true });
+compiler.run('emmake', ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
 
 const distCmakeContent = fs.readFileSync(`${compiler.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
     .replace('___PROJECT_NAME___', compiler.config.general.name);

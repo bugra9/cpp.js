@@ -1,4 +1,5 @@
 import https from 'https';
+import os from 'os';
 import fs from 'fs';
 import path from 'path';
 import decompress from 'decompress';
@@ -6,6 +7,8 @@ import decompressTargz from 'decompress-targz';
 import CppjsCompiler from 'cpp.js';
 import getPathInfo from 'cpp.js/src/utils/getPathInfo.js';
 import { mkdir } from 'node:fs/promises';
+
+const cpuCount = os.cpus().length - 1;
 
 const VERSION = '1.3.1';
 const url = `https://zlib.net/zlib-${VERSION}.tar.gz`;
@@ -39,7 +42,7 @@ fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: 
 await mkdir(libdir, { recursive: true });
 
 compiler.run('emconfigure', ['./configure', `--prefix=/live/${libdir}`, '--static'], { workdir, console: true });
-compiler.run('emmake', ['make', '-j4', 'install'], { workdir: `${workdir}`, console: true });
+compiler.run('emmake', ['make', `-j${cpuCount}`, 'install'], { workdir: `${workdir}`, console: true });
 
 const distCmakeContent = fs.readFileSync(`${compiler.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
     .replace('___PROJECT_NAME___', compiler.config.general.name);

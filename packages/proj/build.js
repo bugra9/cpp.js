@@ -1,4 +1,5 @@
 import fr from 'follow-redirects';
+import os from 'os';
 import fs from 'fs';
 import path from 'path';
 import decompress from 'decompress';
@@ -8,6 +9,8 @@ import getPathInfo from 'cpp.js/src/utils/getPathInfo.js';
 import tiffConfig from 'cppjs-package-tiff/cppjs.config.js';
 import sqlite3Config from 'cppjs-package-sqlite3/cppjs.config.js';
 import { mkdir } from 'node:fs/promises';
+
+const cpuCount = os.cpus().length - 1;
 
 const VERSION = '9.3.1';
 const url = `https://download.osgeo.org/proj/proj-${VERSION}.tar.gz`;
@@ -48,7 +51,7 @@ compiler.run('emcmake', [
     `-DSQLITE3_INCLUDE_DIR=${sqlite3Path}/include`, `-DSQLITE3_LIBRARY=${sqlite3Path}/lib/libsqlite3.a`,
     `-DTIFF_INCLUDE_DIR=${tiffPath}/include`, `-DTIFF_LIBRARY_RELEASE=${tiffPath}/lib/libtiff.a`,
 ], { workdir, console: true });
-compiler.run('emmake', ['make', '-j4', 'install'], { workdir, console: true });
+compiler.run('emmake', ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
 
 const distCmakeContent = fs.readFileSync(`${compiler.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
     .replace('___PROJECT_NAME___', compiler.config.general.name);

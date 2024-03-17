@@ -6,6 +6,7 @@ export default {
     },
     export: {
         type: 'cmake',
+        libName: ['libwebp.a', 'libsharpyuv.a'],
     },
     paths: {
         base: '.',

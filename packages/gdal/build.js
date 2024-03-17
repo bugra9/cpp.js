@@ -1,9 +1,11 @@
 import fr from 'follow-redirects';
+import os from 'os';
 import fs from 'fs';
 import path from 'path';
 import decompress from 'decompress';
 import decompressTargz from 'decompress-targz';
 import replace from 'replace';
+import { mkdir } from 'node:fs/promises';
 import CppjsCompiler from 'cpp.js';
 import getPathInfo from 'cpp.js/src/utils/getPathInfo.js';
 import expatConfig from 'cppjs-package-expat/cppjs.config.js';
@@ -16,6 +18,8 @@ import sqlite3Config from 'cppjs-package-sqlite3/cppjs.config.js';
 import tiffConfig from 'cppjs-package-tiff/cppjs.config.js';
 import webpConfig from 'cppjs-package-webp/cppjs.config.js';
 import zlibConfig from 'cppjs-package-zlib/cppjs.config.js';
+
+const cpuCount = os.cpus().length - 1;
 
 const VERSION = '3.8.1';
 const url = `https://github.com/OSGeo/gdal/releases/download/v${VERSION}/gdal-${VERSION}.tar.gz`;
@@ -47,6 +51,8 @@ const workdirReal = `${compiler.config.paths.temp}/gdal-${VERSION}`;
 const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/Emscripten-x86_64`;
 
 fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
+
+await mkdir(`${compiler.config.paths.output}/prebuilt/Emscripten-x86_64/swig`, { recursive: true });
 
 replace({
     regex: ' iconv_open', replacement: ' libiconv_open', paths: [`${workdirReal}/port/cpl_recode_iconv.cpp`], recursive: false, silent: true,
@@ -87,9 +93,11 @@ compiler.run('emcmake', [
     `-DEXPAT_INCLUDE_DIR=${expatPath}/include`, `-DEXPAT_LIBRARY=${expatPath}/lib/libexpat.a`,
     `-DIconv_INCLUDE_DIR=${iconvPath}/include`, `-DIconv_LIBRARY=${iconvPath}/lib/libiconv.a`,
 ], { workdir, console: true });
-compiler.run('emmake', ['make', '-j4', 'install'], { workdir, console: true });
+compiler.run('emmake', ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
 
 const distCmakeContent = fs.readFileSync(`${compiler.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
     .replace('___PROJECT_NAME___', compiler.config.general.name);
 fs.writeFileSync(`${compiler.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
+fs.copyFileSync(`${compiler.config.paths.project}/assets/Gdal.i`, `${compiler.config.paths.output}/prebuilt/Emscripten-x86_64/swig/Gdal.i`);
+fs.copyFileSync(`${compiler.config.paths.project}/assets/gdalcpp.h`, `${compiler.config.paths.output}/prebuilt/Emscripten-x86_64/include/gdalcpp.h`);
 fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });

@@ -1,4 +1,5 @@
 import fr from 'follow-redirects';
+import os from 'os';
 import fs from 'fs';
 import path from 'path';
 import decompress from 'decompress';
@@ -9,6 +10,8 @@ import geosConfig from 'cppjs-package-geos/cppjs.config.js';
 import projConfig from 'cppjs-package-proj/cppjs.config.js';
 import sqlite3Config from 'cppjs-package-sqlite3/cppjs.config.js';
 import zlibConfig from 'cppjs-package-zlib/cppjs.config.js';
+
+const cpuCount = os.cpus().length - 1;
 
 const VERSION = '5.1.0';
 const url = `https://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-${VERSION}.tar.gz`;
@@ -59,7 +62,7 @@ compiler.run('emconfigure', [
         '-e', `LDFLAGS=-L${geosPath}/lib -L${projPath}/lib -L${sqlite3Path}/lib -L${zlibPath}/lib`,
     ],
 });
-compiler.run('emmake', ['make', '-j4', 'install'], { workdir, console: true });
+compiler.run('emmake', ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
 
 const distCmakeContent = fs.readFileSync(`${compiler.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
     .replace('___PROJECT_NAME___', compiler.config.general.name);
