@@ -6,10 +6,12 @@ import getData from './functions/getData.js';
 import createWasm from './functions/createWasm.js';
 import getConfig from './utils/getConfig.js';
 
+const platforms = ['Emscripten-x86_64', 'Android-arm64-v8a'];
 export default class CppjsCompiler {
-    constructor() {
+    constructor(platform) {
         this.config = getConfig();
         this.interfaces = [];
+        this.platform = platform;
     }
 
     findOrCreateInterfaceFile(path) {
@@ -34,5 +36,10 @@ export default class CppjsCompiler {
 
     run(program, params, dockerOptions) {
         run(this, program, params, dockerOptions);
+    }
+
+    // eslint-disable-next-line class-methods-use-this
+    getAllPlatforms() {
+        return platforms;
     }
 }
