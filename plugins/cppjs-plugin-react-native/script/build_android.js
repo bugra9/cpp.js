@@ -1,4 +1,4 @@
-import glob from 'glob';
+import { glob } from 'glob';
 import CppjsCompiler from 'cpp.js';
 import RNEmbind from 'cppjs-core-rn-embind/cppjs.config.mjs';
 import RNCppjsPluginReactNative from '../cppjs.config.mjs';

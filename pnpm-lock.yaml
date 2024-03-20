@@ -460,6 +460,9 @@ importers:
       cppjs-package-geos:
         specifier: workspace:^
         version: link:../geos
+      cppjs-package-iconv:
+        specifier: workspace:^
+        version: link:../iconv
       cppjs-package-proj:
         specifier: workspace:^
         version: link:../proj
@@ -561,6 +564,9 @@ importers:
       cppjs-core-rn-embind:
         specifier: workspace:^
         version: link:../../core/cppjs-core-rn-embind
+      glob:
+        specifier: ^10.3.10
+        version: 10.3.10
       react-native:
         specifier: ^0.72.0
         version: 0.72.6(@babel/core@7.23.3)(@babel/preset-env@7.23.3)(react@18.2.0)

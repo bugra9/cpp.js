@@ -40,64 +40,91 @@ function downloadFile(url, folder) {
     });
 }
 
-const compiler = new CppjsCompiler();
+const compiler2 = new CppjsCompiler();
+await downloadFile(url, compiler2.config.paths.temp);
+await mkdir(`${compiler2.config.paths.output}/prebuilt`, { recursive: true });
+const distCmakeContent = fs.readFileSync(`${compiler2.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
+    .replace('___PROJECT_NAME___', compiler2.config.general.name);
+fs.writeFileSync(`${compiler2.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
 
-await downloadFile(url, compiler.config.paths.temp);
-await decompress(`${compiler.config.paths.temp}/gdal-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
+const promises = [];
+compiler2.getAllPlatforms().forEach((platform) => {
+    if (fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${platform}/lib`)) return;
+    const job = async () => {
+        const compiler = new CppjsCompiler(platform);
+        await decompress(`${compiler2.config.paths.temp}/gdal-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
 
-const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
-const workdir = `${tempPath}/gdal-${VERSION}`;
-const workdirReal = `${compiler.config.paths.temp}/gdal-${VERSION}`;
-const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/Emscripten-x86_64`;
+        const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
+        const workdir = `${tempPath}/gdal-${VERSION}`;
+        const workdirReal = `${compiler.config.paths.temp}/gdal-${VERSION}`;
+        const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
 
-fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
+        // fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
+        await mkdir(`${compiler.config.paths.output}/prebuilt/${platform}/swig`, { recursive: true });
 
-await mkdir(`${compiler.config.paths.output}/prebuilt/Emscripten-x86_64/swig`, { recursive: true });
+        replace({
+            regex: ' iconv_open', replacement: ' libiconv_open', paths: [`${workdirReal}/port/cpl_recode_iconv.cpp`], recursive: false, silent: true,
+        });
+        replace({
+            regex: '        iconv', replacement: '        libiconv', paths: [`${workdirReal}/port/cpl_recode_iconv.cpp`], recursive: false, silent: true,
+        });
+        replace({
+            regex: '#include <iconv.h>', replacement: '# include <iconv.h>\nextern "C" {\n    extern __attribute__((__visibility__("default"))) iconv_t libiconv_open (const char* tocode, const char* fromcode);\n    extern __attribute__((__visibility__("default"))) size_t libiconv (iconv_t cd,  char* * inbuf, size_t *inbytesleft, char* * outbuf, size_t *outbytesleft);\n}', paths: [`${workdirReal}/port/cpl_recode_iconv.cpp`], recursive: false, silent: true,
+        });
+        replace({
+            regex: '  add_subdirectory\\(swig\\)', replacement: '', paths: [`${workdirReal}/gdal.cmake`], recursive: false, silent: true,
+        });
 
-replace({
-    regex: ' iconv_open', replacement: ' libiconv_open', paths: [`${workdirReal}/port/cpl_recode_iconv.cpp`], recursive: false, silent: true,
+        const expatPath = `/live/${getPathInfo(expatConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const geosPath = `/live/${getPathInfo(geosConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const geotiffPath = `/live/${getPathInfo(geotiffConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const iconvPath = `/live/${getPathInfo(iconvConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const projPath = `/live/${getPathInfo(projConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const spatialitePath = `/live/${getPathInfo(spatialiteConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const sqlite3Path = `/live/${getPathInfo(sqlite3Config.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const tiffPath = `/live/${getPathInfo(tiffConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const webpPath = `/live/${getPathInfo(webpConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const zlibPath = `/live/${getPathInfo(zlibConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+
+        let platformParams = [];
+        let ext;
+        switch (platform) {
+            case 'Emscripten-x86_64':
+                platformParams = ['-DBUILD_SHARED_LIBS=OFF'];
+                ext = 'a';
+                break;
+            case 'Android-arm64-v8a':
+                platformParams = ['-DCMAKE_ANDROID_STL_TYPE=c++_shared'];
+                ext = 'so';
+                break;
+            default:
+        }
+
+        compiler.run(null, [
+            'cmake', '.', `-DCMAKE_INSTALL_PREFIX=/live/${libdir}`, '-DCMAKE_BUILD_TYPE=Release', ...platformParams,
+            `-DCMAKE_PREFIX_PATH=/live/${libdir}`, `-DCMAKE_FIND_ROOT_PATH=/live/${libdir}`,
+            '-DBUILD_APPS=OFF', '-DGDAL_ENABLE_DRIVER_PDS=OFF',
+            '-DGDAL_USE_HDF5=OFF', '-DGDAL_USE_HDFS=OFF', '-DACCEPT_MISSING_SQLITE3_MUTEX_ALLOC=ON',
+            `-DSQLite3_INCLUDE_DIR=${sqlite3Path}/include`, `-DSQLite3_LIBRARY=${sqlite3Path}/lib/libsqlite3.${ext}`,
+            `-DPROJ_INCLUDE_DIR=${projPath}/include`, `-DPROJ_LIBRARY_RELEASE=${projPath}/lib/libproj.${ext}`,
+            `-DTIFF_INCLUDE_DIR=${tiffPath}/include`, `-DTIFF_LIBRARY_RELEASE=${tiffPath}/lib/libtiff.${ext}`,
+            `-DGEOTIFF_INCLUDE_DIR=${geotiffPath}/include`, `-DGEOTIFF_LIBRARY_RELEASE=${geotiffPath}/lib/libgeotiff.${ext}`,
+            `-DZLIB_INCLUDE_DIR=${zlibPath}/include`, `-DZLIB_LIBRARY_RELEASE=${zlibPath}/lib/libz.${ext}`,
+            `-DSPATIALITE_INCLUDE_DIR=${spatialitePath}/include`, `-DSPATIALITE_LIBRARY=${spatialitePath}/lib/libspatialite.${ext}`,
+            `-DGEOS_INCLUDE_DIR=${geosPath}/include`, `-DGEOS_LIBRARY=${geosPath}/lib/libgeos_c.${ext}`,
+            `-DWEBP_INCLUDE_DIR=${webpPath}/include`, `-DWEBP_LIBRARY=${webpPath}/lib/libwebp.${ext}`,
+            `-DEXPAT_INCLUDE_DIR=${expatPath}/include`, `-DEXPAT_LIBRARY=${expatPath}/lib/libexpat.${ext}`,
+            `-DIconv_INCLUDE_DIR=${iconvPath}/include`, `-DIconv_LIBRARY=${iconvPath}/lib/libiconv.${ext}`,
+        ], { workdir, console: true });
+        compiler.run(null, ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
+
+        fs.copyFileSync(`${compiler.config.paths.project}/assets/Gdal.i`, `${compiler.config.paths.output}/prebuilt/${platform}/swig/Gdal.i`);
+        fs.copyFileSync(`${compiler.config.paths.project}/assets/gdalcpp.h`, `${compiler.config.paths.output}/prebuilt/${platform}/include/gdalcpp.h`);
+        fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
+    };
+    promises.push(job());
 });
 
-replace({
-    regex: '        iconv', replacement: '        libiconv', paths: [`${workdirReal}/port/cpl_recode_iconv.cpp`], recursive: false, silent: true,
+Promise.all(promises).finally(() => {
+    fs.rmSync(compiler2.config.paths.temp, { recursive: true, force: true });
 });
-
-replace({
-    regex: '#include <iconv.h>', replacement: '# include <iconv.h>\nextern "C" {\n    extern __attribute__((__visibility__("default"))) iconv_t libiconv_open (const char* tocode, const char* fromcode);\n    extern __attribute__((__visibility__("default"))) size_t libiconv (iconv_t cd,  char* * inbuf, size_t *inbytesleft, char* * outbuf, size_t *outbytesleft);\n}', paths: [`${workdirReal}/port/cpl_recode_iconv.cpp`], recursive: false, silent: true,
-});
-
-const expatPath = `/live/${getPathInfo(expatConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/Emscripten-x86_64`;
-const geosPath = `/live/${getPathInfo(geosConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/Emscripten-x86_64`;
-const geotiffPath = `/live/${getPathInfo(geotiffConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/Emscripten-x86_64`;
-const iconvPath = `/live/${getPathInfo(iconvConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/Emscripten-x86_64`;
-const projPath = `/live/${getPathInfo(projConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/Emscripten-x86_64`;
-const spatialitePath = `/live/${getPathInfo(spatialiteConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/Emscripten-x86_64`;
-const sqlite3Path = `/live/${getPathInfo(sqlite3Config.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/Emscripten-x86_64`;
-const tiffPath = `/live/${getPathInfo(tiffConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/Emscripten-x86_64`;
-const webpPath = `/live/${getPathInfo(webpConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/Emscripten-x86_64`;
-const zlibPath = `/live/${getPathInfo(zlibConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/Emscripten-x86_64`;
-
-compiler.run('emcmake', [
-    'cmake', '.', `-DCMAKE_INSTALL_PREFIX=/live/${libdir}`, '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_BUILD_TYPE=Release',
-    `-DCMAKE_PREFIX_PATH=/live/${libdir}`, `-DCMAKE_FIND_ROOT_PATH=/live/${libdir}`,
-    '-DBUILD_APPS=OFF', '-DGDAL_ENABLE_DRIVER_PDS=OFF',
-    '-DGDAL_USE_HDF5=OFF', '-DGDAL_USE_HDFS=OFF', '-DACCEPT_MISSING_SQLITE3_MUTEX_ALLOC=ON',
-    `-DSQLite3_INCLUDE_DIR=${sqlite3Path}/include`, `-DSQLite3_LIBRARY=${sqlite3Path}/lib/libsqlite3.a`,
-    `-DPROJ_INCLUDE_DIR=${projPath}/include`, `-DPROJ_LIBRARY_RELEASE=${projPath}/lib/libproj.a`,
-    `-DTIFF_INCLUDE_DIR=${tiffPath}/include`, `-DTIFF_LIBRARY_RELEASE=${tiffPath}/lib/libtiff.a`,
-    `-DGEOTIFF_INCLUDE_DIR=${geotiffPath}/include`, `-DGEOTIFF_LIBRARY_RELEASE=${geotiffPath}/lib/libgeotiff.a`,
-    `-DZLIB_INCLUDE_DIR=${zlibPath}/include`, `-DZLIB_LIBRARY_RELEASE=${zlibPath}/lib/libz.a`,
-    `-DSPATIALITE_INCLUDE_DIR=${spatialitePath}/include`, `-DSPATIALITE_LIBRARY=${spatialitePath}/lib/libspatialite.a`,
-    `-DGEOS_INCLUDE_DIR=${geosPath}/include`, `-DGEOS_LIBRARY=${geosPath}/lib/libgeos.a`,
-    `-DWEBP_INCLUDE_DIR=${webpPath}/include`, `-DWEBP_LIBRARY=${webpPath}/lib/libwebp.a`,
-    `-DEXPAT_INCLUDE_DIR=${expatPath}/include`, `-DEXPAT_LIBRARY=${expatPath}/lib/libexpat.a`,
-    `-DIconv_INCLUDE_DIR=${iconvPath}/include`, `-DIconv_LIBRARY=${iconvPath}/lib/libiconv.a`,
-], { workdir, console: true });
-compiler.run('emmake', ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
-
-const distCmakeContent = fs.readFileSync(`${compiler.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
-    .replace('___PROJECT_NAME___', compiler.config.general.name);
-fs.writeFileSync(`${compiler.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
-fs.copyFileSync(`${compiler.config.paths.project}/assets/Gdal.i`, `${compiler.config.paths.output}/prebuilt/Emscripten-x86_64/swig/Gdal.i`);
-fs.copyFileSync(`${compiler.config.paths.project}/assets/gdalcpp.h`, `${compiler.config.paths.output}/prebuilt/Emscripten-x86_64/include/gdalcpp.h`);
-fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });

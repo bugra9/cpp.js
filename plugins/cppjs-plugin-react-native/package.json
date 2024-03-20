@@ -10,6 +10,7 @@
     "dependencies": {
         "@babel/runtime": "^7.20.7",
         "cppjs-core-rn-embind": "workspace:^",
-        "cpp.js": "workspace:^"
+        "cpp.js": "workspace:^",
+        "glob": "^10.3.10"
     }
 }

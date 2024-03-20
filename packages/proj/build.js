@@ -31,29 +31,57 @@ function downloadFile(url, folder) {
     });
 }
 
-const compiler = new CppjsCompiler();
+const compiler2 = new CppjsCompiler();
+await downloadFile(url, compiler2.config.paths.temp);
+await mkdir(`${compiler2.config.paths.output}/prebuilt`, { recursive: true });
+const distCmakeContent = fs.readFileSync(`${compiler2.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
+    .replace('___PROJECT_NAME___', compiler2.config.general.name);
+fs.writeFileSync(`${compiler2.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
 
-await downloadFile(url, compiler.config.paths.temp);
-await decompress(`${compiler.config.paths.temp}/proj-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
+const promises = [];
+compiler2.getAllPlatforms().forEach((platform) => {
+    if (fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${platform}/lib`)) return;
+    const job = async () => {
+        const compiler = new CppjsCompiler(platform);
+        await decompress(`${compiler2.config.paths.temp}/proj-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
 
-const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
-const workdir = `${tempPath}/proj-${VERSION}`;
-const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/Emscripten-x86_64`;
+        const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
+        const workdir = `${tempPath}/proj-${VERSION}`;
+        const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
 
-fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
+        // fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
+        await mkdir(libdir, { recursive: true });
 
-const tiffPath = `/live/${getPathInfo(tiffConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/Emscripten-x86_64`;
-const sqlite3Path = `/live/${getPathInfo(sqlite3Config.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/Emscripten-x86_64`;
+        let platformParams = [];
+        let ext;
+        switch (platform) {
+            case 'Emscripten-x86_64':
+                platformParams = ['-DBUILD_SHARED_LIBS=OFF'];
+                ext = 'a';
+                break;
+            case 'Android-arm64-v8a':
+                platformParams = [];
+                ext = 'so';
+                break;
+            default:
+        }
 
-compiler.run('emcmake', [
-    'cmake', '.', `-DCMAKE_INSTALL_PREFIX=/live/${libdir}`,
-    '-DENABLE_CURL=OFF', '-DBUILD_TESTING=OFF', '-DBUILD_SHARED_LIBS=OFF', '-DBUILD_APPS=OFF',
-    `-DSQLITE3_INCLUDE_DIR=${sqlite3Path}/include`, `-DSQLITE3_LIBRARY=${sqlite3Path}/lib/libsqlite3.a`,
-    `-DTIFF_INCLUDE_DIR=${tiffPath}/include`, `-DTIFF_LIBRARY_RELEASE=${tiffPath}/lib/libtiff.a`,
-], { workdir, console: true });
-compiler.run('emmake', ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
+        const tiffPath = `/live/${getPathInfo(tiffConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const sqlite3Path = `/live/${getPathInfo(sqlite3Config.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
 
-const distCmakeContent = fs.readFileSync(`${compiler.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
-    .replace('___PROJECT_NAME___', compiler.config.general.name);
-fs.writeFileSync(`${compiler.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
-fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
+        compiler.run(null, [
+            'cmake', '.', `-DCMAKE_INSTALL_PREFIX=/live/${libdir}`, ...platformParams,
+            '-DENABLE_CURL=OFF', '-DBUILD_TESTING=OFF', '-DBUILD_APPS=OFF',
+            `-DSQLITE3_INCLUDE_DIR=${sqlite3Path}/include`, `-DSQLITE3_LIBRARY=${sqlite3Path}/lib/libsqlite3.${ext}`,
+            `-DTIFF_INCLUDE_DIR=${tiffPath}/include`, `-DTIFF_LIBRARY_RELEASE=${tiffPath}/lib/libtiff.${ext}`,
+        ], { workdir, console: true });
+        compiler.run(null, ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
+
+        fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
+    };
+    promises.push(job());
+});
+
+Promise.all(promises).finally(() => {
+    fs.rmSync(compiler2.config.paths.temp, { recursive: true, force: true });
+});

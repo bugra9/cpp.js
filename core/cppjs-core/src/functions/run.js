@@ -48,6 +48,13 @@ export default function run(compiler, program, params = [], dockerOptions = {}) 
         case 'Android-arm64-v8a':
             [dProgram, ...dParams] = params;
             platformParams = androidParams;
+            if (dProgram === 'cmake') {
+                dParams = [
+                    ...dParams,
+                    '-DCMAKE_SYSTEM_NAME=Android', '-DCMAKE_SYSTEM_VERSION=33', '-DCMAKE_ANDROID_ARCH_ABI=arm64-v8a',
+                    `-DCMAKE_ANDROID_NDK=${ANDROID_NDK}`,
+                ];
+            }
             break;
         default:
     }
