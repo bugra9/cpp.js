@@ -13,4 +13,9 @@ export default {
         project: getDirName(import.meta.url),
         output: 'dist',
     },
+    platform: {
+        'Emscripten-x86_64': {
+            ignoreLibName: ['charset'],
+        },
+    },
 };
