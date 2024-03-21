@@ -1,0 +1,23 @@
+{
+    "name": "cppjs-package-spatialite",
+    "version": "5.1.0-1.0.0",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "build": "node build.js"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^",
+        "cppjs-package-geos": "workspace:^",
+        "cppjs-package-proj": "workspace:^",
+        "cppjs-package-sqlite3": "workspace:^",
+        "cppjs-package-zlib": "workspace:^",
+        "cppjs-package-iconv": "workspace:^"
+    },
+    "devDependencies": {
+        "decompress": "4.2.1",
+        "decompress-targz": "4.1.1",
+        "follow-redirects":"1.15.3",
+        "replace": "1.2.2"
+    }
+}

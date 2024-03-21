@@ -3,6 +3,7 @@
 # compiled output
 dist
 tmp
+.cppjs
 /out-tsc
 
 # dependencies

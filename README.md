@@ -1,12 +1,17 @@
 <h1 align="center">Cpp.js</h1>
 
-Bind c++ libraries to js on web and mobile. Created by Buğra Sarı.
+Bind C++ codes to JS on the web and react native without writing extra code.  
 
+> **Note:** This project is currently under heavy development.
+
+<https://gdal3.js.org>
+  
+  \
 **Why Cpp.js?**  
-- Perfect harmony of c++ and javascript
-- Exceed native performance
+- Seamless integration of C++ and JavaScript
+- Power of native performance
+- Use or create prebuilt cpp.js libraries
 - Cross Platform
-- Use libraries from another platform.
 
 ## Usage
 **/src/index.js**
@@ -38,3 +43,8 @@ public:
     }
 };
 ```
+
+## License
+[MIT](https://opensource.org/licenses/MIT)
+
+Copyright (c) 2023-present, Buğra Sarı

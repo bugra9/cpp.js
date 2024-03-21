@@ -1,0 +1,16 @@
+{
+    "name": "cppjs-package-iconv",
+    "version": "1.17.0-1.0.0",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "build": "node build.js"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^"
+    },
+    "devDependencies": {
+        "decompress": "4.2.1",
+        "decompress-targz": "4.1.1"
+    }
+}

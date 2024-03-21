@@ -1,0 +1,18 @@
+{
+    "name": "cppjs-package-sqlite3",
+    "version": "3.44.2-1.0.0",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "build": "node build.js"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^",
+        "cppjs-package-zlib": "workspace:^"
+    },
+    "devDependencies": {
+        "decompress": "4.2.1",
+        "decompress-targz": "4.1.1",
+        "follow-redirects":"1.15.3"
+    }
+}
