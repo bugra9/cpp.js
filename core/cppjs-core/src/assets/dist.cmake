@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 set(CMAKE_CXX_STANDARD 11)
 set(PROJECT_NAME "___PROJECT_NAME___")
+set(PROJECT_LIBS "___PROJECT_LIBS___")
 project("${PROJECT_NAME}")
 
 if(ANDROID)
@@ -13,16 +14,20 @@ else()
     set(PACKAGE_HOST "${CMAKE_SYSTEM_NAME}-${CMAKE_HOST_SYSTEM_PROCESSOR}")
 endif()
 
-
-find_library(PROJECT_LIBRARY
-    NAMES "${PROJECT_NAME}"
-    PATHS "${PROJECT_SOURCE_DIR}/${PACKAGE_HOST}/lib"
-    NO_CACHE
-    NO_DEFAULT_PATH
-    NO_CMAKE_FIND_ROOT_PATH
-    REQUIRED
-)
+set(PROJECT_LIBS_DIR)
+foreach(L IN LISTS PROJECT_LIBS)
+    SET(FOUND_LIB "FOUND_LIB-NOTFOUND")
+    find_library(FOUND_LIB
+        NAMES "${L}"
+        PATHS "${PROJECT_SOURCE_DIR}/${PACKAGE_HOST}/lib"
+        NO_CACHE
+        NO_DEFAULT_PATH
+        NO_CMAKE_FIND_ROOT_PATH
+        REQUIRED
+    )
+    LIST(APPEND PROJECT_LIBS_DIR ${FOUND_LIB})
+endforeach()
 
 add_library("${PROJECT_NAME}" INTERFACE)
-target_link_libraries("${PROJECT_NAME}" INTERFACE "${PROJECT_LIBRARY}")
+target_link_libraries("${PROJECT_NAME}" INTERFACE "${PROJECT_LIBS_DIR}")
 target_include_directories("${PROJECT_NAME}" INTERFACE "${PROJECT_SOURCE_DIR}/${PACKAGE_HOST}/include")

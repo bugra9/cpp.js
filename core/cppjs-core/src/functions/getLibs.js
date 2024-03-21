@@ -17,7 +17,7 @@ export default function getLibs(config, pathPrefix) {
     getDependencyParams(config, pathPrefix).cmakeDepends.forEach((d) => {
         if (d.export.libName) {
             d.export.libName.forEach((fileName) => {
-                dependLibs.push(...glob.sync(`${d.paths.output}/prebuilt/Emscripten-x86_64/lib/${fileName}`, { absolute: true, cwd: d.paths.project }));
+                dependLibs.push(...glob.sync(`${d.paths.output}/prebuilt/Emscripten-x86_64/lib/lib${fileName}.a`, { absolute: true, cwd: d.paths.project }));
             });
         }
     });

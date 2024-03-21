@@ -6,6 +6,7 @@ export default {
     },
     export: {
         type: 'cmake',
+        libName: ['iconv', 'charset'],
     },
     paths: {
         base: '.',

@@ -36,7 +36,7 @@ const compiler2 = new CppjsCompiler();
 await downloadFile(url, compiler2.config.paths.temp);
 await mkdir(`${compiler2.config.paths.output}/prebuilt`, { recursive: true });
 const distCmakeContent = fs.readFileSync(`${compiler2.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
-    .replace('___PROJECT_NAME___', compiler2.config.general.name);
+    .replace('___PROJECT_NAME___', compiler2.config.general.name).replace('___PROJECT_LIBS___', compiler2.config.export.libName.join(';'));
 fs.writeFileSync(`${compiler2.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
 
 const promises = [];

@@ -77,7 +77,7 @@ function generateLib(platform, output, base) {
     fs.renameSync(`${compiler.config.paths.temp}/prebuilt`, `${compiler.config.paths.output}/prebuilt`);
 
     const distCmakeContent = fs.readFileSync(`${compiler.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
-        .replace('___PROJECT_NAME___', compiler.config.general.name);
+        .replace('___PROJECT_NAME___', compiler.config.general.name).replace('___PROJECT_LIBS___', compiler.config.export.libName.join(';'));
     fs.writeFileSync(`${compiler.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
     fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
 }

@@ -143,7 +143,7 @@ function fillConfig(tempConfig, options = {}) {
     config.export.type = tempConfig.export.type || 'cmake';
     config.export.header = tempConfig.export.header || 'include';
     config.export.libPath = getPath(tempConfig.export.libPath || 'lib');
-    config.export.libName = tempConfig.export.libName || [`lib${config.general.name}.a`];
+    config.export.libName = tempConfig.export.libName || [config.general.name];
 
     config.platform['Emscripten-x86_64'] = tempConfig.platform['Emscripten-x86_64'] || {};
 
