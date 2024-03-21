@@ -47,4 +47,4 @@ public:
 ## License
 [MIT](https://opensource.org/licenses/MIT)
 
-Copyright (c) 2013-present, Buğra Sarı
+Copyright (c) 2023-present, Buğra Sarı
