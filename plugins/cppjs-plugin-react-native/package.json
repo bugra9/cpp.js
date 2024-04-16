@@ -1,7 +1,11 @@
 
 {
     "name": "cppjs-plugin-react-native",
-    "version": "0.3.1",
+    "version": "0.3.4",
+    "description": "Bind c++ codes to javascript on the react native without writing extra code.",
+    "author": "Bugra Sari",
+    "homepage": "https://github.com/bugra9/cpp.js",
+    "license": "MIT",
     "main": "js/index.js",
     "type": "module",
     "peerDependencies": {

@@ -1,7 +1,10 @@
 {
     "name": "cppjs-package-proj",
     "version": "9.3.1-1.0.0",
-    "license": "MIT",
+    "description": "PROJ is a generic coordinate transformation software that transforms geospatial coordinates from one coordinate reference system (CRS) to another.",
+    "homepage": "https://proj.org/",
+    "license": "SEE LICENSE IN https://github.com/OSGeo/PROJ/blob/master/COPYING",
+    "author": "",
     "type": "module",
     "scripts": {
         "build": "node build.js"

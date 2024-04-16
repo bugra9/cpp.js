@@ -2,6 +2,10 @@
 {
     "name": "cppjs-core-rn-embind",
     "version": "0.3.0",
+    "description": "IOS embind implementation for React Native",
+    "author": "Bugra Sari",
+    "homepage": "https://github.com/bugra9/cpp.js",
+    "license": "MIT",
     "main": "js/embind.js",
     "peerDependencies": {
         "@babel/runtime": "^7.20.7",

@@ -45,9 +45,9 @@ compiler2.getAllPlatforms().forEach((platform) => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/proj-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
 
-        const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
+        const tempPath = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
         const workdir = `${tempPath}/proj-${VERSION}`;
-        const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
+        const libdir = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
 
         // fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
         await mkdir(libdir, { recursive: true });
@@ -63,19 +63,28 @@ compiler2.getAllPlatforms().forEach((platform) => {
                 platformParams = [];
                 ext = 'so';
                 break;
+            case 'iOS-iphoneos':
+                platformParams = [];
+                ext = 'a';
+                break;
+            case 'iOS-iphonesimulator':
+                platformParams = [];
+                ext = 'a';
+                break;
             default:
         }
 
-        const tiffPath = `/live/${getPathInfo(tiffConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
-        const sqlite3Path = `/live/${getPathInfo(sqlite3Config.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const tiffPath = `/tmp/cppjs/live/${getPathInfo(tiffConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const sqlite3Path = `/tmp/cppjs/live/${getPathInfo(sqlite3Config.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
 
         compiler.run(null, [
-            'cmake', '.', `-DCMAKE_INSTALL_PREFIX=/live/${libdir}`, ...platformParams,
+            'cmake', '.', `-DCMAKE_INSTALL_PREFIX=${libdir}`, '-DCMAKE_BUILD_TYPE=Release', ...platformParams,
             '-DENABLE_CURL=OFF', '-DBUILD_TESTING=OFF', '-DBUILD_APPS=OFF',
             `-DSQLITE3_INCLUDE_DIR=${sqlite3Path}/include`, `-DSQLITE3_LIBRARY=${sqlite3Path}/lib/libsqlite3.${ext}`,
             `-DTIFF_INCLUDE_DIR=${tiffPath}/include`, `-DTIFF_LIBRARY_RELEASE=${tiffPath}/lib/libtiff.${ext}`,
         ], { workdir, console: true });
-        compiler.run(null, ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
+        compiler.run(null, ['cmake', '--build', '.', '--config', 'Release'], { workdir, console: true });
+        compiler.run(null, ['cmake', '--install', '.'], { workdir, console: true });
 
         fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
     };
@@ -83,5 +92,6 @@ compiler2.getAllPlatforms().forEach((platform) => {
 });
 
 Promise.all(promises).finally(() => {
+    compiler2.finishBuild();
     fs.rmSync(compiler2.config.paths.temp, { recursive: true, force: true });
 });

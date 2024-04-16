@@ -16,14 +16,14 @@ export default function createBridge(compiler) {
             ...compiler.config.getAllDependencies().map((d) => `${d.paths.output}/prebuilt/${platform}/include`),
             ...compiler.config.getAllDependencies().map((d) => `${d.paths.output}/prebuilt/${platform}/swig`),
             ...compiler.config.paths.header,
-        ].filter((path) => !!path.toString()).map((path) => `-I/live/${getPathInfo(path, compiler.config.paths.base).relative}`);
+        ].filter((path) => !!path.toString()).map((path) => `-I/tmp/cppjs/live/${getPathInfo(path, compiler.config.paths.base).relative}`);
 
         run(compiler, 'swig', [
             '-c++',
             '-embind',
-            '-o', `/live/${output.relative}/${filePath.split('/').at(-1)}.cpp`,
+            '-o', `/tmp/cppjs/live/${output.relative}/${filePath.split('/').at(-1)}.cpp`,
             ...includePath,
-            `/live/${input.relative}`,
+            `/tmp/cppjs/live/${input.relative}`,
         ]);
 
         bridges.push(`${base.withSlash}${output.relative}/${filePath.split('/').at(-1)}.cpp`);

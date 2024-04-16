@@ -1,7 +1,10 @@
 {
     "name": "cppjs-package-sqlite3",
     "version": "3.44.2-1.0.0",
-    "license": "MIT",
+    "description": "SQLite is a C-language library that implements a small, fast, self-contained, high-reliability, full-featured, SQL database engine.",
+    "homepage": "https://www.sqlite.org",
+    "license": "SEE LICENSE IN https://www.sqlite.org/copyright.html",
+    "author": "",
     "type": "module",
     "scripts": {
         "build": "node build.js"

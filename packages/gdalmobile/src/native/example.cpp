@@ -1,7 +1,11 @@
 #include "example.h"
-// #include "sqlite3.h"
+#include "sqlite3.h"
 #include "ogrsf_frmts.h"
 #include "gdal.h"
+#include "webp/decode.h"
+#include "geotiff.h"
+#include "expat.h"
+#include "spatialite.h"
 
 int bugra_a(int a) {
   return 8;
@@ -29,8 +33,14 @@ int Bugra3Class::oo(int d) {
 }
 
 int Bugra3Class::getSqliteVersion() {
+    // spatialite_version();
+    // XML_ExpatVersion();
+    // return GTIFTagCode("");
+    // return WebPGetDecoderVersion();
+    // return sqlite3_libversion_number();
     GDALAllRegister();
     return GDALGetDriverCount();
+    // return 2;
 }
 
 std::vector<int> myIntVector = {3, 5, 7};

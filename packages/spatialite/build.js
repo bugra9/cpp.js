@@ -48,7 +48,7 @@ compiler2.getAllPlatforms().forEach((platform) => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/libspatialite-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
 
-        const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
+        const tempPath = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
         const workdir = `${tempPath}/libspatialite-${VERSION}`;
         const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
         const workdirReal = `${compiler.config.paths.temp}/libspatialite-${VERSION}`;
@@ -71,18 +71,26 @@ compiler2.getAllPlatforms().forEach((platform) => {
                 });
                 fs.cpSync(`${compiler.config.paths.project}/config.sub`, `${workdirReal}/config.sub`);
                 break;
+            case 'iOS-iphoneos':
+                platformParams = ['--host=arm-apple-darwin'];
+                libs = ['-lstdc++', '-lsqlite3', '-lm', '-ltiff', '-lgeos'];
+                break;
+            case 'iOS-iphonesimulator':
+                platformParams = ['--host=x86_64-apple-darwin'];
+                libs = ['-lstdc++', '-lsqlite3', '-lm', '-ltiff', '-lgeos'];
+                break;
             default:
         }
 
-        const geosPath = `/live/${getPathInfo(geosConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
-        const sqlite3Path = `/live/${getPathInfo(sqlite3Config.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const geosPath = `/tmp/cppjs/live/${getPathInfo(geosConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const sqlite3Path = `/tmp/cppjs/live/${getPathInfo(sqlite3Config.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
 
         const allDeps = compiler.config.getAllDependencies();
-        const cFlags = allDeps.map((d) => `-I/live/${getPathInfo(d.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}/include`).join(' ');
-        const ldFlags = allDeps.map((d) => `-L/live/${getPathInfo(d.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}/lib`).join(' ');
+        const cFlags = allDeps.map((d) => `-I/tmp/cppjs/live/${getPathInfo(d.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}/include`).join(' ');
+        const ldFlags = allDeps.map((d) => `-L/tmp/cppjs/live/${getPathInfo(d.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}/lib`).join(' ');
 
         compiler.run(null, [
-            './configure', `--prefix=/live/${libdir}`, ...platformParams,
+            './configure', `--prefix=/tmp/cppjs/live/${libdir}`, ...platformParams,
             `SQLITE3_CFLAGS=-I${sqlite3Path}/include`, `SQLITE3_LIBS=-L${sqlite3Path}/lib`, `--with-geosconfig=${geosPath}/bin/geos-config`,
             '--enable-geosadvanced=yes', '--enable-geopackage=yes', '--enable-examples=no', '--enable-minizip=no',
             '--enable-libxml2=no', '--enable-freexl=no', '--disable-rttopo',
@@ -103,5 +111,6 @@ compiler2.getAllPlatforms().forEach((platform) => {
 });
 
 Promise.all(promises).finally(() => {
+    compiler2.finishBuild();
     fs.rmSync(compiler2.config.paths.temp, { recursive: true, force: true });
 });

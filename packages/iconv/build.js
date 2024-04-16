@@ -43,7 +43,7 @@ compiler2.getAllPlatforms().forEach((platform) => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/libiconv-${ICONV_VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
 
-        const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
+        const tempPath = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
         const workdir = `${tempPath}/libiconv-${ICONV_VERSION}`;
         const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}/lib`;
         const includedir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}/include`;
@@ -60,12 +60,18 @@ compiler2.getAllPlatforms().forEach((platform) => {
             case 'Android-arm64-v8a':
                 platformParams = ['--host=aarch64-linux-android'];
                 break;
+            case 'iOS-iphoneos':
+                platformParams = ['--host=arm-apple-darwin', '--enable-static'];
+                break;
+            case 'iOS-iphonesimulator':
+                platformParams = ['--host=x86_64-apple-darwin', '--enable-static'];
+                break;
             default:
         }
 
         compiler.run(null, ['./configure', `--prefix=${tempPath}`, ...platformParams], { workdir, console: true });
         compiler.run(null, ['make', `-j${cpuCount}`, 'lib/localcharset.h'], { workdir, console: true });
-        compiler.run(null, ['make', `-j${cpuCount}`, 'install', `prefix='${tempPath}'`, `exec_prefix='${tempPath}'`, `libdir='/live/${libdir}'`, `includedir='/live/${includedir}'`], { workdir, console: true });
+        compiler.run(null, ['make', `-j${cpuCount}`, 'install', `prefix='${tempPath}'`, `exec_prefix='${tempPath}'`, `libdir='/tmp/cppjs/live/${libdir}'`, `includedir='/tmp/cppjs/live/${includedir}'`], { workdir, console: true });
 
         fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
     };
@@ -73,5 +79,6 @@ compiler2.getAllPlatforms().forEach((platform) => {
 });
 
 Promise.all(promises).finally(() => {
+    compiler2.finishBuild();
     fs.rmSync(compiler2.config.paths.temp, { recursive: true, force: true });
 });

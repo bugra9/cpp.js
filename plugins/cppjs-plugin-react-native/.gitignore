@@ -1,3 +1,5 @@
+*.xcframework
+*.xcframework.zip
 .yarn
 
 # OSX

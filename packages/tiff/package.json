@@ -1,7 +1,10 @@
 {
     "name": "cppjs-package-tiff",
     "version": "4.6.0-1.0.0",
-    "license": "MIT",
+    "description": "The LibTIFF software provides support for the Tag Image File Format (TIFF), a widely used format for storing image data.",
+    "homepage": "https://libtiff.gitlab.io/libtiff/index.html",
+    "license": "SEE LICENSE IN https://libtiff.gitlab.io/libtiff/project/license.html",
+    "author": "",
     "type": "module",
     "scripts": {
         "build": "node build.js"

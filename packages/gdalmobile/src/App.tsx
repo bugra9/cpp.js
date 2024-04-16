@@ -26,7 +26,7 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 
 import Cppjs from 'cppjs-plugin-react-native';
-
+console.log('BugraClass', Cppjs.BugraClass, Cppjs);
 const BugraClass = Cppjs.BugraClass;
 const Bugra2Class = Cppjs.Bugra2Class;
 const Bugra3Class = Cppjs.Bugra3Class;

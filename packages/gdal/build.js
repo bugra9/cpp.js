@@ -21,7 +21,7 @@ import zlibConfig from 'cppjs-package-zlib/cppjs.config.js';
 
 const cpuCount = os.cpus().length - 1;
 
-const VERSION = '3.8.1';
+const VERSION = '3.8.5';
 const url = `https://github.com/OSGeo/gdal/releases/download/v${VERSION}/gdal-${VERSION}.tar.gz`;
 
 function downloadFile(url, folder) {
@@ -54,13 +54,14 @@ compiler2.getAllPlatforms().forEach((platform) => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/gdal-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
 
-        const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
-        const workdir = `${tempPath}/gdal-${VERSION}`;
+        const tempPath = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
+        const workdir = `${tempPath}/gdal-${VERSION}/cppjs`;
         const workdirReal = `${compiler.config.paths.temp}/gdal-${VERSION}`;
         const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
 
         // fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
         await mkdir(`${compiler.config.paths.output}/prebuilt/${platform}/swig`, { recursive: true });
+        await mkdir(workdir, { recursive: true });
 
         replace({
             regex: ' iconv_open', replacement: ' libiconv_open', paths: [`${workdirReal}/port/cpl_recode_iconv.cpp`], recursive: false, silent: true,
@@ -75,17 +76,18 @@ compiler2.getAllPlatforms().forEach((platform) => {
             regex: '  add_subdirectory\\(swig\\)', replacement: '', paths: [`${workdirReal}/gdal.cmake`], recursive: false, silent: true,
         });
 
-        const expatPath = `/live/${getPathInfo(expatConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
-        const geosPath = `/live/${getPathInfo(geosConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
-        const geotiffPath = `/live/${getPathInfo(geotiffConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
-        const iconvPath = `/live/${getPathInfo(iconvConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
-        const projPath = `/live/${getPathInfo(projConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
-        const spatialitePath = `/live/${getPathInfo(spatialiteConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
-        const sqlite3Path = `/live/${getPathInfo(sqlite3Config.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
-        const tiffPath = `/live/${getPathInfo(tiffConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
-        const webpPath = `/live/${getPathInfo(webpConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
-        const zlibPath = `/live/${getPathInfo(zlibConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const expatPath = `/tmp/cppjs/live/${getPathInfo(expatConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const geosPath = `/tmp/cppjs/live/${getPathInfo(geosConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const geotiffPath = `/tmp/cppjs/live/${getPathInfo(geotiffConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const iconvPath = `/tmp/cppjs/live/${getPathInfo(iconvConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const projPath = `/tmp/cppjs/live/${getPathInfo(projConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const spatialitePath = `/tmp/cppjs/live/${getPathInfo(spatialiteConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const sqlite3Path = `/tmp/cppjs/live/${getPathInfo(sqlite3Config.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const tiffPath = `/tmp/cppjs/live/${getPathInfo(tiffConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const webpPath = `/tmp/cppjs/live/${getPathInfo(webpConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const zlibPath = `/tmp/cppjs/live/${getPathInfo(zlibConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
 
+        const basePlatform = platform.split('-', 1)[0];
         let platformParams = [];
         let ext;
         switch (platform) {
@@ -97,13 +99,21 @@ compiler2.getAllPlatforms().forEach((platform) => {
                 platformParams = ['-DCMAKE_ANDROID_STL_TYPE=c++_shared'];
                 ext = 'so';
                 break;
+            case 'iOS-iphoneos':
+                platformParams = [];
+                ext = 'a';
+                break;
+            case 'iOS-iphonesimulator':
+                platformParams = [];
+                ext = 'a';
+                break;
             default:
         }
 
         compiler.run(null, [
-            'cmake', '.', `-DCMAKE_INSTALL_PREFIX=/live/${libdir}`, '-DCMAKE_BUILD_TYPE=Release', ...platformParams,
-            `-DCMAKE_PREFIX_PATH=/live/${libdir}`, `-DCMAKE_FIND_ROOT_PATH=/live/${libdir}`,
-            '-DBUILD_APPS=OFF', '-DGDAL_ENABLE_DRIVER_PDS=OFF',
+            basePlatform === 'iOS' ? 'ios-cmake' : 'cmake', '..', `-DCMAKE_INSTALL_PREFIX=/tmp/cppjs/live/${libdir}`, '-DCMAKE_BUILD_TYPE=Release', ...platformParams,
+            `-DCMAKE_PREFIX_PATH=/tmp/cppjs/live/${libdir}`, `-DCMAKE_FIND_ROOT_PATH=/tmp/cppjs/live/${libdir}`,
+            '-DBUILD_APPS=OFF', '-DGDAL_ENABLE_DRIVER_PDS=OFF', '-DBUILD_TESTING=OFF', '-DGDAL_USE_ZSTD=OFF',
             '-DGDAL_USE_HDF5=OFF', '-DGDAL_USE_HDFS=OFF', '-DACCEPT_MISSING_SQLITE3_MUTEX_ALLOC=ON',
             `-DSQLite3_INCLUDE_DIR=${sqlite3Path}/include`, `-DSQLite3_LIBRARY=${sqlite3Path}/lib/libsqlite3.${ext}`,
             `-DPROJ_INCLUDE_DIR=${projPath}/include`, `-DPROJ_LIBRARY_RELEASE=${projPath}/lib/libproj.${ext}`,
@@ -116,7 +126,7 @@ compiler2.getAllPlatforms().forEach((platform) => {
             `-DEXPAT_INCLUDE_DIR=${expatPath}/include`, `-DEXPAT_LIBRARY=${expatPath}/lib/libexpat.${ext}`,
             `-DIconv_INCLUDE_DIR=${iconvPath}/include`, `-DIconv_LIBRARY=${iconvPath}/lib/libiconv.${ext}`,
         ], { workdir, console: true });
-        compiler.run(null, ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
+        compiler.run(null, [basePlatform === 'iOS' ? 'ios-cmake' : 'cmake', '--build', '.', '--config', 'Release', '--target', 'install'], { workdir, console: true });
 
         fs.copyFileSync(`${compiler.config.paths.project}/assets/Gdal.i`, `${compiler.config.paths.output}/prebuilt/${platform}/swig/Gdal.i`);
         fs.copyFileSync(`${compiler.config.paths.project}/assets/gdalcpp.h`, `${compiler.config.paths.output}/prebuilt/${platform}/include/gdalcpp.h`);
@@ -126,5 +136,6 @@ compiler2.getAllPlatforms().forEach((platform) => {
 });
 
 Promise.all(promises).finally(() => {
+    compiler2.finishBuild();
     fs.rmSync(compiler2.config.paths.temp, { recursive: true, force: true });
 });
