@@ -6,12 +6,27 @@ project("${PROJECT_NAME}")
 
 if(ANDROID)
     set(PACKAGE_HOST "${CMAKE_SYSTEM_NAME}-${ANDROID_ABI}")
+    set(PACKAGE_DIR "${PROJECT_SOURCE_DIR}/${PACKAGE_HOST}/lib")
 elseif(APPLE)
-    set(PACKAGE_HOST "${CMAKE_SYSTEM_NAME}-${CMAKE_HOST_SYSTEM_PROCESSOR}")
+    if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        if (CMAKE_OSX_SYSROOT MATCHES "/iPhoneOS.platform/")
+            set(PACKAGE_HOST "iOS-iphoneos")
+        elseif(CMAKE_OSX_SYSROOT MATCHES "/iPhoneSimulator.platform/")
+            set(PACKAGE_HOST "iOS-iphonesimulator")
+        else()
+            set(PACKAGE_HOST "iOS-unknown")
+        endif()
+        set(PACKAGE_DIR "${PROJECT_SOURCE_DIR}")
+    else()
+        set(PACKAGE_HOST "${CMAKE_SYSTEM_NAME}-${CMAKE_HOST_SYSTEM_PROCESSOR}")
+        set(PACKAGE_DIR "${PROJECT_SOURCE_DIR}/${PACKAGE_HOST}/lib")
+    endif()
 elseif(UNIX)
     set(PACKAGE_HOST "${CMAKE_SYSTEM_NAME}-${CMAKE_HOST_SYSTEM_PROCESSOR}")
+    set(PACKAGE_DIR "${PROJECT_SOURCE_DIR}/${PACKAGE_HOST}/lib")
 else()
     set(PACKAGE_HOST "${CMAKE_SYSTEM_NAME}-${CMAKE_HOST_SYSTEM_PROCESSOR}")
+    set(PACKAGE_DIR "${PROJECT_SOURCE_DIR}/${PACKAGE_HOST}/lib")
 endif()
 
 set(PROJECT_LIBS_DIR)
@@ -19,7 +34,7 @@ foreach(L IN LISTS PROJECT_LIBS)
     SET(FOUND_LIB "FOUND_LIB-NOTFOUND")
     find_library(FOUND_LIB
         NAMES "${L}"
-        PATHS "${PROJECT_SOURCE_DIR}/${PACKAGE_HOST}/lib"
+        PATHS "${PACKAGE_DIR}"
         NO_CACHE
         NO_DEFAULT_PATH
         NO_CMAKE_FIND_ROOT_PATH

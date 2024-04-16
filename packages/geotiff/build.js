@@ -46,9 +46,9 @@ compiler2.getAllPlatforms().forEach((platform) => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/libgeotiff-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
 
-        const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
+        const tempPath = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
         const workdir = `${tempPath}/libgeotiff-${VERSION}`;
-        const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
+        const libdir = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
 
         // fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
         await mkdir(libdir, { recursive: true });
@@ -64,19 +64,27 @@ compiler2.getAllPlatforms().forEach((platform) => {
                 platformParams = ['--host=aarch64-linux-android'];
                 libs = ['-lstdc++'];
                 break;
+            case 'iOS-iphoneos':
+                platformParams = ['--host=arm-apple-darwin', '--enable-shared=no'];
+                libs = ['-lstdc++'];
+                break;
+            case 'iOS-iphonesimulator':
+                platformParams = ['--host=x86_64-apple-darwin', '--enable-shared=no'];
+                libs = ['-lstdc++'];
+                break;
             default:
         }
 
-        const projPath = `/live/${getPathInfo(projConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
-        const tiffPath = `/live/${getPathInfo(tiffConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
-        const zlibPath = `/live/${getPathInfo(zlibConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const projPath = `/tmp/cppjs/live/${getPathInfo(projConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const tiffPath = `/tmp/cppjs/live/${getPathInfo(tiffConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        const zlibPath = `/tmp/cppjs/live/${getPathInfo(zlibConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
 
         const allDeps = compiler.config.getAllDependencies();
-        const cFlags = allDeps.map((d) => `-I/live/${getPathInfo(d.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}/include`).join(' ');
-        const ldFlags = allDeps.map((d) => `-L/live/${getPathInfo(d.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}/lib`).join(' ');
+        const cFlags = allDeps.map((d) => `-I/tmp/cppjs/live/${getPathInfo(d.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}/include`).join(' ');
+        const ldFlags = allDeps.map((d) => `-L/tmp/cppjs/live/${getPathInfo(d.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}/lib`).join(' ');
 
         compiler.run(null, [
-            './configure', `--prefix=/live/${libdir}`, ...platformParams,
+            './configure', `--prefix=${libdir}`, ...platformParams,
             `--with-proj=${projPath}`, `--with-libtiff=${tiffPath}`, `--with-zlib=${zlibPath}`,
         ], {
             workdir,
@@ -95,5 +103,6 @@ compiler2.getAllPlatforms().forEach((platform) => {
 });
 
 Promise.all(promises).finally(() => {
+    compiler2.finishBuild();
     fs.rmSync(compiler2.config.paths.temp, { recursive: true, force: true });
 });

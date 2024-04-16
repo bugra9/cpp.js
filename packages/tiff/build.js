@@ -44,30 +44,43 @@ compiler2.getAllPlatforms().forEach((platform) => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/tiff-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
 
-        const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
+        const tempPath = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
         const workdir = `${tempPath}/tiff-${VERSION}`;
-        const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
+        const libdir = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
 
         // fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
+        console.log('libdir', libdir);
         await mkdir(libdir, { recursive: true });
 
+        let zlibPath = `/tmp/cppjs/live/${getPathInfo(zlibConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        let libDirForCompiler = libdir;
         let platformParams = [];
         switch (platform) {
             case 'Emscripten-x86_64':
-                platformParams = ['--enable-shared=no', '--host=wasm32-unknown-emscripten'];
+                platformParams = ['-DBUILD_SHARED_LIBS=OFF'];
                 break;
             case 'Android-arm64-v8a':
-                platformParams = ['--host=aarch64-linux-android'];
+                platformParams = [];
+                break;
+            case 'iOS-iphoneos':
+                platformParams = [];
+                libDirForCompiler = `${compiler.config.paths.output}/prebuilt/${platform}`;
+                zlibPath = `${zlibConfig.paths.project}/dist/prebuilt/${platform}`;
+                break;
+            case 'iOS-iphonesimulator':
+                platformParams = [];
+                libDirForCompiler = `${compiler.config.paths.output}/prebuilt/${platform}`;
+                zlibPath = `${zlibConfig.paths.project}/dist/prebuilt/${platform}`;
                 break;
             default:
         }
 
-        const zlibPath = `/live/${getPathInfo(zlibConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
         compiler.run(null, [
-            './configure', `--prefix=/live/${libdir}`, '--disable-docs', ...platformParams,
-            `--with-zlib-include-dir=${zlibPath}/include`, `--with-zlib-lib-dir=${zlibPath}/lib`,
+            'cmake', '.', `-DCMAKE_INSTALL_PREFIX=${libdir}`, '-DCMAKE_BUILD_TYPE=Release', ...platformParams,
+            '-Dtiff-tools=OFF', '-Dtiff-tests=OFF', '-Dtiff-contrib=OFF', '-Dtiff-docs=OFF', '-Dld-version-script=OFF',
         ], { workdir, console: true });
-        compiler.run(null, ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
+        compiler.run(null, ['cmake', '--build', '.', '--config', 'Release'], { workdir, console: true });
+        compiler.run(null, ['cmake', '--install', '.'], { workdir, console: true });
 
         fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
     };
@@ -75,5 +88,6 @@ compiler2.getAllPlatforms().forEach((platform) => {
 });
 
 Promise.all(promises).finally(() => {
+    compiler2.finishBuild();
     fs.rmSync(compiler2.config.paths.temp, { recursive: true, force: true });
 });

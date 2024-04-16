@@ -1,7 +1,10 @@
 {
     "name": "cppjs-package-expat",
     "version": "2.6.0-0.1.0",
-    "license": "MIT",
+    "description": "Fast streaming XML parser",
+    "homepage": "https://github.com/libexpat/libexpat",
+    "license": "SEE LICENSE IN https://github.com/libexpat/libexpat/blob/master/expat/COPYING",
+    "author": "",
     "type": "module",
     "scripts": {
         "build": "node build.js"

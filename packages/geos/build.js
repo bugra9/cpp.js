@@ -43,9 +43,9 @@ compiler2.getAllPlatforms().forEach((platform) => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/geos-${VERSION}.tar.bz2`, compiler.config.paths.temp);
 
-        const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
+        const tempPath = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
         const workdir = `${tempPath}/geos-${VERSION}`;
-        const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
+        const libdir = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
 
         // fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
         await mkdir(libdir, { recursive: true });
@@ -58,14 +58,21 @@ compiler2.getAllPlatforms().forEach((platform) => {
             case 'Android-arm64-v8a':
                 platformParams = [];
                 break;
+            case 'iOS-iphoneos':
+                platformParams = [];
+                break;
+            case 'iOS-iphonesimulator':
+                platformParams = [];
+                break;
             default:
         }
 
         compiler.run(null, [
-            'cmake', '.', `-DCMAKE_INSTALL_PREFIX=/live/${libdir}`, '-DCMAKE_BUILD_TYPE=Release',
+            'cmake', '.', `-DCMAKE_INSTALL_PREFIX=${libdir}`, '-DCMAKE_BUILD_TYPE=Release',
             '-DBUILD_TESTING=OFF', ...platformParams,
         ], { workdir, console: true });
-        compiler.run(null, ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
+        compiler.run(null, ['cmake', '--build', '.', '--config', 'Release'], { workdir, console: true });
+        compiler.run(null, ['cmake', '--install', '.'], { workdir, console: true });
 
         fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
     };
@@ -73,5 +80,6 @@ compiler2.getAllPlatforms().forEach((platform) => {
 });
 
 Promise.all(promises).finally(() => {
+    compiler2.finishBuild();
     fs.rmSync(compiler2.config.paths.temp, { recursive: true, force: true });
 });

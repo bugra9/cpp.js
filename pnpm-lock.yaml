@@ -311,12 +311,45 @@ importers:
       cppjs-core-rn-embind:
         specifier: workspace:^
         version: link:../../core/cppjs-core-rn-embind
+      cppjs-package-expat:
+        specifier: workspace:^
+        version: link:../expat
       cppjs-package-gdal:
         specifier: workspace:^
         version: link:../gdal
+      cppjs-package-geos:
+        specifier: workspace:^
+        version: link:../geos
+      cppjs-package-geotiff:
+        specifier: workspace:^
+        version: link:../geotiff
+      cppjs-package-iconv:
+        specifier: workspace:^
+        version: link:../iconv
+      cppjs-package-proj:
+        specifier: workspace:^
+        version: link:../proj
+      cppjs-package-spatialite:
+        specifier: workspace:^
+        version: link:../spatialite
+      cppjs-package-sqlite3:
+        specifier: workspace:^
+        version: link:../sqlite3
+      cppjs-package-tiff:
+        specifier: workspace:^
+        version: link:../tiff
+      cppjs-package-webp:
+        specifier: workspace:^
+        version: link:../webp
+      cppjs-package-zlib:
+        specifier: workspace:^
+        version: link:../zlib
       cppjs-plugin-react-native:
         specifier: workspace:^
         version: link:../../plugins/cppjs-plugin-react-native
+      cppjs-plugin-react-native-ios-helper:
+        specifier: workspace:^
+        version: link:../../plugins/cppjs-plugin-react-native-ios-helper
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -570,6 +603,8 @@ importers:
       react-native:
         specifier: ^0.72.0
         version: 0.72.6(@babel/core@7.23.3)(@babel/preset-env@7.23.3)(react@18.2.0)
+
+  plugins/cppjs-plugin-react-native-ios-helper: {}
 
   plugins/cppjs-plugin-rollup:
     dependencies:

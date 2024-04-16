@@ -13,8 +13,19 @@
     "react": "18.2.0",
     "react-native": "0.73.4",
     "cppjs-plugin-react-native": "workspace:^",
+    "cppjs-plugin-react-native-ios-helper": "workspace:^",
     "cppjs-core-rn-embind": "workspace:^",
-    "cppjs-package-gdal": "workspace:^"
+    "cppjs-package-gdal": "workspace:^",
+    "cppjs-package-expat": "workspace:^",
+    "cppjs-package-geos": "workspace:^",
+    "cppjs-package-geotiff": "workspace:^",
+    "cppjs-package-iconv": "workspace:^",
+    "cppjs-package-proj": "workspace:^",
+    "cppjs-package-spatialite": "workspace:^",
+    "cppjs-package-sqlite3": "workspace:^",
+    "cppjs-package-tiff": "workspace:^",
+    "cppjs-package-webp": "workspace:^",
+    "cppjs-package-zlib": "workspace:^"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

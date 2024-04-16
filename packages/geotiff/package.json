@@ -1,7 +1,10 @@
 {
     "name": "cppjs-package-geotiff",
     "version": "1.7.1-1.0.0",
-    "license": "MIT",
+    "description": "This library is designed to permit the extraction and parsing of the 'GeoTIFF' Key directories, as well as definition and installation of GeoTIFF keys in new files.",
+    "homepage": "https://github.com/OSGeo/libgeotiff",
+    "license": "SEE LICENSE IN https://github.com/OSGeo/libgeotiff/blob/master/libgeotiff/LICENSE",
+    "author": "",
     "type": "module",
     "scripts": {
         "build": "node build.js"

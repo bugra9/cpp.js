@@ -43,7 +43,7 @@ compiler2.getAllPlatforms().forEach((platform) => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/libwebp-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
 
-        const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
+        const tempPath = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
         const workdir = `${tempPath}/libwebp-${VERSION}`;
         const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
 
@@ -58,10 +58,16 @@ compiler2.getAllPlatforms().forEach((platform) => {
             case 'Android-arm64-v8a':
                 platformParams = ['--host=aarch64-linux-android'];
                 break;
+            case 'iOS-iphoneos':
+                platformParams = ['--host=arm-apple-darwin'];
+                break;
+            case 'iOS-iphonesimulator':
+                platformParams = ['--host=x86_64-apple-darwin'];
+                break;
             default:
         }
 
-        compiler.run(null, ['./configure', `--prefix=/live/${libdir}`, ...platformParams], { workdir, console: true });
+        compiler.run(null, ['./configure', `--prefix=/tmp/cppjs/live/${libdir}`, ...platformParams], { workdir, console: true });
         compiler.run(null, ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
 
         fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
@@ -70,5 +76,6 @@ compiler2.getAllPlatforms().forEach((platform) => {
 });
 
 Promise.all(promises).finally(() => {
+    compiler2.finishBuild();
     fs.rmSync(compiler2.config.paths.temp, { recursive: true, force: true });
 });

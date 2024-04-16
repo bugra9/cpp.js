@@ -43,12 +43,12 @@ compiler2.getAllPlatforms().forEach((platform) => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/zlib-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
 
-        const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
+        const tempPath = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
         const workdir = `${tempPath}/zlib-${VERSION}`;
         const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
 
         // fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
-        await mkdir(libdir, { recursive: true });
+        // await mkdir(libdir, { recursive: true });
 
         let platformParams = [];
         let platformConfig = [];
@@ -60,10 +60,14 @@ compiler2.getAllPlatforms().forEach((platform) => {
                 platformParams = [];
                 platformConfig = ['-e', 'LDFLAGS=-Wl,-soname,libz.so'];
                 break;
+            case 'iOS-iphoneos':
+            case 'iOS-iphonesimulator':
+                platformParams = [];
+                break;
             default:
         }
 
-        compiler.run(null, ['./configure', `--prefix=/live/${libdir}`, ...platformParams], { workdir, console: true, params: platformConfig });
+        compiler.run(null, ['./configure', `--prefix=/tmp/cppjs/live/${libdir}`, ...platformParams], { workdir, console: true, params: platformConfig });
         compiler.run(null, ['make', `-j${cpuCount}`, 'install'], { workdir, console: true, params: platformConfig });
 
         fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
@@ -72,5 +76,6 @@ compiler2.getAllPlatforms().forEach((platform) => {
 });
 
 Promise.all(promises).finally(() => {
+    compiler2.finishBuild();
     fs.rmSync(compiler2.config.paths.temp, { recursive: true, force: true });
 });

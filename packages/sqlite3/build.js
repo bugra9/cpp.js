@@ -44,9 +44,9 @@ compiler2.getAllPlatforms().forEach((platform) => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/sqlite-autoconf-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
 
-        const tempPath = `/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
+        const tempPath = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
         const workdir = `${tempPath}/sqlite-autoconf-${VERSION}`;
-        const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
+        const libdir = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
 
         // fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
         await mkdir(libdir, { recursive: true });
@@ -59,15 +59,21 @@ compiler2.getAllPlatforms().forEach((platform) => {
             case 'Android-arm64-v8a':
                 platformParams = ['--host=aarch64-linux-android'];
                 break;
+            case 'iOS-iphoneos':
+                platformParams = ['--host=arm-apple-darwin', '--enable-shared=no'];
+                break;
+            case 'iOS-iphonesimulator':
+                platformParams = ['--host=x86_64-apple-darwin', '--enable-shared=no'];
+                break;
             default:
         }
 
-        const zlibPath = `/live/${getPathInfo(zlibConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
-        compiler.run(null, ['./configure', `--prefix=/live/${libdir}`, ...platformParams], {
+        const zlibPath = `/tmp/cppjs/live/${getPathInfo(zlibConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
+        compiler.run(null, ['./configure', `--prefix=${libdir}`, ...platformParams], {
             workdir,
             console: true,
             params: [
-                '-e', `CFLAGS=-I${zlibPath}/include -DSQLITE_DISABLE_LFS -DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_FTS3_PARENTHESIS -DSQLITE_ENABLE_JSON1 -DSQLITE_THREADSAFE=0 -DSQLITE_ENABLE_NORMALIZE`,
+                '-e', `CFLAGS=-I${zlibPath}/include -DSQLITE_NOHAVE_SYSTEM -DSQLITE_DISABLE_LFS -DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_FTS3_PARENTHESIS -DSQLITE_ENABLE_JSON1 -DSQLITE_THREADSAFE=0 -DSQLITE_ENABLE_NORMALIZE -DSQLITE_ENABLE_COLUMN_METADATA`,
                 '-e', `CPPFLAGS=-I${zlibPath}/include`,
                 '-e', `LDFLAGS=-L${zlibPath}/lib`,
             ],
@@ -80,5 +86,6 @@ compiler2.getAllPlatforms().forEach((platform) => {
 });
 
 Promise.all(promises).finally(() => {
+    compiler2.finishBuild();
     fs.rmSync(compiler2.config.paths.temp, { recursive: true, force: true });
 });
