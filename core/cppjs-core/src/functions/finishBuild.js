@@ -4,6 +4,11 @@ import getPathInfo from '../utils/getPathInfo.js';
 
 export default function finishBuild(compiler) {
     const output = getPathInfo(compiler.config.paths.output, compiler.config.paths.base);
+    if (
+        !fs.existsSync(`${output.absolute}/prebuilt/iOS-iphoneos/lib`)
+        || !fs.existsSync(`${output.absolute}/prebuilt/iOS-iphonesimulator/lib`)
+    ) return;
+
     const options = {
         cwd: `${output.absolute}/prebuilt`,
         stdio: 'inherit',
@@ -29,4 +34,10 @@ export default function finishBuild(compiler) {
             fs.symlinkSync(`${options.cwd}/${fileName}.xcframework`, `${compiler.config.paths.project}/${fileName}.xcframework`);
         }
     });
+    /* if (fs.existsSync(`${output.absolute}/prebuilt/iOS-iphoneos`)) {
+        fs.rmSync(`${output.absolute}/prebuilt/iOS-iphoneos`, { recursive: true, force: true });
+    }
+    if (fs.existsSync(`${output.absolute}/prebuilt/iOS-iphonesimulator`)) {
+        fs.rmSync(`${output.absolute}/prebuilt/iOS-iphonesimulator`, { recursive: true, force: true });
+    } */
 }

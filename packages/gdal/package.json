@@ -1,13 +1,15 @@
 {
     "name": "cppjs-package-gdal",
-    "version": "3.8.1-1.0.0",
+    "version": "1.0.0-alpha.2",
+    "nativeVersion": "3.9.2",
     "description": "GDAL is an open source MIT licensed translator library for raster and vector geospatial data formats. ",
     "homepage": "https://github.com/OSGeo/gdal",
     "license": "SEE LICENSE IN https://github.com/OSGeo/gdal/blob/master/LICENSE.TXT",
-    "author": "",
     "type": "module",
     "scripts": {
-        "build": "node build.js"
+        "build": "node build.js",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "postinstall": "cpp.js postinstall"
     },
     "dependencies": {
         "cpp.js": "workspace:^",

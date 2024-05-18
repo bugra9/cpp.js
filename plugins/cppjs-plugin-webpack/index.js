@@ -21,10 +21,10 @@ export default class CppjsWebpackPlugin {
         callback();
     }
 
-    onDone({ compilation }) {
+    async onDone({ compilation }) {
         const isDev = compilation.options.mode === 'development';
         this.compiler.createBridge();
-        this.compiler.createWasm({ cc: ['-O3'] });
+        await this.compiler.createWasm({ cc: ['-O3'] });
         if (!isDev) {
             fs.copyFileSync(`${this.compiler.config.paths.temp}/${this.compiler.config.general.name}.js`, `${compilation.options.output.path}/cpp.js`);
             fs.copyFileSync(`${this.compiler.config.paths.temp}/${this.compiler.config.general.name}.wasm`, `${compilation.options.output.path}/cpp.wasm`);

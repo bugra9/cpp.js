@@ -35,13 +35,49 @@ export default {
         output: 'dist',
     },
     platform: {
-        'Emscripten-x86_64': {
+        'Android-arm64-v8a': {
+            data: {
+                'share/gdal': 'gdal',
+            },
+            env: {
+                GDAL_DATA: '_CPPJS_DATA_PATH_/gdal',
+                DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
+                GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
+                // CPL_DEBUG: 'ON',
+                CPL_LOG_ERRORS: 'ON',
+            },
+        },
+        'iOS-iphoneos': {
+            data: {
+                'share/gdal': 'gdal',
+            },
+            env: {
+                GDAL_DATA: '_CPPJS_DATA_PATH_/gdal',
+                DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
+                GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
+                // CPL_DEBUG: 'ON',
+                CPL_LOG_ERRORS: 'ON',
+            },
+        },
+        'Emscripten-x86_64-browser': {
             data: {
                 'share/gdal': '/usr/share/gdal',
             },
             env: {
-                PROJ_LIB: '/usr/share/proj',
                 GDAL_DATA: '/usr/share/gdal',
+                DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
+                GDAL_NUM_THREADS: '0',
+                GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
+                // CPL_DEBUG: 'ON',
+                CPL_LOG_ERRORS: 'ON',
+            },
+        },
+        'Emscripten-x86_64-node': {
+            data: {
+                'share/gdal': 'gdal',
+            },
+            env: {
+                GDAL_DATA: '_CPPJS_DATA_PATH_/gdal',
                 DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
                 GDAL_NUM_THREADS: '0',
                 GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',

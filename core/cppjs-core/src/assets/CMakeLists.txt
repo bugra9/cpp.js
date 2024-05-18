@@ -45,14 +45,14 @@ file(GLOB_RECURSE HEADER_FILES ${HEADER_GLOB})
 target_include_directories("${PROJECT_NAME}" PUBLIC "${HEADER_DIR}")
 
 if (BUILD_SOURCE)
-    target_sources("${PROJECT_NAME}"
-        PUBLIC FILE_SET HEADERS
-        BASE_DIRS "${HEADER_DIR}"
-        FILES "${HEADER_FILES}")
-    string(REPLACE "-" ";" HEADER_FOLDER ${PROJECT_NAME})
-    list(GET HEADER_FOLDER 2 HEADER_FOLDER)
-    install(TARGETS "${PROJECT_NAME}" DESTINATION "prebuilt/${PACKAGE_HOST}/lib")
-    install(TARGETS "${PROJECT_NAME}" FILE_SET HEADERS DESTINATION "prebuilt/${PACKAGE_HOST}/include/cppjs-lib-${HEADER_FOLDER}")
+    install(TARGETS "${PROJECT_NAME}" DESTINATION "lib")
+    if(NOT "${HEADER_FILES}" STREQUAL "")
+        target_sources("${PROJECT_NAME}"
+            PUBLIC FILE_SET HEADERS
+            BASE_DIRS "${HEADER_DIR}"
+            FILES "${HEADER_FILES}")
+        install(TARGETS "${PROJECT_NAME}" FILE_SET HEADERS DESTINATION "include")
+    endif()
 endif(BUILD_SOURCE)
 unset(BUILD_SOURCE CACHE)
 

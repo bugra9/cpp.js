@@ -10,10 +10,11 @@ import projConfig from 'cppjs-package-proj/cppjs.config.js';
 import tiffConfig from 'cppjs-package-tiff/cppjs.config.js';
 import zlibConfig from 'cppjs-package-zlib/cppjs.config.js';
 import { mkdir } from 'node:fs/promises';
+import packageJson from './package.json' assert { type: 'json' };
 
+const VERSION = packageJson.nativeVersion;
 const cpuCount = os.cpus().length - 1;
 
-const VERSION = '1.7.1';
 const url = `https://download.osgeo.org/geotiff/libgeotiff/libgeotiff-${VERSION}.tar.gz`;
 
 function downloadFile(url, folder) {
@@ -41,7 +42,13 @@ fs.writeFileSync(`${compiler2.config.paths.output}/prebuilt/CMakeLists.txt`, dis
 
 const promises = [];
 compiler2.getAllPlatforms().forEach((platform) => {
-    if (fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${platform}/lib`)) return;
+    const basePlatform = platform.split('-', 1)[0];
+    if (
+        (basePlatform === 'iOS' && fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${compiler2.config.general.name}.xcframework`))
+        || (basePlatform !== 'iOS' && fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${platform}/lib`))
+    ) {
+        return;
+    }
     const job = async () => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/libgeotiff-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
@@ -51,7 +58,7 @@ compiler2.getAllPlatforms().forEach((platform) => {
         const libdir = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
 
         // fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
-        await mkdir(libdir, { recursive: true });
+        // await mkdir(libdir, { recursive: true });
 
         let platformParams = [];
         let libs = [];
@@ -91,7 +98,7 @@ compiler2.getAllPlatforms().forEach((platform) => {
             console: true,
             params: [
                 '-e', `CFLAGS=${cFlags}`,
-                '-e', `CPPFLAGS=${cFlags}`,
+                '-e', `CXXFLAGS=${cFlags}`,
                 '-e', `LDFLAGS=${ldFlags} ${libs.join(' ')}`,
             ],
         });

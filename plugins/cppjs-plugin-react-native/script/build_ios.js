@@ -7,20 +7,31 @@ import RNCppjsPluginReactNative from '../cppjs.config.mjs';
 const projectPath = RNCppjsPluginReactNative.paths.project;
 
 const compiler = new CppjsCompiler();
+const defaultTempPath = `${compiler.config.paths.project}/.cppjs/default`;
 
-let headers = [];
-compiler.config.paths.header.forEach((header) => {
-    compiler.config.ext.header.forEach((ext) => {
-        headers.push(
-            ...glob.sync(`${header}/*.${ext}`, { absolute: true, cwd: compiler.config.paths.project }),
-            ...glob.sync(`${header}/**/*.${ext}`, { absolute: true, cwd: compiler.config.paths.project }),
+if (fs.existsSync(defaultTempPath)) {
+    compiler.config.ext.module.forEach((ext) => {
+        compiler.interfaces.push(
+            ...glob.sync(`${defaultTempPath}/interface/*.${ext}`, { absolute: true, cwd: compiler.config.paths.project }),
         );
     });
-});
-headers = [...new Set(headers)];
-headers.forEach((header) => {
-    compiler.findOrCreateInterfaceFile(header);
-});
+} else {
+    let headers = [];
+    compiler.config.paths.header.forEach((header) => {
+        compiler.config.ext.header.forEach((ext) => {
+            headers.push(
+                ...glob.sync(`${header}/*.${ext}`, { absolute: true, cwd: compiler.config.paths.project }),
+                ...glob.sync(`${header}/**/*.${ext}`, { absolute: true, cwd: compiler.config.paths.project }),
+            );
+        });
+    });
+
+    headers = [...new Set(headers)];
+    headers.forEach((header) => {
+        compiler.findOrCreateInterfaceFile(header);
+    });
+}
+
 compiler.createBridge();
 const params = compiler.getCmakeParams();
 params.forEach((param, i) => {
@@ -39,7 +50,7 @@ params.push(...[
 ['iOS-iphoneos', 'iOS-iphonesimulator'].forEach((platform) => {
     const compiler2 = new CppjsCompiler(platform);
     compiler2.run(null, [
-        'cmake', `${compiler.config.paths.cli}/assets/CMakeLists.txt`, `-DCMAKE_INSTALL_PREFIX=${compiler.config.paths.temp}`, '-DCMAKE_BUILD_TYPE=Release', ...params,
+        'cmake', `${compiler.config.paths.cli}/assets/CMakeLists.txt`, `-DCMAKE_INSTALL_PREFIX=${compiler.config.paths.temp}/prebuilt/${platform}`, '-DCMAKE_BUILD_TYPE=Release', ...params,
     ], { workdir: compiler2.config.paths.temp, console: true });
     compiler2.run(null, ['cmake', '--build', '.', '--config', 'Release'], { workdir: compiler2.config.paths.temp, console: true });
     compiler2.run(null, ['cmake', '--install', '.'], { workdir: compiler2.config.paths.temp, console: true });

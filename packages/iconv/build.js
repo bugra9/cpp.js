@@ -7,11 +7,12 @@ import decompressTargz from 'decompress-targz';
 import CppjsCompiler from 'cpp.js';
 import getPathInfo from 'cpp.js/src/utils/getPathInfo.js';
 import { mkdir } from 'node:fs/promises';
+import packageJson from './package.json' assert { type: 'json' };
 
+const VERSION = packageJson.nativeVersion;
 const cpuCount = os.cpus().length - 1;
 
-const ICONV_VERSION = '1.17';
-const url = `https://ftp.gnu.org/pub/gnu/libiconv/libiconv-${ICONV_VERSION}.tar.gz`;
+const url = `https://ftp.gnu.org/pub/gnu/libiconv/libiconv-${VERSION}.tar.gz`;
 
 function downloadFile(url, folder) {
     return new Promise((resolve) => {
@@ -38,13 +39,19 @@ fs.writeFileSync(`${compiler2.config.paths.output}/prebuilt/CMakeLists.txt`, dis
 
 const promises = [];
 compiler2.getAllPlatforms().forEach((platform) => {
-    if (fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${platform}/lib`)) return;
+    const basePlatform = platform.split('-', 1)[0];
+    if (
+        (basePlatform === 'iOS' && fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${compiler2.config.general.name}.xcframework`))
+        || (basePlatform !== 'iOS' && fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${platform}/lib`))
+    ) {
+        return;
+    }
     const job = async () => {
         const compiler = new CppjsCompiler(platform);
-        await decompress(`${compiler2.config.paths.temp}/libiconv-${ICONV_VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
+        await decompress(`${compiler2.config.paths.temp}/libiconv-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
 
         const tempPath = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
-        const workdir = `${tempPath}/libiconv-${ICONV_VERSION}`;
+        const workdir = `${tempPath}/libiconv-${VERSION}`;
         const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}/lib`;
         const includedir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}/include`;
 

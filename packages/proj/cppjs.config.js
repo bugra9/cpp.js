@@ -19,9 +19,36 @@ export default {
         output: 'dist',
     },
     platform: {
-        'Emscripten-x86_64': {
+        'Emscripten-x86_64-browser': {
             data: {
                 'share/proj': '/usr/share/proj',
+            },
+            env: {
+                PROJ_LIB: '/usr/share/proj',
+            },
+        },
+        'Emscripten-x86_64-node': {
+            data: {
+                'share/proj': 'proj',
+            },
+            env: {
+                PROJ_LIB: '_CPPJS_DATA_PATH_/proj',
+            },
+        },
+        'Android-arm64-v8a': {
+            data: {
+                'share/proj': 'proj',
+            },
+            env: {
+                PROJ_LIB: '_CPPJS_DATA_PATH_/proj',
+            },
+        },
+        'iOS-iphoneos': {
+            data: {
+                'share/proj': 'proj',
+            },
+            env: {
+                PROJ_LIB: '_CPPJS_DATA_PATH_/proj',
             },
         },
     },

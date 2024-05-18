@@ -4,7 +4,7 @@ Bind C++ codes to JS on the web and react native without writing extra code.
 
 > **Note:** This project is currently under heavy development.
 
-<https://gdal3.js.org>
+<https://cpp.js.org>
   
   \
 **Why Cpp.js?**  
@@ -47,4 +47,4 @@ public:
 ## License
 [MIT](https://opensource.org/licenses/MIT)
 
-Copyright (c) 2023-present, Buğra Sarı
+Copyright (c) 2024, Buğra Sarı

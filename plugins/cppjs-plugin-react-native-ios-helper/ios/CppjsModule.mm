@@ -6,7 +6,7 @@
 
 namespace emscripten {
 namespace internal {
-__attribute__((used)) void _embind_initialize_bindings(facebook::jsi::Runtime& rt);
+__attribute__((used)) void _embind_initialize_bindings(facebook::jsi::Runtime& rt, std::string path);
 }
 }
 
@@ -20,7 +20,8 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(start)
 {
     RCTCxxBridge *cxxBridge = (RCTCxxBridge *)self.bridge;
     jsi::Runtime* runtime = (jsi::Runtime*)cxxBridge.runtime;
-    emscripten::internal::_embind_initialize_bindings(*runtime);
+    NSString *mainBundlePath = [[NSBundle mainBundle] bundlePath];
+    emscripten::internal::_embind_initialize_bindings(*runtime, std::string([mainBundlePath UTF8String]));
     return @true;
 }
 

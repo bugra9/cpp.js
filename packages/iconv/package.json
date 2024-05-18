@@ -1,13 +1,15 @@
 {
     "name": "cppjs-package-iconv",
-    "version": "1.17.0-1.0.0",
+    "version": "1.0.0-alpha.2",
+    "nativeVersion": "1.17",
     "description": "Iconv can convert from any of these encodings to any other, through Unicode conversion.",
     "homepage": "https://www.gnu.org/software/libiconv/",
     "license": "LGPL",
-    "author": "",
     "type": "module",
     "scripts": {
-        "build": "node build.js"
+        "build": "node build.js",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "postinstall": "cpp.js postinstall"
     },
     "dependencies": {
         "cpp.js": "workspace:^"

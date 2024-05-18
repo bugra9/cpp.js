@@ -18,10 +18,11 @@ import sqlite3Config from 'cppjs-package-sqlite3/cppjs.config.js';
 import tiffConfig from 'cppjs-package-tiff/cppjs.config.js';
 import webpConfig from 'cppjs-package-webp/cppjs.config.js';
 import zlibConfig from 'cppjs-package-zlib/cppjs.config.js';
+import packageJson from './package.json' assert { type: 'json' };
 
+const VERSION = packageJson.nativeVersion;
 const cpuCount = os.cpus().length - 1;
 
-const VERSION = '3.8.5';
 const url = `https://github.com/OSGeo/gdal/releases/download/v${VERSION}/gdal-${VERSION}.tar.gz`;
 
 function downloadFile(url, folder) {
@@ -49,7 +50,13 @@ fs.writeFileSync(`${compiler2.config.paths.output}/prebuilt/CMakeLists.txt`, dis
 
 const promises = [];
 compiler2.getAllPlatforms().forEach((platform) => {
-    if (fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${platform}/lib`)) return;
+    const basePlatform = platform.split('-', 1)[0];
+    if (
+        (basePlatform === 'iOS' && fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${compiler2.config.general.name}.xcframework`))
+        || (basePlatform !== 'iOS' && fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${platform}/lib`))
+    ) {
+        return;
+    }
     const job = async () => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/gdal-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
@@ -87,7 +94,6 @@ compiler2.getAllPlatforms().forEach((platform) => {
         const webpPath = `/tmp/cppjs/live/${getPathInfo(webpConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
         const zlibPath = `/tmp/cppjs/live/${getPathInfo(zlibConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
 
-        const basePlatform = platform.split('-', 1)[0];
         let platformParams = [];
         let ext;
         switch (platform) {
@@ -110,11 +116,13 @@ compiler2.getAllPlatforms().forEach((platform) => {
             default:
         }
 
+        const EMCC_CFLAGS = '-DRENAME_INTERNAL_LIBTIFF_SYMBOLS';
         compiler.run(null, [
             basePlatform === 'iOS' ? 'ios-cmake' : 'cmake', '..', `-DCMAKE_INSTALL_PREFIX=/tmp/cppjs/live/${libdir}`, '-DCMAKE_BUILD_TYPE=Release', ...platformParams,
             `-DCMAKE_PREFIX_PATH=/tmp/cppjs/live/${libdir}`, `-DCMAKE_FIND_ROOT_PATH=/tmp/cppjs/live/${libdir}`,
-            '-DBUILD_APPS=OFF', '-DGDAL_ENABLE_DRIVER_PDS=OFF', '-DBUILD_TESTING=OFF', '-DGDAL_USE_ZSTD=OFF',
-            '-DGDAL_USE_HDF5=OFF', '-DGDAL_USE_HDFS=OFF', '-DACCEPT_MISSING_SQLITE3_MUTEX_ALLOC=ON',
+            '-DBUILD_APPS=OFF', '-DBUILD_TESTING=OFF', '-DACCEPT_MISSING_SQLITE3_MUTEX_ALLOC=ON',
+            '-DOGR_ENABLE_DRIVER_GPSBABEL=OFF', '-DGDAL_USE_HDF5=OFF', '-DGDAL_USE_HDFS=OFF',
+            '-DGDAL_USE_ZSTD=OFF', '-DGDAL_ENABLE_DRIVER_PDS=OFF',
             `-DSQLite3_INCLUDE_DIR=${sqlite3Path}/include`, `-DSQLite3_LIBRARY=${sqlite3Path}/lib/libsqlite3.${ext}`,
             `-DPROJ_INCLUDE_DIR=${projPath}/include`, `-DPROJ_LIBRARY_RELEASE=${projPath}/lib/libproj.${ext}`,
             `-DTIFF_INCLUDE_DIR=${tiffPath}/include`, `-DTIFF_LIBRARY_RELEASE=${tiffPath}/lib/libtiff.${ext}`,
@@ -125,11 +133,21 @@ compiler2.getAllPlatforms().forEach((platform) => {
             `-DWEBP_INCLUDE_DIR=${webpPath}/include`, `-DWEBP_LIBRARY=${webpPath}/lib/libwebp.${ext}`,
             `-DEXPAT_INCLUDE_DIR=${expatPath}/include`, `-DEXPAT_LIBRARY=${expatPath}/lib/libexpat.${ext}`,
             `-DIconv_INCLUDE_DIR=${iconvPath}/include`, `-DIconv_LIBRARY=${iconvPath}/lib/libiconv.${ext}`,
-        ], { workdir, console: true });
-        compiler.run(null, [basePlatform === 'iOS' ? 'ios-cmake' : 'cmake', '--build', '.', '--config', 'Release', '--target', 'install'], { workdir, console: true });
+        ], { workdir, console: true, params: [
+            '-e', `CFLAGS="${EMCC_CFLAGS}"`,
+            '-e', `CPPFLAGS="${EMCC_CFLAGS}"`,
+            '-e', `EMCC_CFLAGS="${EMCC_CFLAGS}"`,
+        ], });
+        if (basePlatform === 'iOS') {
+            compiler.run(null, ['ios-cmake', '--build', '.', '--config', 'Release', '--target', 'install'], { workdir, console: true });
+        } else {
+            compiler.run(null, ['make', `-j${cpuCount}`, 'install'], { workdir, console: true, params: [
+                '-e', `CFLAGS="${EMCC_CFLAGS}"`,
+                '-e', `CPPFLAGS="${EMCC_CFLAGS}"`,
+                '-e', `EMCC_CFLAGS="${EMCC_CFLAGS}"`,
+            ], });
+        }
 
-        fs.copyFileSync(`${compiler.config.paths.project}/assets/Gdal.i`, `${compiler.config.paths.output}/prebuilt/${platform}/swig/Gdal.i`);
-        fs.copyFileSync(`${compiler.config.paths.project}/assets/gdalcpp.h`, `${compiler.config.paths.output}/prebuilt/${platform}/include/gdalcpp.h`);
         fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
     };
     promises.push(job());

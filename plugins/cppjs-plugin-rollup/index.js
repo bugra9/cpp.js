@@ -12,11 +12,35 @@ const rollupCppjsPlugin = (options, _compiler) => {
     const moduleRegex = new RegExp(`.(${compiler.config.ext.module.join('|')})$`);
     const dependPackageNames = compiler.config.getAllDependencies();
 
+    const params = `{
+        ...config,
+        env: {...${env}, ...config.env},
+        paths: {
+            wasm: 'cpp.wasm',
+            data: 'cpp.data.txt'
+        }
+    }`;
+
+    const CppJs = `
+export const Native = {};
+export function initCppJs(config = {}) {
+    return new Promise(
+        (resolve, reject) => import('/cpp.js').then(n => { return window.CppJs.initCppJs(${params})}).then(m => {
+            Native = m;
+            resolve(m);
+        })
+    );
+}
+`;
+
     return {
         name: 'rollup-plugin-cppjs',
         resolveId(source) {
             if (source === '/cpp.js') {
                 return { id: source, external: true };
+            }
+            if (source === 'cpp.js') {
+                return { id: source, external: false };
             }
 
             const dependPackage = dependPackageNames.find((d) => source.startsWith(d.package.name));
@@ -34,14 +58,20 @@ const rollupCppjsPlugin = (options, _compiler) => {
             }
             return null;
         },
+        load(id) {
+            if (id === 'cpp.js') {
+                return CppJs;
+            }
+            return null;
+        },
         async transform(code, path) {
             if (!headerRegex.test(path) && !moduleRegex.test(path)) {
-                return;
+                return null;
             }
 
             compiler.findOrCreateInterfaceFile(path);
 
-            return `export default function() { return new Promise((resolve, reject) => import('/cpp.js').then(n => n.default({env: ${env}, paths: {wasm: 'cpp.wasm', data: 'cpp.data'}})).then(resolve)); }`;
+            return CppJs;
         },
         buildStart() {
             const watch = (dirs) => {
@@ -63,9 +93,9 @@ const rollupCppjsPlugin = (options, _compiler) => {
 
             watch(compiler.config.paths.native);
         },
-        generateBundle() {
+        async generateBundle() {
             compiler.createBridge();
-            compiler.createWasm({ cc: ['-O3'] });
+            await compiler.createWasm({ cc: ['-O3'] });
             this.emitFile({
                 type: 'asset',
                 source: fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.js`),
@@ -76,12 +106,12 @@ const rollupCppjsPlugin = (options, _compiler) => {
                 source: fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`),
                 fileName: 'cpp.wasm',
             });
-            const dataFilePath = `${compiler.config.paths.temp}/${compiler.config.general.name}.data`;
+            const dataFilePath = `${compiler.config.paths.temp}/${compiler.config.general.name}.data.txt`;
             if (fs.existsSync(dataFilePath)) {
                 this.emitFile({
                     type: 'asset',
                     source: fs.readFileSync(dataFilePath),
-                    fileName: 'cpp.data',
+                    fileName: 'cpp.data.txt',
                 });
             }
             const isWatching = process.argv.includes('-w') || process.argv.includes('--watch');

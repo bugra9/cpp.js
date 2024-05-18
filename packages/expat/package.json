@@ -1,13 +1,16 @@
 {
     "name": "cppjs-package-expat",
-    "version": "2.6.0-0.1.0",
+    "version": "1.0.0-alpha.2",
+    "nativeVersion": "2.6.2",
     "description": "Fast streaming XML parser",
     "homepage": "https://github.com/libexpat/libexpat",
-    "license": "SEE LICENSE IN https://github.com/libexpat/libexpat/blob/master/expat/COPYING",
-    "author": "",
+    "license": "MIT",
+    "author": "Thai Open Source Software Center Ltd, Clark Cooper, and Expat maintainers",
     "type": "module",
     "scripts": {
-        "build": "node build.js"
+        "build": "node build.js",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "postinstall": "cpp.js postinstall"
     },
     "dependencies": {
         "cpp.js": "workspace:^"

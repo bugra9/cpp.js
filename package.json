@@ -1,7 +1,11 @@
 {
+    "private": true,
     "scripts": {
         "docs:deploy": "push-dir --dir=website/build --branch=gh-pages --cleanup",
-        "build:gdal": "pnpm --filter=cppjs-package-iconv run build && pnpm --filter=cppjs-package-zlib run build && pnpm --filter=cppjs-package-expat run build && pnpm --filter=cppjs-package-webp run build && pnpm --filter=cppjs-package-tiff run build && pnpm --filter=cppjs-package-sqlite3 run build && pnpm --filter=cppjs-package-proj run build && pnpm --filter=cppjs-package-geotiff run build && pnpm --filter=cppjs-package-geos run build && pnpm --filter=cppjs-package-spatialite run build && pnpm --filter=cppjs-package-gdal run build"
+        "build:gdal": "pnpm --filter=cppjs-package-iconv run build && pnpm --filter=cppjs-package-zlib run build && pnpm --filter=cppjs-package-expat run build && pnpm --filter=cppjs-package-webp run build && pnpm --filter=cppjs-package-tiff run build && pnpm --filter=cppjs-package-sqlite3 run build && pnpm --filter=cppjs-package-proj run build && pnpm --filter=cppjs-package-geotiff run build && pnpm --filter=cppjs-package-geos run build && pnpm --filter=cppjs-package-spatialite run build && pnpm --filter=cppjs-package-gdal run build",
+        "pack:clear": "zsh -c \"rm **/*.tgz\"",
+        "pack:list": "zsh -c \"ls -Slh **/*.tgz\"",
+        "pack:build": "pnpm pack:clear; node ./scripts/pack-all.mjs && pnpm pack:list"
     },
     "devDependencies": {
         "cpp.js": "workspace:^",
