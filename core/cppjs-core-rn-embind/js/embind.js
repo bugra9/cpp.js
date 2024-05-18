@@ -567,7 +567,7 @@ function readFromMemoryUsingBit(pointer, signed, bit) {
     default:
         throw new TypeError("Unknown bit");
   }
-  
+
   return readFromMemoryUsingShift(pointer, signed, shift);
 }
 
@@ -583,7 +583,7 @@ function readFromMemoryUsingSize(pointer, signed, bit) {
     default:
         throw new TypeError("Unknown size");
   }
-  
+
   return readFromMemoryUsingShift(pointer, signed, shift);
 }
 
@@ -1512,7 +1512,7 @@ function dbg(text) {
               return readFromMemoryUsingShift(pointer, true, 2, true);
             };
           case 3:
-          case 3n:  
+          case 3n:
             return function(pointer) {
               return readFromMemoryUsingShift(pointer, true, 3, true);
             };
@@ -1552,7 +1552,7 @@ function dbg(text) {
   function simpleReadValueFromPointer(pointer) {
       /* console.log(
         'simpleReadValueFromPointer :',
-        this.name, JSON.stringify(pointer, null, 2), 
+        this.name, JSON.stringify(pointer, null, 2),
         readFromMemoryUsingShift(pointer, true, 2)
       ); */
       return this['fromWireType'](readFromMemoryUsingShift(pointer, true, 2));
@@ -1561,7 +1561,7 @@ function dbg(text) {
   function simpleReadValueFromPointer64(pointer) {
       /* console.log(
         'simpleReadValueFromPointer :',
-        this.name, JSON.stringify(pointer, null, 3), 
+        this.name, JSON.stringify(pointer, null, 3),
         readFromMemoryUsingShift(pointer, true, 3)
       ); */
       return this['fromWireType'](readFromMemoryUsingShift(pointer, false, 3));
@@ -1618,7 +1618,7 @@ function dbg(text) {
     }
   function stringToUTF8(str, outPtr, maxBytesToWrite) {
       assert(typeof maxBytesToWrite == 'number', 'stringToUTF8(str, outPtr, maxBytesToWrite) is missing the third parameter that specifies the length of the output buffer!');
-      
+
       const index = getHeapIndex(outPtr);
       return stringToUTF8Array(str, HEAPU8[index], outPtr - HEAP_OFFSET[index], maxBytesToWrite);
     }
@@ -1768,7 +1768,7 @@ function dbg(text) {
           /* if (!usePointer) {
             return value;
           }
-          
+
           if (value instanceof ArrayBuffer) {
             value = new Uint8Array(value)
           }
@@ -4746,3 +4746,23 @@ run();
 
 globalThis.Module['ASSERTIONS'] = true;
 export default globalThis.Module;
+
+function toArray(vector) {
+    console.log('aaaaa', vector);
+    const output = [];
+    for (let i = 0; i < vector.size(); i += 1) {
+        output.push(vector.get(i));
+    }
+    return output;
+}
+
+function toVector(VectorClass, array = []) {
+    const vector = new VectorClass();
+    array.forEach((item) => {
+        vector.push_back(item);
+    });
+    return vector;
+}
+
+globalThis.Module.toArray = toArray;
+globalThis.Module.toVector = toVector;

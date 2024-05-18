@@ -7,10 +7,11 @@ import decompressTargz from 'decompress-targz';
 import CppjsCompiler from 'cpp.js';
 import getPathInfo from 'cpp.js/src/utils/getPathInfo.js';
 import { mkdir } from 'node:fs/promises';
+import packageJson from './package.json' assert { type: 'json' };
 
+const VERSION = packageJson.nativeVersion;
 const cpuCount = os.cpus().length - 1;
 
-const VERSION = '1.3.2';
 const url = `https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-${VERSION}.tar.gz`;
 
 function downloadFile(url, folder) {
@@ -38,7 +39,13 @@ fs.writeFileSync(`${compiler2.config.paths.output}/prebuilt/CMakeLists.txt`, dis
 
 const promises = [];
 compiler2.getAllPlatforms().forEach((platform) => {
-    if (fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${platform}/lib`)) return;
+    const basePlatform = platform.split('-', 1)[0];
+    if (
+        (basePlatform === 'iOS' && fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${compiler2.config.general.name}.xcframework`))
+        || (basePlatform !== 'iOS' && fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${platform}/lib`))
+    ) {
+        return;
+    }
     const job = async () => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/libwebp-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
@@ -48,7 +55,7 @@ compiler2.getAllPlatforms().forEach((platform) => {
         const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
 
         // fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
-        await mkdir(libdir, { recursive: true });
+        // await mkdir(libdir, { recursive: true });
 
         let platformParams = [];
         switch (platform) {

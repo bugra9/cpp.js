@@ -88,6 +88,7 @@ export default function run(compiler, program, params = [], dockerOptions = {}) 
     if (program === null) {
         switch (basePlatform) {
             case 'Emscripten':
+                platformParams = ['-e', 'CXXFLAGS=-fexceptions', '-e', 'CFLAGS=-fexceptions'];
                 if (params[0].includes('configure')) dProgram = 'emconfigure';
                 else if (params[0] === 'make') dProgram = 'emmake';
                 else if (params[0] === 'cmake') dProgram = 'emcmake';
@@ -123,8 +124,8 @@ export default function run(compiler, program, params = [], dockerOptions = {}) 
                             `-DCMAKE_OSX_ARCHITECTURES=${arch[0] === 'iphoneos' ? 'arm64;arm64e' : 'arm64;arm64e;x86_64'}`,
                             `-DCMAKE_C_FLAGS=${arch[0] === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
                             `-DCMAKE_CXX_FLAGS=${arch[0] === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
-                            // '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY=\'iPhone Developer\'',
-                            // '-DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=7ZZLDWBUVT',
+                            '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY=\'iPhone Developer\'',
+                            '-DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=7ZZLDWBUVT',
                         ];
                     }
                 } else if (dProgram === 'ios-cmake') {
@@ -147,8 +148,8 @@ export default function run(compiler, program, params = [], dockerOptions = {}) 
                             `-DCMAKE_OSX_ARCHITECTURES=${arch[0] === 'iphoneos' ? 'arm64;arm64e' : 'arm64;arm64e;x86_64'}`,
                             `-DCMAKE_C_FLAGS=${arch[0] === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
                             `-DCMAKE_CXX_FLAGS=${arch[0] === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
-                            // '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY=\'iPhone Developer\'',
-                            // '-DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=7ZZLDWBUVT',
+                            '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY=\'iPhone Developer\'',
+                            '-DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=7ZZLDWBUVT',
                         ];
                     }
                 }

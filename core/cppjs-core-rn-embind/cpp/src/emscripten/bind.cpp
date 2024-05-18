@@ -19,11 +19,14 @@
 
 #include <any>
 #include <unordered_map>
+#include <stdlib.h>
 
 
 using namespace emscripten;
 using namespace internal;
 using namespace facebook;
+
+std::string CPPJS_DATA_PATH = "";
 
 namespace emscripten {
     facebook::jsi::Runtime* jsRuntime = nullptr;
@@ -907,7 +910,9 @@ namespace emscripten {
         };
 
 
-        EMSCRIPTEN_KEEPALIVE void _embind_initialize_bindings(jsi::Runtime& rt) {
+        EMSCRIPTEN_KEEPALIVE void _embind_initialize_bindings(jsi::Runtime& rt, std::string path) {
+            CPPJS_DATA_PATH = path;
+            CppJS::setEnv("CPPJS_DATA_PATH", path, false);
             jsRuntime = &rt;
 
             char* name = "M";
@@ -1006,6 +1011,15 @@ template <typename T> static void register_memory_view(const char* name) {
 }
 } // namespace
 
+int CppJS::setEnv(std::string key, std::string value, bool overwrite) {
+    return setenv(key.c_str(), value.c_str(), overwrite);
+}
+std::string CppJS::getEnv(std::string key) {
+    char* value = getenv(key.c_str());
+    std::string valueStr = std::string(value);
+    // free(value);
+    return valueStr;
+}
 
 EMSCRIPTEN_BINDINGS(builtin) {
   using namespace emscripten::internal;
@@ -1070,11 +1084,17 @@ EMSCRIPTEN_BINDINGS(builtin) {
   register_memory_view<double>("emscripten::memory_view<double>");
 
     // register_vector<bool>("BoolVector");
-    register_vector<char>("CharVector");
+    /* register_vector<char>("CharVector");
     register_vector<short>("ShortVector");
     register_vector<int>("IntVector");
     register_vector<int64_t>("Int64_tVector");
     register_vector<float>("FloatVector");
     register_vector<double>("DoubleVector");
-    register_vector<std::string>("StringVector");
+    register_vector<std::string>("StringVector"); */
+
+    class_<CppJS>("CppJS")
+        .class_function("setEnv", &CppJS::setEnv)
+        .class_function("getEnv", &CppJS::getEnv)
+    ;
+    constant("CPPJS_DATA_PATH", CPPJS_DATA_PATH);
 }

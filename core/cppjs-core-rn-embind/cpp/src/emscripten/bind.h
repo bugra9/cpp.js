@@ -42,7 +42,7 @@ namespace emscripten {
     };
 
     namespace internal {
-        EMSCRIPTEN_KEEPALIVE void _embind_initialize_bindings(facebook::jsi::Runtime& rt);
+        EMSCRIPTEN_KEEPALIVE void _embind_initialize_bindings(facebook::jsi::Runtime& rt, std::string path);
 
         typedef int32_t GenericEnumValue;
 
@@ -2668,6 +2668,10 @@ namespace internal {
             v[index] = value;
             return true;
         }
+
+        static int size(VectorType& v) {
+            return (int) v.size();
+        }
     };
 
 } // end namespace internal
@@ -2678,12 +2682,12 @@ class_<std::vector<T>> register_vector(const char* name) {
 
     void (VecType::*push_back)(const T&) = &VecType::push_back;
     void (VecType::*resize)(const size_t, const T&) = &VecType::resize;
-    size_t (VecType::*size)() const = &VecType::size;
+    // size_t (VecType::*size)() const = &VecType::size;
     return class_<std::vector<T>>(name)
             .template constructor<>()
             .function("push_back", push_back)
             .function("resize", resize)
-            .function("size", size)
+            .function("size", &internal::VectorAccess<VecType, T>::size)
             .function("get", &internal::VectorAccess<VecType, T>::get)
             .function("set", &internal::VectorAccess<VecType, T>::set)
             ;
@@ -2823,3 +2827,9 @@ void constant(const char* name, const ConstantType& v) {
   static void embind_init_##name()
 
 } // end namespace emscripten
+
+class CppJS {
+public:
+    static int setEnv(std::string key, std::string value, bool overwrite);
+    static std::string getEnv(std::string key);
+};

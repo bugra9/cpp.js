@@ -1,8 +1,8 @@
 {
     "name": "cppjs-samples",
-    "version": "0.6.2",
+    "version": "1.0.0-alpha.2",
     "description": "Cpp.js Samples",
-    "author": "Buğra Sarı <git.bugra@gmail.com>",
+    "author": "Bugra SARI <git.bugra@gmail.com>",
     "license": "MIT",
     "type": "module",
     "main": "index.js",

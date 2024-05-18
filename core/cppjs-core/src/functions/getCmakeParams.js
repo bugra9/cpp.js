@@ -31,10 +31,10 @@ function getPath(config, path, pathPrefix) {
     return `${pathPrefix}${getPathInfo(path, config.paths.base).relative}`;
 }
 
-let dependencyParams;
+const dependencyParams = {};
 export function getDependencyParams(config, pathPrefix) {
-    if (dependencyParams) {
-        return dependencyParams;
+    if (dependencyParams && dependencyParams[pathPrefix || 'empty']) {
+        return dependencyParams[pathPrefix || 'empty'];
     }
 
     const sourceFilter = (d) => d === config || d.export.type === 'source';
@@ -71,7 +71,7 @@ export function getDependencyParams(config, pathPrefix) {
         .map((p) => getPath(config, p, pathPrefix)))].join(';');
     const nameOfCmakeDepends = [...new Set(cmakeDepends.map((d) => d.general.name))].join(';');
 
-    dependencyParams = {
+    dependencyParams[pathPrefix || 'empty'] = {
         nativeGlob,
         headerGlob,
         headerPathWithDepends,
@@ -79,7 +79,7 @@ export function getDependencyParams(config, pathPrefix) {
         pathsOfCmakeDepends,
         nameOfCmakeDepends,
     };
-    return dependencyParams;
+    return dependencyParams[pathPrefix || 'empty'];
 }
 
 export default function getCmakeParams(config, pathPrefix, isBuildSource, isBuildBridge) {

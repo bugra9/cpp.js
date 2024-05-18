@@ -144,8 +144,15 @@ function fillConfig(tempConfig, options = {}) {
     config.export.header = tempConfig.export.header || 'include';
     config.export.libPath = getPath(tempConfig.export.libPath || 'lib');
     config.export.libName = tempConfig.export.libName || [config.general.name];
+    config.export.binHeaders = tempConfig.export.binHeaders || [];
+    config.export.entry = tempConfig.export.entry;
 
     config.platform['Emscripten-x86_64'] = tempConfig.platform['Emscripten-x86_64'] || {};
+    config.platform['Emscripten-x86_64-browser'] = tempConfig.platform['Emscripten-x86_64-browser'] || {};
+    config.platform['Emscripten-x86_64-node'] = tempConfig.platform['Emscripten-x86_64-node'] || {};
+    config.platform['Android-arm64-v8a'] = tempConfig.platform['Android-arm64-v8a'] || {};
+    config.platform['iOS-iphoneos'] = tempConfig.platform['iOS-iphoneos'] || {};
+    config.platform['iOS-iphonesimulator'] = tempConfig.platform['iOS-iphonesimulator'] || {};
 
     createDir('interface', config.paths.temp);
     createDir('bridge', config.paths.temp);

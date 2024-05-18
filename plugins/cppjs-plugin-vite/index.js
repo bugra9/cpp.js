@@ -13,12 +13,13 @@ const viteCppjsPlugin = (options, _compiler) => {
         rollupCppjsPlugin(options, compiler),
         {
             name: 'vite-plugin-cppjs',
-            load(source) {
+            async load(source) {
                 if (isServe && source === '/cpp.js') {
                     compiler.createBridge();
-                    compiler.createWasm();
-                    return fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.js`, {encoding:'utf8', flag:'r'});
+                    await compiler.createWasm();
+                    return fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.js`, { encoding: 'utf8', flag: 'r' });
                 }
+                return null;
             },
             configResolved(config) {
                 isServe = config.command === 'serve';
@@ -34,17 +35,17 @@ const viteCppjsPlugin = (options, _compiler) => {
                     });
                 }
             },
-            handleHotUpdate({file, server}) {
+            async handleHotUpdate({ file, server }) {
                 if (headerRegex.test(file)) {
                     compiler.findOrCreateInterfaceFile(file);
                     compiler.createBridge();
                 } else if (sourceRegex.test(file)) {
-                    compiler.createWasm();
-                    server.ws.send({ type: 'full-reload' })
+                    await compiler.createWasm();
+                    server.ws.send({ type: 'full-reload' });
                 }
-            }
-        }
-    ]
+            },
+        },
+    ];
 };
 
 export default viteCppjsPlugin;

@@ -13,11 +13,12 @@ public class RNJsiLibModule extends ReactContextBaseJavaModule {
   public RNJsiLibModule(ReactApplicationContext reactContext) {
     super(reactContext);
     this.reactContext = reactContext;
+    Utils.copyAssetFolder(reactContext, "cppjs", reactContext.getCacheDir().getAbsolutePath() + "/cppjs");
   }
 
   @ReactMethod(isBlockingSynchronousMethod = true)
   public void start() {
-    install(this.reactContext.getJavaScriptContextHolder().get());
+    install(this.reactContext.getJavaScriptContextHolder().get(), this.reactContext.getCacheDir().getAbsolutePath());
   }
 
   @Override
@@ -25,7 +26,7 @@ public class RNJsiLibModule extends ReactContextBaseJavaModule {
     return "RNJsiLib";
   }
 
-  public native void install(long jsContextNativePointer);
+  public native void install(long jsContextNativePointer, String path);
 
   static {
     System.loadLibrary("react-native-cppjs");

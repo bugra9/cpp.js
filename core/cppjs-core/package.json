@@ -1,18 +1,25 @@
 {
     "name": "cpp.js",
-    "version": "0.6.1",
+    "version": "1.0.0-alpha.2",
     "license": "MIT",
     "type": "module",
+    "homepage": "https://cpp.js.org",
+    "repository": "https://github.com/bugra9/cpp.js.git",
     "scripts": {
         "test": "mocha"
     },
     "bin": {
         "cpp.js": "./src/bin.js"
     },
-    "main": "/src/index.js",
+    "main": "src/index.js",
     "dependencies": {
+        "@rollup/plugin-commonjs": "^26.0.1",
+        "@rollup/plugin-node-resolve": "^15.2.3",
+        "@rollup/plugin-virtual": "^3.0.2",
         "commander": "^9.4.1",
-        "glob": "^8.0.3"
+        "glob": "^8.0.3",
+        "rollup": "^4.18.0",
+        "rollup-plugin-uglify": "^6.0.4"
     },
     "devDependencies": {
         "mocha": "^10.2.0"

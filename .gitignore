@@ -5,6 +5,9 @@ dist
 tmp
 .cppjs
 /out-tsc
+*.xcframework
+*.xcframework.zip
+*.tgz
 
 # dependencies
 node_modules

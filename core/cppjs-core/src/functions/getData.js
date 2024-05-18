@@ -1,7 +1,6 @@
+/* eslint-disable default-param-last */
 /* eslint-disable no-param-reassign */
 import getPathInfo from '../utils/getPathInfo.js';
-
-const platform = 'Emscripten-x86_64';
 
 function getPath(config, path, pathPrefix) {
     if (!pathPrefix) {
@@ -11,9 +10,10 @@ function getPath(config, path, pathPrefix) {
     return `${pathPrefix}${getPathInfo(path, config.paths.base).relative}`;
 }
 
-function getRecursiveData(obj, dependency, field, pathPrefix) {
-    if (dependency?.platform?.[platform]?.[field]) {
-        Object.entries(dependency.platform[platform][field]).forEach(([dKey, value]) => {
+function getRecursiveData(obj, dependency, field, pathPrefix, platform, subPlatform) {
+    const platformName = subPlatform ? `${platform}-${subPlatform}` : platform;
+    if (dependency?.platform?.[platformName]?.[field]) {
+        Object.entries(dependency.platform[platformName][field]).forEach(([dKey, value]) => {
             if (field === 'data') {
                 const a = `${dependency.paths.project}/dist/prebuilt/${platform}/${dKey}`;
                 const key = getPath(dependency, a, pathPrefix);
@@ -25,13 +25,13 @@ function getRecursiveData(obj, dependency, field, pathPrefix) {
     }
 
     dependency.dependencies.forEach((dep) => {
-        getRecursiveData(obj, dep, field, pathPrefix);
+        getRecursiveData(obj, dep, field, pathPrefix, platform, subPlatform);
     });
 }
 
-export default function getData(config, field, pathPrefix) {
+export default function getData(config, field, pathPrefix, platform = 'Emscripten-x86_64', subPlatform) {
     const output = {};
-    getRecursiveData(output, config, field, pathPrefix);
+    getRecursiveData(output, config, field, pathPrefix, platform, subPlatform);
 
     return output;
 }

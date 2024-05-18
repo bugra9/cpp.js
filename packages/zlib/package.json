@@ -1,13 +1,15 @@
 {
     "name": "cppjs-package-zlib",
-    "version": "1.3.0-1.0.0",
+    "version": "1.0.0-alpha.2",
+    "nativeVersion": "1.3.1",
     "description": "A Massively Spiffy Yet Delicately Unobtrusive Compression Library",
     "homepage": "https://www.zlib.net/",
     "license": "SEE LICENSE IN https://www.zlib.net/zlib_license.html",
-    "author": "",
     "type": "module",
     "scripts": {
-        "build": "node build.js"
+        "build": "node build.js",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "postinstall": "cpp.js postinstall"
     },
     "dependencies": {
         "cpp.js": "workspace:^"

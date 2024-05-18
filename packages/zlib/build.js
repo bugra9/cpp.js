@@ -7,10 +7,11 @@ import decompressTargz from 'decompress-targz';
 import CppjsCompiler from 'cpp.js';
 import getPathInfo from 'cpp.js/src/utils/getPathInfo.js';
 import { mkdir } from 'node:fs/promises';
+import packageJson from './package.json' assert { type: 'json' };
 
+const VERSION = packageJson.nativeVersion;
 const cpuCount = os.cpus().length - 1;
 
-const VERSION = '1.3.1';
 const url = `https://zlib.net/zlib-${VERSION}.tar.gz`;
 
 function downloadFile(url, folder) {
@@ -38,39 +39,55 @@ fs.writeFileSync(`${compiler2.config.paths.output}/prebuilt/CMakeLists.txt`, dis
 
 const promises = [];
 compiler2.getAllPlatforms().forEach((platform) => {
-    if (fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${platform}/lib`)) return;
+    const basePlatform = platform.split('-', 1)[0];
+    if (
+        (basePlatform === 'iOS' && fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${compiler2.config.general.name}.xcframework`))
+        || (basePlatform !== 'iOS' && fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${platform}/lib`))
+    ) {
+        return;
+    }
     const job = async () => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/zlib-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
 
         const tempPath = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
         const workdir = `${tempPath}/zlib-${VERSION}`;
-        const libdir = `${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
-
-        // fs.rmSync(`${compiler.config.paths.output}/prebuilt`, { recursive: true, force: true });
-        // await mkdir(libdir, { recursive: true });
+        const libdir = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.output, compiler.config.paths.base).relative}/prebuilt/${platform}`;
 
         let platformParams = [];
-        let platformConfig = [];
         switch (platform) {
             case 'Emscripten-x86_64':
-                platformParams = ['--static'];
+                platformParams = ['-DBUILD_SHARED_LIBS=OFF'];
                 break;
             case 'Android-arm64-v8a':
                 platformParams = [];
-                platformConfig = ['-e', 'LDFLAGS=-Wl,-soname,libz.so'];
                 break;
             case 'iOS-iphoneos':
+                platformParams = ['-DBUILD_SHARED_LIBS=OFF'];
+                break;
             case 'iOS-iphonesimulator':
-                platformParams = [];
+                platformParams = ['-DBUILD_SHARED_LIBS=OFF'];
                 break;
             default:
         }
 
-        compiler.run(null, ['./configure', `--prefix=/tmp/cppjs/live/${libdir}`, ...platformParams], { workdir, console: true, params: platformConfig });
-        compiler.run(null, ['make', `-j${cpuCount}`, 'install'], { workdir, console: true, params: platformConfig });
+        compiler.run(null, [
+            'cmake', '.', `-DCMAKE_INSTALL_PREFIX=${libdir}`, '-DCMAKE_BUILD_TYPE=Release', ...platformParams,
+        ], { workdir, console: true });
+        if (basePlatform === 'iOS') {
+            compiler.run(null, ['cmake', '--build', '.', '--config', 'Release'], { workdir, console: true });
+            compiler.run(null, ['cmake', '--install', '.'], { workdir, console: true });
+        } else {
+            compiler.run(null, ['make', 'install'], { workdir, console: true });
+        }
 
         fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
+
+        if (basePlatform === 'iOS') {
+            fs.rmSync(`${libdir}/lib/libz.dylib`, { recursive: true, force: true });
+            fs.rmSync(`${libdir}/lib/libz.${VERSION}.dylib`, { recursive: true, force: true });
+            fs.rmSync(`${libdir}/lib/libz.${VERSION.split('.')[0]}.dylib`, { recursive: true, force: true });
+        }
     };
     promises.push(job());
 });

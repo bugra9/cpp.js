@@ -8,10 +8,11 @@ import CppjsCompiler from 'cpp.js';
 import getPathInfo from 'cpp.js/src/utils/getPathInfo.js';
 import zlibConfig from 'cppjs-package-zlib/cppjs.config.js';
 import { mkdir } from 'node:fs/promises';
+import packageJson from './package.json' assert { type: 'json' };
 
+const VERSION = packageJson.nativeVersion;
 const cpuCount = os.cpus().length - 1;
 
-const VERSION = '4.6.0';
 const url = `https://download.osgeo.org/libtiff/tiff-${VERSION}.tar.gz`;
 
 function downloadFile(url, folder) {
@@ -39,7 +40,13 @@ fs.writeFileSync(`${compiler2.config.paths.output}/prebuilt/CMakeLists.txt`, dis
 
 const promises = [];
 compiler2.getAllPlatforms().forEach((platform) => {
-    if (fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${platform}/lib`)) return;
+    const basePlatform = platform.split('-', 1)[0];
+    if (
+        (basePlatform === 'iOS' && fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${compiler2.config.general.name}.xcframework`))
+        || (basePlatform !== 'iOS' && fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${platform}/lib`))
+    ) {
+        return;
+    }
     const job = async () => {
         const compiler = new CppjsCompiler(platform);
         await decompress(`${compiler2.config.paths.temp}/tiff-${VERSION}.tar.gz`, compiler.config.paths.temp, { plugins: [decompressTargz()] });
@@ -54,6 +61,7 @@ compiler2.getAllPlatforms().forEach((platform) => {
 
         let zlibPath = `/tmp/cppjs/live/${getPathInfo(zlibConfig.paths.project, compiler.config.paths.base).relative}/dist/prebuilt/${platform}`;
         let libDirForCompiler = libdir;
+
         let platformParams = [];
         switch (platform) {
             case 'Emscripten-x86_64':
@@ -79,8 +87,12 @@ compiler2.getAllPlatforms().forEach((platform) => {
             'cmake', '.', `-DCMAKE_INSTALL_PREFIX=${libdir}`, '-DCMAKE_BUILD_TYPE=Release', ...platformParams,
             '-Dtiff-tools=OFF', '-Dtiff-tests=OFF', '-Dtiff-contrib=OFF', '-Dtiff-docs=OFF', '-Dld-version-script=OFF',
         ], { workdir, console: true });
-        compiler.run(null, ['cmake', '--build', '.', '--config', 'Release'], { workdir, console: true });
-        compiler.run(null, ['cmake', '--install', '.'], { workdir, console: true });
+        if (basePlatform === 'iOS') {
+            compiler.run(null, ['cmake', '--build', '.', '--config', 'Release'], { workdir, console: true });
+            compiler.run(null, ['cmake', '--install', '.'], { workdir, console: true });
+        } else {
+            compiler.run(null, ['make', `-j${cpuCount}`, 'install'], { workdir, console: true });
+        }
 
         fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
     };
