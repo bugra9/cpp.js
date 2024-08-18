@@ -1,7 +1,7 @@
 
 {
     "name": "cppjs-plugin-react-native",
-    "version": "1.0.0-alpha.2",
+    "version": "1.0.0-alpha.7",
     "description": "Bind c++ codes to javascript on the react native without writing extra code.",
     "author": "Bugra Sari",
     "homepage": "https://github.com/bugra9/cpp.js",
@@ -15,7 +15,7 @@
         "@babel/runtime": "^7.20.7",
         "cppjs-core-rn-embind": "workspace:^",
         "cpp.js": "workspace:^",
-        "glob": "^10.3.10",
+        "glob": "^11.0.0",
         "@react-native/metro-babel-transformer": "^0.73.15"
     }
 }

@@ -1,6 +1,6 @@
 {
     "name": "cppjs-package-expat",
-    "version": "1.0.0-alpha.2",
+    "version": "1.0.0-alpha.3",
     "nativeVersion": "2.6.2",
     "description": "Fast streaming XML parser",
     "homepage": "https://github.com/libexpat/libexpat",

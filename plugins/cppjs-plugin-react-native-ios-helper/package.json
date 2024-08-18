@@ -1,7 +1,7 @@
 
 {
     "name": "cppjs-plugin-react-native-ios-helper",
-    "version": "1.0.0-alpha.2",
+    "version": "1.0.0-alpha.3",
     "description": "Bind c++ codes to javascript on the react native without writing extra code.",
     "author": "Bugra Sari",
     "homepage": "https://github.com/bugra9/cpp.js",
