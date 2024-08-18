@@ -7,6 +7,9 @@ import getData from './getData.js';
 import getPathInfo from '../utils/getPathInfo.js';
 
 export default async function createWasm(compiler, options, buildAll = false) {
+    if (fs.existsSync('/tmp/cppjs/live')) fs.unlinkSync('/tmp/cppjs/live');
+    fs.symlinkSync(compiler.config.paths.base, '/tmp/cppjs/live');
+
     const output = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
 
     let params = getCmakeParams(compiler.config, '/tmp/cppjs/live/', true, false);
@@ -28,7 +31,7 @@ export default async function createWasm(compiler, options, buildAll = false) {
     run(compiler, 'emmake', ['make', 'install']);
 
     const libs = getLibs(compiler.config, '/tmp/cppjs/live/');
-    const data = Object.entries(getData(compiler.config, 'data', '/tmp/cppjs/live/', 'Emscripten-x86_64', 'browser')).map(([key, value]) => ['--preload-file', `${key}@${value}`]).flat();
+    const data = Object.entries(getData(compiler.config, 'data', '/tmp/cppjs/live/', 'Emscripten-x86_64', 'browser')).map(([key, value]) => ['--preload-file', `${key.replaceAll('@', '@@')}@${value}`]).flat();
     run(compiler, 'emcc', [
         '-lembind', '-Wl,--whole-archive',
         ...libs, ...(options.cc || []),

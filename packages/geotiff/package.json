@@ -1,6 +1,6 @@
 {
     "name": "cppjs-package-geotiff",
-    "version": "1.0.0-alpha.2",
+    "version": "1.0.0-alpha.3",
     "nativeVersion": "1.7.3",
     "description": "This library is designed to permit the extraction and parsing of the 'GeoTIFF' Key directories, as well as definition and installation of GeoTIFF keys in new files.",
     "homepage": "https://github.com/OSGeo/libgeotiff",

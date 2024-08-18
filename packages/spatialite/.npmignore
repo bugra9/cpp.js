@@ -1,3 +1,4 @@
 dist/prebuilt/iOS-iphoneos
 dist/prebuilt/iOS-iphonesimulator
 *.xcframework.zip
+*.tgz

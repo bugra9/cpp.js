@@ -84,11 +84,23 @@ function run(programName, params) {
 function generate(type, platform) {
     const compiler2 = new CppjsCompiler();
     if (type === 'lib') {
+        const modules = [];
+        compiler2.config.paths.module.forEach((modulePath) => {
+            modules.push(...glob.sync('**/*.i', { absolute: true, cwd: modulePath }));
+            modules.push(...glob.sync('*.i', { absolute: true, cwd: modulePath }));
+        });
+
         if (platform === 'all' || platform === 'wasm') {
             if (!fs.existsSync(`${compiler2.config.paths.output}/prebuilt/Emscripten-x86_64`)) {
                 generateWasmLib();
+                modules.forEach((modulePath) => {
+                    const fileName = modulePath.split('/').at(-1);
+                    createDir('prebuilt/Emscripten-x86_64/swig', compiler2.config.paths.output);
+                    fs.copyFileSync(modulePath, `${compiler2.config.paths.output}/prebuilt/Emscripten-x86_64/swig/${fileName}`);
+                });
             }
         }
+
         if (platform === 'wasm') return;
         const platforms = {
             all: ['Android-arm64-v8a', 'iOS-iphoneos', 'iOS-iphonesimulator'],
@@ -99,6 +111,11 @@ function generate(type, platform) {
             if (!fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${p}`)) {
                 const compiler = new CppjsCompiler(p);
                 compiler.createLib();
+                modules.forEach((modulePath) => {
+                    const fileName = modulePath.split('/').at(-1);
+                    createDir(`prebuilt/${p}/swig`, compiler2.config.paths.output);
+                    fs.copyFileSync(modulePath, `${compiler2.config.paths.output}/prebuilt/${p}/swig/${fileName}`);
+                });
             }
         });
         if (platform === 'all' || platform === 'ios') {
@@ -126,7 +143,16 @@ async function generateWasmLib() {
 
     compiler.createBridge();
     await compiler.createWasm({ cc: ['-O3'] });
-    createDir('prebuilt/Emscripten-x86_64', compiler.config.paths.output);
+    createDir('prebuilt/Emscripten-x86_64/lib', compiler.config.paths.output);
+
+    fs.renameSync(`${compiler.config.paths.temp}/lib/lib${compiler.config.general.name}.a`, `${compiler.config.paths.output}/prebuilt/Emscripten-x86_64/lib/lib${compiler.config.general.name}.a`);
+    fs.renameSync(`${compiler.config.paths.temp}/include/`, `${compiler.config.paths.output}/prebuilt/Emscripten-x86_64/include`);
+
+    fs.rmSync(`${compiler.config.paths.output}/data`, { recursive: true, force: true });
+    if (fs.existsSync(`${compiler.config.paths.temp}/data`)) {
+        fs.renameSync(`${compiler.config.paths.temp}/data`, `${compiler.config.paths.output}/data`);
+    }
+
     fs.copyFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.node.js`, `${compiler.config.paths.output}/${compiler.config.general.name}.node.js`);
     fs.copyFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.browser.js`, `${compiler.config.paths.output}/${compiler.config.general.name}.browser.js`);
     fs.copyFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`, `${compiler.config.paths.output}/${compiler.config.general.name}.wasm`);
@@ -134,10 +160,5 @@ async function generateWasmLib() {
         fs.copyFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.data.txt`, `${compiler.config.paths.output}/${compiler.config.general.name}.data.txt`);
     }
 
-    fs.renameSync(`${compiler.config.paths.temp}/lib/`, `${compiler.config.paths.output}/prebuilt/Emscripten-x86_64/lib`);
-    fs.renameSync(`${compiler.config.paths.temp}/include/`, `${compiler.config.paths.output}/prebuilt/Emscripten-x86_64/include`);
-
-    fs.rmSync(`${compiler.config.paths.output}/data`, { recursive: true, force: true });
-    fs.renameSync(`${compiler.config.paths.temp}/data`, `${compiler.config.paths.output}/data`);
     fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
 }

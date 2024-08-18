@@ -1,6 +1,6 @@
 {
     "name": "cppjs-package-webp",
-    "version": "1.0.0-alpha.2",
+    "version": "1.0.0-alpha.3",
     "nativeVersion": "1.4.0",
     "description": "WebP codec is a library to encode and decode images in WebP format.",
     "homepage": "https://chromium.googlesource.com/webm/libwebp",
