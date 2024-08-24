@@ -1,5 +1,7 @@
 apply plugin: 'com.android.library'
 
+String[] buildJsCommand = ["node", projectDir.parent + "/script/build_js.js", "android"]
+this.getCommandOutput(buildJsCommand, rootProject.projectDir.getParentFile())
 String[] buildAndroidCommand = ["node", projectDir.parent + "/script/build_android.js"]
 def cmakeOptionsString = this.getCommandOutput(buildAndroidCommand, rootProject.projectDir.getParentFile())
 println cmakeOptionsString
