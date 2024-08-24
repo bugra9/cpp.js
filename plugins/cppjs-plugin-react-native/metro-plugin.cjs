@@ -7,8 +7,8 @@ let moduleRegex;
 import('cpp.js').then(({ default: CppjsCompiler }) => {
     compiler = new CppjsCompiler();
     dependPackageNames = compiler.config.getAllDependencies();
-    headerRegex = new RegExp(`.(${compiler.config.ext.header.join('|')})$`);
-    moduleRegex = new RegExp(`.(${compiler.config.ext.module.join('|')})$`);
+    headerRegex = new RegExp(`\\.(${compiler.config.ext.header.join('|')})$`);
+    moduleRegex = new RegExp(`\\.(${compiler.config.ext.module.join('|')})$`);
 
     const defaultPath = `${compiler.config.paths.project}/.cppjs/default`;
     if (fs.existsSync(defaultPath)) {

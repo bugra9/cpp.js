@@ -1,6 +1,5 @@
 /* eslint-disable import/no-unresolved */
 /* eslint-disable global-require */
-const fs = require('fs');
 const upstreamTransformer = (() => {
     try {
         return require('@expo/metro-config/babel-transformer');
