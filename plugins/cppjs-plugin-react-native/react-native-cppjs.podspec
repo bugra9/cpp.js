@@ -19,6 +19,8 @@ Pod::Spec.new do |s|
   s.script_phase = {
     :name => 'Cpp.js',
     :script => 'cd "${PODS_ROOT}/../.." && node "${PODS_TARGET_SRCROOT}/script/build_js.js" ios && node "${PODS_TARGET_SRCROOT}/script/build_ios.js"',
-    :execution_position => :before_compile
+    :execution_position => :before_compile,
+    :output_files => ['$(PODS_XCFRAMEWORKS_BUILD_DIR)/react-native-cppjs/libreact-native-cppjs.a']
   }
+  s.user_target_xcconfig = { 'OTHER_LDFLAGS' => '-ObjC -force_load $(PODS_XCFRAMEWORKS_BUILD_DIR)/react-native-cppjs/libreact-native-cppjs.a' }
 end

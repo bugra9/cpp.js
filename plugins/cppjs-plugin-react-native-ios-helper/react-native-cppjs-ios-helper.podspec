@@ -15,8 +15,6 @@ Pod::Spec.new do |s|
   s.source       = { :http => "file:${PODS_ROOT}/../../.cppjs/react-native-cppjs.xcframework.zip", :type => "zip" }
   s.source_files = "ios/**/*.{h,hpp,c,cpp,m,mm}"
 
-  s.user_target_xcconfig = { 'OTHER_LDFLAGS' => '-ObjC -force_load $(PODS_CONFIGURATION_BUILD_DIR)/XCFrameworkIntermediates/react-native-cppjs/libreact-native-cppjs.a' }
-
   if respond_to?(:install_modules_dependencies, true)
     install_modules_dependencies(s)
   else
