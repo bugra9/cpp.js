@@ -30,7 +30,7 @@ module.exports = async function () {
                 }
 
                 devServer.app.get('/cpp.js', function (req, res) {
-                  res.sendFile(`${compiler.config.paths.temp}/${compiler.config.general.name}.js`);
+                  res.sendFile(`${compiler.config.paths.temp}/${compiler.config.general.name}.browser.js`);
                 });
 
                 devServer.app.get('/cpp.wasm', function (req, res) {

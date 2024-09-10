@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+
+<html>
+   <head>
+      <meta charset = "utf-8">
+      <title>Cpp.js Vanilla sample</title>
+      <script src="./dist/cppjs-sample-web-vanilla.browser.js"></script>
+      <script>
+        initCppJs({ path: './dist' }).then(({ Native }) => {
+            document.querySelector('#cppMessage').innerHTML = Native.sample();
+        });
+      </script>
+      <style>
+        body {
+            padding: 50px;
+        }
+        table, th, td {
+            border: 1px solid red;
+            border-collapse: collapse;
+        }
+        table {
+            width: 400px;
+            margin-top: 20px;
+        }
+      </style>
+   </head>
+   <body>
+    <p>Matrix multiplier with c++ &nbsp;&nbsp;=&gt;&nbsp;&nbsp;  <span id="cppMessage">compiling ...</span></p>
+   </body>
+</html>

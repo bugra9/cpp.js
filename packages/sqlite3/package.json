@@ -1,6 +1,6 @@
 {
     "name": "cppjs-package-sqlite3",
-    "version": "1.0.0-alpha.3",
+    "version": "1.0.0-beta.1",
     "nativeVersion": "3.46.1",
     "description": "SQLite is a C-language library that implements a small, fast, self-contained, high-reliability, full-featured, SQL database engine.",
     "homepage": "https://www.sqlite.org",

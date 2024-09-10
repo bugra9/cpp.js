@@ -1,0 +1,16 @@
+{
+    "name": "cppjs-sample-lib-prebuilt-matrix",
+    "version": "1.0.0-beta.4",
+    "description": "Cpp.js sample matrix multiplier",
+    "homepage": "https://cpp.js.org",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "build": "cpp.js generate lib",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "postinstall": "cpp.js postinstall"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^"
+    }
+}

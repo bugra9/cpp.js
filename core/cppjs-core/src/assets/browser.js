@@ -152,10 +152,23 @@ function initCppJs(userConfig = {}) {
                 return vector;
             },
         };
+        if (config.getWasmFunction) {
+            m.instantiateWasm = function instantiateWasm(info, receive) {
+                const instance = new WebAssembly.Instance(config.getWasmFunction(), info);
+                receive(instance);
+                return instance.exports;
+            };
+        }
         Module(m).then(resolve).catch(reject);
     });
 
     return cppJsPromise;
+}
+
+if (typeof globalThis === 'object') {
+    globalThis.CppJs = {
+        initCppJs,
+    };
 }
 
 export default initCppJs;

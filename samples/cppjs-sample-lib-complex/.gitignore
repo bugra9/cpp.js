@@ -1,7 +1,0 @@
-# cpp.js
-.cppjs
-
-lib
-include
-cppjs-lib-*.js
-cppjs-lib-*.wasm

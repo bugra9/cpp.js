@@ -1,6 +1,6 @@
 {
     "name": "cppjs-package-iconv",
-    "version": "1.0.0-alpha.3",
+    "version": "1.0.0-beta.1",
     "nativeVersion": "1.17",
     "description": "Iconv can convert from any of these encodings to any other, through Unicode conversion.",
     "homepage": "https://www.gnu.org/software/libiconv/",

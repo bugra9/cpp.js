@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+
+<html>
+   <head>
+      <meta charset = "utf-8">
+      <title>C++ Matrix Multiplier</title>
+      <script src="./Matrix.js"></script>
+      <script type="module">
+        import '../dist/cppjs-sample-lib-prebuilt-matrix.browser.js';
+        let wasmModule;
+        init();
+        const SIZE = Math.pow(1100, 2);
+
+
+        async function init () {
+            wasmModule = await initCppJs({ path: '../dist' });
+            new wasmModule.Matrix(10, 0);
+            toggleVisible(true);
+        }
+
+        function runCore(type) {
+            const MatrixClass = type === 'wasm' ? wasmModule.Matrix : Matrix;
+            const a = new MatrixClass(SIZE, 1);
+            const b = new MatrixClass(SIZE, 2);
+
+            const startTime = new Date();
+            const result = a.multiple(b);
+
+            writeResult(type, result.get(0), ((new Date()) - startTime) / 1000);
+        }
+        function run(type) {
+            toggleVisible(false);
+            setTimeout(() => runCore(type), 200);
+            setTimeout(() => toggleVisible(true), 200);
+        }
+        function writeResult(type, result, duration) {
+            document.querySelector(`#${type}-result`).innerHTML = result;
+            document.querySelector(`#${type}-duration`).innerHTML = duration;
+        }
+        function toggleVisible(visible) {
+            document.querySelector('#loading').style.display = visible ? "none" : "block";
+            document.querySelector('main').style.display = visible ? "block" : "none";
+        }
+        window.run = run;
+      </script>
+      <style>
+        body {
+            padding: 50px;
+        }
+        table, th, td {
+            border: 1px solid red;
+            border-collapse: collapse;
+        }
+        table {
+            width: 400px;
+            margin-top: 20px;
+        }
+      </style>
+   </head>
+   <body>
+    <div id="loading">Loading ...</div>
+    <main style="display: none;">
+        <div>
+            <button type="button" onclick="run('js')">Calculate using JS</button>
+            <button type="button" onclick="run('wasm')">Calculate using WASM</button>
+        </div>
+        <table>
+            <tr><td>Type</td><td>result[0]</td><td>Duration (s)</td></tr>
+            <tr><td>JS</td><td id="js-result"></td><td id="js-duration"></td></tr>
+            <tr><td>WASM</td><td id="wasm-result"></td><td id="wasm-duration"></td></tr>
+        </table>
+    </main>
+   </body>
+</html>

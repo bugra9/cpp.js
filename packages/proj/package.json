@@ -1,6 +1,6 @@
 {
     "name": "cppjs-package-proj",
-    "version": "1.0.0-alpha.3",
+    "version": "1.0.0-beta.1",
     "nativeVersion": "9.4.1",
     "description": "PROJ is a generic coordinate transformation software that transforms geospatial coordinates from one coordinate reference system (CRS) to another.",
     "homepage": "https://proj.org/",

@@ -8,8 +8,8 @@ const platform = 'Emscripten-x86_64';
 const rollupCppjsPlugin = (options, _compiler) => {
     const compiler = _compiler || new CppjsCompiler();
     const env = JSON.stringify(compiler.getData('env'));
-    const headerRegex = new RegExp(`.(${compiler.config.ext.header.join('|')})$`);
-    const moduleRegex = new RegExp(`.(${compiler.config.ext.module.join('|')})$`);
+    const headerRegex = new RegExp(`\\.(${compiler.config.ext.header.join('|')})$`);
+    const moduleRegex = new RegExp(`\\.(${compiler.config.ext.module.join('|')})$`);
     const dependPackageNames = compiler.config.getAllDependencies();
 
     const params = `{
@@ -22,7 +22,7 @@ const rollupCppjsPlugin = (options, _compiler) => {
     }`;
 
     const CppJs = `
-export const Native = {};
+export let Native = {};
 export function initCppJs(config = {}) {
     return new Promise(
         (resolve, reject) => import('/cpp.js').then(n => { return window.CppJs.initCppJs(${params})}).then(m => {
@@ -98,7 +98,7 @@ export function initCppJs(config = {}) {
             await compiler.createWasm({ cc: ['-O3'] });
             this.emitFile({
                 type: 'asset',
-                source: fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.js`),
+                source: fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.browser.js`),
                 fileName: 'cpp.js',
             });
             this.emitFile({

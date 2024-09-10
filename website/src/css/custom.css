@@ -72,10 +72,22 @@ html[data-theme='dark'] {
     font-weight: 700;
 }
 
-.home-markdown a {
+.home-markdown a, article a {
     text-decoration: underline;
 }
 
 .markdown h1:first-child {
     --ifm-h1-font-size: 2rem;
+}
+
+.menu__list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+div.bash span.token-line::before, div.language-shell span.token-line::before {
+    content: '$';
+    padding: 0 10px 0 0;
+    color: orange;
 }
