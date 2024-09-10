@@ -1,0 +1,24 @@
+{
+    "name": "cppjs-sample-cloud-cloudflare-worker",
+    "version": "1.0.0-beta.1",
+    "description": "Cpp.js - Cloudflare webassembly sample",
+    "homepage": "https://cpp.js.org",
+    "license": "MIT",
+    "scripts": {
+        "build": "cpp.js generate lib -p wasm",
+        "dev": "wrangler dev",
+        "deploy": "wrangler dev"
+    },
+    "files": [
+        "dist/cppjs-sample-cloud-cloudflare.browser.js",
+        "dist/cppjs-sample-cloud-cloudflare.wasm",
+        "index.js",
+        "cppjs.config.mjs",
+        "wrangler.toml",
+        "src"
+    ],
+    "devDependencies": {
+        "cpp.js": "workspace:^",
+        "wrangler": "^3.75.0"
+    }
+}

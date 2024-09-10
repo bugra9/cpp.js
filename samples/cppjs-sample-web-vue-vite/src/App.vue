@@ -1,18 +1,14 @@
 <script setup>
 import { ref } from 'vue'
-import Native from '../native/native.h'
+import { initCppJs } from './native/native.h'
 
-Native().then(({Native}) => {;
+const message = ref("compiling ...")
+
+initCppJs().then(({Native}) => {;
   message.value = Native.sample();
 });
-
-defineProps({
-  fluent: Object
-})
-
-const message = ref("")
 </script>
 
 <template>
-  <p>Cpp message: {{message}}</p>
+  <p>Matrix multiplier with c++ &nbsp;&nbsp;=&gt;&nbsp;&nbsp;  {{message}}</p>
 </template>

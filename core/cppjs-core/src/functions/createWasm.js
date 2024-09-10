@@ -6,7 +6,7 @@ import getLibs from './getLibs.js';
 import getData from './getData.js';
 import getPathInfo from '../utils/getPathInfo.js';
 
-export default async function createWasm(compiler, options, buildAll = false) {
+export default async function createWasm(compiler, options = {}, buildAll = false) {
     if (fs.existsSync('/tmp/cppjs/live')) fs.unlinkSync('/tmp/cppjs/live');
     fs.symlinkSync(compiler.config.paths.base, '/tmp/cppjs/live');
 
@@ -35,9 +35,9 @@ export default async function createWasm(compiler, options, buildAll = false) {
     run(compiler, 'emcc', [
         '-lembind', '-Wl,--whole-archive',
         ...libs, ...(options.cc || []),
-        '-s', 'WASM=1', '-s', 'MODULARIZE=1',
+        '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
         '-s', 'RESERVED_FUNCTION_POINTERS=200', '-s', 'DISABLE_EXCEPTION_CATCHING=0', '-s', 'FORCE_FILESYSTEM=1',
-        '-s', 'TOTAL_MEMORY=512MB', '-s', 'ALLOW_MEMORY_GROWTH=1',
+        '-s', 'ALLOW_MEMORY_GROWTH=1',
         '-s', 'EXPORTED_RUNTIME_METHODS=["FS", "ENV"]',
         '-o', `${output}/${compiler.config.general.name}.js`,
         ...data,
@@ -46,9 +46,9 @@ export default async function createWasm(compiler, options, buildAll = false) {
     run(compiler, 'emcc', [
         '-lembind', '-Wl,--whole-archive', '-lnodefs.js',
         ...libs, ...(options.cc || []),
-        '-s', 'WASM=1', '-s', 'MODULARIZE=1',
+        '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
         '-s', 'RESERVED_FUNCTION_POINTERS=200', '-s', 'DISABLE_EXCEPTION_CATCHING=0', '-s', 'FORCE_FILESYSTEM=1', '-s', 'NODERAWFS',
-        '-s', 'TOTAL_MEMORY=512MB', '-s', 'ALLOW_MEMORY_GROWTH=1',
+        '-s', 'ALLOW_MEMORY_GROWTH=1',
         '-s', 'EXPORTED_RUNTIME_METHODS=["FS", "ENV", "NODEFS"]',
         '-o', `${output}/${compiler.config.general.name}.js`,
     ]);

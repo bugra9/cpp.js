@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import Native from './native/native.h';
+import { initCppJs } from './native/native.h';
 import logo from './logo.svg';
 import './App.css';
 
 function App() {
-    const [message, setMessage] = useState("Loading...");
+    const [message, setMessage] = useState("compiling ...");
 
-    Native().then(({Native}) => {;
+    initCppJs().then(({ Native }) => {;
         setMessage(Native.sample());
     });
 
@@ -14,9 +14,7 @@ function App() {
         <div className="App">
             <header className="App-header">
                 <img src={logo} className="App-logo" alt="logo" />
-                <p>
-                    {message}
-                </p>
+                <p>Matrix multiplier with c++ &nbsp;&nbsp;=&gt;&nbsp;&nbsp; {message}</p>
             </header>
         </div>
     );

@@ -1,6 +1,6 @@
 {
     "name": "cppjs-loader",
-    "version": "1.0.0-alpha.3",
+    "version": "1.0.0-beta.1",
     "license": "MIT",
     "main": "index.js",
     "dependencies": {

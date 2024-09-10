@@ -1,9 +1,9 @@
 import getDirName from 'cpp.js/src/utils/getDirName.js';
-import SimpleComplex from 'cppjs-lib-samplecomplex-wasm/cppjs.config.js';
+import Matrix from 'cppjs-sample-lib-prebuilt-matrix/cppjs.config.js';
 
 export default {
     dependencies: [
-        SimpleComplex,
+        Matrix,
     ],
 	paths: {
 		base: "../..",

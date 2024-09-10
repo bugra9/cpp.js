@@ -1,0 +1,96 @@
+[
+    {
+        "label": "Development",
+        "type": "dropdown",
+        "position": "left",
+        "items": [
+            {
+                "label": "Docs",
+                "type": "doc",
+                "docId": "Getting Started/introduction"
+            },
+            {
+                "label": "Plugins",
+                "type": "doc",
+                "docId": "plugins"
+            },
+            {
+                "label": "Architecture",
+                "type": "doc",
+                "docId": "architecture"
+            }
+        ]
+    },
+    {
+        "label": "API",
+        "type": "dropdown",
+        "position": "left",
+        "items": [
+            {
+                "label": "Configuration",
+                "type": "doc",
+                "docId": "configuration"
+            },
+            {
+                "label": "CLI",
+                "type": "doc",
+                "docId": "cli"
+            },
+            {
+                "label": "Javascript",
+                "type": "doc",
+                "docId": "javascript"
+            },
+            {
+                "label": "C++",
+                "type": "doc",
+                "docId": "c++"
+            }
+        ]
+    },
+    {
+        "label": "Contribute",
+        "type": "dropdown",
+        "position": "left",
+        "items": [
+            {
+                "label": "Contribute",
+                "type": "doc",
+                "docId": "contribute"
+            },
+            {
+                "label": "Writing a plugin",
+                "type": "doc",
+                "docId": "writing-a-plugin"
+            },
+            {
+                "label": "Writing a package",
+                "type": "doc",
+                "docId": "writing-a-package"
+            },
+            {
+                "label": "Report a issue",
+                "href": "https://github.com/bugra9/cpp.js/issues"
+            },
+            {
+                "label": "Ask a question",
+                "href": "https://github.com/bugra9/cpp.js/discussions"
+            }
+        ]
+    },
+    {
+        "label": "Showcase",
+        "to": "/changelogs",
+        "position": "left"
+    },
+    {
+        "label": "Changelogs",
+        "to": "/changelogs",
+        "position": "right"
+    },
+    {
+        "label": "GitHub",
+        "href": "https://github.com/bugra9/cpp.js",
+        "position": "right"
+    }
+]

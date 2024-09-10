@@ -4,8 +4,5 @@ packages:
   - 'plugins/*'
   - 'samples/*'
   - 'website'
-  - '!samples/cppjs-sample-mobile-reactnative'
-  - '!packages/gdal3js-mobile'
+  - '!samples/cppjs-sample-mobile-reactnative-nativecli'
   - '!**/test/**'
-  - packages/gdal3.js/apps/example-node
-  - packages/gdal3.js/apps/app-gui

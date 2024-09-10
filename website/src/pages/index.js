@@ -37,7 +37,6 @@ function HomepageIntro() {
                     Samples
                 </Link>
             </div>
-
         </div>
         <div class="flex-1">
             <Tabs>
@@ -46,32 +45,35 @@ function HomepageIntro() {
                         language="js"
                         title="/src/index.js"
                         showLineNumbers>
-{`import { Factorial } from './native/Factorial.h';
+{`import { initCppJs } './native/Matrix.h';
 
-const factorial = new Factorial(99999);
-const result = factorial.calculate();
-console.log(result); // execution time: 0.863s`}
+const { Matrix } = await initCppJs();
+const a = new Matrix(1210000, 1);
+const b = new Matrix(1210000, 2);
+const result = a.multiple(b);
+console.log(result); // execution time: 1.23s`}
                     </CodeBlock>
                     <CodeBlock
                         language="cpp"
-                        title="/src/native/Factorial.h"
+                        title="/src/native/Matrix.h"
                         showLineNumbers>
-{`class Factorial {
-private:
-    int number;
-
+{`class Matrix : public std::vector<int> {
 public:
-    Factorial(int num) : number(num) {}
+  Matrix(int size, int v) : std::vector<int>(size, v) {}
+  int get(int i) { return this->at(i); }
+  std::shared_ptr<Matrix> multiple(std::shared_ptr<Matrix> b) {
+    int size = sqrt(this->size());
+    auto result = std::make_shared<Matrix>(this->size(), 0);
 
-    int calculate() {
-        if (number < 0) return -1;
-
-        int result = 1;
-        for (int i = 2; i <= number; i += 1) {
-            result *= i;
+    for (int i = 0; i < size; i += 1) {
+      for (int j = 0; j < size; j += 1) {
+        for (int k = 0; k < size; k += 1) {
+          (*result)[i*size+j]+=this->at(i*size+k)*(*b)[k*size+j];
         }
-        return result;
+      }
     }
+    return result;
+  }
 };`}
                     </CodeBlock>
                 </TabItem>
@@ -80,27 +82,30 @@ public:
                         language="js"
                         title="/src/index.js"
                         showLineNumbers>
-{`import { Factorial } from './Factorial.js';
+{`import { Matrix } from './Matrix.js';
 
-const factorial = new Factorial(99999);
-const result = factorial.calculate();
-console.log(result); // execution time: 2.314s`}
+const a = new Matrix(1210000, 1);
+const b = new Matrix(1210000, 2);
+const result = a.multiple(b);
+console.log(result); // execution time: 3.503s`}
                     </CodeBlock>
                     <CodeBlock
                         language="js"
-                        title="/src/Factorial.js"
+                        title="/src/Matrix.js"
                         showLineNumbers>
-{`export class Factorial {
-  constructor(number) {
-    this.number = number;
-  }
+{`export class Matrix extends Array {
+  constructor(size, v) { super(size); this.fill(v); }
+  get(i) { return this[i]; }
+  multiple(otherMatrix) {
+    const size = Math.sqrt(this.length);
+    const result = new Matrix(this.length, 0);
 
-  calculate() {
-    if (this.number < 0) return -1;
-
-    let result = 1;
-    for (let i = 2; i <= this.number; i += 1) {
-      result *= i;
+    for (let i = 0; i < size; i += 1) {
+      for (let j = 0; j < size; j += 1) {
+        for (let k = 0; k < size; k += 1) {
+          result[i*size+j]+=this[i*size+k]*otherMatrix[k*size+j];
+        }
+      }
     }
     return result;
   }

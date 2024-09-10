@@ -17,7 +17,7 @@ export default class CppjsWebpackPlugin {
     }
 
     afterCompile(compilation, callback) {
-        this.compiler.config.paths.native.map(file => compilation.contextDependencies.add(file))
+        this.compiler.config.paths.native.map(file => compilation.contextDependencies.add(file));
         callback();
     }
 
@@ -26,7 +26,7 @@ export default class CppjsWebpackPlugin {
         this.compiler.createBridge();
         await this.compiler.createWasm({ cc: ['-O3'] });
         if (!isDev) {
-            fs.copyFileSync(`${this.compiler.config.paths.temp}/${this.compiler.config.general.name}.js`, `${compilation.options.output.path}/cpp.js`);
+            fs.copyFileSync(`${this.compiler.config.paths.temp}/${this.compiler.config.general.name}.browser.js`, `${compilation.options.output.path}/cpp.js`);
             fs.copyFileSync(`${this.compiler.config.paths.temp}/${this.compiler.config.general.name}.wasm`, `${compilation.options.output.path}/cpp.wasm`);
             fs.rmSync(this.compiler.config.paths.temp, { recursive: true, force: true });
         }

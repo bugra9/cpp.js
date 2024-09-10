@@ -6,8 +6,8 @@ import fs from 'fs';
 const viteCppjsPlugin = (options, _compiler) => {
     let isServe = false;
     const compiler = _compiler || new CppjsCompiler();
-    const headerRegex = new RegExp(`.(${compiler.config.ext.header.join('|')})$`);
-    const sourceRegex = new RegExp(`.(${compiler.config.ext.source.join('|')})$`);
+    const headerRegex = new RegExp(`\\.(${compiler.config.ext.header.join('|')})$`);
+    const sourceRegex = new RegExp(`\\.(${compiler.config.ext.source.join('|')})$`);
 
     return [
         rollupCppjsPlugin(options, compiler),
@@ -17,7 +17,7 @@ const viteCppjsPlugin = (options, _compiler) => {
                 if (isServe && source === '/cpp.js') {
                     compiler.createBridge();
                     await compiler.createWasm();
-                    return fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.js`, { encoding: 'utf8', flag: 'r' });
+                    return fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.browser.js`, { encoding: 'utf8', flag: 'r' });
                 }
                 return null;
             },
@@ -36,6 +36,9 @@ const viteCppjsPlugin = (options, _compiler) => {
                 }
             },
             async handleHotUpdate({ file, server }) {
+                if (file.startsWith(compiler.config.paths.temp)) {
+                    return;
+                }
                 if (headerRegex.test(file)) {
                     compiler.findOrCreateInterfaceFile(file);
                     compiler.createBridge();

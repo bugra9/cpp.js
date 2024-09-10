@@ -1,0 +1,9 @@
+{
+    "name": "cppjs-sample-lib-source",
+    "version": "1.0.0-beta.1",
+    "license": "MIT",
+    "type": "module",
+    "dependencies": {
+        "cpp.js": "workspace:^"
+    }
+}
