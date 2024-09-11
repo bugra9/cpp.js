@@ -80,7 +80,7 @@
     },
     {
         "label": "Showcase",
-        "to": "/changelogs",
+        "to": "/showcase",
         "position": "left"
     },
     {
