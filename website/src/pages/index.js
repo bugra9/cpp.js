@@ -15,30 +15,43 @@ function HomepageIntro() {
   const {siteConfig} = useDocusaurusContext();
   return (
     <div className={clsx('hero hero--primary', styles.heroBanner)}>
-      <div className="container flex flex-wrap gap-20 min-h-[820px]">
+      <div className="container flex flex-wrap gap-20 min-h-[calc(100vh-92px)]">
         <div class="flex-1 justify-self-center self-center min-w-[23rem]">
             <h1 className="hero__title mb-3">{siteConfig.title}</h1>
-            <p className="hero__subtitle mb-16 text-2xl">Bind C++ codes to JS on the web and react native without writing extra code.</p>
-            <p className="hero__subtitle mb-2"><b>Why Cpp.js?</b></p>
-            <p className="hero__subtitle mb-1 text-xl">- Seamless integration of C++ and JavaScript</p>
-            <p className="hero__subtitle mb-1 text-xl">- Power of native performance</p>
-            <p className="hero__subtitle mb-1 text-xl">- Use or create prebuilt cpp.js libraries</p>
-            <p className="hero__subtitle mb-1 text-xl">- Cross Platform</p>
+            <p className="hero__subtitle mb-16 text-2xl">Bind C++ code to JS on the web and React Native without writing any extra code.</p>
 
-            <div className="mt-10 flex gap-5">
+            <Tabs>
+                <TabItem value="cppjs-create-npm" label="npm">
+                    <CodeBlock language="shell">
+                        npm create cpp.js@latest
+                    </CodeBlock>
+                </TabItem>
+                <TabItem value="cppjs-create-pnpm" label="pnpm">
+                    <CodeBlock language="shell">
+                        pnpm create cpp.js@latest
+                    </CodeBlock>
+                </TabItem>
+                <TabItem value="cppjs-create-yarn" label="yarn">
+                    <CodeBlock language="shell">
+                        yarn create cpp.js@latest
+                    </CodeBlock>
+                </TabItem>
+                <TabItem value="cppjs-create-bun" label="bun">
+                    <CodeBlock language="shell">
+                        bun create cpp.js@latest
+                    </CodeBlock>
+                </TabItem>
+            </Tabs>
+
+            <div className="mt-10 flex gap-5 justify-center">
                 <Link
-                    className="bg-[#fb9700] hover:bg-[#ffa40c] text-white hover:text-white hover:no-underline font-bold py-2 px-4 rounded-full"
+                    className="start-button text-white hover:text-white hover:no-underline font-bold py-3 px-8 rounded"
                     to="/docs/Getting%20Started/prerequisites">
                     Get Started
                 </Link>
-                <Link
-                    className="simple-button border border-solid hover:no-underline font-bold py-2 px-4 rounded-full"
-                    to="https://github.com/bugra9/cpp.js/tree/main/samples">
-                    Samples
-                </Link>
             </div>
         </div>
-        <div class="flex-1">
+        <div class="flex-1 max-w-full min-w-[40rem]">
             <Tabs>
                 <TabItem value="cpp.js" label="C++ & JS using cpp.js">
                     <CodeBlock
@@ -51,7 +64,7 @@ const { Matrix } = await initCppJs();
 const a = new Matrix(1210000, 1);
 const b = new Matrix(1210000, 2);
 const result = a.multiple(b);
-console.log(result); // execution time: 1.23s`}
+console.log(result); // execution time: 0.872s`}
                     </CodeBlock>
                     <CodeBlock
                         language="cpp"
@@ -87,7 +100,7 @@ public:
 const a = new Matrix(1210000, 1);
 const b = new Matrix(1210000, 2);
 const result = a.multiple(b);
-console.log(result); // execution time: 3.503s`}
+console.log(result); // execution time: 5.886s`}
                     </CodeBlock>
                     <CodeBlock
                         language="js"
@@ -112,6 +125,13 @@ console.log(result); // execution time: 3.503s`}
 }`}
                     </CodeBlock>
                 </TabItem>
+                <TabItem value="codepen" label="Try it in your browser">
+                <iframe height="600" style={{width: '100%'}} scrolling="no" title="Cpp.js WebAssembly Performance Test - Matrix Multiplier" src="https://codepen.io/bugra9/embed/qBzvvbZ?default-tab=result&editable=true" frameborder="no" loading="lazy" allowtransparency="true" allowfullscreen="true">
+  See the Pen <a href="https://codepen.io/bugra9/pen/qBzvvbZ">
+  Cpp.js WebAssembly Performance Test - Matrix Multiplier</a> by Bugra (<a href="https://codepen.io/bugra9">@bugra9</a>)
+  on <a href="https://codepen.io">CodePen</a>.
+</iframe>
+                </TabItem>
             </Tabs>
         </div>
       </div>
@@ -124,11 +144,6 @@ export default function Home() {
   return (
     <Layout description="Bind c++ libraries to js on web and mobile.">
         <HomepageIntro />
-        <div className={clsx('hero hero--primary mt-1', styles.heroBanner)}>
-            <div className="container home-markdown text-lg max-w-3xl text-justify">
-                <SeamlessIntegration />
-            </div>
-        </div>
     </Layout>
   );
 }

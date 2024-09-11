@@ -41,7 +41,7 @@ docker pull bugra9/cpp.js
 ### Node.js
 Check the current Node.js version with the following command:
 ```shell
-docker --version
+node --version
 ```
 If you do not have Node.js installed in current environment, or the installed version is too low, you can use the following link to install it.
 

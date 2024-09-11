@@ -40,19 +40,27 @@ const config = {
             ({
                 docs: {
                     remarkPlugins: [
-                        [require('@docusaurus/remark-plugin-npm2yarn'), {sync: true}],
+                        [
+                            require('@docusaurus/remark-plugin-npm2yarn'),
+                            { sync: true, converters: ['yarn', 'pnpm', 'bun'] },
+                        ],
                     ],
                     sidebarPath: require.resolve('./sidebars.json'),
                     sidebarCollapsible: false,
                 },
                 pages: {
-                    remarkPlugins: [require('@docusaurus/remark-plugin-npm2yarn')],
+                    remarkPlugins: [
+                        [
+                            require('@docusaurus/remark-plugin-npm2yarn'),
+                            { sync: true, converters: ['yarn', 'pnpm', 'bun'] },
+                        ],
+                    ],
                 },
                 blog: {
                     remarkPlugins: [
                         [
                             require('@docusaurus/remark-plugin-npm2yarn'),
-                            {converters: ['pnpm']},
+                            { sync: true, converters: ['yarn', 'pnpm', 'bun'] },
                         ],
                     ],
                     showReadingTime: true,

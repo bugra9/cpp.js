@@ -57,6 +57,14 @@ html[data-theme='dark'] {
     background-color: var(--ifm-footer-background-color);
 }
 
+.start-button {
+    background-color: var(--ifm-color-primary);
+}
+
+.start-button:hover {
+    background-color: #ffa40c;
+}
+
 .home-markdown h3:not(:first-child) {
     margin-top: 4rem;
 }
