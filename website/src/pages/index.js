@@ -160,7 +160,7 @@ export default function Home() {
     <Layout description="Bind c++ libraries to js on web and mobile.">
         <HomepageIntro />
         <div className={clsx('hero hero--primary mt-12 mb-12', styles.heroBanner)}>
-            <div className="container home-markdown text-lg max-w-3xl text-justify">
+            <div className="container home-markdown text-lg !max-w-3xl text-justify">
                 <SeamlessIntegration />
             </div>
         </div>
