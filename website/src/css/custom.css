@@ -58,11 +58,11 @@ html[data-theme='dark'] {
 }
 
 .start-button {
-    background-color: var(--ifm-color-primary);
+    background-color: #77bb27;
 }
 
 .start-button:hover {
-    background-color: #ffa40c;
+    background-color: #84cc27;
 }
 
 .home-markdown h3:not(:first-child) {
@@ -70,7 +70,7 @@ html[data-theme='dark'] {
 }
 
 .home-markdown h2:not(:first-child) {
-    margin-top: 7rem;
+    margin-top: 8rem;
 }
 
 .home-markdown h2 {
@@ -80,7 +80,7 @@ html[data-theme='dark'] {
     font-weight: 700;
 }
 
-.home-markdown a, article a {
+.home-markdown a:not(.no-underline), article a:not(.no-underline) {
     text-decoration: underline;
 }
 

@@ -18,8 +18,10 @@
             "Integrate into Existing Project/react-native",
             "Integrate into Existing Project/expo"
         ],
-        "Core": [
-            "Tutorial/tutorial"
+        "Features": [
+            "Features/calling-cpp-from-javascript",
+            "Features/packages",
+            "Features/assets"
         ]
     },
     "Plugins": [

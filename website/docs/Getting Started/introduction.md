@@ -1,4 +1,4 @@
-# What is Cpp.js?
+# Introduction
 Cpp.js is a framework that provides the ability to use c++ code in the javascript ecosystem to help developers build applications for web and mobile platforms. Developers can integrate c++ libraries into their applications developed with javascript.
 
 Here is a minimal example:
