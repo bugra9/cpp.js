@@ -84,7 +84,7 @@ export default {
 The project is now fully set up and ready to run.
 
 :::warning
-Before proceeding, ensure that you have met all the [prerequisites](/docs/Getting%20Started/prerequisites) for setting up a working development environment.
+Before proceeding, ensure that you have met all the [prerequisites](/docs/Guide/Getting%20Started/prerequisites) for setting up a working development environment.
 :::
 
 :::info

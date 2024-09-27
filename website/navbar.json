@@ -1,82 +1,18 @@
 [
     {
-        "label": "Development",
-        "type": "dropdown",
-        "position": "left",
-        "items": [
-            {
-                "label": "Docs",
-                "type": "doc",
-                "docId": "Getting Started/introduction"
-            },
-            {
-                "label": "Plugins",
-                "type": "doc",
-                "docId": "plugins"
-            },
-            {
-                "label": "Architecture",
-                "type": "doc",
-                "docId": "architecture"
-            }
-        ]
+        "label": "Guide",
+        "type": "doc",
+        "docId": "Guide/Getting Started/introduction"
     },
     {
         "label": "API",
-        "type": "dropdown",
-        "position": "left",
-        "items": [
-            {
-                "label": "Configuration",
-                "type": "doc",
-                "docId": "configuration"
-            },
-            {
-                "label": "CLI",
-                "type": "doc",
-                "docId": "cli"
-            },
-            {
-                "label": "Javascript",
-                "type": "doc",
-                "docId": "javascript"
-            },
-            {
-                "label": "C++",
-                "type": "doc",
-                "docId": "c++"
-            }
-        ]
+        "type": "doc",
+        "docId": "API/Configuration/overview"
     },
     {
         "label": "Contribute",
-        "type": "dropdown",
-        "position": "left",
-        "items": [
-            {
-                "label": "Contribute",
-                "type": "doc",
-                "docId": "contribute"
-            },
-            {
-                "label": "Writing a plugin",
-                "type": "doc",
-                "docId": "writing-a-plugin"
-            },
-            {
-                "label": "Writing a package",
-                "type": "doc",
-                "docId": "writing-a-package"
-            },
-            {
-                "label": "Report a issue",
-                "href": "https://github.com/bugra9/cpp.js/issues"
-            },
-            {
-                "label": "Ask a question",
-                "href": "https://github.com/bugra9/cpp.js/discussions"
-            }
-        ]
+        "type": "doc",
+        "docId": "Contribute/Contribute/overview"
     },
     {
         "label": "Showcase",

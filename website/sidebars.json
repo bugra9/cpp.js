@@ -1,54 +1,77 @@
 {
-    "Docs": {
+    "Guide": {
         "Getting Started": [
-            "Getting Started/introduction",
-            "Getting Started/prerequisites",
-            "Getting Started/create-a-project"
+            "Guide/Getting Started/introduction",
+            "Guide/Getting Started/prerequisites",
+            "Guide/Getting Started/create-a-project"
         ],
         "Integrate into Existing Project": [
-            "Integrate into Existing Project/overview",
-            "Integrate into Existing Project/standalone",
-            "Integrate into Existing Project/webpack",
-            "Integrate into Existing Project/rollup",
-            "Integrate into Existing Project/vite",
-            "Integrate into Existing Project/rspack",
-            "Integrate into Existing Project/create-react-app",
-            "Integrate into Existing Project/nodejs",
-            "Integrate into Existing Project/cloudflare-worker",
-            "Integrate into Existing Project/react-native",
-            "Integrate into Existing Project/expo"
+            "Guide/Integrate into Existing Project/overview",
+            "Guide/Integrate into Existing Project/standalone",
+            "Guide/Integrate into Existing Project/webpack",
+            "Guide/Integrate into Existing Project/rollup",
+            "Guide/Integrate into Existing Project/vite",
+            "Guide/Integrate into Existing Project/rspack",
+            "Guide/Integrate into Existing Project/create-react-app",
+            "Guide/Integrate into Existing Project/nodejs",
+            "Guide/Integrate into Existing Project/cloudflare-worker",
+            "Guide/Integrate into Existing Project/react-native",
+            "Guide/Integrate into Existing Project/expo"
         ],
         "Features": [
-            "Features/calling-cpp-from-javascript",
-            "Features/packages",
-            "Features/assets"
+            "Guide/Features/calling-cpp-from-javascript",
+            "Guide/Features/packages",
+            "Guide/Features/assets"
         ]
     },
-    "Plugins": [
-        "plugins"
-    ],
-    "Architecture": [
-        "architecture"
-    ],
-    "Configuration": [
-        "configuration"
-    ],
-    "CLI": [
-        "cli"
-    ],
-    "Javascript": [
-        "javascript"
-    ],
-    "C++": [
-        "c++"
-    ],
-    "Contribute": [
-        "contribute"
-    ],
-    "Writing a Plugin": [
-        "writing-a-plugin"
-    ],
-    "Writing a Package": [
-        "writing-a-package"
-    ]
+    "API": {
+        "Configuration": [
+            "API/Configuration/overview",
+            "API/Configuration/general",
+            "API/Configuration/dependencies",
+            "API/Configuration/paths",
+            "API/Configuration/extensions",
+            "API/Configuration/export",
+            "API/Configuration/platform"
+        ],
+        "CLI": [
+            "API/CLI/overview",
+            "API/CLI/generate",
+            "API/CLI/run",
+            "API/CLI/postinstall"
+        ],
+        "JavaScript": [
+            "API/JavaScript/overview",
+            "API/JavaScript/filesystem",
+            "API/JavaScript/utility-functions"
+        ],
+        "C++ Bindings": [
+            "API/C++ Bindings/overview",
+            "API/C++ Bindings/class",
+            "API/C++ Bindings/function",
+            "API/C++ Bindings/data-types",
+            "API/C++ Bindings/complex-data-structures"
+        ]
+    },
+    "Contribute": {
+        "Contribute": [
+            "Contribute/Contribute/overview",
+            "Contribute/Contribute/ask-a-question",
+            "Contribute/Contribute/report-a-issue",
+            "Contribute/Contribute/create-a-pr"
+        ],
+        "Architecture": [
+            "Contribute/Architecture/overview"
+        ],
+        "Plugin": [
+            "Contribute/Plugin/overview",
+            "Contribute/Plugin/writing-a-plugin",
+            "Contribute/Plugin/maintaining-a-plugin"
+        ],
+        "Package": [
+            "Contribute/Package/overview",
+            "Contribute/Package/writing-a-package",
+            "Contribute/Package/maintaining-a-package"
+        ]
+    }
 }

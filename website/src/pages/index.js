@@ -56,12 +56,12 @@ function HomepageIntro() {
             <div className="mt-10 flex gap-5">
                 <Link
                     className="start-button text-white hover:text-white hover:no-underline font-bold py-3 px-8 rounded"
-                    to="/docs/Getting%20Started/introduction">
+                    to="/docs/Guide/Getting%20Started/introduction">
                     Get Started
                 </Link>
                 <Link
                     className="simple-button border border-solid hover:no-underline font-bold py-3 px-8 rounded"
-                    to="/docs/Features/calling-cpp-from-javascript">
+                    to="/docs/Guide/Features/calling-cpp-from-javascript">
                     Features
                 </Link>
             </div>
