@@ -6,7 +6,7 @@ You can use cpp.js to compile native code from your project into WebAssembly. To
 {
     "name": "myapp",
     "scripts": {
-+       "build": "cpp.js generate lib -p wasm"
++       "build": "cpp.js build -p wasm"
     },
     "devDependencies": {
 +       "cpp.js": "^1.0.0-beta.1"

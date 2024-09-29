@@ -36,7 +36,7 @@
         ],
         "CLI": [
             "API/CLI/overview",
-            "API/CLI/generate",
+            "API/CLI/build",
             "API/CLI/run",
             "API/CLI/postinstall"
         ],
@@ -47,8 +47,8 @@
         ],
         "C++ Bindings": [
             "API/C++ Bindings/overview",
-            "API/C++ Bindings/class",
             "API/C++ Bindings/function",
+            "API/C++ Bindings/class",
             "API/C++ Bindings/data-types",
             "API/C++ Bindings/complex-data-structures"
         ]

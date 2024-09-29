@@ -2,15 +2,21 @@
 ```bash
 Usage: cpp.js [options] [command]
 
-Compile c++ files to webassembly.
+Compile C++ files to WebAssembly and native platforms.
 
 Options:
   -V, --version              output the version number
   -h, --help                 display help for command
 
 Commands:
-  generate [options] <type>  Generate app or lib.
-  run                        Run docker application
-  postinstall                npm postinstall
+  build [options]            compile the project that was set up using Cpp.js
+  run                        run docker application
+  postinstall                prepare the required packages for Cpp.js after installation
   help [command]             display help for command
 ```
+
+<br />
+
+:::info 
+**Binary function:** You can access the binary function from [this link](https://github.com/bugra9/cpp.js/blob/main/core/cppjs-core/src/bin.js).  
+:::

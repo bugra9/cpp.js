@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { Command, Argument } from 'commander';
+import { Command, Option } from 'commander';
 import fs from 'fs';
 import glob from 'glob';
 import { createDir } from './utils/createTempDir.js';
@@ -14,30 +14,26 @@ const program = new Command();
 
 program
     .name('cpp.js')
-    .description('Compile c++ files to webassembly.')
+    .description('Compile C++ files to WebAssembly and native platforms.')
     .version(packageJSON.version)
     .showHelpAfterError();
 
-const commandGenerate = program.command('generate')
-    .description('Generate app or lib.')
-    .addArgument(new Argument('<type>', 'Generation type').choices(['app', 'lib']))
-    .option('-b, --base <base>', 'base path')
-    .option('-p, --platform <platform>', 'platform (all)', 'all', ['all', 'wasm', 'android', 'ios'])
-    .option('-o, --output <string>', 'Output path');
+const commandBuild = program.command('build')
+    .description('compile the project that was set up using Cpp.js')
+    .addOption(new Option('-p, --platform <platform>', 'target platform').default('all').choices(['all', 'wasm', 'android', 'ios']));
 
 const commandRun = program.command('run')
-    .description('Run docker application');
+    .description('run docker application');
 
 const commandPostInstall = program.command('postinstall')
-    .description('npm postinstall');
+    .description('prepare the required packages for Cpp.js after installation');
 
 program.parse(process.argv);
 
 switch (program.args[0]) {
-    case 'generate': {
-        const type = commandGenerate.args[0];
-        const { output, platform, base } = commandGenerate.opts();
-        generate(type, platform, output, base);
+    case 'build': {
+        const { platform } = commandBuild.opts();
+        build(platform);
         break;
     }
     case 'run': {
@@ -55,7 +51,15 @@ switch (program.args[0]) {
 
 function postInstall() {
     const projectPath = process.env.PWD;
-    if (!fs.existsSync(`${projectPath}/cppjs.config.js`) && !fs.existsSync(`${projectPath}/cppjs.config.cjs`) && !fs.existsSync(`${projectPath}/cppjs.config.mjs`)) {
+    const isDarwin = process.platform === 'darwin';
+    if (
+        !isDarwin
+        || (
+            !fs.existsSync(`${projectPath}/cppjs.config.js`)
+            && !fs.existsSync(`${projectPath}/cppjs.config.cjs`)
+            && !fs.existsSync(`${projectPath}/cppjs.config.mjs`)
+        )
+    ) {
         return;
     }
 
@@ -78,49 +82,48 @@ function postInstall() {
 
 function run(programName, params) {
     const compiler = new CppjsCompiler();
-    compiler.run(programName, params);
+    compiler.run(programName, params, { console: true });
 }
 
-function generate(type, platform) {
+function build(platform) {
     const compiler2 = new CppjsCompiler();
-    if (type === 'lib') {
-        const modules = [];
-        compiler2.config.paths.module.forEach((modulePath) => {
-            modules.push(...glob.sync('**/*.i', { absolute: true, cwd: modulePath }));
-            modules.push(...glob.sync('*.i', { absolute: true, cwd: modulePath }));
-        });
 
-        if (platform === 'all' || platform === 'wasm') {
-            if (!fs.existsSync(`${compiler2.config.paths.output}/prebuilt/Emscripten-x86_64`)) {
-                generateWasmLib();
-                modules.forEach((modulePath) => {
-                    const fileName = modulePath.split('/').at(-1);
-                    createDir('prebuilt/Emscripten-x86_64/swig', compiler2.config.paths.output);
-                    fs.copyFileSync(modulePath, `${compiler2.config.paths.output}/prebuilt/Emscripten-x86_64/swig/${fileName}`);
-                });
-            }
-        }
+    const modules = [];
+    compiler2.config.paths.module.forEach((modulePath) => {
+        modules.push(...glob.sync('**/*.i', { absolute: true, cwd: modulePath }));
+        modules.push(...glob.sync('*.i', { absolute: true, cwd: modulePath }));
+    });
 
-        if (platform === 'wasm') return;
-        const platforms = {
-            all: ['Android-arm64-v8a', 'iOS-iphoneos', 'iOS-iphonesimulator'],
-            android: ['Android-arm64-v8a'],
-            ios: ['iOS-iphoneos', 'iOS-iphonesimulator'],
-        };
-        platforms[platform].forEach((p) => {
-            if (!fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${p}`)) {
-                const compiler = new CppjsCompiler(p);
-                compiler.createLib();
-                modules.forEach((modulePath) => {
-                    const fileName = modulePath.split('/').at(-1);
-                    createDir(`prebuilt/${p}/swig`, compiler2.config.paths.output);
-                    fs.copyFileSync(modulePath, `${compiler2.config.paths.output}/prebuilt/${p}/swig/${fileName}`);
-                });
-            }
-        });
-        if (platform === 'all' || platform === 'ios') {
-            compiler2.finishBuild();
+    if (platform === 'all' || platform === 'wasm') {
+        if (!fs.existsSync(`${compiler2.config.paths.output}/prebuilt/Emscripten-x86_64`)) {
+            buildWasm();
+            modules.forEach((modulePath) => {
+                const fileName = modulePath.split('/').at(-1);
+                createDir('prebuilt/Emscripten-x86_64/swig', compiler2.config.paths.output);
+                fs.copyFileSync(modulePath, `${compiler2.config.paths.output}/prebuilt/Emscripten-x86_64/swig/${fileName}`);
+            });
         }
+    }
+
+    if (platform === 'wasm') return;
+    const platforms = {
+        all: ['Android-arm64-v8a', 'iOS-iphoneos', 'iOS-iphonesimulator'],
+        android: ['Android-arm64-v8a'],
+        ios: ['iOS-iphoneos', 'iOS-iphonesimulator'],
+    };
+    platforms[platform].forEach((p) => {
+        if (!fs.existsSync(`${compiler2.config.paths.output}/prebuilt/${p}`)) {
+            const compiler = new CppjsCompiler(p);
+            compiler.createLib();
+            modules.forEach((modulePath) => {
+                const fileName = modulePath.split('/').at(-1);
+                createDir(`prebuilt/${p}/swig`, compiler2.config.paths.output);
+                fs.copyFileSync(modulePath, `${compiler2.config.paths.output}/prebuilt/${p}/swig/${fileName}`);
+            });
+        }
+    });
+    if (platform === 'all' || platform === 'ios') {
+        compiler2.finishBuild();
     }
 
     const distCmakeContent = fs.readFileSync(`${compiler2.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
@@ -128,7 +131,7 @@ function generate(type, platform) {
     fs.writeFileSync(`${compiler2.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
 }
 
-async function generateWasmLib() {
+async function buildWasm() {
     let headers = [];
 
     const compiler = new CppjsCompiler();

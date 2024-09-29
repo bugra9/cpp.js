@@ -61,8 +61,8 @@ function HomepageIntro() {
                 </Link>
                 <Link
                     className="simple-button border border-solid hover:no-underline font-bold py-3 px-8 rounded"
-                    to="/docs/Guide/Features/calling-cpp-from-javascript">
-                    Features
+                    to="/docs/API/C++%20Bindings/overview">
+                    C++ Bindings
                 </Link>
             </div>
         </div>
