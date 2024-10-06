@@ -1,9 +1,12 @@
-# Vite
+# Rollup
+:::tip
+If you're using the Vite bundler, you can skip this section. Simply follow the instructions provided on the [Vite page](vite).
+:::
 
-To integrate cpp.js into your project using Vite as a bundler, you can utilize the vite-plugin-cppjs plugin. Start by installing these package with the following command:
+To integrate cpp.js into your project using Rollup as a bundler, you can utilize the rollup-plugin-cppjs plugin. Start by installing these package with the following command:
 
 ```shell npm2yarn
-npm install vite-plugin-cppjs --save-dev
+npm install rollup-plugin-cppjs --save-dev
 ```
 
 To enable the plugin, modify the `vite.config.js` file as shown below.
@@ -11,12 +14,12 @@ To enable the plugin, modify the `vite.config.js` file as shown below.
 ```diff title="vite.config.js"
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-+ import viteCppjsPlugin from 'vite-plugin-cppjs'
++ import rollupCppjsPlugin from 'rollup-plugin-cppjs'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-+   viteCppjsPlugin(),
++   rollupCppjsPlugin(),
   ]
 });
 ```
@@ -61,9 +64,5 @@ initCppJs().then(({ MySampleClass }) => {;
 The project is now fully set up and ready to run.
 
 :::warning
-Before proceeding, ensure that you have met all the [prerequisites](/docs/Guide/Getting%20Started/prerequisites) for setting up a working development environment.
-:::
-
-:::info
-**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-web-vue-vite).
+Before proceeding, ensure that you have met all the [prerequisites](/docs/guide/getting-started/prerequisites) for setting up a working development environment.
 :::

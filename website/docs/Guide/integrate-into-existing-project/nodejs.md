@@ -50,7 +50,7 @@ public:
 
 Now, we can compile our C++ code into WebAssembly. Run the following command:
 :::warning
-Before proceeding, ensure that you have met all the [prerequisites](/docs/Guide/Getting%20Started/prerequisites) for setting up a working development environment.
+Before proceeding, ensure that you have met all the [prerequisites](/docs/guide/getting-started/prerequisites) for setting up a working development environment.
 :::
 ```shell npm2yarn
 npm run build

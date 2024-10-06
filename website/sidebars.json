@@ -1,77 +1,120 @@
 {
-    "Guide": {
-        "Getting Started": [
-            "Guide/Getting Started/introduction",
-            "Guide/Getting Started/prerequisites",
-            "Guide/Getting Started/create-a-project"
-        ],
-        "Integrate into Existing Project": [
-            "Guide/Integrate into Existing Project/overview",
-            "Guide/Integrate into Existing Project/standalone",
-            "Guide/Integrate into Existing Project/webpack",
-            "Guide/Integrate into Existing Project/rollup",
-            "Guide/Integrate into Existing Project/vite",
-            "Guide/Integrate into Existing Project/rspack",
-            "Guide/Integrate into Existing Project/create-react-app",
-            "Guide/Integrate into Existing Project/nodejs",
-            "Guide/Integrate into Existing Project/cloudflare-worker",
-            "Guide/Integrate into Existing Project/react-native",
-            "Guide/Integrate into Existing Project/expo"
-        ],
-        "Features": [
-            "Guide/Features/calling-cpp-from-javascript",
-            "Guide/Features/packages",
-            "Guide/Features/assets"
-        ]
-    },
-    "API": {
-        "Configuration": [
-            "API/Configuration/overview",
-            "API/Configuration/general",
-            "API/Configuration/dependencies",
-            "API/Configuration/paths",
-            "API/Configuration/extensions",
-            "API/Configuration/export",
-            "API/Configuration/platform"
-        ],
-        "CLI": [
-            "API/CLI/overview",
-            "API/CLI/build",
-            "API/CLI/run",
-            "API/CLI/postinstall"
-        ],
-        "JavaScript": [
-            "API/JavaScript/overview",
-            "API/JavaScript/filesystem",
-            "API/JavaScript/utility-functions"
-        ],
-        "C++ Bindings": [
-            "API/C++ Bindings/overview",
-            "API/C++ Bindings/function",
-            "API/C++ Bindings/class",
-            "API/C++ Bindings/data-types",
-            "API/C++ Bindings/complex-data-structures"
-        ]
-    },
-    "Contribute": {
-        "Contribute": [
-            "Contribute/Contribute/overview",
-            "Contribute/Contribute/ask-a-question",
-            "Contribute/Contribute/report-a-issue",
-            "Contribute/Contribute/create-a-pr"
-        ],
-        "Architecture": [
-            "Contribute/Architecture/overview"
-        ],
-        "Plugin": [
-            "Contribute/Plugin/overview",
-            "Contribute/Plugin/writing-a-plugin",
-            "Contribute/Plugin/maintaining-a-plugin"
-        ],
-        "Package": [
-            "Contribute/Package/overview",
-            "Contribute/Package/writing-a-package",
-            "Contribute/Package/maintaining-a-package"
-        ]
-    }
+    "guide": [
+        {
+            "type": "category",
+            "label": "Getting Started",
+            "items": [
+                "guide/getting-started/introduction",
+                "guide/getting-started/prerequisites",
+                "guide/getting-started/create-a-project"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "Integrate Into Existing Project",
+            "items": [
+                "guide/integrate-into-existing-project/overview",
+                "guide/integrate-into-existing-project/standalone",
+                "guide/integrate-into-existing-project/webpack",
+                "guide/integrate-into-existing-project/rollup",
+                "guide/integrate-into-existing-project/vite",
+                "guide/integrate-into-existing-project/rspack",
+                "guide/integrate-into-existing-project/create-react-app",
+                "guide/integrate-into-existing-project/nodejs",
+                "guide/integrate-into-existing-project/cloudflare-worker",
+                "guide/integrate-into-existing-project/react-native",
+                "guide/integrate-into-existing-project/expo"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "Feature",
+            "items": [
+                "guide/features/calling-cpp-from-javascript",
+                "guide/features/packages",
+                "guide/features/assets"
+            ]
+        }
+    ],
+    "API": [
+        {
+            "type": "category",
+            "label": "C++ Bindings",
+            "items": [
+                "api/cpp-bindings/overview",
+                "api/cpp-bindings/data-types",
+                "api/cpp-bindings/functions",
+                "api/cpp-bindings/classes"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "JavaScript",
+            "items": [
+                "api/javascript/overview",
+                "api/javascript/filesystem",
+                "api/javascript/utility-functions"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "Configuration",
+            "items": [
+                "api/configuration/overview",
+                "api/configuration/general",
+                "api/configuration/dependencies",
+                "api/configuration/paths",
+                "api/configuration/extensions",
+                "api/configuration/export",
+                "api/configuration/platform"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "CLI",
+            "items": [
+                "api/cli/overview",
+                "api/cli/build",
+                "api/cli/run",
+                "api/cli/postinstall"
+            ]
+        }
+    ],
+    "Contribute": [
+        {
+            "type": "category",
+            "label": "Contribute",
+            "items": [
+                "contribute/contribute/overview",
+                "contribute/contribute/ask-a-question",
+                "contribute/contribute/report-a-issue",
+                "contribute/contribute/create-a-pr"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "Architecture",
+            "items": [
+                "contribute/architecture/overview"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "Plugin",
+            "items": [
+                "contribute/plugin/overview",
+                "contribute/plugin/writing-a-plugin",
+                "contribute/plugin/maintaining-a-plugin"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "Package",
+            "items": [
+                "contribute/package/overview",
+                "contribute/package/writing-a-package",
+                "contribute/package/maintaining-a-package"
+            ]
+        }
+    ]
 }

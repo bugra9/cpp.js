@@ -2,17 +2,17 @@
     {
         "label": "Guide",
         "type": "doc",
-        "docId": "Guide/Getting Started/introduction"
+        "docId": "guide/getting-started/introduction"
     },
     {
         "label": "API",
         "type": "doc",
-        "docId": "API/Configuration/overview"
+        "docId": "api/cpp-bindings/overview"
     },
     {
         "label": "Contribute",
         "type": "doc",
-        "docId": "Contribute/Contribute/overview"
+        "docId": "contribute/contribute/overview"
     },
     {
         "label": "Showcase",
