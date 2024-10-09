@@ -31,8 +31,10 @@
             "label": "Feature",
             "items": [
                 "guide/features/calling-cpp-from-javascript",
+                "guide/features/assets",
+                "guide/features/monorepo",
                 "guide/features/packages",
-                "guide/features/assets"
+                "guide/features/plugins"
             ]
         }
     ],

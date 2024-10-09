@@ -159,9 +159,7 @@ const newStyle = NewStyle.TWO;
 Here is a minimal example:
 
 ```cpp title="C++"
-class A {
-
-}
+class A {};
 
 std::shared_ptr<A> getClassObject();
 void passClassObject(std::shared_ptr<A>);

@@ -28,7 +28,7 @@ import { initCppJs } 'cppjs-package-gdal/gdal.h';
 const { Gdal } = await initCppJs();
 ```
 
-[You can view the prebuilt packages here.](https://cpp.js.org/)
+[You can view the prebuilt packages here.](/showcase)
 
 ## Managing Bundle Size
 Only the code referenced via the imported header is included in the final bundle. As a result, the bundle size is determined solely by the code that is actually used. For instance, if you only require a few methods from a large library, the bundle will include just the necessary code, not the entire library.
