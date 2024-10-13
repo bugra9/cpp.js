@@ -10,19 +10,9 @@
         "docId": "api/cpp-bindings/overview"
     },
     {
-        "label": "Contribute",
-        "type": "doc",
-        "docId": "contribute/contribute/overview"
-    },
-    {
-        "label": "Showcase",
+        "label": "Showcase & Packages",
         "to": "/showcase",
         "position": "left"
-    },
-    {
-        "label": "Changelogs",
-        "to": "/changelogs",
-        "position": "right"
     },
     {
         "label": "GitHub",

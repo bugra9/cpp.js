@@ -15,6 +15,6 @@ export default {
 
 In this example, the monorepo's path is specified as two directories up from the project's path.
 
-:::tip
+:::info
 The configuration documentation can be accessed [here](/docs/api/configuration/paths).
 :::
