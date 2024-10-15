@@ -6,10 +6,7 @@ import getLibs from './getLibs.js';
 import getData from './getData.js';
 import getPathInfo from '../utils/getPathInfo.js';
 
-export default async function createWasm(compiler, options = {}, buildAll = false) {
-    if (fs.existsSync('/tmp/cppjs/live')) fs.unlinkSync('/tmp/cppjs/live');
-    fs.symlinkSync(compiler.config.paths.base, '/tmp/cppjs/live');
-
+export default async function createWasm(compiler, options = {}) {
     const output = `/tmp/cppjs/live/${getPathInfo(compiler.config.paths.temp, compiler.config.paths.base).relative}`;
 
     let params = getCmakeParams(compiler.config, '/tmp/cppjs/live/', true, false);
@@ -42,7 +39,7 @@ export default async function createWasm(compiler, options = {}, buildAll = fals
         '-o', `${output}/${compiler.config.general.name}.js`,
         ...data,
     ]);
-    await buildJS(compiler, `${output}/${compiler.config.general.name}.js`, 'browser');
+    await buildJS(compiler, `${compiler.config.paths.temp}/${compiler.config.general.name}.js`, 'browser');
     run(compiler, 'emcc', [
         '-lembind', '-Wl,--whole-archive', '-lnodefs.js',
         ...libs, ...(options.cc || []),
@@ -54,15 +51,14 @@ export default async function createWasm(compiler, options = {}, buildAll = fals
     ]);
     Object.entries(getData(compiler.config, 'data', null, 'Emscripten-x86_64', 'node')).forEach(([key, value]) => {
         if (fs.existsSync(key)) {
-            const dAssetPath = `${output}/data/${value}`;
+            const dAssetPath = `${compiler.config.paths.temp}/data/${value}`;
             if (!fs.existsSync(dAssetPath)) {
                 fs.mkdirSync(dAssetPath, { recursive: true });
                 fs.cpSync(key, dAssetPath, { recursive: true });
             }
         }
     });
-    await buildJS(compiler, `${output}/${compiler.config.general.name}.js`, 'node');
-    // await buildJS(compiler, `${output}/${compiler.config.general.name}.js`);
+    await buildJS(compiler, `${compiler.config.paths.temp}/${compiler.config.general.name}.js`, 'node');
     if (fs.existsSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.data`)) {
         fs.renameSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.data`, `${compiler.config.paths.temp}/${compiler.config.general.name}.data.txt`);
     }

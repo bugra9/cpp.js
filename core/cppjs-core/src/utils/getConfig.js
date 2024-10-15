@@ -1,10 +1,10 @@
 import fs from 'fs';
-import nodePath from 'path';
+import nodePath from 'upath';
 import * as url from 'node:url';
 import createTempDir, { createDir } from './createTempDir.js';
 import findCMakeListsFile from './findCMakeListsFile.js';
 
-const filename = url.fileURLToPath(import.meta.url);
+const filename = nodePath.normalize(url.fileURLToPath(import.meta.url));
 const temp = filename.split('/'); temp.pop(); temp.pop();
 const dirname = temp.join('/');
 
@@ -58,7 +58,7 @@ async function initDefaultConfigFile() {
     });
 
     if (filePath) {
-        let file = await import(filePath);
+        let file = await import('file:///' + filePath);
         if (file.default) file = file.default;
 
         if (typeof file === 'function') tempConfigDefault = file();

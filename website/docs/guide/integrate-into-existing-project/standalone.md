@@ -1,4 +1,8 @@
-# Cloudflare Worker
+# Standalone
+
+:::info
+If you are using a bundler, you may choose to skip this section.
+:::
 
 You can use cpp.js to compile native code from your project into WebAssembly. To do this, add the build script and cpp.js as a dependency in the package.json file of your project.
 
@@ -6,13 +10,10 @@ You can use cpp.js to compile native code from your project into WebAssembly. To
 {
     "name": "myapp",
     "scripts": {
-+       "build": "cpp.js build -p wasm",
-        "dev": "wrangler dev",
-        "deploy": "wrangler dev"
++       "build": "cppjs build -p wasm"
     },
     "devDependencies": {
-+       "cpp.js": "^1.0.0-beta.1",
-        "wrangler": "^3.75.0"
++       "cpp.js": "^1.0.0-beta.1"
     }
 }
 ```
@@ -73,33 +74,50 @@ This command will generate myapp.wasm, myapp.browser.js, and myapp.node.js files
 ├── ...
 ```
 
-You can now access your native code by importing **dist/myapp.browser.js** into your JavaScript file. For a minimal setup, create a index.js and add the following content.
+You can now access your native code by importing **dist/myapp.browser.js** into your JavaScript file. For a minimal setup, create a index.html and add the following content.
 
-```js title="index.js"
-import initCppJs from './dist/myapp.browser.js';
-import wasmContent from './dist/myapp.wasm';
+```html title="index.html"
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset = "utf-8">
+      <title>Cpp.js Vanilla sample</title>
+      <script src="./dist/myapp.browser.js"></script>
+      <script>
+        initCppJs({ path: './dist' }).then(({ MySampleClass }) => {
+            document.querySelector('#cppMessage').innerHTML = MySampleClass.sample();
+        });
+      </script>
+   </head>
+   <body>
+    <p>Response from c++ : <span id="cppMessage">compiling ...</span></p>
+   </body>
+</html>
+```
 
-const { MySampleClass } = await initCppJs({ getWasmFunction: () => wasmContent });
+To view the output, you can start a local server, such as using the `serve` command, within the project directory.
 
-export default {
-    async fetch(request, env, ctx) {
-        return new Response(MySampleClass.sample());
+:::tip
+To add `serve` as a project dependency, follow these steps:
+```diff title="package.json"
+{
+    "name": "myapp",
+    "scripts": {
++      "start": "serve",
+       "build": "cppjs build -p wasm",
     },
-};
+    "devDependencies": {
++      "serve": "^14.2.3",
+       "cpp.js": "^1.0.0-beta.1"
+    }
+}
 ```
-
-The project is now fully set up and ready to run. To view the output, run the following command:
-
+To start your project
 ```shell npm2yarn
-npm run dev
+npm run start
 ```
-
-To deploy the output, run the following command:
-
-```shell npm2yarn
-npm run deploy
-```
+:::
 
 :::info
-**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-cloud-cloudflare-worker).
+**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-web-vanilla).
 :::

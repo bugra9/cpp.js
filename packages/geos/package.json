@@ -9,7 +9,7 @@
     "scripts": {
         "build": "node build.js",
         "clear": "rm -rf .cppjs dist *.xcframework",
-        "postinstall": "cpp.js postinstall"
+        "postinstall": "cppjs postinstall"
     },
     "dependencies": {
         "cpp.js": "workspace:^"

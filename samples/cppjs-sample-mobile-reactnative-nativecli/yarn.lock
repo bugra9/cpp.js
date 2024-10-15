@@ -4124,6 +4124,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"commander@npm:^12.1.0":
+  version: 12.1.0
+  resolution: "commander@npm:12.1.0"
+  checksum: 68e9818b00fc1ed9cdab9eb16905551c2b768a317ae69a5e3c43924c2b20ac9bb65b27e1cab36aeda7b6496376d4da908996ba2c0b5d79463e0fb1e77935d514
+  languageName: node
+  linkType: hard
+
 "commander@npm:^2.20.0":
   version: 2.20.3
   resolution: "commander@npm:2.20.3"
@@ -4257,6 +4264,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cpp.js@npm:^1.0.0-beta.4":
+  version: 1.0.0-beta.4
+  resolution: "cpp.js@npm:1.0.0-beta.4"
+  dependencies:
+    "@rollup/plugin-commonjs": ^26.0.1
+    "@rollup/plugin-node-resolve": ^15.2.3
+    "@rollup/plugin-virtual": ^3.0.2
+    commander: ^12.1.0
+    glob: ^8.0.3
+    rollup: ^4.18.0
+    rollup-plugin-uglify: ^6.0.4
+    upath: ^2.0.1
+  bin:
+    cpp.js: src/bin.js
+    cppjs: src/bin.js
+  checksum: 5e0323a3686e1d0d343609e913066f4076201d54a285f0bc4165d7d829d62eaab1cea0068b94c8f53b4207d618a9453f82d970b38614be37d7e8a59fd827d15d
+  languageName: node
+  linkType: hard
+
 "cppjs-core-rn-embind@npm:^1.0.0-beta.1":
   version: 1.0.0-beta.1
   resolution: "cppjs-core-rn-embind@npm:1.0.0-beta.1"
@@ -4292,12 +4318,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cppjs-sample-lib-prebuilt-matrix@npm:^1.0.0-beta.4":
-  version: 1.0.0-beta.4
-  resolution: "cppjs-sample-lib-prebuilt-matrix@npm:1.0.0-beta.4"
+"cppjs-sample-lib-prebuilt-matrix@npm:^1.0.0-beta.7":
+  version: 1.0.0-beta.7
+  resolution: "cppjs-sample-lib-prebuilt-matrix@npm:1.0.0-beta.7"
   dependencies:
-    cpp.js: ^1.0.0-beta.1
-  checksum: b8b13717734ac47691b676aedc742924771d570fb1f9df12d27734a0ee1cc416051bbf29679496d0847d09f9f843843a22ca82d1dd73b2c882bc98c8497f6159
+    cpp.js: ^1.0.0-beta.4
+  checksum: de0516d007ff311120f35429ac50a97db7b25854014ac45c1687983eb8e9fb519f55059d087b49074b21d7940f9cb7d09d50fca13d8e07316a6300cf4d1cafe2
   languageName: node
   linkType: hard
 
@@ -4315,11 +4341,11 @@ __metadata:
     "@types/react": ^18.2.6
     "@types/react-test-renderer": ^18.0.0
     babel-jest: ^29.6.3
-    cpp.js: ^1.0.0-beta.1
+    cpp.js: ^1.0.0-beta.4
     cppjs-core-rn-embind: ^1.0.0-beta.1
     cppjs-plugin-react-native: ^1.0.0-beta.1
     cppjs-plugin-react-native-ios-helper: ^1.0.0-beta.1
-    cppjs-sample-lib-prebuilt-matrix: ^1.0.0-beta.4
+    cppjs-sample-lib-prebuilt-matrix: ^1.0.0-beta.7
     eslint: ^8.19.0
     jest: ^29.6.3
     prettier: 2.8.8
@@ -9851,6 +9877,13 @@ __metadata:
   version: 1.0.0
   resolution: "unpipe@npm:1.0.0"
   checksum: 4fa18d8d8d977c55cb09715385c203197105e10a6d220087ec819f50cb68870f02942244f1017565484237f1f8c5d3cd413631b1ae104d3096f24fdfde1b4aa2
+  languageName: node
+  linkType: hard
+
+"upath@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "upath@npm:2.0.1"
+  checksum: 2db04f24a03ef72204c7b969d6991abec9e2cb06fb4c13a1fd1c59bc33b46526b16c3325e55930a11ff86a77a8cbbcda8f6399bf914087028c5beae21ecdb33c
   languageName: node
   linkType: hard
 

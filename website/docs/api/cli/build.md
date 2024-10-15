@@ -1,6 +1,6 @@
 # Build
 ```bash
-Usage: cpp.js build [options]
+Usage: cppjs build [options]
 
 compile the project that was set up using Cpp.js
 
@@ -66,7 +66,7 @@ Here is a minimal example:
 {
     "name": "cf-worker-example",
     "scripts": {
-       "build": "cpp.js build -p wasm"
+       "build": "cppjs build -p wasm"
     }
 }
 ```

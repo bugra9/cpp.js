@@ -1,6 +1,6 @@
 {
   "name": "cppjs-sample-mobile-reactnative-nativecli",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.5",
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
@@ -9,7 +9,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "cppjs-sample-lib-prebuilt-matrix": "^1.0.0-beta.5",
+    "cppjs-sample-lib-prebuilt-matrix": "^1.0.0-beta.7",
     "react": "18.3.1",
     "react-native": "0.75.2"
   },
@@ -24,7 +24,7 @@
     "@types/react": "^18.2.6",
     "@types/react-test-renderer": "^18.0.0",
     "babel-jest": "^29.6.3",
-    "cpp.js": "^1.0.0-beta.2",
+    "cpp.js": "^1.0.0-beta.4",
     "cppjs-core-rn-embind": "^1.0.0-beta.1",
     "cppjs-plugin-react-native": "^1.0.0-beta.1",
     "cppjs-plugin-react-native-ios-helper": "^1.0.0-beta.1",

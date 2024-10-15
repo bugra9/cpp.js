@@ -13,7 +13,7 @@ const packageJSON = JSON.parse(fs.readFileSync(new URL('../package.json', import
 const program = new Command();
 
 program
-    .name('cpp.js')
+    .name('cppjs')
     .description('Compile C++ files to WebAssembly and native platforms.')
     .version(packageJSON.version)
     .showHelpAfterError();

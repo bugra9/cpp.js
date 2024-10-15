@@ -1,6 +1,6 @@
 {
   "name": "cppjs-sample-web-react-rspack",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "scripts": {
     "dev": "cross-env NODE_ENV=development rspack serve",
     "build": "cross-env NODE_ENV=production rspack build"

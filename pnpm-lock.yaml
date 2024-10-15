@@ -50,6 +50,9 @@ importers:
       rollup-plugin-uglify:
         specifier: ^6.0.4
         version: 6.0.4(rollup@4.18.0)
+      upath:
+        specifier: ^2.0.1
+        version: 2.0.1
     devDependencies:
       mocha:
         specifier: ^10.2.0
@@ -87,8 +90,8 @@ importers:
         specifier: workspace:^
         version: link:../../samples/cppjs-sample-lib-source
       cppjs-sample-mobile-reactnative-nativecli:
-        specifier: 1.0.0-beta.1
-        version: 1.0.0-beta.1(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(typescript@5.5.4)
+        specifier: 1.0.0-beta.2
+        version: 1.0.0-beta.2(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(typescript@5.5.4)
       cppjs-sample-web-react-cra:
         specifier: workspace:^
         version: link:../../samples/cppjs-sample-web-react-cra
@@ -4826,15 +4829,15 @@ packages:
       typescript:
         optional: true
 
-  cpp.js@1.0.0-beta.1:
-    resolution: {integrity: sha512-WkPe9R34v/fS+V/agc/UcyUwzzUcfQGyGXxUnhCQornsySUVxL/o0U1AHsRt+Mvr4WKUjOY4uve2J5bpc8Es3A==}
+  cpp.js@1.0.0-beta.2:
+    resolution: {integrity: sha512-q578J6MLkiR2mVmgMP30qvYxrW5b+qi/mls9NN4HG3LyASnA2eyc2REBl/rvHOJr4p4BDTWFt5laHRpGWwZGDQ==}
     hasBin: true
 
-  cppjs-sample-lib-prebuilt-matrix@1.0.0-beta.4:
-    resolution: {integrity: sha512-OOnRZokrXUS53HzMPMyvB3sWcoOA80wdob9oxO4m3YWs82Sx/jBecCO50djHubpy1S+7ZOdIYLfZhorD4tvfXg==}
+  cppjs-sample-lib-prebuilt-matrix@1.0.0-beta.5:
+    resolution: {integrity: sha512-4kxMoWImIsnTtYKlaDc0wGU+1eqRIuVml8T553vJ++HzZ6QVP+r+RpL/4slWdqK98BLfoL/Rua90ldY39t+0/w==}
 
-  cppjs-sample-mobile-reactnative-nativecli@1.0.0-beta.1:
-    resolution: {integrity: sha512-3pB0l5vAzHhIN0hysYoB580mHRMlc1GAAwC9IIIVmNTpSluOhaPGH7Li814npcwxEmIDNvR1wBjsZSt+A1OcSg==}
+  cppjs-sample-mobile-reactnative-nativecli@1.0.0-beta.2:
+    resolution: {integrity: sha512-Bt9BxdivjuQYTxSU3N1PKM2w0LTs9zq8y+R2Y5di1AKs9Suv2O8P58MoOS7+8JaobilSpisV9qvxcOG0FRykVg==}
     engines: {node: '>=18'}
 
   create-require@1.1.1:
@@ -10549,6 +10552,10 @@ packages:
     resolution: {integrity: sha512-aZwGpamFO61g3OlfT7OQCHqhGnW43ieH9WZeP7QxN/G/jS4jfqUkZxoryvJgVPEcrl5NL/ggHsSmLMHuH64Lhg==}
     engines: {node: '>=4'}
 
+  upath@2.0.1:
+    resolution: {integrity: sha512-1uEe95xksV1O0CYKXo8vQvN1JEbtJp7lb7C5U9HMsIp6IVwntkH/oNUzyVNQSd4S1sYk2FpSSW44FqMc8qee5w==}
+    engines: {node: '>=4'}
+
   update-browserslist-db@1.0.13:
     resolution: {integrity: sha512-xebP81SNcPuNpPP3uzeW1NYXxI3rxyJzF3pD6sH4jE7o/IX+WtSpwnVU+qIsDPyk0d3hmFQ7mjqc6AtV604hbg==}
     hasBin: true
@@ -15038,7 +15045,7 @@ snapshots:
       '@babel/plugin-transform-object-rest-spread': 7.24.7(@babel/core@7.25.2)
       '@babel/plugin-transform-optional-catch-binding': 7.24.7(@babel/core@7.25.2)
       '@babel/plugin-transform-optional-chaining': 7.24.8(@babel/core@7.25.2)
-      '@babel/plugin-transform-parameters': 7.23.3(@babel/core@7.25.2)
+      '@babel/plugin-transform-parameters': 7.24.7(@babel/core@7.25.2)
       '@babel/plugin-transform-private-methods': 7.23.3(@babel/core@7.25.2)
       '@babel/plugin-transform-private-property-in-object': 7.23.4(@babel/core@7.25.2)
       '@babel/plugin-transform-react-display-name': 7.23.3(@babel/core@7.25.2)
@@ -15182,7 +15189,7 @@ snapshots:
       open: 7.4.2
       selfsigned: 2.4.1
       serve-static: 1.15.0
-      ws: 6.2.2
+      ws: 6.2.3
     transitivePeerDependencies:
       - bufferutil
       - encoding
@@ -17512,23 +17519,23 @@ snapshots:
     optionalDependencies:
       typescript: 5.5.4
 
-  cpp.js@1.0.0-beta.1:
+  cpp.js@1.0.0-beta.2:
     dependencies:
       '@rollup/plugin-commonjs': 26.0.1(rollup@4.21.2)
       '@rollup/plugin-node-resolve': 15.2.3(rollup@4.21.2)
       '@rollup/plugin-virtual': 3.0.2(rollup@4.21.2)
-      commander: 9.4.1
+      commander: 12.1.0
       glob: 8.0.3
       rollup: 4.21.2
       rollup-plugin-uglify: 6.0.4(rollup@4.21.2)
 
-  cppjs-sample-lib-prebuilt-matrix@1.0.0-beta.4:
+  cppjs-sample-lib-prebuilt-matrix@1.0.0-beta.5:
     dependencies:
-      cpp.js: 1.0.0-beta.1
+      cpp.js: 1.0.0-beta.2
 
-  cppjs-sample-mobile-reactnative-nativecli@1.0.0-beta.1(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(typescript@5.5.4):
+  cppjs-sample-mobile-reactnative-nativecli@1.0.0-beta.2(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(typescript@5.5.4):
     dependencies:
-      cppjs-sample-lib-prebuilt-matrix: 1.0.0-beta.4
+      cppjs-sample-lib-prebuilt-matrix: 1.0.0-beta.5
       react: 18.3.1
       react-native: 0.75.2(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(react@18.3.1)(typescript@5.5.4)
     transitivePeerDependencies:
@@ -23408,7 +23415,7 @@ snapshots:
       semver: 7.6.3
       stacktrace-parser: 0.1.10
       whatwg-fetch: 3.6.20
-      ws: 6.2.2
+      ws: 6.2.3
       yargs: 17.7.2
     optionalDependencies:
       '@types/react': 18.3.5
@@ -25022,6 +25029,8 @@ snapshots:
   unquote@1.1.1: {}
 
   upath@1.2.0: {}
+
+  upath@2.0.1: {}
 
   update-browserslist-db@1.0.13(browserslist@4.22.3):
     dependencies:

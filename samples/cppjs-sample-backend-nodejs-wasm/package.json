@@ -1,11 +1,11 @@
 {
     "name": "cppjs-sample-backend-nodejs-wasm",
-    "version": "1.0.0-beta.2",
+    "version": "1.0.0-beta.4",
     "description": "Cpp.js - Node.js webassembly sample",
     "homepage": "https://cpp.js.org",
     "license": "MIT",
     "scripts": {
-        "build": "cpp.js build -p wasm"
+        "build": "cppjs build -p wasm"
     },
     "dependencies": {
         "cppjs-sample-lib-prebuilt-matrix": "workspace:^"

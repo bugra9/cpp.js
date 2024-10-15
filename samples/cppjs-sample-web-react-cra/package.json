@@ -1,6 +1,6 @@
 {
   "name": "cppjs-sample-web-react-cra",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "type": "module",
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",

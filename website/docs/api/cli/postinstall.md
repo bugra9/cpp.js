@@ -1,6 +1,6 @@
 # Post Install
 ```bash
-Usage: cpp.js postinstall [options]
+Usage: cppjs postinstall [options]
 
 prepare the required packages for Cpp.js after installation
 
@@ -16,7 +16,7 @@ Here is a minimal example:
 {
     "name": "mylib",
     "scripts": {
-       "postinstall": "cpp.js postinstall"
+       "postinstall": "cppjs postinstall"
     }
 }
 ```

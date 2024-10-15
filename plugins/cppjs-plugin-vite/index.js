@@ -30,7 +30,7 @@ const viteCppjsPlugin = (options, _compiler) => {
             configureServer(server) {
                 if (isServe) {
                     server.middlewares.use((req, res, next) => {
-                        if (req.url === '/cpp.wasm') req.url = `/@fs${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`;
+                        if (req.url === '/cpp.wasm') req.url = `/@fs/${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`;
                         next();
                     });
                 }
