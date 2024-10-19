@@ -5,4 +5,5 @@ packages:
   - 'samples/*'
   - 'website'
   - '!samples/cppjs-sample-mobile-reactnative-nativecli'
+  - '!samples/cppjs-sample-mobile-reactnative-expo'
   - '!**/test/**'

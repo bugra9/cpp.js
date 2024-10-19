@@ -16,7 +16,7 @@ If you are using a bundler you can continue with its page. If not, you can integ
 | Web                      | Mobile                       | Backend           | Cloud                                  |
 | ------------------------ | ---------------------------- | ----------------- | -------------------------------------- |
 | [Standalone](standalone) | [React Native](react-native) | [Node.js](nodejs) | [Cloudflare Worker](cloudflare-worker) |
-| [Webpack](webpack)       | Expo (Coming Soon)           |                   |                                        |
+| [Webpack](webpack)       | [Expo](expo)                 |                   |                                        |
 | [Rollup](rollup)         |                              |                   |                                        |
 | [Vite](vite)             |                              |                   |                                        |
 | [Rspack](rspack)         |

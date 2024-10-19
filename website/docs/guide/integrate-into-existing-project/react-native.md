@@ -54,8 +54,6 @@ public:
         return "Hello World!";
     }
 };
-
-#endif
 ```
 
 Modify the React file to call the c++ function from your React page. For example;

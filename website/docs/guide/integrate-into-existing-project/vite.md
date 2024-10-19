@@ -45,8 +45,6 @@ public:
         return "Hello World!";
     }
 };
-
-#endif
 ```
 
 Modify the JavaScript file to call the C++ function. For example:

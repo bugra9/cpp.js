@@ -2,8 +2,8 @@ import sampleLibCmake from 'cppjs-sample-lib-cmake/cppjs.config.js';
 import sampleLibMatrix from 'cppjs-sample-lib-prebuilt-matrix/cppjs.config.js';
 import sampleLibSource from 'cppjs-sample-lib-source/cppjs.config.js';
 
-// import sampleMobileReactNativeNativeCLI from 'cppjs-sample-mobile-reactnative-nativecli/cppjs.config.mjs';
 import sampleMobileReactNativeNativeCLI from 'cppjs-sample-mobile-reactnative-nativecli/cppjs.config.mjs';
+import sampleMobileReactNativeExpo from 'cppjs-sample-mobile-reactnative-expo/cppjs.config.mjs';
 
 import sampleWebVanilla from 'cppjs-sample-web-vanilla/cppjs.config.mjs';
 import sampleWebReactCRA from 'cppjs-sample-web-react-cra/cppjs.config.js';
@@ -54,6 +54,9 @@ export default {
         'React Native': {
             'Native CLI': {
                 path: sampleMobileReactNativeNativeCLI.paths.project,
+            },
+            Expo: {
+                path: sampleMobileReactNativeExpo.paths.project,
             },
         },
     },

@@ -48,8 +48,6 @@ public:
         return "Hello World!";
     }
 };
-
-#endif
 ```
 
 Now, we can compile our C++ code into WebAssembly. Run the following command:
