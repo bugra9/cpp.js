@@ -65,6 +65,6 @@ files.forEach((fileInfo) => {
 <br />
 
 :::info
-**Browser Functions:** You can access the browser functions from [this link](https://github.com/bugra9/cpp.js/blob/main/core/cppjs-core/src/assets/browser.js).  
-**Node.js Functions:** You can access the Node.js functions from [this link](https://github.com/bugra9/cpp.js/blob/main/core/cppjs-core/src/assets/node.js).  
+**Browser Functions:** You can access the browser functions from [this link](https://github.com/bugra9/cpp.js/blob/main/packages/cpp.js/src/assets/browser.js).  
+**Node.js Functions:** You can access the Node.js functions from [this link](https://github.com/bugra9/cpp.js/blob/main/packages/cpp.js/src/assets/node.js).  
 :::

@@ -9,7 +9,7 @@ In this section, you will learn how to set up your Cpp.js project and write a mi
 npm init cpp.js@latest
 ```
 
-This command will install and execute [create-cpp.js](https://github.com/bugra9/cpp.js/tree/main/core/cppjs-core-sample-creator), the official Cpp.js project scaffolding tool. You will be presented with prompts for several optional features such as React.
+This command will install and execute [create-cpp.js](https://github.com/bugra9/cpp.js/tree/main/packages/core-create-app), the official Cpp.js project scaffolding tool. You will be presented with prompts for several optional features such as React.
 
 ```bash
 Welcome to Cpp.js!

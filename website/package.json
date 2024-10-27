@@ -1,5 +1,5 @@
 {
-  "name": "doc-cppjs",
+  "name": "@cpp.js/website",
   "version": "1.0.0-beta.1",
   "private": true,
   "scripts": {

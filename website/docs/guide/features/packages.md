@@ -9,7 +9,7 @@ Import the necessary header file directly from the package. Header files can be 
 
 Here is a minimal example:
 ```js title="JavaScript"
-import { initCppJs } 'cppjs-package-gdal/gdal.h';
+import { initCppJs } '@cpp.js/package-gdal/gdal.h';
 
 const { Gdal } = await initCppJs();
 ```
@@ -78,7 +78,7 @@ export default {
 ```
 
 :::info
-You can find the sample prebuilt package [here](https://www.npmjs.com/package/cppjs-sample-lib-prebuilt-matrix).
+You can find the sample prebuilt package [here](https://www.npmjs.com/package/@cpp.js/sample-lib-prebuilt-matrix).
 :::
 
 ### Source Code Packages
@@ -89,7 +89,7 @@ Import the necessary header file directly from the package. Header files can be 
 
 Here is a minimal example:
 ```js title="JavaScript"
-import { initCppJs } 'cppjs-sample-lib-source/samplebasic.h';
+import { initCppJs } '@cppjs/sample-lib-source/samplebasic.h';
 
 const { SampleBasic } = await initCppJs();
 ```
@@ -117,7 +117,7 @@ export default {
 ```
 
 :::info
-You can find the sample source code package [here](https://www.npmjs.com/package/cppjs-sample-lib-source).
+You can find the sample source code package [here](https://www.npmjs.com/package/@cppjs/sample-lib-source).
 :::
 
 ### Cmake Packages
@@ -128,7 +128,7 @@ Import the necessary header file directly from the package. Header files can be 
 
 Here is a minimal example:
 ```js title="JavaScript"
-import { initCppJs } 'cppjs-sample-lib-cmake/samplebasiccmake.h';
+import { initCppJs } '@cpp.js/sample-lib-cmake/samplebasiccmake.h';
 
 const { SampleBasicCmake } = await initCppJs();
 ```
@@ -158,5 +158,5 @@ export default {
 ```
 
 :::info
-You can find the cmake package [here](https://www.npmjs.com/package/cppjs-sample-lib-cmake).
+You can find the cmake package [here](https://www.npmjs.com/package/@cpp.js/sample-lib-cmake).
 :::

@@ -28,5 +28,5 @@ The configuration object consists of six sections. These are:
 <br />
 
 :::tip
-You can find the JavaScript file that generates the configuration [here.](https://github.com/bugra9/cpp.js/blob/main/core/cppjs-core/src/utils/getConfig.js)
+You can find the JavaScript file that generates the configuration [here.](https://github.com/bugra9/cpp.js/blob/main/packages/cpp.js/src/utils/getConfig.js)
 :::

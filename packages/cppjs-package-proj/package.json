@@ -1,0 +1,24 @@
+{
+    "name": "@cpp.js/package-proj",
+    "version": "1.0.0-beta.1",
+    "nativeVersion": "9.4.1",
+    "description": "PROJ is a generic coordinate transformation software that transforms geospatial coordinates from one coordinate reference system (CRS) to another.",
+    "homepage": "https://proj.org/",
+    "license": "SEE LICENSE IN https://github.com/OSGeo/PROJ/blob/master/COPYING",
+    "type": "module",
+    "scripts": {
+        "build": "node build.js",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "postinstall": "cppjs postinstall"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^",
+        "@cpp.js/package-tiff": "workspace:^",
+        "@cpp.js/package-sqlite3": "workspace:^"
+    },
+    "devDependencies": {
+        "decompress": "4.2.1",
+        "decompress-targz": "4.1.1",
+        "follow-redirects":"1.15.3"
+    }
+}

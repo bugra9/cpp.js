@@ -1,9 +1,6 @@
 packages:
-  - 'core/*'
   - 'packages/*'
-  - 'plugins/*'
-  - 'samples/*'
   - 'website'
-  - '!samples/cppjs-sample-mobile-reactnative-nativecli'
-  - '!samples/cppjs-sample-mobile-reactnative-expo'
+  - '!packages/cppjs-sample-mobile-reactnative-nativecli'
+  - '!packages/cppjs-sample-mobile-reactnative-expo'
   - '!**/test/**'

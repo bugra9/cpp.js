@@ -2,7 +2,7 @@
 Create React App (CRA) uses a predefined Webpack configuration that doesn't allow direct modifications. To customize it, we can use CRACO (Create React App Configuration Override). Start by installing these packages with the following command:
 
 ```shell npm2yarn
-npm install @craco/craco cppjs-webpack-plugin cppjs-loader
+npm install @craco/craco @cpp.js/webpack-plugin @cpp.js/webpack-plugin-loader
 ```
 
 To enable the CRACO, modify the `package.json` file as shown below.
@@ -26,7 +26,7 @@ To enable the plugin, create the `craco.config.js` file as shown below.
 const fs = require('fs');
 
 module.exports = async function () {
-    const { default: CppjsWebpackPlugin } = await import('cppjs-webpack-plugin');
+    const { default: CppjsWebpackPlugin } = await import('@cpp.js/webpack-plugin');
     const cppjsWebpackPlugin = new CppjsWebpackPlugin();
     const compiler = cppjsWebpackPlugin.getCompiler();
 
@@ -39,7 +39,7 @@ module.exports = async function () {
                 config.module.rules[1].oneOf = [
                     {
                         test: /\.h$/,
-                        loader: 'cppjs-loader',
+                        loader: '@cpp.js/webpack-plugin-loader',
                         options: { compiler },
                     },
                     ...config.module.rules[1].oneOf,
@@ -88,5 +88,5 @@ Before proceeding, ensure that you have met all the [prerequisites](/docs/guide/
 :::
 
 :::info
-**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-web-react-cra).
+**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-web-react-cra).
 :::

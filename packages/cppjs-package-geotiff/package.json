@@ -1,0 +1,25 @@
+{
+    "name": "@cpp.js/package-geotiff",
+    "version": "1.0.0-beta.1",
+    "nativeVersion": "1.7.3",
+    "description": "This library is designed to permit the extraction and parsing of the 'GeoTIFF' Key directories, as well as definition and installation of GeoTIFF keys in new files.",
+    "homepage": "https://github.com/OSGeo/libgeotiff",
+    "license": "SEE LICENSE IN https://github.com/OSGeo/libgeotiff/blob/master/libgeotiff/LICENSE",
+    "type": "module",
+    "scripts": {
+        "build": "node build.js",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "postinstall": "cppjs postinstall"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^",
+        "@cpp.js/package-proj": "workspace:^",
+        "@cpp.js/package-tiff": "workspace:^",
+        "@cpp.js/package-zlib": "workspace:^"
+    },
+    "devDependencies": {
+        "decompress": "4.2.1",
+        "decompress-targz": "4.1.1",
+        "follow-redirects":"1.15.3"
+    }
+}

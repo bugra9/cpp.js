@@ -3,10 +3,10 @@
 If you're using the Vite bundler, you can skip this section. Simply follow the instructions provided on the [Vite page](vite).
 :::
 
-To integrate cpp.js into your project using Rollup as a bundler, you can utilize the rollup-plugin-cppjs plugin. Start by installing these package with the following command:
+To integrate cpp.js into your project using Rollup as a bundler, you can utilize the @cpp.js/plugin-rollup plugin. Start by installing these package with the following command:
 
 ```shell npm2yarn
-npm install rollup-plugin-cppjs --save-dev
+npm install @cpp.js/plugin-rollup --save-dev
 ```
 
 To enable the plugin, modify the `vite.config.js` file as shown below.
@@ -14,7 +14,7 @@ To enable the plugin, modify the `vite.config.js` file as shown below.
 ```diff title="vite.config.js"
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-+ import rollupCppjsPlugin from 'rollup-plugin-cppjs'
++ import rollupCppjsPlugin from '@cpp.js/plugin-rollup'
 
 // https://vitejs.dev/config/
 export default defineConfig({

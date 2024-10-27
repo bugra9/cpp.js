@@ -117,5 +117,5 @@ npm run start
 :::
 
 :::info
-**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-web-vanilla).
+**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-web-vanilla).
 :::

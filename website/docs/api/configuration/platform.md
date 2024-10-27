@@ -48,6 +48,6 @@ export default {
 
 :::tip
 Below are examples demonstrating various uses of the configurations.  
-- [**ignoreLibName:** ['charset']](https://www.npmjs.com/package/cppjs-package-iconv?activeTab=code)
-- [**data**, **env**](https://www.npmjs.com/package/cppjs-package-proj?activeTab=code)
+- [**ignoreLibName:** ['charset']](https://www.npmjs.com/package/@cpp.js/package-iconv?activeTab=code)
+- [**data**, **env**](https://www.npmjs.com/package/@cpp.js/package-proj?activeTab=code)
 :::

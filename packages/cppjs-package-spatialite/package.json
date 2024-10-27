@@ -1,0 +1,28 @@
+{
+    "name": "@cpp.js/package-spatialite",
+    "version": "1.0.0-beta.1",
+    "nativeVersion": "5.1.0",
+    "description": "SpatiaLite is an open source library intended to extend the SQLite core to support fully fledged Spatial SQL capabilities.",
+    "homepage": "https://www.gaia-gis.it/fossil/libspatialite/index",
+    "license": "SEE LICENSE IN https://website-archive.mozilla.org/www.mozilla.org/mpl/MPL/boilerplate-1.1/mpl-tri-license-html",
+    "type": "module",
+    "scripts": {
+        "build": "node build.js",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "postinstall": "cppjs postinstall"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^",
+        "@cpp.js/package-geos": "workspace:^",
+        "@cpp.js/package-proj": "workspace:^",
+        "@cpp.js/package-sqlite3": "workspace:^",
+        "@cpp.js/package-zlib": "workspace:^",
+        "@cpp.js/package-iconv": "workspace:^"
+    },
+    "devDependencies": {
+        "decompress": "4.2.1",
+        "decompress-targz": "4.1.1",
+        "follow-redirects":"1.15.3",
+        "replace": "1.2.2"
+    }
+}

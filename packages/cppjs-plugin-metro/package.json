@@ -1,0 +1,28 @@
+{
+    "name": "@cpp.js/plugin-metro",
+    "version": "1.0.0-beta.4",
+    "description": "Cpp.js Metro plugin: A tool for seamless C++ integration with the Metro bundler.",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-plugin-metro#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "license": "MIT",
+    "main": "src/metro-plugin.cjs",
+    "peerDependencies": {
+        "metro": "*"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^",
+        "@babel/runtime": "^7.20.7",
+        "@react-native/metro-babel-transformer": "^0.73.15",
+        "upath": "^2.0.1"
+    },
+    "keywords": [
+        "metro",
+        "react-native",
+        "expo",
+        "bind",
+        "c++",
+        "android",
+        "ios",
+        "mobile"
+    ]
+}
