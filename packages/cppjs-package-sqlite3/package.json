@@ -5,6 +5,7 @@
     "description": "SQLite is a C-language library that implements a small, fast, self-contained, high-reliability, full-featured, SQL database engine.",
     "homepage": "https://www.sqlite.org",
     "license": "SEE LICENSE IN https://www.sqlite.org/copyright.html",
+    "type": "module",
     "scripts": {
         "build": "node build.js",
         "clear": "rm -rf .cppjs dist *.xcframework",
