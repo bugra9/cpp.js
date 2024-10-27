@@ -23,7 +23,7 @@ Prebuilt packages can be used with cpp.js to avoid recompiling the package, ther
 Here is a minimal example:
 
 ```jsx title="/src/main.js"
-import { initCppJs } 'cppjs-package-gdal/gdal.h';
+import { initCppJs } '@cpp.js/package-gdal/gdal.h';
 
 const { Gdal } = await initCppJs();
 ```

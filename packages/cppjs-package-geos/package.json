@@ -1,0 +1,22 @@
+{
+    "name": "@cpp.js/package-geos",
+    "version": "1.0.0-beta.1",
+    "nativeVersion": "3.12.2",
+    "description": "GEOS is a C++ library for performing operations on two-dimensional vector geometries.",
+    "homepage": "https://github.com/libgeos/geos",
+    "license": "SEE LICENSE IN https://github.com/libgeos/geos/blob/main/COPYING",
+    "type": "module",
+    "scripts": {
+        "build": "node build.js",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "postinstall": "cppjs postinstall"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^"
+    },
+    "devDependencies": {
+        "decompress": "4.2.1",
+        "decompress-targz": "4.1.1",
+        "follow-redirects":"1.15.3"
+    }
+}

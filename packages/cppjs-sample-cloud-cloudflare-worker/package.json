@@ -1,0 +1,33 @@
+{
+    "name": "@cpp.js/sample-cloud-cloudflare-worker",
+    "version": "1.0.0-beta.4",
+    "description": "Cpp.js - Cloudflare webassembly sample",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-cloud-cloudflare-worker#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "license": "MIT",
+    "scripts": {
+        "build": "cppjs build -p wasm",
+        "dev": "wrangler dev",
+        "deploy": "wrangler dev"
+    },
+    "files": [
+        "dist/@cpp.js/sample-cloud-cloudflare.browser.js",
+        "dist/@cpp.js/sample-cloud-cloudflare.wasm",
+        "index.js",
+        "cppjs.config.mjs",
+        "wrangler.toml",
+        "src"
+    ],
+    "devDependencies": {
+        "cpp.js": "workspace:^",
+        "wrangler": "^3.75.0"
+    },
+    "keywords": [
+        "cpp.js-sample",
+        "cloudflare",
+        "cloudflare-worker",
+        "webassembly",
+        "bind",
+        "c++"
+    ]
+}

@@ -1,0 +1,23 @@
+{
+    "name": "@cpp.js/package-tiff",
+    "version": "1.0.0-beta.1",
+    "nativeVersion": "4.6.0",
+    "description": "The LibTIFF software provides support for the Tag Image File Format (TIFF), a widely used format for storing image data.",
+    "homepage": "https://libtiff.gitlab.io/libtiff/index.html",
+    "license": "SEE LICENSE IN https://libtiff.gitlab.io/libtiff/project/license.html",
+    "type": "module",
+    "scripts": {
+        "build": "node build.js",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "postinstall": "cppjs postinstall"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^",
+        "@cpp.js/package-zlib": "workspace:^"
+    },
+    "devDependencies": {
+        "decompress": "4.2.1",
+        "decompress-targz": "4.1.1",
+        "follow-redirects":"1.15.3"
+    }
+}

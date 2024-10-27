@@ -44,7 +44,7 @@ import { initCppJs } 'gdal3.js/Gdal.h';
 In prebuilt Cpp.js packages, header files are located in the `dist/prebuilt/PLATFORM_NAME/include` directory, and SWIG module files can be found in the `dist/prebuilt/PLATFORM_NAME/swig` directory. To resolve these files correctly, integration via a hook is required.
 
 Here is a minimal example:
-```js title="cppjs-plugin-rollup/index.js"
+```js title="@cpp.js/plugin-rollup/index.js"
 
 import CppjsCompiler from 'cpp.js';
 import fs from 'fs';
@@ -94,7 +94,7 @@ The `findOrCreateInterfaceFile` function in Cpp.js generates a simple SWIG modul
 To execute these processes, the `findOrCreateInterfaceFile` function must be called for both the imported headers and SWIG modules.
 
 Here is a minimal example:
-```diff title="cppjs-plugin-rollup/index.js"
+```diff title="@cpp.js/plugin-rollup/index.js"
 const rollupCppjsPlugin = (options, _compiler) => {
     const compiler = _compiler || new CppjsCompiler();
     const headerRegex = new RegExp(`\\.(${compiler.config.ext.header.join('|')})$`);
@@ -127,7 +127,7 @@ For web projects, the code is compiled to WebAssembly using the `createWasm` fun
 These files should then be moved to the appropriate location to complete the build process.
 
 Here is a minimal example:
-```diff title="cppjs-plugin-rollup/index.js"
+```diff title="@cpp.js/plugin-rollup/index.js"
 const rollupCppjsPlugin = (options, _compiler) => {
     const compiler = _compiler || new CppjsCompiler();
 
@@ -169,7 +169,7 @@ const rollupCppjsPlugin = (options, _compiler) => {
 To transmit the configuration, encapsulate the output.
 
 Here is a minimal example:
-```diff title="cppjs-plugin-rollup/index.js"
+```diff title="@cpp.js/plugin-rollup/index.js"
 const rollupCppjsPlugin = (options, _compiler) => {
     const compiler = _compiler || new CppjsCompiler();
 +   const env = JSON.stringify(compiler.getData('env'));
@@ -223,9 +223,9 @@ To ensure Cpp.js operates correctly in the development server environment, follo
   Similarly, set up your server to return the `NAME.wasm` file from the temp path when a request is made to the `/cpp.wasm` endpoint.
 
 Here is a minimal example:
-```js title="cppjs-plugin-vite/index.js"
+```js title="@cpp.js/plugin-vite/index.js"
 import CppjsCompiler from 'cpp.js';
-import rollupCppjsPlugin from 'rollup-plugin-cppjs';
+import rollupCppjsPlugin from '@cpp.js/plugin-rollup';
 import fs from 'fs';
 
 const viteCppjsPlugin = (options, _compiler) => {
@@ -271,7 +271,7 @@ export default viteCppjsPlugin;
 Enable HMR by watching native file changes, recompiling with `createWasm`, and using WebSockets to refresh updates.
 
 Here is a minimal example:
-```diff title="cppjs-plugin-vite/index.js"
+```diff title="@cpp.js/plugin-vite/index.js"
 const viteCppjsPlugin = (options, _compiler) => {
     let isServe = false;
     const compiler = _compiler || new CppjsCompiler();

@@ -1,6 +1,6 @@
 # Overview
 ```bash
-Usage: cpp.js [options] [command]
+Usage: cppjs [options] [command]
 
 Compile C++ files to WebAssembly and native platforms.
 
@@ -18,5 +18,5 @@ Commands:
 <br />
 
 :::info 
-**Binary function:** You can access the binary function from [this link](https://github.com/bugra9/cpp.js/blob/main/core/cppjs-core/src/bin.js).  
+**Binary function:** You can access the binary function from [this link](https://github.com/bugra9/cpp.js/blob/main/packages/cpp.js/src/bin.js).  
 :::

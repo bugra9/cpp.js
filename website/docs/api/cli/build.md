@@ -72,6 +72,6 @@ Here is a minimal example:
 ```
 
 :::info 
-**Create library function:** You can access the create library function from [this link](https://github.com/bugra9/cpp.js/blob/main/core/cppjs-core/src/functions/createLib.js).  
-**Create webassembly function:** You can access the create webassembly function from [this link](https://github.com/bugra9/cpp.js/blob/main/core/cppjs-core/src/functions/createWasm.js).  
+**Create library function:** You can access the create library function from [this link](https://github.com/bugra9/cpp.js/blob/main/packages/cpp.js/src/functions/createLib.js).  
+**Create webassembly function:** You can access the create webassembly function from [this link](https://github.com/bugra9/cpp.js/blob/main/packages/cpp.js/src/functions/createWasm.js).  
 :::

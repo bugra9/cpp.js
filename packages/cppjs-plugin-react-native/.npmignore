@@ -1,0 +1,4 @@
+*.tgz
+react-native-cppjs.xcframework
+.cxx
+build

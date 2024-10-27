@@ -27,6 +27,6 @@ export default {
 
 :::tip
 Below are examples demonstrating various uses of the configurations.  
-- [**type:** source](https://www.npmjs.com/package/cppjs-sample-lib-source?activeTab=code)
-- [**libName:** ['webp', 'sharpyuv']](https://www.npmjs.com/package/cppjs-package-webp?activeTab=code)
+- [**type:** source](https://www.npmjs.com/package/@cpp.js/sample-lib-source?activeTab=code)
+- [**libName:** ['webp', 'sharpyuv']](https://www.npmjs.com/package/@cpp.js/package-webp?activeTab=code)
 :::

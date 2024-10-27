@@ -1,9 +1,9 @@
 # Vite
 
-To integrate cpp.js into your project using Vite as a bundler, you can utilize the vite-plugin-cppjs plugin. Start by installing these package with the following command:
+To integrate cpp.js into your project using Vite as a bundler, you can utilize the @cpp.js/plugin-vite plugin. Start by installing these package with the following command:
 
 ```shell npm2yarn
-npm install vite-plugin-cppjs --save-dev
+npm install @cpp.js/plugin-vite --save-dev
 ```
 
 To enable the plugin, modify the `vite.config.js` file as shown below.
@@ -11,7 +11,7 @@ To enable the plugin, modify the `vite.config.js` file as shown below.
 ```diff title="vite.config.js"
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-+ import viteCppjsPlugin from 'vite-plugin-cppjs'
++ import viteCppjsPlugin from '@cpp.js/plugin-vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -63,5 +63,5 @@ Before proceeding, ensure that you have met all the [prerequisites](/docs/guide/
 :::
 
 :::info
-**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-web-vue-vite).
+**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-web-vue-vite).
 :::

@@ -1,0 +1,33 @@
+{
+    "name": "@cpp.js/package-gdal",
+    "version": "1.0.0-beta.1",
+    "nativeVersion": "3.9.2",
+    "description": "GDAL is an open source MIT licensed translator library for raster and vector geospatial data formats. ",
+    "homepage": "https://github.com/OSGeo/gdal",
+    "license": "SEE LICENSE IN https://github.com/OSGeo/gdal/blob/master/LICENSE.TXT",
+    "type": "module",
+    "scripts": {
+        "build": "node build.js",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "postinstall": "cppjs postinstall"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^",
+        "@cpp.js/package-expat": "workspace:^",
+        "@cpp.js/package-geos": "workspace:^",
+        "@cpp.js/package-geotiff": "workspace:^",
+        "@cpp.js/package-iconv": "workspace:^",
+        "@cpp.js/package-proj": "workspace:^",
+        "@cpp.js/package-spatialite": "workspace:^",
+        "@cpp.js/package-sqlite3": "workspace:^",
+        "@cpp.js/package-tiff": "workspace:^",
+        "@cpp.js/package-webp": "workspace:^",
+        "@cpp.js/package-zlib": "workspace:^"
+    },
+    "devDependencies": {
+        "decompress": "4.2.1",
+        "decompress-targz": "4.1.1",
+        "follow-redirects":"1.15.3",
+        "replace": "1.2.2"
+    }
+}

@@ -1,15 +1,15 @@
 # Webpack
 
-To integrate cpp.js into your project using Webpack as a bundler, you can utilize the cppjs-webpack-plugin and cppjs-loader plugins. Start by installing these packages with the following command:
+To integrate cpp.js into your project using Webpack as a bundler, you can utilize the @cpp.js/plugin-webpack and @cpp.js/plugin-webpack-loader plugins. Start by installing these packages with the following command:
 
 ```shell npm2yarn
-npm install cppjs-webpack-plugin cppjs-loader --save-dev
+npm install @cpp.js/plugin-webpack @cpp.js/plugin-webpack-loader --save-dev
 ```
 
 To enable the plugin, modify the `webpack.config.js` file as shown below.
 
 ```diff title="webpack.config.js"
-+ const CppjsWebpackPlugin = require('cppjs-webpack-plugin');
++ const CppjsWebpackPlugin = require('@cpp.js/plugin-webpack');
 + const cppjsWebpackPlugin = new CppjsWebpackPlugin();
 + const compiler = cppjsWebpackPlugin.getCompiler();
 
@@ -22,7 +22,7 @@ module.exports = {
     rules: [
 +     {
 +       test: /\.h$/,
-+       loader: 'cppjs-loader',
++       loader: '@cpp.js/plugin-webpack-loader',
 +       options: { compiler },
 +     }
     ],

@@ -1,6 +1,6 @@
 # Run
 ```bash
-Usage: cpp.js run [options]
+Usage: cppjs run [options]
 
 run docker application
 
@@ -15,7 +15,7 @@ The bugra9/cpp.js Docker image includes all the necessary tools for compiling to
 Here is a minimal example:
 
 ```shell
-cpp.js run -- cmake --version
+cppjs run -- cmake --version
 ```
 ```bash
 cmake version 3.28.3
@@ -25,6 +25,6 @@ CMake suite maintained and supported by Kitware (kitware.com/cmake).
 
 :::info
 **Docker Image:** You can access the docker image from [this link](https://hub.docker.com/r/bugra9/cpp.js).  
-**Dockerfile:** You can access the dockerfile from [this link](https://github.com/bugra9/cpp.js/blob/main/core/cppjs-core-docker/Dockerfile).  
-**Run Function:** You can access the run function from [this link](https://github.com/bugra9/cpp.js/blob/main/core/cppjs-core/src/functions/run.js).
+**Dockerfile:** You can access the dockerfile from [this link](https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-core-docker/Dockerfile).  
+**Run Function:** You can access the run function from [this link](https://github.com/bugra9/cpp.js/blob/main/packages/cpp.js/src/functions/run.js).
 :::

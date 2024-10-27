@@ -4,17 +4,17 @@
 This guide is intended for react native projects that utilize @react-native-community/cli without a framework. Visit the [Expo page](expo) for a guide on using Expo.
 :::
 
-To integrate cpp.js into your project using React Native, you can utilize the cppjs-plugin-react-native, cppjs-plugin-react-native-ios-helper and cppjs-core-rn-embind. Start by installing these package with the following command:
+To integrate cpp.js into your project using React Native, you can utilize the @cpp.js/plugin-react-native, @cpp.js/plugin-react-native-ios-helper. Start by installing these package with the following command:
 
 ```shell npm2yarn
-npm install cpp.js cppjs-plugin-react-native cppjs-plugin-react-native-ios-helper cppjs-core-rn-embind
+npm install @cpp.js/plugin-react-native @cpp.js/plugin-react-native-ios-helper
 ```
 
 To enable the plugin, modify the `metro.config.js` file as shown below.
 
 ```diff title="metro.config.js"
 const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
-+const CppjsMetroPlugin = require('cppjs-plugin-react-native/metro-plugin.cjs');
++const CppjsMetroPlugin = require('@cpp.js/plugin-metro/metro-plugin.cjs');
 
 /**
  * Metro configuration
@@ -113,5 +113,5 @@ npm run android
 ```
 
 :::info
-**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/samples/cppjs-sample-mobile-reactnative-nativecli).
+**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-mobile-reactnative-nativecli).
 :::
