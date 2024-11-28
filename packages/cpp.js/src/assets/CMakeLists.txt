@@ -29,7 +29,9 @@ if (BUILD_BRIDGE)
     file(GLOB BRIDGE_SRC_FILES "${BRIDGE_DIR}/*.i.cpp")
 endif(BUILD_BRIDGE)
 
-set(SRC_FILES "${BUILD_SRC_FILES}" "${BRIDGE_SRC_FILES}")
+file(GLOB_RECURSE EXTERNAL_SRC_FILES ${EXTERNAL_NATIVE_GLOB})
+
+set(SRC_FILES "${BUILD_SRC_FILES}" "${BRIDGE_SRC_FILES}" "${EXTERNAL_SRC_FILES}")
 add_library("${PROJECT_NAME}" "${BUILD_TYPE}" ${SRC_FILES})
 
 set(EXTRA_LINK_LIBRARIES "")
@@ -44,15 +46,17 @@ endif()
 file(GLOB_RECURSE HEADER_FILES ${HEADER_GLOB})
 target_include_directories("${PROJECT_NAME}" PUBLIC "${HEADER_DIR}")
 
+install(TARGETS "${PROJECT_NAME}" DESTINATION "lib")
+if(NOT "${HEADER_FILES}" STREQUAL "")
+    target_sources("${PROJECT_NAME}"
+        PUBLIC FILE_SET HEADERS
+        BASE_DIRS "${HEADER_DIR}"
+        FILES "${HEADER_FILES}")
+    install(TARGETS "${PROJECT_NAME}" FILE_SET HEADERS DESTINATION "include")
+endif()
+
 if (BUILD_SOURCE)
-    install(TARGETS "${PROJECT_NAME}" DESTINATION "lib")
-    if(NOT "${HEADER_FILES}" STREQUAL "")
-        target_sources("${PROJECT_NAME}"
-            PUBLIC FILE_SET HEADERS
-            BASE_DIRS "${HEADER_DIR}"
-            FILES "${HEADER_FILES}")
-        install(TARGETS "${PROJECT_NAME}" FILE_SET HEADERS DESTINATION "include")
-    endif()
+
 endif(BUILD_SOURCE)
 unset(BUILD_SOURCE CACHE)
 

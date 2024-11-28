@@ -1,13 +1,13 @@
+// eslint-disable object-curly-newline
 import fs from 'fs';
-import p from 'path';
-import CppjsCompiler from 'cpp.js';
+import { state, createLib, buildWasm, createBridgeFile, getData } from 'cpp.js';
 
 export default class CppjsWebpackPlugin {
     static defaultOptions = {};
 
     constructor(options = {}) {
         this.options = { ...CppjsWebpackPlugin.defaultOptions, ...options };
-        this.compiler = new CppjsCompiler();
+        this.bridges = [];
     }
 
     apply(compiler) {
@@ -17,22 +17,27 @@ export default class CppjsWebpackPlugin {
     }
 
     afterCompile(compilation, callback) {
-        this.compiler.config.paths.native.map(file => compilation.contextDependencies.add(file));
+        state.config.paths.native.map((file) => compilation.contextDependencies.add(file));
         callback();
     }
 
     async onDone({ compilation }) {
         const isDev = compilation.options.mode === 'development';
-        this.compiler.createBridge();
-        await this.compiler.createWasm({ cc: ['-O3'] });
+        createLib('Emscripten-x86_64', 'Source', { isProd: true, buildSource: true });
+        createLib('Emscripten-x86_64', 'Bridge', { isProd: true, buildSource: false, nativeGlob: this.bridges });
+        await buildWasm('browser', true);
         if (!isDev) {
-            fs.copyFileSync(`${this.compiler.config.paths.temp}/${this.compiler.config.general.name}.browser.js`, `${compilation.options.output.path}/cpp.js`);
-            fs.copyFileSync(`${this.compiler.config.paths.temp}/${this.compiler.config.general.name}.wasm`, `${compilation.options.output.path}/cpp.wasm`);
-            fs.rmSync(this.compiler.config.paths.temp, { recursive: true, force: true });
+            fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, `${compilation.options.output.path}/cpp.js`);
+            fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`, `${compilation.options.output.path}/cpp.wasm`);
         }
     }
 
-    getCompiler() {
-        return this.compiler;
+    getLoaderOptions() {
+        return {
+            bridges: this.bridges,
+            createBridgeFile,
+            getData,
+            state,
+        };
     }
 }

@@ -9,7 +9,7 @@ importers:
   .:
     devDependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:packages/cpp.js
       eslint:
         specifier: ^7.32.0 || ^8.2.0
@@ -30,20 +30,32 @@ importers:
   packages/cpp.js:
     dependencies:
       '@rollup/plugin-commonjs':
-        specifier: ^26.0.1
-        version: 26.0.1(rollup@4.21.2)
+        specifier: ^28.0.1
+        version: 28.0.1(rollup@4.21.2)
+      '@rollup/plugin-json':
+        specifier: ^6.1.0
+        version: 6.1.0(rollup@4.21.2)
       '@rollup/plugin-node-resolve':
-        specifier: ^15.2.3
-        version: 15.2.3(rollup@4.21.2)
+        specifier: ^15.3.0
+        version: 15.3.0(rollup@4.21.2)
       '@rollup/plugin-virtual':
         specifier: ^3.0.2
         version: 3.0.2(rollup@4.21.2)
       commander:
         specifier: ^12.1.0
         version: 12.1.0
+      decompress:
+        specifier: 4.2.1
+        version: 4.2.1
+      follow-redirects:
+        specifier: 1.15.9
+        version: 1.15.9
       glob:
         specifier: ^8.0.3
         version: 8.0.3
+      replace:
+        specifier: 1.2.2
+        version: 1.2.2
       rollup:
         specifier: ^4.18.0
         version: 4.21.2
@@ -61,19 +73,19 @@ importers:
   packages/cppjs-core-create-app:
     dependencies:
       '@cpp.js/sample-backend-nodejs-wasm':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-backend-nodejs-wasm
       '@cpp.js/sample-cloud-cloudflare-worker':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-cloud-cloudflare-worker
       '@cpp.js/sample-lib-cmake':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-lib-cmake
       '@cpp.js/sample-lib-prebuilt-matrix':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-lib-prebuilt-matrix
       '@cpp.js/sample-lib-source':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-lib-source
       '@cpp.js/sample-mobile-reactnative-expo':
         specifier: 1.0.0-beta.3
@@ -82,22 +94,22 @@ importers:
         specifier: 1.0.0-beta.7
         version: 1.0.0-beta.7(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(typescript@5.5.4)
       '@cpp.js/sample-web-react-cra':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-web-react-cra
       '@cpp.js/sample-web-react-rspack':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-web-react-rspack
       '@cpp.js/sample-web-react-vite':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-web-react-vite
       '@cpp.js/sample-web-svelte-vite':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-web-svelte-vite
       '@cpp.js/sample-web-vanilla':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-web-vanilla
       '@cpp.js/sample-web-vue-vite':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-web-vue-vite
       fs-extra:
         specifier: ^11.1.0
@@ -114,19 +126,19 @@ importers:
   packages/cppjs-core-embind-jsi:
     dependencies:
       '@babel/runtime':
-        specifier: ^7.20.7
+        specifier: '*'
         version: 7.23.9
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
       react-native:
-        specifier: ^0.74.3
-        version: 0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(react@18.3.1)
+        specifier: '*'
+        version: 0.75.2(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(react@18.3.1)(typescript@5.5.4)
 
   packages/cppjs-package-expat:
     dependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
     devDependencies:
       decompress:
@@ -142,37 +154,37 @@ importers:
   packages/cppjs-package-gdal:
     dependencies:
       '@cpp.js/package-expat':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-expat
       '@cpp.js/package-geos':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-geos
       '@cpp.js/package-geotiff':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-geotiff
       '@cpp.js/package-iconv':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-iconv
       '@cpp.js/package-proj':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-proj
       '@cpp.js/package-spatialite':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-spatialite
       '@cpp.js/package-sqlite3':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-sqlite3
       '@cpp.js/package-tiff':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-tiff
       '@cpp.js/package-webp':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-webp
       '@cpp.js/package-zlib':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-zlib
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
     devDependencies:
       decompress:
@@ -191,7 +203,7 @@ importers:
   packages/cppjs-package-geos:
     dependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
     devDependencies:
       decompress:
@@ -207,16 +219,16 @@ importers:
   packages/cppjs-package-geotiff:
     dependencies:
       '@cpp.js/package-proj':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-proj
       '@cpp.js/package-tiff':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-tiff
       '@cpp.js/package-zlib':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-zlib
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
     devDependencies:
       decompress:
@@ -232,7 +244,7 @@ importers:
   packages/cppjs-package-iconv:
     dependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
     devDependencies:
       decompress:
@@ -245,13 +257,13 @@ importers:
   packages/cppjs-package-proj:
     dependencies:
       '@cpp.js/package-sqlite3':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-sqlite3
       '@cpp.js/package-tiff':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-tiff
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
     devDependencies:
       decompress:
@@ -267,22 +279,22 @@ importers:
   packages/cppjs-package-spatialite:
     dependencies:
       '@cpp.js/package-geos':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-geos
       '@cpp.js/package-iconv':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-iconv
       '@cpp.js/package-proj':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-proj
       '@cpp.js/package-sqlite3':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-sqlite3
       '@cpp.js/package-zlib':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-zlib
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
     devDependencies:
       decompress:
@@ -301,10 +313,10 @@ importers:
   packages/cppjs-package-sqlite3:
     dependencies:
       '@cpp.js/package-zlib':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-zlib
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
     devDependencies:
       decompress:
@@ -320,10 +332,10 @@ importers:
   packages/cppjs-package-tiff:
     dependencies:
       '@cpp.js/package-zlib':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-package-zlib
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
     devDependencies:
       decompress:
@@ -339,7 +351,7 @@ importers:
   packages/cppjs-package-webp:
     dependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
     devDependencies:
       decompress:
@@ -355,7 +367,7 @@ importers:
   packages/cppjs-package-zlib:
     dependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
     devDependencies:
       decompress:
@@ -374,7 +386,7 @@ importers:
         specifier: ^0.73.15
         version: 0.73.15(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
       metro:
         specifier: '*'
@@ -389,13 +401,13 @@ importers:
         specifier: ^7.20.7
         version: 7.23.9
       '@cpp.js/core-embind-jsi':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-core-embind-jsi
       '@cpp.js/plugin-metro':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-plugin-metro
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
       glob:
         specifier: ^11.0.0
@@ -415,7 +427,7 @@ importers:
   packages/cppjs-plugin-rollup:
     dependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
       rollup:
         specifier: ^3.5.0
@@ -424,35 +436,38 @@ importers:
   packages/cppjs-plugin-vite:
     dependencies:
       '@cpp.js/plugin-rollup':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-plugin-rollup
+      cpp.js:
+        specifier: workspace:*
+        version: link:../cpp.js
 
   packages/cppjs-plugin-webpack:
     dependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
 
   packages/cppjs-plugin-webpack-loader:
     dependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
 
   packages/cppjs-sample-backend-nodejs-wasm:
     dependencies:
       '@cpp.js/sample-lib-prebuilt-matrix':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-lib-prebuilt-matrix
     devDependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
 
   packages/cppjs-sample-cloud-cloudflare-worker:
     devDependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
       wrangler:
         specifier: ^3.75.0
@@ -461,25 +476,25 @@ importers:
   packages/cppjs-sample-lib-cmake:
     dependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
 
   packages/cppjs-sample-lib-prebuilt-matrix:
     dependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
 
   packages/cppjs-sample-lib-source:
     dependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
 
   packages/cppjs-sample-web-react-cra:
     dependencies:
       '@cpp.js/sample-lib-prebuilt-matrix':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-lib-prebuilt-matrix
       '@testing-library/jest-dom':
         specifier: ^5.16.5
@@ -504,22 +519,22 @@ importers:
         version: 2.1.4
     devDependencies:
       '@cpp.js/plugin-webpack':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-plugin-webpack
       '@cpp.js/plugin-webpack-loader':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-plugin-webpack-loader
       '@craco/craco':
         specifier: ^7.1.0
         version: 7.1.0(@swc/core@1.7.23)(@types/node@20.11.16)(postcss@8.4.41)(react-scripts@5.0.1(@babel/plugin-syntax-flow@7.23.3(@babel/core@7.25.2))(@babel/plugin-transform-react-jsx@7.23.4(@babel/core@7.25.2))(@rspack/core@1.0.3)(@swc/core@1.7.23)(@types/babel__core@7.20.5)(eslint@9.10.0(jiti@1.21.0))(react@18.3.1)(ts-node@10.9.2(@swc/core@1.7.23)(@types/node@20.11.16)(typescript@5.5.4))(type-fest@3.13.1)(typescript@5.5.4))(typescript@5.5.4)
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
 
   packages/cppjs-sample-web-react-rspack:
     dependencies:
       '@cpp.js/sample-lib-prebuilt-matrix':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-lib-prebuilt-matrix
       react:
         specifier: ^18.2.0
@@ -529,10 +544,10 @@ importers:
         version: 18.3.1(react@18.3.1)
     devDependencies:
       '@cpp.js/plugin-webpack':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-plugin-webpack
       '@cpp.js/plugin-webpack-loader':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-plugin-webpack-loader
       '@rspack/cli':
         specifier: ^1.0.3
@@ -550,7 +565,7 @@ importers:
         specifier: ^18.2.18
         version: 18.3.0
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
       cross-env:
         specifier: ^7.0.3
@@ -562,7 +577,7 @@ importers:
   packages/cppjs-sample-web-react-vite:
     dependencies:
       '@cpp.js/sample-lib-prebuilt-matrix':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-lib-prebuilt-matrix
       react:
         specifier: ^18.3.1
@@ -572,7 +587,7 @@ importers:
         version: 18.3.1(react@18.3.1)
     devDependencies:
       '@cpp.js/plugin-vite':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-plugin-vite
       '@eslint/js':
         specifier: ^9.9.0
@@ -587,7 +602,7 @@ importers:
         specifier: ^3.5.0
         version: 3.7.0(vite@5.4.2(@types/node@20.11.16)(terser@5.27.0))
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
       eslint:
         specifier: ^9.9.0
@@ -611,17 +626,17 @@ importers:
   packages/cppjs-sample-web-svelte-vite:
     dependencies:
       '@cpp.js/sample-lib-prebuilt-matrix':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-lib-prebuilt-matrix
     devDependencies:
       '@cpp.js/plugin-vite':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-plugin-vite
       '@sveltejs/vite-plugin-svelte':
         specifier: ^3.1.1
         version: 3.1.2(svelte@4.2.19)(vite@5.4.2(@types/node@20.11.16)(terser@5.27.0))
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
       svelte:
         specifier: ^4.2.18
@@ -633,30 +648,30 @@ importers:
   packages/cppjs-sample-web-vanilla:
     dependencies:
       '@cpp.js/sample-lib-prebuilt-matrix':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-lib-prebuilt-matrix
     devDependencies:
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
 
   packages/cppjs-sample-web-vue-vite:
     dependencies:
       '@cpp.js/sample-lib-prebuilt-matrix':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-sample-lib-prebuilt-matrix
       vue:
         specifier: ^3.4.29
         version: 3.4.38(typescript@5.5.4)
     devDependencies:
       '@cpp.js/plugin-vite':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cppjs-plugin-vite
       '@vitejs/plugin-vue':
         specifier: ^5.0.5
         version: 5.1.3(vite@5.4.2(@types/node@20.11.16)(terser@5.27.0))(vue@3.4.38(typescript@5.5.4))
       cpp.js:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../cpp.js
       vite:
         specifier: ^5.3.1
@@ -3161,14 +3176,32 @@ packages:
       rollup:
         optional: true
 
+  '@rollup/plugin-commonjs@28.0.1':
+    resolution: {integrity: sha512-+tNWdlWKbpB3WgBN7ijjYkq9X5uhjmcvyjEght4NmH5fAU++zfQzAJ6wumLS+dNcvwEZhKx2Z+skY8m7v0wGSA==}
+    engines: {node: '>=16.0.0 || 14 >= 14.17'}
+    peerDependencies:
+      rollup: ^2.68.0||^3.0.0||^4.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+
+  '@rollup/plugin-json@6.1.0':
+    resolution: {integrity: sha512-EGI2te5ENk1coGeADSIwZ7G2Q8CJS2sF120T7jLw4xFw9n7wIOXHo+kIYRAoVpJAN+kmqZSoO3Fp4JtoNF4ReA==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+
   '@rollup/plugin-node-resolve@11.2.1':
     resolution: {integrity: sha512-yc2n43jcqVyGE2sqV5/YCmocy9ArjVAP/BeXyTtADTBBX6V0e5UMqwO8CdQ0kzjb6zu5P1qMzsScCMRvE9OlVg==}
     engines: {node: '>= 10.0.0'}
     peerDependencies:
       rollup: ^1.20.0||^2.0.0
 
-  '@rollup/plugin-node-resolve@15.2.3':
-    resolution: {integrity: sha512-j/lym8nf5E21LwBT4Df1VD6hRO2L2iwUeUmP7litikRsVp1H6NWx20NEp0Y7su+7XGc476GnXXc4kFeZNGmaSQ==}
+  '@rollup/plugin-node-resolve@15.3.0':
+    resolution: {integrity: sha512-9eO5McEICxMzJpDW9OnMYSv4Sta3hmt7VtBFz5zR9273suNOydOyq/FrGeGy+KsTRFm8w0SLVhzig2ILFT63Ag==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       rollup: ^2.78.0||^3.0.0||^4.0.0
@@ -6461,6 +6494,14 @@ packages:
   fd-slicer@1.1.0:
     resolution: {integrity: sha512-cE1qsB/VwyQozZ+q1dGxR8LBYNZeofhEdUNGSMbQD3Gw2lAzX9Zb3uIU6Ebc/Fmyjo9AWWfnn0AUCHqtevs/8g==}
 
+  fdir@6.4.2:
+    resolution: {integrity: sha512-KnhMXsKSPZlAhp7+IjUkRZKPb4fUyccpDrdFXbi4QL1qkmFh9kVY09Yox+n4MaOb3lHZ1Tv829C3oaaXoMYPDQ==}
+    peerDependencies:
+      picomatch: ^3 || ^4
+    peerDependenciesMeta:
+      picomatch:
+        optional: true
+
   feed@4.2.2:
     resolution: {integrity: sha512-u5/sxGfiMfZNtJ3OvQpXcvotFpYkL0n9u9mM2vkui2nGo8b4wvDkJ8gAkYqbA8QpGyFCv3RK0Z+Iv+9veCS9bQ==}
     engines: {node: '>=0.4.0'}
@@ -6572,6 +6613,15 @@ packages:
 
   follow-redirects@1.15.3:
     resolution: {integrity: sha512-1VzOtuEM8pC9SFU1E+8KfTjZyMztRsgEfwQl44z8A25uy13jSzTj6dyK2Df52iV0vgHCfBwLhDWevLn95w5v6Q==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
+
+  follow-redirects@1.15.9:
+    resolution: {integrity: sha512-gew4GsXizNgdoRyqmyfMHyAmXsZDk6mHkSxZFCzW9gwlbtOW44CDtYavM+y+72qD/Vq2l550kMF52DT8fOLJqQ==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -7282,10 +7332,6 @@ packages:
 
   is-buffer@1.1.6:
     resolution: {integrity: sha512-NcdALwpXkTm5Zvvbk7owOUSvVvBKDgKP5/ewfXEznmQFfs4ZRmanOeKBTjRVjka3QFoN6XJ+9F3USqfHqTaU5w==}
-
-  is-builtin-module@3.2.1:
-    resolution: {integrity: sha512-BSLE3HnV2syZ0FK0iMA/yUGplUeMmNz4AW5fnTunbCIqZi4vG3WjJT9FHMy5D69xmAYBHXQhJdALdpwVxV501A==}
-    engines: {node: '>=6'}
 
   is-callable@1.2.7:
     resolution: {integrity: sha512-1BC0BVFhS/p0qtw6enp8e+8OD0UrK0oFLztSjNzhcKA3WDuJxxAPXzPuPtKkjEY9UUoEWlX/8fgKeu2S8i9JTA==}
@@ -9213,6 +9259,10 @@ packages:
   picomatch@3.0.1:
     resolution: {integrity: sha512-I3EurrIQMlRc9IaAZnqRR044Phh2DXY+55o7uJ0V+hYZAcQYSuFWsc9q5PvyDHUSCe1Qxn/iBz+78s86zWnGag==}
     engines: {node: '>=10'}
+
+  picomatch@4.0.2:
+    resolution: {integrity: sha512-M7BAV6Rlcy5u+m6oPhAPFgJTzAioX/6B0DxyvDlo9l8+T3nLKbrczg2WLUyzd45L8RqfUMyGPzekbMvX2Ldkwg==}
+    engines: {node: '>=12'}
 
   pify@2.3.0:
     resolution: {integrity: sha512-udgsAY+fTnvv7kI7aaxbqwWNb0AHiB0qBO89PZKPkoTmGOgdbrHDKD+0B2X4uTfJ/FT1R09r9gTsjUjNJotuog==}
@@ -16934,15 +16984,6 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.5
 
-  '@react-native/virtualized-lists@0.74.87(@types/react@18.3.5)(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      invariant: 2.2.4
-      nullthrows: 1.1.1
-      react: 18.3.1
-      react-native: 0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(react@18.3.1)
-    optionalDependencies:
-      '@types/react': 18.3.5
-
   '@react-native/virtualized-lists@0.75.2(@types/react@18.3.5)(react-native@0.75.2(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(react@18.3.1)(typescript@5.5.4))(react@18.3.1)':
     dependencies:
       invariant: 2.2.4
@@ -17090,6 +17131,24 @@ snapshots:
     optionalDependencies:
       rollup: 4.21.2
 
+  '@rollup/plugin-commonjs@28.0.1(rollup@4.21.2)':
+    dependencies:
+      '@rollup/pluginutils': 5.1.0(rollup@4.21.2)
+      commondir: 1.0.1
+      estree-walker: 2.0.2
+      fdir: 6.4.2(picomatch@4.0.2)
+      is-reference: 1.2.1
+      magic-string: 0.30.11
+      picomatch: 4.0.2
+    optionalDependencies:
+      rollup: 4.21.2
+
+  '@rollup/plugin-json@6.1.0(rollup@4.21.2)':
+    dependencies:
+      '@rollup/pluginutils': 5.1.0(rollup@4.21.2)
+    optionalDependencies:
+      rollup: 4.21.2
+
   '@rollup/plugin-node-resolve@11.2.1(rollup@2.79.1)':
     dependencies:
       '@rollup/pluginutils': 3.1.0(rollup@2.79.1)
@@ -17100,12 +17159,11 @@ snapshots:
       resolve: 1.22.8
       rollup: 2.79.1
 
-  '@rollup/plugin-node-resolve@15.2.3(rollup@4.21.2)':
+  '@rollup/plugin-node-resolve@15.3.0(rollup@4.21.2)':
     dependencies:
       '@rollup/pluginutils': 5.1.0(rollup@4.21.2)
       '@types/resolve': 1.20.2
       deepmerge: 4.3.1
-      is-builtin-module: 3.2.1
       is-module: 1.0.0
       resolve: 1.22.8
     optionalDependencies:
@@ -19369,7 +19427,7 @@ snapshots:
   cpp.js@1.0.0-beta.7:
     dependencies:
       '@rollup/plugin-commonjs': 26.0.1(rollup@4.21.2)
-      '@rollup/plugin-node-resolve': 15.2.3(rollup@4.21.2)
+      '@rollup/plugin-node-resolve': 15.3.0(rollup@4.21.2)
       '@rollup/plugin-virtual': 3.0.2(rollup@4.21.2)
       commander: 12.1.0
       glob: 8.0.3
@@ -21213,6 +21271,10 @@ snapshots:
     dependencies:
       pend: 1.2.0
 
+  fdir@6.4.2(picomatch@4.0.2):
+    optionalDependencies:
+      picomatch: 4.0.2
+
   feed@4.2.2:
     dependencies:
       xml-js: 1.6.11
@@ -21335,6 +21397,8 @@ snapshots:
   flow-parser@0.206.0: {}
 
   follow-redirects@1.15.3: {}
+
+  follow-redirects@1.15.9: {}
 
   fontfaceobserver@2.3.0: {}
 
@@ -22007,7 +22071,7 @@ snapshots:
   http-proxy@1.18.1:
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.3
+      follow-redirects: 1.15.9
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -22179,10 +22243,6 @@ snapshots:
       has-tostringtag: 1.0.2
 
   is-buffer@1.1.6: {}
-
-  is-builtin-module@3.2.1:
-    dependencies:
-      builtin-modules: 3.3.0
 
   is-callable@1.2.7: {}
 
@@ -24860,6 +24920,8 @@ snapshots:
 
   picomatch@3.0.1: {}
 
+  picomatch@4.0.2: {}
+
   pify@2.3.0: {}
 
   pify@3.0.0: {}
@@ -25911,56 +25973,6 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(react@18.3.1):
-    dependencies:
-      '@jest/create-cache-key-function': 29.7.0
-      '@react-native-community/cli': 13.6.9
-      '@react-native-community/cli-platform-android': 13.6.9
-      '@react-native-community/cli-platform-ios': 13.6.9
-      '@react-native/assets-registry': 0.74.87
-      '@react-native/codegen': 0.74.87(@babel/preset-env@7.23.3(@babel/core@7.25.2))
-      '@react-native/community-cli-plugin': 0.74.87(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))
-      '@react-native/gradle-plugin': 0.74.87
-      '@react-native/js-polyfills': 0.74.87
-      '@react-native/normalize-colors': 0.74.87
-      '@react-native/virtualized-lists': 0.74.87(@types/react@18.3.5)(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(react@18.3.1))(react@18.3.1)
-      abort-controller: 3.0.0
-      anser: 1.4.10
-      ansi-regex: 5.0.1
-      base64-js: 1.5.1
-      chalk: 4.1.2
-      event-target-shim: 5.0.1
-      flow-enums-runtime: 0.0.6
-      invariant: 2.2.4
-      jest-environment-node: 29.7.0
-      jsc-android: 250231.0.0
-      memoize-one: 5.2.1
-      metro-runtime: 0.80.5
-      metro-source-map: 0.80.5
-      mkdirp: 0.5.6
-      nullthrows: 1.1.1
-      pretty-format: 26.6.2
-      promise: 8.3.0
-      react: 18.3.1
-      react-devtools-core: 5.3.1
-      react-refresh: 0.14.2
-      react-shallow-renderer: 16.15.0(react@18.3.1)
-      regenerator-runtime: 0.13.11
-      scheduler: 0.24.0-canary-efb381bbf-20230505
-      stacktrace-parser: 0.1.10
-      whatwg-fetch: 3.6.20
-      ws: 6.2.3
-      yargs: 17.7.2
-    optionalDependencies:
-      '@types/react': 18.3.5
-    transitivePeerDependencies:
-      - '@babel/core'
-      - '@babel/preset-env'
-      - bufferutil
-      - encoding
-      - supports-color
-      - utf-8-validate
-
   react-native@0.75.2(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(react@18.3.1)(typescript@5.5.4):
     dependencies:
       '@jest/create-cache-key-function': 29.7.0
@@ -26138,12 +26150,6 @@ snapshots:
     dependencies:
       object-assign: 4.1.1
       react: 18.2.0
-      react-is: 18.2.0
-
-  react-shallow-renderer@16.15.0(react@18.3.1):
-    dependencies:
-      object-assign: 4.1.1
-      react: 18.3.1
       react-is: 18.2.0
 
   react@18.2.0:

@@ -1,16 +1,17 @@
-import CppjsCompiler from 'cpp.js';
+/* eslint-disable no-restricted-syntax */
+// eslint-disable-next-line object-curly-newline
+import { state, createLib, createBridgeFile, buildWasm, getData } from 'cpp.js';
 
 import fs from 'fs';
 import p from 'path';
 
 const platform = 'Emscripten-x86_64';
 
-const rollupCppjsPlugin = (options, _compiler) => {
-    const compiler = _compiler || new CppjsCompiler();
-    const env = JSON.stringify(compiler.getData('env'));
-    const headerRegex = new RegExp(`\\.(${compiler.config.ext.header.join('|')})$`);
-    const moduleRegex = new RegExp(`\\.(${compiler.config.ext.module.join('|')})$`);
-    const dependPackageNames = compiler.config.getAllDependencies();
+const rollupCppjsPlugin = (options, bridges = []) => {
+    const env = JSON.stringify(getData('env'));
+    const headerRegex = new RegExp(`\\.(${state.config.ext.header.join('|')})$`);
+    const moduleRegex = new RegExp(`\\.(${state.config.ext.module.join('|')})$`);
+    const dependPackageNames = state.config.allDependencies;
 
     const params = `{
         ...config,
@@ -69,7 +70,8 @@ export function initCppJs(config = {}) {
                 return null;
             }
 
-            compiler.findOrCreateInterfaceFile(path);
+            const bridgeFile = createBridgeFile(path);
+            bridges.push(bridgeFile);
 
             return CppJs;
         },
@@ -91,32 +93,30 @@ export function initCppJs(config = {}) {
                 });
             };
 
-            watch(compiler.config.paths.native);
+            watch(state.config.paths.native);
         },
         async generateBundle() {
-            compiler.createBridge();
-            await compiler.createWasm({ cc: ['-O3'] });
+            createLib('Emscripten-x86_64', 'Source', { isProd: true, buildSource: true });
+            createLib('Emscripten-x86_64', 'Bridge', { isProd: true, buildSource: false, nativeGlob: bridges });
+            await buildWasm('browser', true);
+            await buildWasm('node', true);
             this.emitFile({
                 type: 'asset',
-                source: fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.browser.js`),
+                source: fs.readFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`),
                 fileName: 'cpp.js',
             });
             this.emitFile({
                 type: 'asset',
-                source: fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`),
+                source: fs.readFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`),
                 fileName: 'cpp.wasm',
             });
-            const dataFilePath = `${compiler.config.paths.temp}/${compiler.config.general.name}.data.txt`;
+            const dataFilePath = `${state.config.paths.build}/${state.config.general.name}.data.txt`;
             if (fs.existsSync(dataFilePath)) {
                 this.emitFile({
                     type: 'asset',
                     source: fs.readFileSync(dataFilePath),
                     fileName: 'cpp.data.txt',
                 });
-            }
-            const isWatching = process.argv.includes('-w') || process.argv.includes('--watch');
-            if (!isWatching) {
-                // fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
             }
         },
     };

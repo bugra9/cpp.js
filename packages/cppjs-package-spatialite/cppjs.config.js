@@ -1,4 +1,3 @@
-import getDirName from 'cpp.js/src/utils/getDirName.js';
 import geos from '@cpp.js/package-geos/cppjs.config.js';
 import proj from '@cpp.js/package-proj/cppjs.config.js';
 import sqlite3 from '@cpp.js/package-sqlite3/cppjs.config.js';
@@ -20,8 +19,8 @@ export default {
         iconv,
     ],
     paths: {
+        config: import.meta.url,
         base: '../..',
-        project: getDirName(import.meta.url),
         output: 'dist',
     },
 };

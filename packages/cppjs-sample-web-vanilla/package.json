@@ -6,13 +6,13 @@
     "repository": "https://github.com/bugra9/cpp.js.git",
     "license": "MIT",
     "scripts": {
-        "build": "cppjs build -p wasm"
+        "build": "cppjs build -p WebAssembly"
     },
     "dependencies": {
-        "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^"
+        "@cpp.js/sample-lib-prebuilt-matrix": "workspace:*"
     },
     "devDependencies": {
-        "cpp.js": "workspace:^"
+        "cpp.js": "workspace:*"
     },
     "keywords": [
         "cpp.js-sample",

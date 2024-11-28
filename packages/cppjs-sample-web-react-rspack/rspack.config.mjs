@@ -13,7 +13,8 @@ const isDev = process.env.NODE_ENV === 'development';
 const targets = ['chrome >= 87', 'edge >= 88', 'firefox >= 78', 'safari >= 14'];
 
 const cppjsWebpackPlugin = new CppjsWebpackPlugin();
-const compiler = cppjsWebpackPlugin.getCompiler();
+const cppjsLoaderOptions = cppjsWebpackPlugin.getLoaderOptions();
+const { state } = cppjsLoaderOptions;
 
 export default defineConfig({
     context: __dirname,
@@ -28,7 +29,7 @@ export default defineConfig({
             {
                 test: /\.h$/,
                 loader: '@cpp.js/plugin-webpack-loader',
-                options: { compiler },
+                options: { ...cppjsLoaderOptions },
             },
             {
                 test: /\.svg$/,
@@ -79,7 +80,14 @@ export default defineConfig({
         css: true,
     },
     devServer: {
-        watchFiles: compiler.config.paths.native,
+        watchFiles: {
+            paths: ['src/**/*'], // İzlemek istediğiniz dosya/dizin
+            options: {
+                ignored: /node_modules/, // İstemediğiniz dosyaları hariç tutabilirsiniz
+            },
+        },
+        hot: true, // HMR'yi etkinleştirir
+        liveReload: true, // Sayfa yenileme
         setupMiddlewares: (middlewares, devServer) => {
             if (!devServer) {
                 throw new Error('@rspack/dev-server is not defined');
@@ -89,14 +97,14 @@ export default defineConfig({
                 name: '/cpp.js',
                 path: '/cpp.js',
                 middleware: (req, res) => {
-                    res.sendFile(`${compiler.config.paths.temp}/${compiler.config.general.name}.browser.js`);
+                    res.sendFile(`${state.config.paths.build}/${state.config.general.name}.browser.js`);
                 },
             });
             middlewares.unshift({
                 name: '/cpp.wasm',
                 path: '/cpp.wasm',
                 middleware: (req, res) => {
-                    res.send(fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`));
+                    res.send(fs.readFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`));
                 },
             });
 

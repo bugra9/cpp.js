@@ -7,17 +7,17 @@
     "license": "SEE LICENSE IN https://website-archive.mozilla.org/www.mozilla.org/mpl/MPL/boilerplate-1.1/mpl-tri-license-html",
     "type": "module",
     "scripts": {
-        "build": "node build.js",
+        "build": "cppjs build",
         "clear": "rm -rf .cppjs dist *.xcframework",
         "postinstall": "cppjs postinstall"
     },
     "dependencies": {
-        "cpp.js": "workspace:^",
-        "@cpp.js/package-geos": "workspace:^",
-        "@cpp.js/package-proj": "workspace:^",
-        "@cpp.js/package-sqlite3": "workspace:^",
-        "@cpp.js/package-zlib": "workspace:^",
-        "@cpp.js/package-iconv": "workspace:^"
+        "cpp.js": "workspace:*",
+        "@cpp.js/package-geos": "workspace:*",
+        "@cpp.js/package-proj": "workspace:*",
+        "@cpp.js/package-sqlite3": "workspace:*",
+        "@cpp.js/package-zlib": "workspace:*",
+        "@cpp.js/package-iconv": "workspace:*"
     },
     "devDependencies": {
         "decompress": "4.2.1",

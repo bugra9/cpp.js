@@ -1,4 +1,3 @@
-import getDirName from 'cpp.js/src/utils/getDirName.js';
 import tiff from '@cpp.js/package-tiff/cppjs.config.js';
 import sqlite3 from '@cpp.js/package-sqlite3/cppjs.config.js';
 
@@ -14,8 +13,8 @@ export default {
         sqlite3,
     ],
     paths: {
+        config: import.meta.url,
         base: '../..',
-        project: getDirName(import.meta.url),
         output: 'dist',
     },
     platform: {

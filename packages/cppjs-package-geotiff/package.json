@@ -7,15 +7,15 @@
     "license": "SEE LICENSE IN https://github.com/OSGeo/libgeotiff/blob/master/libgeotiff/LICENSE",
     "type": "module",
     "scripts": {
-        "build": "node build.js",
+        "build": "cppjs build",
         "clear": "rm -rf .cppjs dist *.xcframework",
         "postinstall": "cppjs postinstall"
     },
     "dependencies": {
-        "cpp.js": "workspace:^",
-        "@cpp.js/package-proj": "workspace:^",
-        "@cpp.js/package-tiff": "workspace:^",
-        "@cpp.js/package-zlib": "workspace:^"
+        "cpp.js": "workspace:*",
+        "@cpp.js/package-proj": "workspace:*",
+        "@cpp.js/package-tiff": "workspace:*",
+        "@cpp.js/package-zlib": "workspace:*"
     },
     "devDependencies": {
         "decompress": "4.2.1",

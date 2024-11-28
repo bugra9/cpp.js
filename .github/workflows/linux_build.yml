@@ -1,0 +1,29 @@
+name: linux_build
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - packages/cpp.js/**
+      - packages/cppjs-plugin-*/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - packages/cpp.js/**
+      - packages/cppjs-plugin-*/**
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build for Linux
+        run: pnpm run ci:linux:build

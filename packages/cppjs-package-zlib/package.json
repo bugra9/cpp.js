@@ -7,12 +7,15 @@
     "license": "SEE LICENSE IN https://www.zlib.net/zlib_license.html",
     "type": "module",
     "scripts": {
-        "build": "node build.js",
+        "build": "cppjs build",
+        "build:wasm": "cppjs build -p WebAssembly",
+        "build:android": "cppjs build -p Android",
+        "build:ios": "cppjs build -p iOS",
         "clear": "rm -rf .cppjs dist *.xcframework",
         "postinstall": "cppjs postinstall"
     },
     "dependencies": {
-        "cpp.js": "workspace:^"
+        "cpp.js": "workspace:*"
     },
     "devDependencies": {
         "decompress": "4.2.1",

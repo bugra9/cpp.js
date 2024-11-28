@@ -7,22 +7,22 @@
     "license": "SEE LICENSE IN https://github.com/OSGeo/gdal/blob/master/LICENSE.TXT",
     "type": "module",
     "scripts": {
-        "build": "node build.js",
+        "build": "cppjs build",
         "clear": "rm -rf .cppjs dist *.xcframework",
         "postinstall": "cppjs postinstall"
     },
     "dependencies": {
-        "cpp.js": "workspace:^",
-        "@cpp.js/package-expat": "workspace:^",
-        "@cpp.js/package-geos": "workspace:^",
-        "@cpp.js/package-geotiff": "workspace:^",
-        "@cpp.js/package-iconv": "workspace:^",
-        "@cpp.js/package-proj": "workspace:^",
-        "@cpp.js/package-spatialite": "workspace:^",
-        "@cpp.js/package-sqlite3": "workspace:^",
-        "@cpp.js/package-tiff": "workspace:^",
-        "@cpp.js/package-webp": "workspace:^",
-        "@cpp.js/package-zlib": "workspace:^"
+        "cpp.js": "workspace:*",
+        "@cpp.js/package-expat": "workspace:*",
+        "@cpp.js/package-geos": "workspace:*",
+        "@cpp.js/package-geotiff": "workspace:*",
+        "@cpp.js/package-iconv": "workspace:*",
+        "@cpp.js/package-proj": "workspace:*",
+        "@cpp.js/package-spatialite": "workspace:*",
+        "@cpp.js/package-sqlite3": "workspace:*",
+        "@cpp.js/package-tiff": "workspace:*",
+        "@cpp.js/package-webp": "workspace:*",
+        "@cpp.js/package-zlib": "workspace:*"
     },
     "devDependencies": {
         "decompress": "4.2.1",

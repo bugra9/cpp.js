@@ -8,7 +8,8 @@
     "type": "module",
     "main": "index.js",
     "dependencies": {
-        "@cpp.js/plugin-rollup": "workspace:^"
+        "cpp.js": "workspace:*",
+        "@cpp.js/plugin-rollup": "workspace:*"
     },
     "keywords": [
         "vite",
