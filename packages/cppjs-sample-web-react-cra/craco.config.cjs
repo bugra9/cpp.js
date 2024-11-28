@@ -3,7 +3,8 @@ const fs = require('fs');
 module.exports = async function () {
     const { default: CppjsWebpackPlugin } = await import('@cpp.js/plugin-webpack');
     const cppjsWebpackPlugin = new CppjsWebpackPlugin();
-    const compiler = cppjsWebpackPlugin.getCompiler();
+    const cppjsLoaderOptions = cppjsWebpackPlugin.getLoaderOptions();
+    const { state } = cppjsLoaderOptions;
 
     return {
         webpack: {
@@ -15,7 +16,7 @@ module.exports = async function () {
                     {
                         test: /\.h$/,
                         loader: '@cpp.js/plugin-webpack-loader',
-                        options: { compiler },
+                        options: { ...cppjsLoaderOptions },
                     },
                     ...config.module.rules[1].oneOf,
                 ];
@@ -23,18 +24,18 @@ module.exports = async function () {
             },
         },
         devServer: (devServerConfig) => {
-            devServerConfig.watchFiles = compiler.config.paths.native;
+            devServerConfig.watchFiles = state.config.paths.native;
             devServerConfig.onBeforeSetupMiddleware = (devServer) => {
                 if (!devServer) {
                   throw new Error('webpack-dev-server is not defined');
                 }
 
                 devServer.app.get('/cpp.js', function (req, res) {
-                  res.sendFile(`${compiler.config.paths.temp}/${compiler.config.general.name}.browser.js`);
+                  res.sendFile(`${state.config.paths.build}/${state.config.general.name}.browser.js`);
                 });
 
                 devServer.app.get('/cpp.wasm', function (req, res) {
-                    res.send(fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`));
+                    res.send(fs.readFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`));
                 });
             };
 

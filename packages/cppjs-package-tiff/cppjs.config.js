@@ -1,4 +1,3 @@
-import getDirName from 'cpp.js/src/utils/getDirName.js';
 import zlib from '@cpp.js/package-zlib/cppjs.config.js';
 
 export default {
@@ -12,8 +11,8 @@ export default {
         zlib,
     ],
     paths: {
+        config: import.meta.url,
         base: '../..',
-        project: getDirName(import.meta.url),
         output: 'dist',
     },
 };

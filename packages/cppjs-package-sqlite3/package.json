@@ -7,13 +7,13 @@
     "license": "SEE LICENSE IN https://www.sqlite.org/copyright.html",
     "type": "module",
     "scripts": {
-        "build": "node build.js",
+        "build": "cppjs build",
         "clear": "rm -rf .cppjs dist *.xcframework",
         "postinstall": "cppjs postinstall"
     },
     "dependencies": {
-        "cpp.js": "workspace:^",
-        "@cpp.js/package-zlib": "workspace:^"
+        "cpp.js": "workspace:*",
+        "@cpp.js/package-zlib": "workspace:*"
     },
     "devDependencies": {
         "decompress": "4.2.1",

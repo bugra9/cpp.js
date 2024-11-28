@@ -1,4 +1,3 @@
-import getDirName from 'cpp.js/src/utils/getDirName.js';
 import Matrix from '@cpp.js/sample-lib-prebuilt-matrix/cppjs.config.js';
 
 export default {
@@ -9,8 +8,8 @@ export default {
         Matrix,
     ],
     paths: {
+        config: import.meta.url,
         base: '../..',
-        project: getDirName(import.meta.url),
         output: 'dist',
     },
 };

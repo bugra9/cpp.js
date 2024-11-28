@@ -1,20 +1,14 @@
-const fs = require('fs');
-
-let compiler;
+let config;
+let createBridgeFileFunc;
 let dependPackageNames;
 let headerRegex;
 let moduleRegex;
-import('cpp.js').then(({ default: CppjsCompiler }) => {
-    compiler = new CppjsCompiler();
-    dependPackageNames = compiler.config.getAllDependencies();
-    headerRegex = new RegExp(`\\.(${compiler.config.ext.header.join('|')})$`);
-    moduleRegex = new RegExp(`\\.(${compiler.config.ext.module.join('|')})$`);
-
-    const defaultPath = `${compiler.config.paths.project}/.cppjs/default`;
-    if (fs.existsSync(defaultPath)) {
-        fs.unlinkSync(defaultPath);
-    }
-    fs.symlinkSync(compiler.config.paths.temp.split('/.cppjs/')[1], defaultPath);
+import('cpp.js').then(({ state, createBridgeFile }) => {
+    config = state.config;
+    createBridgeFileFunc = createBridgeFile;
+    dependPackageNames = config.allDependencies;
+    headerRegex = new RegExp(`\\.(${config.ext.header.join('|')})$`);
+    moduleRegex = new RegExp(`\\.(${config.ext.module.join('|')})$`);
 });
 
 module.exports = function CppjsMetroPlugin(defaultConfig) {
@@ -37,13 +31,13 @@ module.exports = function CppjsMetroPlugin(defaultConfig) {
                             path = `${dependPackage.paths.output}/prebuilt/${fullPlatform}/swig/${filePath}`;
                         }
 
-                        compiler.findOrCreateInterfaceFile(path);
+                        createBridgeFileFunc(path);
                         return { type: 'empty' };
                     }
 
                     const path = context.resolveRequest(context, moduleName, platform)?.filePath;
-                    if (path && compiler.config.paths.native.some((n) => path.startsWith(n))) {
-                        compiler.findOrCreateInterfaceFile(path);
+                    if (path && config.paths.native.some((n) => path.startsWith(n))) {
+                        createBridgeFileFunc(path);
                         return { type: 'empty' };
                     }
                 }

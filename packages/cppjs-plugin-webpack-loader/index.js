@@ -1,6 +1,6 @@
 async function cppjsLoader(content) {
-    const compiler = this.getOptions().compiler;
-    const env = JSON.stringify(compiler.getData('env'));
+    const { bridges, createBridgeFile, getData } = this.getOptions();
+    const env = JSON.stringify(getData('env'));
 
     const params = `{
         ...config,
@@ -23,7 +23,8 @@ export function initCppJs(config = {}) {
 }
 `;
 
-    compiler.findOrCreateInterfaceFile(this.resourcePath);
+    const bridgeFile = createBridgeFile(this.resourcePath);
+    bridges.push(bridgeFile);
 
     return CppJs;
 }

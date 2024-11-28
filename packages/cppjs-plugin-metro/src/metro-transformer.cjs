@@ -16,8 +16,8 @@ let compilerClassPromise;
 const getCompilerClass = () => {
     if (compilerClassPromise) return compilerClassPromise;
     compilerClassPromise = new Promise((resolve, reject) => {
-        import('cpp.js').then(({ default: CppjsCompiler }) => {
-            resolve(CppjsCompiler);
+        import('cpp.js').then(({ getData }) => {
+            resolve({ getData });
         }).catch((e) => reject(e));
     });
     return compilerClassPromise;
@@ -28,9 +28,8 @@ module.exports.transform = async ({ src, filename, ...rest }) => {
         let platform = null;
         if (rest.options.platform === 'ios') platform = 'iOS-iphoneos';
         else if (rest.options.platform === 'android') platform = 'Android-arm64-v8a';
-        const CppJsCompiler = await getCompilerClass();
-        const compiler = new CppJsCompiler(platform);
-        const env = compiler.getData('env');
+        const { getData } = await getCompilerClass();
+        const env = getData('env', platform);
 
         return upstreamTransformer.transform({
             src:

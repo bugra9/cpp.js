@@ -13,13 +13,13 @@
     },
     "dependencies": {
         "vue": "^3.4.29",
-        "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^"
+        "@cpp.js/sample-lib-prebuilt-matrix": "workspace:*"
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "^5.0.5",
         "vite": "^5.3.1",
-        "cpp.js": "workspace:^",
-        "@cpp.js/plugin-vite": "workspace:^"
+        "cpp.js": "workspace:*",
+        "@cpp.js/plugin-vite": "workspace:*"
     },
     "keywords": [
         "cpp.js-sample",

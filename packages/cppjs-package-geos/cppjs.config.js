@@ -1,5 +1,3 @@
-import getDirName from 'cpp.js/src/utils/getDirName.js';
-
 export default {
     general: {
         name: 'geos',
@@ -9,8 +7,8 @@ export default {
         libName: ['geos', 'geos_c'],
     },
     paths: {
+        config: import.meta.url,
         base: '../..',
-        project: getDirName(import.meta.url),
         output: 'dist',
     },
 };

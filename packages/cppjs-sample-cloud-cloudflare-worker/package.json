@@ -6,7 +6,7 @@
     "repository": "https://github.com/bugra9/cpp.js.git",
     "license": "MIT",
     "scripts": {
-        "build": "cppjs build -p wasm",
+        "build": "cppjs build -p WebAssembly",
         "dev": "wrangler dev",
         "deploy": "wrangler dev"
     },
@@ -19,7 +19,7 @@
         "src"
     ],
     "devDependencies": {
-        "cpp.js": "workspace:^",
+        "cpp.js": "workspace:*",
         "wrangler": "^3.75.0"
     },
     "keywords": [

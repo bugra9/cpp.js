@@ -7,6 +7,6 @@
     "license": "MIT",
     "type": "module",
     "dependencies": {
-        "cpp.js": "workspace:^"
+        "cpp.js": "workspace:*"
     }
 }

@@ -2,7 +2,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-empty */
 import Metro from 'metro';
-import CppjsCompiler from 'cpp.js';
+import { state } from 'cpp.js';
 import upath from 'upath';
 import fs from 'node:fs';
 
@@ -18,9 +18,8 @@ try {
     isExpo = !!exportEmbedAsync && !!resolveOptions;
 } catch (e) {}
 
-const compiler = new CppjsCompiler();
-const modulePath = compiler.config.package.main ? getModulePath(compiler.config.package.main) : null;
-const entry = modulePath ? upath.relative(compiler.config.paths.project, modulePath) : 'index.js';
+const modulePath = state.config.package.main ? getModulePath(state.config.package.main) : null;
+const entry = modulePath ? upath.relative(state.config.paths.project, modulePath) : 'index.js';
 
 const config = await Metro.loadConfig();
 const platform = process.argv.length === 3 ? process.argv[2] : 'web';
@@ -28,10 +27,10 @@ const platform = process.argv.length === 3 ? process.argv[2] : 'web';
 if (isExpo) {
     const options = await resolveOptions({
         '--entry-file': entry,
-        '--bundle-output': `${compiler.config.paths.temp}/metro-${platform}.js`,
+        '--bundle-output': `${state.config.paths.build}/metro-${platform}.js`,
         '--platform': platform,
     }, { args: {} });
-    await exportEmbedAsync(compiler.config.paths.project, options);
+    await exportEmbedAsync(state.config.paths.project, options);
 } else {
     await Metro.runBuild(config, {
         entry,
@@ -39,7 +38,7 @@ if (isExpo) {
         minify: true,
         dev: false,
         sourceMap: false,
-        out: `${compiler.config.paths.temp}/metro-${platform}.js`,
+        out: `${state.config.paths.build}/metro-${platform}.js`,
     });
 }
 

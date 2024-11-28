@@ -1,4 +1,3 @@
-import getDirName from 'cpp.js/src/utils/getDirName.js';
 import expat from '@cpp.js/package-expat/cppjs.config.js';
 import geos from '@cpp.js/package-geos/cppjs.config.js';
 import geotiff from '@cpp.js/package-geotiff/cppjs.config.js';
@@ -30,8 +29,8 @@ export default {
         zlib,
     ],
     paths: {
+        config: import.meta.url,
         base: '../..',
-        project: getDirName(import.meta.url),
         output: 'dist',
     },
     platform: {
