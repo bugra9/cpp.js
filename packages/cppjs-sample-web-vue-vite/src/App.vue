@@ -1,10 +1,10 @@
 <script setup>
 import { ref } from 'vue'
-import { initCppJs } from './native/native.h'
+import { initCppJs, Native } from './native/native.h'
 
 const message = ref("compiling ...")
 
-initCppJs().then(({Native}) => {;
+initCppJs().then(() => {;
   message.value = Native.sample();
 });
 </script>

@@ -3,9 +3,9 @@ Cpp.js is a framework that provides the ability to use c++ code in the javascrip
 
 Here is a minimal example:
 ```jsx title="/src/main.js"
-import { initCppJs } './native/helloWorld.h';
+import { initCppJs, getHelloWorldMessage } './native/helloWorld.h';
 
-const { getHelloWorldMessage } = await initCppJs();
+await initCppJs();
 console.log(getHelloWorldMessage());
 
 ```
@@ -23,9 +23,9 @@ Prebuilt packages can be used with cpp.js to avoid recompiling the package, ther
 Here is a minimal example:
 
 ```jsx title="/src/main.js"
-import { initCppJs } '@cpp.js/package-gdal/gdal.h';
+import { initCppJs, Gdal } '@cpp.js/package-gdal/gdal.h';
 
-const { Gdal } = await initCppJs();
+await initCppJs();
 ```
 
 [You can view the prebuilt packages here.](/showcase)

@@ -1,6 +1,6 @@
-// eslint-disable object-curly-newline
-import fs from 'fs';
-import { state, createLib, buildWasm, createBridgeFile, getData } from 'cpp.js';
+/* eslint-disable object-curly-newline */
+import fs from 'node:fs';
+import { state, createLib, buildWasm, createBridgeFile, getData, getCppJsScript } from 'cpp.js';
 
 export default class CppjsWebpackPlugin {
     static defaultOptions = {};
@@ -38,6 +38,7 @@ export default class CppjsWebpackPlugin {
             createBridgeFile,
             getData,
             state,
+            getCppJsScript,
         };
     }
 }

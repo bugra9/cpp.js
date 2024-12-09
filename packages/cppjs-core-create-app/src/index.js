@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /* eslint-disable no-plusplus */
 /* eslint-disable no-console */
-import fs from 'fs';
+import fs from 'node:fs';
 import fse from 'fs-extra';
-import path from 'path';
+import path from 'node:path';
 import {
     bold, cyan, gray, green,
 } from 'kleur/colors';

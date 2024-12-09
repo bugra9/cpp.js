@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import fs, { mkdirSync } from 'node:fs';
+import fs from 'node:fs';
 import { Command, Option } from 'commander';
 import glob from 'glob';
 import upath from 'upath';

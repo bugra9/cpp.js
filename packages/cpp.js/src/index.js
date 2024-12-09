@@ -9,3 +9,5 @@ export { default as getCmakeParameters } from './actions/getCmakeParameters.js';
 export { default as createXCFramework } from './actions/createXCFramework.js';
 export { default as getAllBridges } from './actions/getAllBridges.js';
 export { default as run } from './actions/run.js';
+export { default as getCppJsScript } from './integration/getCppJsScript.js';
+export { default as getDependFilePath } from './integration/getDependFilePath.js';

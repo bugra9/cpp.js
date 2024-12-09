@@ -11,6 +11,7 @@ const defaultConfig = getDefaultConfig(__dirname);
  */
 const config = {
     ...CppjsMetroPlugin(defaultConfig),
+    resetCache: true,
 };
 
 module.exports = mergeConfig(defaultConfig, config);

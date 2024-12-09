@@ -1,12 +1,12 @@
 import React from "react";
 import { useState } from "react";
-import { initCppJs } from './native/native.h';
+import { initCppJs, Native } from './native/native.h';
 import "./App.css";
 
 function App() {
 	const [message, setMessage] = useState("compiling ...");
 
-    initCppJs().then(({ Native }) => {;
+    initCppJs().then(() => {;
         setMessage(Native.sample());
     });
 

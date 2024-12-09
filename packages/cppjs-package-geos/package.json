@@ -1,22 +1,28 @@
 {
     "name": "@cpp.js/package-geos",
-    "version": "1.0.0-beta.1",
+    "version": "1.0.0-beta.20",
     "nativeVersion": "3.12.2",
-    "description": "GEOS is a C++ library for performing operations on two-dimensional vector geometries.",
-    "homepage": "https://github.com/libgeos/geos",
-    "license": "SEE LICENSE IN https://github.com/libgeos/geos/blob/main/COPYING",
+    "description": "This package provides the precompiled GEOS library, built using Cpp.js, for seamless integration into JavaScript, WebAssembly, and React Native projects. It supports advanced geometry operations, including spatial analysis and topological calculations, delivering high performance and cross-platform compatibility. Perfect for web, server-side, and mobile geospatial applications.",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-geos#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "license": "LGPL-2.1-or-later",
     "type": "module",
     "scripts": {
         "build": "cppjs build",
+        "build:wasm": "cppjs build -p WebAssembly",
+        "build:android": "cppjs build -p Android",
+        "build:ios": "cppjs build -p iOS",
         "clear": "rm -rf .cppjs dist *.xcframework",
         "postinstall": "cppjs postinstall"
     },
-    "dependencies": {
+    "devDependencies": {
         "cpp.js": "workspace:*"
     },
-    "devDependencies": {
-        "decompress": "4.2.1",
-        "decompress-targz": "4.1.1",
-        "follow-redirects":"1.15.3"
-    }
+    "keywords": [
+        "geos",
+        "libgeos",
+        "cpp.js-package",
+        "webassembly",
+        "react-native"
+    ]
 }

@@ -5,8 +5,8 @@ Pod::Spec.new do |s|
   s.module_name  = "proj"
   s.name         = package["name"]
   s.version      = package["nativeVersion"]
-  s.summary      = package["description"]
-  s.homepage     = package["homepage"]
+  s.summary      = "PROJ is a generic coordinate transformation software that transforms geospatial coordinates from one coordinate reference system (CRS) to another."
+  s.homepage     = "https://proj.org/"
   s.author       = "Proj Authors"
   s.source       = { :http => "https://cpp.js.org" }
   s.vendored_frameworks = 'proj.xcframework', 'sqlite3.xcframework', 'tiff.xcframework'

@@ -47,8 +47,8 @@ Here is a minimal example:
 ```js title="@cpp.js/plugin-rollup/index.js"
 
 import CppjsCompiler from 'cpp.js';
-import fs from 'fs';
-import p from 'path';
+import fs from 'node:fs';
+import p from 'node:path';
 
 const platform = 'Emscripten-x86_64';
 const rollupCppjsPlugin = (options, _compiler) => {
@@ -226,7 +226,7 @@ Here is a minimal example:
 ```js title="@cpp.js/plugin-vite/index.js"
 import CppjsCompiler from 'cpp.js';
 import rollupCppjsPlugin from '@cpp.js/plugin-rollup';
-import fs from 'fs';
+import fs from 'node:fs';
 
 const viteCppjsPlugin = (options, _compiler) => {
     let isServe = false;

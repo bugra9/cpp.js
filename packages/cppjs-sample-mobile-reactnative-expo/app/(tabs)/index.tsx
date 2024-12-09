@@ -6,14 +6,13 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
-import '../../src/native/native.h';
-import { initCppJs } from 'cpp.js';
+import { initCppJs, Native } from '../../src/native/native.h';
 
 export default function HomeScreen() {
   const [message, setMessage] = useState('compiling ...');
 
   useEffect(() => {
-    initCppJs().then(({ Native }) => {
+    initCppJs().then(() => {
         setMessage(Native.sample());
     });
   }, []);

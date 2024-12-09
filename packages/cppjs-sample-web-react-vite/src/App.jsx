@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { initCppJs } from './native/native.h'
+import { initCppJs, Native } from './native/native.h'
 
 function App() {
   const [message, setMessage] = useState('compiling ...')
 
   useEffect(() => {
-    initCppJs().then(({Native}) => {
+    initCppJs().then(() => {
         setMessage(Native.sample());
     });
   }, []);

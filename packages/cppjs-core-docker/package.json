@@ -3,7 +3,7 @@
     "version": "1.0.0-beta.1",
     "private": "true",
     "scripts": {
-        "build": "docker build --no-cache -t bugra9/cpp.js:latest -t bugra9/cpp.js:0.2.6 .",
+        "build": "docker build --no-cache -t bugra9/cpp.js:latest -t bugra9/cpp.js:0.2.7 .",
         "push": "docker push bugra9/cpp.js --all-tags"
     }
 }

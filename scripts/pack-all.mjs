@@ -1,4 +1,4 @@
-import { execFileSync } from 'child_process';
+import { execFileSync } from 'node:child_process';
 
 const projectPaths = JSON.parse(execFileSync('pnpm', ['m', 'ls', '--json', '--depth=-1'], { stdio: 'pipe' }))
     .filter(p => !p.private)

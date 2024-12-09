@@ -1,3 +1,5 @@
+import getParentPath from 'cpp.js/src/utils/getParentPath.js';
+
 import sampleLibCmake from '@cpp.js/sample-lib-cmake/cppjs.config.js';
 import sampleLibMatrix from '@cpp.js/sample-lib-prebuilt-matrix/cppjs.config.js';
 import sampleLibSource from '@cpp.js/sample-lib-source/cppjs.config.js';
@@ -22,27 +24,27 @@ export default {
             'Select a bundler:',
         ],
         Vanilla: {
-            path: sampleWebVanilla.paths.project,
+            path: getParentPath(sampleWebVanilla.paths.config),
         },
         React: {
             'Create React App (CRA)': {
-                path: sampleWebReactCRA.paths.project,
+                path: getParentPath(sampleWebReactCRA.paths.config),
             },
             Rspack: {
-                path: sampleWebReactRspack.paths.project,
+                path: getParentPath(sampleWebReactRspack.paths.config),
             },
             Vite: {
-                path: sampleWebReactVite.paths.project,
+                path: getParentPath(sampleWebReactVite.paths.config),
             },
         },
         Vue: {
             Vite: {
-                path: sampleWebVueVite.paths.project,
+                path: getParentPath(sampleWebVueVite.paths.config),
             },
         },
         Svelte: {
             Vite: {
-                path: sampleWebSvelteVite.paths.project,
+                path: getParentPath(sampleWebSvelteVite.paths.config),
             },
         },
     },
@@ -53,10 +55,10 @@ export default {
         ],
         'React Native': {
             'Native CLI': {
-                path: sampleMobileReactNativeNativeCLI.paths.project,
+                path: getParentPath(sampleMobileReactNativeNativeCLI.paths.config),
             },
             Expo: {
-                path: sampleMobileReactNativeExpo.paths.project,
+                path: getParentPath(sampleMobileReactNativeExpo.paths.config),
             },
         },
     },
@@ -67,7 +69,7 @@ export default {
         ],
         'Node.js': {
             WebAssembly: {
-                path: sampleBackendNodeJsWasm.paths.project,
+                path: getParentPath(sampleBackendNodeJsWasm.paths.config),
             },
         },
     },
@@ -76,7 +78,7 @@ export default {
             'Select a service:',
         ],
         'Cloudflare Worker': {
-            path: sampleCloudCloudflareWorker.paths.project,
+            path: getParentPath(sampleCloudCloudflareWorker.paths.config),
         },
     },
     Library: {
@@ -84,13 +86,13 @@ export default {
             'Select a library type:',
         ],
         Prebuilt: {
-            path: sampleLibMatrix.paths.project,
+            path: getParentPath(sampleLibMatrix.paths.config),
         },
         Source: {
-            path: sampleLibSource.paths.project,
+            path: getParentPath(sampleLibSource.paths.config),
         },
         CMake: {
-            path: sampleLibCmake.paths.project,
+            path: getParentPath(sampleLibCmake.paths.config),
         },
     },
 };

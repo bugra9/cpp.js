@@ -1,23 +1,31 @@
 {
     "name": "@cpp.js/package-tiff",
-    "version": "1.0.0-beta.1",
+    "version": "1.0.0-beta.23",
     "nativeVersion": "4.6.0",
-    "description": "The LibTIFF software provides support for the Tag Image File Format (TIFF), a widely used format for storing image data.",
-    "homepage": "https://libtiff.gitlab.io/libtiff/index.html",
-    "license": "SEE LICENSE IN https://libtiff.gitlab.io/libtiff/project/license.html",
+    "description": "This package provides the Tiff library compiled with Cpp.js, enabling fast and efficient image processing using the TIFF format. It is built with Cpp.js to provide cross-platform support, leveraging both WebAssembly (WASM) for web applications and native code for mobile platforms. Ideal for developers looking to handle TIFF images with high performance in JavaScript environments.",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-tiff#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "license": "libtiff",
     "type": "module",
     "scripts": {
         "build": "cppjs build",
+        "build:wasm": "cppjs build -p WebAssembly",
+        "build:android": "cppjs build -p Android",
+        "build:ios": "cppjs build -p iOS",
         "clear": "rm -rf .cppjs dist *.xcframework",
         "postinstall": "cppjs postinstall"
     },
     "dependencies": {
-        "cpp.js": "workspace:*",
         "@cpp.js/package-zlib": "workspace:*"
     },
     "devDependencies": {
-        "decompress": "4.2.1",
-        "decompress-targz": "4.1.1",
-        "follow-redirects":"1.15.3"
-    }
+        "cpp.js": "workspace:*"
+    },
+    "keywords": [
+        "tiff",
+        "libtiff",
+        "cpp.js-package",
+        "webassembly",
+        "react-native"
+    ]
 }

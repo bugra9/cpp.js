@@ -1,38 +1,13 @@
 /* eslint-disable no-restricted-syntax */
 // eslint-disable-next-line object-curly-newline
-import { state, createLib, createBridgeFile, buildWasm, getData } from 'cpp.js';
+import { state, createLib, createBridgeFile, buildWasm, getCppJsScript, getDependFilePath } from 'cpp.js';
 
-import fs from 'fs';
-import p from 'path';
-
-const platform = 'Emscripten-x86_64';
+import fs from 'node:fs';
+import p from 'node:path';
 
 const rollupCppjsPlugin = (options, bridges = []) => {
-    const env = JSON.stringify(getData('env'));
     const headerRegex = new RegExp(`\\.(${state.config.ext.header.join('|')})$`);
     const moduleRegex = new RegExp(`\\.(${state.config.ext.module.join('|')})$`);
-    const dependPackageNames = state.config.allDependencies;
-
-    const params = `{
-        ...config,
-        env: {...${env}, ...config.env},
-        paths: {
-            wasm: 'cpp.wasm',
-            data: 'cpp.data.txt'
-        }
-    }`;
-
-    const CppJs = `
-export let Native = {};
-export function initCppJs(config = {}) {
-    return new Promise(
-        (resolve, reject) => import('/cpp.js').then(n => { return window.CppJs.initCppJs(${params})}).then(m => {
-            Native = m;
-            resolve(m);
-        })
-    );
-}
-`;
 
     return {
         name: 'rollup-plugin-cppjs',
@@ -44,24 +19,16 @@ export function initCppJs(config = {}) {
                 return { id: source, external: false };
             }
 
-            const dependPackage = dependPackageNames.find((d) => source.startsWith(d.package.name));
-            if (dependPackage) {
-                const filePath = source.substring(dependPackage.package.name.length + 1);
-
-                let path = `${dependPackage.paths.output}/prebuilt/${platform}/${filePath}`;
-                if (headerRegex.test(source)) {
-                    path = `${dependPackage.paths.output}/prebuilt/${platform}/include/${filePath}`;
-                } else if (moduleRegex.test(source)) {
-                    path = `${dependPackage.paths.output}/prebuilt/${platform}/swig/${filePath}`;
-                }
-
-                return path;
+            const dependFilePath = getDependFilePath(source);
+            if (dependFilePath) {
+                return dependFilePath;
             }
+
             return null;
         },
         load(id) {
             if (id === 'cpp.js') {
-                return CppJs;
+                return getCppJsScript('Emscripten-x86_64');
             }
             return null;
         },
@@ -73,7 +40,7 @@ export function initCppJs(config = {}) {
             const bridgeFile = createBridgeFile(path);
             bridges.push(bridgeFile);
 
-            return CppJs;
+            return getCppJsScript('Emscripten-x86_64', bridgeFile);
         },
         buildStart() {
             const watch = (dirs) => {

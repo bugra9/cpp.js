@@ -8,14 +8,13 @@
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, Text, StyleSheet, View} from 'react-native';
 
-import './native/native.h';
-import { initCppJs } from 'cpp.js';
+import { initCppJs, Native } from './native/native.h';
 
 function App(): React.JSX.Element {
   const [message, setMessage] = useState('compiling ...');
 
   useEffect(() => {
-    initCppJs().then(({ Native }) => {
+    initCppJs().then(() => {
         setMessage(Native.sample());
     });
   }, []);

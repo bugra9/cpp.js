@@ -6,6 +6,7 @@ export default {
     },
     export: {
         type: 'cmake',
+        libName: ['tiff', 'tiffxx'],
     },
     dependencies: [
         zlib,

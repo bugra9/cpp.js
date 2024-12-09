@@ -88,11 +88,11 @@ importers:
         specifier: workspace:*
         version: link:../cppjs-sample-lib-source
       '@cpp.js/sample-mobile-reactnative-expo':
-        specifier: 1.0.0-beta.3
-        version: 1.0.0-beta.3(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(expo-modules-autolinking@1.11.3)(typescript@5.5.4)
+        specifier: 1.0.0-beta.4
+        version: 1.0.0-beta.4(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(expo-modules-autolinking@1.11.3)(typescript@5.5.4)
       '@cpp.js/sample-mobile-reactnative-nativecli':
-        specifier: 1.0.0-beta.7
-        version: 1.0.0-beta.7(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(typescript@5.5.4)
+        specifier: 1.0.0-beta.9
+        version: 1.0.0-beta.9(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(typescript@5.5.4)
       '@cpp.js/sample-web-react-cra':
         specifier: workspace:*
         version: link:../cppjs-sample-web-react-cra
@@ -111,6 +111,9 @@ importers:
       '@cpp.js/sample-web-vue-vite':
         specifier: workspace:*
         version: link:../cppjs-sample-web-vue-vite
+      cpp.js:
+        specifier: workspace:*
+        version: link:../cpp.js
       fs-extra:
         specifier: ^11.1.0
         version: 11.2.0
@@ -128,28 +131,15 @@ importers:
       '@babel/runtime':
         specifier: '*'
         version: 7.23.9
-      cpp.js:
-        specifier: workspace:*
-        version: link:../cpp.js
       react-native:
         specifier: '*'
         version: 0.75.2(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(react@18.3.1)(typescript@5.5.4)
 
   packages/cppjs-package-expat:
-    dependencies:
+    devDependencies:
       cpp.js:
         specifier: workspace:*
         version: link:../cpp.js
-    devDependencies:
-      decompress:
-        specifier: 4.2.1
-        version: 4.2.1
-      decompress-targz:
-        specifier: 4.1.1
-        version: 4.1.1
-      follow-redirects:
-        specifier: 1.15.3
-        version: 1.15.3
 
   packages/cppjs-package-gdal:
     dependencies:
@@ -183,38 +173,16 @@ importers:
       '@cpp.js/package-zlib':
         specifier: workspace:*
         version: link:../cppjs-package-zlib
+    devDependencies:
       cpp.js:
         specifier: workspace:*
         version: link:../cpp.js
-    devDependencies:
-      decompress:
-        specifier: 4.2.1
-        version: 4.2.1
-      decompress-targz:
-        specifier: 4.1.1
-        version: 4.1.1
-      follow-redirects:
-        specifier: 1.15.3
-        version: 1.15.3
-      replace:
-        specifier: 1.2.2
-        version: 1.2.2
 
   packages/cppjs-package-geos:
-    dependencies:
+    devDependencies:
       cpp.js:
         specifier: workspace:*
         version: link:../cpp.js
-    devDependencies:
-      decompress:
-        specifier: 4.2.1
-        version: 4.2.1
-      decompress-targz:
-        specifier: 4.1.1
-        version: 4.1.1
-      follow-redirects:
-        specifier: 1.15.3
-        version: 1.15.3
 
   packages/cppjs-package-geotiff:
     dependencies:
@@ -227,32 +195,16 @@ importers:
       '@cpp.js/package-zlib':
         specifier: workspace:*
         version: link:../cppjs-package-zlib
+    devDependencies:
       cpp.js:
         specifier: workspace:*
         version: link:../cpp.js
-    devDependencies:
-      decompress:
-        specifier: 4.2.1
-        version: 4.2.1
-      decompress-targz:
-        specifier: 4.1.1
-        version: 4.1.1
-      follow-redirects:
-        specifier: 1.15.3
-        version: 1.15.3
 
   packages/cppjs-package-iconv:
-    dependencies:
+    devDependencies:
       cpp.js:
         specifier: workspace:*
         version: link:../cpp.js
-    devDependencies:
-      decompress:
-        specifier: 4.2.1
-        version: 4.2.1
-      decompress-targz:
-        specifier: 4.1.1
-        version: 4.1.1
 
   packages/cppjs-package-proj:
     dependencies:
@@ -262,19 +214,10 @@ importers:
       '@cpp.js/package-tiff':
         specifier: workspace:*
         version: link:../cppjs-package-tiff
+    devDependencies:
       cpp.js:
         specifier: workspace:*
         version: link:../cpp.js
-    devDependencies:
-      decompress:
-        specifier: 4.2.1
-        version: 4.2.1
-      decompress-targz:
-        specifier: 4.1.1
-        version: 4.1.1
-      follow-redirects:
-        specifier: 1.15.3
-        version: 1.15.3
 
   packages/cppjs-package-spatialite:
     dependencies:
@@ -293,89 +236,42 @@ importers:
       '@cpp.js/package-zlib':
         specifier: workspace:*
         version: link:../cppjs-package-zlib
+    devDependencies:
       cpp.js:
         specifier: workspace:*
         version: link:../cpp.js
-    devDependencies:
-      decompress:
-        specifier: 4.2.1
-        version: 4.2.1
-      decompress-targz:
-        specifier: 4.1.1
-        version: 4.1.1
-      follow-redirects:
-        specifier: 1.15.3
-        version: 1.15.3
-      replace:
-        specifier: 1.2.2
-        version: 1.2.2
 
   packages/cppjs-package-sqlite3:
     dependencies:
       '@cpp.js/package-zlib':
         specifier: workspace:*
         version: link:../cppjs-package-zlib
+    devDependencies:
       cpp.js:
         specifier: workspace:*
         version: link:../cpp.js
-    devDependencies:
-      decompress:
-        specifier: 4.2.1
-        version: 4.2.1
-      decompress-targz:
-        specifier: 4.1.1
-        version: 4.1.1
-      follow-redirects:
-        specifier: 1.15.3
-        version: 1.15.3
 
   packages/cppjs-package-tiff:
     dependencies:
       '@cpp.js/package-zlib':
         specifier: workspace:*
         version: link:../cppjs-package-zlib
+    devDependencies:
       cpp.js:
         specifier: workspace:*
         version: link:../cpp.js
-    devDependencies:
-      decompress:
-        specifier: 4.2.1
-        version: 4.2.1
-      decompress-targz:
-        specifier: 4.1.1
-        version: 4.1.1
-      follow-redirects:
-        specifier: 1.15.3
-        version: 1.15.3
 
   packages/cppjs-package-webp:
-    dependencies:
+    devDependencies:
       cpp.js:
         specifier: workspace:*
         version: link:../cpp.js
-    devDependencies:
-      decompress:
-        specifier: 4.2.1
-        version: 4.2.1
-      decompress-targz:
-        specifier: 4.1.1
-        version: 4.1.1
-      follow-redirects:
-        specifier: 1.15.3
-        version: 1.15.3
 
   packages/cppjs-package-zlib:
-    dependencies:
+    devDependencies:
       cpp.js:
         specifier: workspace:*
         version: link:../cpp.js
-    devDependencies:
-      decompress:
-        specifier: 4.2.1
-        version: 4.2.1
-      decompress-targz:
-        specifier: 4.1.1
-        version: 4.1.1
 
   packages/cppjs-plugin-metro:
     dependencies:
@@ -473,23 +369,15 @@ importers:
         specifier: ^3.75.0
         version: 3.75.0
 
-  packages/cppjs-sample-lib-cmake:
-    dependencies:
-      cpp.js:
-        specifier: workspace:*
-        version: link:../cpp.js
+  packages/cppjs-sample-lib-cmake: {}
 
   packages/cppjs-sample-lib-prebuilt-matrix:
-    dependencies:
+    devDependencies:
       cpp.js:
         specifier: workspace:*
         version: link:../cpp.js
 
-  packages/cppjs-sample-lib-source:
-    dependencies:
-      cpp.js:
-        specifier: workspace:*
-        version: link:../cpp.js
+  packages/cppjs-sample-lib-source: {}
 
   packages/cppjs-sample-web-react-cra:
     dependencies:
@@ -1799,14 +1687,14 @@ packages:
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
 
-  '@cpp.js/sample-lib-prebuilt-matrix@1.0.0-beta.9':
-    resolution: {integrity: sha512-+rq9fD4j8VoS+6PqoYFjgGbS+Y7Bx32bSv+9JMYKA1F8p+uDhL79vcVsewy8FOZ0SXiTNx3649+rvy7lfS9QCA==}
+  '@cpp.js/sample-lib-prebuilt-matrix@1.0.0-beta.24':
+    resolution: {integrity: sha512-GgizV7gDpoph+8Yrb4IXXYN73ltolN54HPmoJIO0lplmvUUDEoYOjIlAJkN5rvWGFcK+EJoXtDWDOICEMw5dpQ==}
 
-  '@cpp.js/sample-mobile-reactnative-expo@1.0.0-beta.3':
-    resolution: {integrity: sha512-OYMDVUpY4W+EMhaldhEfJZdkeyE0tlNuh0+WWulYw+nU2zuNpFwCaTZxGYXE9YEm71eAkOpXnJf55kPJ60BUrA==}
+  '@cpp.js/sample-mobile-reactnative-expo@1.0.0-beta.4':
+    resolution: {integrity: sha512-zk8FQotL/lwjhnltBbtZh59WRp1Eo3eTCg+zaSJI9aGYizzN9ie7rzX5656feJfASsEVlUATydsGjhT9T2KUvQ==}
 
-  '@cpp.js/sample-mobile-reactnative-nativecli@1.0.0-beta.7':
-    resolution: {integrity: sha512-UdJDipbqjYFZ/YB2HD3qoihM8O5SRX6juTNAERFnRsP6pNU9AVP5apmB4+O1sqfgH1EhtUg3RIu0F0M8H4/kww==}
+  '@cpp.js/sample-mobile-reactnative-nativecli@1.0.0-beta.9':
+    resolution: {integrity: sha512-Wc1d9z/CQqDP8FkrUMMhgfD5tF746BM7sCAgPO5HyG1+Glozkrbm3uqdJsqk4x768ifuqZQgxiBR3e5Us59FwQ==}
     engines: {node: '>=18'}
 
   '@craco/craco@7.1.0':
@@ -2429,7 +2317,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {'0': node >=0.10.0}
+    engines: {node: '>=0.10.0'}
 
   '@expo/cli@0.18.30':
     resolution: {integrity: sha512-V90TUJh9Ly8stYo8nwqIqNWCsYjE28GlVFWEhAFCUOp99foiQr8HSTpiiX5GIrprcPoWmlGoY+J5fQA29R4lFg==}
@@ -3165,15 +3053,6 @@ packages:
       rollup: ^1.20.0||^2.0.0
     peerDependenciesMeta:
       '@types/babel__core':
-        optional: true
-
-  '@rollup/plugin-commonjs@26.0.1':
-    resolution: {integrity: sha512-UnsKoZK6/aGIH6AdkptXhNvhaqftcjq3zZdT+LY5Ftms6JR06nADcDsYp5hTU9E2lbJUEOhdlY5J4DNTneM+jQ==}
-    engines: {node: '>=16.0.0 || 14 >= 14.17'}
-    peerDependencies:
-      rollup: ^2.68.0||^3.0.0||^4.0.0
-    peerDependenciesMeta:
-      rollup:
         optional: true
 
   '@rollup/plugin-commonjs@28.0.1':
@@ -5148,10 +5027,6 @@ packages:
       typescript:
         optional: true
 
-  cpp.js@1.0.0-beta.7:
-    resolution: {integrity: sha512-tlBnbhvDtI0kfb3beQJ1abmCIGs/EWnfIy2/sZOMeNokV8ir9Vdczpdm/S2QguJMKnzUdIoRn1wAulAkBu1UtQ==}
-    hasBin: true
-
   create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
 
@@ -6610,15 +6485,6 @@ packages:
   flow-parser@0.206.0:
     resolution: {integrity: sha512-HVzoK3r6Vsg+lKvlIZzaWNBVai+FXTX1wdYhz/wVlH13tb/gOdLXmlTqy6odmTBhT5UoWUbq0k8263Qhr9d88w==}
     engines: {node: '>=0.4.0'}
-
-  follow-redirects@1.15.3:
-    resolution: {integrity: sha512-1VzOtuEM8pC9SFU1E+8KfTjZyMztRsgEfwQl44z8A25uy13jSzTj6dyK2Df52iV0vgHCfBwLhDWevLn95w5v6Q==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
 
   follow-redirects@1.15.9:
     resolution: {integrity: sha512-gew4GsXizNgdoRyqmyfMHyAmXsZDk6mHkSxZFCzW9gwlbtOW44CDtYavM+y+72qD/Vq2l550kMF52DT8fOLJqQ==}
@@ -14390,13 +14256,11 @@ snapshots:
   '@colors/colors@1.5.0':
     optional: true
 
-  '@cpp.js/sample-lib-prebuilt-matrix@1.0.0-beta.9':
-    dependencies:
-      cpp.js: 1.0.0-beta.7
+  '@cpp.js/sample-lib-prebuilt-matrix@1.0.0-beta.24': {}
 
-  '@cpp.js/sample-mobile-reactnative-expo@1.0.0-beta.3(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(expo-modules-autolinking@1.11.3)(typescript@5.5.4)':
+  '@cpp.js/sample-mobile-reactnative-expo@1.0.0-beta.4(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(expo-modules-autolinking@1.11.3)(typescript@5.5.4)':
     dependencies:
-      '@cpp.js/sample-lib-prebuilt-matrix': 1.0.0-beta.9
+      '@cpp.js/sample-lib-prebuilt-matrix': 1.0.0-beta.24
       '@expo/vector-icons': 14.0.4
       '@react-navigation/native': 6.1.18(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(react@18.2.0))(react@18.2.0)
       expo: 51.0.38(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))
@@ -14429,9 +14293,9 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@cpp.js/sample-mobile-reactnative-nativecli@1.0.0-beta.7(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(typescript@5.5.4)':
+  '@cpp.js/sample-mobile-reactnative-nativecli@1.0.0-beta.9(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(typescript@5.5.4)':
     dependencies:
-      '@cpp.js/sample-lib-prebuilt-matrix': 1.0.0-beta.9
+      '@cpp.js/sample-lib-prebuilt-matrix': 1.0.0-beta.24
       react: 18.3.1
       react-native: 0.75.2(@babel/core@7.25.2)(@babel/preset-env@7.23.3(@babel/core@7.25.2))(@types/react@18.3.5)(react@18.3.1)(typescript@5.5.4)
     transitivePeerDependencies:
@@ -17120,17 +16984,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@rollup/plugin-commonjs@26.0.1(rollup@4.21.2)':
-    dependencies:
-      '@rollup/pluginutils': 5.1.0(rollup@4.21.2)
-      commondir: 1.0.1
-      estree-walker: 2.0.2
-      glob: 10.4.5
-      is-reference: 1.2.1
-      magic-string: 0.30.11
-    optionalDependencies:
-      rollup: 4.21.2
-
   '@rollup/plugin-commonjs@28.0.1(rollup@4.21.2)':
     dependencies:
       '@rollup/pluginutils': 5.1.0(rollup@4.21.2)
@@ -19424,17 +19277,6 @@ snapshots:
     optionalDependencies:
       typescript: 5.5.4
 
-  cpp.js@1.0.0-beta.7:
-    dependencies:
-      '@rollup/plugin-commonjs': 26.0.1(rollup@4.21.2)
-      '@rollup/plugin-node-resolve': 15.3.0(rollup@4.21.2)
-      '@rollup/plugin-virtual': 3.0.2(rollup@4.21.2)
-      commander: 12.1.0
-      glob: 8.0.3
-      rollup: 4.21.2
-      rollup-plugin-uglify: 6.0.4(rollup@4.21.2)
-      upath: 2.0.1
-
   create-require@1.1.1: {}
 
   cross-env@7.0.3:
@@ -21395,8 +21237,6 @@ snapshots:
   flow-enums-runtime@0.0.6: {}
 
   flow-parser@0.206.0: {}
-
-  follow-redirects@1.15.3: {}
 
   follow-redirects@1.15.9: {}
 

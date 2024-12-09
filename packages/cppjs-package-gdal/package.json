@@ -1,18 +1,21 @@
 {
     "name": "@cpp.js/package-gdal",
-    "version": "1.0.0-beta.1",
+    "version": "1.0.0-beta.20",
     "nativeVersion": "3.9.2",
-    "description": "GDAL is an open source MIT licensed translator library for raster and vector geospatial data formats. ",
-    "homepage": "https://github.com/OSGeo/gdal",
-    "license": "SEE LICENSE IN https://github.com/OSGeo/gdal/blob/master/LICENSE.TXT",
+    "description": "This package provides the precompiled GDAL, built using Cpp.js, for seamless integration into JavaScript, WebAssembly, and React Native projects. It enables advanced geospatial data processing, including raster and vector data manipulation, format conversion, and spatial analysis, ensuring high performance and cross-platform compatibility. Perfect for web, server-side, and mobile geospatial applications.",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-gdal#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "license": "MIT",
     "type": "module",
     "scripts": {
         "build": "cppjs build",
+        "build:wasm": "cppjs build -p WebAssembly",
+        "build:android": "cppjs build -p Android",
+        "build:ios": "cppjs build -p iOS",
         "clear": "rm -rf .cppjs dist *.xcframework",
         "postinstall": "cppjs postinstall"
     },
     "dependencies": {
-        "cpp.js": "workspace:*",
         "@cpp.js/package-expat": "workspace:*",
         "@cpp.js/package-geos": "workspace:*",
         "@cpp.js/package-geotiff": "workspace:*",
@@ -25,9 +28,13 @@
         "@cpp.js/package-zlib": "workspace:*"
     },
     "devDependencies": {
-        "decompress": "4.2.1",
-        "decompress-targz": "4.1.1",
-        "follow-redirects":"1.15.3",
-        "replace": "1.2.2"
-    }
+        "cpp.js": "workspace:*"
+    },
+    "keywords": [
+        "gdal",
+        "libgdal",
+        "cpp.js-package",
+        "webassembly",
+        "react-native"
+    ]
 }

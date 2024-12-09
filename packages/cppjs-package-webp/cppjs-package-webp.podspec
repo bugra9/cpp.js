@@ -5,8 +5,8 @@ Pod::Spec.new do |s|
   s.module_name  = "webp"
   s.name         = package["name"]
   s.version      = package["nativeVersion"]
-  s.summary      = package["description"]
-  s.homepage     = package["homepage"]
+  s.summary      = "WebP codec is a library to encode and decode images in WebP format."
+  s.homepage     = "https://developers.google.com/speed/webp"
   s.author       = "Webp Authors"
   s.source       = { :http => "https://cpp.js.org" }
   s.vendored_frameworks = 'webp.xcframework', 'sharpyuv.xcframework'

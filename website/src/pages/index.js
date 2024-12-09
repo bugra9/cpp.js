@@ -73,9 +73,9 @@ function HomepageIntro() {
                         language="js"
                         title="/src/index.js"
                         showLineNumbers>
-{`import { initCppJs } './native/Matrix.h';
+{`import { initCppJs, Matrix } './native/Matrix.h';
 
-const { Matrix } = await initCppJs();
+await initCppJs();
 const a = new Matrix(1210000, 1);
 const b = new Matrix(1210000, 2);
 const result = a.multiple(b);

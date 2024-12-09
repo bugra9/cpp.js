@@ -1,18 +1,21 @@
 {
     "name": "@cpp.js/package-spatialite",
-    "version": "1.0.0-beta.1",
+    "version": "1.0.0-beta.21",
     "nativeVersion": "5.1.0",
-    "description": "SpatiaLite is an open source library intended to extend the SQLite core to support fully fledged Spatial SQL capabilities.",
-    "homepage": "https://www.gaia-gis.it/fossil/libspatialite/index",
-    "license": "SEE LICENSE IN https://website-archive.mozilla.org/www.mozilla.org/mpl/MPL/boilerplate-1.1/mpl-tri-license-html",
+    "description": "This package provides SpatiaLite, a spatial extension to SQLite, compiled with Cpp.js for seamless integration in JavaScript, WebAssembly and React Native environments. By using Cpp.js, this package enables high-performance spatial database operations both on the web (via WebAssembly) and native mobile environments (via machine code).",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-spatialite#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "license": "MPL tri-license",
     "type": "module",
     "scripts": {
         "build": "cppjs build",
+        "build:wasm": "cppjs build -p WebAssembly",
+        "build:android": "cppjs build -p Android",
+        "build:ios": "cppjs build -p iOS",
         "clear": "rm -rf .cppjs dist *.xcframework",
         "postinstall": "cppjs postinstall"
     },
     "dependencies": {
-        "cpp.js": "workspace:*",
         "@cpp.js/package-geos": "workspace:*",
         "@cpp.js/package-proj": "workspace:*",
         "@cpp.js/package-sqlite3": "workspace:*",
@@ -20,9 +23,13 @@
         "@cpp.js/package-iconv": "workspace:*"
     },
     "devDependencies": {
-        "decompress": "4.2.1",
-        "decompress-targz": "4.1.1",
-        "follow-redirects":"1.15.3",
-        "replace": "1.2.2"
-    }
+        "cpp.js": "workspace:*"
+    },
+    "keywords": [
+        "spatialite",
+        "libspatialite",
+        "cpp.js-package",
+        "webassembly",
+        "react-native"
+    ]
 }

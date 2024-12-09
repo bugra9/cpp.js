@@ -2,7 +2,7 @@
 import { state, createLib, createBridgeFile, buildWasm } from 'cpp.js';
 import rollupCppjsPlugin from '@cpp.js/plugin-rollup';
 
-import fs from 'fs';
+import fs from 'node:fs';
 
 const viteCppjsPlugin = (options) => {
     let isServe = false;

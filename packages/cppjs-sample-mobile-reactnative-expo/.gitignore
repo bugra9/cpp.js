@@ -1,5 +1,7 @@
 .cppjs
 .yarn
+ios/build
+android/build
 
 node_modules/
 .expo/

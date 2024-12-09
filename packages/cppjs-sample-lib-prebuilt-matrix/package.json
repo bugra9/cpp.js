@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/sample-lib-prebuilt-matrix",
-    "version": "1.0.0-beta.20",
+    "version": "1.0.0-beta.25",
     "description": "Cpp.js sample prebuilt library: matrix multiplier",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-lib-prebuilt-matrix#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -18,6 +18,7 @@
         "cpp.js": "workspace:*"
     },
     "keywords": [
+        "cpp.js-sample",
         "matrix",
         "cpp.js-sample",
         "webassembly",

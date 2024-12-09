@@ -1,15 +1,13 @@
 {
     "name": "@cpp.js/sample-lib-cmake",
-    "version": "1.0.0-beta.4",
+    "version": "1.0.0-beta.5",
     "description": "Cpp.js sample library: simple cmake library",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-lib-cmake#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "license": "MIT",
     "type": "module",
-    "dependencies": {
-        "cpp.js": "workspace:*"
-    },
     "keywords": [
+        "cpp.js-sample",
         "cmake",
         "cpp.js-sample",
         "webassembly",

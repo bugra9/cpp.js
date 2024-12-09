@@ -5,8 +5,8 @@ Pod::Spec.new do |s|
   s.module_name  = "z"
   s.name         = package["name"]
   s.version      = package["nativeVersion"]
-  s.summary      = package["description"]
-  s.homepage     = package["homepage"]
+  s.summary      = "A Massively Spiffy Yet Delicately Unobtrusive Compression Library"
+  s.homepage     = "https://www.zlib.net/"
   s.author       = "ZLIB Authors"
   s.source       = { :http => "https://cpp.js.org" }
   s.vendored_frameworks = 'z.xcframework'

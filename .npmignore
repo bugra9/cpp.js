@@ -1,3 +1,6 @@
 LICENSE
 *.xcframework.zip
 *.tgz
+.cppjs
+ios/build
+android/build

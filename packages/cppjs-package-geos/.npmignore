@@ -1,2 +1,5 @@
 *.xcframework.zip
 *.tgz
+.cppjs
+*.dylib
+dist/prebuilt/Android-arm64-v8a/lib/*.a

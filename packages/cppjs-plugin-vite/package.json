@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/plugin-vite",
-    "version": "1.0.0-beta.4",
+    "version": "1.0.0-beta.5",
     "description": "Cpp.js Vite plugin: A tool for seamless C++ integration with the Vite.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-plugin-vite#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -12,6 +12,7 @@
         "@cpp.js/plugin-rollup": "workspace:*"
     },
     "keywords": [
+        "cpp.js-plugin",
         "vite",
         "bind",
         "c++"

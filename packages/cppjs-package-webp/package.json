@@ -1,22 +1,28 @@
 {
     "name": "@cpp.js/package-webp",
-    "version": "1.0.0-beta.1",
+    "version": "1.0.0-beta.21",
     "nativeVersion": "1.4.0",
-    "description": "WebP codec is a library to encode and decode images in WebP format.",
-    "homepage": "https://chromium.googlesource.com/webm/libwebp",
-    "license": "SEE LICENSE IN https://chromium.googlesource.com/webm/libwebp/+/refs/heads/master/COPYING",
+    "description": "This package provides a WebP library compiled with Cpp.js, enabling seamless usage of WebP functionalities in JavaScript, WebAssembly and React Native projects. It supports efficient image processing for web and mobile applications.",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-webp#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "license": "BSD-3-Clause",
     "type": "module",
     "scripts": {
         "build": "cppjs build",
+        "build:wasm": "cppjs build -p WebAssembly",
+        "build:android": "cppjs build -p Android",
+        "build:ios": "cppjs build -p iOS",
         "clear": "rm -rf .cppjs dist *.xcframework",
         "postinstall": "cppjs postinstall"
     },
-    "dependencies": {
+    "devDependencies": {
         "cpp.js": "workspace:*"
     },
-    "devDependencies": {
-        "decompress": "4.2.1",
-        "decompress-targz": "4.1.1",
-        "follow-redirects":"1.15.3"
-    }
+    "keywords": [
+        "webp",
+        "libwebp",
+        "cpp.js-package",
+        "webassembly",
+        "react-native"
+    ]
 }

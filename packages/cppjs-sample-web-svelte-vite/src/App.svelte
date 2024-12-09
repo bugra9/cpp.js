@@ -1,8 +1,8 @@
 <script>
-    import { initCppJs } from './native/native.h';
+    import { initCppJs, Native } from './native/native.h';
 
     let message = 'compiling ...';
-    initCppJs().then(({Native}) => {
+    initCppJs().then(() => {
         message = Native.sample();
     });
 </script>
