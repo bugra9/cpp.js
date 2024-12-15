@@ -12,7 +12,12 @@ export default function getCmakeParameters(platform, options = {}) {
     const externalNativeGlob = [
         ...(options.nativeGlob || []),
     ];
+    const externalBridgeGlob = [
+        `${state.config.paths.cli}/assets/bridge.cpp`,
+        ...(options.bridgeGlob || []),
+    ];
     const nativeGlob = [
+        `${state.config.paths.cli}/assets/cppjsemptysource.cpp`,
         ...(dependParams.nativeGlob || []),
     ];
     const headerGlob = [
@@ -34,6 +39,7 @@ export default function getCmakeParameters(platform, options = {}) {
         `-DPROJECT_NAME=${options.name || state.config.general.name}`,
         `-DBASE_DIR=${state.config.paths.project}`,
         `-DEXTERNAL_NATIVE_GLOB=${externalNativeGlob.join(';')}`,
+        `-DEXTERNAL_BRIDGE_GLOB=${externalBridgeGlob.join(';')}`,
         `-DNATIVE_GLOB=${nativeGlob.join(';')}`,
         `-DHEADER_GLOB=${headerGlob.join(';')}`,
         `-DHEADER_DIR=${headerDirs.join(';')}`,

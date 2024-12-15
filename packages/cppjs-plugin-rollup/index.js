@@ -19,7 +19,7 @@ const rollupCppjsPlugin = (options, bridges = []) => {
                 return { id: source, external: false };
             }
 
-            const dependFilePath = getDependFilePath(source);
+            const dependFilePath = getDependFilePath(source, 'Emscripten-x86_64');
             if (dependFilePath) {
                 return dependFilePath;
             }
@@ -60,7 +60,9 @@ const rollupCppjsPlugin = (options, bridges = []) => {
                 });
             };
 
-            watch(state.config.paths.native);
+            if (fs.existsSync(state.config.paths.native)) {
+                watch(state.config.paths.native);
+            }
         },
         async generateBundle() {
             createLib('Emscripten-x86_64', 'Source', { isProd: true, buildSource: true });

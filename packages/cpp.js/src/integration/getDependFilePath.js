@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import state from '../state/index.js';
 
 export default function getDependFilePath(source, platform) {
@@ -6,13 +7,24 @@ export default function getDependFilePath(source, platform) {
 
     const dependPackage = state.config.allDependencies.find((d) => source.startsWith(d.package.name));
     if (dependPackage) {
-        const filePath = source.substring(dependPackage.package.name.length + 1);
+        const depName = dependPackage.package.name;
+        const filePath = source.substring(depName.length + 1);
 
-        let path = `${dependPackage.paths.output}/prebuilt/${platform}/${filePath}`;
+        let path;
         if (headerRegex.test(source)) {
-            path = `${dependPackage.paths.output}/prebuilt/${platform}/include/${filePath}`;
+            path = `${dependPackage.paths.output}/prebuilt/${platform}/include`;
         } else if (moduleRegex.test(source)) {
-            path = `${dependPackage.paths.output}/prebuilt/${platform}/swig/${filePath}`;
+            path = `${dependPackage.paths.output}/prebuilt/${platform}/swig`;
+        } else {
+            path = `${dependPackage.paths.output}/prebuilt/${platform}`;
+        }
+
+        if (fs.existsSync(`${path}/${depName}/${filePath}`)) {
+            path = `${path}/${depName}/${filePath}`;
+        } else if (fs.existsSync(`${path}/${filePath}`)) {
+            path = `${path}/${filePath}`;
+        } else {
+            throw new Error(`${source} not found in ${depName} package.`);
         }
 
         return path;

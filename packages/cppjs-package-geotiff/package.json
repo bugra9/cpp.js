@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-geotiff",
-    "version": "1.0.0-beta.20",
+    "version": "1.0.0-beta.21",
     "nativeVersion": "1.7.3",
     "description": "This package provides the precompiled geotiff library, built using cpp.js, for easy integration into JavaScript, WebAssembly and React Native projects. Designed for working with GeoTIFF files, offering robust support for geospatial metadata handling, ensuring high performance and cross-platform compatibility. Ideal for use in web and mobile applications.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-geotiff#readme",
@@ -12,16 +12,15 @@
         "build:wasm": "cppjs build -p WebAssembly",
         "build:android": "cppjs build -p Android",
         "build:ios": "cppjs build -p iOS",
-        "clear": "rm -rf .cppjs dist *.xcframework",
-        "postinstall": "cppjs postinstall"
+        "clear": "rm -rf .cppjs dist *.xcframework"
     },
     "dependencies": {
-        "@cpp.js/package-proj": "workspace:*",
-        "@cpp.js/package-tiff": "workspace:*",
-        "@cpp.js/package-zlib": "workspace:*"
+        "@cpp.js/package-proj": "workspace:^",
+        "@cpp.js/package-tiff": "workspace:^",
+        "@cpp.js/package-zlib": "workspace:^"
     },
     "devDependencies": {
-        "cpp.js": "workspace:*"
+        "cpp.js": "workspace:^"
     },
     "keywords": [
         "geotiff",

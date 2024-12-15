@@ -1,4 +1,5 @@
 import os from 'node:os';
+import systemKeys from '../utils/systemKeys.js';
 import loadJs from '../utils/loadJs.js';
 import loadJson from '../utils/loadJson.js';
 import getParentPath from '../utils/getParentPath.js';
@@ -15,6 +16,12 @@ export default async function loadConfig(configDir = process.cwd(), configName =
 
     output.paths.systemConfig = `${os.homedir()}/.cppjs.json`;
     output.system = loadJson(output.paths.systemConfig) || {};
+
+    Object.entries(systemKeys).forEach(([key, value]) => {
+        if (!(key in output.system)) {
+            output.system[key] = value.default;
+        }
+    });
 
     return output;
 }

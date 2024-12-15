@@ -8,7 +8,7 @@ import state from '../state/index.js';
 export default async function buildWasm(type, isProd = false) {
     const buildType = isProd ? 'Release' : 'Debug';
     const libs = [
-        getDependLibs(),
+        ...getDependLibs(),
         `${state.config.paths.build}/Source-${buildType}/Emscripten-x86_64/lib${state.config.general.name}.a`,
         `${state.config.paths.build}/Bridge-${buildType}/Emscripten-x86_64/lib${state.config.general.name}.a`,
     ];

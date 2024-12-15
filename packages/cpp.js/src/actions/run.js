@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import pullDockerImage, { getDockerImage } from '../utils/pullDockerImage.js';
 import getOsUserAndGroupId from '../utils/getOsUserAndGroupId.js';
+import { getContentHash } from '../utils/hash.js';
 import state from '../state/index.js';
 
 const CROSSCOMPILER = 'aarch64-linux-android33';
@@ -151,92 +152,94 @@ export default function run(program, params = [], platformPrefix = null, platfor
             default:
         }
     }
-    if (basePlatform === 'iOS' && program === null) {
+
+    const env = {};
+    let runner = 'DOCKER';
+    if ((basePlatform === 'iOS' && program === null) || state.config.system.RUNNER === 'LOCAL') {
+        runner = 'LOCAL';
+    }
+
+    if (runner === 'LOCAL') {
         const allowedEnv = [
             '^PWD$', '^SHELL$', '^LC_CTYPE$', '^PATH$', '^HOME$', '^TMPDIR$', '^USER$',
             '^PODS_*', '^CONFIGURATION_BUILD_DIR$', '^UNLOCALIZED_RESOURCES_FOLDER_PATH$',
         ];
-        const env = {};
         Object.entries(process.env).forEach(([key, value]) => {
             if (allowedEnv.some((e) => key.match(e))) {
                 env[key] = value;
             }
         });
-        const pParams = [...platformParams, ...(dockerOptions.params || [])];
-        for (let i = 0; i < pParams.length; i += 2) {
-            if (pParams[i] === '-e') {
-                const [key, ...rest] = pParams[i + 1].split('=');
-                const value = rest.join('=');
-                if (['CFLAGS', 'CXXFLAGS', 'CPPFLAGS', 'LDFLAGS'].includes(key)) {
-                    let v = value;
-                    if (v.startsWith('\'') || v.startsWith('"')) {
-                        v = v.substring(1, v.length - 1);
-                    }
-                    if (env[key]) env[key] += ` ${v}`;
-                    else env[key] = v;
-                } else {
-                    env[key] = value;
+    }
+
+    const pParams = [...platformParams, ...(dockerOptions.params || [])];
+    for (let i = 0; i < pParams.length; i += 2) {
+        if (pParams[i] === '-e') {
+            const [key, ...rest] = pParams[i + 1].split('=');
+            const value = rest.join('=');
+            if (['CFLAGS', 'CXXFLAGS', 'CPPFLAGS', 'LDFLAGS'].includes(key)) {
+                let v = value;
+                if (v.startsWith('\'') || v.startsWith('"')) {
+                    v = v.substring(1, v.length - 1);
                 }
+                if (env[key]) env[key] += ` ${v}`;
+                else env[key] = v;
+            } else {
+                env[key] = value;
             }
         }
+    }
 
+    let fileExecParams;
+    if (runner === 'LOCAL') {
         env.PATH = `/opt/homebrew/bin:${env.PATH}`;
 
         const options = {
             cwd: dockerOptions.workdir || buildPath,
-            stdio: dockerOptions.console ? 'inherit' : 'ignore',
+            stdio: dockerOptions.console ? 'inherit' : ['ignore', 'pipe', 'pipe'],
             env,
         };
-        execFileSync(dProgram, dParams, options);
-    } else if (false) {
-        const options = { cwd: buildPath, stdio: dockerOptions.console ? 'inherit' : 'ignore' };
-        const args = [
-            'exec',
-            '--user', getOsUserAndGroupId(),
-            '--workdir', dockerOptions.workdir || replaceBasePathForDocker(buildPath),
-            'cppjs-builder',
-            dProgram,
-            ...replaceBasePathForDocker(dParams),
-        ];
-        execFileSync('docker', args, options);
-    } else {
-        const env = {};
-        const pParams = [...platformParams, ...(dockerOptions.params || [])];
-        for (let i = 0; i < pParams.length; i += 2) {
-            if (pParams[i] === '-e') {
-                const [key, ...rest] = pParams[i + 1].split('=');
-                const value = rest.join('=');
-                if (['CFLAGS', 'CXXFLAGS', 'CPPFLAGS', 'LDFLAGS'].includes(key)) {
-                    let v = value;
-                    if (v.startsWith('\'') || v.startsWith('"')) {
-                        v = v.substring(1, v.length - 1);
-                    }
-                    if (env[key]) env[key] += ` ${v}`;
-                    else env[key] = v;
-                } else {
-                    env[key] = value;
-                }
-            }
-        }
-
+        fileExecParams = [dProgram, dParams, options];
+    } else if (runner === 'DOCKER') {
         const dockerEnv = [];
         Object.entries(env).forEach(([key, value]) => {
             dockerEnv.push('-e', `${key}=${value}`);
         });
-        const options = { cwd: buildPath, stdio: dockerOptions.console ? 'inherit' : 'ignore' };
+        const options = { cwd: buildPath, stdio: dockerOptions.console ? 'inherit' : ['ignore', 'pipe', 'pipe'] };
+
+        let runnerParams = [];
+        let imageOrContainer = null;
+        if (state.config.system.RUNNER === 'DOCKER_RUN') {
+            imageOrContainer = getDockerImage();
+            runnerParams = ['run', '--rm', '-v', `${state.config.paths.base}:/tmp/cppjs/live`];
+        } else if (state.config.system.RUNNER === 'DOCKER_EXEC') {
+            imageOrContainer = `${getDockerImage()}-${getContentHash(state.config.paths.base)}`.replace('/', '-').replace(':', '-');
+            runnerParams = ['exec'];
+        } else {
+            throw new Error(`The runner ${state.config.system.RUNNER} is invalid.`);
+        }
+
         const args = [
-            'run',
-            '--rm',
+            ...runnerParams,
             '--user', getOsUserAndGroupId(),
-            '-v', `${state.config.paths.base}:/tmp/cppjs/live`,
             '--workdir', replaceBasePathForDocker(dockerOptions.workdir || buildPath),
             ...replaceBasePathForDocker(dockerEnv),
             // '-e', replaceBasePathForDocker(`CCACHE_DIR=${state.config.paths.build}/ccache`),
-            getDockerImage(),
+            imageOrContainer,
             replaceBasePathForDocker(dProgram),
             ...replaceBasePathForDocker(dParams),
         ];
-        execFileSync('docker', args, options);
+        fileExecParams = ['docker', args, options];
+    } else {
+        throw new Error(`The runner ${state.config.system.RUNNER} or command is invalid.`);
+    }
+
+    try {
+        execFileSync(...fileExecParams);
+    } catch (e) {
+        console.log(e?.stdout?.toString() || 'stdout is empty');
+        console.error(e?.stderr?.toString() || 'stderr is empty');
+        console.error('An error occurred while running the application. Please check the logs for more details.');
+        process.exit();
     }
 }
 
