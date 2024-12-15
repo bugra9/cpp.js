@@ -32,7 +32,8 @@ export default function createLib(platform, fileType, options = {}) {
         const ext = sharedPlatforms.includes(basePlatform) ? 'so' : 'a';
         buildParams = getBuildParams ? getBuildParams(platform, depPaths, ext, buildPath) : [];
         if (state.config.build?.buildType !== 'configure') {
-            buildParams.push(`-DCMAKE_PREFIX_PATH=${libdir}`, `-DCMAKE_FIND_ROOT_PATH=${libdir}`);
+            const cmakeBuildType = sharedPlatforms.includes(basePlatform) ? 'SHARED' : 'STATIC';
+            buildParams.push(`-DCMAKE_PREFIX_PATH=${libdir}`, `-DCMAKE_FIND_ROOT_PATH=${libdir}`, `-DBUILD_TYPE=${cmakeBuildType}`);
         }
 
         const cFlags = Object.values(depPaths).map((d) => `-I${d.header}`).join(' ');

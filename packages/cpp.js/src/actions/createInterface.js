@@ -36,8 +36,7 @@ function createInterfaceFile(headerOrModuleFilePath) {
     }
 
     const headerPaths = (state.config.dependencyParameters?.pathsOfCmakeDepends?.split(';') || [])
-        .filter((d) => d.startsWith(state.config.paths.base))
-        .map((d) => d.replace(`${state.config.paths.base}/`, ''));
+        .filter((d) => d.startsWith(state.config.paths.base));
 
     const temp2 = headerPaths
         .map((p) => headerOrModuleFilePath.match(new RegExp(`^${p}/.*?/include/(.*?)$`, 'i')))
@@ -47,10 +46,10 @@ function createInterfaceFile(headerOrModuleFilePath) {
     if (temp.length < 2) return null;
 
     const filePathWithoutExt = temp[1];
-    const interfaceFile = `${state.config.paths.base}/${filePathWithoutExt}.i`;
+    const interfaceFile = `${filePathWithoutExt}.i`;
 
     if (fs.existsSync(interfaceFile)) {
-        const newPath = `${state.config.paths.build}/interface/${filePathWithoutExt}.i`;
+        const newPath = `${state.config.paths.build}/interface/${interfaceFile.split('/').at(-1)}`;
         fs.copyFileSync(interfaceFile, newPath);
         state.cache.interfaces[headerOrModuleFilePath] = newPath;
         state.cache.hashes[headerOrModuleFilePath] = fileHash;

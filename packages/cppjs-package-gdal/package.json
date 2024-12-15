@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-gdal",
-    "version": "1.0.0-beta.20",
+    "version": "1.0.0-beta.21",
     "nativeVersion": "3.9.2",
     "description": "This package provides the precompiled GDAL, built using Cpp.js, for seamless integration into JavaScript, WebAssembly, and React Native projects. It enables advanced geospatial data processing, including raster and vector data manipulation, format conversion, and spatial analysis, ensuring high performance and cross-platform compatibility. Perfect for web, server-side, and mobile geospatial applications.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-gdal#readme",
@@ -12,23 +12,22 @@
         "build:wasm": "cppjs build -p WebAssembly",
         "build:android": "cppjs build -p Android",
         "build:ios": "cppjs build -p iOS",
-        "clear": "rm -rf .cppjs dist *.xcframework",
-        "postinstall": "cppjs postinstall"
+        "clear": "rm -rf .cppjs dist *.xcframework"
     },
     "dependencies": {
-        "@cpp.js/package-expat": "workspace:*",
-        "@cpp.js/package-geos": "workspace:*",
-        "@cpp.js/package-geotiff": "workspace:*",
-        "@cpp.js/package-iconv": "workspace:*",
-        "@cpp.js/package-proj": "workspace:*",
-        "@cpp.js/package-spatialite": "workspace:*",
-        "@cpp.js/package-sqlite3": "workspace:*",
-        "@cpp.js/package-tiff": "workspace:*",
-        "@cpp.js/package-webp": "workspace:*",
-        "@cpp.js/package-zlib": "workspace:*"
+        "@cpp.js/package-expat": "workspace:^",
+        "@cpp.js/package-geos": "workspace:^",
+        "@cpp.js/package-geotiff": "workspace:^",
+        "@cpp.js/package-iconv": "workspace:^",
+        "@cpp.js/package-proj": "workspace:^",
+        "@cpp.js/package-spatialite": "workspace:^",
+        "@cpp.js/package-sqlite3": "workspace:^",
+        "@cpp.js/package-tiff": "workspace:^",
+        "@cpp.js/package-webp": "workspace:^",
+        "@cpp.js/package-zlib": "workspace:^"
     },
     "devDependencies": {
-        "cpp.js": "workspace:*"
+        "cpp.js": "workspace:^"
     },
     "keywords": [
         "gdal",

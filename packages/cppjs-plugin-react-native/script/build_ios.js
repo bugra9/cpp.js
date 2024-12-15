@@ -31,11 +31,13 @@ const options = {
 createLib('iOS-iphoneos', 'Full', options);
 createLib('iOS-iphonesimulator', 'Full', options);
 
-state.config.paths.output = `${state.config.paths.build}/Full-Release`;
-state.config.export.libName = ['react-native-cppjs'];
-createXCFramework(false);
-fs.cpSync(
-    `${state.config.paths.output}/prebuilt/react-native-cppjs.xcframework`,
-    `${projectPath}/react-native-cppjs.xcframework`,
-    { recursive: true },
-);
+const overrideConfig = {
+    paths: {
+        project: projectPath,
+        output: `${state.config.paths.build}/Full-Release`,
+    },
+    export: {
+        libName: ['react-native-cppjs'],
+    }
+};
+createXCFramework(overrideConfig);
