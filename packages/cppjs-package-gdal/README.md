@@ -4,6 +4,9 @@
 <a href="https://www.npmjs.com/package/@cpp.js/package-gdal">
     <img alt="NPM version" src="https://img.shields.io/npm/v/@cpp.js/package-gdal?style=for-the-badge" />
 </a>
+<a href="https://github.com/OSGeo/gdal">
+    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Funpkg.com%2F%40cpp.js%2Fpackage-gdal%2Fpackage.json&query=%24.nativeVersion&style=for-the-badge&label=Gdal" />
+</a>
 <a href="https://github.com/OSGeo/gdal/blob/master/LICENSE.TXT">
     <img alt="License" src="https://img.shields.io/npm/l/%40cpp.js%2Fpackage-gdal?style=for-the-badge" />
 </a>

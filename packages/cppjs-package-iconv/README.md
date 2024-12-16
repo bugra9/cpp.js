@@ -4,6 +4,9 @@
 <a href="https://www.npmjs.com/package/@cpp.js/package-iconv">
     <img alt="NPM version" src="https://img.shields.io/npm/v/@cpp.js/package-iconv?style=for-the-badge" />
 </a>
+<a href="https://www.gnu.org/software/libiconv/">
+    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Funpkg.com%2F%40cpp.js%2Fpackage-iconv%2Fpackage.json&query=%24.nativeVersion&style=for-the-badge&label=iconv" />
+</a>
 <a href="https://spdx.org/licenses/LGPL-2.1-or-later.html">
     <img alt="License" src="https://img.shields.io/npm/l/%40cpp.js%2Fpackage-iconv?style=for-the-badge" />
 </a>

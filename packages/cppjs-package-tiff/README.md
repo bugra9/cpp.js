@@ -4,6 +4,9 @@
 <a href="https://www.npmjs.com/package/@cpp.js/package-tiff">
     <img alt="NPM version" src="https://img.shields.io/npm/v/@cpp.js/package-tiff?style=for-the-badge" />
 </a>
+<a href="https://gitlab.com/libtiff/libtiff">
+    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Funpkg.com%2F%40cpp.js%2Fpackage-tiff%2Fpackage.json&query=%24.nativeVersion&style=for-the-badge&label=TIFF" />
+</a>
 <a href="https://libtiff.gitlab.io/libtiff/project/license.html">
     <img alt="License" src="https://img.shields.io/npm/l/%40cpp.js%2Fpackage-tiff?style=for-the-badge" />
 </a>
