@@ -88,11 +88,11 @@ importers:
         specifier: workspace:^
         version: link:../cppjs-sample-lib-source
       '@cpp.js/sample-mobile-reactnative-expo':
-        specifier: 1.0.0-beta.5
-        version: 1.0.0-beta.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(expo-modules-autolinking@1.11.3)(typescript@5.5.4)
+        specifier: 1.0.0-beta.6
+        version: 1.0.0-beta.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(expo-modules-autolinking@1.11.3)(typescript@5.5.4)
       '@cpp.js/sample-mobile-reactnative-nativecli':
-        specifier: 1.0.0-beta.10
-        version: 1.0.0-beta.10(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(typescript@5.5.4)
+        specifier: 1.0.0-beta.11
+        version: 1.0.0-beta.11(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(typescript@5.5.4)
       '@cpp.js/sample-web-react-cra':
         specifier: workspace:^
         version: link:../cppjs-sample-web-react-cra
@@ -1591,14 +1591,14 @@ packages:
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
 
-  '@cpp.js/sample-lib-prebuilt-matrix@1.0.0-beta.27':
-    resolution: {integrity: sha512-BWFqCb9XXA5+9ciKuEBtUjeUxeyVI5EsWJiSzMNS4D7w5/Embp0ivZt9up1aOdXdI7suLoKgaGL32Rv7VmNONg==}
+  '@cpp.js/sample-lib-prebuilt-matrix@1.0.0-beta.28':
+    resolution: {integrity: sha512-KgX3z3lL/fnIawjCyM60v42AFs7TXe1oRlbS1uf6GFu091VitSjALMQXf8y05em8Lm5yZUT94rHxeMOEiOghwg==}
 
-  '@cpp.js/sample-mobile-reactnative-expo@1.0.0-beta.5':
-    resolution: {integrity: sha512-bQPhyudKrT022lLTZiVNRjWQc7Yy7v8BAbInW2unzQuRgO+/BqR5xLYrWXSU6Ib3RvctYDLDUunWKjVpS8ksvw==}
+  '@cpp.js/sample-mobile-reactnative-expo@1.0.0-beta.6':
+    resolution: {integrity: sha512-3oq/m/dovgQq+LEB7bRcDu7XAZts8pOGiyztrbpO8hZTiDD2vXmc3LVkt6U/nK/SCqXdWIzSaOxNXbFOeAY4WQ==}
 
-  '@cpp.js/sample-mobile-reactnative-nativecli@1.0.0-beta.10':
-    resolution: {integrity: sha512-RqFVwYLmZsJV+Q+JByNFpjUr/eQFRcHPwUIeWuD/v1lMcK+wznI+KYCAr1NrveZP/qofySpOtzE2psHShCl58g==}
+  '@cpp.js/sample-mobile-reactnative-nativecli@1.0.0-beta.11':
+    resolution: {integrity: sha512-FUoxuMk6Ya0e/Yq6k6EQnZAa7kUGK2vEIuLABjNK7kFe4BligX2E6i1TA/2mxPGaq6gWLRPizgJbS3QKcuX8tQ==}
     engines: {node: '>=18'}
 
   '@craco/craco@7.1.0':
@@ -11143,12 +11143,15 @@ packages:
 
   sudo-prompt@8.2.5:
     resolution: {integrity: sha512-rlBo3HU/1zAJUrkY6jNxDOC9eVYliG6nS4JA8u8KAshITd07tafMc/Br7xQwCSseXwJ2iCcHCE8SNWX3q8Z+kw==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   sudo-prompt@9.1.1:
     resolution: {integrity: sha512-es33J1g2HjMpyAhz8lOR+ICmXXAqTuKbuXuUWLhOLew20oN9oUCgCJx615U/v7aioZg7IX5lIh9x34vwneu4pA==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   sudo-prompt@9.2.1:
     resolution: {integrity: sha512-Mu7R0g4ig9TUuGSxJavny5Rv0egCEtpZRNMrZaYS1vxkiIxGiGUwoezU3LazIQ+KE04hTrTfNPgxU5gzi7F5Pw==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   super-regex@0.2.0:
     resolution: {integrity: sha512-WZzIx3rC1CvbMDloLsVw0lkZVKJWbrkJ0k1ghKFmcnPrW1+jWbgTkTEWVtD9lMdmI4jZEz40+naBxl1dCUhXXw==}
@@ -13518,11 +13521,11 @@ snapshots:
   '@colors/colors@1.5.0':
     optional: true
 
-  '@cpp.js/sample-lib-prebuilt-matrix@1.0.0-beta.27': {}
+  '@cpp.js/sample-lib-prebuilt-matrix@1.0.0-beta.28': {}
 
-  '@cpp.js/sample-mobile-reactnative-expo@1.0.0-beta.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(expo-modules-autolinking@1.11.3)(typescript@5.5.4)':
+  '@cpp.js/sample-mobile-reactnative-expo@1.0.0-beta.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(expo-modules-autolinking@1.11.3)(typescript@5.5.4)':
     dependencies:
-      '@cpp.js/sample-lib-prebuilt-matrix': 1.0.0-beta.27
+      '@cpp.js/sample-lib-prebuilt-matrix': 1.0.0-beta.28
       '@expo/vector-icons': 14.0.4
       '@react-navigation/native': 6.1.18(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(react@18.2.0))(react@18.2.0)
       expo: 51.0.39(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))
@@ -13555,9 +13558,9 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@cpp.js/sample-mobile-reactnative-nativecli@1.0.0-beta.10(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(typescript@5.5.4)':
+  '@cpp.js/sample-mobile-reactnative-nativecli@1.0.0-beta.11(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(typescript@5.5.4)':
     dependencies:
-      '@cpp.js/sample-lib-prebuilt-matrix': 1.0.0-beta.27
+      '@cpp.js/sample-lib-prebuilt-matrix': 1.0.0-beta.28
       react: 18.3.1
       react-native: 0.75.2(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.16)(react@18.3.1)(typescript@5.5.4)
     transitivePeerDependencies:
