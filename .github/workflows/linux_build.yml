@@ -3,9 +3,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - packages/cpp.js/**
-      - packages/cppjs-plugin-*/**
   pull_request:
     branches:
       - main
