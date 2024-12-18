@@ -1,7 +1,6 @@
 #include <emscripten/bind.h>
 
-EMSCRIPTEN_BINDINGS(stl_wrappers) {
-    emscripten::register_vector<bool>("VectorBool");
+EMSCRIPTEN_BINDINGS(CommonBridges) {
     emscripten::register_vector<char>("VectorChar");
     emscripten::register_vector<short>("VectorShort");
     emscripten::register_vector<int>("VectorInt");

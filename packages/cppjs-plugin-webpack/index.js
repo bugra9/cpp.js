@@ -24,7 +24,7 @@ export default class CppjsWebpackPlugin {
     async onDone({ compilation }) {
         const isDev = compilation.options.mode === 'development';
         createLib('Emscripten-x86_64', 'Source', { isProd: true, buildSource: true });
-        createLib('Emscripten-x86_64', 'Bridge', { isProd: true, buildSource: false, nativeGlob: this.bridges });
+        createLib('Emscripten-x86_64', 'Bridge', { isProd: true, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...this.bridges] });
         await buildWasm('browser', true);
         if (!isDev) {
             fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, `${compilation.options.output.path}/cpp.js`);

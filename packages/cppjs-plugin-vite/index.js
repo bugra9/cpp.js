@@ -17,7 +17,7 @@ const viteCppjsPlugin = (options) => {
             async load(source) {
                 if (isServe && source === '/cpp.js') {
                     createLib('Emscripten-x86_64', 'Source', { isProd: false, buildSource: true });
-                    createLib('Emscripten-x86_64', 'Bridge', { isProd: false, buildSource: false, nativeGlob: bridges });
+                    createLib('Emscripten-x86_64', 'Bridge', { isProd: false, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
                     await buildWasm('browser', false);
                     return fs.readFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, { encoding: 'utf8', flag: 'r' });
                 }
@@ -44,7 +44,7 @@ const viteCppjsPlugin = (options) => {
                 if (headerRegex.test(file)) {
                     const bridgeFile = createBridgeFile(file);
                     bridges.push(bridgeFile);
-                    createLib('Emscripten-x86_64', 'Bridge', { isProd: false, buildSource: false, nativeGlob: bridges });
+                    createLib('Emscripten-x86_64', 'Bridge', { isProd: false, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
                     await buildWasm('browser', true);
                     server.ws.send({ type: 'full-reload' });
                 } else if (sourceRegex.test(file)) {

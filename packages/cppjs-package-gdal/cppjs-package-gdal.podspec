@@ -3,7 +3,7 @@ package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
 Pod::Spec.new do |s|
   s.module_name  = "gdal"
-  s.name         = package["name"]
+  s.name         = "cppjs-package-gdal"
   s.version      = package["nativeVersion"]
   s.summary      = "GDAL is an open source MIT licensed translator library for raster and vector geospatial data formats."
   s.homepage     = "https://github.com/OSGeo/gdal"

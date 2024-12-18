@@ -29,6 +29,7 @@ const options = {
     isProd: true,
     buildSource: true,
     nativeGlob: [
+        `${state.config.paths.cli}/assets/commonBridges.cpp`,
         ...bridges,
         `${projectPath}/cpp/src/JSI_module.cpp`,
         `${RNEmbindProjectPath}/cpp/src/emscripten/bind.cpp`,

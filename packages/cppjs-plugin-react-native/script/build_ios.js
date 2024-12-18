@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import {
     state, createLib, getParentPath,
     createXCFramework, getAllBridges,
@@ -15,6 +14,7 @@ const options = {
     isProd: true,
     buildSource: true,
     nativeGlob: [
+        `${state.config.paths.cli}/assets/commonBridges.cpp`,
         ...bridges,
         `${RNEmbindProjectPath}/cpp/src/emscripten/bind.cpp`,
         `${state.config.paths.project}/node_modules/react-native/ReactCommon/jsi/jsi/jsi.cpp`,

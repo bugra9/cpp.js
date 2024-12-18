@@ -1,17 +1,19 @@
 /* eslint-disable prefer-destructuring */
 import fs from 'node:fs';
+import upath from 'upath';
 import state, { saveCache } from '../state/index.js';
 import { getFileHash } from '../utils/hash.js';
 import run from './run.js';
 
 export default function createBridgeFile(headerOrModuleFilePath) {
+    const interfaceFilePath = upath.resolve(headerOrModuleFilePath);
     if (!fs.existsSync(`${state.config.paths.build}/interface`)) {
         fs.mkdirSync(`${state.config.paths.build}/interface`, { recursive: true });
     }
     if (!fs.existsSync(`${state.config.paths.build}/bridge`)) {
         fs.mkdirSync(`${state.config.paths.build}/bridge`, { recursive: true });
     }
-    const interfaceFile = createInterfaceFile(headerOrModuleFilePath);
+    const interfaceFile = createInterfaceFile(interfaceFilePath);
     return createBridgeFileFromInterfaceFile(interfaceFile);
 }
 

@@ -13,11 +13,11 @@ export default function getCmakeParameters(platform, options = {}) {
         ...(options.nativeGlob || []),
     ];
     const externalBridgeGlob = [
-        `${state.config.paths.cli}/assets/bridge.cpp`,
+        `${state.config.paths.cli}/assets/commonBridges.cpp`,
         ...(options.bridgeGlob || []),
     ];
     const nativeGlob = [
-        `${state.config.paths.cli}/assets/cppjsemptysource.cpp`,
+        `${state.config.paths.cli}/assets/cppjsEmptySource.cpp`,
         ...(dependParams.nativeGlob || []),
     ];
     const headerGlob = [

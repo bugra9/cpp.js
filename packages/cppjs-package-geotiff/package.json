@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-geotiff",
-    "version": "1.0.0-beta.21",
+    "version": "1.0.0-beta.22",
     "nativeVersion": "1.7.3",
     "description": "This package provides the precompiled geotiff library, built using cpp.js, for easy integration into JavaScript, WebAssembly and React Native projects. Designed for working with GeoTIFF files, offering robust support for geospatial metadata handling, ensuring high performance and cross-platform compatibility. Ideal for use in web and mobile applications.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-geotiff#readme",

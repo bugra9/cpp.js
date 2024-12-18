@@ -66,7 +66,7 @@ const rollupCppjsPlugin = (options, bridges = []) => {
         },
         async generateBundle() {
             createLib('Emscripten-x86_64', 'Source', { isProd: true, buildSource: true });
-            createLib('Emscripten-x86_64', 'Bridge', { isProd: true, buildSource: false, nativeGlob: bridges });
+            createLib('Emscripten-x86_64', 'Bridge', { isProd: true, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
             await buildWasm('browser', true);
             await buildWasm('node', true);
             this.emitFile({

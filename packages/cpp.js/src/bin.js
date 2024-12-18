@@ -303,7 +303,10 @@ async function createWasmJs() {
     const opt = {
         isProd: true,
         buildSource: false,
-        nativeGlob: bridges,
+        nativeGlob: [
+            `${state.config.paths.cli}/assets/commonBridges.cpp`,
+            ...bridges,
+        ],
     };
     createLib('Emscripten-x86_64', 'Bridge', opt);
 
