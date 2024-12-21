@@ -3,7 +3,6 @@
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { Command, Option } from 'commander';
-import { glob } from 'glob';
 import replace from 'replace';
 
 import { state } from './index.js';
@@ -18,6 +17,7 @@ import systemKeys from './utils/systemKeys.js';
 
 import { getDockerImage } from './utils/pullDockerImage.js';
 import { getContentHash } from './utils/hash.js';
+import findFiles from './utils/findFiles.js';
 
 const packageJSON = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url)));
 
@@ -262,8 +262,8 @@ function buildLib(platform) {
 
             const modules = [];
             state.config.paths.module.forEach((modulePath) => {
-                modules.push(...glob.sync('**/*.i', { absolute: true, cwd: modulePath }));
-                modules.push(...glob.sync('*.i', { absolute: true, cwd: modulePath }));
+                modules.push(...findFiles('**/*.i', { cwd: modulePath }));
+                modules.push(...findFiles('*.i', { cwd: modulePath }));
             });
             if (modules.length > 0) {
                 fs.mkdirSync(`${state.config.paths.output}/prebuilt/${p}/swig`, { recursive: true });
@@ -289,7 +289,7 @@ function buildLib(platform) {
 async function createWasmJs() {
     let headers = [];
     state.config.paths.header.forEach((headerPath) => {
-        headers.push(glob.sync('**/*.h', { absolute: true, cwd: headerPath }));
+        headers.push(findFiles('**/*.h', { cwd: headerPath }));
     });
     headers = headers.filter((path) => !!path.toString()).flat();
 

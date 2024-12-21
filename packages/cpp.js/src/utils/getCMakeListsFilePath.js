@@ -1,10 +1,10 @@
-import { glob } from 'glob';
 import getParentPath from './getParentPath.js';
+import findFiles from './findFiles.js';
 
 export default function getCMakeListsFilePath(basePath = process.cwd()) {
-    let temp = glob.sync('CMakeLists.txt', { absolute: true, cwd: basePath });
+    let temp = findFiles('CMakeLists.txt', { cwd: basePath });
     if (temp.length === 0) {
-        temp = glob.sync('*/CMakeLists.txt', { absolute: true, cwd: basePath, ignore: ['node_modules/*', 'dist/*', 'build/*'] });
+        temp = findFiles('*/CMakeLists.txt', { cwd: basePath, ignore: ['node_modules/*', 'dist/*', 'build/*'] });
     }
 
     if (temp.length > 0) return temp[0];

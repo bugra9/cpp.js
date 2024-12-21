@@ -1,0 +1,26 @@
+name: build windows
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - packages/**
+      - .github/workflows/build-windows.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - packages/cpp.js/**
+      - packages/cppjs-plugin-*/**
+      - .github/workflows/build-windows.yml
+
+permissions: {}
+jobs:
+  build:
+    runs-on: Windows
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build for windows
+        run: pnpm run ci:windows:build

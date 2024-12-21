@@ -5,7 +5,7 @@ export default function getAbsolutePath(projectPath, path) {
         return null;
     }
     if (upath.isAbsolute(path)) {
-        return path;
+        return upath.resolve(path);
     }
     if (projectPath) {
         return upath.resolve(upath.join(upath.resolve(projectPath), path));

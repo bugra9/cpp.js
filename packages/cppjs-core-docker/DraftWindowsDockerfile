@@ -1,0 +1,74 @@
+FROM winamd64/openjdk:24-nanoserver
+
+SHELL ["cmd", "/S", "/C"]
+
+RUN curl -o python.zip -L https://www.python.org/ftp/python/3.13.1/python-3.13.1-embed-amd64.zip && \
+    mkdir C:\Python && \
+    tar -xf python.zip -C C:\Python && \
+    del python.zip
+
+RUN curl -o nodejs.zip -L https://nodejs.org/dist/v22.12.0/node-v22.12.0-win-x64.zip && \
+    mkdir C:\NodeJS && \
+    tar -xf nodejs.zip -C C:\NodeJS && \
+    del nodejs.zip
+
+RUN curl -o cmake.zip -L https://github.com/Kitware/CMake/releases/download/v3.31.3/cmake-3.31.3-windows-x86_64.zip && \
+    mkdir C:\CMake && \
+    tar -xf cmake.zip -C C:\CMake && \
+    del cmake.zip
+
+RUN curl -o mingit.zip -L https://github.com/git-for-windows/git/releases/download/v2.47.1.windows.1/MinGit-2.47.1-64-bit.zip && \
+    mkdir C:\Git && \
+    tar -xf mingit.zip -C C:\Git && \
+    del mingit.zip
+
+RUN curl -o C:\cacert.pem -L https://curl.se/ca/cacert.pem
+
+USER ContainerAdministrator
+RUN setx /M PATH "%PATH%;C:\Python;C:\NodeJS\node-v22.12.0-win-x64;C:\CMake\cmake-3.31.3-windows-x86_64\bin;C:\Git\cmd;C:\emsdk"
+RUN setx /M SSL_CERT_FILE "C:\cacert.pem"
+USER ContainerUser
+
+RUN git clone https://github.com/emscripten-core/emsdk.git C:\emsdk && \
+    cd C:\emsdk && \
+    emsdk install 3.1.51
+
+RUN emsdk activate 3.1.51
+
+USER ContainerAdministrator
+RUN setx /M PATH "C:\emsdk\upstream\emscripten;%PATH%"
+RUN setx /M EMSDK "C:\emsdk"
+RUN setx /M EMSDK_NODE "C:\emsdk\node\20.18.0_64bit\bin\node.exe"
+RUN setx /M EMSDK_PYTHON "C:\emsdk\python\3.9.2-nuget_64bit\python.exe"
+RUN setx /M NDK_VERSION "25.2.9519653"
+RUN setx /M ANDROID_SDK_ROOT "c:\android-sdk"
+RUN setx /M ANDROID_HOME "c:\android-sdk"
+RUN setx /M NDK_ROOT "%ANDROID_SDK_ROOT%/ndk/${NDK_VERSION}"
+USER ContainerUser
+
+RUN curl -o android-sdk.zip https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip && \
+    mkdir %ANDROID_SDK_ROOT% && \
+    tar -xf android-sdk.zip -C %ANDROID_SDK_ROOT%
+RUN mkdir %ANDROID_SDK_ROOT%\licenses
+RUN node -e "require('fs').writeFileSync('c:/android-sdk/licenses/android-sdk-license', '24333f8a63b6825ea9c5514f83c2829b004d1fee')"
+RUN node -e "require('fs').writeFileSync('c:/android-sdk/licenses/android-sdk-preview-license', '84831b9409646a918e30573bab4c9c91346d8abd')"
+RUN %ANDROID_SDK_ROOT%\cmdline-tools\bin\sdkmanager --sdk_root=%ANDROID_SDK_ROOT% --install "ndk;%NDK_VERSION%"
+RUN del android-sdk.zip
+
+WORKDIR c:/emsdk/upstream/emscripten/src/embind
+RUN curl -o embind.js -L https://raw.githubusercontent.com/bugra9/emscripten/embind-overloading-support/src/embind/embind.js
+
+WORKDIR c:/emsdk/upstream/emscripten
+RUN node -e "const fs = require('fs'); const filePath = './system/include/emscripten/bind.h'; const data = fs.readFileSync(filePath, 'utf8').replace(/smart_ptr<SmartPtr>\(smartPtrName\);/g, ' '); fs.writeFileSync(filePath, data);"
+RUN node -e "const fs = require('fs'); const filePath = './cache/sysroot/include/emscripten/bind.h'; const data = fs.readFileSync(filePath, 'utf8').replace(/smart_ptr<SmartPtr>\(smartPtrName\);/g, ' '); fs.writeFileSync(filePath, data);"
+
+WORKDIR c:/
+RUN curl -o add-embind-support.zip -L https://github.com/bugra9/swig/archive/refs/heads/add-embind-support.zip
+RUN tar -xf add-embind-support.zip -C c:/
+
+#WORKDIR c:/swig-add-embind-support
+#RUN cmake .
+#RUN make
+#RUN make install
+
+ENTRYPOINT [ "cmd", "/c" ]
