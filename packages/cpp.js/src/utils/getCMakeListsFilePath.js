@@ -1,4 +1,4 @@
-import glob from 'glob';
+import { glob } from 'glob';
 import getParentPath from './getParentPath.js';
 
 export default function getCMakeListsFilePath(basePath = process.cwd()) {

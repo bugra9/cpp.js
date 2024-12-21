@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/sample-mobile-reactnative-nativecli",
-    "version": "1.0.0-beta.11",
+    "version": "1.0.0-beta.12",
     "description": "Cpp.js React Native sample",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-mobile-reactnative-nativecli#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -13,11 +13,13 @@
         "test": "jest"
     },
     "dependencies": {
-        "@cpp.js/sample-lib-prebuilt-matrix": "1.0.0-beta.28",
+        "@cpp.js/sample-lib-prebuilt-matrix": "1.0.0-beta.29",
         "react": "18.3.1",
         "react-native": "0.75.2"
     },
     "devDependencies": {
+        "@cpp.js/plugin-react-native": "1.0.0-beta.40",
+        "@cpp.js/plugin-react-native-ios-helper": "1.0.0-beta.3",
         "@babel/core": "^7.20.0",
         "@babel/preset-env": "^7.20.0",
         "@babel/runtime": "^7.20.0",
@@ -28,8 +30,6 @@
         "@types/react": "^18.2.6",
         "@types/react-test-renderer": "^18.0.0",
         "babel-jest": "^29.6.3",
-        "@cpp.js/plugin-react-native": "1.0.0-beta.37",
-        "@cpp.js/plugin-react-native-ios-helper": "1.0.0-beta.3",
         "eslint": "^8.19.0",
         "jest": "^29.6.3",
         "prettier": "2.8.8",

@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/plugin-rollup",
-    "version": "1.0.0-beta.6",
+    "version": "1.0.0-beta.7",
     "description": "Cpp.js Rollup plugin: A tool for seamless C++ integration with the Rollup bundler.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-plugin-rollup#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -8,8 +8,7 @@
     "type": "module",
     "main": "index.js",
     "dependencies": {
-        "cpp.js": "workspace:^",
-        "rollup": "^3.5.0"
+        "cpp.js": "workspace:^"
     },
     "keywords": [
         "cpp.js-plugin",

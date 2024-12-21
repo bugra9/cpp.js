@@ -20,7 +20,7 @@
     ],
     "devDependencies": {
         "cpp.js": "workspace:^",
-        "wrangler": "^3.75.0"
+        "wrangler": "^3.99.0"
     },
     "keywords": [
         "cpp.js-sample",

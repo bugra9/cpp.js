@@ -1,6 +1,6 @@
 PODS:
   - boost (1.83.0)
-  - cppjs-sample-lib-prebuilt-matrix (1.0.0-beta.27)
+  - cppjs-sample-lib-prebuilt-matrix (1.0.0-beta.29)
   - DoubleConversion (1.1.6)
   - EXConstants (16.0.2):
     - ExpoModulesCore
@@ -999,7 +999,7 @@ PODS:
   - React-Mapbuffer (0.74.5):
     - glog
     - React-debug
-  - react-native-cppjs (1.0.0-beta.36)
+  - react-native-cppjs (1.0.0-beta.40)
   - react-native-cppjs-ios-helper (1.0.0-beta.3):
     - DoubleConversion
     - glog
@@ -1548,7 +1548,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   boost: d3f49c53809116a5d38da093a8aa78bf551aed09
-  cppjs-sample-lib-prebuilt-matrix: a8076db133bf7645d79a7ed32771a695f88ee20e
+  cppjs-sample-lib-prebuilt-matrix: 25d2466aeb7473d635dfb3b5744dba54258a1774
   DoubleConversion: 76ab83afb40bddeeee456813d9c04f67f78771b5
   EXConstants: 409690fbfd5afea964e5e9d6c4eb2c2b59222c59
   Expo: 8c995afb875c15bf8439af0b20bcb9ed8f90d0bd
@@ -1589,7 +1589,7 @@ SPEC CHECKSUMS:
   React-jsitracing: 3b6060bbf5317663667e1dd93560c7943ab86ccc
   React-logger: 257858bd55f3a4e1bc0cf07ddc8fb9faba6f8c7c
   React-Mapbuffer: 6c1cacdbf40b531f549eba249e531a7d0bfd8e7f
-  react-native-cppjs: f960faab1133caccd1fd94d9e8b1d8985a3a3d44
+  react-native-cppjs: c4b6348e1f992308f92ec3795e8eab6a88a83a32
   react-native-cppjs-ios-helper: 031bd3aea2045086db7f14af252b3b19c8b88456
   react-native-safe-area-context: a240ad4b683349e48b1d51fed1611138d1bdad97
   React-nativeconfig: ba9a2e54e2f0882cf7882698825052793ed4c851

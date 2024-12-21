@@ -11,9 +11,15 @@
         "build:website": "pnpm --filter=@cpp.js/website run build",
         "build:": "pnpm run build:packages; pnpm run build:samples;",
         "clear:cache": "find packages -name \".cppjs\" -type d -maxdepth 2 -exec rm -rf {} +",
+        "clear:cache:samples": "find packages -name \".cppjs\" -path \"*cppjs-sample-*\" -type d -maxdepth 2 -exec rm -rf {} +",
+        "clear:cache:packages": "find packages -name \".cppjs\" -path \"*cppjs-package-*\" -type d -maxdepth 2 -exec rm -rf {} +",
         "clear:dist": "find packages -name \"*.xcframework\" -maxdepth 2 -exec rm -rf {} +; find packages -name \"dist\" -type d -maxdepth 2 -exec rm -rf {} +",
+        "clear:dist:samples": "find packages -name \"*.xcframework\" -path \"*cppjs-sample-*\" -maxdepth 2 -exec rm -rf {} +; find packages -name \"dist\" -path \"*cppjs-sample-*\" -type d -maxdepth 2 -exec rm -rf {} +",
+        "clear:dist:packages": "find packages -name \"*.xcframework\" -path \"*cppjs-package-*\" -maxdepth 2 -exec rm -rf {} +; find packages -name \"dist\" -path \"*cppjs-package-*\" -type d -maxdepth 2 -exec rm -rf {} +",
         "clear:pack": "find packages -name \"*.tgz\" -type d -maxdepth 2 -exec rm -rf {} +",
         "clear": "pnpm run clear:cache; pnpm run clear:dist; pnpm run clear:pack",
+        "clear:samples": "pnpm run clear:cache:samples; pnpm run clear:dist:samples",
+        "clear:packages": "pnpm run clear:cache:package; pnpm run clear:dist:package",
         "pack:list": "find packages -name \"*.tgz\" -type d -maxdepth 2",
         "pack:build": "pnpm pack:clear; node ./scripts/pack-all.mjs && pnpm pack:list",
         "ci:linux:build:package": "pnpm --filter=@cpp.js/package-zlib run build:wasm && pnpm --filter=@cpp.js/package-zlib run build:android",
@@ -24,10 +30,10 @@
     },
     "devDependencies": {
         "cpp.js": "workspace:^",
-        "prettier": "^2.6.2",
-        "eslint": "^7.32.0 || ^8.2.0",
+        "prettier": "^3.4.2",
+        "eslint": "^9.17.0",
         "eslint-config-airbnb-base": "^15.0.0",
-        "eslint-plugin-import": "^2.25.2"
+        "eslint-plugin-import": "^2.31.0"
     },
     "packageManager": "pnpm@9.9.0+sha512.60c18acd138bff695d339be6ad13f7e936eea6745660d4cc4a776d5247c540d0edee1a563695c183a66eb917ef88f2b4feb1fc25f32a7adcadc7aaf3438e99c1"
 }

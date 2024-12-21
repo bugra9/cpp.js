@@ -3,8 +3,7 @@
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { Command, Option } from 'commander';
-import glob from 'glob';
-import upath from 'upath';
+import { glob } from 'glob';
 import replace from 'replace';
 
 import { state } from './index.js';
