@@ -47,6 +47,7 @@ const config = {
                     ],
                     sidebarPath: require.resolve('./sidebars.json'),
                     sidebarCollapsible: false,
+                    showLastUpdateTime: true,
                 },
                 pages: {
                     remarkPlugins: [

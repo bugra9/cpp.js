@@ -1,4 +1,4 @@
-name: macos_build
+name: build macos
 on:
   push:
     branches:

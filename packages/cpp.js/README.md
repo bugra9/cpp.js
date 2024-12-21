@@ -15,8 +15,8 @@
 <a href="https://github.com/bugra9/cpp.js/discussions"><img alt="Discussions" src="https://img.shields.io/github/discussions/bugra9/cpp.js?style=for-the-badge" /></a>
 <a href="https://github.com/bugra9/cpp.js/issues"><img alt="Issues" src="https://img.shields.io/github/issues/bugra9/cpp.js?style=for-the-badge" /></a>
 <br />
-<img alt="Linux Build" src="https://img.shields.io/github/actions/workflow/status/bugra9/cpp.js/linux_build.yml?branch=main&style=for-the-badge&label=Linux%20Build">
-<img alt="Macos Build" src="https://img.shields.io/github/actions/workflow/status/bugra9/cpp.js/macos_build.yml?branch=main&style=for-the-badge&label=Macos%20Build">
+<img alt="Linux Build" src="https://img.shields.io/github/actions/workflow/status/bugra9/cpp.js/build-linux.yml?branch=main&style=for-the-badge&label=Linux%20Build">
+<img alt="Macos Build" src="https://img.shields.io/github/actions/workflow/status/bugra9/cpp.js/build-macos.yml?branch=main&style=for-the-badge&label=Macos%20Build">
 </div>
 
 <h3 align="center">

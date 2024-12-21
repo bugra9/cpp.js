@@ -1,7 +1,6 @@
 {
     "private": true,
     "scripts": {
-        "docs:deploy": "push-dir --dir=website/build --branch=gh-pages --cleanup",
         "build:packages": "pnpm --filter=@cpp.js/package-iconv run build && pnpm --filter=@cpp.js/package-zlib run build && pnpm --filter=@cpp.js/package-expat run build && pnpm --filter=@cpp.js/package-webp run build && pnpm --filter=@cpp.js/package-tiff run build && pnpm --filter=@cpp.js/package-sqlite3 run build && pnpm --filter=@cpp.js/package-proj run build && pnpm --filter=@cpp.js/package-geotiff run build && pnpm --filter=@cpp.js/package-geos run build && pnpm --filter=@cpp.js/package-spatialite run build && pnpm --filter=@cpp.js/package-gdal run build",
         "build:samples": "pnpm --filter=@cpp.js/sample-* run build",
         "build:samples:lib": "pnpm --filter=@cpp.js/sample-lib-* run build",
@@ -9,6 +8,7 @@
         "build:samples:lib:android": "pnpm --filter=@cpp.js/sample-lib-* run build:android",
         "build:samples:lib:ios": "pnpm --filter=@cpp.js/sample-lib-* run build:ios",
         "build:samples:wasm": "pnpm --filter=@cpp.js/sample-web-* run build && pnpm --filter=@cpp.js/sample-cloud-* run build && pnpm --filter=@cpp.js/sample-backend-* run build && pnpm run build:samples:lib:wasm",
+        "build:website": "pnpm --filter=@cpp.js/website run build",
         "build:": "pnpm run build:packages; pnpm run build:samples;",
         "clear:cache": "find packages -name \".cppjs\" -type d -maxdepth 2 -exec rm -rf {} +",
         "clear:dist": "find packages -name \"*.xcframework\" -maxdepth 2 -exec rm -rf {} +; find packages -name \"dist\" -type d -maxdepth 2 -exec rm -rf {} +",
@@ -25,7 +25,6 @@
     "devDependencies": {
         "cpp.js": "workspace:^",
         "prettier": "^2.6.2",
-        "push-dir": "^0.4.1",
         "eslint": "^7.32.0 || ^8.2.0",
         "eslint-config-airbnb-base": "^15.0.0",
         "eslint-plugin-import": "^2.25.2"
