@@ -86,7 +86,3 @@ The project is now fully set up and ready to run.
 :::warning
 Before proceeding, ensure that you have met all the [prerequisites](/docs/guide/getting-started/prerequisites) for setting up a working development environment.
 :::
-
-:::info
-**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-web-react-cra).
-:::

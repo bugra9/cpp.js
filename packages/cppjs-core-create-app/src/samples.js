@@ -8,7 +8,6 @@ import sampleMobileReactNativeNativeCLI from '@cpp.js/sample-mobile-reactnative-
 import sampleMobileReactNativeExpo from '@cpp.js/sample-mobile-reactnative-expo/cppjs.config.mjs';
 
 import sampleWebVanilla from '@cpp.js/sample-web-vanilla/cppjs.config.mjs';
-import sampleWebReactCRA from '@cpp.js/sample-web-react-cra/cppjs.config.js';
 import sampleWebReactRspack from '@cpp.js/sample-web-react-rspack/cppjs.config.mjs';
 import sampleWebReactVite from '@cpp.js/sample-web-react-vite/cppjs.config.js';
 import sampleWebSvelteVite from '@cpp.js/sample-web-svelte-vite/cppjs.config.js';
@@ -27,9 +26,6 @@ export default {
             path: getParentPath(sampleWebVanilla.paths.config),
         },
         React: {
-            'Create React App (CRA)': {
-                path: getParentPath(sampleWebReactCRA.paths.config),
-            },
             Rspack: {
                 path: getParentPath(sampleWebReactRspack.paths.config),
             },
