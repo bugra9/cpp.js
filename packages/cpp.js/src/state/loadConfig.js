@@ -64,7 +64,7 @@ function getFilledConfig(config, options = { isDepend: false }) {
     newConfig.paths.bridge = (newConfig.paths.bridge || [...newConfig.paths.native, newConfig.paths.build])
         .map((p) => getPath(p));
     newConfig.paths.output = getPath(newConfig.paths.output) || newConfig.paths.build;
-    newConfig.paths.cmake = options.isDepend ? getCMakeListsFilePath(newConfig.paths.output) : (
+    newConfig.paths.cmake = options.isDepend ? getPath(getCMakeListsFilePath(newConfig.paths.output)) : (
         getPath(newConfig.paths.cmake || getCMakeListsFilePath(newConfig.paths.project))
     );
     newConfig.paths.cmakeDir = getParentPath(newConfig.paths.cmake);

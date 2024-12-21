@@ -7,7 +7,6 @@ on:
     paths:
       - website/**
       - .github/workflows/deploy-website.yml
-  pull_request:
 
 jobs:
   deploy:
