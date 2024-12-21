@@ -3,12 +3,18 @@ on:
   push:
     branches:
       - main
+    paths:
+      - packages/**
+      - .github/workflows/build-macos.yml
   pull_request:
     branches:
       - main
     paths:
       - packages/cpp.js/**
       - packages/cppjs-plugin-*/**
+      - .github/workflows/build-macos.yml
+
+permissions: {}
 jobs:
   build:
     runs-on: macos-latest
@@ -44,7 +50,7 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 #v4
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
