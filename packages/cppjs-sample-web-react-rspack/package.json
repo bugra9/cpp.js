@@ -7,7 +7,10 @@
     "license": "MIT",
     "scripts": {
         "dev": "cross-env NODE_ENV=development rspack serve",
-        "build": "cross-env NODE_ENV=production rspack build"
+        "build": "cross-env NODE_ENV=production rspack build",
+        "preview": "serve dist",
+        "e2e:dev": "playwright test --config playwright.dev.config.cjs",
+        "e2e:prod": "playwright test --config playwright.prod.config.cjs"
     },
     "dependencies": {
         "react": "^19.0.0",
@@ -24,7 +27,9 @@
         "react-refresh": "^0.16.0",
         "cpp.js": "workspace:^",
         "@cpp.js/plugin-webpack-loader": "workspace:^",
-        "@cpp.js/plugin-webpack": "workspace:^"
+        "@cpp.js/plugin-webpack": "workspace:^",
+        "@playwright/test": "^1.49.1",
+        "serve": "^14.2.4"
     },
     "keywords": [
         "cpp.js-sample",

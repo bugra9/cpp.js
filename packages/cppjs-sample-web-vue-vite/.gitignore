@@ -1,5 +1,7 @@
 # cpp.js
 .cppjs
+test-results
+playwright-report
 
 # Logs
 logs

@@ -27,14 +27,17 @@
         "ci:linux:build": "pnpm run build:samples && pnpm run ci:linux:build:package",
         "ci:windows:build": "pnpm run build:samples:lib:wasm && pnpm run build:samples:lib:android && pnpm run ci:linux:build:package",
         "ci:ios:build:package": "pnpm --filter=@cpp.js/package-zlib run build:ios",
-        "ci:macos:build": "pnpm run build:samples:lib:ios && pnpm run ci:ios:build:package"
+        "ci:macos:build": "pnpm run build:samples:lib:ios && pnpm run ci:ios:build:package",
+        "e2e:dev": "pnpm -r --workspace-concurrency=1 e2e:dev",
+        "e2e:prod": "pnpm -r --workspace-concurrency=1 e2e:prod"
     },
     "devDependencies": {
         "cpp.js": "workspace:^",
         "prettier": "^3.4.2",
         "eslint": "^9.17.0",
         "eslint-config-airbnb-base": "^15.0.0",
-        "eslint-plugin-import": "^2.31.0"
+        "eslint-plugin-import": "^2.31.0",
+        "@playwright/test": "^1.49.1"
     },
     "packageManager": "pnpm@9.9.0+sha512.60c18acd138bff695d339be6ad13f7e936eea6745660d4cc4a776d5247c540d0edee1a563695c183a66eb917ef88f2b4feb1fc25f32a7adcadc7aaf3438e99c1"
 }

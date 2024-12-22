@@ -6,13 +6,17 @@
     "repository": "https://github.com/bugra9/cpp.js.git",
     "license": "MIT",
     "scripts": {
-        "build": "cppjs build -p WebAssembly"
+        "build": "cppjs build -p WebAssembly",
+        "preview": "serve",
+        "e2e:prod": "playwright test --config playwright.prod.config.cjs"
     },
     "dependencies": {
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^"
     },
     "devDependencies": {
-        "cpp.js": "workspace:^"
+        "cpp.js": "workspace:^",
+        "serve": "^14.2.4",
+        "@playwright/test": "^1.49.1"
     },
     "keywords": [
         "cpp.js-sample",

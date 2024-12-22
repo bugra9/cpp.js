@@ -8,7 +8,9 @@
     "scripts": {
         "build": "cppjs build -p WebAssembly",
         "dev": "wrangler dev",
-        "deploy": "wrangler dev"
+        "deploy": "wrangler dev",
+        "e2e:dev": "playwright test --config playwright.dev.config.cjs",
+        "e2e:prod": "playwright test --config playwright.dev.config.cjs"
     },
     "files": [
         "dist/@cpp.js/sample-cloud-cloudflare.browser.js",
@@ -20,7 +22,8 @@
     ],
     "devDependencies": {
         "cpp.js": "workspace:^",
-        "wrangler": "^3.99.0"
+        "wrangler": "^3.99.0",
+        "@playwright/test": "^1.49.1"
     },
     "keywords": [
         "cpp.js-sample",
