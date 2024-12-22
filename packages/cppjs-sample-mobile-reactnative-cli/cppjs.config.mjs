@@ -6,5 +6,6 @@ export default {
     ],
 	paths: {
         config: import.meta.url,
+        base: '../..', /* Delete this line for create-cpp.js */
 	}
 }

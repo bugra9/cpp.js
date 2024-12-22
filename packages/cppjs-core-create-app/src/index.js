@@ -8,6 +8,7 @@ import {
     bold, cyan, gray, green,
 } from 'kleur/colors';
 import prompts from 'prompts';
+import replace from 'replace';
 import { pkgManager, getPath } from './utils.js';
 import samples from './samples.js';
 
@@ -21,19 +22,25 @@ async function main() {
     console.log(gray(`\ncreate-cppjs version ${version}`));
     console.log(disclaimer);
 
-    const { name } = await prompts({
-        type: 'text',
-        name: 'name',
-        message: 'Project Name',
-        initial: 'sample',
-        validate: (value) => value && value.length > 0,
-    }, {
-        onCancel: () => {
-            process.exit(1);
-        },
-    });
-
     let cwd = process.argv[2] || '.';
+    let name = process.argv[2] || null;
+    let selectedType = process.argv[3] || null;
+    let selectedPlatform = process.argv[4] || null;
+    let selectedBundler = process.argv[5] || null;
+
+    if (!name) {
+        ({ name } = await prompts({
+            type: 'text',
+            name: 'name',
+            message: 'Project Name',
+            initial: 'sample',
+            validate: (value) => value && value.length > 0,
+        }, {
+            onCancel: () => {
+                process.exit(1);
+            },
+        }));
+    }
 
     if (cwd === '.') {
         const { dir } = await prompts({
@@ -72,33 +79,36 @@ async function main() {
         }
     }
 
-    const { templateType: selectedType } = await prompts({
-        type: 'select',
-        name: 'templateType',
-        message: 'Select a type:',
-        initial: false,
-        choices: Object.keys(samples).map((k) => ({ title: k, value: k })),
-    }, {
-        onCancel: () => {
-            process.exit(1);
-        },
-    });
+    if (!selectedType) {
+        ({ templateType: selectedType } = await prompts({
+            type: 'select',
+            name: 'templateType',
+            message: 'Select a type:',
+            initial: false,
+            choices: Object.keys(samples).map((k) => ({ title: k, value: k })),
+        }, {
+            onCancel: () => {
+                process.exit(1);
+            },
+        }));
+    }
 
-    const { appPlatformType: selectedPlatform } = await prompts({
-        type: 'select',
-        name: 'appPlatformType',
-        message: samples[selectedType].Questions[0],
-        initial: false,
-        choices: Object.keys(samples[selectedType]).slice(1).map((k) => ({ title: k, value: k })),
-    }, {
-        onCancel: () => {
-            process.exit(1);
-        },
-    });
+    if (!selectedPlatform) {
+        ({ appPlatformType: selectedPlatform } = await prompts({
+            type: 'select',
+            name: 'appPlatformType',
+            message: samples[selectedType].Questions[0],
+            initial: false,
+            choices: Object.keys(samples[selectedType]).slice(1).map((k) => ({ title: k, value: k })),
+        }, {
+            onCancel: () => {
+                process.exit(1);
+            },
+        }));
+    }
 
-    let selectedBundler = null;
-    if (!samples[selectedType][selectedPlatform].path) {
-        const result = await prompts({
+    if (!samples[selectedType][selectedPlatform].path && !selectedBundler) {
+        ({ bundler: selectedBundler } = await prompts({
             type: 'select',
             name: 'bundler',
             message: samples[selectedType].Questions[1],
@@ -108,8 +118,7 @@ async function main() {
             onCancel: () => {
                 process.exit(1);
             },
-        });
-        selectedBundler = result.bundler;
+        }));
     }
 
     let templatePath;
@@ -125,6 +134,26 @@ async function main() {
     const packageJson = JSON.parse(fs.readFileSync(packageJsonFilePath, 'utf-8'));
     packageJson.name = selectedType === 'app' ? name : `cppjs-lib-${name}`;
     fs.writeFileSync(packageJsonFilePath, JSON.stringify(packageJson, null, 2));
+
+    const metroJsFilePath = `${cwd}/metro.config.js`;
+    if (fs.existsSync(metroJsFilePath)) {
+        replace({
+            regex: '^(.*?)Delete this line for create-cpp.js(.*?)$\n',
+            replacement: '',
+            paths: [metroJsFilePath], recursive: false, silent: true, multiline: true,
+        });
+    }
+
+    const cppJsFilePaths = [`${cwd}/cppjs.config.js`, `${cwd}/cppjs.config.mjs`];
+    cppJsFilePaths.forEach(cppJsFilePath => {
+        if (fs.existsSync(cppJsFilePath)) {
+            replace({
+                regex: '^(.*?)Delete this line for create-cpp.js(.*?)$\n',
+                replacement: '',
+                paths: [cppJsFilePath], recursive: false, silent: true, multiline: true,
+            });
+        }
+    });
 
     console.log(bold(green('\nYour project is ready!')));
 
