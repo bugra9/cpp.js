@@ -18,6 +18,7 @@
 <img alt="CodeQL" src="https://img.shields.io/github/actions/workflow/status/bugra9/cpp.js/github-code-scanning/codeql?branch=main&style=for-the-badge&label=CodeQL">
 <img alt="Linux Build" src="https://img.shields.io/github/actions/workflow/status/bugra9/cpp.js/build-linux.yml?branch=main&style=for-the-badge&label=Linux%20Build">
 <img alt="Macos Build" src="https://img.shields.io/github/actions/workflow/status/bugra9/cpp.js/build-macos.yml?branch=main&style=for-the-badge&label=Macos%20Build">
+<img alt="Windows Build" src="https://img.shields.io/github/actions/workflow/status/bugra9/cpp.js/build-windows.yml?branch=main&style=for-the-badge&label=Windows%20Build">
 </div>
 
 <h3 align="center">
