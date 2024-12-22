@@ -20,7 +20,7 @@
         "@cpp.js/sample-web-vue-vite": "workspace:^",
         "@cpp.js/sample-backend-nodejs-wasm": "workspace:^",
         "@cpp.js/sample-cloud-cloudflare-worker": "workspace:^",
-        "@cpp.js/sample-mobile-reactnative-nativecli": "1.0.0-beta.13",
+        "@cpp.js/sample-mobile-reactnative-cli": "workspace:^",
         "@cpp.js/sample-mobile-reactnative-expo": "1.0.0-beta.8",
         "fs-extra": "^11.2.0",
         "kleur": "^4.1.5",

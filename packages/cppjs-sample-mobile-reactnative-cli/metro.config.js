@@ -12,6 +12,7 @@ const defaultConfig = getDefaultConfig(__dirname);
 const config = {
     ...CppjsMetroPlugin(defaultConfig),
     resetCache: true,
+    watchFolders: [ require('path').resolve('../../') ],
 };
 
 module.exports = mergeConfig(defaultConfig, config);

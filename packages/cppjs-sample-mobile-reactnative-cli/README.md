@@ -1,8 +1,8 @@
-# @cpp.js/sample-mobile-reactnative-nativecli
+# @cpp.js/sample-mobile-reactnative-cli
 **Cpp.js React Native sample**  
 
-<a href="https://www.npmjs.com/package/@cpp.js/sample-mobile-reactnative-nativecli">
-    <img alt="NPM version" src="https://img.shields.io/npm/v/@cpp.js/sample-mobile-reactnative-nativecli?style=for-the-badge" />
+<a href="https://www.npmjs.com/package/@cpp.js/sample-mobile-reactnative-cli">
+    <img alt="NPM version" src="https://img.shields.io/npm/v/@cpp.js/sample-mobile-reactnative-cli?style=for-the-badge" />
 </a>
 <a href="https://github.com/bugra9/cpp.js/blob/main/LICENSE">
     <img alt="License" src="https://img.shields.io/github/license/bugra9/cpp.js?style=for-the-badge" />
