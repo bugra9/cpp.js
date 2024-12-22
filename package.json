@@ -3,6 +3,7 @@
     "scripts": {
         "build:packages": "pnpm --filter=@cpp.js/package-iconv run build && pnpm --filter=@cpp.js/package-zlib run build && pnpm --filter=@cpp.js/package-expat run build && pnpm --filter=@cpp.js/package-webp run build && pnpm --filter=@cpp.js/package-tiff run build && pnpm --filter=@cpp.js/package-sqlite3 run build && pnpm --filter=@cpp.js/package-proj run build && pnpm --filter=@cpp.js/package-geotiff run build && pnpm --filter=@cpp.js/package-geos run build && pnpm --filter=@cpp.js/package-spatialite run build && pnpm --filter=@cpp.js/package-gdal run build",
         "build:samples": "pnpm --filter=@cpp.js/sample-* run build",
+        "build:samples:android": "pnpm --filter=@cpp.js/sample-* run build:android",
         "build:samples:lib": "pnpm --filter=@cpp.js/sample-lib-* run build",
         "build:samples:lib:wasm": "pnpm --filter=@cpp.js/sample-lib-* run build:wasm",
         "build:samples:lib:android": "pnpm --filter=@cpp.js/sample-lib-* run build:android",
@@ -22,8 +23,8 @@
         "clear:packages": "pnpm run clear:cache:package; pnpm run clear:dist:package",
         "pack:list": "find packages -name \"*.tgz\" -type d -maxdepth 2",
         "pack:build": "pnpm pack:clear; node ./scripts/pack-all.mjs && pnpm pack:list",
-        "ci:linux:build:package": "pnpm --filter=@cpp.js/package-zlib run build:wasm && pnpm --filter=@cpp.js/package-zlib run build:android",
-        "ci:linux:build": "pnpm run build:samples:lib:wasm && pnpm run build:samples:lib:android && pnpm run ci:linux:build:package",
+        "ci:linux:build:package": "pnpm --filter=@cpp.js/package-zlib run build",
+        "ci:linux:build": "pnpm run build:samples && pnpm run ci:linux:build:package",
         "ci:windows:build": "pnpm run build:samples:lib:wasm && pnpm run build:samples:lib:android && pnpm run ci:linux:build:package",
         "ci:ios:build:package": "pnpm --filter=@cpp.js/package-zlib run build:ios",
         "ci:macos:build": "pnpm run build:samples:lib:ios && pnpm run ci:ios:build:package"

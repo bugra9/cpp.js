@@ -10,8 +10,7 @@ on:
     branches:
       - main
     paths:
-      - packages/cpp.js/**
-      - packages/cppjs-plugin-*/**
+      - packages/**
       - .github/workflows/build-linux.yml
 
 permissions: {}
