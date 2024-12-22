@@ -9,7 +9,9 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "e2e:dev": "playwright test --config playwright.dev.config.cjs",
+        "e2e:prod": "playwright test --config playwright.prod.config.cjs"
     },
     "dependencies": {
         "vue": "^3.5.13",
@@ -19,7 +21,8 @@
         "@vitejs/plugin-vue": "^5.2.1",
         "vite": "^6.0.5",
         "cpp.js": "workspace:^",
-        "@cpp.js/plugin-vite": "workspace:^"
+        "@cpp.js/plugin-vite": "workspace:^",
+        "@playwright/test": "^1.49.1"
     },
     "keywords": [
         "cpp.js-sample",

@@ -29,3 +29,7 @@ jobs:
         run: pnpm install
       - name: Build for Linux
         run: pnpm run ci:linux:build
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps
+      - name: Run Playwright tests
+        run: pnpm run e2e:prod

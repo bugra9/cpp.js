@@ -10,7 +10,9 @@
         "dev": "vite",
         "build": "vite build",
         "lint": "eslint .",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "e2e:dev": "playwright test --config playwright.dev.config.cjs",
+        "e2e:prod": "playwright test --config playwright.prod.config.cjs"
     },
     "dependencies": {
         "react": "^19.0.0",
@@ -29,7 +31,8 @@
         "globals": "^15.14.0",
         "vite": "^6.0.5",
         "cpp.js": "workspace:^",
-        "@cpp.js/plugin-vite": "workspace:^"
+        "@cpp.js/plugin-vite": "workspace:^",
+        "@playwright/test": "^1.49.1"
     },
     "keywords": [
         "cpp.js-sample",
