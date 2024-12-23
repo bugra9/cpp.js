@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/plugin-metro",
-    "version": "1.0.0-beta.36",
+    "version": "1.0.0-beta.37",
     "description": "Cpp.js Metro plugin: A tool for seamless C++ integration with the Metro bundler.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-plugin-metro#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",

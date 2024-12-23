@@ -2,6 +2,8 @@
 .yarn
 ios/build
 android/build
+android/app/build
+android/app/.cxx
 
 # OSX
 #

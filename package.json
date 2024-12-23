@@ -29,7 +29,11 @@
         "ci:ios:build:package": "pnpm --filter=@cpp.js/package-zlib run build:ios",
         "ci:macos:build": "pnpm run build:samples:lib:ios && pnpm run ci:ios:build:package",
         "e2e:dev": "pnpm -r --workspace-concurrency=1 e2e:dev",
-        "e2e:prod": "pnpm -r --workspace-concurrency=1 e2e:prod"
+        "e2e:prod": "pnpm -r --workspace-concurrency=1 e2e:prod",
+        "publish:samples": "pnpm --filter=@cpp.js/sample-* publish --no-git-checks",
+        "publish:plugins": "pnpm --filter=@cpp.js/plugin-* publish --no-git-checks",
+        "publish:core": "pnpm --filter=cpp.js publish --no-git-checks",
+        "publish:all": "pnpm run publish:core; pnpm run publish:plugins; pnpm run publish:samples"
     },
     "devDependencies": {
         "cpp.js": "workspace:^",
