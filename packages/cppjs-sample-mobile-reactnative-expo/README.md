@@ -1,8 +1,8 @@
 # @cpp.js/sample-mobile-reactnative-expo
 **Cpp.js Expo sample**  
 
-<a href="https://www.npmjs.com/package/@cpp.js/plugin-react-native">
-    <img alt="NPM version" src="https://img.shields.io/npm/v/@cpp.js/plugin-react-native?style=for-the-badge" />
+<a href="https://www.npmjs.com/package/@cpp.js/sample-mobile-reactnative-expo">
+    <img alt="NPM version" src="https://img.shields.io/npm/v/@cpp.js/sample-mobile-reactnative-expo?style=for-the-badge" />
 </a>
 <a href="https://github.com/bugra9/cpp.js/blob/main/LICENSE">
     <img alt="License" src="https://img.shields.io/github/license/bugra9/cpp.js?style=for-the-badge" />
@@ -30,5 +30,5 @@
 3. Start the android app
 
    ```bash
-    npm run ios
+    npm run android
    ```

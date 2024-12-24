@@ -1,7 +1,7 @@
 {
     "name": "@cpp.js/sample-mobile-reactnative-expo",
     "main": "expo-router/entry",
-    "version": "1.0.0-beta.9",
+    "version": "1.0.0-beta.10",
     "description": "Cpp.js Expo sample",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-mobile-reactnative-expo#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",

@@ -155,6 +155,11 @@ async function main() {
         }
     });
 
+    const androidGradlewFilePath = `${cwd}/android/gradlew`;
+    if (fs.existsSync(androidGradlewFilePath)) {
+        fs.chmodSync(androidGradlewFilePath, 0o755);
+    }
+
     console.log(bold(green('\nYour project is ready!')));
 
     console.log('\nNext steps:');
