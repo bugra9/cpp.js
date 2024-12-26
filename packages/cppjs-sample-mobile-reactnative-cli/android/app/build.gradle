@@ -77,9 +77,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.cppjs"
+    namespace "org.js.cpp.cppjsSampleReactNativeCLI"
     defaultConfig {
-        applicationId "com.cppjs"
+        applicationId "org.js.cpp.cppjsSampleReactNativeCLI"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

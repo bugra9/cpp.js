@@ -3,7 +3,6 @@
     "scripts": {
         "build:packages": "pnpm --filter=@cpp.js/package-iconv run build && pnpm --filter=@cpp.js/package-zlib run build && pnpm --filter=@cpp.js/package-expat run build && pnpm --filter=@cpp.js/package-webp run build && pnpm --filter=@cpp.js/package-tiff run build && pnpm --filter=@cpp.js/package-sqlite3 run build && pnpm --filter=@cpp.js/package-proj run build && pnpm --filter=@cpp.js/package-geotiff run build && pnpm --filter=@cpp.js/package-geos run build && pnpm --filter=@cpp.js/package-spatialite run build && pnpm --filter=@cpp.js/package-gdal run build",
         "build:samples": "pnpm --filter=@cpp.js/sample-* run build",
-        "build:samples:android": "pnpm --filter=@cpp.js/sample-* run build:android",
         "build:samples:lib": "pnpm --filter=@cpp.js/sample-lib-* run build",
         "build:samples:lib:wasm": "pnpm --filter=@cpp.js/sample-lib-* run build:wasm",
         "build:samples:lib:android": "pnpm --filter=@cpp.js/sample-lib-* run build:android",
@@ -30,6 +29,10 @@
         "ci:macos:build": "pnpm run build:samples:lib:ios && pnpm run ci:ios:build:package",
         "e2e:dev": "pnpm -r --workspace-concurrency=1 e2e:dev",
         "e2e:prod": "pnpm -r --workspace-concurrency=1 e2e:prod",
+        "e2e:ios": "pnpm -r --workspace-concurrency=1 e2e:ios",
+        "e2e:android": "pnpm -r --workspace-concurrency=1 e2e:android",
+        "e2e:mobile": "pnpm run e2e:ios && pnpm run e2e:prod && pnpm run e2e:mobile",
+        "e2e": "pnpm run e2e:dev && pnpm run e2e:android",
         "publish:samples": "pnpm --filter=@cpp.js/sample-* publish --no-git-checks",
         "publish:plugins": "pnpm --filter=@cpp.js/plugin-* publish --no-git-checks",
         "publish:core": "pnpm --filter=cpp.js publish --no-git-checks",

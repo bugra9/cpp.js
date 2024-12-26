@@ -14,7 +14,7 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
-target 'cppjs' do
+target 'cppjsSampleReactNativeCLI' do
   config = use_native_modules!
 
   use_react_native!(
@@ -23,7 +23,7 @@ target 'cppjs' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  target 'cppjsTests' do
+  target 'cppjsSampleReactNativeCLITests' do
     inherit! :complete
     # Pods for testing
   end
