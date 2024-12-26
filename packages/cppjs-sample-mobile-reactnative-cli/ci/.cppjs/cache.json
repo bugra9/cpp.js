@@ -1,0 +1,12 @@
+{
+    "hashes": {
+        "/Users/runner/work/cpp.js/cpp.js/packages/cppjs-sample-mobile-reactnative-cli/src/native/native.h": "d105082c6e8c8652ea461e161c501e824b6b625f7b819490102c5c0699744249",
+        "/Users/runner/work/cpp.js/cpp.js/packages/cppjs-sample-mobile-reactnative-cli/.cppjs/build/interface/native.i": "eab7d231467438ee3e5f5af1c3ae64919c0514393461653981fb40f26b5edad3"
+    },
+    "interfaces": {
+        "/Users/runner/work/cpp.js/cpp.js/packages/cppjs-sample-mobile-reactnative-cli/src/native/native.h": "/Users/runner/work/cpp.js/cpp.js/packages/cppjs-sample-mobile-reactnative-cli/.cppjs/build/interface/native.i"
+    },
+    "bridges": {
+        "/Users/runner/work/cpp.js/cpp.js/packages/cppjs-sample-mobile-reactnative-cli/.cppjs/build/interface/native.i": "/Users/runner/work/cpp.js/cpp.js/packages/cppjs-sample-mobile-reactnative-cli/.cppjs/build/bridge/native.i.cpp"
+    }
+}

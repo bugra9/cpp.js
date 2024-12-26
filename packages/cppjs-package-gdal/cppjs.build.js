@@ -1,6 +1,7 @@
 const platformCmake = {
     'Emscripten-x86_64': ['-DBUILD_SHARED_LIBS=OFF'],
     'Android-arm64-v8a': ['-DCMAKE_ANDROID_STL_TYPE=c++_shared'],
+    'Android-x86_64': ['-DCMAKE_ANDROID_STL_TYPE=c++_shared'],
 };
 
 export default {

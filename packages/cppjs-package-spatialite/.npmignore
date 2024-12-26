@@ -5,4 +5,5 @@ dist/prebuilt/iOS-iphonesimulator
 .cppjs
 *.dylib
 dist/prebuilt/Android-arm64-v8a/lib/*.a
+dist/prebuilt/Android-x86_64/lib/*.a
 dist/prebuilt/**/bin

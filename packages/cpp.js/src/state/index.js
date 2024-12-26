@@ -6,9 +6,9 @@ const cacheDir = `${process.cwd()}/.cppjs`;
 
 const state = {
     platforms: {
-        All: ['Emscripten-x86_64', 'Android-arm64-v8a', 'iOS-iphoneos', 'iOS-iphonesimulator'],
+        All: ['Emscripten-x86_64', 'Android-arm64-v8a', 'Android-x86_64', 'iOS-iphoneos', 'iOS-iphonesimulator'],
         WebAssembly: ['Emscripten-x86_64'],
-        Android: ['Android-arm64-v8a'],
+        Android: ['Android-arm64-v8a', 'Android-x86_64'],
         iOS: ['iOS-iphoneos', 'iOS-iphonesimulator'],
     },
     config: null,

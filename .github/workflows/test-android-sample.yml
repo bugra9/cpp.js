@@ -1,0 +1,91 @@
+name: test android sample
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - packages/**
+      - .github/workflows/test-android-sample.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - packages/cpp.js/**
+      - packages/cppjs-plugin-metro/**
+      - packages/cppjs-plugin-react-native/**
+      - packages/cppjs-sample-lib-prebuilt-matrix/**
+      - packages/cppjs-sample-mobile-reactnative-cli/**
+      - .github/workflows/test-android-sample.yml
+
+permissions: {}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 #v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build cppjs-sample-lib-prebuilt-matrix
+        run: pnpm --filter=@cpp.js/sample-lib-prebuilt-matrix run build:android
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@0bdd871935719febd78681f197cd39af5b6e16a6 #v4
+      - name: create AVD
+        uses: reactivecircus/android-emulator-runner@62dbb605bba737720e10b196cb4220d374026a6d #v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          cmake: 3.31.1
+          ndk: 26.1.10909125
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching."
+      - name: E2E Android
+        uses: reactivecircus/android-emulator-runner@62dbb605bba737720e10b196cb4220d374026a6d #v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          cmake: 3.31.1
+          ndk: 26.1.10909125
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            adb logcat --clear
+            adb logcat '*:D' > adb-log.txt &
+            pnpm run e2e:android
+      - name: Upload Adb Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Adb Logs
+          path: adb-log.txt
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: E2E Report
+          path: ~/.maestro/tests/**/*

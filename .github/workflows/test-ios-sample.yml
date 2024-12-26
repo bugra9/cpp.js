@@ -1,22 +1,22 @@
-name: build macos
+name: test ios sample
 on:
   push:
     branches:
       - main
     paths:
       - packages/**
-      - .github/workflows/build-macos.yml
+      - .github/workflows/test-ios-sample.yml
   pull_request:
     branches:
       - main
     paths:
       - packages/cpp.js/**
-      - packages/cppjs-plugin-*/**
-      - packages/cppjs-sample-lib-*/**
-      - packages/cppjs-sample-web-*/**
-      - packages/cppjs-sample-backend-*/**
-      - packages/cppjs-sample-cloud-*/**
-      - .github/workflows/build-macos.yml
+      - packages/cppjs-plugin-metro/**
+      - packages/cppjs-plugin-react-native/**
+      - packages/cppjs-plugin-react-native-ios-helper/**
+      - packages/cppjs-sample-lib-prebuilt-matrix/**
+      - packages/cppjs-sample-mobile-reactnative-cli/**
+      - .github/workflows/test-ios-sample.yml
 
 permissions: {}
 jobs:
@@ -64,5 +64,15 @@ jobs:
         run: |
           pnpm install
           pnpm cppjs config set XCODE_DEVELOPMENT_TEAM 7ZZLDWBUVT
-      - name: Build for Macos
-        run: pnpm run ci:macos:build
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+      - name: Restore cached bridge files
+        run: cp -r ./packages/cppjs-sample-mobile-reactnative-cli/ci/.cppjs ./packages/cppjs-sample-mobile-reactnative-cli
+      - name: Build cppjs-sample-lib-prebuilt-matrix
+        run: pnpm --filter=@cpp.js/sample-lib-prebuilt-matrix run build:ios
+      - name: Pod install
+        run: cd packages/cppjs-sample-mobile-reactnative-cli/ios && pod install && cd ../../../
+      - name: E2E IOS
+        run: pnpm run e2e:ios
