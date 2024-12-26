@@ -5,7 +5,8 @@ import getOsUserAndGroupId from '../utils/getOsUserAndGroupId.js';
 import { getContentHash } from '../utils/hash.js';
 import state from '../state/index.js';
 
-const CROSSCOMPILER = 'aarch64-linux-android33';
+const CROSSCOMPILER_ARM64 = 'aarch64-linux-android33';
+const CROSSCOMPILER_x86_64 = 'x86_64-linux-android33';
 const ANDROID_NDK = '/opt/android-sdk/ndk/25.2.9519653';
 const t = `${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin`;
 const t2 = `${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64`;
@@ -15,11 +16,23 @@ const iosBinPath = `${iOSDevPath}/Toolchains/XcodeDefault.xctoolchain/usr/bin`;
 const iosSdkPath = `${iOSDevPath}/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk`;
 const iosSimSdkPath = `${iOSDevPath}/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk`;
 
-const androidParams = [
+const androidParamsArm64 = [
     '-e', `AR=${t}/llvm-ar`,
     '-e', `AS=${t}/llvm-as`,
-    '-e', `CC=${t}/${CROSSCOMPILER}-clang`,
-    '-e', `CXX=${t}/${CROSSCOMPILER}-clang++`,
+    '-e', `CC=${t}/${CROSSCOMPILER_ARM64}-clang`,
+    '-e', `CXX=${t}/${CROSSCOMPILER_ARM64}-clang++`,
+    '-e', `LD=${t}/ld`,
+    '-e', `RANLIB=${t}/llvm-ranlib`,
+    '-e', `STRIP=${t}/llvm-strip`,
+    '-e', `NM=${t}/nm`,
+    '-e', `CFLAGS=--sysroot=${t2}/sysroot`,
+];
+
+const androidParamsX86_64 = [
+    '-e', `AR=${t}/llvm-ar`,
+    '-e', `AS=${t}/llvm-as`,
+    '-e', `CC=${t}/${CROSSCOMPILER_x86_64}-clang`,
+    '-e', `CXX=${t}/${CROSSCOMPILER_x86_64}-clang++`,
     '-e', `LD=${t}/ld`,
     '-e', `RANLIB=${t}/llvm-ranlib`,
     '-e', `STRIP=${t}/llvm-strip`,
@@ -91,11 +104,12 @@ export default function run(program, params = [], platformPrefix = null, platfor
                 break;
             case 'Android':
                 [dProgram, ...dParams] = params;
-                platformParams = androidParams;
+                platformParams = arch[0] === 'x86_64' ? androidParamsX86_64 : androidParamsArm64;
                 if (dProgram === 'cmake') {
                     dParams = [
                         ...dParams,
-                        '-DCMAKE_SYSTEM_NAME=Android', '-DCMAKE_SYSTEM_VERSION=33', '-DCMAKE_ANDROID_ARCH_ABI=arm64-v8a',
+                        '-DCMAKE_SYSTEM_NAME=Android', '-DCMAKE_SYSTEM_VERSION=33',
+                        `-DCMAKE_ANDROID_ARCH_ABI=${arch[0] === 'x86_64' ? 'x86_64' : 'arm64-v8a'}`,
                         `-DCMAKE_ANDROID_NDK=${ANDROID_NDK}`,
                     ];
                 }

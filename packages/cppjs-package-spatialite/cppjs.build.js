@@ -1,6 +1,7 @@
 const platformBuild = {
     'Emscripten-x86_64': ['--enable-shared=no', '--host=x86_64-pc-linux-gnu'],
     'Android-arm64-v8a': ['--enable-static=no', '--host=aarch64-linux-android'],
+    'Android-x86_64': ['--enable-static=no', '--host=x86_64-linux-android'],
     'iOS-iphoneos': ['--enable-shared=no', '--host=arm-apple-darwin'],
     'iOS-iphonesimulator': ['--enable-shared=no', '--host=x86_64-apple-darwin'],
 };
@@ -8,12 +9,20 @@ const platformBuild = {
 const platformLibs = {
     'Emscripten-x86_64': ['-lsqlite3'],
     'Android-arm64-v8a': ['-lstdc++', '-lsqlite3', '-lm', '-ltiff', '-lgeos'],
+    'Android-x86_64': ['-lstdc++', '-lsqlite3', '-lm', '-ltiff', '-lgeos'],
     'iOS-iphoneos': ['-lstdc++', '-lsqlite3', '-lm', '-ltiff', '-lgeos'],
     'iOS-iphonesimulator': ['-lstdc++', '-lsqlite3', '-lm', '-ltiff', '-lgeos'],
 };
 
 const platformSourceReplaceList = {
     'Android-arm64-v8a': [
+        {
+            regex: ' -lpthread',
+            replacement: '',
+            paths: ['configure', 'configure.ac', 'src/Makefile.in', 'src/Makefile.am'],
+        },
+    ],
+    'Android-x86_64': [
         {
             regex: ' -lpthread',
             replacement: '',

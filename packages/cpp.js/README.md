@@ -103,4 +103,4 @@ Integrate cpp.js seamlessly into your existing projects using the appropriate pa
 ## License
 [MIT](https://github.com/bugra9/cpp.js/blob/main/LICENSE)
 
-Copyright (c) 2024, Buğra Sarı
+Copyright (c) 2023-2025, Buğra Sarı

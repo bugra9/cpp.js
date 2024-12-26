@@ -85,6 +85,7 @@ function getFilledConfig(config, options = { isDepend: false }) {
     newConfig.platform['Emscripten-x86_64-browser'] = newConfig.platform['Emscripten-x86_64-browser'] || {};
     newConfig.platform['Emscripten-x86_64-node'] = newConfig.platform['Emscripten-x86_64-node'] || {};
     newConfig.platform['Android-arm64-v8a'] = newConfig.platform['Android-arm64-v8a'] || {};
+    newConfig.platform['Android-x86_64'] = newConfig.platform['Android-x86_64'] || {};
     newConfig.platform['iOS-iphoneos'] = newConfig.platform['iOS-iphoneos'] || {};
     newConfig.platform['iOS-iphonesimulator'] = newConfig.platform['iOS-iphonesimulator'] || {};
 
