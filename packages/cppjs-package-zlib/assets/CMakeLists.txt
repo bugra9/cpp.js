@@ -169,8 +169,6 @@ endif()
 
 if(UNIX)
     # On unix-like platforms the library is almost always called libz
-    message("aaaa")
-    message("${BUILD_TYPE}")
     if (BUILD_TYPE STREQUAL "SHARED")
         set_target_properties(zlib PROPERTIES OUTPUT_NAME z)
         set_target_properties(zlibstatic PROPERTIES OUTPUT_NAME z2)

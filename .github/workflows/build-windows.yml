@@ -6,13 +6,13 @@ on:
     paths:
       - packages/**
       - .github/workflows/build-windows.yml
-  pull_request:
-    branches:
-      - main
-    paths:
-      - packages/cpp.js/**
-      - packages/cppjs-plugin-*/**
-      - .github/workflows/build-windows.yml
+#  pull_request:
+#    branches:
+#      - main
+#    paths:
+#      - packages/cpp.js/**
+#      - packages/cppjs-plugin-*/**
+#      - .github/workflows/build-windows.yml
 
 permissions: {}
 jobs:

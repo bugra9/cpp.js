@@ -6,12 +6,12 @@ on:
     paths:
       - packages/**
       - .github/workflows/build-linux.yml
-  pull_request:
-    branches:
-      - main
-    paths:
-      - packages/**
-      - .github/workflows/build-linux.yml
+#  pull_request:
+#    branches:
+#      - main
+#    paths:
+#      - packages/**
+#      - .github/workflows/build-linux.yml
 
 permissions: {}
 jobs:
@@ -25,6 +25,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
+          cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
       - name: Build for Linux

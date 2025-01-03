@@ -1,4 +1,4 @@
-package com.cppjs
+package org.js.cpp.cppjsSampleReactNativeCLI
 
 import android.app.Application
 import com.facebook.react.PackageList
