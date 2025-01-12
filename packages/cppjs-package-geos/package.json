@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-geos",
-    "version": "1.0.0-beta.22",
+    "version": "1.0.0-beta.23",
     "nativeVersion": "3.13.0",
     "description": "This package provides the precompiled GEOS library, built using Cpp.js, for seamless integration into JavaScript, WebAssembly, and React Native projects. It supports advanced geometry operations, including spatial analysis and topological calculations, delivering high performance and cross-platform compatibility. Perfect for web, server-side, and mobile geospatial applications.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-geos#readme",
@@ -12,7 +12,8 @@
         "build:wasm": "cppjs build -p WebAssembly",
         "build:android": "cppjs build -p Android",
         "build:ios": "cppjs build -p iOS",
-        "clear": "rm -rf .cppjs dist *.xcframework"
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "prepublishOnly": "cppjs build"
     },
     "devDependencies": {
         "cpp.js": "workspace:^"

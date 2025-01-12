@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/core-embind-jsi",
-    "version": "1.0.0-beta.27",
+    "version": "1.0.0-beta.28",
     "description": "The Embind JSI integration tool enables seamless C++ integration with React Native and Expo.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-core-embind-jsi#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",

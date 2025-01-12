@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/plugin-webpack-loader",
-    "version": "1.0.0-beta.9",
+    "version": "1.0.0-beta.10",
     "description": "Cpp.js Webpack loader: A tool for seamless C++ integration with the Webpack bundler.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-plugin-webpack-loader#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",

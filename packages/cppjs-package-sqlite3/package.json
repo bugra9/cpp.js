@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-sqlite3",
-    "version": "1.0.0-beta.24",
+    "version": "1.0.0-beta.25",
     "nativeVersion": "3.47.2",
     "description": "This package provides the precompiled SQLite3 database engine, built using cpp.js, for easy integration into JavaScript, WebAssembly and React Native projects. It offers powerful database capabilities, ensuring high performance and cross-platform compatibility. Ideal for use in web and mobile applications.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-sqlite3#readme",
@@ -12,7 +12,8 @@
         "build:wasm": "cppjs build -p WebAssembly",
         "build:android": "cppjs build -p Android",
         "build:ios": "cppjs build -p iOS",
-        "clear": "rm -rf .cppjs dist *.xcframework"
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "prepublishOnly": "cppjs build"
     },
     "dependencies": {
         "@cpp.js/package-zlib": "workspace:^"

@@ -1,7 +1,6 @@
-
 {
     "name": "@cpp.js/plugin-react-native-ios-helper",
-    "version": "1.0.0-beta.3",
+    "version": "1.0.0-beta.4",
     "description": "Cpp.js React Native plugin iOS helper: A tool for seamless C++ integration with React Native and Expo.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-plugin-react-native-ios-helper#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
