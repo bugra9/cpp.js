@@ -1,0 +1,27 @@
+name: build prebuilt packages in macos
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - packages/cppjs-package-*/**
+      - packages/cppjs-sample-lib-prebuilt-*/**
+      - .github/workflows/build-prebuilt-packages.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - packages/cppjs-package-*/**
+      - packages/cppjs-sample-lib-prebuilt-*/**
+      - .github/workflows/build-prebuilt-packages.yml
+
+permissions: {}
+jobs:
+  build:
+    runs-on: macOS
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build packages
+        run: pnpm --filter=@cpp.js/package-zlib run build
