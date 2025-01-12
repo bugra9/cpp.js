@@ -17,7 +17,6 @@ npm install @cpp.js/sample-lib-source
 
 To enable the library, modify the cppjs.config.js file as shown below.
 ```diff
-import getDirName from 'cpp.js/src/utils/getDirName.js';
 +import sourceSample from '@cpp.js/sample-lib-source/cppjs.config.js';
 
 export default {
@@ -25,7 +24,7 @@ export default {
 +        sourceSample
     ]
     paths: {
-        project: getDirName(import.meta.url),
+        config: import.meta.url,
     },
 };
 ```

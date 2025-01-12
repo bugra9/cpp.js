@@ -17,7 +17,6 @@ npm install @cpp.js/sample-lib-cmake
 
 To enable the library, modify the cppjs.config.js file as shown below.
 ```diff
-import getDirName from 'cpp.js/src/utils/getDirName.js';
 +import cmakeSample from '@cpp.js/sample-lib-cmake/cppjs.config.js';
 
 export default {
@@ -25,7 +24,7 @@ export default {
 +        cmakeSample
     ]
     paths: {
-        project: getDirName(import.meta.url),
+        config: import.meta.url,
     },
 };
 ```

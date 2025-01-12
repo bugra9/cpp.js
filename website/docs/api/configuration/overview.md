@@ -5,11 +5,9 @@ The configuration file is mandatory, and it must define the path to the project.
 
 A minimal configuration file would look like this:
 ```js
-import getDirName from 'cpp.js/src/utils/getDirName.js';
-
 export default {
     paths: {
-        project: getDirName(import.meta.url),
+        config: import.meta.url,
     },
 };
 ```

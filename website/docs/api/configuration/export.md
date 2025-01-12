@@ -3,15 +3,13 @@ This object includes configurations related to lib generation.
 
 Here is a minimal example:
 ```js
-import getDirName from 'cpp.js/src/utils/getDirName.js';
-
 export default {
     export: {
         type: 'cmake',
         libName: ['webp', 'sharpyuv'],
     },
     paths: {
-        project: getDirName(import.meta.url),
+        config: import.meta.url,
     },
 };
 ```

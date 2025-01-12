@@ -17,7 +17,6 @@ npm install @cpp.js/sample-lib-prebuilt-matrix
 
 To enable the library, modify the cppjs.config.js file as shown below.
 ```diff
-import getDirName from 'cpp.js/src/utils/getDirName.js';
 +import matrix from '@cpp.js/sample-lib-prebuilt-matrix/cppjs.config.js';
 
 export default {
@@ -25,7 +24,7 @@ export default {
 +        matrix
     ]
     paths: {
-        project: getDirName(import.meta.url),
+        config: import.meta.url,
     },
 };
 ```

@@ -3,14 +3,12 @@ This object specifies the file extensions for source, header, and module files.
 
 Here is a minimal example:
 ```js
-import getDirName from 'cpp.js/src/utils/getDirName.js';
-
 export default {
     ext: {
         source: ['myext' 'cpp'],
     },
     paths: {
-        project: getDirName(import.meta.url),
+        config: import.meta.url,
     },
 };
 ```

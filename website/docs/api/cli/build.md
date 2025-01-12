@@ -66,7 +66,7 @@ Here is a minimal example:
 {
     "name": "cf-worker-example",
     "scripts": {
-       "build": "cppjs build -p wasm"
+       "build": "cppjs build -p WebAssembly"
     }
 }
 ```

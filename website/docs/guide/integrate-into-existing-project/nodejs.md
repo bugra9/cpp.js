@@ -6,10 +6,10 @@ You can use cpp.js to compile native code from your project into WebAssembly. To
 {
     "name": "myapp",
     "scripts": {
-+       "build": "cppjs build -p wasm"
++       "build": "cppjs build -p WebAssembly"
     },
     "devDependencies": {
-+       "cpp.js": "^1.0.0-beta.1"
++       "cpp.js": "^1.0.0-beta.33"
     }
 }
 ```
@@ -22,11 +22,9 @@ npm install
 Cpp.js requires a configuration file to work. For a minimal setup, create a `cppjs.config.mjs` file and add the following content.
 
 ```js title="cppjs.config.mjs"
-import getDirName from 'cpp.js/src/utils/getDirName.js';
-
 export default {
     paths: {
-        project: getDirName(import.meta.url),
+        config: import.meta.url,
         output: 'dist',
     },
 };

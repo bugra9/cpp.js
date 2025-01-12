@@ -3,8 +3,6 @@ This object includes platform-specific configuration.
 
 Here is a minimal example:
 ```js
-import getDirName from 'cpp.js/src/utils/getDirName.js';
-
 export default {
     platform: {
         'Emscripten-x86_64': {
@@ -20,7 +18,7 @@ export default {
         },
     },
     paths: {
-        project: getDirName(import.meta.url),
+        config: import.meta.url,
     },
 };
 ```

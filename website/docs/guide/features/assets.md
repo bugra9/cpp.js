@@ -3,11 +3,9 @@ Native applications may require assets to function properly. Cpp.js automates th
 
 Here is a minimal config example:
 ```js title="cppjs.config.js"
-import getDirName from 'cpp.js/src/utils/getDirName.js';
-
 export default {
     paths: {
-        project: getDirName(import.meta.url),
+        config: import.meta.url,
     },
     platform: {
         'Emscripten-x86_64-browser': {

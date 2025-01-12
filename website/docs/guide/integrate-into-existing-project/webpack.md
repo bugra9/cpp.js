@@ -33,11 +33,9 @@ module.exports = {
 Cpp.js requires a configuration file to work. For a minimal setup, create a `cppjs.config.mjs` file and add the following content.
 
 ```js title="cppjs.config.mjs"
-import getDirName from 'cpp.js/src/utils/getDirName.js';
-
 export default {
     paths: {
-        project: getDirName(import.meta.url),
+        config: import.meta.url,
     },
 };
 ```

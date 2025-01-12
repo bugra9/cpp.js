@@ -65,14 +65,12 @@ const { Gdal } = await initCppJs();
 
 #### Configuration
 ```diff title="cppjs.config.js"
-import getDirName from 'cpp.js/src/utils/getDirName.js';
-
 export default {
     export: {
 +       type: 'cmake',
     },
     paths: {
-        project: getDirName(import.meta.url),
+        config: import.meta.url,
     },
 };
 ```
@@ -104,14 +102,12 @@ const { SampleBasic } = await initCppJs();
 
 #### Configuration
 ```diff title="cppjs.config.js"
-import getDirName from 'cpp.js/src/utils/getDirName.js';
-
 export default {
     export: {
 +       type: 'source',
     },
     paths: {
-        project: getDirName(import.meta.url),
+        config: import.meta.url,
     },
 };
 ```
@@ -145,14 +141,12 @@ const { SampleBasicCmake } = await initCppJs();
 
 #### Configuration
 ```diff title="cppjs.config.js"
-import getDirName from 'cpp.js/src/utils/getDirName.js';
-
 export default {
     export: {
 +       type: 'cmake',
     },
     paths: {
-        project: getDirName(import.meta.url),
+        config: import.meta.url,
     },
 };
 ```

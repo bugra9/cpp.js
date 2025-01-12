@@ -24,7 +24,6 @@ A JavaScript file can import a module from the Cpp.js package it depends on.
 
 Here is a minimal example:
 ```js title="cppjs.config.js"
-import getDirName from 'cpp.js/src/utils/getDirName.js';
 import gdal3js from 'gdal3.js/cppjs.config.js';
 
 export default {
@@ -32,7 +31,7 @@ export default {
         gdal3js,
     ]
     paths: {
-        project: getDirName(import.meta.url),
+        config: import.meta.url,
     },
 };
 ```
