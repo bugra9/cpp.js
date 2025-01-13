@@ -1,141 +1,175 @@
 import Link from '@docusaurus/Link';
+import CodeBlock from '@theme/CodeBlock';
 
-## High Performance Execution
-Cpp.js is engineered to provide high execution speeds, optimizing performance for applications. By compiling C++ code into WebAssembly for the web and native machine code for mobile, it ensures maximum efficiency and performance.
+## Features
 
-<div class="grid-[6px] mx-auto flex w-full max-w-[640px] flex-col mt-12">
-    <div class="flex w-full flex-row items-center justify-start">
-        <p class="w-[100px] m-0 text-start text-lg font-light">Cpp.js</p>
-        <div class="w-[15px]"></div>
-        <div class="h-[32px] flex-1  items-center py-[6px]">
-            <div class="h-full overflow-hidden rounded-[3px]" style={{width:'14.81%'}}>
-                <div class="loaderbar h-full bg-[#77bb27]"
-                    style={{width: 'auto', animationDuration: '0.3605s', animationTimingFunction: 'linear', animationDelay: '0s', transformOrigin: 'left center 0px', animationName: 'loaderbar'}}>
+<br />
+<div class="flex gap-20 flex-wrap">
+    <div class="flex-1 min-w-[28rem] bg-[#f6f8fa] border rounded-lg shadow dark:bg-[#282a36]">
+        <div class="p-10">
+            <h5 class="mb-8 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Inter-Process Communication</h5>
+            <p class="font-normal text-gray-700 dark:text-gray-300">
+                Write your frontend in JavaScript and power it with C++ logic. Cpp.js empowers developers to bridge the gap between these two worlds seamlessly and efficiently.
+
+                Cpp.js supports binding for most C++ constructs, including features from C++11 and C++14.
+                - **Classes:** Constructors, member functions, inheritance, polymorphism, and interfaces
+                - **Functions:** Function calls and overloading
+                - **Data Types:** Primitive types, vectors, maps, enums, and class objects
+            </p>
+        </div>
+    </div>
+    <div class="flex-1 min-w-[28rem] bg-[#f6f8fa] border rounded-lg shadow dark:bg-[#282a36]">
+        <div class="p-10">
+            <h5 class="mb-8 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Cross Platform</h5>
+            <p class="font-normal text-gray-700 dark:text-gray-300">
+                C++ and JavaScript can run on any platform. Cpp.js compiles your C++ code to the relevant platforms, ensuring it runs seamlessly on the web, Android, and iOS.
+                - **WebAssembly:** Chrome, Firefox, Safari, Node.js, Cloudflare Workers
+                - **Android**: Android arm64 and x86_64
+                - **iOS**: iOS arm64 and arm64e for iPhone and iPhone simulator
+            </p>
+            <div className="flex gap-8 mt-12 flex-wrap">
+                <div className="flex gap-3 w-42">
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/Chrome.svg" title="Google Chrome" alt="Google Chrome" />
+                    </div>
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/Firefox.svg" title="Mozilla Firefox" alt="Mozilla Firefox" />
+                    </div>
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/AppleSafari.svg" title="Apple Safari" alt="Apple Safari" />
+                    </div>
+                </div>
+                <div className="flex gap-3 w-42">
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/React.svg" title="React Native" alt="React Native" />
+                    </div>
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/Android.svg" title="Android (React Native)" alt="Android (React Native)" />
+                    </div>
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/Apple.svg" title="iOS (React Native)" alt="iOS (React Native)" />
+                    </div>
+                </div>
+                <div className="flex gap-3 w-27">
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/Node.js.svg" title="Node.js" alt="Node.js" />
+                    </div>
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/CloudflareWorkers.svg" title="Cloudflare Workers" alt="Cloudflare Workers" />
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="w-[15px]"></div>
-        <div class="counter mono w-[50px] text-start text-xs" counter-max="360.5">0.872s</div>
     </div>
-    <div class="flex w-full flex-row items-center justify-start">
-        <p class="w-[100px] m-0 text-start text-lg font-light">JavaScript</p>
-        <div class="w-[15px]"></div>
-        <div class="h-[32px] flex-1  items-center py-[6px]">
-            <div class="h-full overflow-hidden rounded-[3px]" style={{width:'100%'}}>
-                <div class="absolute z-[2] px-[5px] text-[13px] leading-[20px]"><em>6.75x <span
-                            class="hidden md:inline">slower</span></em></div>
-                <div class="loaderbar h-full bg-[var(--ifm-border-color)]"
-                    style={{width: 'auto', animationDuration: '6.44s', animationTimingFunction: 'linear', animationDelay: '0s', transformOrigin: 'left center 0px', animationName: 'loaderbar'}}>
+    <div class="flex-1 min-w-[28rem] bg-[#f6f8fa] border rounded-lg shadow dark:bg-[#282a36]">
+        <div class="p-10">
+            <h5 class="mb-8 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Prebuilt Libraries</h5>
+            <p class="font-normal text-gray-700 dark:text-gray-300">
+                Cpp.js offers a range of precompiled libraries, enabling effortless integration into your projects without the need for manual compilation. These libraries streamline the development process, allowing you to focus on building high-performance applications.
+
+                Additionally, users can create and distribute their own precompiled libraries, further enhancing flexibility and collaboration within the developer community.
+            </p>
+            <div class="flex justify-center mt-12">
+                <Link
+                    className="simple-button border border-solid no-underline hover:no-underline font-bold py-3 px-8 rounded"
+                    to="/showcase">Explore Prebuilt Libraries</Link>
+            </div>
+        </div>
+    </div>
+    <div class="flex-1 min-w-[28rem] bg-[#f6f8fa] border rounded-lg shadow dark:bg-[#282a36]">
+        <div class="p-10">
+            <h5 class="mb-8 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Compile Existing Projects</h5>
+            <p class="font-normal text-gray-700 dark:text-gray-300">
+                Cpp.js can build projects that use CMake or configure and package them into a Cpp.js package. Below is a configuration for building the TIFF library:
+                <CodeBlock language="js"title="cppjs.build.js" showLineNumbers>
+{`export default {
+    getURL: (version) => \`https://download.osgeo.org/libtiff/tiff-\${version}.tar.gz\`,
+    buildType: 'cmake',
+    getBuildParams: () => [
+        '-Dtiff-tools=OFF', '-Dtiff-tests=OFF', '-Dtiff-contrib=OFF',
+        '-Dtiff-docs=OFF', '-Dld-version-script=OFF',
+    ],
+};`}
+                </CodeBlock>
+            </p>
+        </div>
+    </div>
+    <div class="flex-1 min-w-[28rem] bg-[#f6f8fa] border rounded-lg shadow dark:bg-[#282a36]">
+        <div class="p-10">
+            <h5 class="mb-8 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">High Performance Execution</h5>
+            <p class="font-normal text-gray-700 dark:text-gray-300">
+                Cpp.js is engineered to provide high execution speeds, optimizing performance for applications. By compiling C++ code into WebAssembly for the web and native machine code for mobile, it ensures maximum efficiency and performance.
+            </p>
+            <div class="grid-[6px] mx-auto flex w-full max-w-[640px] flex-col mt-12">
+                <div class="flex w-full flex-row items-center justify-start">
+                    <p class="w-[100px] m-0 text-start text-lg font-light">Cpp.js</p>
+                    <div class="w-[15px]"></div>
+                    <div class="h-[32px] flex-1  items-center py-[6px]">
+                        <div class="h-full overflow-hidden rounded-[3px]" style={{width:'14.81%'}}>
+                            <div class="loaderbar h-full bg-[#77bb27]"
+                                style={{width: 'auto', animationDuration: '0.3605s', animationTimingFunction: 'linear', animationDelay: '0s', transformOrigin: 'left center 0px', animationName: 'loaderbar'}}>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-[15px]"></div>
+                    <div class="counter mono w-[50px] text-start text-xs" counter-max="360.5">0.872s</div>
+                </div>
+                <div class="flex w-full flex-row items-center justify-start">
+                    <p class="w-[100px] m-0 text-start text-lg font-light">JavaScript</p>
+                    <div class="w-[15px]"></div>
+                    <div class="h-[32px] flex-1  items-center py-[6px]">
+                        <div class="h-full overflow-hidden rounded-[3px]" style={{width:'100%'}}>
+                            <div class="absolute z-[2] px-[5px] text-[13px] leading-[20px]"><em>6.75x <span
+                                        class="hidden md:inline">slower</span></em></div>
+                            <div class="loaderbar h-full bg-[var(--ifm-border-color)]"
+                                style={{width: 'auto', animationDuration: '6.44s', animationTimingFunction: 'linear', animationDelay: '0s', transformOrigin: 'left center 0px', animationName: 'loaderbar'}}>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-[15px]"></div>
+                    <div class="counter mono w-[50px] text-start text-xs" counter-max="6440">5.886s</div>
                 </div>
             </div>
         </div>
-        <div class="w-[15px]"></div>
-        <div class="counter mono w-[50px] text-start text-xs" counter-max="6440">5.886s</div>
     </div>
-</div>
-
-## Prebuilt Libraries
-Cpp.js offers a range of precompiled libraries, enabling effortless integration into your projects without the need for manual compilation. These libraries streamline the development process, allowing you to focus on building high-performance applications.
-
-Additionally, users can create and distribute their own precompiled libraries, further enhancing flexibility and collaboration within the developer community.
-
-<div class="flex justify-center mt-12">
-<Link
-    className="simple-button border border-solid no-underline hover:no-underline font-bold py-3 px-8 rounded"
-    to="/showcase">Explore Prebuilt Libraries</Link>
-</div>
-
-## Multi-Platform
-Develop applications for Web, Mobile, and Backend using a single codebase with C++ and JavaScript.
-
-Supports Google Chrome, Mozilla Firefox, Apple Safari, React Native, Android, iOS, Node.js, and Cloudflare Workers.
-
-<div className="flex gap-16 mt-16 flex-wrap">
-    <div className="flex gap-4 w-56">
-        <div className="h-16 w-16">
-            <img src="/img/platforms/Chrome.svg" title="Google Chrome" alt="Google Chrome" />
+    <div class="flex-1 min-w-[28rem] bg-[#f6f8fa] border rounded-lg shadow dark:bg-[#282a36]">
+        <div class="p-10">
+            <h5 class="mb-8 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Bundler Integration</h5>
+            <p class="font-normal text-gray-700 dark:text-gray-300">
+                Cpp.js integrates seamlessly with popular JavaScript bundlers to streamline the development process.
+                
+                Supports Webpack, Rollup, Vite, Rspack, Create React App (CRA), React Native, Metro, Gradle, Cocoapods.
+            </p>
+            <div className="flex gap-12 mt-12 flex-wrap">
+                <div className="flex gap-3 w-57">
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/Webpack.svg" title="Webpack" alt="Webpack" />
+                    </div>
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/Rollup.js.svg" title="Rollup" alt="Rollup" />
+                    </div>
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/Vite.js.svg" title="Vite" alt="Vite" />
+                    </div>
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/Rspack.svg" title="Rspack" alt="Rspack" />
+                    </div>
+                </div>
+                <div className="flex gap-3 w-57">
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/React.svg" title="React Native" alt="React Native" />
+                    </div>
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/Metro.svg" title="Metro" alt="Metro" />
+                    </div>
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/Gradle.svg" title="Gradle" alt="Gradle" />
+                    </div>
+                    <div className="h-12 w-12">
+                        <img src="/img/platforms/Cocoapods.png" title="Cocoapods" alt="Cocoapods" />
+                    </div>
+                </div>
+            </div>
         </div>
-        <div className="h-16 w-16">
-            <img src="/img/platforms/Firefox.svg" title="Mozilla Firefox" alt="Mozilla Firefox" />
-        </div>
-        <div className="h-16 w-16">
-            <img src="/img/platforms/AppleSafari.svg" title="Apple Safari" alt="Apple Safari" />
-        </div>
-    </div>
-    <div className="flex gap-4 w-56">
-        <div className="h-16 w-16">
-            <img src="/img/platforms/React.svg" title="React Native" alt="React Native" />
-        </div>
-        <div className="h-16 w-16">
-            <img src="/img/platforms/Android.svg" title="Android (React Native)" alt="Android (React Native)" />
-        </div>
-        <div className="h-16 w-16">
-            <img src="/img/platforms/Apple.svg" title="iOS (React Native)" alt="iOS (React Native)" />
-        </div>
-    </div>
-    <div className="flex gap-4 w-36">
-        <div className="h-16 w-16">
-            <img src="/img/platforms/Node.js.svg" title="Node.js" alt="Node.js" />
-        </div>
-        <div className="h-16 w-16">
-            <img src="/img/platforms/CloudflareWorkers.svg" title="Cloudflare Workers" alt="Cloudflare Workers" />
-        </div>
-    </div>
-</div>
-
-## Seamless Integration
-Seamless integration with plugins designed for a wide range of bundlers.
-
-Supports Webpack, Rollup, Vite, Rspack, Create React App (CRA), React Native, Metro, Gradle, Cocoapods.
-
-<div className="flex gap-16 mt-16 flex-wrap">
-    <div className="flex gap-4 w-76">
-        <div className="h-16 w-16">
-            <img src="/img/platforms/Webpack.svg" title="Webpack" alt="Webpack" />
-        </div>
-        <div className="h-16 w-16">
-            <img src="/img/platforms/Rollup.js.svg" title="Rollup" alt="Rollup" />
-        </div>
-        <div className="h-16 w-16">
-            <img src="/img/platforms/Vite.js.svg" title="Vite" alt="Vite" />
-        </div>
-        <div className="h-16 w-16">
-            <img src="/img/platforms/Rspack.svg" title="Rspack" alt="Rspack" />
-        </div>
-    </div>
-    <div className="flex gap-4 w-76">
-        <div className="h-16 w-16">
-            <img src="/img/platforms/React.svg" title="React Native" alt="React Native" />
-        </div>
-        <div className="h-16 w-16">
-            <img src="/img/platforms/Metro.svg" title="Metro" alt="Metro" />
-        </div>
-        <div className="h-16 w-16">
-            <img src="/img/platforms/Gradle.svg" title="Gradle" alt="Gradle" />
-        </div>
-        <div className="h-16 w-16">
-            <img src="/img/platforms/Cocoapods.png" title="Cocoapods" alt="Cocoapods" />
-        </div>
-    </div>
-</div>
-
-## Widespread Adoption of WebAssembly
-Many companies are rapidly adopting WebAssembly to enhance performance and expand their web capabilities. Some notable examples of successful implementations include:
-
-<div className="flex flex-wrap">
-    <div className="flex-1">
-        - [Figma](https://www.figma.com/blog/webassembly-cut-figmas-load-time-by-3x/)
-        - [Adobe Photoshop](https://medium.com/@addyosmani/photoshop-is-now-on-the-web-38d70954365a)
-        - [AutoCAD](https://www.autodesk.com/blogs/autocad/autocad-web-app-google-io-2018)
-    </div>
-    <div className="flex-1">
-        - [Unity](https://blog.unity.com/technology/webassembly-is-here)
-        - [WordPress](https://playground.wordpress.net/)
-        - [Google Earth](https://blog.chromium.org/2019/06/webassembly-brings-google-earth-to-more.html)
-    </div>
-    <div className="flex-1">
-        - [Zoom](https://www.infoq.com/news/2020/08/zoom-web-chrome-apis/)
-        - [TensorFlow.js](https://blog.tensorflow.org/2020/09/supercharging-tensorflowjs-webassembly.html)
-        - [Docker](https://www.docker.com/blog/docker-wasm-technical-preview/)
     </div>
 </div>
