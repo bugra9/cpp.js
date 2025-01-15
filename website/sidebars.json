@@ -77,8 +77,8 @@
             "items": [
                 "api/cli/overview",
                 "api/cli/build",
-                "api/cli/run",
-                "api/cli/postinstall"
+                "api/cli/docker",
+                "api/cli/config"
             ]
         }
     ],
@@ -116,6 +116,84 @@
                 "contribute/package/overview",
                 "contribute/package/writing-a-package",
                 "contribute/package/maintaining-a-package"
+            ]
+        }
+    ],
+    "package": [
+        {
+            "type": "category",
+            "label": "Package",
+            "items": [
+                "package/package/showcase",
+                "package/package/cppjs-package-gdal",
+                "package/package/cppjs-package-proj",
+                "package/package/cppjs-package-spatialite",
+                "package/package/cppjs-package-geos",
+                "package/package/cppjs-package-sqlite3",
+                "package/package/cppjs-package-iconv",
+                "package/package/cppjs-package-zlib",
+                "package/package/cppjs-package-geotiff",
+                "package/package/cppjs-package-tiff",
+                "package/package/cppjs-package-webp",
+                "package/package/cppjs-package-expat"
+            ]
+        }
+    ],
+    "changelog": [
+        {
+            "type": "category",
+            "label": "Core",
+            "items": [
+                "changelog/core/cppjs",
+                "changelog/core/cppjs-core-create-app",
+                "changelog/core/cppjs-core-embind-jsi"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "Plugins",
+            "items": [
+                "changelog/plugins/cppjs-plugin-metro",
+                "changelog/plugins/cppjs-plugin-react-native-ios-helper",
+                "changelog/plugins/cppjs-plugin-react-native",
+                "changelog/plugins/cppjs-plugin-rollup",
+                "changelog/plugins/cppjs-plugin-vite",
+                "changelog/plugins/cppjs-plugin-webpack-loader",
+                "changelog/plugins/cppjs-plugin-webpack"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "Packages",
+            "items": [
+                "changelog/packages/cppjs-package-expat",
+                "changelog/packages/cppjs-package-gdal",
+                "changelog/packages/cppjs-package-geos",
+                "changelog/packages/cppjs-package-geotiff",
+                "changelog/packages/cppjs-package-iconv",
+                "changelog/packages/cppjs-package-proj",
+                "changelog/packages/cppjs-package-spatialite",
+                "changelog/packages/cppjs-package-sqlite3",
+                "changelog/packages/cppjs-package-tiff",
+                "changelog/packages/cppjs-package-webp",
+                "changelog/packages/cppjs-package-zlib"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "Samples",
+            "items": [
+                "changelog/samples/cppjs-sample-backend-nodejs-wasm",
+                "changelog/samples/cppjs-sample-cloud-cloudflare-worker",
+                "changelog/samples/cppjs-sample-lib-cmake",
+                "changelog/samples/cppjs-sample-lib-prebuilt-matrix",
+                "changelog/samples/cppjs-sample-lib-source",
+                "changelog/samples/cppjs-sample-mobile-reactnative-cli",
+                "changelog/samples/cppjs-sample-web-react-rspack",
+                "changelog/samples/cppjs-sample-web-react-vite",
+                "changelog/samples/cppjs-sample-web-svelte-vite",
+                "changelog/samples/cppjs-sample-web-vanilla",
+                "changelog/samples/cppjs-sample-web-vue-vite"
             ]
         }
     ]

@@ -44,8 +44,8 @@ std::string Native::sample() {
 
 ### Usage in JavaScript Code (web, with plugin)
 ```js
-import { initCppJs } '@cpp.js/sample-lib-source/cppjs-lib-samplebasic/samplebasic.h';
+import { initCppJs, SampleBasic } from '@cpp.js/sample-lib-source/cppjs-lib-samplebasic/samplebasic.h';
 
-const { SampleBasic } = await initCppJs();
+await initCppJs();
 console.log(SampleBasic.sample());
 ```

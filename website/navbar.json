@@ -11,8 +11,14 @@
     },
     {
         "label": "Showcase & Packages",
-        "to": "/showcase",
-        "position": "left"
+        "type": "doc",
+        "docId": "package/package/showcase"
+    },
+    {
+        "label": "Releases",
+        "type": "doc",
+        "docId": "changelog/core/cppjs",
+        "position": "right"
     },
     {
         "label": "GitHub",

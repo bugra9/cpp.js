@@ -37,25 +37,19 @@ export default {
 ```
 
 ```js title="src/index.js"
-import { initCppJs } 'gdal3.js/Gdal.h';
+import { initCppJs } from 'gdal3.js/Gdal.h';
 ```
 
-In prebuilt Cpp.js packages, header files are located in the `dist/prebuilt/PLATFORM_NAME/include` directory, and SWIG module files can be found in the `dist/prebuilt/PLATFORM_NAME/swig` directory. To resolve these files correctly, integration via a hook is required.
+To resolve packages files correctly, integration via a hook is required.
 
 Here is a minimal example:
 ```js title="@cpp.js/plugin-rollup/index.js"
 
-import CppjsCompiler from 'cpp.js';
+import { state, createLib, createBridgeFile, buildWasm, getCppJsScript, getDependFilePath } from 'cpp.js';
 import fs from 'node:fs';
 import p from 'node:path';
 
-const platform = 'Emscripten-x86_64';
-const rollupCppjsPlugin = (options, _compiler) => {
-    const compiler = _compiler || new CppjsCompiler();
-    const headerRegex = new RegExp(`\\.(${compiler.config.ext.header.join('|')})$`);
-    const moduleRegex = new RegExp(`\\.(${compiler.config.ext.module.join('|')})$`);
-    const dependPackageNames = compiler.config.getAllDependencies();
-
+const rollupCppjsPlugin = (options, bridges = []) => {
     return {
         name: 'rollup-plugin-cppjs',
         resolveId(source) {
@@ -66,19 +60,11 @@ const rollupCppjsPlugin = (options, _compiler) => {
                 return { id: source, external: false };
             }
 
-            const dependPackage = dependPackageNames.find((d) => source.startsWith(d.package.name));
-            if (dependPackage) {
-                const filePath = source.substring(dependPackage.package.name.length + 1);
-
-                let path = `${dependPackage.paths.output}/prebuilt/${platform}/${filePath}`;
-                if (headerRegex.test(source)) {
-                    path = `${dependPackage.paths.output}/prebuilt/${platform}/include/${filePath}`;
-                } else if (moduleRegex.test(source)) {
-                    path = `${dependPackage.paths.output}/prebuilt/${platform}/swig/${filePath}`;
-                }
-
-                return path;
+            const dependFilePath = getDependFilePath(source, 'Emscripten-x86_64');
+            if (dependFilePath) {
+                return dependFilePath;
             }
+
             return null;
         },
     };
@@ -87,17 +73,14 @@ const rollupCppjsPlugin = (options, _compiler) => {
 export default rollupCppjsPlugin;
 ```
 
-### Create or Locate SWIG Module Files
-The `findOrCreateInterfaceFile` function in Cpp.js generates a simple SWIG module file for the imported header and registers it with the system. If a SWIG module file is imported instead of a header, it is registered with the system directly.
-
-To execute these processes, the `findOrCreateInterfaceFile` function must be called for both the imported headers and SWIG modules.
+### Create Bridge Files and Return Cpp.js Script
+The `createBridgeFile` function in Cpp.js generates a bridge file for the imported header and returns the bridge file path.
 
 Here is a minimal example:
 ```diff title="@cpp.js/plugin-rollup/index.js"
-const rollupCppjsPlugin = (options, _compiler) => {
-    const compiler = _compiler || new CppjsCompiler();
-    const headerRegex = new RegExp(`\\.(${compiler.config.ext.header.join('|')})$`);
-    const moduleRegex = new RegExp(`\\.(${compiler.config.ext.module.join('|')})$`);
+const rollupCppjsPlugin = (options, bridges = []) => {
++   const headerRegex = new RegExp(`\\.(${state.config.ext.header.join('|')})$`);
++   const moduleRegex = new RegExp(`\\.(${state.config.ext.module.join('|')})$`);
 
     return {
         name: 'rollup-plugin-cppjs',
@@ -107,17 +90,23 @@ const rollupCppjsPlugin = (options, _compiler) => {
 +               return null;
 +           }
 +
-+           compiler.findOrCreateInterfaceFile(path);
-+           return CppJs;
++           const bridgeFile = createBridgeFile(path);
++           bridges.push(bridgeFile);
++
++           return getCppJsScript('Emscripten-x86_64', bridgeFile);
++       },
++       load(id) {
++           if (id === 'cpp.js') {
++               return getCppJsScript('Emscripten-x86_64');
++           }
++           return null;
 +       }
     };
 };
 ```
 
-### Create Bridge and Compile
-To create a C++ bridge from the registered SWIG module files, use the `createBridge` function.
-
-For web projects, the code is compiled to WebAssembly using the `createWasm` function. As a result of the compilation, the following files are generated in the `temp` directory:
+### Compile
+For web projects, the code is compiled to WebAssembly using `createLib` and `buildWasm` function. As a result of the compilation, the following files are generated in the `temp` directory:
 
 - `NAME.browser.js`
 - `NAME.wasm`
@@ -127,27 +116,27 @@ These files should then be moved to the appropriate location to complete the bui
 
 Here is a minimal example:
 ```diff title="@cpp.js/plugin-rollup/index.js"
-const rollupCppjsPlugin = (options, _compiler) => {
-    const compiler = _compiler || new CppjsCompiler();
-
+const rollupCppjsPlugin = (options, bridges = []) => {
     return {
         name: 'rollup-plugin-cppjs',
         resolveId(source) {},
         async transform(code, path) {},
 +       async generateBundle() {
-+           compiler.createBridge();
-+           await compiler.createWasm({ cc: ['-O3'] });
++           createLib('Emscripten-x86_64', 'Source', { isProd: true, buildSource: true });
++           createLib('Emscripten-x86_64', 'Bridge', { isProd: true, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
++           await buildWasm('browser', true);
++           await buildWasm('node', true);
 +           this.emitFile({
 +               type: 'asset',
-+               source: fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.browser.js`),
++               source: fs.readFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`),
 +               fileName: 'cpp.js',
 +           });
 +           this.emitFile({
 +               type: 'asset',
-+               source: fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`),
++               source: fs.readFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`),
 +               fileName: 'cpp.wasm',
 +           });
-+           const dataFilePath = `${compiler.config.paths.temp}/${compiler.config.general.name}.data.txt`;
++           const dataFilePath = `${state.config.paths.build}/${state.config.general.name}.data.txt`;
 +           if (fs.existsSync(dataFilePath)) {
 +               this.emitFile({
 +                   type: 'asset',
@@ -155,55 +144,6 @@ const rollupCppjsPlugin = (options, _compiler) => {
 +                   fileName: 'cpp.data.txt',
 +               });
 +           }
-+           const isWatching = process.argv.includes('-w') || process.argv.includes('--watch');
-+           if (!isWatching) {
-+               fs.rmSync(compiler.config.paths.temp, { recursive: true, force: true });
-+           }
-+       },
-    };
-};
-```
-
-### Encapsulate the Output
-To transmit the configuration, encapsulate the output.
-
-Here is a minimal example:
-```diff title="@cpp.js/plugin-rollup/index.js"
-const rollupCppjsPlugin = (options, _compiler) => {
-    const compiler = _compiler || new CppjsCompiler();
-+   const env = JSON.stringify(compiler.getData('env'));
-
-+   const params = `{
-+       ...config,
-+       env: {...${env}, ...config.env},
-+       paths: {
-+           wasm: 'cpp.wasm',
-+           data: 'cpp.data.txt'
-+       }
-+   }`;
-+
-+   const CppJs = `
-+       export let Native = {};
-+       export function initCppJs(config = {}) {
-+           return new Promise(
-+               (resolve, reject) => import('/cpp.js').then(n => { return window.CppJs.initCppJs(${params})}).then(m => {
-+                   Native = m;
-+                   resolve(m);
-+               })
-+           );
-+       }
-+   `;
-
-    return {
-        name: 'rollup-plugin-cppjs',
-        resolveId(source) {},
-        async transform(code, path) {},
-        async generateBundle() {},
-+       load(id) {
-+           if (id === 'cpp.js') {
-+               return CppJs;
-+           }
-+           return null;
 +       },
     };
 };
@@ -213,7 +153,7 @@ const rollupCppjsPlugin = (options, _compiler) => {
 To ensure Cpp.js operates correctly in the development server environment, follow these steps:
 
 - **Allow Access to Cpp.js Temp Path:**
-  Make sure the development server configuration permits access to the directory where Cpp.js stores its temporary files, typically generated by the `createWasm` function.
+  Make sure the development server configuration permits access to the directory where Cpp.js stores its temporary files, typically generated by the `buildWasm` function.
 
 - **Serve JavaScript Files:**
   Configure your server to compile and return the `NAME.browser.js` file from the temp path when a request is made to the `/cpp.js` endpoint. This can be achieved using server-specific routing or middleware.
@@ -223,38 +163,39 @@ To ensure Cpp.js operates correctly in the development server environment, follo
 
 Here is a minimal example:
 ```js title="@cpp.js/plugin-vite/index.js"
-import CppjsCompiler from 'cpp.js';
+import { state, createLib, createBridgeFile, buildWasm } from 'cpp.js';
 import rollupCppjsPlugin from '@cpp.js/plugin-rollup';
 import fs from 'node:fs';
 
-const viteCppjsPlugin = (options, _compiler) => {
+const viteCppjsPlugin = (options) => {
     let isServe = false;
-    const compiler = _compiler || new CppjsCompiler();
-    const headerRegex = new RegExp(`\\.(${compiler.config.ext.header.join('|')})$`);
-    const sourceRegex = new RegExp(`\\.(${compiler.config.ext.source.join('|')})$`);
+    const bridges = [];
+    const headerRegex = new RegExp(`\\.(${state.config.ext.header.join('|')})$`);
+    const sourceRegex = new RegExp(`\\.(${state.config.ext.source.join('|')})$`);
 
     return [
-        rollupCppjsPlugin(options, compiler),
+        rollupCppjsPlugin(options, bridges),
         {
             name: 'vite-plugin-cppjs',
             async load(source) {
                 if (isServe && source === '/cpp.js') {
-                    compiler.createBridge();
-                    await compiler.createWasm();
-                    return fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.browser.js`, { encoding: 'utf8', flag: 'r' });
+                    createLib('Emscripten-x86_64', 'Source', { isProd: false, buildSource: true });
+                    createLib('Emscripten-x86_64', 'Bridge', { isProd: false, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
+                    await buildWasm('browser', false);
+                    return fs.readFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, { encoding: 'utf8', flag: 'r' });
                 }
                 return null;
             },
             configResolved(config) {
                 isServe = config.command === 'serve';
                 if (isServe) {
-                    config.server.fs.allow.push(compiler.config.paths.temp);
+                    config.server.fs.allow.push(state.config.paths.build);
                 }
             },
             configureServer(server) {
                 if (isServe) {
                     server.middlewares.use((req, res, next) => {
-                        if (req.url === '/cpp.wasm') req.url = `/@fs${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`;
+                        if (req.url === '/cpp.wasm') req.url = `/@fs/${state.config.paths.build}/${state.config.general.name}.wasm`;
                         next();
                     });
                 }
@@ -267,32 +208,36 @@ export default viteCppjsPlugin;
 ```
 
 ### Hot Module Replacement (HMR)
-Enable HMR by watching native file changes, recompiling with `createWasm`, and using WebSockets to refresh updates.
+Enable HMR by watching native file changes, recompiling with `createLib` and `buildWasm`, and using WebSockets to refresh updates.
 
 Here is a minimal example:
 ```diff title="@cpp.js/plugin-vite/index.js"
-const viteCppjsPlugin = (options, _compiler) => {
+const viteCppjsPlugin = (options) => {
     let isServe = false;
-    const compiler = _compiler || new CppjsCompiler();
-    const headerRegex = new RegExp(`\\.(${compiler.config.ext.header.join('|')})$`);
-    const sourceRegex = new RegExp(`\\.(${compiler.config.ext.source.join('|')})$`);
+    const bridges = [];
+    const headerRegex = new RegExp(`\\.(${state.config.ext.header.join('|')})$`);
+    const sourceRegex = new RegExp(`\\.(${state.config.ext.source.join('|')})$`);
 
     return [
-        rollupCppjsPlugin(options, compiler),
+        rollupCppjsPlugin(options, bridges),
         {
             name: 'vite-plugin-cppjs',
             async load(source) {},
             configResolved(config) {},
             configureServer(server) {},
 +           async handleHotUpdate({ file, server }) {
-+               if (file.startsWith(compiler.config.paths.temp)) {
++               if (file.startsWith(state.config.paths.build)) {
 +                   return;
 +               }
 +               if (headerRegex.test(file)) {
-+                   compiler.findOrCreateInterfaceFile(file);
-+                   compiler.createBridge();
++                   const bridgeFile = createBridgeFile(file);
++                   bridges.push(bridgeFile);
++                   createLib('Emscripten-x86_64', 'Bridge', { isProd: false, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
++                   await buildWasm('browser', true);
++                   server.ws.send({ type: 'full-reload' });
 +               } else if (sourceRegex.test(file)) {
-+                   await compiler.createWasm();
++                   createLib('Emscripten-x86_64', 'Source', { isProd: false, buildSource: true, bypassCmake: true });
++                   await buildWasm('browser', false);
 +                   server.ws.send({ type: 'full-reload' });
 +               }
 +           },

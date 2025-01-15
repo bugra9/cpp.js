@@ -47,9 +47,9 @@ std::string Native::sample() {
 
 ### Usage in JavaScript Code (web, with plugin)
 ```js
-import { initCppJs } '@cpp.js/sample-lib-prebuilt-matrix/Matrix.h';
+import { initCppJs, Matrix } from '@cpp.js/sample-lib-prebuilt-matrix/Matrix.h';
 
-const { Matrix } = await initCppJs();
+await initCppJs();
 const a = new Matrix(1210000, 1);
 const b = new Matrix(1210000, 2);
 const result = a.multiple(b);

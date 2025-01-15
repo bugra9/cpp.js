@@ -9,58 +9,74 @@ Import the necessary header file directly from the package. Header files can be 
 
 Here is a minimal example:
 ```js title="JavaScript"
-import { initCppJs } '@cpp.js/package-gdal/gdal.h';
+import { initCppJs, Gdal } from '@cpp.js/package-gdal/gdal.h';
 
-const { Gdal } = await initCppJs();
+await initCppJs();
 ```
+
+#### Build
+Cpp.js can compile external projects using CMake and configure. To set up the build process for an external project, you can create a cppjs.build.js file in your project’s home directory to configure the build process. Once configured, use the cppjs build command to compile the project.
+
+Here are some examples of how cppjs.build.js files are structured for different projects:
+
+- [@cpp.js/package-zlib/cppjs.build.js](https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-package-zlib/cppjs.build.js)
+- [@cpp.js/package-webp/cppjs.build.js](https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-package-webp/cppjs.build.js)
+- [@cpp.js/package-gdal/cppjs.build.js](https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-package-gdal/cppjs.build.js)
+- [@cpp.js/package-spatialite/cppjs.build.js](https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-package-spatialite/cppjs.build.js)
 
 #### Package Structure
 ```
-└── dist
-    ├── mylib.wasm
-    ├── mylib.browser.js
-    ├── mylib.node.js
-    └── prebuilt
-        ├── Android-arm64-v8a
-        │   ├── include
-        │   │   └── ...
-        │   └── lib
-        │       └── mylib.so
-        │
-        ├── Emscripten-x86_64
-        │   ├── include
-        │   │   └── ...
-        │   └── lib
-        │       └── mylib.a
-        │
-        ├── iOS-iphoneos
-        │   ├── include
-        │   │   └── ...
-        │   └── lib
-        │       └── mylib.a
-        │
-        ├── iOS-iphonesimulator
-        │   ├── include
-        │   │   └── ...
-        │   └── lib
-        │       └── mylib.a
-        │
-        ├── mylib.xcframework
-        │   ├── ios-arm64_arm64e
-        │   │   ├── Headers
-        │   │   │   └── ...
-        │   │   └── mylib.a
-        │   │
-        │   ├── ios-arm64_arm64e_x86_64-simulator
-        │   │   ├── Headers
-        │   │   │   └── ...
-        │   │   └── mylib.a
-        │   │
-        │   └── Info.plist
-        │
-        ├── mylib.xcframework.zip
-        └── CMakeLists.txt
-
+├── dist
+│   ├── mylib.wasm
+│   ├── mylib.browser.js
+│   ├── mylib.node.js
+│   └── prebuilt
+│       ├── Android-arm64-v8a
+│       │   ├── include
+│       │   │   └── ...
+│       │   └── lib
+│       │       └── mylib.so
+│       │
+│       ├── Android-x86_64
+│       │   ├── include
+│       │   │   └── ...
+│       │   └── lib
+│       │       └── mylib.so
+│       │
+│       ├── Emscripten-x86_64
+│       │   ├── include
+│       │   │   └── ...
+│       │   └── lib
+│       │       └── mylib.a
+│       │
+│       ├── iOS-iphoneos
+│       │   ├── include
+│       │   │   └── ...
+│       │   └── lib
+│       │       └── mylib.a
+│       │
+│       ├── iOS-iphonesimulator
+│       │   ├── include
+│       │   │   └── ...
+│       │   └── lib
+│       │       └── mylib.a
+│       │
+│       ├── mylib.xcframework.zip
+│       └── CMakeLists.txt
+|
+└── mylib.xcframework
+    ├── ios-arm64_arm64e
+    │   ├── Headers
+    │   │   └── ...
+    │   └── mylib.a
+    │
+    ├── ios-arm64_arm64e_x86_64-simulator
+    │   ├── Headers
+    │   │   └── ...
+    │   └── mylib.a
+    │
+    └── Info.plist
+ 
 ```
 
 #### Configuration
@@ -87,9 +103,9 @@ Import the necessary header file directly from the package. Header files can be 
 
 Here is a minimal example:
 ```js title="JavaScript"
-import { initCppJs } '@cppjs/sample-lib-source/samplebasic.h';
+import { initCppJs, SampleBasic } from '@cppjs/sample-lib-source/samplebasic.h';
 
-const { SampleBasic } = await initCppJs();
+await initCppJs();
 ```
 
 #### Package Structure
@@ -124,9 +140,9 @@ Import the necessary header file directly from the package. Header files can be 
 
 Here is a minimal example:
 ```js title="JavaScript"
-import { initCppJs } '@cpp.js/sample-lib-cmake/samplebasiccmake.h';
+import { initCppJs, SampleBasicCmake } from '@cpp.js/sample-lib-cmake/samplebasiccmake.h';
 
-const { SampleBasicCmake } = await initCppJs();
+await initCppJs();
 ```
 
 #### Package Structure

@@ -7,9 +7,9 @@ std::string getHelloMessage(std::string name) {
 ```
 
 ```js title="/src/index.js"
-import { initCppJs } './native/hello.h';
-const { getHelloMessage } = await initCppJs();
+import { initCppJs, getHelloMessage } from './native/hello.h';
 
+await initCppJs();
 const helloMessage = getHelloMessage('Bugra');
 console.log(helloMessage); // Hello Bugra!
 ```
@@ -33,9 +33,9 @@ std::string getHelloMessage(int a) {
 ```
 
 ```js title="/src/index.js"
-import { initCppJs } './native/hello.h';
-const { getHelloMessage } = await initCppJs();
+import { initCppJs, getHelloMessage } from './native/hello.h';
 
+await initCppJs();
 const helloMessage = getHelloMessage('Bugra');
 console.log(helloMessage); // Hello Bugra!
 
@@ -60,9 +60,9 @@ std::string getHelloMessage(int a) { // JS Type: Number
 ```
 
 ```js title="/src/index.js"
-import { initCppJs } './native/hello.h';
-const { getHelloMessage } = await initCppJs();
+import { initCppJs, getHelloMessage } from './native/hello.h';
 
+await initCppJs();
 const helloMessage = getHelloMessage(9);
 console.log(helloMessage); // Hello 9!
 

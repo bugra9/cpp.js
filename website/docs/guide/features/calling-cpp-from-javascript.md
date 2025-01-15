@@ -11,9 +11,9 @@ For more detailed information on how to use C++ with JavaScript, refer to the [A
 
 Here is a minimal example:
 ```jsx title="/src/main.js"
-import { initCppJs } './native/helloWorld.h';
+import { initCppJs, getHelloWorldMessage } from './native/helloWorld.h';
 
-const { getHelloWorldMessage } = await initCppJs();
+await initCppJs();
 console.log(getHelloWorldMessage());
 
 ```

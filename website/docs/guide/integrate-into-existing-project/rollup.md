@@ -50,9 +50,9 @@ public:
 
 Modify the JavaScript file to call the C++ function. For example:
 ```js
-import { initCppJs } from './native/native.h'
+import { initCppJs, MySampleClass } from './native/native.h';
 
-initCppJs().then(({ MySampleClass }) => {;
+initCppJs().then(() => {
   console.log(MySampleClass.sample());
 });
 ```

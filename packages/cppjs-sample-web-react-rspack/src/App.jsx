@@ -6,7 +6,7 @@ import "./App.css";
 function App() {
 	const [message, setMessage] = useState("compiling ...");
 
-    initCppJs().then(() => {;
+    initCppJs().then(() => {
         setMessage(Native.sample());
     });
 

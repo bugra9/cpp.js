@@ -1,11 +1,19 @@
-# Run
+# Docker
 ```bash
-Usage: cppjs run [options]
+Usage: cppjs docker [options] [command]
 
-run docker application
+manage docker
 
 Options:
   -h, --help  display help for command
+
+Commands:
+  run             run docker application
+  create          create docker container
+  start           start docker container
+  stop            stop docker container
+  delete          delete docker container
+  help [command]  display help for command
 ```
 
 <br />
@@ -15,7 +23,7 @@ The bugra9/cpp.js Docker image includes all the necessary tools for compiling to
 Here is a minimal example:
 
 ```shell
-cppjs run -- cmake --version
+cppjs docker run -- cmake --version
 ```
 ```bash
 cmake version 3.28.3

@@ -42,7 +42,7 @@ commandDocker.command('stop').description('stop docker container');
 commandDocker.command('delete').description('delete docker container');
 
 const commandConfig = program.command('config')
-    .description('Manage the Cpp.js configuration files');
+    .description('manage the Cpp.js configuration files');
 commandConfig.command('get').description('get the Cpp.js system configuration');
 commandConfig.command('set').description('set the Cpp.js system configuration');
 commandConfig.command('delete').description('delete the Cpp.js system configuration');

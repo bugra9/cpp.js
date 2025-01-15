@@ -28,15 +28,15 @@
   <span> · </span>
   <a href="https://cpp.js.org/docs/api/cpp-bindings/overview">C++ Bindings</a>
   <span> · </span>
-  <a href="https://cpp.js.org/showcase">Showcase</a>
+  <a href="https://cpp.js.org/docs/package/package/showcase">Showcase</a>
 </h3>
 
 ## Basic Usage
 **src/index.js**
 ```js
-import { initCppJs } from './native/Factorial.h';
+import { initCppJs, Factorial } from './native/Factorial.h';
 
-const { Factorial } = await initCppJs();
+await initCppJs();
 const factorial = new Factorial(99999);
 const result = factorial.calculate();
 console.log(result);
@@ -77,30 +77,8 @@ To set up a new cpp.js project with a minimal starter structure, execute the fol
 ```sh
 npm create cpp.js@latest
 ```
-## Integrate Into Existing Project
-Integrate cpp.js seamlessly into your existing projects using the appropriate packages for your development needs. Refer to the documentation links for detailed integration guides.
-
-| Platform | Package(s) | Documentation |
-| -------- | ---------- | ------------- |
-| Standalone  | [cpp.js](https://www.npmjs.com/package/cpp.js) | [Learn](https://cpp.js.org/docs/guide/integrate-into-existing-project/standalone) |
-| Webpack  | [@cpp.js/plugin-webpack](https://www.npmjs.com/package/@cpp.js/plugin-webpack), [@cpp.js/plugin-webpack-loader](https://www.npmjs.com/package/@cpp.js/plugin-webpack-loader) | [Learn](https://cpp.js.org/docs/guide/integrate-into-existing-project/webpack) |
-| Rollup  | [@cpp.js/plugin-rollup](https://www.npmjs.com/package/@cpp.js/plugin-rollup) | [Learn](https://cpp.js.org/docs/guide/integrate-into-existing-project/rollup) |
-| Vite  | [@cpp.js/plugin-vite](https://www.npmjs.com/package/@cpp.js/plugin-vite) | [Learn](https://cpp.js.org/docs/guide/integrate-into-existing-project/vite) |
-| Rspack  | [@cpp.js/plugin-webpack](https://www.npmjs.com/package/@cpp.js/plugin-webpack), [@cpp.js/plugin-webpack-loader](https://www.npmjs.com/package/@cpp.js/plugin-webpack-loader) | [Learn](https://cpp.js.org/docs/guide/integrate-into-existing-project/rspack) |
-| Create React App (CRA) | [@cpp.js/plugin-webpack](https://www.npmjs.com/package/@cpp.js/plugin-webpack), [@cpp.js/plugin-webpack-loader](https://www.npmjs.com/package/@cpp.js/plugin-webpack-loader) | [Learn](https://cpp.js.org/docs/guide/integrate-into-existing-project/create-react-app) |
-| React Native | [@cpp.js/plugin-react-native](https://www.npmjs.com/package/@cpp.js/plugin-react-native), [@cpp.js/plugin-react-native-ios-helper](https://www.npmjs.com/package/@cpp.js/plugin-react-native-ios-helper), [@cpp.js/plugin-metro](https://www.npmjs.com/package/@cpp.js/plugin-metro), [@cpp.js/core-embind-jsi](https://www.npmjs.com/package/@cpp.js/core-embind-jsi) | [Learn](https://cpp.js.org/docs/guide/integrate-into-existing-project/react-native) |
-| Expo | [@cpp.js/plugin-react-native](https://www.npmjs.com/package/@cpp.js/plugin-react-native), [@cpp.js/plugin-react-native-ios-helper](https://www.npmjs.com/package/@cpp.js/plugin-react-native-ios-helper), [@cpp.js/plugin-metro](https://www.npmjs.com/package/@cpp.js/plugin-metro), [@cpp.js/core-embind-jsi](https://www.npmjs.com/package/@cpp.js/core-embind-jsi) | [Learn](https://cpp.js.org/docs/guide/integrate-into-existing-project/expo) |
-| Node.js | [cpp.js](https://www.npmjs.com/package/cpp.js) | [Learn](https://cpp.js.org/docs/guide/integrate-into-existing-project/nodejs) |
-| Cloudflare Workers  | [cpp.js](https://www.npmjs.com/package/cpp.js) | [Learn](https://cpp.js.org/docs/guide/integrate-into-existing-project/cloudflare-worker) |
-
-## Features
-- [Calling C++ from JavaScript](https://cpp.js.org/docs/guide/features/calling-cpp-from-javascript)
-- [Packages](https://cpp.js.org/docs/guide/features/packages)
-- [Plugins](https://cpp.js.org/docs/guide/features/plugins)
-- [Assets](https://cpp.js.org/docs/guide/features/assets)
-- [Working with a Monorepo](https://cpp.js.org/docs/guide/features/monorepo)
 
 ## License
 [MIT](https://github.com/bugra9/cpp.js/blob/main/LICENSE)
 
-Copyright (c) 2023-2025, Buğra Sarı
+Copyright (c) 2025, Buğra Sarı

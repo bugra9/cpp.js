@@ -62,14 +62,13 @@ Modify the React file to call the c++ function from your React page. For example
 
 ```diff title="app/(tabs)/index.tsx"
 +import { useState, useEffect } from 'react';
-+import '../../src/native/MySampleClass.h';
-+import { initCppJs } from 'cpp.js';
++import { initCppJs, MySampleClass } from '../../src/native/MySampleClass.h';
 
 export default function HomeScreen() {
 +  const [message, setMessage] = useState('compiling ...');
 
 +  useEffect(() => {
-+    initCppJs().then(({ MySampleClass }) => {
++    initCppJs().then(() => {
 +        setMessage(MySampleClass.sample());
 +    });
 +  }, []);

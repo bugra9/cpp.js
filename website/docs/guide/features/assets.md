@@ -9,7 +9,7 @@ export default {
     },
     platform: {
         'Emscripten-x86_64-browser': {
-            k: {
+            data: {
                 'share/proj': '/usr/share/proj',
             },
             env: {

@@ -27,31 +27,22 @@ When C++ code is bound to JavaScript, the data types in C++ are mapped to equiva
 This table highlights how common primitive types in C++ correspond to their closest JavaScript equivalents when using Cpp.js
 
 ### Vector
-:::warning
-Cpp.js currently does not support direct handling of vectors. To manage them manually, you need to create a module file and define embind bindings for the required types.
+Cpp.js supports vectors for the following primitive types:
 
-Here is a minimal example:
+| C++ vector type  | Javascript class name |
+| ----------------- | ---------- |
+| `std::vector<char>` | VectorChar |
+| `std::vector<short>` | VectorShort |
+| `std::vector<int>` | VectorInt |
+| `std::vector<int64_t>` | VectorInt64 |
+| `std::vector<float>` | VectorFloat |
+| `std::vector<double>` | VectorDouble |
+| `std::vector<std::string>` | VectorString |
 
-```cpp title="/src/native/mycustom.i"
-#pragma once
+Additionally, Cpp.js supports vectors for any class. In JavaScript, the corresponding class name is formed by adding Vector to the beginning of the C++ class name.
 
-%module mycustom
-
-%{
-EMSCRIPTEN_BINDINGS(mycustom) {
-    emscripten::register_vector<int>("VectorInt");
-    emscripten::register_vector<std::string>("VectorString");
-    emscripten::register_vector<std::shared_ptr<Driver>>("VectorDriver");
-}
-%}
-
-%feature("shared_ptr");
-%feature("polymorphic_shared_ptr");
-```
-
-```js title="/src/index.js"
-import './native/mycustom.i';
-:::
+For example:
+    - `std::vector<MyClass>` in C++ becomes `VectorMyClass` in JavaScript.
 
 Here is a minimal example:
 
@@ -72,6 +63,30 @@ newMyVector.push_back(9);
 setMyVector(newMyVector);
 ```
 
+:::info
+For unsupported types, you can still use vectors, but you will need to manage them manually. This involves creating a module file and defining embind bindings for the required types.
+
+Here is a minimal example:
+
+```cpp title="/src/native/mycustom.i"
+#pragma once
+
+%module mycustom
+
+%{
+EMSCRIPTEN_BINDINGS(mycustom) {
+    emscripten::register_vector<Abc>("VectorAbc");
+}
+%}
+
+%feature("shared_ptr");
+%feature("polymorphic_shared_ptr");
+```
+
+```js title="/src/index.js"
+import './native/mycustom.i';
+:::
+
 **Conversion Between JavaScript Arrays and C++ Vectors**  
 [The utility JavaScript functions](/docs/api/javascript/utility-functions), `toVector` and `toArray`, are used to convert a C++ Vector into a complete JavaScript Array and vice versa, transforming a JavaScript Array into a complete C++ Vector.
 
@@ -86,30 +101,15 @@ setMyVector(toVector(VectorInt, myVectorArray));
 ```
 
 ### Map
-:::warning
-Cpp.js currently does not support direct handling of maps. To manage them manually, you need to create a module file and define embind bindings for the required types.
+Cpp.js supports maps for the following primitive types:
 
-Here is a minimal example:
+| C++ vector type  | Javascript class name |
+| ----------------- | ---------- |
+| `std::map<int,int>` | MapIntInt |
+| `std::map<int,std::string>` | MapIntString |
+| `std::map<std::string,std::string>` | MapStringString |
+| `std::map<std::string,int>` | MapStringInt |
 
-```cpp title="/src/native/mycustom.i"
-#pragma once
-
-%module mycustom
-
-%{
-EMSCRIPTEN_BINDINGS(mycustom) {
-    emscripten::register_vector<int>("VectorInt");
-    emscripten::register_map<int, int>("MapIntInt");
-}
-%}
-
-%feature("shared_ptr");
-%feature("polymorphic_shared_ptr");
-```
-
-```js title="/src/index.js"
-import './native/mycustom.i';
-:::
 
 Here is a minimal example:
 
@@ -131,6 +131,30 @@ const newMyMap = new MapIntInt();
 newMyMap.set(9, 9);
 setMyMap(newMyMap);
 ```
+
+:::info
+For unsupported types, you can still use maps, but you will need to manage them manually. This involves creating a module file and defining embind bindings for the required types.
+
+Here is a minimal example:
+
+```cpp title="/src/native/mycustom.i"
+#pragma once
+
+%module mycustom
+
+%{
+EMSCRIPTEN_BINDINGS(mycustom) {
+    emscripten::register_map<double, double>("MapDoubleDouble");
+}
+%}
+
+%feature("shared_ptr");
+%feature("polymorphic_shared_ptr");
+```
+
+```js title="/src/index.js"
+import './native/mycustom.i';
+:::
 
 ### Enum
 In C++, an enum is a user-defined type that consists of a set of named integral constants. It can be defined using the traditional "old style" or the strongly-typed "new style" introduced in C++11 (enum class).

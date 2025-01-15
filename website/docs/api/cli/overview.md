@@ -10,8 +10,8 @@ Options:
 
 Commands:
   build [options]            compile the project that was set up using Cpp.js
-  run                        run docker application
-  postinstall                prepare the required packages for Cpp.js after installation
+  docker                     manage docker
+  config                     manage the Cpp.js configuration files
   help [command]             display help for command
 ```
 

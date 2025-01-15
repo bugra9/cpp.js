@@ -73,7 +73,7 @@ function HomepageIntro() {
                         language="js"
                         title="/src/index.js"
                         showLineNumbers>
-{`import { initCppJs, Matrix } './native/Matrix.h';
+{`import { initCppJs, Matrix } from './native/Matrix.h';
 
 await initCppJs();
 const a = new Matrix(1210000, 1);

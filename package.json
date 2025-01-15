@@ -21,7 +21,6 @@
         "clear:samples": "pnpm run clear:cache:samples; pnpm run clear:dist:samples",
         "clear:packages": "pnpm run clear:cache:package; pnpm run clear:dist:package",
         "pack:list": "find packages -name \"*.tgz\" -type d -maxdepth 2",
-        "pack:build": "pnpm pack:clear; node ./scripts/pack-all.mjs && pnpm pack:list",
         "ci:linux:build:package": "pnpm --filter=@cpp.js/package-zlib run build",
         "ci:linux:build": "pnpm run build:samples && pnpm run ci:linux:build:package",
         "ci:windows:build": "pnpm run build:samples:lib:wasm && pnpm run build:samples:lib:android && pnpm run ci:linux:build:package",

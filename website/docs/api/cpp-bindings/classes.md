@@ -16,9 +16,9 @@ class MyClass {
 ```
 
 ```js title="/src/index.js"
-import { initCppJs } './native/MyClass.h';
-const { MyClass } = await initCppJs();
+import { initCppJs, MyClass } from './native/MyClass.h';
 
+await initCppJs();
 const version = MyClass.getVersion(); // static member function
 
 const myObject = new MyClass(9); // constructor
