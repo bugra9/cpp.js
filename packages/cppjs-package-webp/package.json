@@ -1,7 +1,7 @@
 {
     "name": "@cpp.js/package-webp",
-    "version": "1.0.0-beta.24",
-    "nativeVersion": "1.4.0",
+    "version": "1.0.0",
+    "nativeVersion": "1.5.0",
     "description": "This package provides a WebP library compiled with Cpp.js, enabling seamless usage of WebP functionalities in JavaScript, WebAssembly and React Native projects. It supports efficient image processing for web and mobile applications.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-webp#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",

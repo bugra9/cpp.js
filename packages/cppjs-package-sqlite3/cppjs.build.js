@@ -10,7 +10,7 @@ export default {
     getURL: (version) => {
         const versionArray = version.split('.');
         const VERSION = (versionArray[0] * 1000000 + versionArray[1] * 10000 + versionArray[2] * 100).toString();
-        return `https://www.sqlite.org/2024/sqlite-autoconf-${VERSION}.tar.gz`;
+        return `https://www.sqlite.org/2025/sqlite-autoconf-${VERSION}.tar.gz`;
     },
     buildType: 'configure',
     getBuildParams: (platform) => [

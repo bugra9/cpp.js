@@ -13,7 +13,7 @@ You can use cpp.js to compile native code from your project into WebAssembly. To
 +       "build": "cppjs build -p WebAssembly"
     },
     "devDependencies": {
-+       "cpp.js": "^1.0.0-beta.33"
++       "cpp.js": "^1.0.0"
     }
 }
 ```
@@ -104,7 +104,7 @@ To add `serve` as a project dependency, follow these steps:
     },
     "devDependencies": {
 +      "serve": "^14.2.3",
-       "cpp.js": "^1.0.0-beta.33"
+       "cpp.js": "^1.0.0"
     }
 }
 ```

@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/plugin-vite",
-    "version": "1.0.0-beta.11",
+    "version": "1.0.0",
     "description": "Cpp.js Vite plugin: A tool for seamless C++ integration with the Vite.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-plugin-vite#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",

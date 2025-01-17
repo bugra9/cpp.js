@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/sample-web-react-rspack",
-    "version": "1.0.0-beta.11",
+    "version": "1.0.0",
     "description": "Cpp.js React Rspack sample",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-web-react-rspack#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",

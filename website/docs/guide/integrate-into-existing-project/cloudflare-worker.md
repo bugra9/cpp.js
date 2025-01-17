@@ -11,7 +11,7 @@ You can use cpp.js to compile native code from your project into WebAssembly. To
         "deploy": "wrangler dev"
     },
     "devDependencies": {
-+       "cpp.js": "^1.0.0-beta.33",
++       "cpp.js": "^1.0.0",
         "wrangler": "^3.75.0"
     }
 }

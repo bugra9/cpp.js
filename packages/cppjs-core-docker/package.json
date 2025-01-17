@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/core-docker",
-    "version": "1.0.0-beta.1",
+    "version": "1.0.0",
     "private": "true",
     "scripts": {
         "build": "docker build --no-cache -t bugra9/cpp.js:latest -t bugra9/cpp.js:0.2.8 .",

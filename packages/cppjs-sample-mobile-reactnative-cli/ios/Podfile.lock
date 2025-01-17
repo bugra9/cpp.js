@@ -1,6 +1,6 @@
 PODS:
   - boost (1.84.0)
-  - cppjs-sample-lib-prebuilt-matrix (1.0.0-beta.31)
+  - cppjs-sample-lib-prebuilt-matrix (1.0.0)
   - DoubleConversion (1.1.6)
   - FBLazyVector (0.76.5)
   - fmt (9.1.0)
@@ -1243,8 +1243,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-cppjs (1.0.0-beta.42)
-  - react-native-cppjs-ios-helper (1.0.0-beta.3):
+  - react-native-cppjs (1.0.0)
+  - react-native-cppjs-ios-helper (1.0.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1746,7 +1746,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   boost: 1dca942403ed9342f98334bf4c3621f011aa7946
-  cppjs-sample-lib-prebuilt-matrix: 2d8545e481dbc7a564765fd19b67ba8a219fba7d
+  cppjs-sample-lib-prebuilt-matrix: 308a1c7c72927057bd919ba97e5bf3ecf904911a
   DoubleConversion: f16ae600a246532c4020132d54af21d0ddb2a385
   FBLazyVector: 1bf99bb46c6af9a2712592e707347315f23947aa
   fmt: 10c6e61f4be25dc963c36bd73fc7b1705fe975be
@@ -1781,8 +1781,8 @@ SPEC CHECKSUMS:
   React-logger: 697873f06b8ba436e3cddf28018ab4741e8071b6
   React-Mapbuffer: c174e11bdea12dce07df8669d6c0dc97eb0c7706
   React-microtasksnativemodule: 8a80099ad7391f4e13a48b12796d96680f120dc6
-  react-native-cppjs: f598bc050562b3d52e121037bc524a2c5648a8f0
-  react-native-cppjs-ios-helper: 9a94aabab00df945d8613a1b15e698485de6d16f
+  react-native-cppjs: bf43782b3149df83b572fe882f22c65007e467d8
+  react-native-cppjs-ios-helper: 24275032a6124028683462f9835d40c135fd6e49
   React-nativeconfig: f7ab6c152e780b99a8c17448f2d99cf5f69a2311
   React-NativeModulesApple: 70600f7edfc2c2a01e39ab13a20fd59f4c60df0b
   React-perflogger: ceb97dd4e5ca6ff20eebb5a6f9e00312dcdea872
