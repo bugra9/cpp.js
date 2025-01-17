@@ -1,5 +1,16 @@
 # @cpp.js/plugin-metro
 
+## 1.0.0
+
+### Major Changes
+
+- 🚀 first stable release
+
+### Patch Changes
+
+- Updated dependencies
+  - cpp.js@1.0.0
+
 ## 1.0.0-beta.38
 
 ### Patch Changes

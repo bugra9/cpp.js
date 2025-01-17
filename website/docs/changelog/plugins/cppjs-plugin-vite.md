@@ -1,5 +1,17 @@
 # @cpp.js/plugin-vite
 
+## 1.0.0
+
+### Major Changes
+
+- 🚀 first stable release
+
+### Patch Changes
+
+- Updated dependencies
+  - cpp.js@1.0.0
+  - @cpp.js/plugin-rollup@1.0.0
+
 ## 1.0.0-beta.11
 
 ### Patch Changes
