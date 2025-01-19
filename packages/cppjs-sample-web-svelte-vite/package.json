@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/sample-web-svelte-vite",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Cpp.js Svelte Vite sample",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-web-svelte-vite#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -14,14 +14,13 @@
         "e2e:prod": "playwright test --config playwright.prod.config.cjs"
     },
     "dependencies": {
+        "@cpp.js/plugin-vite": "workspace:^",
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^"
     },
     "devDependencies": {
         "@sveltejs/vite-plugin-svelte": "^5.0.3",
         "svelte": "^5.15.0",
         "vite": "^6.0.5",
-        "cpp.js": "workspace:^",
-        "@cpp.js/plugin-vite": "workspace:^",
         "@playwright/test": "^1.49.1"
     },
     "keywords": [

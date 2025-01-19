@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/sample-web-react-vite",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Cpp.js React Vite sample",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-web-react-vite#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -17,6 +17,7 @@
     "dependencies": {
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
+        "@cpp.js/plugin-vite": "workspace:^",
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^"
     },
     "devDependencies": {
@@ -30,8 +31,6 @@
         "eslint-plugin-react-refresh": "^0.4.16",
         "globals": "^15.14.0",
         "vite": "^6.0.5",
-        "cpp.js": "workspace:^",
-        "@cpp.js/plugin-vite": "workspace:^",
         "@playwright/test": "^1.49.1"
     },
     "keywords": [

@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/sample-mobile-reactnative-cli",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Cpp.js React Native sample",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-mobile-reactnative-cli#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -18,15 +18,15 @@
         "e2e:android": "pnpm run run:android && pnpm run maestro"
     },
     "dependencies": {
+        "@cpp.js/core-embind-jsi": "workspace:^",
+        "@cpp.js/plugin-metro": "workspace:^",
+        "@cpp.js/plugin-react-native": "workspace:^",
+        "@cpp.js/plugin-react-native-ios-helper": "workspace:^",
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^",
         "react": "18.3.1",
         "react-native": "0.76.5"
     },
     "devDependencies": {
-        "@cpp.js/core-embind-jsi": "workspace:^",
-        "@cpp.js/plugin-metro": "workspace:^",
-        "@cpp.js/plugin-react-native": "workspace:^",
-        "@cpp.js/plugin-react-native-ios-helper": "workspace:^",
         "@babel/core": "^7.25.2",
         "@babel/preset-env": "^7.25.3",
         "@babel/runtime": "^7.25.0",

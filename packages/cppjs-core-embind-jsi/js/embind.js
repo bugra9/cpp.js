@@ -4748,7 +4748,6 @@ globalThis.Module['ASSERTIONS'] = true;
 export default globalThis.Module;
 
 function toArray(vector) {
-    console.log('aaaaa', vector);
     const output = [];
     for (let i = 0; i < vector.size(); i += 1) {
         output.push(vector.get(i));

@@ -1243,7 +1243,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-cppjs (1.0.0)
+  - react-native-cppjs (1.0.2)
   - react-native-cppjs-ios-helper (1.0.0):
     - DoubleConversion
     - glog
@@ -1781,7 +1781,7 @@ SPEC CHECKSUMS:
   React-logger: 697873f06b8ba436e3cddf28018ab4741e8071b6
   React-Mapbuffer: c174e11bdea12dce07df8669d6c0dc97eb0c7706
   React-microtasksnativemodule: 8a80099ad7391f4e13a48b12796d96680f120dc6
-  react-native-cppjs: bf43782b3149df83b572fe882f22c65007e467d8
+  react-native-cppjs: a557b429a0f33cd5ab0603335113c01f9355fe59
   react-native-cppjs-ios-helper: 24275032a6124028683462f9835d40c135fd6e49
   React-nativeconfig: f7ab6c152e780b99a8c17448f2d99cf5f69a2311
   React-NativeModulesApple: 70600f7edfc2c2a01e39ab13a20fd59f4c60df0b

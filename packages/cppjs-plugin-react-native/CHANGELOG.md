@@ -1,5 +1,15 @@
 # @cpp.js/plugin-react-native
 
+## 1.0.2
+
+### Patch Changes
+
+- fix: workaround for race condition with turbomodule in android.
+- Updated dependencies
+  - @cpp.js/core-embind-jsi@1.0.3
+  - cpp.js@1.0.4
+  - @cpp.js/plugin-metro@1.0.2
+
 ## 1.0.0
 
 ### Major Changes

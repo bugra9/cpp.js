@@ -8,6 +8,7 @@ export default function getDependFilePath(source, platform) {
     const dependPackage = state.config.allDependencies.find((d) => source.startsWith(d.package.name));
     if (dependPackage) {
         const depName = dependPackage.package.name;
+        const configName = dependPackage.general.name;
         const filePath = source.substring(depName.length + 1);
 
         let path;
@@ -19,7 +20,9 @@ export default function getDependFilePath(source, platform) {
             path = `${dependPackage.paths.output}/prebuilt/${platform}`;
         }
 
-        if (fs.existsSync(`${path}/${depName}/${filePath}`)) {
+        if (fs.existsSync(`${path}/${configName}/${filePath}`)) {
+            path = `${path}/${configName}/${filePath}`;
+        } else if (fs.existsSync(`${path}/${depName}/${filePath}`)) {
             path = `${path}/${depName}/${filePath}`;
         } else if (fs.existsSync(`${path}/${filePath}`)) {
             path = `${path}/${filePath}`;

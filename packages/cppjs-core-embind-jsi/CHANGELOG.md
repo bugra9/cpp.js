@@ -1,5 +1,11 @@
 # @cpp.js/core-embind-jsi
 
+## 1.0.3
+
+### Patch Changes
+
+- fix: workaround for race condition with turbomodule in android.
+
 ## 1.0.0
 
 ### Major Changes

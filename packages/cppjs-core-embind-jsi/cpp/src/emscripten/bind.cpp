@@ -21,6 +21,9 @@
 #include <unordered_map>
 #include <stdlib.h>
 
+#ifdef __ANDROID__
+#include <unistd.h>
+#endif
 
 using namespace emscripten;
 using namespace internal;
@@ -914,6 +917,10 @@ namespace emscripten {
             CPPJS_DATA_PATH = path;
             CppJS::setEnv("CPPJS_DATA_PATH", path, false);
             jsRuntime = &rt;
+
+#ifdef __ANDROID__
+            sleep(2);
+#endif
 
             char* name = "M";
             uint64_t namePtrNumber = reinterpret_cast<uint64_t>(name);

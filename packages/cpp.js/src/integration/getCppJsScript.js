@@ -51,9 +51,9 @@ function getReactNativeScript(env, modulePrefix) {
         }
 
         export function initCppJs(config = {}) {
-            return new Promise((resolve, reject) => {
+            return new Promise(async (resolve, reject) => {
                 if (RNJsiLib && RNJsiLib.start) {
-                    RNJsiLib.start();
+                    await RNJsiLib.start();
                     setEnv();
                     const m = Module;
                     ${modulePrefix}

@@ -999,7 +999,7 @@ PODS:
   - React-Mapbuffer (0.74.5):
     - glog
     - React-debug
-  - react-native-cppjs (1.0.0)
+  - react-native-cppjs (1.0.2)
   - react-native-cppjs-ios-helper (1.0.0):
     - DoubleConversion
     - glog
@@ -1589,7 +1589,7 @@ SPEC CHECKSUMS:
   React-jsitracing: 3b6060bbf5317663667e1dd93560c7943ab86ccc
   React-logger: 257858bd55f3a4e1bc0cf07ddc8fb9faba6f8c7c
   React-Mapbuffer: 6c1cacdbf40b531f549eba249e531a7d0bfd8e7f
-  react-native-cppjs: 7d2fb8966bdf4a16c07c023e070930881004ebf6
+  react-native-cppjs: f3aae23152c596f2a506ce7d4e4c191547d5c08a
   react-native-cppjs-ios-helper: 42afcdcbc74b6a3ccf74982e7dfde231cf6a3642
   react-native-safe-area-context: a240ad4b683349e48b1d51fed1611138d1bdad97
   React-nativeconfig: ba9a2e54e2f0882cf7882698825052793ed4c851

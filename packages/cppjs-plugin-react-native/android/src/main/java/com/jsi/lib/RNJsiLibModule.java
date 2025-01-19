@@ -5,6 +5,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.Promise;
 
 public class RNJsiLibModule extends ReactContextBaseJavaModule {
 
@@ -16,9 +17,10 @@ public class RNJsiLibModule extends ReactContextBaseJavaModule {
     Utils.copyAssetFolder(reactContext, "cppjs", reactContext.getCacheDir().getAbsolutePath() + "/cppjs");
   }
 
-  @ReactMethod(isBlockingSynchronousMethod = true)
-  public void start() {
+  @ReactMethod
+  public void start(Promise promise) {
     install(this.reactContext.getJavaScriptContextHolder().get(), this.reactContext.getCacheDir().getAbsolutePath());
+    promise.resolve(true);
   }
 
   @Override

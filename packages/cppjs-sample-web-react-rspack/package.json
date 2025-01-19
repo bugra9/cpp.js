@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/sample-web-react-rspack",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Cpp.js React Rspack sample",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-web-react-rspack#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -15,6 +15,8 @@
     "dependencies": {
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
+        "@cpp.js/plugin-webpack": "workspace:^",
+        "@cpp.js/plugin-webpack-loader": "workspace:^",
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^"
     },
     "devDependencies": {
@@ -25,9 +27,6 @@
         "@types/react-dom": "^19.0.2",
         "cross-env": "^7.0.3",
         "react-refresh": "^0.16.0",
-        "cpp.js": "workspace:^",
-        "@cpp.js/plugin-webpack-loader": "workspace:^",
-        "@cpp.js/plugin-webpack": "workspace:^",
         "@playwright/test": "^1.49.1",
         "serve": "^14.2.4"
     },
