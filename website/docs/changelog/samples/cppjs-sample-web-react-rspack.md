@@ -1,5 +1,13 @@
 # @cpp.js/sample-web-react-rspack
 
+## 1.0.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @cpp.js/plugin-webpack@1.0.2
+  - @cpp.js/plugin-webpack-loader@1.0.2
+
 ## 1.0.0
 
 ### Major Changes
