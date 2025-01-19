@@ -87,8 +87,8 @@ importers:
         specifier: workspace:^
         version: link:../cppjs-sample-mobile-reactnative-cli
       '@cpp.js/sample-mobile-reactnative-expo':
-        specifier: 1.0.0
-        version: 1.0.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.18)(expo-modules-autolinking@1.11.3)(typescript@5.7.2)
+        specifier: 1.0.1
+        version: 1.0.1(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.18)(expo-modules-autolinking@1.11.3)(metro@0.81.0)(typescript@5.7.2)
       '@cpp.js/sample-web-react-rspack':
         specifier: workspace:^
         version: link:../cppjs-sample-web-react-rspack
@@ -345,19 +345,19 @@ importers:
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
-    devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../cpp.js
 
   packages/cppjs-sample-cloud-cloudflare-worker:
+    dependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../cpp.js
     devDependencies:
       '@playwright/test':
         specifier: ^1.49.1
         version: 1.49.1
-      cpp.js:
-        specifier: workspace:^
-        version: link:../cpp.js
       wrangler:
         specifier: ^3.99.0
         version: 3.99.0
@@ -456,6 +456,12 @@ importers:
 
   packages/cppjs-sample-web-react-rspack:
     dependencies:
+      '@cpp.js/plugin-webpack':
+        specifier: workspace:^
+        version: link:../cppjs-plugin-webpack
+      '@cpp.js/plugin-webpack-loader':
+        specifier: workspace:^
+        version: link:../cppjs-plugin-webpack-loader
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
@@ -466,12 +472,6 @@ importers:
         specifier: ^19.0.0
         version: 19.0.0(react@19.0.0)
     devDependencies:
-      '@cpp.js/plugin-webpack':
-        specifier: workspace:^
-        version: link:../cppjs-plugin-webpack
-      '@cpp.js/plugin-webpack-loader':
-        specifier: workspace:^
-        version: link:../cppjs-plugin-webpack-loader
       '@playwright/test':
         specifier: ^1.49.1
         version: 1.49.1
@@ -490,9 +490,6 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.2
         version: 19.0.2(@types/react@19.0.2)
-      cpp.js:
-        specifier: workspace:^
-        version: link:../cpp.js
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -505,6 +502,9 @@ importers:
 
   packages/cppjs-sample-web-react-vite:
     dependencies:
+      '@cpp.js/plugin-vite':
+        specifier: workspace:^
+        version: link:../cppjs-plugin-vite
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
@@ -515,9 +515,6 @@ importers:
         specifier: ^19.0.0
         version: 19.0.0(react@19.0.0)
     devDependencies:
-      '@cpp.js/plugin-vite':
-        specifier: workspace:^
-        version: link:../cppjs-plugin-vite
       '@eslint/js':
         specifier: ^9.17.0
         version: 9.17.0
@@ -533,9 +530,6 @@ importers:
       '@vitejs/plugin-react-swc':
         specifier: ^3.7.2
         version: 3.7.2(vite@6.0.5(@types/node@22.10.2)(jiti@1.21.7)(terser@5.37.0)(yaml@2.6.1))
-      cpp.js:
-        specifier: workspace:^
-        version: link:../cpp.js
       eslint:
         specifier: ^9.17.0
         version: 9.17.0(jiti@1.21.7)
@@ -557,22 +551,19 @@ importers:
 
   packages/cppjs-sample-web-svelte-vite:
     dependencies:
+      '@cpp.js/plugin-vite':
+        specifier: workspace:^
+        version: link:../cppjs-plugin-vite
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
     devDependencies:
-      '@cpp.js/plugin-vite':
-        specifier: workspace:^
-        version: link:../cppjs-plugin-vite
       '@playwright/test':
         specifier: ^1.49.1
         version: 1.49.1
       '@sveltejs/vite-plugin-svelte':
         specifier: ^5.0.3
         version: 5.0.3(svelte@5.15.0)(vite@6.0.5(@types/node@22.10.2)(jiti@1.21.7)(terser@5.37.0)(yaml@2.6.1))
-      cpp.js:
-        specifier: workspace:^
-        version: link:../cpp.js
       svelte:
         specifier: ^5.15.0
         version: 5.15.0
@@ -585,19 +576,22 @@ importers:
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
+      cpp.js:
+        specifier: workspace:^
+        version: link:../cpp.js
     devDependencies:
       '@playwright/test':
         specifier: ^1.49.1
         version: 1.49.1
-      cpp.js:
-        specifier: workspace:^
-        version: link:../cpp.js
       serve:
         specifier: ^14.2.4
         version: 14.2.4
 
   packages/cppjs-sample-web-vue-vite:
     dependencies:
+      '@cpp.js/plugin-vite':
+        specifier: workspace:^
+        version: link:../cppjs-plugin-vite
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
@@ -605,18 +599,12 @@ importers:
         specifier: ^3.5.13
         version: 3.5.13(typescript@5.7.2)
     devDependencies:
-      '@cpp.js/plugin-vite':
-        specifier: workspace:^
-        version: link:../cppjs-plugin-vite
       '@playwright/test':
         specifier: ^1.49.1
         version: 1.49.1
       '@vitejs/plugin-vue':
         specifier: ^5.2.1
         version: 5.2.1(vite@6.0.5(@types/node@22.10.2)(jiti@1.21.7)(terser@5.37.0)(yaml@2.6.1))(vue@3.5.13(typescript@5.7.2))
-      cpp.js:
-        specifier: workspace:^
-        version: link:../cpp.js
       vite:
         specifier: ^6.0.5
         version: 6.0.5(@types/node@22.10.2)(jiti@1.21.7)(terser@5.37.0)(yaml@2.6.1)
@@ -1696,11 +1684,31 @@ packages:
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
 
+  '@cpp.js/core-embind-jsi@1.0.3':
+    resolution: {integrity: sha512-B+lO9k+OnT9bt77fcEs/5vMQOZ84u5pqzNH8j+n6PPpgwQqDW5piFR/NhyDRCzcgLVYm1bka1+q+blucFyIKtQ==}
+    peerDependencies:
+      '@babel/runtime': '*'
+      react-native: '*'
+
+  '@cpp.js/plugin-metro@1.0.2':
+    resolution: {integrity: sha512-QrJkr/FSS8OMKUT8Zj1HvXNvc4dIcELp9Ns9JqMJSXQr25o2Dsoz7wuYDUVHO3jUfqFIYBkKyPfWnQ1FwsuklQ==}
+    peerDependencies:
+      metro: '*'
+
+  '@cpp.js/plugin-react-native-ios-helper@1.0.0':
+    resolution: {integrity: sha512-KDFT4VF+5PtvJLvWzCH4f2GXDsPq9Fmx3Tjhm65Kd10g2mcEIucW61SS37O7s47VFvEpOvmYxpZlVlr6wzkCTg==}
+
+  '@cpp.js/plugin-react-native@1.0.2':
+    resolution: {integrity: sha512-YQB9SEK6M/FUwipAJIkWrRljHe8A3A0oRxZg4HH60s9fZ1SI8je3tTteL4V5f1WSTJknz5hr8mg/YcvjTmpovw==}
+    peerDependencies:
+      metro: '*'
+      react-native: '*'
+
   '@cpp.js/sample-lib-prebuilt-matrix@1.0.0':
     resolution: {integrity: sha512-+sepuR+mfvGtFPG9z8tP3JT326t5/PTJN1eJGnZFGDo/JD6fzxd7OmVvb8TZyQqJbYOxBwXnR4tkV+lgn9juug==}
 
-  '@cpp.js/sample-mobile-reactnative-expo@1.0.0':
-    resolution: {integrity: sha512-/Vl8czYP6KYQqlkqTNrTs+SU/xVtyJJsE7E9b6uOZWkQfUacZkL+cQmO7W7j365yd4o2905nMKy7czvdRoe6Vw==}
+  '@cpp.js/sample-mobile-reactnative-expo@1.0.1':
+    resolution: {integrity: sha512-0R2/IVtPRiu1L8vMaxJQouoh0HHjSUz68jbht9lVI49p4x+qRrJJ9ROkyU1Q3c/tYU2fB9V+bJLpPTCJwCbMeg==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -2483,7 +2491,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {'0': node >=0.10.0}
+    engines: {node: '>=0.10.0'}
 
   '@expo/cli@0.18.31':
     resolution: {integrity: sha512-v9llw9fT3Uv+TCM6Xllo54t672CuYtinEQZ2LPJ2EJsCwuTc4Cd2gXQaouuIVD21VoeGQnr5JtJuWbF97sBKzQ==}
@@ -5068,6 +5076,10 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  cpp.js@1.0.4:
+    resolution: {integrity: sha512-V59KQZ36Wi4IhfscNduek4wInUM04fy1DTS/7+5uR+2aRL/dmtnYXaVmw+aZ7KKGuaingHwHpnSmpfW9S/7bjw==}
+    hasBin: true
 
   create-jest@29.7.0:
     resolution: {integrity: sha512-Adz2bdH0Vq3F53KEMJOoftQFutWCukm6J24wbPWRO4k1kMY7gS7ds/uoJkNuV8wDCtWWnuwGcJwpWcih+zEW1Q==}
@@ -12813,10 +12825,47 @@ snapshots:
   '@colors/colors@1.5.0':
     optional: true
 
+  '@cpp.js/core-embind-jsi@1.0.3(@babel/runtime@7.26.0)(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.18)(react@18.2.0))':
+    dependencies:
+      '@babel/runtime': 7.26.0
+      react-native: 0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.18)(react@18.2.0)
+
+  '@cpp.js/plugin-metro@1.0.2(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(metro@0.81.0)':
+    dependencies:
+      '@babel/runtime': 7.26.0
+      '@react-native/metro-babel-transformer': 0.73.15(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))
+      cpp.js: 1.0.4
+      metro: 0.81.0
+      upath: 2.0.1
+    transitivePeerDependencies:
+      - '@babel/core'
+      - '@babel/preset-env'
+      - debug
+      - supports-color
+
+  '@cpp.js/plugin-react-native-ios-helper@1.0.0': {}
+
+  '@cpp.js/plugin-react-native@1.0.2(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(metro@0.81.0)(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.18)(react@18.2.0))':
+    dependencies:
+      '@babel/runtime': 7.26.0
+      '@cpp.js/core-embind-jsi': 1.0.3(@babel/runtime@7.26.0)(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.18)(react@18.2.0))
+      '@cpp.js/plugin-metro': 1.0.2(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(metro@0.81.0)
+      cpp.js: 1.0.4
+      metro: 0.81.0
+      react-native: 0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.18)(react@18.2.0)
+      upath: 2.0.1
+    transitivePeerDependencies:
+      - '@babel/core'
+      - '@babel/preset-env'
+      - debug
+      - supports-color
+
   '@cpp.js/sample-lib-prebuilt-matrix@1.0.0': {}
 
-  '@cpp.js/sample-mobile-reactnative-expo@1.0.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.18)(expo-modules-autolinking@1.11.3)(typescript@5.7.2)':
+  '@cpp.js/sample-mobile-reactnative-expo@1.0.1(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.18)(expo-modules-autolinking@1.11.3)(metro@0.81.0)(typescript@5.7.2)':
     dependencies:
+      '@cpp.js/plugin-react-native': 1.0.2(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(metro@0.81.0)(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.18)(react@18.2.0))
+      '@cpp.js/plugin-react-native-ios-helper': 1.0.0
       '@cpp.js/sample-lib-prebuilt-matrix': 1.0.0
       '@expo/vector-icons': 14.0.4
       '@react-navigation/native': 6.1.18(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.18)(react@18.2.0))(react@18.2.0)
@@ -12844,8 +12893,10 @@ snapshots:
       - '@testing-library/jest-native'
       - '@types/react'
       - bufferutil
+      - debug
       - encoding
       - expo-modules-autolinking
+      - metro
       - supports-color
       - typescript
       - utf-8-validate
@@ -17865,6 +17916,22 @@ snapshots:
       parse-json: 5.2.0
     optionalDependencies:
       typescript: 5.0.4
+
+  cpp.js@1.0.4:
+    dependencies:
+      '@rollup/plugin-commonjs': 28.0.2(rollup@4.29.1)
+      '@rollup/plugin-json': 6.1.0(rollup@4.29.1)
+      '@rollup/plugin-node-resolve': 16.0.0(rollup@4.29.1)
+      '@rollup/plugin-virtual': 3.0.2(rollup@4.29.1)
+      commander: 12.1.0
+      decompress: 4.2.1
+      follow-redirects: 1.15.9
+      glob: 11.0.0
+      replace: 1.2.2
+      rollup: 4.29.1
+      upath: 2.0.1
+    transitivePeerDependencies:
+      - debug
 
   create-jest@29.7.0(@types/node@22.10.2):
     dependencies:
