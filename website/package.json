@@ -1,59 +1,59 @@
 {
-  "name": "@cpp.js/website",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "docusaurus": "docusaurus",
-    "start": "docusaurus start",
-    "build": "docusaurus build",
-    "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy",
-    "clear": "docusaurus clear",
-    "serve": "docusaurus serve",
-    "check:links": "remark --frail --use remark-lint-no-dead-urls .",
-    "write-translations": "docusaurus write-translations",
-    "write-heading-ids": "docusaurus write-heading-ids",
-    "copy:readme": "find ../packages -path \"../packages/cppjs-package-*/README.md\" -maxdepth 2 -exec bash -c 'src=\"{}\"; dest=\"./docs/package/package/$(basename $(dirname \"$src\")).md\"; cp \"$src\" \"$dest\"' \\;",
-    "copy:changelog:core": "cp ../packages/cpp.js/CHANGELOG.md ./docs/changelog/core/cppjs.md; find ../packages -path \"../packages/cppjs-core-*/CHANGELOG.md\" -maxdepth 2 -exec bash -c 'src=\"{}\"; dest=\"./docs/changelog/core/$(basename $(dirname \"$src\")).md\"; cp \"$src\" \"$dest\"' \\;",
-    "copy:changelog:plugin": "find ../packages -path \"../packages/cppjs-plugin-*/CHANGELOG.md\" -maxdepth 2 -exec bash -c 'src=\"{}\"; dest=\"./docs/changelog/plugins/$(basename $(dirname \"$src\")).md\"; cp \"$src\" \"$dest\"' \\;",
-    "copy:changelog:package": "find ../packages -path \"../packages/cppjs-package-*/CHANGELOG.md\" -maxdepth 2 -exec bash -c 'src=\"{}\"; dest=\"./docs/changelog/packages/$(basename $(dirname \"$src\")).md\"; cp \"$src\" \"$dest\"' \\;",
-    "copy:changelog:sample": "find ../packages -path \"../packages/cppjs-sample-*/CHANGELOG.md\" -maxdepth 2 -exec bash -c 'src=\"{}\"; dest=\"./docs/changelog/samples/$(basename $(dirname \"$src\")).md\"; cp \"$src\" \"$dest\"' \\;",
-    "copy": "pnpm run copy:readme && pnpm run copy:changelog:core && pnpm run copy:changelog:plugin && pnpm run copy:changelog:package && pnpm run copy:changelog:sample"
-  },
-  "dependencies": {
-    "@docusaurus/core": "^3.6.3",
-    "@docusaurus/preset-classic": "^3.6.3",
-    "@docusaurus/remark-plugin-npm2yarn": "^3.6.3",
-    "@docusaurus/theme-mermaid": "^3.6.3",
-    "@mdx-js/react": "^3.1.0",
-    "autoprefixer": "^10.4.20",
-    "clsx": "^2.1.1",
-    "postcss": "^8.4.49",
-    "prism-react-renderer": "^2.4.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "tailwindcss": "^3.4.17"
-  },
-  "devDependencies": {
-    "@docusaurus/module-type-aliases": "^3.6.3",
-    "@docusaurus/types": "^3.6.3",
-    "typescript": "^5.7.2",
-    "remark-cli": "^12.0.1",
-    "remark-lint-no-dead-urls": "^2.0.1"
-  },
-  "browserslist": {
-    "production": [
-      ">0.5%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 3 chrome version",
-      "last 3 firefox version",
-      "last 5 safari version"
-    ]
-  },
-  "engines": {
-    "node": ">=18.0"
+    "name": "@cpp.js/website",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+      "docusaurus": "docusaurus",
+      "start": "docusaurus start",
+      "build": "docusaurus build",
+      "swizzle": "docusaurus swizzle",
+      "deploy": "docusaurus deploy",
+      "clear": "docusaurus clear",
+      "serve": "docusaurus serve",
+      "check:links": "remark --frail --use remark-lint-no-dead-urls .",
+      "write-translations": "docusaurus write-translations",
+      "write-heading-ids": "docusaurus write-heading-ids",
+      "copy:readme": "find ../packages -path \"../packages/cppjs-package-*/README.md\" -maxdepth 2 -exec bash -c 'src=\"{}\"; dest=\"./docs/package/package/$(basename $(dirname \"$src\")).md\"; cp \"$src\" \"$dest\"' \\;",
+      "copy:changelog:core": "cp ../packages/cpp.js/CHANGELOG.md ./docs/changelog/core/cppjs.md; find ../packages -path \"../packages/cppjs-core-*/CHANGELOG.md\" -maxdepth 2 -exec bash -c 'src=\"{}\"; dest=\"./docs/changelog/core/$(basename $(dirname \"$src\")).md\"; cp \"$src\" \"$dest\"' \\;",
+      "copy:changelog:plugin": "find ../packages -path \"../packages/cppjs-plugin-*/CHANGELOG.md\" -maxdepth 2 -exec bash -c 'src=\"{}\"; dest=\"./docs/changelog/plugins/$(basename $(dirname \"$src\")).md\"; cp \"$src\" \"$dest\"' \\;",
+      "copy:changelog:package": "find ../packages -path \"../packages/cppjs-package-*/CHANGELOG.md\" -maxdepth 2 -exec bash -c 'src=\"{}\"; dest=\"./docs/changelog/packages/$(basename $(dirname \"$src\")).md\"; cp \"$src\" \"$dest\"' \\;",
+      "copy:changelog:sample": "find ../packages -path \"../packages/cppjs-sample-*/CHANGELOG.md\" -maxdepth 2 -exec bash -c 'src=\"{}\"; dest=\"./docs/changelog/samples/$(basename $(dirname \"$src\")).md\"; cp \"$src\" \"$dest\"' \\;",
+      "copy": "pnpm run copy:readme && pnpm run copy:changelog:core && pnpm run copy:changelog:plugin && pnpm run copy:changelog:package && pnpm run copy:changelog:sample"
+    },
+    "dependencies": {
+      "@docusaurus/core": "^3.7.0",
+      "@docusaurus/preset-classic": "^3.7.0",
+      "@docusaurus/remark-plugin-npm2yarn": "^3.7.0",
+      "@docusaurus/theme-mermaid": "^3.7.0",
+      "@mdx-js/react": "^3.1.0",
+      "autoprefixer": "^10.4.20",
+      "clsx": "^2.1.1",
+      "postcss": "^8.5.1",
+      "prism-react-renderer": "^2.4.1",
+      "react": "^19.0.0",
+      "react-dom": "^19.0.0",
+      "tailwindcss": "^3.4.17"
+    },
+    "devDependencies": {
+      "@docusaurus/module-type-aliases": "^3.7.0",
+      "@docusaurus/types": "^3.7.0",
+      "typescript": "^5.7.3",
+      "remark-cli": "^12.0.1",
+      "remark-lint-no-dead-urls": "^2.0.1"
+    },
+    "browserslist": {
+      "production": [
+        ">0.5%",
+        "not dead",
+        "not op_mini all"
+      ],
+      "development": [
+        "last 3 chrome version",
+        "last 3 firefox version",
+        "last 5 safari version"
+      ]
+    },
+    "engines": {
+      "node": ">=18.0"
+    }
   }
-}

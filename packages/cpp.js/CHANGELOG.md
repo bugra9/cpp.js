@@ -10,7 +10,7 @@
 
 ### Patch Changes
 
-- fix: include prebuilt/_/{config.general.name}/_.h in dependency header search paths
+- fix: include prebuilt/_/_config.general.name_/_.h in dependency header search paths
 
 ## 1.0.0
 
