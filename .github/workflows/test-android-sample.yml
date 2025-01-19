@@ -1,5 +1,6 @@
 name: test android sample
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
