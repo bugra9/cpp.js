@@ -23,7 +23,16 @@ function downloadFile(url, folder) {
             return;
         }
 
-        fr.https.get(url, (res) => {
+        const parsedUrl = new URL(url);
+        const options = {
+            hostname: parsedUrl.hostname,
+            path: parsedUrl.pathname + parsedUrl.search,
+            headers: {
+                'User-Agent': 'curl/8.7.1',
+            },
+        };
+
+        fr.https.get(options, (res) => {
             const fileStream = fs.createWriteStream(`${folder}/${filename}`);
             res.pipe(fileStream);
 
