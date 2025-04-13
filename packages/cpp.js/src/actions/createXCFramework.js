@@ -3,6 +3,10 @@ import upath from 'upath';
 import { execFileSync } from 'node:child_process';
 import state from '../state/index.js';
 
+const iOSDevPath = '/Applications/Xcode.app/Contents/Developer';
+const iosBinPath = `${iOSDevPath}/Toolchains/XcodeDefault.xctoolchain/usr/bin`;
+const iosRanLibBin = `${iosBinPath}/ranlib`;
+
 export default function createXCFramework(overrideConfig = null) {
     if (process.platform !== 'darwin') {
         return;
@@ -26,6 +30,8 @@ export default function createXCFramework(overrideConfig = null) {
 
     libName.forEach((fileName) => {
         if (!fs.existsSync(`${projectPath}/${fileName}.xcframework`)) {
+            execFileSync(iosRanLibBin, [`${relativeOutput}/prebuilt/iOS-iphoneos/lib/lib${fileName}.a`], options);
+            execFileSync(iosRanLibBin, [`${relativeOutput}/prebuilt/iOS-iphonesimulator/lib/lib${fileName}.a`], options);
             const params = [
                 '-create-xcframework',
                 '-library', `${relativeOutput}/prebuilt/iOS-iphoneos/lib/lib${fileName}.a`,

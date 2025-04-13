@@ -6,6 +6,7 @@ const platformCmake = {
 
 export default {
     getURL: (version) => `https://github.com/OSGeo/gdal/releases/download/v${version}/gdal-${version}.tar.gz`,
+    copyToSource: { 'assets/gdal_empty_file.cpp': 'gcore/gdal_empty_file.cpp' },
     replaceList: [
         {
             regex: ' iconv_open',
@@ -27,9 +28,13 @@ export default {
             replacement: '',
             paths: ['gdal.cmake'],
         },
+        {
+            regex: 'add_library\\(\\$\\{GDAL_LIB_TARGET_NAME\\} gcore/gdal.h\\)',
+            replacement: 'add_library(${GDAL_LIB_TARGET_NAME} gcore/gdal.h gcore/gdal_empty_file.cpp)',
+            paths: ['gdal.cmake'],
+        },
     ],
-    buildType: 'cmake', // cmake, configure,
-    useIOSCMake: true,
+    buildType: 'cmake',
     getBuildParams: (platform, depPaths, ext) => [
         ...(platformCmake[platform] || []),
         '-DBUILD_APPS=OFF', '-DBUILD_TESTING=OFF', '-DACCEPT_MISSING_SQLITE3_MUTEX_ALLOC=ON',

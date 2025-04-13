@@ -41,7 +41,7 @@ const androidParamsX86_64 = [
 ];
 
 const IOS_HOST_FLAGS = `-arch arm64 -arch arm64e -isysroot ${iosSdkPath} -fembed-bitcode`;
-const IOS_SIM_HOST_FLAGS = `-arch x86_64 -arch arm64 -arch arm64e -isysroot ${iosSimSdkPath} -fembed-bitcode`;
+const IOS_SIM_HOST_FLAGS = `-arch x86_64 -arch arm64 -isysroot ${iosSimSdkPath} -fembed-bitcode`;
 const IOS_IPHONE_PARAMS = [
     '-e', `CFLAGS="${IOS_HOST_FLAGS}"`,
     '-e', `CXXFLAGS="${IOS_HOST_FLAGS}"`,
@@ -130,7 +130,7 @@ export default function run(program, params = [], platformPrefix = null, platfor
                             `-DMACOSX_FRAMEWORK_IDENTIFIER=org.js.cpp.${state.config.general.name}`,
                             `-DCMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER=org.js.cpp.${state.config.general.name}`,
                             `-DCMAKE_OSX_SYSROOT='${arch[0] === 'iphoneos' ? iosSdkPath : iosSimSdkPath}'`,
-                            `-DCMAKE_OSX_ARCHITECTURES=${arch[0] === 'iphoneos' ? 'arm64;arm64e' : 'arm64;arm64e;x86_64'}`,
+                            `-DCMAKE_OSX_ARCHITECTURES=${arch[0] === 'iphoneos' ? 'arm64;arm64e' : 'arm64;x86_64'}`,
                             `-DCMAKE_C_FLAGS=${arch[0] === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
                             `-DCMAKE_CXX_FLAGS=${arch[0] === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
                             '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY=\'iPhone Developer\'',
@@ -145,7 +145,7 @@ export default function run(program, params = [], platformPrefix = null, platfor
                             ...dParams,
                             `-DCMAKE_TOOLCHAIN_FILE='${state.config.paths.cli}/assets/ios.toolchain.cmake'`,
                             `-DPLATFORM=${arch[0] === 'iphoneos' ? 'OS64' : 'SIMULATORARM64'}`,
-                            `-DARCHS=${arch[0] === 'iphoneos' ? 'arm64;arm64e' : 'arm64;arm64e;x86_64'}`,
+                            `-DARCHS=${arch[0] === 'iphoneos' ? 'arm64;arm64e' : 'arm64;x86_64'}`,
                             '-DENABLE_BITCODE=TRUE',
                             '-DBUILD_SHARED_LIBS=OFF',
                             '-DFRAMEWORK=TRUE',
@@ -154,7 +154,7 @@ export default function run(program, params = [], platformPrefix = null, platfor
                             `-DMACOSX_FRAMEWORK_IDENTIFIER=org.js.cpp.${state.config.general.name}`,
                             `-DCMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER=org.js.cpp.${state.config.general.name}`,
                             `-DCMAKE_OSX_SYSROOT='${arch[0] === 'iphoneos' ? iosSdkPath : iosSimSdkPath}'`,
-                            `-DCMAKE_OSX_ARCHITECTURES=${arch[0] === 'iphoneos' ? 'arm64;arm64e' : 'arm64;arm64e;x86_64'}`,
+                            `-DCMAKE_OSX_ARCHITECTURES=${arch[0] === 'iphoneos' ? 'arm64;arm64e' : 'arm64;x86_64'}`,
                             `-DCMAKE_C_FLAGS=${arch[0] === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
                             `-DCMAKE_CXX_FLAGS=${arch[0] === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
                             '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY=\'iPhone Developer\'',

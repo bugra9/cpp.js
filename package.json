@@ -9,7 +9,7 @@
         "build:samples:lib:ios": "pnpm --filter=@cpp.js/sample-lib-* run build:ios",
         "build:samples:wasm": "pnpm --filter=@cpp.js/sample-web-* run build && pnpm --filter=@cpp.js/sample-cloud-* run build && pnpm --filter=@cpp.js/sample-backend-* run build && pnpm run build:samples:lib:wasm",
         "build:website": "pnpm --filter=@cpp.js/website run build",
-        "build:": "pnpm run build:packages; pnpm run build:samples;",
+        "build": "pnpm run build:packages; pnpm run build:samples;",
         "clear:cache": "find packages -name \".cppjs\" -type d -maxdepth 2 -exec rm -rf {} +",
         "clear:cache:samples": "find packages -name \".cppjs\" -path \"*cppjs-sample-*\" -type d -maxdepth 2 -exec rm -rf {} +",
         "clear:cache:packages": "find packages -name \".cppjs\" -path \"*cppjs-package-*\" -type d -maxdepth 2 -exec rm -rf {} +",
