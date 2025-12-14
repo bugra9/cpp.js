@@ -1,0 +1,4 @@
+appId: org.js.cpp.cppjsSampleReactNativeCLI
+---
+- launchApp
+- assertVisible: 'Matrix multiplier with c++.*=>.*J₃ \* \(2\*J₃\) = 6\*J₃'

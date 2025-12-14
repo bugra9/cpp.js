@@ -1,0 +1,25 @@
+{
+    "name": "@cpp.js/package-tiff",
+    "version": "2.0.0-beta.2",
+    "nativeVersion": "4.7.1",
+    "description": "This package provides the Tiff library compiled with Cpp.js, enabling fast and efficient image processing using the TIFF format. It is built with Cpp.js to provide cross-platform support, leveraging both WebAssembly (WASM) for web applications and native code for mobile platforms. Ideal for developers looking to handle TIFF images with high performance in JavaScript environments.",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-tiff#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "type": "module",
+    "license": "libtiff",
+    "keywords": [
+        "tiff",
+        "libtiff",
+        "cpp.js-package",
+        "webassembly",
+        "react-native"
+    ],
+    "dependencies": {
+        "@cpp.js/package-tiff-wasm": "workspace:^",
+        "@cpp.js/package-tiff-android": "workspace:^",
+        "@cpp.js/package-tiff-ios": "workspace:^"
+    },
+    "devDependencies": {
+        "cpp.js": "workspace:^"
+    }
+}

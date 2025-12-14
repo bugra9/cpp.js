@@ -8,6 +8,8 @@ tmp
 *.xcframework
 *.xcframework.zip
 *.tgz
+pnpm-publish-summary.json
+beta-releases.md
 
 # dependencies
 node_modules

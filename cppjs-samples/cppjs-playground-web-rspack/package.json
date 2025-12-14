@@ -1,0 +1,53 @@
+{
+    "name": "@cpp.js/playground-web-rspack",
+    "version": "2.0.0-beta.1",
+    "description": "Cpp.js Rspack Playground",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-playground-web-rspack#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "license": "MIT",
+    "scripts": {
+        "dev": "cross-env NODE_ENV=development rspack serve",
+        "build": "cross-env NODE_ENV=production rspack build",
+        "preview": "serve dist -c ../serve.json"
+    },
+    "dependencies": {
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "@cpp.js/plugin-webpack": "workspace:^",
+        "@cpp.js/plugin-webpack-loader": "workspace:^",
+        "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^",
+        "@cpp.js/package-curl": "workspace:^",
+        "@cpp.js/package-expat": "workspace:^",
+        "@cpp.js/package-gdal": "workspace:^",
+        "@cpp.js/package-geos": "workspace:^",
+        "@cpp.js/package-geotiff": "workspace:^",
+        "@cpp.js/package-iconv": "workspace:^",
+        "@cpp.js/package-openssl": "workspace:^",
+        "@cpp.js/package-proj": "workspace:^",
+        "@cpp.js/package-spatialite": "workspace:^",
+        "@cpp.js/package-sqlite3": "workspace:^",
+        "@cpp.js/package-tiff": "workspace:^",
+        "@cpp.js/package-webp": "workspace:^",
+        "@cpp.js/package-zlib": "workspace:^"
+    },
+    "devDependencies": {
+        "@rspack/plugin-react-refresh": "^1.0.1",
+        "@rspack/cli": "^1.1.8",
+        "@rspack/core": "^1.1.8",
+        "@types/react": "^19.0.2",
+        "@types/react-dom": "^19.0.2",
+        "cross-env": "^7.0.3",
+        "react-refresh": "^0.16.0",
+        "@playwright/test": "^1.49.1",
+        "serve": "^14.2.4"
+    },
+    "keywords": [
+        "cpp.js-sample",
+        "webassembly",
+        "bind",
+        "c++",
+        "react",
+        "rspack",
+        "webpack"
+    ]
+}

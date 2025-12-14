@@ -1,0 +1,40 @@
+{
+    "name": "@cpp.js/playground-web-vanilla",
+    "version": "2.0.0-beta.1",
+    "description": "Cpp.js Web Vanilla playground",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-playground-web-vanilla#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "license": "MIT",
+    "scripts": {
+        "build": "cppjs build -p WebAssembly",
+        "preview": "serve -c ./serve.json"
+    },
+    "dependencies": {
+        "cpp.js": "workspace:^",
+        "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^",
+        "@cpp.js/package-curl": "workspace:^",
+        "@cpp.js/package-expat": "workspace:^",
+        "@cpp.js/package-gdal": "workspace:^",
+        "@cpp.js/package-geos": "workspace:^",
+        "@cpp.js/package-geotiff": "workspace:^",
+        "@cpp.js/package-iconv": "workspace:^",
+        "@cpp.js/package-openssl": "workspace:^",
+        "@cpp.js/package-proj": "workspace:^",
+        "@cpp.js/package-spatialite": "workspace:^",
+        "@cpp.js/package-sqlite3": "workspace:^",
+        "@cpp.js/package-tiff": "workspace:^",
+        "@cpp.js/package-webp": "workspace:^",
+        "@cpp.js/package-zlib": "workspace:^"
+    },
+    "devDependencies": {
+        "serve": "^14.2.4",
+        "@playwright/test": "^1.49.1"
+    },
+    "keywords": [
+        "cpp.js-sample",
+        "webassembly",
+        "bind",
+        "c++",
+        "vanilla"
+    ]
+}

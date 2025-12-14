@@ -1,5 +1,9 @@
 packages:
-  - 'packages/*'
+  - 'cppjs-core/*'
+  - 'cppjs-plugins/*'
+  - 'cppjs-samples/*'
+  - '!cppjs-samples/cppjs-sample-mobile-reactnative-expo'
+  - 'cppjs-packages/*/*'
+  - 'cppjs-extensions/*'
   - 'website'
-  - '!packages/cppjs-sample-mobile-reactnative-expo'
   - '!**/test/**'

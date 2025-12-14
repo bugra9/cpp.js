@@ -1,0 +1,37 @@
+{
+    "name": "@cpp.js/package-gdal-wasm-multithread",
+    "version": "2.0.0-beta.1",
+    "nativeVersion": "3.12.1",
+    "description": "This package provides the precompiled GDAL, built using Cpp.js, for seamless integration into JavaScript, WebAssembly, and React Native projects. It enables advanced geospatial data processing, including raster and vector data manipulation, format conversion, and spatial analysis, ensuring high performance and cross-platform compatibility. Perfect for web, server-side, and mobile geospatial applications.",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-gdal#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "type": "module",
+    "license": "MIT",
+    "keywords": [
+        "gdal",
+        "libgdal",
+        "cpp.js-package",
+        "webassembly",
+        "react-native"
+    ],
+    "scripts": {
+        "build": "cppjs build -p WebAssembly",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "prepublishOnly": "cppjs build -p WebAssembly"
+    },
+    "dependencies": {
+        "@cpp.js/package-expat-wasm-multithread": "workspace:^",
+        "@cpp.js/package-geos-wasm-multithread": "workspace:^",
+        "@cpp.js/package-geotiff-wasm-multithread": "workspace:^",
+        "@cpp.js/package-iconv-wasm-multithread": "workspace:^",
+        "@cpp.js/package-proj-wasm-multithread": "workspace:^",
+        "@cpp.js/package-spatialite-wasm-multithread": "workspace:^",
+        "@cpp.js/package-sqlite3-wasm-multithread": "workspace:^",
+        "@cpp.js/package-tiff-wasm-multithread": "workspace:^",
+        "@cpp.js/package-webp-wasm-multithread": "workspace:^",
+        "@cpp.js/package-zlib-wasm-multithread": "workspace:^"
+    },
+    "devDependencies": {
+        "cpp.js": "workspace:^"
+    }
+}
