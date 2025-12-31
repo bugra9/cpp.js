@@ -5,7 +5,7 @@ import state, { saveCache } from '../state/index.js';
 import { getFileHash } from '../utils/hash.js';
 import run from './run.js';
 
-export default function createBridgeFile(headerOrModuleFilePath) {
+export default function createBridgeFile(headerOrModuleFilePath, platform = 'Emscripten-x86_64') {
     const interfaceFilePath = upath.resolve(headerOrModuleFilePath);
     if (!fs.existsSync(`${state.config.paths.build}/interface`)) {
         fs.mkdirSync(`${state.config.paths.build}/interface`, { recursive: true });
@@ -13,11 +13,11 @@ export default function createBridgeFile(headerOrModuleFilePath) {
     if (!fs.existsSync(`${state.config.paths.build}/bridge`)) {
         fs.mkdirSync(`${state.config.paths.build}/bridge`, { recursive: true });
     }
-    const interfaceFile = createInterfaceFile(interfaceFilePath);
-    return createBridgeFileFromInterfaceFile(interfaceFile);
+    const interfaceFile = createInterfaceFile(interfaceFilePath, platform);
+    return createBridgeFileFromInterfaceFile(interfaceFile, platform);
 }
 
-function createInterfaceFile(headerOrModuleFilePath) {
+function createInterfaceFile(headerOrModuleFilePath, platform) {
     if (!headerOrModuleFilePath) {
         return null;
     }
@@ -37,7 +37,7 @@ function createInterfaceFile(headerOrModuleFilePath) {
         return newPath;
     }
 
-    const headerPaths = (state.config.dependencyParameters?.pathsOfCmakeDepends?.split(';') || [])
+    const headerPaths = (state.config.dependencyParameters?.getCmakeDependsPathAndName(platform).pathsOfCmakeDepends || [])
         .filter((d) => d.startsWith(state.config.paths.base));
 
     const temp2 = headerPaths
@@ -92,7 +92,7 @@ function createInterfaceFile(headerOrModuleFilePath) {
     return outputFilePath;
 }
 
-function createBridgeFileFromInterfaceFile(interfaceFilePath) {
+function createBridgeFileFromInterfaceFile(interfaceFilePath, platform) {
     if (!interfaceFilePath) {
         return null;
     }
@@ -105,8 +105,8 @@ function createBridgeFileFromInterfaceFile(interfaceFilePath) {
     const allHeaders = state.config.dependencyParameters.headerPathWithDepends.split(';');
 
     let includePath = [
-        ...state.config.allDependencies.map((d) => `${d.paths.output}/prebuilt/Emscripten-x86_64/include`),
-        ...state.config.allDependencies.map((d) => `${d.paths.output}/prebuilt/Emscripten-x86_64/swig`),
+        ...state.config.allDependencies.map((d) => `${d.paths.output}/prebuilt/${platform}/include`),
+        ...state.config.allDependencies.map((d) => `${d.paths.output}/prebuilt/${platform}/swig`),
         ...state.config.paths.header,
         ...allHeaders,
     ].filter((path) => !!path.toString()).map((path) => `-I${path}`);

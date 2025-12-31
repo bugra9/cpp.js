@@ -10,18 +10,18 @@ import webpAndroidMultithread from '@cpp.js/package-webp-android-multithread/cpp
 import zlibAndroidMultithread from '@cpp.js/package-zlib-android-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        expatAndroidMultithread,
-        geosAndroidMultithread,
-        geotiffAndroidMultithread,
-        iconvAndroidMultithread,
-        projAndroidMultithread,
-        spatialiteAndroidMultithread,
-        sqlite3AndroidMultithread,
-        tiffAndroidMultithread,
-        webpAndroidMultithread,
-        zlibAndroidMultithread,
-    ],
+  dependencies: [
+    expatAndroidMultithread,
+    geosAndroidMultithread,
+    geotiffAndroidMultithread,
+    iconvAndroidMultithread,
+    projAndroidMultithread,
+    spatialiteAndroidMultithread,
+    sqlite3AndroidMultithread,
+    tiffAndroidMultithread,
+    webpAndroidMultithread,
+    zlibAndroidMultithread,
+  ],
   general: {
     name: 'gdal'
   },
@@ -48,5 +48,5 @@ export default {
         CPL_LOG_ERRORS: 'ON'
       }
     }
-  }
+  },
 };

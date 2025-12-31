@@ -27,23 +27,32 @@ export default function calculateDependencyParameters(config) {
     setPath(cmakeDepends, config, 'this', cmakeFilter);
     cmakeDepends = [...new Set(cmakeDepends)];
 
-    const pathsOfCmakeDepends = [];
-    const nameOfCmakeDepends = [];
-    cmakeDepends.forEach((d) => {
-        const dependPath = getParentPath(d.paths.cmake);
-        if (!pathsOfCmakeDepends.includes(dependPath)) {
-            pathsOfCmakeDepends.push(dependPath);
-            nameOfCmakeDepends.push(d.general.name);
-        }
-    });
+    const getCmakeDepends = (platform, variants = []) => {
+        return cmakeDepends.filter(d => d.functions.isEnabled(platform, variants));
+    };
+
+    const getCmakeDependsPathAndName = (platform, variants = []) => {
+        const pathsOfCmakeDepends = [];
+        const nameOfCmakeDepends = [];
+        getCmakeDepends(platform, variants).forEach((d) => {
+            const dependPath = d.paths.cmakeDir;
+            if (!pathsOfCmakeDepends.includes(dependPath)) {
+                pathsOfCmakeDepends.push(dependPath);
+                nameOfCmakeDepends.push(d.general.name);
+            }
+        });
+        return {
+            pathsOfCmakeDepends: pathsOfCmakeDepends,
+            nameOfCmakeDepends: nameOfCmakeDepends,
+        };
+    }
 
     return {
         nativeGlob,
         headerGlob,
         headerPathWithDepends,
-        cmakeDepends,
-        pathsOfCmakeDepends: pathsOfCmakeDepends.join(';'),
-        nameOfCmakeDepends: nameOfCmakeDepends.join(';'),
+        getCmakeDepends,
+        getCmakeDependsPathAndName,
     };
 }
 
@@ -61,10 +70,4 @@ function setPath(arr, dependency, type, filter = () => { }) {
     dependency.dependencies.forEach((dep) => {
         setPath(arr, dep, type, filter);
     });
-}
-
-function getParentPath(path) {
-    const pathArray = path.split('/');
-    pathArray.pop();
-    return pathArray.join('/');
 }

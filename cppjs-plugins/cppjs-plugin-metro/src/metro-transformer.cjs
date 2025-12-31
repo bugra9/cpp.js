@@ -29,12 +29,13 @@ module.exports.transform = async ({ src, filename, ...rest }) => {
     const moduleRegex = new RegExp(`\\.(${state.config.ext.module.join('|')})$`);
 
     if (headerRegex.test(filename) || moduleRegex.test(filename)) {
-        const bridgeFile = createBridgeFile(filename);
-
         let platform = null;
         if (rest.options.platform === 'ios') platform = 'iOS-iphoneos';
         else if (rest.options.platform === 'android') platform = 'Android-arm64-v8a';
         else platform = 'Emscripten-x86_64';
+
+        const bridgeFile = createBridgeFile(filename, platform);
+
         return upstreamTransformer.transform({ src: getCppJsScript(platform, bridgeFile), filename, ...rest });
     }
 

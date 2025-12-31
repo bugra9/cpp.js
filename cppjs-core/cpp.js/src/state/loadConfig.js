@@ -1,4 +1,5 @@
 import os from 'node:os';
+import fs from 'node:fs';
 import systemKeys from '../utils/systemKeys.js';
 import loadJs from '../utils/loadJs.js';
 import loadJson from '../utils/loadJson.js';
@@ -42,6 +43,7 @@ function getFilledConfig(config, options = { isDepend: false }) {
         build: config.build || {},
         extensions: config.extensions || [],
         package: null,
+        functions: config.functions || {},
     };
 
     if (newConfig.paths.config && !newConfig.paths.project) {
@@ -113,6 +115,14 @@ function getFilledConfig(config, options = { isDepend: false }) {
     if (!newConfig.build.usePthread) {
         newConfig.build.usePthread = newConfig.allDependencies.some((d) => d?.build?.usePthread);
     }
+
+    newConfig.functions.isEnabled = newConfig.functions.isEnabled || ((platform) => {
+        const basePlatform = platform.split('-', 1)[0];
+        return (
+            fs.existsSync(`${newConfig.paths.cmakeDir}/${platform}`)
+            || (basePlatform === 'iOS' && fs.existsSync(`${newConfig.paths.cmakeDir}/../../${newConfig.general.name}.xcframework`))
+        );
+    });
 
     newConfig.dependencyParameters = calculateDependencyParameters(newConfig);
     // newConfig.cmakeParameters = getCmakeParameters(newConfig);

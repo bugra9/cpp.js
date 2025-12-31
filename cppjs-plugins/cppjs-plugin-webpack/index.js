@@ -27,16 +27,17 @@ export default class CppjsWebpackPlugin {
         createLib('Emscripten-x86_64', 'Bridge', { isProd: true, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...this.bridges] });
         await buildWasm('browser', true);
         if (!isDev) {
-            fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, `${compilation.options.output.path}/cpp.js`);
-            fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`, `${compilation.options.output.path}/cpp.wasm`);
+            const output = state.config.paths.output === state.config.paths.build ? compilation.options.output.path : state.config.paths.output;
+            fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, `${output}/cpp.js`);
+            fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`, `${output}/cpp.wasm`);
 
             const dataFilePath = `${state.config.paths.build}/${state.config.general.name}.data.txt`;
             if (fs.existsSync(dataFilePath)) {
-                fs.copyFileSync(dataFilePath, `${compilation.options.output.path}/cpp.data.txt`);
+                fs.copyFileSync(dataFilePath, `${output}/cpp.data.txt`);
             }
             /* const workerFilePath = `${state.config.paths.build}/${state.config.general.name}.js`;
             if (fs.existsSync(workerFilePath)) {
-                fs.copyFileSync(workerFilePath, `${compilation.options.output.path}/cpp.worker.js`);
+                fs.copyFileSync(workerFilePath, `${output}/cpp.worker.js`);
             } */
         }
     }

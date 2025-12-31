@@ -39,17 +39,6 @@ export default function getCmakeParameters(platform, options = {}) {
 
     const cmakeCompileOptions = [...new Set(getData('cmake', platform)?.compileOptions || [])];
 
-    const pathsOfCmakeDepends = dependParams.pathsOfCmakeDepends.split(';');
-    const nameOfCmakeDepends = dependParams.nameOfCmakeDepends.split(';');
-    const pathsOfCmakeDependsFilteredByPlatform = [];
-    const nameOfCmakeDependsFilteredByPlatform = [];
-    pathsOfCmakeDepends.forEach((d, i) => {
-        if (fs.existsSync(`${d}/${platform}`) || (basePlatform === 'iOS' && fs.existsSync(`${d}/../../${nameOfCmakeDepends[i]}.xcframework`))) {
-            pathsOfCmakeDependsFilteredByPlatform.push(d);
-            nameOfCmakeDependsFilteredByPlatform.push(nameOfCmakeDepends[i]);
-        }
-    });
-
     params.push(...[
         `-DPROJECT_NAME=${options.name || state.config.general.name}`,
         `-DBASE_DIR=${state.config.paths.project}`,
@@ -58,8 +47,8 @@ export default function getCmakeParameters(platform, options = {}) {
         `-DNATIVE_GLOB=${nativeGlob.join(';')}`,
         `-DHEADER_GLOB=${headerGlob.join(';')}`,
         `-DHEADER_DIR=${headerDirs.join(';')}`,
-        `-DDEPENDS_CMAKE_PATHS=${pathsOfCmakeDependsFilteredByPlatform.join(';')}`,
-        `-DDEPENDS_CMAKE_NAMES=${nameOfCmakeDependsFilteredByPlatform.join(';')}`,
+        `-DDEPENDS_CMAKE_PATHS=${dependParams.getCmakeDependsPathAndName(platform).pathsOfCmakeDepends.join(';')}`,
+        `-DDEPENDS_CMAKE_NAMES=${dependParams.getCmakeDependsPathAndName(platform).nameOfCmakeDepends.join(';')}`,
         `-DBRIDGE_DIR=${state.config.paths.build}/bridge`,
         `-DBUILD_TYPE=${buildType}`,
         `-DBUILD_${otherBuildType}_LIBS=OFF`,
