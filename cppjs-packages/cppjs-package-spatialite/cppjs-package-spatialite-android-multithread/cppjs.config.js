@@ -5,13 +5,13 @@ import zlibAndroidMultithread from '@cpp.js/package-zlib-android-multithread/cpp
 import iconvAndroidMultithread from '@cpp.js/package-iconv-android-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        geosAndroidMultithread,
-        projAndroidMultithread,
-        sqlite3AndroidMultithread,
-        zlibAndroidMultithread,
-        iconvAndroidMultithread,
-    ],
+  dependencies: [
+    geosAndroidMultithread,
+    projAndroidMultithread,
+    sqlite3AndroidMultithread,
+    zlibAndroidMultithread,
+    iconvAndroidMultithread,
+  ],
   general: {
     name: 'spatialite'
   },
@@ -23,7 +23,5 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  }
+
 };

@@ -1,9 +1,9 @@
 import zlibWasmMultithread from '@cpp.js/package-zlib-wasm-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        zlibWasmMultithread,
-    ],
+  dependencies: [
+    zlibWasmMultithread,
+  ],
   general: {
     name: 'tiff'
   },
@@ -19,7 +19,5 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  }
+
 };

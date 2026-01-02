@@ -3,11 +3,11 @@ import tiffIosMultithread from '@cpp.js/package-tiff-ios-multithread/cppjs.confi
 import zlibIosMultithread from '@cpp.js/package-zlib-ios-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        projIosMultithread,
-        tiffIosMultithread,
-        zlibIosMultithread,
-    ],
+  dependencies: [
+    projIosMultithread,
+    tiffIosMultithread,
+    zlibIosMultithread,
+  ],
   general: {
     name: 'geotiff'
   },
@@ -19,7 +19,5 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  }
+
 };

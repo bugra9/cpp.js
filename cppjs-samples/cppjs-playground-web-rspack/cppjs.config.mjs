@@ -37,11 +37,13 @@ export default {
         config: import.meta.url,
         base: '../..', /* Delete this line for create-cpp.js */
     },
-    platform: {
-        'Emscripten-x86_64': {
-            binary: {
-                emccFlags: ['-sJSPI'],
+    targetSpecs: [
+        {
+            specs: {
+                binary: {
+                    emccFlags: ['-sJSPI'],
+                }
             }
-        },
-    }
+        }
+    ],
 };

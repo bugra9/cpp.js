@@ -3,11 +3,11 @@ import tiffWasmMultithread from '@cpp.js/package-tiff-wasm-multithread/cppjs.con
 import zlibWasmMultithread from '@cpp.js/package-zlib-wasm-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        projWasmMultithread,
-        tiffWasmMultithread,
-        zlibWasmMultithread,
-    ],
+  dependencies: [
+    projWasmMultithread,
+    tiffWasmMultithread,
+    zlibWasmMultithread,
+  ],
   general: {
     name: 'geotiff'
   },
@@ -19,7 +19,5 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  }
+
 };

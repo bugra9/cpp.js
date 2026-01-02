@@ -1,9 +1,9 @@
 import zlibIosMultithread from '@cpp.js/package-zlib-ios-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        zlibIosMultithread,
-    ],
+  dependencies: [
+    zlibIosMultithread,
+  ],
   general: {
     name: 'tiff'
   },
@@ -19,7 +19,5 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  }
+
 };

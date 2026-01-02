@@ -8,9 +8,9 @@
     "license": "Zlib",
     "type": "module",
     "scripts": {
-        "build": "cppjs build -p WebAssembly",
+        "build": "cppjs build -p wasm",
         "clear": "rm -rf .cppjs dist",
-        "prepublishOnly": "cppjs build -p WebAssembly"
+        "prepublishOnly": "cppjs build -p wasm"
     },
     "devDependencies": {
         "cpp.js": "workspace:^"

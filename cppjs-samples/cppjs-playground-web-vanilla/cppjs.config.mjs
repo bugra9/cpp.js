@@ -38,11 +38,13 @@ export default {
         base: '../..', /* Delete this line for create-cpp.js */
         output: 'dist',
     },
-    platform: {
-        'Emscripten-x86_64': {
-            binary: {
-                emccFlags: ['-sJSPI'],
+    targetSpecs: [
+        {
+            specs: {
+                binary: {
+                    emccFlags: ['-sJSPI'],
+                }
             }
-        },
-    }
+        }
+    ],
 };

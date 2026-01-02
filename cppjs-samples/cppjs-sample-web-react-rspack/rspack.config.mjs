@@ -14,7 +14,21 @@ const targets = ['chrome >= 87', 'edge >= 88', 'firefox >= 78', 'safari >= 14'];
 
 const cppjsWebpackPlugin = new CppjsWebpackPlugin();
 const cppjsLoaderOptions = cppjsWebpackPlugin.getLoaderOptions();
-const { state } = cppjsLoaderOptions;
+const { state, getTargetParams, getFilteredBuildTargets } = cppjsLoaderOptions;
+
+const targetParams = getTargetParams({ platform: 'wasm', arch: 'wasm32', runtime: 'st', runtimeEnv: 'browser' }, true);
+let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
+let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
+
+if (!buildTargetRelease && !buildTargetDebug) {
+    throw new Error('No build targets found');
+}
+
+if (!buildTargetDebug) {
+    buildTargetDebug = buildTargetRelease;
+} else if (!buildTargetRelease) {
+    buildTargetRelease = buildTargetDebug;
+}
 
 export default defineConfig({
     context: __dirname,
@@ -97,14 +111,14 @@ export default defineConfig({
                 name: '/cpp.js',
                 path: '/cpp.js',
                 middleware: (req, res) => {
-                    res.sendFile(`${state.config.paths.build}/${state.config.general.name}.browser.js`);
+                    res.sendFile(`${state.config.paths.build}/${buildTargetDebug.jsName}`);
                 },
             });
             middlewares.unshift({
                 name: '/cpp.wasm',
                 path: '/cpp.wasm',
                 middleware: (req, res) => {
-                    res.send(fs.readFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`));
+                    res.send(fs.readFileSync(`${state.config.paths.build}/${buildTargetDebug.wasmName}`));
                 },
             });
 

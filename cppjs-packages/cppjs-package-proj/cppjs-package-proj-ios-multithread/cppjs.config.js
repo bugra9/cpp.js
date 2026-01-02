@@ -2,10 +2,10 @@ import tiffIosMultithread from '@cpp.js/package-tiff-ios-multithread/cppjs.confi
 import sqlite3IosMultithread from '@cpp.js/package-sqlite3-ios-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        tiffIosMultithread,
-        sqlite3IosMultithread,
-    ],
+  dependencies: [
+    tiffIosMultithread,
+    sqlite3IosMultithread,
+  ],
   general: {
     name: 'proj'
   },
@@ -17,17 +17,17 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  },
-  platform: {
-    'iOS-iphoneos': {
-      data: {
-        'share/proj': 'proj'
-      },
-      env: {
-        PROJ_LIB: '_CPPJS_DATA_PATH_/proj'
+
+  targetSpecs: [
+    {
+      specs: {
+        data: {
+          'share/proj': 'proj'
+        },
+        env: {
+          PROJ_LIB: '_CPPJS_DATA_PATH_/proj'
+        }
       }
     }
-  }
+  ],
 };

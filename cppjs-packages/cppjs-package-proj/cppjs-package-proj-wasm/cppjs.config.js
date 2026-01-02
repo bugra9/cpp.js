@@ -17,22 +17,16 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  platform: {
-    'Emscripten-x86_64-browser': {
-      'data': {
-        'share/proj': '/usr/share/proj'
-      },
-      env: {
-        PROJ_LIB: '/usr/share/proj'
-      }
-    },
-    'Emscripten-x86_64-node': {
-      'data': {
-        'share/proj': 'proj'
-      },
-      env: {
-        PROJ_LIB: '_CPPJS_DATA_PATH_/proj'
+  targetSpecs: [
+    {
+      specs: {
+        data: {
+          'share/proj': 'proj'
+        },
+        env: {
+          PROJ_LIB: '_CPPJS_DATA_PATH_/proj'
+        }
       }
     }
-  }
+  ],
 };

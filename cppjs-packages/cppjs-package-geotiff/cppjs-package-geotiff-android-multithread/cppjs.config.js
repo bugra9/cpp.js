@@ -3,11 +3,11 @@ import tiffAndroidMultithread from '@cpp.js/package-tiff-android-multithread/cpp
 import zlibAndroidMultithread from '@cpp.js/package-zlib-android-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        projAndroidMultithread,
-        tiffAndroidMultithread,
-        zlibAndroidMultithread,
-    ],
+  dependencies: [
+    projAndroidMultithread,
+    tiffAndroidMultithread,
+    zlibAndroidMultithread,
+  ],
   general: {
     name: 'geotiff'
   },
@@ -19,7 +19,5 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  }
+
 };

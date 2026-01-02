@@ -1,8 +1,4 @@
-const platformCmake = {
-    'Emscripten-x86_64': ['-DBUILD_SHARED_LIBS=OFF'],
-    'Android-arm64-v8a': ['-DCMAKE_ANDROID_STL_TYPE=c++_shared'],
-    'Android-x86_64': ['-DCMAKE_ANDROID_STL_TYPE=c++_shared'],
-};
+const platformCmake = {};
 
 export default {
     getURL: (version) => `https://github.com/OSGeo/gdal/releases/download/v${version}/gdal-${version}.tar.gz`,
@@ -35,8 +31,8 @@ export default {
         },
     ],
     buildType: 'cmake',
-    getBuildParams: (platform, depPaths) => [
-        ...(platformCmake[platform] || []),
+    getBuildParams: (target, depPaths) => [
+        ...(platformCmake[target.platform] || []),
         '-DBUILD_APPS=OFF', '-DBUILD_TESTING=OFF', '-DACCEPT_MISSING_SQLITE3_MUTEX_ALLOC=ON',
         '-DOGR_ENABLE_DRIVER_GPSBABEL=OFF', '-DGDAL_USE_HDF5=OFF', '-DGDAL_USE_HDFS=OFF',
         '-DGDAL_USE_ZSTD=OFF', '-DGDAL_ENABLE_DRIVER_PDS=OFF',

@@ -1,5 +1,5 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
+ 
+ 
 import { rollup } from 'rollup';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
@@ -21,7 +21,6 @@ const options = {
     browser: {
         plugins: [virtual(nodeLibs), nodeResolve(), commonjs({ transformMixedEsModules: true, ignoreTryCatch: 'remove' })],
         output: {
-            file: 'browser',
             format: 'umd',
             name: 'initCppJs',
         },
@@ -29,38 +28,33 @@ const options = {
     node: {
         plugins: [nodeResolve(), commonjs()],
         output: {
-            file: 'node',
             format: 'umd',
             name: 'initCppJs',
         },
     },
 };
 
-export default async function buildJS(input, type) {
-    const entryJS = `${state.config.paths.cli}/assets/${type}.js`;
-    const env = JSON.stringify(getData('env', 'Emscripten-x86_64', type));
+export default async function buildJS(target) {
+    const entryJS = `${state.config.paths.cli}/assets/${target.runtimeEnv}.js`;
+    const env = JSON.stringify(getData('env', target));
     const systemConfig = `export default {
         env: ${env},
         paths: {
-            wasm: '${state.config.general.name}.wasm',
-            data: '${state.config.general.name}.data.txt',
-            worker: '${state.config.general.name}.js',
+            wasm: '${target.wasmName}',
+            data: '${target.dataTxtName}',
+            worker: '${target.rawJsName}',
         }
     }`;
-    let file = input;
-    if (input.endsWith('.js')) {
-        file = input.substring(0, input.length - 3);
-    }
+
     // fs.renameSync(input, `${input}.raw.js`);
-    const option = options[type];
+    const option = options[target.runtimeEnv];
     option.plugins = [virtual({
         'cpp.js/systemConfig': systemConfig,
-        'cpp.js/module': `export { default } from '${input}';`,
+        'cpp.js/module': `export { default } from '${state.config.paths.build}/${target.rawJsName}';`,
     }), ...option.plugins];
     option.input = entryJS;
-    option.output.file = `${file}.${option.output.file}.js`;
+    option.output.file = `${state.config.paths.build}/${target.jsName}`;
     const bundle = await rollup(option);
     await bundle.write(option.output);
     // fs.rmSync(`${input}.raw.js`, { force: true });
 }
-//

@@ -10,5 +10,5 @@ Pod::Spec.new do |s|
   s.author       = "OpenSSL Authors"
   s.source       = { :http => "https://cpp.js.org" }
   s.vendored_frameworks = 'ssl.xcframework', 'crypto.xcframework'
-  s.resources = ['dist/prebuilt/iOS-iphoneos/ssl/certs']
+  s.resources = ['dist/prebuilt/ios-iphoneos/ssl/certs']
 end

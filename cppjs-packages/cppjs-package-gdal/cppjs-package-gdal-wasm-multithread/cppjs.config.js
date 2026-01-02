@@ -10,18 +10,18 @@ import webpWasmMultithread from '@cpp.js/package-webp-wasm-multithread/cppjs.con
 import zlibWasmMultithread from '@cpp.js/package-zlib-wasm-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        expatWasmMultithread,
-        geosWasmMultithread,
-        geotiffWasmMultithread,
-        iconvWasmMultithread,
-        projWasmMultithread,
-        spatialiteWasmMultithread,
-        sqlite3WasmMultithread,
-        tiffWasmMultithread,
-        webpWasmMultithread,
-        zlibWasmMultithread,
-    ],
+  dependencies: [
+    expatWasmMultithread,
+    geosWasmMultithread,
+    geotiffWasmMultithread,
+    iconvWasmMultithread,
+    projWasmMultithread,
+    spatialiteWasmMultithread,
+    sqlite3WasmMultithread,
+    tiffWasmMultithread,
+    webpWasmMultithread,
+    zlibWasmMultithread,
+  ],
   general: {
     name: 'gdal'
   },
@@ -33,33 +33,21 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  },
-  platform: {
-    'Emscripten-x86_64-browser': {
-      data: {
-        'share/gdal': '/usr/share/gdal'
-      },
-      env: {
-        GDAL_DATA: '/usr/share/gdal',
-        DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
-        GDAL_NUM_THREADS: '0',
-        GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
-        CPL_LOG_ERRORS: 'ON'
-      }
-    },
-    'Emscripten-x86_64-node': {
-      data: {
-        'share/gdal': 'gdal'
-      },
-      env: {
-        GDAL_DATA: '_CPPJS_DATA_PATH_/gdal',
-        DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
-        GDAL_NUM_THREADS: '0',
-        GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
-        CPL_LOG_ERRORS: 'ON'
+
+  targetSpecs: [
+    {
+      specs: {
+        'data': {
+          'share/gdal': 'gdal'
+        },
+        env: {
+          GDAL_DATA: '_CPPJS_DATA_PATH_/gdal',
+          DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
+          GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
+          CPL_LOG_ERRORS: 'ON',
+          GDAL_NUM_THREADS: '0',
+        }
       }
     }
-  }
+  ],
 };

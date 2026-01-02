@@ -7,9 +7,6 @@ export default {
     export: {
         type: 'cmake',
     },
-    build: {
-        usePthread: true,
-    },
     dependencies: [
         zlib,
     ],

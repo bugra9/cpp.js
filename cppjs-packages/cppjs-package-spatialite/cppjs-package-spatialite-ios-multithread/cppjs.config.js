@@ -5,13 +5,13 @@ import zlibIosMultithread from '@cpp.js/package-zlib-ios-multithread/cppjs.confi
 import iconvIosMultithread from '@cpp.js/package-iconv-ios-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        geosIosMultithread,
-        projIosMultithread,
-        sqlite3IosMultithread,
-        zlibIosMultithread,
-        iconvIosMultithread,
-    ],
+  dependencies: [
+    geosIosMultithread,
+    projIosMultithread,
+    sqlite3IosMultithread,
+    zlibIosMultithread,
+    iconvIosMultithread,
+  ],
   general: {
     name: 'spatialite'
   },
@@ -23,7 +23,5 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  }
+
 };

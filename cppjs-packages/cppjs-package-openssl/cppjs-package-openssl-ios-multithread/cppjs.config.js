@@ -14,19 +14,14 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  },
-  platform: {
-    'iOS-iphoneos': {
-      data: {
-        'ssl/certs': 'certs'
-      }
-    },
-    'iOS-iphonesimulator': {
-      data: {
-        'ssl/certs': 'certs'
+
+  targetSpecs: [
+    {
+      specs: {
+        data: {
+          'ssl/certs': 'certs'
+        }
       }
     }
-  }
+  ],
 };

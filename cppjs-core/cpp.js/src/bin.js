@@ -11,10 +11,11 @@ import createLib from './actions/createLib.js';
 import buildWasm from './actions/buildWasm.js';
 import createXCFramework from './actions/createXCFramework.js';
 import runCppjsApp from './actions/run.js';
+import { getBuildTargets, getFilteredBuildTargets } from './actions/target.js';
+
 import downloadAndExtractFile from './utils/downloadAndExtractFile.js';
 import writeJson from './utils/writeJson.js';
 import systemKeys from './utils/systemKeys.js';
-
 import { getDockerImage } from './utils/pullDockerImage.js';
 import { getContentHash } from './utils/hash.js';
 import findFiles from './utils/findFiles.js';
@@ -31,7 +32,11 @@ program
 
 const commandBuild = program.command('build')
     .description('compile the project that was set up using Cpp.js')
-    .addOption(new Option('-p, --platform <platform>', 'target platform').default('All').choices(['All', 'WebAssembly', 'Android', 'iOS']));
+    .addOption(new Option('-p, --platform <platform>', 'target platform').default('all').choices(['all', 'wasm', 'android', 'ios']))
+    .addOption(new Option('-a, --arch <arch>', 'target architecture').default('all').choices(['all', 'wasm32', 'wasm64', 'x86_64', 'arm64-v8a', 'iphoneos', 'iphonesimulator']))
+    .addOption(new Option('-r, --runtime <runtime>', 'target runtime').default('all').choices(['all', 'st', 'mt']))
+    .addOption(new Option('-b, --build-type <buildType>', 'target build type').default('release').choices(['all', 'release', 'debug']))
+    .addOption(new Option('-re, --runtime-env <runtimeEnv>', 'target runtime environment').default('all').choices(['all', 'browser', 'node']));
 
 const commandDocker = program.command('docker')
     .description('manage docker');
@@ -54,11 +59,11 @@ program.parse(process.argv);
 
 switch (program.args[0]) {
     case 'build': {
-        const { platform } = commandBuild.opts();
+        const targetParams = commandBuild.opts();
         if (state.config.build.withBuildConfig) {
-            buildExternal(platform);
+            buildExternal(targetParams);
         } else {
-            build(platform);
+            build(targetParams);
         }
         break;
     }
@@ -221,7 +226,7 @@ function run(programName, params) {
     runCppjsApp(programName, params, null, null, { console: true });
 }
 
-async function buildExternal(platform) {
+async function buildExternal(targetParams) {
     const version = state.config.package.nativeVersion;
     if (!version) {
         console.error('no version found!');
@@ -245,9 +250,10 @@ async function buildExternal(platform) {
         });
     }
 
-    buildLib(platform);
+    buildLib(targetParams);
 
     if (copyToDist) {
+        const targetPath = `${state.config.paths.output}/prebuilt/${targetParams.platform}-${targetParams.arch}-${targetParams.runtime}-${targetParams.buildType}`;
         Object.entries(copyToDist).forEach(([key, value]) => {
             const values = [];
             if (Array.isArray(value)) {
@@ -256,27 +262,31 @@ async function buildExternal(platform) {
                 values.push(value);
             }
             values.forEach(v => {
-                const targetPath = `${state.config.paths.output}/prebuilt/${v}`;
-                if (!fs.existsSync(targetPath)) {
-                    fs.copyFileSync(`${state.config.paths.project}/${key}`, targetPath);
+                const assetPath = `${targetPath}/${v}`;
+                if (!fs.existsSync(assetPath)) {
+                    fs.copyFileSync(`${state.config.paths.project}/${key}`, assetPath);
                 }
             });
         });
     }
 }
 
-async function build(platform) {
-    buildLib(platform);
-    if (platform === 'WebAssembly' || platform === 'All') {
-        createWasmJs();
-    }
+async function build(targetParams) {
+    buildLib(targetParams);
+    createWasmJs(targetParams);
 }
 
-function buildLib(platform) {
+function buildLib(targetParams) {
     let isChanged = false;
-    state.platforms[platform].forEach((p) => {
-        if (!fs.existsSync(`${state.config.paths.output}/prebuilt/${p}/lib`)) {
-            createLib(p, 'Source', { isProd: true, buildSource: true });
+    const targets = getBuildTargets(targetParams);
+    if (targets.length === 0) {
+        console.error('No targets found for the given parameters.', targetParams);
+        throw new Error('No targets found for the given parameters.');
+    }
+
+    targets.forEach((target) => {
+        if (!fs.existsSync(`${state.config.paths.output}/prebuilt/${target.path}/lib`)) {
+            createLib(target, 'Source', { buildSource: true });
 
             const modules = [];
             state.config.paths.module.forEach((modulePath) => {
@@ -284,32 +294,39 @@ function buildLib(platform) {
                 modules.push(...findFiles('*.i', { cwd: modulePath }));
             });
             if (modules.length > 0) {
-                fs.mkdirSync(`${state.config.paths.output}/prebuilt/${p}/swig`, { recursive: true });
+                fs.mkdirSync(`${state.config.paths.output}/prebuilt/${target.path}/swig`, { recursive: true });
             }
             modules.forEach((modulePath) => {
                 const fileName = modulePath.split('/').at(-1);
-                fs.copyFileSync(modulePath, `${state.config.paths.output}/prebuilt/${p}/swig/${fileName}`);
+                fs.copyFileSync(modulePath, `${state.config.paths.output}/prebuilt/${target.path}/swig/${fileName}`);
             });
             isChanged = true;
         } else {
-            console.log(`${state.config.general.name} is already compiled to ${p} architecture.`);
+            console.log(`${state.config.general.name} is already compiled to ${target.path} architecture.`);
         }
     });
 
     if (isChanged && fs.existsSync(`${state.config.paths.build}/Source-Release/prebuilt`)) {
         fs.cpSync(`${state.config.paths.build}/Source-Release/prebuilt`, `${state.config.paths.output}/prebuilt`, { recursive: true, dereference: true });
     }
+    if (isChanged && fs.existsSync(`${state.config.paths.build}/Source-Debug/prebuilt`)) {
+        fs.cpSync(`${state.config.paths.build}/Source-Debug/prebuilt`, `${state.config.paths.output}/prebuilt`, { recursive: true, dereference: true });
+    }
 
     createXCFramework();
 
     const distCmakeContent = fs.readFileSync(`${state.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
         .replace('___PROJECT_NAME___', state.config.general.name)
-        .replace('___PROJECT_HOST___', state.platforms[platform].join(';'))
+        .replace('___PROJECT_HOST___', targets.map((t) => t.path).join(';'))
         .replace('___PROJECT_LIBS___', state.config.export.libName.join(';'));
     fs.writeFileSync(`${state.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
 }
 
-async function createWasmJs() {
+async function createWasmJs(targetParams) {
+    const targets = getFilteredBuildTargets(targetParams, { platform: 'wasm' });
+    if (targets.length === 0) {
+        return;
+    }
     let headers = [];
     state.config.paths.header.forEach((headerPath) => {
         headers.push(findFiles('**/*.h', { cwd: headerPath }));
@@ -323,30 +340,30 @@ async function createWasmJs() {
     });
 
     const opt = {
-        isProd: true,
         buildSource: false,
         nativeGlob: [
             `${state.config.paths.cli}/assets/commonBridges.cpp`,
             ...bridges,
         ],
     };
-    createLib('Emscripten-x86_64', 'Bridge', opt);
 
-    await buildWasm('browser', true);
-    await buildWasm('node', true);
+    for (const target of targets) {
+        if (fs.existsSync(`${state.config.paths.output}/${target.jsName}`) && fs.existsSync(`${state.config.paths.output}/${target.wasmName}`)) {
+            console.log(`${state.config.general.name} wasm is already compiled to ${target.path} ${target.runtimeEnv || ''} architecture.`);
+            continue;
+        }
+        createLib(target, 'Bridge', opt);
+        await buildWasm(target);
 
-    fs.rmSync(`${state.config.paths.output}/data`, { recursive: true, force: true });
-    if (fs.existsSync(`${state.config.paths.build}/data`)) {
-        fs.renameSync(`${state.config.paths.build}/data`, `${state.config.paths.output}/data`);
+        fs.rmSync(`${state.config.paths.output}/data`, { recursive: true, force: true });
+        if (fs.existsSync(`${state.config.paths.build}/data`)) {
+            fs.renameSync(`${state.config.paths.build}/data`, `${state.config.paths.output}/data`);
+        }
+
+        fs.copyFileSync(`${state.config.paths.build}/${target.jsName}`, `${state.config.paths.output}/${target.jsName}`);
+        fs.copyFileSync(`${state.config.paths.build}/${target.wasmName}`, `${state.config.paths.output}/${target.wasmName}`);
+        if (fs.existsSync(`${state.config.paths.build}/${target.dataTxtName}`)) {
+            fs.copyFileSync(`${state.config.paths.build}/${target.dataTxtName}`, `${state.config.paths.output}/${target.dataTxtName}`);
+        }
     }
-
-    fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.node.js`, `${state.config.paths.output}/${state.config.general.name}.node.js`);
-    fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, `${state.config.paths.output}/${state.config.general.name}.browser.js`);
-    fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`, `${state.config.paths.output}/${state.config.general.name}.wasm`);
-    if (fs.existsSync(`${state.config.paths.build}/${state.config.general.name}.data.txt`)) {
-        fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.data.txt`, `${state.config.paths.output}/${state.config.general.name}.data.txt`);
-    }
-    /* if (fs.existsSync(`${state.config.paths.build}/${state.config.general.name}.js`)) {
-        fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.js`, `${state.config.paths.output}/${state.config.general.name}.js`);
-    } */
 }

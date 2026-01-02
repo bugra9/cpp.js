@@ -1,6 +1,20 @@
-/* eslint-disable object-curly-newline */
+
 import fs from 'node:fs';
-import { state, createLib, buildWasm, createBridgeFile, getData, getCppJsScript } from 'cpp.js';
+import { state, createLib, buildWasm, createBridgeFile, getData, getCppJsScript, getTargetParams, getFilteredBuildTargets } from 'cpp.js';
+
+const targetParams = getTargetParams({ platform: 'wasm', arch: 'wasm32', runtime: 'st', runtimeEnv: 'browser' }, true);
+let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
+let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
+
+if (!buildTargetRelease && !buildTargetDebug) {
+    throw new Error('No build targets found');
+}
+
+if (!buildTargetDebug) {
+    buildTargetDebug = buildTargetRelease;
+} else if (!buildTargetRelease) {
+    buildTargetRelease = buildTargetDebug;
+}
 
 export default class CppjsWebpackPlugin {
     static defaultOptions = {};
@@ -23,15 +37,15 @@ export default class CppjsWebpackPlugin {
 
     async onDone({ compilation }) {
         const isDev = compilation.options.mode === 'development';
-        createLib('Emscripten-x86_64', 'Source', { isProd: true, buildSource: true });
-        createLib('Emscripten-x86_64', 'Bridge', { isProd: true, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...this.bridges] });
-        await buildWasm('browser', true);
+        createLib(buildTargetRelease, 'Source', { buildSource: true });
+        createLib(buildTargetRelease, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...this.bridges] });
+        await buildWasm(buildTargetRelease);
         if (!isDev) {
             const output = state.config.paths.output === state.config.paths.build ? compilation.options.output.path : state.config.paths.output;
-            fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, `${output}/cpp.js`);
-            fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`, `${output}/cpp.wasm`);
+            fs.copyFileSync(`${state.config.paths.build}/${buildTargetRelease.jsName}`, `${output}/cpp.js`);
+            fs.copyFileSync(`${state.config.paths.build}/${buildTargetRelease.wasmName}`, `${output}/cpp.wasm`);
 
-            const dataFilePath = `${state.config.paths.build}/${state.config.general.name}.data.txt`;
+            const dataFilePath = `${state.config.paths.build}/${buildTargetRelease.dataTxtName}`;
             if (fs.existsSync(dataFilePath)) {
                 fs.copyFileSync(dataFilePath, `${output}/cpp.data.txt`);
             }
@@ -49,6 +63,8 @@ export default class CppjsWebpackPlugin {
             getData,
             state,
             getCppJsScript,
+            getTargetParams,
+            getFilteredBuildTargets
         };
     }
 }

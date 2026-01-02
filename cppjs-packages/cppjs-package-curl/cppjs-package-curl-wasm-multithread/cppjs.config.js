@@ -1,9 +1,9 @@
 import opensslWasmMultithread from '@cpp.js/package-openssl-wasm-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        opensslWasmMultithread,
-    ],
+  dependencies: [
+    opensslWasmMultithread,
+  ],
   general: {
     name: 'curl'
   },
@@ -15,17 +15,15 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  },
-  platform: {
-    'Emscripten-x86_64': {
-      binary: {
-        emccFlags: [
-          '-s',
-          'FETCH'
-        ]
+
+  targetSpecs: [
+    {
+      platform: 'wasm',
+      specs: {
+        binary: {
+          emccFlags: ['-s', 'FETCH']
+        }
       }
     }
-  }
+  ],
 };

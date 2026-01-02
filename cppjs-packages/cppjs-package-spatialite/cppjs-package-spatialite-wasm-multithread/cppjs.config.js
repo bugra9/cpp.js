@@ -5,13 +5,13 @@ import zlibWasmMultithread from '@cpp.js/package-zlib-wasm-multithread/cppjs.con
 import iconvWasmMultithread from '@cpp.js/package-iconv-wasm-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        geosWasmMultithread,
-        projWasmMultithread,
-        sqlite3WasmMultithread,
-        zlibWasmMultithread,
-        iconvWasmMultithread,
-    ],
+  dependencies: [
+    geosWasmMultithread,
+    projWasmMultithread,
+    sqlite3WasmMultithread,
+    zlibWasmMultithread,
+    iconvWasmMultithread,
+  ],
   general: {
     name: 'spatialite'
   },
@@ -23,7 +23,5 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  }
+
 };

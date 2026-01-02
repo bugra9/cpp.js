@@ -1,9 +1,9 @@
 import opensslAndroidMultithread from '@cpp.js/package-openssl-android-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        opensslAndroidMultithread,
-    ],
+  dependencies: [
+    opensslAndroidMultithread,
+  ],
   general: {
     name: 'curl'
   },
@@ -15,19 +15,13 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  },
-  platform: {
-    'Android-arm64-v8a': {
-      env: {
-        CURL_CA_BUNDLE: '_CPPJS_DATA_PATH_/certs/cacert.pem'
-      }
-    },
-    'Android-x86_64': {
-      env: {
-        CURL_CA_BUNDLE: '_CPPJS_DATA_PATH_/certs/cacert.pem'
+  targetSpecs: [
+    {
+      specs: {
+        env: {
+          'CURL_CA_BUNDLE': '_CPPJS_DATA_PATH_/certs/cacert.pem'
+        }
       }
     }
-  }
+  ],
 };

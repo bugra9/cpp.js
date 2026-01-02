@@ -17,14 +17,16 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  platform: {
-    'Android-arm64-v8a': {
-      'data': {
-        'share/proj': 'proj'
-      },
-      env: {
-        PROJ_LIB: '_CPPJS_DATA_PATH_/proj'
+  targetSpecs: [
+    {
+      specs: {
+        data: {
+          'share/proj': 'proj'
+        },
+        env: {
+          PROJ_LIB: '_CPPJS_DATA_PATH_/proj'
+        }
       }
     }
-  }
+  ],
 };

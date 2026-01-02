@@ -15,14 +15,14 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  platform: {
-    'Emscripten-x86_64': {
-      binary: {
-        'emccFlags': [
-          '-s',
-          'FETCH'
-        ]
+  targetSpecs: [
+    {
+      platform: 'wasm',
+      specs: {
+        binary: {
+          emccFlags: ['-s', 'FETCH']
+        }
       }
     }
-  }
+  ],
 };

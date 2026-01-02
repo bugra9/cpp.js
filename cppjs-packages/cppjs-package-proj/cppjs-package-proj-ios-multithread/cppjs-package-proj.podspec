@@ -10,5 +10,5 @@ Pod::Spec.new do |s|
   s.author       = "Proj Authors"
   s.source       = { :http => "https://cpp.js.org" }
   s.vendored_frameworks = 'proj.xcframework', 'sqlite3.xcframework', 'tiff.xcframework'
-  s.resources = ['dist/prebuilt/iOS-iphoneos/share/proj']
+  s.resources = ['dist/prebuilt/ios-iphoneos/share/proj']
 end

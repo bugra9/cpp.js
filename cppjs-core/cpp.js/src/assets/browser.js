@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved */
 /* eslint-disable import/first */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable no-undef */
+ 
+ 
 import Module from 'cpp.js/module';
 import systemConfig from 'cpp.js/systemConfig';
 
@@ -79,7 +79,7 @@ function initCppJs(userConfig = {}) {
                 ({ ENV }) => {
                     if (ENV && config && config.env) {
                         Object.entries(config.env).forEach(([key, value]) => {
-                            // eslint-disable-next-line no-param-reassign
+                             
                             ENV[key] = value;
                         });
                     }

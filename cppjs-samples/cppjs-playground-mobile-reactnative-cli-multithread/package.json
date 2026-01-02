@@ -19,7 +19,7 @@
         "@cpp.js/plugin-metro": "workspace:^",
         "@cpp.js/plugin-react-native": "workspace:^",
         "@cpp.js/plugin-react-native-ios-helper": "workspace:^",
-        "@cpp.js/sample-lib-prebuilt-matrix-multithread": "workspace:^",
+        "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^",
         "@cpp.js/package-curl-multithread": "workspace:^",
         "@cpp.js/package-expat-multithread": "workspace:^",
         "@cpp.js/package-gdal-multithread": "workspace:^",

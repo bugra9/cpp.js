@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import upath from 'upath';
 import { execFileSync } from 'node:child_process';
 import state from '../state/index.js';
+import { getTargetParams, getFilteredBuildTargets } from './target.js';
 
 const iOSDevPath = '/Applications/Xcode.app/Contents/Developer';
 const iosBinPath = `${iOSDevPath}/Toolchains/XcodeDefault.xctoolchain/usr/bin`;
@@ -16,11 +17,6 @@ export default function createXCFramework(overrideConfig = null) {
     const projectPath = overrideConfig?.paths?.project || state.config.paths.project;
     const libName = overrideConfig?.export?.libName || state.config.export.libName;
 
-    if (
-        !fs.existsSync(`${output}/prebuilt/iOS-iphoneos/lib`)
-        || !fs.existsSync(`${output}/prebuilt/iOS-iphonesimulator/lib`)
-    ) return;
-
     const options = {
         cwd: projectPath,
         stdio: 'inherit',
@@ -28,23 +24,43 @@ export default function createXCFramework(overrideConfig = null) {
 
     const relativeOutput = upath.relative(projectPath, output);
 
-    libName.forEach((fileName) => {
-        if (!fs.existsSync(`${projectPath}/${fileName}.xcframework`)) {
-            execFileSync(iosRanLibBin, [`${relativeOutput}/prebuilt/iOS-iphoneos/lib/lib${fileName}.a`], options);
-            execFileSync(iosRanLibBin, [`${relativeOutput}/prebuilt/iOS-iphonesimulator/lib/lib${fileName}.a`], options);
-            const params = [
-                '-create-xcframework',
-                '-library', `${relativeOutput}/prebuilt/iOS-iphoneos/lib/lib${fileName}.a`,
-                '-headers', `${relativeOutput}/prebuilt/iOS-iphoneos/include`,
-                '-library', `${relativeOutput}/prebuilt/iOS-iphonesimulator/lib/lib${fileName}.a`,
-                '-headers', `${relativeOutput}/prebuilt/iOS-iphonesimulator/include`,
-                '-output', `${fileName}.xcframework`,
-            ];
-            execFileSync('xcodebuild', params, options);
-        }
+    const targetParams = overrideConfig?.targetParams || getTargetParams();
+    const buildTargets = getFilteredBuildTargets(targetParams, { platform: 'ios', runtime: 'mt', buildType: 'release' });
 
-        if (!fs.existsSync(`${output}/prebuilt/${fileName}.xcframework.zip`)) {
-            execFileSync('zip', ['-y', '-r', `${relativeOutput}/prebuilt/${fileName}.xcframework.zip`, `${fileName}.xcframework`], options);
+    if (buildTargets.some(t => !fs.existsSync(`${output}/prebuilt/${t.path}/lib`))) {
+        return;
+    }
+
+    const targets = {};
+    buildTargets.forEach((target) => {
+        const p = `${target.platform}-${target.runtime}-${target.buildType}`;
+        if (!targets[p]) {
+            targets[p] = {};
         }
+        targets[p][target.arch] = target;
+    });
+
+    libName.forEach((fileName) => {
+        Object.values(targets).forEach((a) => {
+            const targets = Object.values(a);
+            // const targetName = `${fileName}-${targets[0].runtime}-${targets[0].buildType}.xcframework`;
+            const targetName = `${fileName}.xcframework`;
+            if (!fs.existsSync(`${projectPath}/${targetName}`)) {
+                console.log(`Creating XCFramework ${targetName}`);
+                const params = ['-create-xcframework'];
+                targets.forEach((target) => {
+                    execFileSync(iosRanLibBin, [`${relativeOutput}/prebuilt/${target.path}/lib/lib${fileName}.a`], options);
+                    params.push(
+                        '-library', `${relativeOutput}/prebuilt/${target.path}/lib/lib${fileName}.a`,
+                        '-headers', `${relativeOutput}/prebuilt/${target.path}/include`,
+                    );
+                });
+                params.push('-output', targetName);
+                execFileSync('xcodebuild', params, options);
+                console.log(`XCFramework ${targetName} created.`);
+            } else {
+                console.log(`XCFramework ${targetName} already exists.`);
+            }
+        });
     });
 }

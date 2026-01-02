@@ -15,9 +15,9 @@
         "react-native"
     ],
     "scripts": {
-        "build": "cppjs build -p WebAssembly",
+        "build": "cppjs build -p wasm",
         "clear": "rm -rf .cppjs dist *.xcframework",
-        "prepublishOnly": "cppjs build -p WebAssembly"
+        "prepublishOnly": "cppjs build -p wasm"
     },
     "dependencies": {
         "@cpp.js/package-expat-wasm-multithread": "workspace:^",
