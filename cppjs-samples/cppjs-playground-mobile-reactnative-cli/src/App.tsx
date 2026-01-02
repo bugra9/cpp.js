@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, Text, StyleSheet, View} from 'react-native';
+import { SafeAreaView, Text, StyleSheet, View } from 'react-native';
 
 import { initCppJs, Native } from './native/native.h';
 
@@ -14,8 +14,11 @@ function App(): React.JSX.Element {
   const [message, setMessage] = useState('compiling ...');
 
   useEffect(() => {
+    console.log('zzz');
     initCppJs().then(() => {
-        setMessage(Native.sample());
+      console.log('aaa');
+      setMessage(Native.sample());
+      console.log('bbb');
     });
   }, []);
 
@@ -29,17 +32,17 @@ function App(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: '#242424'
-    },
-    text: {
-      color: '#FFFFFF',
-      fontWeight: 'bold',
-      fontSize: 30,
-    },
-  });
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#242424'
+  },
+  text: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 30,
+  },
+});
 
 export default App;

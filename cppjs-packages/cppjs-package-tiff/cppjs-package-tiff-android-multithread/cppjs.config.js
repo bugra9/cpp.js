@@ -1,9 +1,9 @@
 import zlibAndroidMultithread from '@cpp.js/package-zlib-android-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        zlibAndroidMultithread,
-    ],
+  dependencies: [
+    zlibAndroidMultithread,
+  ],
   general: {
     name: 'tiff'
   },
@@ -19,7 +19,5 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  }
+
 };

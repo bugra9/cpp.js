@@ -6,7 +6,7 @@
     "repository": "https://github.com/bugra9/cpp.js.git",
     "license": "MIT",
     "scripts": {
-        "build": "cppjs build -p WebAssembly",
+        "build": "cppjs build -p wasm -a wasm32 -r st -re browser -b release",
         "dev": "wrangler dev",
         "deploy": "wrangler dev",
         "e2e:dev": "playwright test --config playwright.dev.config.cjs",

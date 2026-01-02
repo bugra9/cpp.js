@@ -8,9 +8,9 @@
     "type": "module",
     "scripts": {
         "build": "cppjs build",
-        "build:wasm": "cppjs build -p WebAssembly",
-        "build:android": "cppjs build -p Android",
-        "build:ios": "cppjs build -p iOS",
+        "build:wasm": "cppjs build -p wasm",
+        "build:android": "cppjs build -p android",
+        "build:ios": "cppjs build -p ios",
         "clear": "rm -rf .cppjs dist *.xcframework",
         "prepublishOnly": "cppjs build"
     },

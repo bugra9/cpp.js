@@ -1,5 +1,5 @@
-import initCppJs from './dist/cppjs-sample-cloud-cloudflare-worker.browser.js';
-import wasmContent from './dist/cppjs-sample-cloud-cloudflare-worker.wasm';
+import initCppJs from './dist/cppjs-sample-cloud-cloudflare-worker-wasm-wasm32-st-release.browser.js';
+import wasmContent from './dist/cppjs-sample-cloud-cloudflare-worker-wasm-wasm32-st-release.wasm';
 
 globalThis.WorkerGlobalScope = undefined;
 const { Native } = await initCppJs({ getWasmFunction: () => wasmContent });

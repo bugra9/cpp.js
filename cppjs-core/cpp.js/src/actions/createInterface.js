@@ -1,11 +1,11 @@
-/* eslint-disable prefer-destructuring */
+ 
 import fs from 'node:fs';
 import upath from 'upath';
 import state, { saveCache } from '../state/index.js';
 import { getFileHash } from '../utils/hash.js';
 import run from './run.js';
 
-export default function createBridgeFile(headerOrModuleFilePath, platform = 'Emscripten-x86_64') {
+export default function createBridgeFile(headerOrModuleFilePath, target = state.targets.find((t) => t.platform === 'wasm')) {
     const interfaceFilePath = upath.resolve(headerOrModuleFilePath);
     if (!fs.existsSync(`${state.config.paths.build}/interface`)) {
         fs.mkdirSync(`${state.config.paths.build}/interface`, { recursive: true });
@@ -13,11 +13,11 @@ export default function createBridgeFile(headerOrModuleFilePath, platform = 'Ems
     if (!fs.existsSync(`${state.config.paths.build}/bridge`)) {
         fs.mkdirSync(`${state.config.paths.build}/bridge`, { recursive: true });
     }
-    const interfaceFile = createInterfaceFile(interfaceFilePath, platform);
-    return createBridgeFileFromInterfaceFile(interfaceFile, platform);
+    const interfaceFile = createInterfaceFile(interfaceFilePath, target);
+    return createBridgeFileFromInterfaceFile(interfaceFile, target);
 }
 
-function createInterfaceFile(headerOrModuleFilePath, platform) {
+function createInterfaceFile(headerOrModuleFilePath, target) {
     if (!headerOrModuleFilePath) {
         return null;
     }
@@ -37,7 +37,7 @@ function createInterfaceFile(headerOrModuleFilePath, platform) {
         return newPath;
     }
 
-    const headerPaths = (state.config.dependencyParameters?.getCmakeDependsPathAndName(platform).pathsOfCmakeDepends || [])
+    const headerPaths = (state.config.dependencyParameters?.getCmakeDependsPathAndName(target).pathsOfCmakeDepends || [])
         .filter((d) => d.startsWith(state.config.paths.base));
 
     const temp2 = headerPaths
@@ -92,7 +92,7 @@ function createInterfaceFile(headerOrModuleFilePath, platform) {
     return outputFilePath;
 }
 
-function createBridgeFileFromInterfaceFile(interfaceFilePath, platform) {
+function createBridgeFileFromInterfaceFile(interfaceFilePath, target) {
     if (!interfaceFilePath) {
         return null;
     }
@@ -105,8 +105,8 @@ function createBridgeFileFromInterfaceFile(interfaceFilePath, platform) {
     const allHeaders = state.config.dependencyParameters.headerPathWithDepends.split(';');
 
     let includePath = [
-        ...state.config.allDependencies.map((d) => `${d.paths.output}/prebuilt/${platform}/include`),
-        ...state.config.allDependencies.map((d) => `${d.paths.output}/prebuilt/${platform}/swig`),
+        ...state.config.allDependencies.map((d) => `${d.paths.output}/prebuilt/${target.path}/include`),
+        ...state.config.allDependencies.map((d) => `${d.paths.output}/prebuilt/${target.path}/swig`),
         ...state.config.paths.header,
         ...allHeaders,
     ].filter((path) => !!path.toString()).map((path) => `-I${path}`);
@@ -118,7 +118,7 @@ function createBridgeFileFromInterfaceFile(interfaceFilePath, platform) {
         '-o', `${state.config.paths.build}/bridge/${interfaceFilePath.split('/').at(-1)}.cpp`,
         ...includePath,
         interfaceFilePath,
-    ]);
+    ], null, target);
 
     state.cache.bridges[interfaceFilePath] = `${state.config.paths.build}/bridge/${interfaceFilePath.split('/').at(-1)}.cpp`;
     state.cache.hashes[interfaceFilePath] = fileHash;

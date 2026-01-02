@@ -14,14 +14,14 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  },
-  platform: {
-    'Emscripten-x86_64': {
-      ignoreLibName: [
-        'charset'
-      ]
+
+  targetSpecs: [
+    {
+      specs: {
+        ignoreLibName: [
+          'charset'
+        ]
+      }
     }
-  }
+  ],
 };

@@ -15,10 +15,10 @@
         "react-native"
     ],
     "scripts": {
-        "build": "cppjs build -p Android",
+        "build": "cppjs build -p android -r mt",
         "clear": "rm -rf .cppjs dist *.xcframework",
-        "prepublishOnly": "cppjs build -p Android",
-        "build:android": "cppjs build -p Android"
+        "prepublishOnly": "cppjs build -p android -r mt",
+        "build:android": "cppjs build -p android -r mt"
     },
     "dependencies": {
         "@cpp.js/package-tiff-android-multithread": "workspace:^",

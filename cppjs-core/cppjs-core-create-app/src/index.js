@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-/* eslint-disable no-plusplus */
-/* eslint-disable no-console */
+ 
+ 
 import fs from 'node:fs';
 import fse from 'fs-extra';
 import path from 'node:path';

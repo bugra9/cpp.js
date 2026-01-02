@@ -7,32 +7,46 @@ import buildJs from './buildJs.js';
 import triggerExtensions from './extensions.js';
 import state from '../state/index.js';
 
-export default async function buildWasm(type, isProd = false) {
+export default async function buildWasm(target) {
+    const isProd = target.buildType === 'release';
     const buildType = isProd ? 'Release' : 'Debug';
+
+    if (fs.existsSync(`${state.config.paths.build}/${target.jsName}`) && fs.existsSync(`${state.config.paths.build}/${target.wasmName}`)) {
+        console.log(`${target.path} ${target.runtimeEnv || ''} wasm is already built`);
+        return;
+    }
+
     const libs = [
-        ...getDependLibs(),
-        `${state.config.paths.build}/Source-${buildType}/Emscripten-x86_64/lib${state.config.general.name}.a`,
-        `${state.config.paths.build}/Bridge-${buildType}/Emscripten-x86_64/lib${state.config.general.name}.a`,
+        ...getDependLibs(target),
+        `${state.config.paths.build}/Source-${buildType}/${target.path}/lib${state.config.general.name}.a`,
+        `${state.config.paths.build}/Bridge-${buildType}/${target.path}/lib${state.config.general.name}.a`,
     ];
 
-    const binary = getData('binary', 'Emscripten-x86_64');
+    const binary = getData('binary', target);
+    const emccFlags = binary?.emccFlags || [];
 
-    if (type === 'browser') {
+    triggerExtensions('buildWasm', 'beforeBuild', [emccFlags]);
+
+    if (target.runtime === 'mt' && !emccFlags.includes('-pthread')) {
+        emccFlags.push('-pthread');
+        emccFlags.push('-sPTHREAD_POOL_SIZE=4');
+    }
+
+    if (target.platform === 'wasm') {
+        emccFlags.push('-msimd128');
+    }
+
+    if (target.arch === 'wasm64') {
+        emccFlags.push('-sMEMORY64=1');
+    }
+
+    if (target.runtimeEnv === 'browser') {
         console.log('wasm compiling for browser...');
         const t0 = performance.now();
-        const emccFlags = [
-            ...(binary?.emccFlags || []),
-            ...(getData('binary', 'Emscripten-x86_64', 'browser')?.emccFlags || []),
-        ];
 
         triggerExtensions('buildWasm', 'beforeBuildBrowser', [emccFlags]);
 
-        if (state.config.build.usePthread && !emccFlags.includes('-pthread')) {
-            emccFlags.push('-pthread');
-            emccFlags.push('-sPTHREAD_POOL_SIZE=4');
-        }
-
-        const data = Object.entries(getData('data', 'Emscripten-x86_64', 'browser')).map(([key, value]) => ['--preload-file', `${key.replaceAll('@', '@@')}@${value}`]).flat();
+        const data = Object.entries(getData('data', target)).map(([key, value]) => ['--preload-file', `${key.replaceAll('@', '@@')}@${value}`]).flat();
         run('emcc', [
             '-lembind', '-Wl,--whole-archive',
             ...emccFlags,
@@ -45,16 +59,16 @@ export default async function buildWasm(type, isProd = false) {
             //            '-s', 'ALLOW_MEMORY_GROWTH=1',
             '-s', 'EXPORTED_RUNTIME_METHODS=["FS", "ENV"]',
             '-fwasm-exceptions',
-            '-o', `${state.config.paths.build}/${state.config.general.name}.js`,
+            '-o', `${state.config.paths.build}/${target.rawJsName}`,
             ...data,
-        ]);
+        ], null, target);
         const t1 = performance.now();
         console.log('wasm compiled for browser...', Math.round(t1 - t0));
         console.log('js compiling for browser...');
         replace({
             regex: 'var _scriptName = ',
             replacement: `var _scriptName = 'cpp.worker.js'; //`,
-            paths: [`${state.config.paths.build}/${state.config.general.name}.js`],
+            paths: [`${state.config.paths.build}/${target.rawJsName}`],
             recursive: false,
             silent: true,
         });
@@ -65,7 +79,7 @@ export default async function buildWasm(type, isProd = false) {
             recursive: false,
             silent: true,
         }); */
-        await buildJs(`${state.config.paths.build}/${state.config.general.name}.js`, 'browser');
+        await buildJs(target);
         // fs.rmSync(`${state.config.paths.build}/${state.config.general.name}.js`);
         // fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, `${state.config.paths.build}/${state.config.general.name}.js`);
         // fs.renameSync(`${state.config.paths.build}/${state.config.general.name}.js`, `${state.config.paths.build}/${state.config.general.name}.worker.browser.js`);
@@ -73,19 +87,10 @@ export default async function buildWasm(type, isProd = false) {
         console.log('js compiled for browser...', Math.round(t2 - t1));
     }
 
-    if (type === 'node') {
+    if (target.runtimeEnv === 'node') {
         console.log('wasm compiling for node...');
-        const emccFlags = [
-            ...(binary?.emccFlags || []),
-            ...(getData('binary', 'Emscripten-x86_64', 'node')?.emccFlags || []),
-        ];
 
         triggerExtensions('buildWasm', 'beforeBuildNodeJS', [emccFlags]);
-
-        if (state.config.build.usePthread && !emccFlags.includes('-pthread')) {
-            emccFlags.push('-pthread');
-            emccFlags.push('-sPTHREAD_POOL_SIZE=4');
-        }
 
         run('emcc', [
             '-lembind', '-Wl,--whole-archive', '-lnodefs.js',
@@ -99,18 +104,18 @@ export default async function buildWasm(type, isProd = false) {
             '-s', 'NODERAWFS',
             '-s', 'EXPORTED_RUNTIME_METHODS=["FS", "ENV", "NODEFS"]',
             '-fwasm-exceptions',
-            '-o', `${state.config.paths.build}/${state.config.general.name}.js`,
-        ]);
+            '-o', `${state.config.paths.build}/${target.rawJsName}`,
+        ], null, target);
         console.log('wasm compiled for node...');
         console.log('js compiling for node...');
-        await buildJs(`${state.config.paths.build}/${state.config.general.name}.js`, 'node');
+        await buildJs(target);
         if (emccFlags.includes('FETCH')) {
-            fs.appendFileSync(`${state.config.paths.build}/${state.config.general.name}.node.js`, 'var XMLHttpRequest = require(\'xhr2\');\n');
+            fs.appendFileSync(`${state.config.paths.build}/${target.jsName}`, 'var XMLHttpRequest = require(\'xhr2\');\n');
         }
         // fs.renameSync(`${state.config.paths.build}/${state.config.general.name}.js`, `${state.config.paths.build}/${state.config.general.name}.worker.node.js`);
         console.log('js compiled for node...');
 
-        Object.entries(getData('data', 'Emscripten-x86_64', 'node')).forEach(([key, value]) => {
+        Object.entries(getData('data', target)).forEach(([key, value]) => {
             if (fs.existsSync(key)) {
                 const dAssetPath = `${state.config.paths.build}/data/${value}`;
                 if (!fs.existsSync(dAssetPath)) {
@@ -121,7 +126,7 @@ export default async function buildWasm(type, isProd = false) {
         });
     }
 
-    if (fs.existsSync(`${state.config.paths.build}/${state.config.general.name}.data`)) {
-        fs.renameSync(`${state.config.paths.build}/${state.config.general.name}.data`, `${state.config.paths.build}/${state.config.general.name}.data.txt`);
+    if (fs.existsSync(`${state.config.paths.build}/${target.dataName}`)) {
+        fs.renameSync(`${state.config.paths.build}/${target.dataName}`, `${state.config.paths.build}/${target.dataTxtName}`);
     }
 }

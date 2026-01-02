@@ -33,17 +33,20 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  platform: {
-    'Android-arm64-v8a': {
-      'data': {
-        'share/gdal': 'gdal'
-      },
-      env: {
-        GDAL_DATA: '_CPPJS_DATA_PATH_/gdal',
-        DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
-        GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
-        CPL_LOG_ERRORS: 'ON'
+  targetSpecs: [
+    {
+      specs: {
+        'data': {
+          'share/gdal': 'gdal'
+        },
+        env: {
+          GDAL_DATA: '_CPPJS_DATA_PATH_/gdal',
+          DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
+          GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
+          CPL_LOG_ERRORS: 'ON',
+          GDAL_NUM_THREADS: '0',
+        }
       }
     }
-  }
+  ],
 };

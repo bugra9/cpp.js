@@ -15,9 +15,9 @@
         "react-native"
     ],
     "scripts": {
-        "build": "cppjs build -p iOS",
+        "build": "cppjs build -p ios -r mt",
         "clear": "rm -rf .cppjs dist *.xcframework",
-        "prepublishOnly": "cppjs build -p iOS"
+        "prepublishOnly": "cppjs build -p ios -r mt"
     },
     "dependencies": {
         "@cpp.js/package-geos-ios-multithread": "workspace:^",

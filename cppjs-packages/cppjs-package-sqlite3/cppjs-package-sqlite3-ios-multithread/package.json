@@ -8,9 +8,9 @@
     "license": "Public Domain",
     "type": "module",
     "scripts": {
-        "build": "cppjs build -p iOS",
+        "build": "cppjs build -p ios -r mt",
         "clear": "rm -rf .cppjs dist",
-        "prepublishOnly": "cppjs build -p iOS"
+        "prepublishOnly": "cppjs build -p ios -r mt"
     },
     "dependencies": {
         "@cpp.js/package-zlib-ios-multithread": "workspace:^"

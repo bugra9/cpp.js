@@ -1,15 +1,5 @@
 apply plugin: 'com.android.library'
 
-String[] buildJsCommand = ["node", projectDir.parent + "/script/build_js.js", "android"]
-this.getCommandOutput(buildJsCommand, rootProject.projectDir.getParentFile())
-String[] buildAndroidCommand = ["node", projectDir.parent + "/script/build_android.js"]
-def cmakeOptionsString = this.getCommandOutput(buildAndroidCommand, rootProject.projectDir.getParentFile())
-println cmakeOptionsString
-def cmakeOptions = cmakeOptionsString.split(";;;")
-
-String[] getCliPathCommand = ["node", projectDir.parent + "/script/getCliPath.js"]
-def cliPath = this.getCommandOutput(getCliPathCommand, rootProject.projectDir.getParentFile()) + "/assets/CMakeLists.txt"
-
 android {
     compileSdkVersion 34
     buildToolsVersion "34.0.0"
@@ -22,7 +12,7 @@ android {
 
         externalNativeBuild {
              cmake {
-                 arguments cmakeOptions
+                 arguments "-DCPPJS_PROJECT_PATH=${rootProject.projectDir.parent}"
             }
         }
 
@@ -33,7 +23,7 @@ android {
 
     externalNativeBuild {
         cmake {
-            path cliPath
+            path "../script/CMakeLists.txt"
             version "3.25.0+"
         }
     }
@@ -41,30 +31,4 @@ android {
 
 dependencies {
     implementation "com.facebook.react:react-native:+"
-}
-
-String getCommandOutput(String[] command, File directory) {
-    try {
-        def output = ""
-        def cmdProcess = Runtime.getRuntime().exec(command, null, directory)
-        def bufferedReader = new BufferedReader(new InputStreamReader(cmdProcess.getInputStream()))
-        def buff = ""
-        def readBuffer = new StringBuffer()
-        while ((buff = bufferedReader.readLine()) != null) {
-            readBuffer.append(buff)
-        }
-        output = readBuffer.toString()
-        if (!output) {
-            def bufferedErrorReader = new BufferedReader(new InputStreamReader(cmdProcess.getErrorStream()))
-            def errBuff = ""
-            def readErrorBuffer = new StringBuffer()
-            while ((errBuff = bufferedErrorReader.readLine()) != null) {
-                readErrorBuffer.append(errBuff)
-            }
-            throw new Exception(readErrorBuffer.toString())
-        }
-        return output
-    } catch (Exception exception) {
-        throw exception
-    }
 }

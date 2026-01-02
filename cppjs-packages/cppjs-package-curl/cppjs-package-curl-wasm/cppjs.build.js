@@ -139,11 +139,7 @@ const fetchImportString = `
 `;
 
 const platformBuild = {
-    'Emscripten-x86_64': ['-DBUILD_SHARED_LIBS=OFF', '-DBUILD_STATIC_LIBS=ON'],
-    'Android-arm64-v8a': ['-DBUILD_SHARED_LIBS=ON', '-DBUILD_STATIC_LIBS=OFF'],
-    'Android-x86_64': ['-DBUILD_SHARED_LIBS=ON', '-DBUILD_STATIC_LIBS=OFF'],
-    'iOS-iphoneos': ['-DBUILD_SHARED_LIBS=OFF', '-DBUILD_STATIC_LIBS=ON'],
-    'iOS-iphonesimulator': ['-DBUILD_SHARED_LIBS=OFF', '-DBUILD_STATIC_LIBS=ON'],
+    'wasm': ['-DBUILD_SHARED_LIBS=OFF', '-DBUILD_STATIC_LIBS=ON'],
 };
 
 export default {
@@ -166,8 +162,8 @@ export default {
         },
     ],
     buildType: 'cmake',
-    getBuildParams: (platform, depPaths) => [
-        ...(platformBuild[platform] || []),
+    getBuildParams: (target, depPaths) => [
+        ...(platformBuild[target.platform] || []),
         `-DOPENSSL_INCLUDE_DIR=${depPaths.ssl.header}`,
         `-DOPENSSL_SSL_LIBRARY=${depPaths.ssl.lib}`,
         `-DOPENSSL_CRYPTO_LIBRARY=${depPaths.crypto.lib}`,

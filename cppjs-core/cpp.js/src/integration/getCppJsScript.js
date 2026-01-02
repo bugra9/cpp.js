@@ -2,12 +2,12 @@ import getData from '../actions/getData.js';
 import loadJson from '../utils/loadJson.js';
 import state from '../state/index.js';
 
-export default function getCppJsScript(platform, bridgePath = null) {
-    if (!platform || !state.platforms.All.includes(platform)) {
-        throw new Error('The platform is not available!');
+export default function getCppJsScript(target, bridgePath = null) {
+    if (!target) {
+        throw new Error('The target is not available!');
     }
-    const env = JSON.stringify(getData('env', platform));
-    const getPlatformScript = state.platforms.WebAssembly.includes(platform) ? getWebScript : getReactNativeScript;
+    const env = JSON.stringify(getData('env', target));
+    const getPlatformScript = target.platform === 'wasm' ? getWebScript : getReactNativeScript;
 
     const bridgeExportFile = `${bridgePath}.exports.json`;
     let symbols = null;

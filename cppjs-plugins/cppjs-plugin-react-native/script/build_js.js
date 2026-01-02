@@ -1,5 +1,5 @@
 /* eslint-disable import/no-unresolved */
-/* eslint-disable no-restricted-syntax */
+ 
 /* eslint-disable no-empty */
 import Metro from 'metro';
 import { state } from 'cpp.js';

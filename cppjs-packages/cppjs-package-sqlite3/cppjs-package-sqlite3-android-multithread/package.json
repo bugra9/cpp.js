@@ -8,9 +8,9 @@
     "license": "Public Domain",
     "type": "module",
     "scripts": {
-        "build": "cppjs build -p Android",
+        "build": "cppjs build -p android -r mt",
         "clear": "rm -rf .cppjs dist",
-        "prepublishOnly": "cppjs build -p Android"
+        "prepublishOnly": "cppjs build -p android -r mt"
     },
     "dependencies": {
         "@cpp.js/package-zlib-android-multithread": "workspace:^"

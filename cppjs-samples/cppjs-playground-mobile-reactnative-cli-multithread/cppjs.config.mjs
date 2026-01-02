@@ -1,4 +1,4 @@
-import matrix from '@cpp.js/sample-lib-prebuilt-matrix-multithread/cppjs.config.js';
+import matrix from '@cpp.js/sample-lib-prebuilt-matrix/cppjs.config.js';
 import curl from '@cpp.js/package-curl-multithread/cppjs.config.js';
 import expat from '@cpp.js/package-expat-multithread/cppjs.config.js';
 import gdal from '@cpp.js/package-gdal-multithread/cppjs.config.js';

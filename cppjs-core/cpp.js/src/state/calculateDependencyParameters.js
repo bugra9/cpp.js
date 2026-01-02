@@ -27,14 +27,14 @@ export default function calculateDependencyParameters(config) {
     setPath(cmakeDepends, config, 'this', cmakeFilter);
     cmakeDepends = [...new Set(cmakeDepends)];
 
-    const getCmakeDepends = (platform, variants = []) => {
-        return cmakeDepends.filter(d => d.functions.isEnabled(platform, variants));
+    const getCmakeDepends = (target, variants = []) => {
+        return cmakeDepends.filter(d => d.functions.isEnabled(target, variants));
     };
 
-    const getCmakeDependsPathAndName = (platform, variants = []) => {
+    const getCmakeDependsPathAndName = (target, variants = []) => {
         const pathsOfCmakeDepends = [];
         const nameOfCmakeDepends = [];
-        getCmakeDepends(platform, variants).forEach((d) => {
+        getCmakeDepends(target, variants).forEach((d) => {
             const dependPath = d.paths.cmakeDir;
             if (!pathsOfCmakeDepends.includes(dependPath)) {
                 pathsOfCmakeDepends.push(dependPath);

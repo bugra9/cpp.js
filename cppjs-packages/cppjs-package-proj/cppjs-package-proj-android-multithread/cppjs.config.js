@@ -2,10 +2,10 @@ import tiffAndroidMultithread from '@cpp.js/package-tiff-android-multithread/cpp
 import sqlite3AndroidMultithread from '@cpp.js/package-sqlite3-android-multithread/cppjs.config.js';
 
 export default {
-    dependencies: [
-        tiffAndroidMultithread,
-        sqlite3AndroidMultithread,
-    ],
+  dependencies: [
+    tiffAndroidMultithread,
+    sqlite3AndroidMultithread,
+  ],
   general: {
     name: 'proj'
   },
@@ -17,17 +17,17 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  },
-  platform: {
-    'Android-arm64-v8a': {
-      data: {
-        'share/proj': 'proj'
-      },
-      env: {
-        PROJ_LIB: '_CPPJS_DATA_PATH_/proj'
+
+  targetSpecs: [
+    {
+      specs: {
+        data: {
+          'share/proj': 'proj'
+        },
+        env: {
+          PROJ_LIB: '_CPPJS_DATA_PATH_/proj'
+        }
       }
     }
-  }
+  ],
 };

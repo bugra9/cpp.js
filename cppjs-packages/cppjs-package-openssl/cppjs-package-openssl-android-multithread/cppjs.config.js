@@ -14,21 +14,15 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  build: {
-    usePthread: true
-  },
-  platform: {
-    'Android-arm64-v8a': {
-      libType: 'static',
-      data: {
-        'ssl/certs': 'certs'
-      }
-    },
-    'Android-x86_64': {
-      libType: 'static',
-      data: {
-        'ssl/certs': 'certs'
+
+  targetSpecs: [
+    {
+      specs: {
+        libType: 'static',
+        data: {
+          'ssl/certs': 'certs'
+        }
       }
     }
-  }
+  ],
 };

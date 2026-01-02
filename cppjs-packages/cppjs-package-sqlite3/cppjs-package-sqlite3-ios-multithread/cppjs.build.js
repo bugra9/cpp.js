@@ -1,6 +1,6 @@
 const platformBuild = {
-    'iOS-iphoneos': ['--disable-shared', '--host=arm-apple-darwin', '--enable-threadsafe'],
-    'iOS-iphonesimulator': ['--disable-shared', '--host=x86_64-apple-darwin', '--enable-threadsafe'],
+    'ios-iphoneos': ['--disable-shared', '--host=arm-apple-darwin', '--enable-threadsafe'],
+    'ios-iphonesimulator': ['--disable-shared', '--host=x86_64-apple-darwin', '--enable-threadsafe'],
 };
 
 export default {
@@ -10,8 +10,8 @@ export default {
         return `https://www.sqlite.org/2025/sqlite-autoconf-${VERSION}.tar.gz`;
     },
     buildType: 'configure',
-    getBuildParams: (platform) => [
-        ...(platformBuild[platform] || []),
+    getBuildParams: (target) => [
+        ...(platformBuild[`${target.platform}-${target.arch}`] || []),
     ],
     env: [
         'CFLAGS="-DSQLITE_NOHAVE_SYSTEM -DSQLITE_DISABLE_LFS -DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_FTS3_PARENTHESIS -DSQLITE_ENABLE_JSON1 -DSQLITE_ENABLE_NORMALIZE -DSQLITE_ENABLE_COLUMN_METADATA -DHAVE_GETHOSTUUID=0 -DSQLITE_ENABLE_RTREE=1"',

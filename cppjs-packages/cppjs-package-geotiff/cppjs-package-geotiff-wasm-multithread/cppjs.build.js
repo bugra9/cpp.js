@@ -1,27 +1,19 @@
 const platformBuild = {
-    'Emscripten-x86_64': ['--enable-shared=no', '--host=x86_64-pc-linux-gnu'],
-    'Android-arm64-v8a': ['--enable-static=no', '--host=aarch64-linux-android'],
-    'Android-x86_64': ['--enable-static=no', '--host=x86_64-linux-android'],
-    'iOS-iphoneos': ['--enable-shared=no', '--host=arm-apple-darwin'],
-    'iOS-iphonesimulator': ['--enable-shared=no', '--host=x86_64-apple-darwin'],
+    'wasm': ['--enable-shared=no', '--host=x86_64-pc-linux-gnu'],
 };
 
 const platformExtraLibs = {
-    'Emscripten-x86_64': ['-lsqlite3'],
-    'Android-arm64-v8a': ['-lstdc++'],
-    'Android-x86_64': ['-lstdc++'],
-    'iOS-iphoneos': ['-lstdc++'],
-    'iOS-iphonesimulator': ['-lstdc++'],
+    'wasm': ['-lsqlite3'],
 };
 
 export default {
     getURL: (version) => `https://download.osgeo.org/geotiff/libgeotiff/libgeotiff-${version}.tar.gz`,
     buildType: 'configure',
-    getBuildParams: (platform, depPaths) => [
-        ...(platformBuild[platform] || []),
+    getBuildParams: (target, depPaths) => [
+        ...(platformBuild[target.platform] || []),
         `--with-proj=${depPaths.proj.root}`, `--with-libtiff=${depPaths.tiff.root}`, `--with-zlib=${depPaths.z.root}`,
     ],
-    getExtraLibs: (platform) => platformExtraLibs[platform] || [],
+    getExtraLibs: (target) => platformExtraLibs[target.platform] || [],
     replaceList: [
         {
             regex: 'double GTIFAtof\\(const char',
