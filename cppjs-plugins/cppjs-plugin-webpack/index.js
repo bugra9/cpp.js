@@ -4,10 +4,11 @@ import { state, createLib, buildWasm, createBridgeFile, getData, getCppJsScript 
 
 export default class CppjsWebpackPlugin {
     static defaultOptions = {};
+    static hasBuilt = false; // Static flag shared across all instances (for Next.js multi-compiler)
+    static bridges = []; // Static bridges array shared across all instances
 
     constructor(options = {}) {
         this.options = { ...CppjsWebpackPlugin.defaultOptions, ...options };
-        this.bridges = [];
     }
 
     apply(compiler) {
@@ -23,27 +24,48 @@ export default class CppjsWebpackPlugin {
 
     async onDone({ compilation }) {
         const isDev = compilation.options.mode === 'development';
+
+        // In dev mode, skip rebuild if already built (prevents infinite loop)
+        // Use static flag to share state across multiple webpack instances (Next.js)
+        if (isDev && CppjsWebpackPlugin.hasBuilt) {
+            return;
+        }
+
+        // In dev mode, defer build until bridges is populated (loader has run)
+        // This handles the case where server compilation finishes before client compilation
+        if (isDev && CppjsWebpackPlugin.bridges.length === 0) {
+            return;
+        }
+
+        // Set flag BEFORE building to prevent race conditions with parallel onDone calls
+        CppjsWebpackPlugin.hasBuilt = true;
+
+
+
         createLib('Emscripten-x86_64', 'Source', { isProd: true, buildSource: true });
-        createLib('Emscripten-x86_64', 'Bridge', { isProd: true, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...this.bridges] });
+        createLib('Emscripten-x86_64', 'Bridge', { isProd: true, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...CppjsWebpackPlugin.bridges] });
         await buildWasm('browser', true);
+
         if (!isDev) {
-            fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, `${compilation.options.output.path}/cpp.js`);
-            fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`, `${compilation.options.output.path}/cpp.wasm`);
+            const output = state.config.paths.output === state.config.paths.build ? compilation.options.output.path : state.config.paths.output;
+            fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, `${output}/cpp.js`);
+            fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`, `${output}/cpp.wasm`);
 
             const dataFilePath = `${state.config.paths.build}/${state.config.general.name}.data.txt`;
             if (fs.existsSync(dataFilePath)) {
-                fs.copyFileSync(dataFilePath, `${compilation.options.output.path}/cpp.data.txt`);
+                fs.copyFileSync(dataFilePath, `${output}/cpp.data.txt`);
             }
-            /* const workerFilePath = `${state.config.paths.build}/${state.config.general.name}.js`;
-            if (fs.existsSync(workerFilePath)) {
-                fs.copyFileSync(workerFilePath, `${compilation.options.output.path}/cpp.worker.js`);
-            } */
+            // Copy browser.js for pthread worker support (workers load this file)
+            const browserJsPath = `${state.config.paths.build}/${state.config.general.name}.browser.js`;
+            if (fs.existsSync(browserJsPath)) {
+                fs.copyFileSync(browserJsPath, `${output}/cpp.browser.js`);
+            }
         }
     }
 
     getLoaderOptions() {
         return {
-            bridges: this.bridges,
+            bridges: CppjsWebpackPlugin.bridges,
             createBridgeFile,
             getData,
             state,

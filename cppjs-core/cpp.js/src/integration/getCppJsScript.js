@@ -71,9 +71,10 @@ function getWebScript(env, modulePrefix) {
         ...config,
         env: {...${env}, ...config.env},
         paths: {
-            wasm: 'cpp.wasm',
-            data: 'cpp.data.txt',
-            worker: 'cpp.js'
+            wasm: '/cpp.wasm',
+            data: '/cpp.data.txt',
+            worker: '/cpp.js',
+            ...config.paths
         }
     }`;
 
