@@ -10,6 +10,7 @@ const iosRanLibBin = `${iosBinPath}/ranlib`;
 
 export default function createXCFramework(overrideConfig = null) {
     if (process.platform !== 'darwin') {
+        console.log('XCFramework not created because platform is not darwin.');
         return;
     }
 
@@ -25,9 +26,10 @@ export default function createXCFramework(overrideConfig = null) {
     const relativeOutput = upath.relative(projectPath, output);
 
     const targetParams = overrideConfig?.targetParams || getTargetParams();
-    const buildTargets = getFilteredBuildTargets(targetParams, { platform: 'ios', runtime: 'mt', buildType: targetParams.buildType || 'release' });
+    const buildTargets = getFilteredBuildTargets(targetParams, { platform: 'ios', runtime: 'mt', buildType: (targetParams.buildType && targetParams.buildType !== 'all') ? targetParams.buildType : 'release' });
 
     if (buildTargets.some(t => !fs.existsSync(`${output}/prebuilt/${t.path}/lib`))) {
+        console.log('XCFramework not created because some of the build targets are not built.', t.path);
         return;
     }
 
