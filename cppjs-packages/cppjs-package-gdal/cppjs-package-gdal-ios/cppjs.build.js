@@ -1,4 +1,4 @@
-const platformCmake = {};
+const platformCmake = {}
 
 export default {
     getURL: (version) => `https://github.com/OSGeo/gdal/releases/download/v${version}/gdal-${version}.tar.gz`,

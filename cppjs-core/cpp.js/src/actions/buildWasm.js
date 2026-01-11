@@ -46,7 +46,7 @@ export default async function buildWasm(target) {
 
         triggerExtensions('buildWasm', 'beforeBuildBrowser', [emccFlags]);
 
-        const data = Object.entries(getData('data', target)).map(([key, value]) => ['--preload-file', `${key.replaceAll('@', '@@')}@${value}`]).flat();
+        const data = Object.entries(getData('data', target)).map(([key, value]) => ['--preload-file', `${key.replaceAll('@', '@@')}@/cppjs/${value}`]).flat();
         run('emcc', [
             '-lembind', '-Wl,--whole-archive',
             ...emccFlags,

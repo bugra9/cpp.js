@@ -9,5 +9,6 @@ export default {
     config: import.meta.url,
     base: '../..',
     output: 'dist'
-  }
+  },
+
 };

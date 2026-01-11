@@ -33,6 +33,7 @@ export default {
     base: '../..',
     output: 'dist'
   },
+
   targetSpecs: [
     {
       specs: {

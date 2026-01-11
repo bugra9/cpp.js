@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved */
 /* eslint-disable import/first */
- 
- 
+
+
 import Module from 'cpp.js/module';
 import systemConfig from 'cpp.js/systemConfig';
 
@@ -79,8 +79,7 @@ function initCppJs(userConfig = {}) {
                 ({ ENV }) => {
                     if (ENV && config && config.env) {
                         Object.entries(config.env).forEach(([key, value]) => {
-                             
-                            ENV[key] = value;
+                            ENV[key] = value?.replace('_CPPJS_DATA_PATH_', `/cppjs`);
                         });
                     }
                 },

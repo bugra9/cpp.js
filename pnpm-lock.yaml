@@ -157,16 +157,6 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-curl/cppjs-package-curl-android-multithread:
-    dependencies:
-      '@cpp.js/package-openssl-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-openssl/cppjs-package-openssl-android-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-curl/cppjs-package-curl-ios:
     dependencies:
       '@cpp.js/package-openssl-ios':
@@ -177,47 +167,11 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-curl/cppjs-package-curl-ios-multithread:
-    dependencies:
-      '@cpp.js/package-openssl-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-openssl/cppjs-package-openssl-ios-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-curl/cppjs-package-curl-multithread:
-    dependencies:
-      '@cpp.js/package-curl-android-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-curl-android-multithread
-      '@cpp.js/package-curl-ios-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-curl-ios-multithread
-      '@cpp.js/package-curl-wasm-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-curl-wasm-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-curl/cppjs-package-curl-wasm:
     dependencies:
       '@cpp.js/package-openssl-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-openssl/cppjs-package-openssl-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-curl/cppjs-package-curl-wasm-multithread:
-    dependencies:
-      '@cpp.js/package-openssl-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-openssl/cppjs-package-openssl-wasm-multithread
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -245,47 +199,13 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-expat/cppjs-package-expat-android-multithread:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-expat/cppjs-package-expat-ios:
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-expat/cppjs-package-expat-ios-multithread:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-expat/cppjs-package-expat-multithread:
-    dependencies:
-      '@cpp.js/package-expat-android-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-expat-android-multithread
-      '@cpp.js/package-expat-ios-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-expat-ios-multithread
-      '@cpp.js/package-expat-wasm-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-expat-wasm-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm-multithread:
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -344,43 +264,6 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-android-multithread:
-    dependencies:
-      '@cpp.js/package-expat-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-expat/cppjs-package-expat-android-multithread
-      '@cpp.js/package-geos-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-geos/cppjs-package-geos-android-multithread
-      '@cpp.js/package-geotiff-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-geotiff/cppjs-package-geotiff-android-multithread
-      '@cpp.js/package-iconv-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-iconv/cppjs-package-iconv-android-multithread
-      '@cpp.js/package-proj-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-proj/cppjs-package-proj-android-multithread
-      '@cpp.js/package-spatialite-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-spatialite/cppjs-package-spatialite-android-multithread
-      '@cpp.js/package-sqlite3-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-android-multithread
-      '@cpp.js/package-tiff-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-tiff/cppjs-package-tiff-android-multithread
-      '@cpp.js/package-webp-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-webp/cppjs-package-webp-android-multithread
-      '@cpp.js/package-zlib-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-android-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-ios:
     dependencies:
       '@cpp.js/package-expat-ios':
@@ -413,59 +296,6 @@ importers:
       '@cpp.js/package-zlib-ios':
         specifier: workspace:^
         version: link:../../cppjs-package-zlib/cppjs-package-zlib-ios
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-ios-multithread:
-    dependencies:
-      '@cpp.js/package-expat-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-expat/cppjs-package-expat-ios-multithread
-      '@cpp.js/package-geos-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-geos/cppjs-package-geos-ios-multithread
-      '@cpp.js/package-geotiff-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-geotiff/cppjs-package-geotiff-ios-multithread
-      '@cpp.js/package-iconv-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-iconv/cppjs-package-iconv-ios-multithread
-      '@cpp.js/package-proj-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-proj/cppjs-package-proj-ios-multithread
-      '@cpp.js/package-spatialite-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-spatialite/cppjs-package-spatialite-ios-multithread
-      '@cpp.js/package-sqlite3-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-ios-multithread
-      '@cpp.js/package-tiff-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-tiff/cppjs-package-tiff-ios-multithread
-      '@cpp.js/package-webp-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-webp/cppjs-package-webp-ios-multithread
-      '@cpp.js/package-zlib-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-ios-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-multithread:
-    dependencies:
-      '@cpp.js/package-gdal-android-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-gdal-android-multithread
-      '@cpp.js/package-gdal-ios-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-gdal-ios-multithread
-      '@cpp.js/package-gdal-wasm-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-gdal-wasm-multithread
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -508,43 +338,6 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm-multithread:
-    dependencies:
-      '@cpp.js/package-expat-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-expat/cppjs-package-expat-wasm-multithread
-      '@cpp.js/package-geos-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-geos/cppjs-package-geos-wasm-multithread
-      '@cpp.js/package-geotiff-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-geotiff/cppjs-package-geotiff-wasm-multithread
-      '@cpp.js/package-iconv-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-iconv/cppjs-package-iconv-wasm-multithread
-      '@cpp.js/package-proj-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-proj/cppjs-package-proj-wasm-multithread
-      '@cpp.js/package-spatialite-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-spatialite/cppjs-package-spatialite-wasm-multithread
-      '@cpp.js/package-sqlite3-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-wasm-multithread
-      '@cpp.js/package-tiff-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-tiff/cppjs-package-tiff-wasm-multithread
-      '@cpp.js/package-webp-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-webp/cppjs-package-webp-wasm-multithread
-      '@cpp.js/package-zlib-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-wasm-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-geos/cppjs-package-geos:
     dependencies:
       '@cpp.js/package-geos-android':
@@ -567,47 +360,13 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-geos/cppjs-package-geos-android-multithread:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-geos/cppjs-package-geos-ios:
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-geos/cppjs-package-geos-ios-multithread:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-geos/cppjs-package-geos-multithread:
-    dependencies:
-      '@cpp.js/package-geos-android-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-geos-android-multithread
-      '@cpp.js/package-geos-ios-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-geos-ios-multithread
-      '@cpp.js/package-geos-wasm-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-geos-wasm-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm-multithread:
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -645,22 +404,6 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-android-multithread:
-    dependencies:
-      '@cpp.js/package-proj-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-proj/cppjs-package-proj-android-multithread
-      '@cpp.js/package-tiff-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-tiff/cppjs-package-tiff-android-multithread
-      '@cpp.js/package-zlib-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-android-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-ios:
     dependencies:
       '@cpp.js/package-proj-ios':
@@ -677,38 +420,6 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-ios-multithread:
-    dependencies:
-      '@cpp.js/package-proj-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-proj/cppjs-package-proj-ios-multithread
-      '@cpp.js/package-tiff-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-tiff/cppjs-package-tiff-ios-multithread
-      '@cpp.js/package-zlib-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-ios-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-multithread:
-    dependencies:
-      '@cpp.js/package-geotiff-android-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-geotiff-android-multithread
-      '@cpp.js/package-geotiff-ios-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-geotiff-ios-multithread
-      '@cpp.js/package-geotiff-wasm-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-geotiff-wasm-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm:
     dependencies:
       '@cpp.js/package-proj-wasm':
@@ -720,22 +431,6 @@ importers:
       '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-zlib/cppjs-package-zlib-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm-multithread:
-    dependencies:
-      '@cpp.js/package-proj-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-proj/cppjs-package-proj-wasm-multithread
-      '@cpp.js/package-tiff-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-tiff/cppjs-package-tiff-wasm-multithread
-      '@cpp.js/package-zlib-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-wasm-multithread
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -763,47 +458,13 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-android-multithread:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-ios:
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-ios-multithread:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-multithread:
-    dependencies:
-      '@cpp.js/package-iconv-android-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-iconv-android-multithread
-      '@cpp.js/package-iconv-ios-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-iconv-ios-multithread
-      '@cpp.js/package-iconv-wasm-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-iconv-wasm-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm-multithread:
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -831,47 +492,13 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-android-multithread:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-ios:
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-ios-multithread:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-multithread:
-    dependencies:
-      '@cpp.js/package-openssl-android-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-openssl-android-multithread
-      '@cpp.js/package-openssl-ios-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-openssl-ios-multithread
-      '@cpp.js/package-openssl-wasm-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-openssl-wasm-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm-multithread:
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -906,19 +533,6 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-proj/cppjs-package-proj-android-multithread:
-    dependencies:
-      '@cpp.js/package-sqlite3-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-android-multithread
-      '@cpp.js/package-tiff-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-tiff/cppjs-package-tiff-android-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-proj/cppjs-package-proj-ios:
     dependencies:
       '@cpp.js/package-sqlite3-ios':
@@ -932,35 +546,6 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-proj/cppjs-package-proj-ios-multithread:
-    dependencies:
-      '@cpp.js/package-sqlite3-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-ios-multithread
-      '@cpp.js/package-tiff-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-tiff/cppjs-package-tiff-ios-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-proj/cppjs-package-proj-multithread:
-    dependencies:
-      '@cpp.js/package-proj-android-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-proj-android-multithread
-      '@cpp.js/package-proj-ios-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-proj-ios-multithread
-      '@cpp.js/package-proj-wasm-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-proj-wasm-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm:
     dependencies:
       '@cpp.js/package-sqlite3-wasm':
@@ -969,19 +554,6 @@ importers:
       '@cpp.js/package-tiff-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-tiff/cppjs-package-tiff-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm-multithread:
-    dependencies:
-      '@cpp.js/package-sqlite3-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-wasm-multithread
-      '@cpp.js/package-tiff-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-tiff/cppjs-package-tiff-wasm-multithread
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -1025,28 +597,6 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-android-multithread:
-    dependencies:
-      '@cpp.js/package-geos-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-geos/cppjs-package-geos-android-multithread
-      '@cpp.js/package-iconv-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-iconv/cppjs-package-iconv-android-multithread
-      '@cpp.js/package-proj-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-proj/cppjs-package-proj-android-multithread
-      '@cpp.js/package-sqlite3-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-android-multithread
-      '@cpp.js/package-zlib-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-android-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-ios:
     dependencies:
       '@cpp.js/package-geos-ios':
@@ -1069,44 +619,6 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-ios-multithread:
-    dependencies:
-      '@cpp.js/package-geos-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-geos/cppjs-package-geos-ios-multithread
-      '@cpp.js/package-iconv-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-iconv/cppjs-package-iconv-ios-multithread
-      '@cpp.js/package-proj-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-proj/cppjs-package-proj-ios-multithread
-      '@cpp.js/package-sqlite3-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-ios-multithread
-      '@cpp.js/package-zlib-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-ios-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-multithread:
-    dependencies:
-      '@cpp.js/package-spatialite-android-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-spatialite-android-multithread
-      '@cpp.js/package-spatialite-ios-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-spatialite-ios-multithread
-      '@cpp.js/package-spatialite-wasm-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-spatialite-wasm-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm:
     dependencies:
       '@cpp.js/package-geos-wasm':
@@ -1124,28 +636,6 @@ importers:
       '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-zlib/cppjs-package-zlib-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm-multithread:
-    dependencies:
-      '@cpp.js/package-geos-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-geos/cppjs-package-geos-wasm-multithread
-      '@cpp.js/package-iconv-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-iconv/cppjs-package-iconv-wasm-multithread
-      '@cpp.js/package-proj-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-proj/cppjs-package-proj-wasm-multithread
-      '@cpp.js/package-sqlite3-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-wasm-multithread
-      '@cpp.js/package-zlib-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-wasm-multithread
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -1177,16 +667,6 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-android-multithread:
-    dependencies:
-      '@cpp.js/package-zlib-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-android-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-ios:
     dependencies:
       '@cpp.js/package-zlib-ios':
@@ -1197,47 +677,11 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-ios-multithread:
-    dependencies:
-      '@cpp.js/package-zlib-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-ios-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-multithread:
-    dependencies:
-      '@cpp.js/package-sqlite3-android-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-sqlite3-android-multithread
-      '@cpp.js/package-sqlite3-ios-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-sqlite3-ios-multithread
-      '@cpp.js/package-sqlite3-wasm-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-sqlite3-wasm-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm:
     dependencies:
       '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-zlib/cppjs-package-zlib-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm-multithread:
-    dependencies:
-      '@cpp.js/package-zlib-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-wasm-multithread
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -1269,16 +713,6 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-android-multithread:
-    dependencies:
-      '@cpp.js/package-zlib-android-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-android-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-ios:
     dependencies:
       '@cpp.js/package-zlib-ios':
@@ -1289,47 +723,11 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-ios-multithread:
-    dependencies:
-      '@cpp.js/package-zlib-ios-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-ios-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-multithread:
-    dependencies:
-      '@cpp.js/package-tiff-android-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-tiff-android-multithread
-      '@cpp.js/package-tiff-ios-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-tiff-ios-multithread
-      '@cpp.js/package-tiff-wasm-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-tiff-wasm-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm:
     dependencies:
       '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-zlib/cppjs-package-zlib-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm-multithread:
-    dependencies:
-      '@cpp.js/package-zlib-wasm-multithread':
-        specifier: workspace:^
-        version: link:../../cppjs-package-zlib/cppjs-package-zlib-wasm-multithread
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -1357,47 +755,13 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-webp/cppjs-package-webp-android-multithread:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-webp/cppjs-package-webp-ios:
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-webp/cppjs-package-webp-ios-multithread:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-webp/cppjs-package-webp-multithread:
-    dependencies:
-      '@cpp.js/package-webp-android-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-webp-android-multithread
-      '@cpp.js/package-webp-ios-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-webp-ios-multithread
-      '@cpp.js/package-webp-wasm-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-webp-wasm-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm-multithread:
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -1425,47 +789,13 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-android-multithread:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-ios:
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-ios-multithread:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-multithread:
-    dependencies:
-      '@cpp.js/package-zlib-android-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-zlib-android-multithread
-      '@cpp.js/package-zlib-ios-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-zlib-ios-multithread
-      '@cpp.js/package-zlib-wasm-multithread':
-        specifier: workspace:^
-        version: link:../cppjs-package-zlib-wasm-multithread
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
   cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm:
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
-
-  cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm-multithread:
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -1598,45 +928,45 @@ importers:
 
   cppjs-samples/cppjs-playground-backend-nodejs-multithread:
     dependencies:
-      '@cpp.js/package-curl-multithread':
+      '@cpp.js/package-curl':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-multithread
-      '@cpp.js/package-expat-multithread':
+        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl
+      '@cpp.js/package-expat':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-multithread
-      '@cpp.js/package-gdal-multithread':
+        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat
+      '@cpp.js/package-gdal':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-multithread
-      '@cpp.js/package-geos-multithread':
+        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal
+      '@cpp.js/package-geos':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-multithread
-      '@cpp.js/package-geotiff-multithread':
+        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos
+      '@cpp.js/package-geotiff':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-multithread
-      '@cpp.js/package-iconv-multithread':
+        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff
+      '@cpp.js/package-iconv':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-multithread
-      '@cpp.js/package-openssl-multithread':
+        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv
+      '@cpp.js/package-openssl':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-multithread
-      '@cpp.js/package-proj-multithread':
+        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl
+      '@cpp.js/package-proj':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-multithread
-      '@cpp.js/package-spatialite-multithread':
+        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj
+      '@cpp.js/package-spatialite':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-multithread
-      '@cpp.js/package-sqlite3-multithread':
+        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite
+      '@cpp.js/package-sqlite3':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-multithread
-      '@cpp.js/package-tiff-multithread':
+        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3
+      '@cpp.js/package-tiff':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-multithread
-      '@cpp.js/package-webp-multithread':
+        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff
+      '@cpp.js/package-webp':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-multithread
-      '@cpp.js/package-zlib-multithread':
+        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp
+      '@cpp.js/package-zlib':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-multithread
+        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib
       cpp.js:
         specifier: workspace:^
         version: link:../../cppjs-core/cpp.js
@@ -1822,45 +1152,45 @@ importers:
       '@cpp.js/core-embind-jsi':
         specifier: workspace:^
         version: link:../../cppjs-core/cppjs-core-embind-jsi
-      '@cpp.js/package-curl-multithread':
+      '@cpp.js/package-curl':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-multithread
-      '@cpp.js/package-expat-multithread':
+        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl
+      '@cpp.js/package-expat':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-multithread
-      '@cpp.js/package-gdal-multithread':
+        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat
+      '@cpp.js/package-gdal':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-multithread
-      '@cpp.js/package-geos-multithread':
+        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal
+      '@cpp.js/package-geos':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-multithread
-      '@cpp.js/package-geotiff-multithread':
+        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos
+      '@cpp.js/package-geotiff':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-multithread
-      '@cpp.js/package-iconv-multithread':
+        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff
+      '@cpp.js/package-iconv':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-multithread
-      '@cpp.js/package-openssl-multithread':
+        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv
+      '@cpp.js/package-openssl':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-multithread
-      '@cpp.js/package-proj-multithread':
+        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl
+      '@cpp.js/package-proj':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-multithread
-      '@cpp.js/package-spatialite-multithread':
+        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj
+      '@cpp.js/package-spatialite':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-multithread
-      '@cpp.js/package-sqlite3-multithread':
+        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite
+      '@cpp.js/package-sqlite3':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-multithread
-      '@cpp.js/package-tiff-multithread':
+        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3
+      '@cpp.js/package-tiff':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-multithread
-      '@cpp.js/package-webp-multithread':
+        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff
+      '@cpp.js/package-webp':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-multithread
-      '@cpp.js/package-zlib-multithread':
+        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp
+      '@cpp.js/package-zlib':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-multithread
+        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib
       '@cpp.js/plugin-metro':
         specifier: workspace:^
         version: link:../../cppjs-plugins/cppjs-plugin-metro
@@ -2138,45 +1468,45 @@ importers:
 
   cppjs-samples/cppjs-playground-web-vite-multithread:
     dependencies:
-      '@cpp.js/package-curl-multithread':
+      '@cpp.js/package-curl':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-multithread
-      '@cpp.js/package-expat-multithread':
+        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl
+      '@cpp.js/package-expat':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-multithread
-      '@cpp.js/package-gdal-multithread':
+        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat
+      '@cpp.js/package-gdal':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-multithread
-      '@cpp.js/package-geos-multithread':
+        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal
+      '@cpp.js/package-geos':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-multithread
-      '@cpp.js/package-geotiff-multithread':
+        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos
+      '@cpp.js/package-geotiff':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-multithread
-      '@cpp.js/package-iconv-multithread':
+        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff
+      '@cpp.js/package-iconv':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-multithread
-      '@cpp.js/package-openssl-multithread':
+        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv
+      '@cpp.js/package-openssl':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-multithread
-      '@cpp.js/package-proj-multithread':
+        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl
+      '@cpp.js/package-proj':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-multithread
-      '@cpp.js/package-spatialite-multithread':
+        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj
+      '@cpp.js/package-spatialite':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-multithread
-      '@cpp.js/package-sqlite3-multithread':
+        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite
+      '@cpp.js/package-sqlite3':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-multithread
-      '@cpp.js/package-tiff-multithread':
+        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3
+      '@cpp.js/package-tiff':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-multithread
-      '@cpp.js/package-webp-multithread':
+        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff
+      '@cpp.js/package-webp':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-multithread
-      '@cpp.js/package-zlib-multithread':
+        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp
+      '@cpp.js/package-zlib':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-multithread
+        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib
       '@cpp.js/plugin-vite':
         specifier: workspace:^
         version: link:../../cppjs-plugins/cppjs-plugin-vite
