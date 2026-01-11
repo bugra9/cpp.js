@@ -12,7 +12,11 @@ if(NOT PACKAGE_HOST_INDEX EQUAL -1)
     set(PROJECT_LIBS "___PROJECT_LIBS___")
     project("${PROJECT_NAME}")
 
-    set(PACKAGE_DIR "${PROJECT_SOURCE_DIR}/${PROJECT_TARGET_HOST}/lib")
+    if (APPLE AND CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        set(PACKAGE_DIR "${PROJECT_SOURCE_DIR}/../..")
+    else()
+        set(PACKAGE_DIR "${PROJECT_SOURCE_DIR}/${PROJECT_TARGET_HOST}/lib")
+    endif()
 
     set(PROJECT_LIBS_DIR)
     foreach(L IN LISTS PROJECT_LIBS)
@@ -30,5 +34,8 @@ if(NOT PACKAGE_HOST_INDEX EQUAL -1)
 
     add_library("${PROJECT_NAME}" INTERFACE)
     target_link_libraries("${PROJECT_NAME}" INTERFACE "${PROJECT_LIBS_DIR}")
-    target_include_directories("${PROJECT_NAME}" INTERFACE "${PROJECT_SOURCE_DIR}/${PROJECT_TARGET_HOST}/include")
+
+    if(NOT APPLE)
+        target_include_directories("${PROJECT_NAME}" INTERFACE "${PROJECT_SOURCE_DIR}/${PROJECT_TARGET_HOST}/include")
+    endif()
 endif()
