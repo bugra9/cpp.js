@@ -29,7 +29,7 @@ export default function createXCFramework(overrideConfig = null) {
     const buildTargets = getFilteredBuildTargets(targetParams, { platform: 'ios', runtime: 'mt', buildType: (targetParams.buildType && targetParams.buildType !== 'all') ? targetParams.buildType : 'release' });
 
     if (buildTargets.some(t => !fs.existsSync(`${output}/prebuilt/${t.path}/lib`))) {
-        console.log('XCFramework not created because some of the build targets are not built.', t.path);
+        console.log('XCFramework not created because some of the build targets are not built.');
         return;
     }
 

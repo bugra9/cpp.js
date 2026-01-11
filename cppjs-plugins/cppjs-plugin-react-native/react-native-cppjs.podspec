@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
   s.authors      = "Cpp.js Authors"
 
   s.platforms    = { :ios => min_ios_version_supported }
-  s.source       = { :http => "file:${PODS_ROOT}/../../.cppjs/react-native-cppjs.xcframework.zip", :type => "zip" }
+  s.source       = { :http => "https://cpp.js.org" }
 
   s.vendored_frameworks = 'react-native-cppjs.xcframework'
 
