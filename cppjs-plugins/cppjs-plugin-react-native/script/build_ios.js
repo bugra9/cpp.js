@@ -61,7 +61,7 @@ createLib(buildTargetIPhoneSimulator, 'Full', options);
 const overrideConfig = {
     paths: {
         project: projectPath,
-        output: `${state.config.paths.build}/Full-Release`,
+        output: `${state.config.paths.build}/Full-${buildType}`,
     },
     export: {
         libName: ['react-native-cppjs'],
@@ -70,7 +70,7 @@ const overrideConfig = {
         platform: 'ios',
         arch: 'all',
         runtime: 'mt',
-        buildType: 'release',
+        buildType: buildType.toLowerCase(),
     }
 };
 createXCFramework(overrideConfig);

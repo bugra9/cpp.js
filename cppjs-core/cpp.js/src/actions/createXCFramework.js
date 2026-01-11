@@ -25,7 +25,7 @@ export default function createXCFramework(overrideConfig = null) {
     const relativeOutput = upath.relative(projectPath, output);
 
     const targetParams = overrideConfig?.targetParams || getTargetParams();
-    const buildTargets = getFilteredBuildTargets(targetParams, { platform: 'ios', runtime: 'mt', buildType: 'release' });
+    const buildTargets = getFilteredBuildTargets(targetParams, { platform: 'ios', runtime: 'mt', buildType: targetParams.buildType || 'release' });
 
     if (buildTargets.some(t => !fs.existsSync(`${output}/prebuilt/${t.path}/lib`))) {
         return;
