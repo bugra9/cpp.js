@@ -70,7 +70,7 @@ const overrideConfig = {
         platform: 'ios',
         arch: 'all',
         runtime: 'mt',
-        buildType: buildTargetIPhoneOS.buildType.buildType,
+        buildType: buildTargetIPhoneOS.buildType,
     }
 };
 createXCFramework(overrideConfig);

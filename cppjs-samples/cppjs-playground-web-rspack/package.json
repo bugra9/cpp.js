@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/playground-web-rspack",
-    "version": "2.0.0-beta.1",
+    "version": "2.0.0-beta.4",
     "description": "Cpp.js Rspack Playground",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-playground-web-rspack#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
