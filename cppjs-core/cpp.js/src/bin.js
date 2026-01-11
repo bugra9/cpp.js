@@ -11,7 +11,7 @@ import createLib from './actions/createLib.js';
 import buildWasm from './actions/buildWasm.js';
 import createXCFramework from './actions/createXCFramework.js';
 import runCppjsApp from './actions/run.js';
-import { getBuildTargets, getFilteredBuildTargets } from './actions/target.js';
+import { getBuildTargets, getFilteredBuildTargets, getFilteredTargetSpec } from './actions/target.js';
 
 import downloadAndExtractFile from './utils/downloadAndExtractFile.js';
 import writeJson from './utils/writeJson.js';
@@ -314,6 +314,24 @@ function buildLib(targetParams) {
     }
 
     createXCFramework();
+
+    const iosTargets = getBuildTargets({ platform: 'ios', arch: 'iphoneos', runtime: 'mt', buildType: 'release' });
+    const podSpecs = findFiles('*.podspec', { cwd: state.config.paths.project });
+    if (podSpecs.length === 0 && targets.length > 0) {
+        const iosTarget = iosTargets[0];
+        const resources = getFilteredTargetSpec(state.config.targetSpecs, iosTarget).map(s => s.data).filter(s => s).map(d => Object.keys(d)).flat();
+        const uniqueResources = [...new Set(resources)].map(r => `dist/prebuilt/${iosTarget.path}/${r}`);
+        const xcFrameworks = [];
+        xcFrameworks.push(...state.config.export.libName.map((l) => `${l}.xcframework`));
+        if (!xcFrameworks.some(f => !fs.existsSync(`${state.config.paths.project}/${f}`))) {
+            xcFrameworks.push(...state.config.dependencies.map((d) => d.export.libName.map((l) => `${l}.xcframework`)).flat());
+            const distPodSpecContent = fs.readFileSync(`${state.config.paths.cli}/assets/cppjs-package.podspec`, { encoding: 'utf8', flag: 'r' })
+                .replaceAll('___PROJECT_NAME___', state.config.general.name)
+                .replace('___PROJECT_FRAMEWORKS___', xcFrameworks.map(f => `'${f}'`).join(', '))
+                .replace('___PROJECT_RESOURCES___', JSON.stringify(uniqueResources));
+            fs.writeFileSync(`${state.config.paths.project}/${state.config.general.name}.podspec`, distPodSpecContent);
+        }
+    }
 
     const distCmakeContent = fs.readFileSync(`${state.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
         .replace('___PROJECT_NAME___', state.config.general.name)
