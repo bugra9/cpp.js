@@ -60,6 +60,9 @@ program.parse(process.argv);
 switch (program.args[0]) {
     case 'build': {
         const targetParams = commandBuild.opts();
+        if (targetParams.platform === 'wasm' && targetParams.arch === 'all') {
+            targetParams.arch = 'wasm32';
+        }
         if (state.config.build.withBuildConfig) {
             buildExternal(targetParams);
         } else {
@@ -253,7 +256,7 @@ async function buildExternal(targetParams) {
     buildLib(targetParams);
 
     if (copyToDist) {
-        const targetPath = `${state.config.paths.output}/prebuilt/${targetParams.platform}-${targetParams.arch}-${targetParams.runtime}-${targetParams.buildType}`;
+        const targets = getBuildTargets(targetParams);
         Object.entries(copyToDist).forEach(([key, value]) => {
             const values = [];
             if (Array.isArray(value)) {
@@ -262,10 +265,12 @@ async function buildExternal(targetParams) {
                 values.push(value);
             }
             values.forEach(v => {
-                const assetPath = `${targetPath}/${v}`;
-                if (!fs.existsSync(assetPath)) {
-                    fs.copyFileSync(`${state.config.paths.project}/${key}`, assetPath);
-                }
+                targets.forEach(target => {
+                    const assetPath = `${state.config.paths.output}/prebuilt/${target.path}/${v}`;
+                    if (!fs.existsSync(assetPath)) {
+                        fs.copyFileSync(`${state.config.paths.project}/${key}`, assetPath);
+                    }
+                });
             });
         });
     }

@@ -31,6 +31,16 @@ export default {
             replacement: 'add_library(${GDAL_LIB_TARGET_NAME} gcore/gdal.h gcore/gdal_empty_file.cpp)',
             paths: ['gdal.cmake'],
         },
+        {
+            regex: 'CPL_CPUID\\(1, cpuinfo\\);',
+            replacement: '#ifdef __wasm__\n    cpuinfo[0]=0;cpuinfo[1]=0;cpuinfo[2]=0;cpuinfo[3]=0;\n#else\n    CPL_CPUID(1, cpuinfo);\n#endif',
+            paths: ['port/cpl_cpu_features.cpp'],
+        },
+        {
+            regex: '__asm__\\("xgetbv" : "=a"\\(nXCRLow\\), "=d"\\(nXCRHigh\\) : "c"\\(0\\)\\);',
+            replacement: '#ifdef __wasm__\n    nXCRLow = 0; nXCRHigh = 0;\n#else\n    $&\n#endif',
+            paths: ['port/cpl_cpu_features.cpp'],
+        },
     ],
     buildType: 'cmake',
     getBuildParams: (target, depPaths) => [

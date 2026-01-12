@@ -45,7 +45,7 @@ export default function createLib(target, fileType, options = {}) {
         const ldFlags = Object.values(depPaths).filter(d => d.libPath).map((d) => `-L${d.libPath}`);
         let dependLibs = '';
         if (state.config.build?.buildType === 'configure') {
-            dependLibs = Object.keys(depPaths).filter(d => d).map((d) => `-l${d}`).join(' ');
+            dependLibs = Object.keys(depPaths).filter(d => d && d !== 'cmake').map((d) => `-l${d}`).join(' ');
         }
 
         const extraLibs = getExtraLibs ? getExtraLibs(target) : [];
@@ -69,7 +69,7 @@ export default function createLib(target, fileType, options = {}) {
         buildEnv.params.push('-e', `CFLAGS=${cFlags.join(' ')}`);
         buildEnv.params.push('-e', `CXXFLAGS=${cFlags.join(' ')}`);
         buildEnv.params.push('-e', `LDFLAGS=${ldFlags.join(' ')} ${extraLibs.join(' ')}`);
-        // buildEnv.params.push('-e', `LIBS=${dependLibs} ${extraLibs.join(' ')}`);
+        buildEnv.params.push('-e', `LIBS=${dependLibs} ${extraLibs.join(' ')}`);
 
         let configBuildEnv = state.config.build.env;
         if (configBuildEnv && typeof configBuildEnv === 'function') {

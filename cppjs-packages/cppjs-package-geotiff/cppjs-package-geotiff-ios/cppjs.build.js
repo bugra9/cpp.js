@@ -4,7 +4,7 @@ const platformBuild = {
 };
 
 const platformExtraLibs = {
-    'ios-iphonesimulator': ['-lstdc++'],
+    'ios': ['-lc++'],
 };
 
 export default {
