@@ -19,6 +19,7 @@ export default {
   },
   targetSpecs: [
     {
+      platform: 'android',
       specs: {
         data: {
           'share/proj': 'proj'

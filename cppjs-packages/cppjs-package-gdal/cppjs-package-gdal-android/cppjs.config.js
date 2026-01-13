@@ -36,6 +36,7 @@ export default {
 
   targetSpecs: [
     {
+      platform: 'android',
       specs: {
         'data': {
           'share/gdal': 'gdal'

@@ -14,11 +14,11 @@ function App(): React.JSX.Element {
   const [message, setMessage] = useState('compiling ...');
 
   useEffect(() => {
-    console.log('zzz');
     initCppJs().then(() => {
-      console.log('aaa');
-      setMessage(Native.sample());
-      console.log('bbb');
+      console.log('a');
+      console.log(Native.getSqliteVersion);
+      setMessage(`${Native.sample()} - ${Native.getSqliteVersion()}`);
+      console.log('b');
     });
   }, []);
 

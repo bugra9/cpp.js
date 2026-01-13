@@ -19,6 +19,7 @@ export default {
   },
   targetSpecs: [
     {
+      platform: 'wasm',
       specs: {
         data: {
           'share/proj': 'proj'

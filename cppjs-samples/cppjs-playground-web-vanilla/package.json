@@ -1,12 +1,12 @@
 {
     "name": "@cpp.js/playground-web-vanilla",
-    "version": "2.0.0-beta.4",
+    "version": "2.0.0-beta.5",
     "description": "Cpp.js Web Vanilla playground",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-playground-web-vanilla#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "license": "MIT",
     "scripts": {
-        "build": "cppjs build -p wasm",
+        "build": "cppjs build -p wasm -a wasm32 -r mt -re browser",
         "preview": "serve -c ./serve.json"
     },
     "dependencies": {

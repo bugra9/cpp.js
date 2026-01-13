@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/playground-web-vite",
-    "version": "2.0.0-beta.4",
+    "version": "2.0.0-beta.5",
     "description": "Cpp.js Vite Playground",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-playground-web-vite#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",

@@ -9,5 +9,6 @@ Pod::Spec.new do |s|
   s.homepage     = "https://www.sqlite.org"
   s.author       = "SQLite Authors"
   s.source       = { :http => "https://cpp.js.org" }
-  s.vendored_frameworks = 'z.xcframework', 'sqlite3.xcframework'
+  s.vendored_frameworks = 'sqlite3.xcframework'
+  s.dependency 'cppjs-package-zlib'
 end

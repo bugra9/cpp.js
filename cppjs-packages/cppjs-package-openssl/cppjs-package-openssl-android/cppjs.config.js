@@ -16,6 +16,7 @@ export default {
   },
   targetSpecs: [
     {
+      platform: 'android',
       specs: {
         libType: 'static',
         data: {

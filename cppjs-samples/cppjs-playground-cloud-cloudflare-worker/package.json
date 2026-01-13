@@ -1,12 +1,12 @@
 {
     "name": "@cpp.js/playground-cloud-cloudflare-worker",
-    "version": "2.0.0-beta.4",
+    "version": "2.0.0-beta.5",
     "description": "Cpp.js - Cloudflare webassembly playground",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-playground-cloud-cloudflare-worker#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "license": "MIT",
     "scripts": {
-        "build": "cppjs build -p wasm",
+        "build": "cppjs build -p wasm -re browser -r st",
         "dev": "wrangler dev",
         "deploy": "wrangler dev"
     },

@@ -37,6 +37,7 @@ export default {
     },
     targetSpecs: [
         {
+            platform: 'wasm',
             specs: {
                 binary: {
                     emccFlags: ['-sJSPI'],

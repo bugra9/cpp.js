@@ -37,15 +37,16 @@ export default class CppjsWebpackPlugin {
 
     async onDone({ compilation }) {
         const isDev = compilation.options.mode === 'development';
-        createLib(buildTargetRelease, 'Source', { buildSource: true });
-        createLib(buildTargetRelease, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...this.bridges] });
-        await buildWasm(buildTargetRelease);
+        const buildTarget = isDev ? buildTargetDebug : buildTargetRelease;
+        createLib(buildTarget, 'Source', { buildSource: true });
+        createLib(buildTarget, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...this.bridges] });
+        await buildWasm(buildTarget);
         if (!isDev) {
             const output = state.config.paths.output === state.config.paths.build ? compilation.options.output.path : state.config.paths.output;
-            fs.copyFileSync(`${state.config.paths.build}/${buildTargetRelease.jsName}`, `${output}/cpp.js`);
-            fs.copyFileSync(`${state.config.paths.build}/${buildTargetRelease.wasmName}`, `${output}/cpp.wasm`);
+            fs.copyFileSync(`${state.config.paths.build}/${buildTarget.jsName}`, `${output}/cpp.js`);
+            fs.copyFileSync(`${state.config.paths.build}/${buildTarget.wasmName}`, `${output}/cpp.wasm`);
 
-            const dataFilePath = `${state.config.paths.build}/${buildTargetRelease.dataTxtName}`;
+            const dataFilePath = `${state.config.paths.build}/${buildTarget.dataTxtName}`;
             if (fs.existsSync(dataFilePath)) {
                 fs.copyFileSync(dataFilePath, `${output}/cpp.data.txt`);
             }

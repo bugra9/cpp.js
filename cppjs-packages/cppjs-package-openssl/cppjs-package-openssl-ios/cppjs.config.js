@@ -16,6 +16,7 @@ export default {
   },
   targetSpecs: [
     {
+      platform: 'ios',
       specs: {
         data: {
           'ssl/certs': 'certs'

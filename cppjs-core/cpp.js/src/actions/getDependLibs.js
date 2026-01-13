@@ -8,7 +8,7 @@ export default function getDependLibs(target) {
     ];
     state.config.dependencyParameters.getCmakeDepends(target).forEach((d) => {
         if (d.export.libName) {
-            const ignoreLibNames = getFilteredTargetSpec(d?.targetSpecs).map(s => s.ignoreLibName).flat();
+            const ignoreLibNames = getFilteredTargetSpec(d?.targetSpecs, target).map(s => s.ignoreLibName).flat();
             d.export.libName.forEach((fileName) => {
                 if (ignoreLibNames?.includes(fileName)) return;
                 let libPaths = findFiles(`${d.paths.output}/prebuilt/${target.path}/lib/lib${fileName}.a`, { cwd: d.paths.project });

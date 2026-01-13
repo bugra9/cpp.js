@@ -16,6 +16,7 @@ export default {
   },
   targetSpecs: [
     {
+      platform: 'wasm',
       specs: {
         'ignoreLibName': [
           'charset'

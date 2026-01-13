@@ -5,7 +5,7 @@ const path = require('path');
 const execAsync = util.promisify(exec);
 
 async function checkPackages() {
-    const findCmd = 'find cppjs-packages -name "package.json" -maxdepth 3';
+    const findCmd = 'find . -name "package.json" -maxdepth 4';
     const { stdout } = await execAsync(findCmd);
     const packagePaths = stdout.split('\n').filter(p => p.trim());
 

@@ -1,4 +1,4 @@
-const initCppJs = require('../dist/cppjs-sample-backend-nodejs-wasm.node.js');
+const initCppJs = require('../dist/cppjs-sample-backend-nodejs-wasm-wasm-wasm32-st-release.node.js');
 
 function wait(ms, fn) {
     return new Promise((resolve) => {

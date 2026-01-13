@@ -36,6 +36,7 @@ export default {
 
   targetSpecs: [
     {
+      platform: 'ios',
       specs: {
         'data': {
           'share/gdal': 'gdal'

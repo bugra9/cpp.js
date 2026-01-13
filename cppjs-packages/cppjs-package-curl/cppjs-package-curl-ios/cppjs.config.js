@@ -18,6 +18,7 @@ export default {
 
   targetSpecs: [
     {
+      platform: 'ios',
       specs: {
         env: {
           'CURL_CA_BUNDLE': '_CPPJS_DATA_PATH_/certs/cacert.pem'
