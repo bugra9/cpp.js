@@ -1,33 +1,39 @@
 import state from '../state/index.js';
 
+const platforms = [...new Set(state.targets.map(target => target.platform).filter(t => t))];
+const archs = [...new Set(state.targets.map(target => target.arch).filter(t => t))];
+const runtimes = [...new Set(state.targets.map(target => target.runtime).filter(t => t))];
+const buildTypes = [...new Set(state.targets.map(target => target.buildType).filter(t => t))];
+const runtimeEnvs = [...new Set(state.targets.map(target => target.runtimeEnv).filter(t => t))];
+
 export function getTargetParams(givenTargetParams = {}, noParamCheck = false) {
     const { platform, arch, runtime, buildType, runtimeEnv } = givenTargetParams;
     if (!noParamCheck && (
-        (state.config.target.platform && platform && platform !== 'all' && state.config.target.platform !== platform)
-        || (state.config.target.arch && arch && arch !== 'all' && state.config.target.arch !== arch)
-        || (state.config.target.runtime && runtime && runtime !== 'all' && state.config.target.runtime !== runtime)
-        || (state.config.target.buildType && buildType && buildType !== 'all' && state.config.target.buildType !== buildType)
-        || (state.config.target.runtimeEnv && runtimeEnv && runtimeEnv !== 'all' && state.config.target.runtimeEnv !== runtimeEnv)
+        (state.config.target.platform && platform && !platform.includes(state.config.target.platform))
+        || (state.config.target.arch && arch && !arch.includes(state.config.target.arch))
+        || (state.config.target.runtime && runtime && !runtime.includes(state.config.target.runtime))
+        || (state.config.target.buildType && buildType && !buildType.includes(state.config.target.buildType))
+        || (state.config.target.runtimeEnv && runtimeEnv && !runtimeEnv.includes(state.config.target.runtimeEnv))
     )) {
         throw new Error('Invalid target parameters');
     }
     return {
-        platform: state.config.target.platform || platform || 'all',
-        arch: state.config.target.arch || arch || 'all',
-        runtime: state.config.target.runtime || runtime || 'all',
-        buildType: state.config.target.buildType || buildType || 'all',
-        runtimeEnv: state.config.target.runtimeEnv || runtimeEnv || 'all',
+        platform: state.config.target.platform ? [state.config.target.platform] : platform || platforms,
+        arch: state.config.target.arch ? [state.config.target.arch] : arch || archs,
+        runtime: state.config.target.runtime ? [state.config.target.runtime] : runtime || runtimes,
+        buildType: state.config.target.buildType ? [state.config.target.buildType] : buildType || buildTypes,
+        runtimeEnv: state.config.target.runtimeEnv ? [state.config.target.runtimeEnv] : runtimeEnv || runtimeEnvs,
     };
 }
 
 export function getBuildTargets(targetParams) {
     const { platform, arch, runtime, buildType, runtimeEnv } = targetParams;
     return state.targets.filter(t => (
-        (platform === 'all' || t.platform === platform)
-        && (arch === 'all' || t.arch === arch)
-        && (runtime === 'all' || t.runtime === runtime)
-        && (buildType === 'all' || t.buildType === buildType)
-        && (runtimeEnv === 'all' || t.runtimeEnv === runtimeEnv)
+        (!t.platform || platform.includes(t.platform))
+        && (!t.arch || arch.includes(t.arch))
+        && (!t.runtime || runtime.includes(t.runtime))
+        && (!t.buildType || buildType.includes(t.buildType))
+        && (!t.runtimeEnv || runtimeEnv.includes(t.runtimeEnv))
     ));
 }
 

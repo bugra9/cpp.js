@@ -8,6 +8,7 @@
     "type": "module",
     "scripts": {
         "build": "cppjs build",
+        "builda": "cppjs build -p wasm -p android",
         "build:wasm": "cppjs build -p wasm",
         "build:android": "cppjs build -p android",
         "build:ios": "cppjs build -p ios",

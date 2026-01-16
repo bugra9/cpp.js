@@ -8,7 +8,7 @@ import RNCppjsPluginReactNative from '../cppjs.config.mjs';
 
 const buildType = process.argv[3] || 'Release';
 
-const targetParams = getTargetParams({ platform: 'android', arch: process.argv[2], runtime: 'mt' }, true);
+const targetParams = getTargetParams({ platform: ['android'], arch: [process.argv[2]], runtime: ['mt'] }, true);
 let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
 let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
 

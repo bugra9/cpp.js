@@ -22,6 +22,12 @@ import findFiles from './utils/findFiles.js';
 
 const packageJSON = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url)));
 
+const platforms = [...new Set(state.targets.map(target => target.platform).filter(t => t))];
+const archs = [...new Set(state.targets.map(target => target.arch).filter(t => t))];
+const runtimes = [...new Set(state.targets.map(target => target.runtime).filter(t => t))];
+const buildTypes = [...new Set(state.targets.map(target => target.buildType).filter(t => t))];
+const runtimeEnvs = [...new Set(state.targets.map(target => target.runtimeEnv).filter(t => t))];
+
 const program = new Command();
 
 program
@@ -32,11 +38,11 @@ program
 
 const commandBuild = program.command('build')
     .description('compile the project that was set up using Cpp.js')
-    .addOption(new Option('-p, --platform <platform>', 'target platform').default('all').choices(['all', 'wasm', 'android', 'ios']))
-    .addOption(new Option('-a, --arch <arch>', 'target architecture').default('all').choices(['all', 'wasm32', 'wasm64', 'x86_64', 'arm64-v8a', 'iphoneos', 'iphonesimulator']))
-    .addOption(new Option('-r, --runtime <runtime>', 'target runtime').default('all').choices(['all', 'st', 'mt']))
-    .addOption(new Option('-b, --build-type <buildType>', 'target build type').default('release').choices(['all', 'release', 'debug']))
-    .addOption(new Option('-re, --runtime-env <runtimeEnv>', 'target runtime environment').default('all').choices(['all', 'browser', 'node']));
+    .addOption(new Option('-p, --platform <platform>', 'target platform').argParser(createListParser(platforms)))
+    .addOption(new Option('-a, --arch <arch>', 'target architecture').argParser(createListParser(archs)))
+    .addOption(new Option('-r, --runtime <runtime>', 'target runtime').argParser(createListParser(runtimes)))
+    .addOption(new Option('-b, --build-type <buildType>', 'target build type').argParser(createListParser(buildTypes)))
+    .addOption(new Option('-re, --runtime-env <runtimeEnv>', 'target runtime environment').argParser(createListParser(runtimeEnvs)));
 
 const commandDocker = program.command('docker')
     .description('manage docker');
@@ -60,9 +66,20 @@ program.parse(process.argv);
 switch (program.args[0]) {
     case 'build': {
         const targetParams = commandBuild.opts();
-        if (targetParams.platform === 'wasm' && targetParams.arch === 'all') {
-            targetParams.arch = 'wasm32';
+
+        if (!targetParams.arch) {
+            targetParams.arch = archs.filter(item => item !== 'wasm64');
         }
+        if (!targetParams.buildType) {
+            targetParams.buildType = ['release'];
+        }
+
+        targetParams.platform = targetParams.platform || platforms;
+        targetParams.arch = targetParams.arch || archs;
+        targetParams.runtime = targetParams.runtime || runtimes;
+        targetParams.buildType = targetParams.buildType || buildTypes;
+        targetParams.runtimeEnv = targetParams.runtimeEnv || runtimeEnvs;
+
         if (state.config.build.withBuildConfig) {
             buildExternal(targetParams);
         } else {
@@ -320,7 +337,7 @@ function buildLib(targetParams) {
 
     createXCFramework();
 
-    const iosTargets = getBuildTargets({ platform: 'ios', arch: 'iphoneos', runtime: 'mt', buildType: 'release' });
+    const iosTargets = getBuildTargets({ platform: ['ios'], arch: ['iphoneos'], runtime: ['mt'], buildType: ['release'] });
     const podSpecs = findFiles('*.podspec', { cwd: state.config.paths.project });
     if (podSpecs.length === 0 && targets.length > 0) {
         const iosTarget = iosTargets[0];
@@ -389,4 +406,16 @@ async function createWasmJs(targetParams) {
             fs.copyFileSync(`${state.config.paths.build}/${target.dataTxtName}`, `${state.config.paths.output}/${target.dataTxtName}`);
         }
     }
+}
+
+function createListParser(validList) {
+    return (value, previous) => {
+        const items = value.split(',').map(item => item.trim());
+        for (const item of items) {
+            if (!validList.includes(item)) {
+                throw new Error(`Invalid value: "${item}". Allowed values: ${validList.join(', ')}`);
+            }
+        }
+        return previous ? previous.concat(items) : items;
+    };
 }

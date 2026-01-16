@@ -7,8 +7,8 @@ import RNCppjsPluginReactNative from '../cppjs.config.mjs';
 
 const buildType = process.argv[2] || 'Release';
 
-const targetParamsIPhoneOS = getTargetParams({ platform: 'ios', arch: 'iphoneos', runtime: 'mt' }, true);
-const targetParamsIPhoneSimulator = getTargetParams({ platform: 'ios', arch: 'iphonesimulator', runtime: 'mt' }, true);
+const targetParamsIPhoneOS = getTargetParams({ platform: ['ios'], arch: ['iphoneos'], runtime: ['mt'] }, true);
+const targetParamsIPhoneSimulator = getTargetParams({ platform: ['ios'], arch: ['iphonesimulator'], runtime: ['mt'] }, true);
 let buildTargetReleaseIPhoneOS = getFilteredBuildTargets(targetParamsIPhoneOS, { buildType: 'release' })?.[0];
 let buildTargetDebugIPhoneOS = getFilteredBuildTargets(targetParamsIPhoneOS, { buildType: 'debug' })?.[0];
 let buildTargetReleaseIPhoneSimulator = getFilteredBuildTargets(targetParamsIPhoneSimulator, { buildType: 'release' })?.[0];
@@ -67,10 +67,10 @@ const overrideConfig = {
         libName: ['react-native-cppjs'],
     },
     targetParams: {
-        platform: 'ios',
-        arch: 'all',
-        runtime: 'mt',
-        buildType: buildTargetIPhoneOS.buildType,
+        platform: ['ios'],
+        arch: ['iphoneos', 'iphonesimulator'],
+        runtime: ['mt'],
+        buildType: [buildTargetIPhoneOS.buildType],
     }
 };
 createXCFramework(overrideConfig);

@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import { state, createLib, buildWasm, createBridgeFile, getData, getCppJsScript, getTargetParams, getFilteredBuildTargets } from 'cpp.js';
 
-const targetParams = getTargetParams({ platform: 'wasm', arch: 'wasm32', runtime: 'st', runtimeEnv: 'browser' }, true);
+const targetParams = getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
 let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
 let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
 

@@ -26,7 +26,7 @@ export default function createXCFramework(overrideConfig = null) {
     const relativeOutput = upath.relative(projectPath, output);
 
     const targetParams = overrideConfig?.targetParams || getTargetParams();
-    const buildTargets = getFilteredBuildTargets(targetParams, { platform: 'ios', runtime: 'mt', buildType: (targetParams.buildType && targetParams.buildType !== 'all') ? targetParams.buildType : 'release' });
+    const buildTargets = getFilteredBuildTargets(targetParams, { platform: 'ios', runtime: 'mt', buildType: (targetParams.buildType && targetParams.buildType.length > 0) ? targetParams.buildType[0] : 'release' });
 
     if (buildTargets.some(t => !fs.existsSync(`${output}/prebuilt/${t.path}/lib`))) {
         console.log('XCFramework not created because some of the build targets are not built.');

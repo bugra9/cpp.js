@@ -16,7 +16,7 @@ const cppjsWebpackPlugin = new CppjsWebpackPlugin();
 const cppjsLoaderOptions = cppjsWebpackPlugin.getLoaderOptions();
 const { state, getTargetParams, getFilteredBuildTargets } = cppjsLoaderOptions;
 
-const targetParams = getTargetParams({ platform: 'wasm', arch: 'wasm32', runtime: 'st', runtimeEnv: 'browser' }, true);
+const targetParams = getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
 let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
 let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
 
