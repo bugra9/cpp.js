@@ -22,8 +22,9 @@ function createInterfaceFile(headerOrModuleFilePath, target) {
         return null;
     }
     const fileHash = getFileHash(headerOrModuleFilePath);
-    if (state.cache.hashes[headerOrModuleFilePath] === fileHash) {
-        return state.cache.interfaces[headerOrModuleFilePath];
+    const cachedInterface = state.cache.interfaces[headerOrModuleFilePath];
+    if (state.cache.hashes[headerOrModuleFilePath] === fileHash && cachedInterface && fs.existsSync(cachedInterface)) {
+        return cachedInterface;
     }
 
     const moduleRegex = new RegExp(`.(${state.config.ext.module.join('|')})$`);
@@ -98,8 +99,9 @@ function createBridgeFileFromInterfaceFile(interfaceFilePath, target) {
     }
 
     const fileHash = getFileHash(interfaceFilePath);
-    if (state.cache.hashes[interfaceFilePath] === fileHash) {
-        return state.cache.bridges[interfaceFilePath];
+    const cachedBridge = state.cache.bridges[interfaceFilePath];
+    if (state.cache.hashes[interfaceFilePath] === fileHash && cachedBridge && fs.existsSync(cachedBridge)) {
+        return cachedBridge;
     }
 
     const allHeaders = state.config.dependencyParameters.headerPathWithDepends.split(';');

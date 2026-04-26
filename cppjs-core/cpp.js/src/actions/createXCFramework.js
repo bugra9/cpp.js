@@ -47,22 +47,27 @@ export default function createXCFramework(overrideConfig = null) {
             const targets = Object.values(a);
             // const targetName = `${fileName}-${targets[0].runtime}-${targets[0].buildType}.xcframework`;
             const targetName = `${fileName}.xcframework`;
-            if (!fs.existsSync(`${projectPath}/${targetName}`)) {
-                console.log(`Creating XCFramework ${targetName}`);
-                const params = ['-create-xcframework'];
-                targets.forEach((target) => {
-                    execFileSync(iosRanLibBin, [`${relativeOutput}/prebuilt/${target.path}/lib/lib${fileName}.a`], options);
-                    params.push(
-                        '-library', `${relativeOutput}/prebuilt/${target.path}/lib/lib${fileName}.a`,
-                        '-headers', `${relativeOutput}/prebuilt/${target.path}/include`,
-                    );
-                });
-                params.push('-output', targetName);
-                execFileSync('xcodebuild', params, options);
-                console.log(`XCFramework ${targetName} created.`);
-            } else {
-                console.log(`XCFramework ${targetName} already exists.`);
+            const targetPath = `${projectPath}/${targetName}`;
+            // Always recreate: the xcframework wraps the freshly built static libs which contain
+            // the user's bridge bindings. If we keep a stale xcframework around, the linker
+            // (via the podspec's vendored_frameworks + force_load) will pull in old bindings
+            // and runtime calls like `Module.<UserClass>` resolve to undefined. xcodebuild
+            // -create-xcframework refuses to overwrite, so delete first.
+            if (fs.existsSync(targetPath)) {
+                fs.rmSync(targetPath, { recursive: true, force: true });
             }
+            console.log(`Creating XCFramework ${targetName}`);
+            const params = ['-create-xcframework'];
+            targets.forEach((target) => {
+                execFileSync(iosRanLibBin, [`${relativeOutput}/prebuilt/${target.path}/lib/lib${fileName}.a`], options);
+                params.push(
+                    '-library', `${relativeOutput}/prebuilt/${target.path}/lib/lib${fileName}.a`,
+                    '-headers', `${relativeOutput}/prebuilt/${target.path}/include`,
+                );
+            });
+            params.push('-output', targetName);
+            execFileSync('xcodebuild', params, options);
+            console.log(`XCFramework ${targetName} created.`);
         });
     });
 }

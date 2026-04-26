@@ -1508,8 +1508,8 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-  - react-native-cppjs (2.0.0-beta.12)
-  - react-native-cppjs-ios-helper (2.0.0-beta.12):
+  - react-native-cppjs (2.0.0-beta.14)
+  - react-native-cppjs-ios-helper (2.0.0-beta.14):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2589,8 +2589,8 @@ SPEC CHECKSUMS:
   React-logger: 8f320ad2007af122573c11ced727bf3ef795c58b
   React-Mapbuffer: b6935d45926a7a230806e70afd0e67d3daa24ae7
   React-microtasksnativemodule: 0698007c05abab165ee02ee8b1f23a9f577f31bd
-  react-native-cppjs: 11624b55097be19069fedf5e8ee9e50f0c22b936
-  react-native-cppjs-ios-helper: 4b34a1f9cf7db63adf3b6a0e288dd359f00bd537
+  react-native-cppjs: 7c4eacd0be341d84a2bb9886a5f47d3b9e49fdff
+  react-native-cppjs-ios-helper: f9c7ef27d879ac46c3ad1ca1f95146c9ba1ae182
   react-native-safe-area-context: 53f796cb6c814661bbe99fbdfd0585d07b996cdd
   React-NativeModulesApple: 9af02ea7a28301aee846322b8ba14eeed9077c2e
   React-networking: 5332952e3074bca9383c3e2c4c1a786243bbf427

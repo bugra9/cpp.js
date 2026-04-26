@@ -1,5 +1,5 @@
 PODS:
-  - cppjs-sample-lib-prebuilt-matrix (2.0.0-beta.8)
+  - cppjs-sample-lib-prebuilt-matrix (2.0.0-beta.12)
   - FBLazyVector (0.85.2)
   - hermes-engine (250829098.0.10):
     - hermes-engine/Pre-built (= 250829098.0.10)
@@ -1363,8 +1363,8 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-  - react-native-cppjs (2.0.0-beta.8)
-  - react-native-cppjs-ios-helper (2.0.0-beta.8):
+  - react-native-cppjs (2.0.0-beta.13)
+  - react-native-cppjs-ios-helper (2.0.0-beta.13):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2080,7 +2080,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  cppjs-sample-lib-prebuilt-matrix: 06449bb4bc225dbd2689cdae8c41b9d237ae8fa9
+  cppjs-sample-lib-prebuilt-matrix: 11f49025c8d8cd9dc077e3934422341328fffca4
   FBLazyVector: 26fd21c75314e101f280d401e97f27d54f3f7064
   hermes-engine: b6cef8f1f6c726240e275520fd5cfdb6b2ff6826
   RCTDeprecation: c7a2768f905d76ca6d2cfefb26e4349eacbdfca3
@@ -2119,8 +2119,8 @@ SPEC CHECKSUMS:
   React-logger: ae9cf96fd8f8035f5dbd632f781ef741596a2993
   React-Mapbuffer: 95a7bb22f13705cabb2862a6b187a30bde4cf6e0
   React-microtasksnativemodule: 5fe728295b1a5ef95632dd97fb5a8a2b148c4c05
-  react-native-cppjs: 75232088d5a0ea97772c8018be02c9a9d3a4d3e1
-  react-native-cppjs-ios-helper: 6108b3a56641d32435a3e37ab675b9a1c7edf9e1
+  react-native-cppjs: f791faa45a7808f72606ed89b8e466c59f1abe48
+  react-native-cppjs-ios-helper: 6036e35f5667588b6f2b3bf7104ce85f6113616f
   react-native-safe-area-context: a2325922b8594ddd27f98fb13437aec126be2502
   React-NativeModulesApple: 902ad35a8aa6c13085cad3a19f87c5c752aa0115
   React-networking: c5ab123819ccb65b2e9ca5c0e63a9afcfeb8baef

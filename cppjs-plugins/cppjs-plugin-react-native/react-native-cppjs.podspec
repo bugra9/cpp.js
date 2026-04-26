@@ -18,7 +18,24 @@ Pod::Spec.new do |s|
 
   s.script_phase = {
     :name => 'Cpp.js',
-    :script => 'cd "${PODS_ROOT}/../.." && node "${PODS_TARGET_SRCROOT}/script/build_js.js" ios && node "${PODS_TARGET_SRCROOT}/script/build_ios.js" "${CONFIGURATION}"',
+    # The Pods `[CP] Copy XCFrameworks` phase extracts the vendored xcframework slice into
+    # PODS_XCFRAMEWORKS_BUILD_DIR before this script runs, so even though build_ios.js
+    # rebuilds the xcframework with the user's bridge symbols, the linker would still see
+    # the stale extracted .a unless we overwrite it here.
+    :script => 'set -e
+cd "${PODS_ROOT}/../.."
+node "${PODS_TARGET_SRCROOT}/script/build_js.js" ios
+node "${PODS_TARGET_SRCROOT}/script/build_ios.js" "${CONFIGURATION}"
+case "${PLATFORM_NAME}" in
+  iphonesimulator) SLICE="ios-arm64_x86_64-simulator" ;;
+  *) SLICE="ios-arm64_arm64e" ;;
+esac
+SRC="${PODS_TARGET_SRCROOT}/react-native-cppjs.xcframework/${SLICE}/libreact-native-cppjs.a"
+DST="${PODS_XCFRAMEWORKS_BUILD_DIR}/react-native-cppjs/libreact-native-cppjs.a"
+if [ -f "${SRC}" ]; then
+  mkdir -p "$(dirname "${DST}")"
+  cp -f "${SRC}" "${DST}"
+fi',
     :execution_position => :before_compile,
     :output_files => ['$(PODS_XCFRAMEWORKS_BUILD_DIR)/react-native-cppjs/libreact-native-cppjs.a']
   }
