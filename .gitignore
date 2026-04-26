@@ -20,6 +20,7 @@ node_modules
 *.launch
 .settings/
 *.sublime-workspace
+.gradle
 
 # IDE - VSCode
 .vscode/*
