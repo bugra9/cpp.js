@@ -1,1 +1,1 @@
-packages/cpp.js/README.md
+cppjs-core/cpp.js/README.md
