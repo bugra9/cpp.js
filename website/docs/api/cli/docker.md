@@ -33,6 +33,6 @@ CMake suite maintained and supported by Kitware (kitware.com/cmake).
 
 :::info
 **Docker Image:** You can access the docker image from [this link](https://hub.docker.com/r/bugra9/cpp.js).  
-**Dockerfile:** You can access the dockerfile from [this link](https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-core-docker/Dockerfile).  
-**Run Function:** You can access the run function from [this link](https://github.com/bugra9/cpp.js/blob/main/packages/cpp.js/src/functions/run.js).
+**Dockerfile:** You can access the dockerfile from [this link](https://github.com/bugra9/cpp.js/blob/main/cppjs-core/cppjs-core-docker/Dockerfile).  
+**Run Function:** You can access the run function from [this link](https://github.com/bugra9/cpp.js/blob/main/cppjs-core/cpp.js/src/actions/run.js).
 :::

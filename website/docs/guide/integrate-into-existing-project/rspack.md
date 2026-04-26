@@ -95,5 +95,5 @@ Before proceeding, ensure that you have met all the [prerequisites](/docs/guide/
 :::
 
 :::info
-**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-web-react-rspack).
+**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/cppjs-samples/cppjs-sample-web-react-rspack).
 :::

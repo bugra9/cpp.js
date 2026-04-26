@@ -12,7 +12,7 @@ export default {
 };
 ```
 
-The configuration object consists of six sections. These are:
+The configuration object consists of the sections below. These are:
 
 | Attribute    | Description |
 | -            | -           |
@@ -21,10 +21,10 @@ The configuration object consists of six sections. These are:
 | paths        | This object defines paths, such as the project path |
 | ext          | This object specifies file extensions, including those for header files. |
 | export       | This object includes configurations related to lib generation. |
-| platform     | This object includes platform-specific configuration. |
+| targetSpecs  | This array includes target-specific configuration filtered by platform/arch/runtime/buildType. |
 
 <br />
 
 :::tip
-You can find the JavaScript file that generates the configuration [here.](https://github.com/bugra9/cpp.js/blob/main/packages/cpp.js/src/utils/getConfig.js)
+You can find the JavaScript file that generates the configuration [here.](https://github.com/bugra9/cpp.js/blob/main/cppjs-core/cpp.js/src/state/loadConfig.js)
 :::

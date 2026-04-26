@@ -6,10 +6,10 @@ You can use cpp.js to compile native code from your project into WebAssembly. To
 {
     "name": "myapp",
     "scripts": {
-+       "build": "cppjs build -p WebAssembly"
++       "build": "cppjs build -p wasm"
     },
     "devDependencies": {
-+       "cpp.js": "^1.0.0"
++       "cpp.js": "^2.0.0-beta"
     }
 }
 ```
@@ -101,5 +101,5 @@ node ./src/index.mjs
 :::
 
 :::info
-**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-backend-nodejs-wasm).
+**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/cppjs-samples/cppjs-sample-backend-nodejs-wasm).
 :::

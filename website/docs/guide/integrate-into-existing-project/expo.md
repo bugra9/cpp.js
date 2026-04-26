@@ -60,9 +60,9 @@ public:
 
 Modify the React file to call the c++ function from your React page. For example;
 
-```diff title="app/(tabs)/index.tsx"
+```diff title="src/app/index.tsx"
 +import { useState, useEffect } from 'react';
-+import { initCppJs, MySampleClass } from '../../src/native/MySampleClass.h';
++import { initCppJs, MySampleClass } from '@/native/MySampleClass.h';
 
 export default function HomeScreen() {
 +  const [message, setMessage] = useState('compiling ...');
@@ -77,7 +77,6 @@ export default function HomeScreen() {
       <ThemedView style={styles.titleContainer}>
 -       <ThemedText type="title">Welcome!</ThemedText>
 +       <ThemedText type="title">Response from c++ : {message}</ThemedText>
-        <HelloWave />
       </ThemedView>
   );
 }
@@ -104,5 +103,5 @@ npm run android
 ```
 
 :::info
-**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-mobile-reactnative-expo).
+**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/cppjs-samples/cppjs-sample-mobile-reactnative-expo).
 :::
