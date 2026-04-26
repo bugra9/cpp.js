@@ -1,0 +1,26 @@
+{
+    "name": "@cpp.js/package-expat-android",
+    "version": "2.0.0-beta.12",
+    "nativeVersion": "2.8.0",
+    "description": "This package provides the precompiled Expat XML parser library, built using Cpp.js, for seamless integration into JavaScript, WebAssembly, and React Native projects. It enables fast and efficient parsing of XML data, making it ideal for applications requiring robust XML handling across platforms. Perfect for web, server-side, and mobile development environments.",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-expat#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "type": "module",
+    "license": "MIT",
+    "keywords": [
+        "expat",
+        "libexpat",
+        "cpp.js-package",
+        "webassembly",
+        "react-native"
+    ],
+    "scripts": {
+        "build": "cppjs build -p android",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "prepublishOnly": "cppjs build -p android",
+        "build:android": "cppjs build -p android"
+    },
+    "devDependencies": {
+        "cpp.js": "workspace:^"
+    }
+}

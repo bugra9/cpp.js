@@ -1,0 +1,22 @@
+import zlibWasm from '@cpp.js/package-zlib-wasm/cppjs.config.js';
+
+export default {
+  dependencies: [
+    zlibWasm,
+  ],
+  general: {
+    name: 'tiff'
+  },
+  export: {
+    type: 'cmake',
+    libName: [
+      'tiff',
+      'tiffxx'
+    ]
+  },
+  paths: {
+    config: import.meta.url,
+    base: '../..',
+    output: 'dist'
+  }
+};

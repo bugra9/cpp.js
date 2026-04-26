@@ -5,13 +5,21 @@ on:
     branches:
       - main
     paths:
-      - packages/**
+      - cppjs-core/**
+      - cppjs-extensions/**
+      - cppjs-packages/**
+      - cppjs-plugins/**
+      - cppjs-samples/**
       - .github/workflows/build-linux.yml
   pull_request:
     branches:
       - main
     paths:
-      - packages/**
+      - cppjs-core/**
+      - cppjs-extensions/**
+      - cppjs-packages/**
+      - cppjs-plugins/**
+      - cppjs-samples/**
       - .github/workflows/build-linux.yml
 
 permissions: {}

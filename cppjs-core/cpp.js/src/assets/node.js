@@ -1,0 +1,147 @@
+/* eslint-disable import/no-unresolved */
+/* eslint-disable import/first */
+
+
+
+import Module from 'cpp.js/module';
+import systemConfig from 'cpp.js/systemConfig';
+
+let cppJsPromise;
+
+function isObject(item) {
+    return (item && typeof item === 'object' && !Array.isArray(item));
+}
+
+function mergeDeep(target, ...sources) {
+    if (!sources.length) return target;
+    const source = sources.shift();
+
+    if (isObject(target) && isObject(source)) {
+        for (const key in source) {
+            if (isObject(source[key])) {
+                if (!target[key]) Object.assign(target, { [key]: {} });
+                mergeDeep(target[key], source[key]);
+            } else {
+                Object.assign(target, { [key]: source[key] });
+            }
+        }
+    }
+
+    return mergeDeep(target, ...sources);
+}
+
+function initCppJs(userConfig = {}) {
+    if (cppJsPromise) return cppJsPromise;
+
+    const config = mergeDeep(systemConfig, userConfig);
+    Object.entries(config.env).forEach(([key, value]) => config.env[key] = value.replace('_CPPJS_DATA_PATH_', `${__dirname}/data`));
+
+    cppJsPromise = new Promise((resolve, reject) => {
+        const m = {
+            print(text) {
+                if (config.logHandler) {
+                    config.logHandler(text, 'stdout');
+                } else {
+                    console.debug(`wasm stdout: ${text}`);
+                }
+            },
+            printErr(text) {
+                if (config.errorHandler) {
+                    config.errorHandler(text, 'stderr');
+                } else {
+                    console.error(`wasm stderr: ${text}`);
+                }
+            },
+            locateFile(fileName) {
+                let path = fileName;
+                if (config.paths && config.paths.wasm && fileName.endsWith('.wasm')) {
+                    path = config.paths.wasm;
+                } else if (config.paths && config.paths.data && (fileName.endsWith('.data.txt') || fileName.endsWith('.data'))) {
+                    path = config.paths.data;
+                }
+
+                let prefix = '';
+                if (config.path) {
+                    prefix = config.path;
+                    if (prefix.slice(-1) !== '/') prefix += '/';
+                } else {
+                    prefix = `${__dirname}/`;
+                }
+
+                let output = prefix + path;
+                if (output.endsWith('.data')) output += '.txt';
+                return output;
+            },
+
+            preRun: [
+                ({ ENV }) => {
+                    if (ENV && config && config.env) {
+                        Object.entries(config.env).forEach(([key, value]) => {
+
+                            ENV[key] = value;
+                        });
+                    }
+                },
+            ],
+            onRuntimeInitialized() {
+                if (config.onRuntimeInitialized) config.onRuntimeInitialized(m);
+            },
+            getPreloadedPackage(packageName) {
+
+                const a = require('fs').readFileSync(`./${packageName}`, { flag: 'r' }).buffer;
+                return a;
+            },
+            getFileBytes(path) {
+                if (!path) return new Uint8Array();
+                return m.FS.readFile(path, { encoding: 'binary' });
+            },
+            getFileList(path = '/memfs') {
+                const fileList = [];
+                for (const name of m.FS.readdir(path)) {
+                    if (name === '.' || name === '..') continue;
+                    const fullPath = path === '/' ? `/${name}` : `${path}/${name}`;
+                    const stat = m.FS.stat(fullPath);
+                    const type = stat.mode & 0o170000;
+                    if (type === 0o040000) {
+                        fileList.push(...m.getFileList(fullPath));
+                    } else if (type === 0o100000) {
+                        fileList.push({ path: fullPath, size: stat.size });
+                    }
+                }
+                return fileList;
+            },
+            toArray(vector) {
+                const output = [];
+                for (let i = 0; i < vector.size(); i += 1) {
+                    output.push(vector.get(i));
+                }
+                return output;
+            },
+            toVector(VectorClass, array = []) {
+                const vector = new VectorClass();
+                array.forEach((item) => {
+                    vector.push_back(item);
+                });
+                return vector;
+            },
+        };
+        if (config.getWasmFunction) {
+            m.instantiateWasm = function instantiateWasm(info, receive) {
+                const instance = new WebAssembly.Instance(config.getWasmFunction(), info);
+                receive(instance);
+                return instance.exports;
+            };
+        }
+        Module(m).then(resolve).catch(reject);
+    });
+
+    return cppJsPromise;
+}
+
+if (typeof globalThis === 'object') {
+    globalThis.CppJs = {
+        initCppJs,
+    };
+}
+
+export default initCppJs;

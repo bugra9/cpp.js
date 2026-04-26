@@ -1,0 +1,49 @@
+{
+    "name": "@cpp.js/playground-cloud-cloudflare-worker",
+    "version": "2.0.0-beta.12",
+    "private": true,
+    "description": "Cpp.js - Cloudflare webassembly playground",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-playground-cloud-cloudflare-worker#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "license": "MIT",
+    "scripts": {
+        "build": "cppjs build -p wasm -e edge -r st",
+        "dev": "wrangler dev",
+        "deploy": "wrangler dev"
+    },
+    "files": [
+        "dist/@cpp.js/sample-cloud-cloudflare.edge.js",
+        "dist/@cpp.js/sample-cloud-cloudflare.edge.wasm",
+        "index.js",
+        "cppjs.config.mjs",
+        "wrangler.toml",
+        "src"
+    ],
+    "dependencies": {
+        "cpp.js": "workspace:^",
+        "@cpp.js/package-expat": "workspace:^",
+        "@cpp.js/package-gdal": "workspace:^",
+        "@cpp.js/package-geos": "workspace:^",
+        "@cpp.js/package-geotiff": "workspace:^",
+        "@cpp.js/package-iconv": "workspace:^",
+        "@cpp.js/package-openssl": "workspace:^",
+        "@cpp.js/package-proj": "workspace:^",
+        "@cpp.js/package-spatialite": "workspace:^",
+        "@cpp.js/package-sqlite3": "workspace:^",
+        "@cpp.js/package-tiff": "workspace:^",
+        "@cpp.js/package-webp": "workspace:^",
+        "@cpp.js/package-zlib": "workspace:^"
+    },
+    "devDependencies": {
+        "wrangler": "^4.85.0",
+        "@playwright/test": "^1.59.1"
+    },
+    "keywords": [
+        "cpp.js-sample",
+        "cloudflare",
+        "cloudflare-worker",
+        "webassembly",
+        "bind",
+        "c++"
+    ]
+}

@@ -1,0 +1,40 @@
+{
+    "name": "cpp.js",
+    "version": "2.0.0-beta.13",
+    "license": "MIT",
+    "homepage": "https://cpp.js.org",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "description": "Bind C++ to JavaScript without extra code. Cpp.js supports WebAssembly and React Native for cross-platform compatibility.",
+    "type": "module",
+    "bin": {
+        "cpp.js": "./src/bin.js",
+        "cppjs": "./src/bin.js"
+    },
+    "main": "src/index.js",
+    "dependencies": {
+        "@rollup/plugin-commonjs": "^29.0.2",
+        "@rollup/plugin-json": "^6.1.0",
+        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@rollup/plugin-virtual": "^3.0.2",
+        "commander": "^14.0.3",
+        "glob": "^13.0.6",
+        "rollup": "^4.60.2",
+        "upath": "^3.0.7",
+        "decompress": "^4.2.1",
+        "follow-redirects": "^1.16.0",
+        "replace": "^1.2.2",
+        "comlink": "^4.4.2"
+    },
+    "keywords": [
+        "webassembly",
+        "react-native",
+        "bind",
+        "c++",
+        "emscripten",
+        "embind",
+        "swig",
+        "android",
+        "ios",
+        "mobile"
+    ]
+}
