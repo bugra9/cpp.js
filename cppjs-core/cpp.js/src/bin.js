@@ -36,36 +36,15 @@ program
     .version(packageJSON.version)
     .showHelpAfterError();
 
-const commandBuild = program.command('build')
+program.command('build')
     .description('compile the project that was set up using Cpp.js')
     .addOption(new Option('-p, --platform <platform>', 'target platform').argParser(createListParser(platforms)))
     .addOption(new Option('-a, --arch <arch>', 'target architecture').argParser(createListParser(archs)))
     .addOption(new Option('-r, --runtime <runtime>', 'target runtime').argParser(createListParser(runtimes)))
     .addOption(new Option('-b, --build-type <buildType>', 'target build type').argParser(createListParser(buildTypes)))
-    .addOption(new Option('-e, --runtime-env <runtimeEnv>', 'target runtime environment').argParser(createListParser(runtimeEnvs)));
-
-const commandDocker = program.command('docker')
-    .description('manage docker');
-const commandRun = commandDocker.command('run').description('run docker application');
-commandDocker.command('create').description('create docker container');
-commandDocker.command('start').description('start docker container');
-commandDocker.command('stop').description('stop docker container');
-commandDocker.command('delete').description('delete docker container');
-
-const commandConfig = program.command('config')
-    .description('manage the Cpp.js configuration files');
-commandConfig.command('get').description('get the Cpp.js system configuration');
-commandConfig.command('set').description('set the Cpp.js system configuration');
-commandConfig.command('delete').description('delete the Cpp.js system configuration');
-const commandConfigList = commandConfig.command('list').description('list the Cpp.js configurations')
-    .addOption(new Option('-t, --type <type>', 'config type').default('system').choices(['all', 'system', 'project']));
-commandConfig.command('keys').description('list all available system configuration keys for Cpp.js');
-
-program.parse(process.argv);
-
-switch (program.args[0]) {
-    case 'build': {
-        const targetParams = commandBuild.opts();
+    .addOption(new Option('-e, --runtime-env <runtimeEnv>', 'target runtime environment').argParser(createListParser(runtimeEnvs)))
+    .action((options) => {
+        const targetParams = { ...options };
 
         if (!targetParams.arch) {
             targetParams.arch = archs.filter(item => item !== 'wasm64');
@@ -85,101 +64,81 @@ switch (program.args[0]) {
         } else {
             build(targetParams);
         }
-        break;
+    });
+
+const dockerContainerName = () =>
+    `${getDockerImage()}-${getContentHash(state.config.paths.base)}`
+        .replace('/', '-')
+        .replace(':', '-');
+
+const dockerExec = (args) => {
+    try {
+        execFileSync('docker', args, { stdio: 'inherit' });
+    } catch (e) {
+        console.error('An error occurred while running the application. Please check the logs for more details.');
+        process.exit();
     }
-    case 'docker': {
-        switch (program.args[1]) {
-            case 'run': {
-                const [programName, ...params] = commandRun.args;
-                run(programName, params);
-                break;
-            }
-            case 'create': {
-                const args = [
-                    'run',
-                    '-dit',
-                    '--name',
-                    `${getDockerImage()}-${getContentHash(state.config.paths.base)}`.replace('/', '-').replace(':', '-'),
-                    '-v', `${state.config.paths.base}:/tmp/cppjs/live`,
-                    getDockerImage(),
-                    'bash',
-                ];
-                try {
-                    execFileSync('docker', args, { stdio: 'inherit' });
-                } catch (e) {
-                    console.error('An error occurred while running the application. Please check the logs for more details.');
-                    process.exit();
-                }
-                break;
-            }
-            case 'start': {
-                const args = [
-                    'start',
-                    `${getDockerImage()}-${getContentHash(state.config.paths.base)}`.replace('/', '-').replace(':', '-'),
-                ];
-                try {
-                    execFileSync('docker', args, { stdio: 'inherit' });
-                } catch (e) {
-                    console.error('An error occurred while running the application. Please check the logs for more details.');
-                    process.exit();
-                }
-                break;
-            }
-            case 'stop': {
-                const args = [
-                    'stop',
-                    `${getDockerImage()}-${getContentHash(state.config.paths.base)}`.replace('/', '-').replace(':', '-'),
-                ];
-                try {
-                    execFileSync('docker', args, { stdio: 'inherit' });
-                } catch (e) {
-                    console.error('An error occurred while running the application. Please check the logs for more details.');
-                    process.exit();
-                }
-                break;
-            }
-            case 'delete': {
-                const args = [
-                    'rm',
-                    `${getDockerImage()}-${getContentHash(state.config.paths.base)}`.replace('/', '-').replace(':', '-'),
-                ];
-                try {
-                    execFileSync('docker', args, { stdio: 'inherit' });
-                } catch (e) {
-                    console.error('An error occurred while running the application. Please check the logs for more details.');
-                    process.exit();
-                }
-                break;
-            }
-            default:
-        }
-        break;
-    }
-    case 'config': {
-        switch (program.args[1]) {
-            case 'get':
-                getSystemConfig(program.args[2]);
-                break;
-            case 'set':
-                setSystemConfig(program.args[2], program.args[3]);
-                break;
-            case 'delete':
-                deleteSystemConfig(program.args[2]);
-                break;
-            case 'list':
-                listSystemConfig(commandConfigList.opts().type);
-                break;
-            case 'keys':
-                listSystemKeys();
-                break;
-            default:
-                break;
-        }
-        break;
-    }
-    default:
-        break;
-}
+};
+
+const commandDocker = program.command('docker').description('manage docker');
+
+commandDocker.command('run')
+    .description('run docker application')
+    .argument('<program>', 'program to execute inside the container')
+    .argument('[params...]', 'arguments passed to the program')
+    .action((programName, params) => run(programName, params));
+
+commandDocker.command('create')
+    .description('create docker container')
+    .action(() => dockerExec([
+        'run', '-dit',
+        '--name', dockerContainerName(),
+        '-v', `${state.config.paths.base}:/tmp/cppjs/live`,
+        getDockerImage(),
+        'bash',
+    ]));
+
+commandDocker.command('start')
+    .description('start docker container')
+    .action(() => dockerExec(['start', dockerContainerName()]));
+
+commandDocker.command('stop')
+    .description('stop docker container')
+    .action(() => dockerExec(['stop', dockerContainerName()]));
+
+commandDocker.command('delete')
+    .description('delete docker container')
+    .action(() => dockerExec(['rm', dockerContainerName()]));
+
+const commandConfig = program.command('config')
+    .description('manage the Cpp.js configuration files');
+
+commandConfig.command('get')
+    .description('get the Cpp.js system configuration')
+    .argument('<key>', 'configuration key to read')
+    .action((key) => getSystemConfig(key));
+
+commandConfig.command('set')
+    .description('set the Cpp.js system configuration')
+    .argument('<key>', 'configuration key to set')
+    .argument('<value>', 'value to assign')
+    .action((key, value) => setSystemConfig(key, value));
+
+commandConfig.command('delete')
+    .description('delete the Cpp.js system configuration')
+    .argument('<key>', 'configuration key to remove')
+    .action((key) => deleteSystemConfig(key));
+
+commandConfig.command('list')
+    .description('list the Cpp.js configurations')
+    .addOption(new Option('-t, --type <type>', 'config type').default('system').choices(['all', 'system', 'project']))
+    .action((options) => listSystemConfig(options.type));
+
+commandConfig.command('keys')
+    .description('list all available system configuration keys for Cpp.js')
+    .action(() => listSystemKeys());
+
+program.parse(process.argv);
 
 function listSystemKeys() {
     console.info('Available configurations:');

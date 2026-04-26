@@ -161,7 +161,7 @@ function collectPackageJsons() {
 // Network
 // ---------------------------------------------------------------------------
 async function fetchLatestVersion(name) {
-    const url = `${REGISTRY}/${name.replace('/', '%2F')}`;
+    const url = `${REGISTRY}/${encodeURIComponent(name)}`;
     const res = await fetch(url, { headers: { Accept: 'application/json' } });
     if (!res.ok) throw new Error(`GET ${url} -> HTTP ${res.status}`);
     const json = await res.json();
@@ -350,7 +350,7 @@ async function main() {
     // ---------------------------------------------------------------------
     // Markdown rendering
     // ---------------------------------------------------------------------
-    const escapePipe = (s) => String(s).replace(/\|/g, '\\|');
+    const escapePipe = (s) => String(s).replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
     const renderTable = (list) => {
         let s = '| Dependency | Ranges in use | Latest | Used by | Status |\n';
         s += '|---|---|---|---|---|\n';
