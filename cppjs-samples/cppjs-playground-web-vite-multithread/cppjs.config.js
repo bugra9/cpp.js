@@ -18,33 +18,23 @@ export default {
     },
     dependencies: [
         curl,
-        expat,
-        gdal,
-        geos,
-        geotiff,
-        iconv,
-        openssl,
-        proj,
-        spatialite,
-        sqlite3,
-        tiff,
-        webp,
-        zlib,
+        // expat,
+        // gdal,
+        // geos,
+        // geotiff,
+        // iconv,
+        // openssl,
+        // proj,
+        // spatialite,
+        // sqlite3,
+        // tiff,
+        // webp,
+        // zlib,
     ],
     paths: {
         config: import.meta.url,
         base: '../..', /* Delete this line for create-cpp.js */
     },
-    targetSpecs: [
-        {
-            platform: 'wasm',
-            specs: {
-                binary: {
-                    emccFlags: ['-sJSPI'],
-                }
-            }
-        }
-    ],
     target: {
         runtime: 'mt',
     },

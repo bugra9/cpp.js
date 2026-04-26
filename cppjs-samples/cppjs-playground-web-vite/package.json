@@ -1,6 +1,7 @@
 {
     "name": "@cpp.js/playground-web-vite",
-    "version": "2.0.0-beta.5",
+    "version": "2.0.0-beta.12",
+    "private": true,
     "description": "Cpp.js Vite Playground",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-playground-web-vite#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -13,7 +14,7 @@
         "serve": "serve dist -c ../serve.json"
     },
     "dependencies": {
-        "vue": "^3.5.13",
+        "vue": "^3.5.33",
         "@cpp.js/plugin-vite": "workspace:^",
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^",
         "@cpp.js/package-expat": "workspace:^",
@@ -30,9 +31,9 @@
         "@cpp.js/package-zlib": "workspace:^"
     },
     "devDependencies": {
-        "@vitejs/plugin-vue": "^5.2.1",
-        "vite": "^6.0.5",
-        "@playwright/test": "^1.49.1"
+        "@vitejs/plugin-vue": "^6.0.6",
+        "vite": "^8.0.10",
+        "@playwright/test": "^1.59.1"
     },
     "keywords": [
         "cpp.js-sample",

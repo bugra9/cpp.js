@@ -7,8 +7,8 @@
   <title>Cpp.js Vanilla sample</title>
   <script src="./dist/cppjs-sample-web-vanilla-wasm-wasm32-st-release.browser.js"></script>
   <script>
-    initCppJs({ path: './dist' }).then(({ Native }) => {
-      document.querySelector('#cppMessage').innerHTML = Native.sample();
+    initCppJs({ path: './dist' }).then(async ({ Native }) => {
+      document.querySelector('#cppMessage').innerHTML = await Native.sample();
     });
   </script>
   <style>

@@ -18,6 +18,13 @@ const state = {
             arch: 'wasm32',
             runtime: 'st',
             buildType: 'release',
+            runtimeEnv: 'edge',
+        },
+        {
+            platform: 'wasm',
+            arch: 'wasm32',
+            runtime: 'st',
+            buildType: 'release',
             runtimeEnv: 'node',
         },
         {
@@ -26,6 +33,13 @@ const state = {
             runtime: 'st',
             buildType: 'debug',
             runtimeEnv: 'browser',
+        },
+        {
+            platform: 'wasm',
+            arch: 'wasm32',
+            runtime: 'st',
+            buildType: 'debug',
+            runtimeEnv: 'edge',
         },
         {
             platform: 'wasm',
@@ -74,6 +88,13 @@ const state = {
             arch: 'wasm64',
             runtime: 'st',
             buildType: 'release',
+            runtimeEnv: 'edge',
+        },
+        {
+            platform: 'wasm',
+            arch: 'wasm64',
+            runtime: 'st',
+            buildType: 'release',
             runtimeEnv: 'node',
         },
         {
@@ -82,6 +103,13 @@ const state = {
             runtime: 'st',
             buildType: 'debug',
             runtimeEnv: 'browser',
+        },
+        {
+            platform: 'wasm',
+            arch: 'wasm64',
+            runtime: 'st',
+            buildType: 'debug',
+            runtimeEnv: 'edge',
         },
         {
             platform: 'wasm',
@@ -191,11 +219,11 @@ async function initProcessState() {
         target.path = `${target.platform}-${target.arch}-${target.runtime}-${target.buildType}`;
         target.releasePath = `${target.platform}-${target.arch}-${target.runtime}-release`;
         if (target.runtimeEnv && target.platform === 'wasm') {
-            target.rawJsName = `${state.config.general.name}-${target.path}.js`;
+            target.rawJsName = `${state.config.general.name}-${target.path}.${target.runtimeEnv}.js`;
             target.jsName = `${state.config.general.name}-${target.path}.${target.runtimeEnv}.js`;
-            target.wasmName = `${state.config.general.name}-${target.path}.wasm`;
-            target.dataName = `${state.config.general.name}-${target.path}.data`;
-            target.dataTxtName = `${state.config.general.name}-${target.path}.data.txt`;
+            target.wasmName = `${state.config.general.name}-${target.path}.${target.runtimeEnv}.wasm`;
+            target.dataName = `${state.config.general.name}-${target.path}.${target.runtimeEnv}.data`;
+            target.dataTxtName = `${state.config.general.name}-${target.path}.${target.runtimeEnv}.data.txt`;
         }
     });
 

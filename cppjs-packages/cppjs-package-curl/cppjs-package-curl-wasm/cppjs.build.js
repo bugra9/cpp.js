@@ -90,7 +90,7 @@ const easyPerformInside = `
     attr.onerror = on_error;
     attr.userData = userData;
 
-    emscripten_fetch(&attr, data->state.url);
+    emscripten_fetch(&attr, (const char *)Curl_bufref_ptr(&data->state.url));
 
     while (!fetch_completed) {
         emscripten_sleep(100);

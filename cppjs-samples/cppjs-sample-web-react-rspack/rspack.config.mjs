@@ -1,16 +1,11 @@
-import { dirname } from 'node:path';
+// @ts-check
 import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { defineConfig } from '@rspack/cli';
 import { rspack } from '@rspack/core';
-import RefreshPlugin from '@rspack/plugin-react-refresh';
+import { ReactRefreshRspackPlugin } from '@rspack/plugin-react-refresh';
 import CppjsWebpackPlugin from '@cpp.js/plugin-webpack';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const isDev = process.env.NODE_ENV === 'development';
-
-// Target browsers, see: https://github.com/browserslist/browserslist
-const targets = ['chrome >= 87', 'edge >= 88', 'firefox >= 78', 'safari >= 14'];
 
 const cppjsWebpackPlugin = new CppjsWebpackPlugin();
 const cppjsLoaderOptions = cppjsWebpackPlugin.getLoaderOptions();
@@ -31,12 +26,12 @@ if (!buildTargetDebug) {
 }
 
 export default defineConfig({
-    context: __dirname,
     entry: {
         main: './src/main.jsx',
     },
+    target: ['browserslist:last 2 versions, > 0.2%, not dead, Firefox ESR'],
     resolve: {
-        extensions: ['...', '.ts', '.tsx', '.jsx'],
+        extensions: ['...', '.jsx'],
     },
     module: {
         rules: [
@@ -50,16 +45,18 @@ export default defineConfig({
                 type: 'asset',
             },
             {
-                test: /\.(jsx?|tsx?)$/,
+                test: /\.css$/,
+                type: 'css/auto',
+            },
+            {
+                test: /\.(?:js|jsx|mjs|cjs)$/,
                 use: [
                     {
                         loader: 'builtin:swc-loader',
+                        /** @type {import('@rspack/core').SwcLoaderOptions} */
                         options: {
+                            detectSyntax: 'auto',
                             jsc: {
-                                parser: {
-                                    syntax: 'typescript',
-                                    tsx: true,
-                                },
                                 transform: {
                                     react: {
                                         runtime: 'automatic',
@@ -68,7 +65,6 @@ export default defineConfig({
                                     },
                                 },
                             },
-                            env: { targets },
                         },
                     },
                 ],
@@ -80,28 +76,17 @@ export default defineConfig({
         new rspack.HtmlRspackPlugin({
             template: './index.html',
         }),
-        isDev ? new RefreshPlugin() : null,
-    ].filter(Boolean),
-    optimization: {
-        minimizer: [
-            new rspack.SwcJsMinimizerRspackPlugin(),
-            new rspack.LightningCssMinimizerRspackPlugin({
-                minimizerOptions: { targets },
-            }),
-        ],
-    },
-    experiments: {
-        css: true,
-    },
+        isDev && new ReactRefreshRspackPlugin(),
+    ],
     devServer: {
         watchFiles: {
-            paths: ['src/**/*'], // İzlemek istediğiniz dosya/dizin
+            paths: ['src/**/*'],
             options: {
-                ignored: /node_modules/, // İstemediğiniz dosyaları hariç tutabilirsiniz
+                ignored: /node_modules/,
             },
         },
-        hot: true, // HMR'yi etkinleştirir
-        liveReload: true, // Sayfa yenileme
+        hot: true,
+        liveReload: true,
         setupMiddlewares: (middlewares, devServer) => {
             if (!devServer) {
                 throw new Error('@rspack/dev-server is not defined');
@@ -111,14 +96,19 @@ export default defineConfig({
                 name: '/cpp.js',
                 path: '/cpp.js',
                 middleware: (req, res) => {
-                    res.sendFile(`${state.config.paths.build}/${buildTargetDebug.jsName}`);
+                    const filePath = `${state.config.paths.build}/${buildTargetDebug.jsName}`;
+                    res.setHeader('Content-Type', 'application/javascript');
+                    fs.createReadStream(filePath).pipe(res);
                 },
             });
+
             middlewares.unshift({
                 name: '/cpp.wasm',
                 path: '/cpp.wasm',
                 middleware: (req, res) => {
-                    res.send(fs.readFileSync(`${state.config.paths.build}/${buildTargetDebug.wasmName}`));
+                    const filePath = `${state.config.paths.build}/${buildTargetDebug.wasmName}`;
+                    res.setHeader('Content-Type', 'application/wasm');
+                    fs.createReadStream(filePath).pipe(res);
                 },
             });
 

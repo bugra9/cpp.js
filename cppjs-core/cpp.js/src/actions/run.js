@@ -107,9 +107,9 @@ export default function run(program, params = [], platformPrefix = null, target 
                 if (dProgram === 'cmake') {
                     dParams = [
                         ...dParams,
-                        '-DCMAKE_SYSTEM_NAME=Android', '-DCMAKE_SYSTEM_VERSION=33',
-                        `-DCMAKE_ANDROID_ARCH_ABI=${target.arch === 'x86_64' ? 'x86_64' : 'arm64-v8a'}`,
-                        `-DCMAKE_ANDROID_NDK=${ANDROID_NDK}`,
+                        `-DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake`,
+                        `-DANDROID_ABI=${target.arch === 'x86_64' ? 'x86_64' : 'arm64-v8a'}`,
+                        '-DANDROID_PLATFORM=android-33',
                         `-DANDROID_NDK=${ANDROID_NDK}`,
                     ];
                 }

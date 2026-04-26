@@ -5,19 +5,9 @@ import { initCppJs, Native } from './native/native.h'
 const message = ref("compiling ...")
 const threadResult = ref("...")
 
-initCppJs().then((A) => {
-    console.log('zzz');
-    Native.runOnThread();
-    const y = Native.ops_JSPI();
-    console.log('zzz2');
-    console.log(y);
-    y.then(() => {
-        console.log('aaa');
-        message.value = Native.sample();
-    });
-    setTimeout(() => {
-        threadResult.value = Native.getThreadResult();
-    }, 5000);
+initCppJs({ useWorker: true }).then(async (A) => {
+   const v = await Native.listVirtualFiles();
+   console.log('v', v);
 });
 </script>
 

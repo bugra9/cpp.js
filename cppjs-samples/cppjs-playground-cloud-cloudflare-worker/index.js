@@ -1,7 +1,8 @@
-import initCppJs from './dist/cppjs-playground-cloud-cloudflare-worker-wasm-wasm32-st-release.browser.js';
-import wasmContent from './dist/cppjs-playground-cloud-cloudflare-worker-wasm-wasm32-st-release.wasm';
+import initCppJs from './dist/cppjs-playground-cloud-cloudflare-worker-wasm-wasm32-st-release.edge.js';
+import wasmContent from './dist/cppjs-playground-cloud-cloudflare-worker-wasm-wasm32-st-release.edge.wasm';
 
-globalThis.WorkerGlobalScope = undefined;
+// globalThis.WorkerGlobalScope = undefined;
+
 const { Native } = await initCppJs({ getWasmFunction: () => wasmContent });
 
 export default {

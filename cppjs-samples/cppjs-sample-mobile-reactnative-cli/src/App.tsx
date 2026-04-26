@@ -4,13 +4,23 @@
  *
  * @format
  */
-
-import React, { useState, useEffect } from 'react';
-import { SafeAreaView, Text, StyleSheet, View } from 'react-native';
-
+import { useEffect, useState } from 'react';
+import { StatusBar, StyleSheet, useColorScheme, View, Text } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { initCppJs, Native } from './native/native.h';
 
-function App(): React.JSX.Element {
+function App() {
+  const isDarkMode = useColorScheme() === 'dark';
+
+  return (
+    <SafeAreaProvider>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <AppContent />
+    </SafeAreaProvider>
+  );
+}
+
+function AppContent() {
   const [message, setMessage] = useState('compiling ...');
 
   useEffect(() => {
@@ -20,11 +30,9 @@ function App(): React.JSX.Element {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.container}>
-        <Text style={styles.text}>Matrix multiplier with c++ &nbsp;&nbsp;=&gt;&nbsp;&nbsp; {message}</Text>
-      </View>
-    </SafeAreaView>
+    <View style={styles.container}>
+      <Text style={styles.text}>Matrix multiplier with c++ &nbsp;&nbsp;=&gt;&nbsp;&nbsp; {message}</Text>
+    </View>
   );
 }
 

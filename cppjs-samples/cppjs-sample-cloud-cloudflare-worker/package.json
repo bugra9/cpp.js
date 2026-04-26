@@ -1,20 +1,20 @@
 {
     "name": "@cpp.js/sample-cloud-cloudflare-worker",
-    "version": "2.0.0-beta.5",
+    "version": "2.0.0-beta.12",
     "description": "Cpp.js - Cloudflare webassembly sample",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-cloud-cloudflare-worker#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "license": "MIT",
     "scripts": {
-        "build": "cppjs build -p wasm -a wasm32 -r st -re browser -b release",
+        "build": "cppjs build -p wasm -a wasm32 -r st -e edge -b release",
         "dev": "wrangler dev",
         "deploy": "wrangler dev",
         "e2e:dev": "playwright test --config playwright.dev.config.cjs",
         "e2e:prod": "playwright test --config playwright.dev.config.cjs"
     },
     "files": [
-        "dist/@cpp.js/sample-cloud-cloudflare.browser.js",
-        "dist/@cpp.js/sample-cloud-cloudflare.wasm",
+        "dist/@cpp.js/sample-cloud-cloudflare.edge.js",
+        "dist/@cpp.js/sample-cloud-cloudflare.edge.wasm",
         "index.js",
         "cppjs.config.mjs",
         "wrangler.toml",
@@ -24,8 +24,8 @@
         "cpp.js": "workspace:^"
     },
     "devDependencies": {
-        "wrangler": "^3.107.3",
-        "@playwright/test": "^1.49.1"
+        "wrangler": "^4.85.0",
+        "@playwright/test": "^1.59.1"
     },
     "keywords": [
         "cpp.js-sample",

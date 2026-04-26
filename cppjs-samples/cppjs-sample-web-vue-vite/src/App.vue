@@ -4,8 +4,8 @@ import { initCppJs, Native } from './native/native.h'
 
 const message = ref("compiling ...")
 
-initCppJs().then(() => {
-  message.value = Native.sample();
+initCppJs().then(async () => {
+  message.value = await Native.sample();
 });
 </script>
 

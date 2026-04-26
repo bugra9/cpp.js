@@ -6,8 +6,8 @@ function App() {
   const [message, setMessage] = useState('compiling ...')
 
   useEffect(() => {
-    initCppJs().then(() => {
-        setMessage(Native.sample());
+    initCppJs().then(async () => {
+      setMessage(await Native.sample());
     });
   }, []);
 

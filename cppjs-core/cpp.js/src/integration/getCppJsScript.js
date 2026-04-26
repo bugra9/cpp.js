@@ -73,7 +73,8 @@ function getWebScript(env, modulePrefix) {
         paths: {
             wasm: 'cpp.wasm',
             data: 'cpp.data.txt',
-            worker: 'cpp.js'
+            worker: 'cpp.js',
+            js: 'cpp.js',
         }
     }`;
 

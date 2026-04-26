@@ -42,7 +42,7 @@ const commandBuild = program.command('build')
     .addOption(new Option('-a, --arch <arch>', 'target architecture').argParser(createListParser(archs)))
     .addOption(new Option('-r, --runtime <runtime>', 'target runtime').argParser(createListParser(runtimes)))
     .addOption(new Option('-b, --build-type <buildType>', 'target build type').argParser(createListParser(buildTypes)))
-    .addOption(new Option('-re, --runtime-env <runtimeEnv>', 'target runtime environment').argParser(createListParser(runtimeEnvs)));
+    .addOption(new Option('-e, --runtime-env <runtimeEnv>', 'target runtime environment').argParser(createListParser(runtimeEnvs)));
 
 const commandDocker = program.command('docker')
     .description('manage docker');
