@@ -1,5 +1,8 @@
 const platformBuild = {
-    'ios': ['-DBUILD_SHARED_LIBS=OFF', '-DBUILD_STATIC_LIBS=ON'],
+    // _CURL_PREFILL=ON forces curl to load CMake/unix-cache.cmake, which sets
+    // HAVE_PIPE2=0 for APPLE. Without it, curl falls back to check_function_exists,
+    // which misdetects pipe2 as available on iPhoneSimulator SDK 26+ and breaks the build.
+    'ios': ['-DBUILD_SHARED_LIBS=OFF', '-DBUILD_STATIC_LIBS=ON', '-D_CURL_PREFILL=ON'],
 };
 
 export default {

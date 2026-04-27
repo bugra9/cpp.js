@@ -1,6 +1,6 @@
 # Beta Release Status
 
-Generated on: 2026-04-26T19:46:45.225Z
+Generated on: 2026-04-27T23:20:26.808Z
 
 ## ⚠️ Unreleased / Missing Beta Tag
 
@@ -60,9 +60,9 @@ Generated on: 2026-04-26T19:46:45.225Z
 | @cpp.js/package-sqlite3-android | 2.0.0-beta.12 | 4.55 MB |
 | @cpp.js/package-sqlite3 | 2.0.0-beta.12 | 0.00 MB |
 | @cpp.js/package-spatialite-wasm | 2.0.0-beta.12 | 55.86 MB |
-| @cpp.js/package-spatialite-ios | 2.0.0-beta.12 | 0.04 MB |
+| @cpp.js/package-spatialite-ios | 2.0.0-beta.13 | 305.61 MB |
 | @cpp.js/package-spatialite-android | 2.0.0-beta.12 | 32.59 MB |
-| @cpp.js/package-spatialite | 2.0.0-beta.12 | 0.04 MB |
+| @cpp.js/package-spatialite | 2.0.0-beta.13 | 0.04 MB |
 | @cpp.js/package-proj-wasm | 2.0.0-beta.12 | 35.60 MB |
 | @cpp.js/package-proj-ios | 2.0.0-beta.12 | 256.66 MB |
 | @cpp.js/package-proj-android | 2.0.0-beta.12 | 117.34 MB |
@@ -80,29 +80,32 @@ Generated on: 2026-04-26T19:46:45.225Z
 | @cpp.js/package-geotiff-android | 2.0.0-beta.12 | 0.69 MB |
 | @cpp.js/package-geotiff | 2.0.0-beta.12 | 0.01 MB |
 | @cpp.js/package-geos-wasm | 2.0.0-beta.12 | 23.19 MB |
-| @cpp.js/package-geos-ios | 2.0.0-beta.12 | 0.03 MB |
+| @cpp.js/package-geos-ios | 2.0.0-beta.13 | 164.57 MB |
 | @cpp.js/package-geos-android | 2.0.0-beta.12 | 161.26 MB |
-| @cpp.js/package-geos | 2.0.0-beta.12 | 0.03 MB |
+| @cpp.js/package-geos | 2.0.0-beta.13 | 0.03 MB |
 | @cpp.js/package-gdal-wasm | 2.0.0-beta.12 | 101.27 MB |
-| @cpp.js/package-gdal-ios | 2.0.0-beta.12 | 0.03 MB |
+| @cpp.js/package-gdal-ios | 2.0.0-beta.13 | 378.43 MB |
 | @cpp.js/package-gdal-android | 2.0.0-beta.12 | 542.61 MB |
-| @cpp.js/package-gdal | 2.0.0-beta.12 | 0.02 MB |
-| @cpp.js/package-expat-wasm | 2.0.0-beta.12 | 0.71 MB |
-| @cpp.js/package-expat-ios | 2.0.0-beta.12 | 0.00 MB |
-| @cpp.js/package-expat-android | 2.0.0-beta.12 | 1.69 MB |
-| @cpp.js/package-expat | 2.0.0-beta.12 | 0.00 MB |
+| @cpp.js/package-gdal | 2.0.0-beta.13 | 0.02 MB |
+| @cpp.js/package-expat-wasm | 2.0.0-beta.13 | 0.69 MB |
+| @cpp.js/package-expat-ios | 2.0.0-beta.13 | 3.40 MB |
+| @cpp.js/package-expat-android | 2.0.0-beta.13 | 1.66 MB |
+| @cpp.js/package-expat | 2.0.0-beta.13 | 0.00 MB |
 | @cpp.js/package-curl-wasm | 2.0.0-beta.12 | 2.88 MB |
-| @cpp.js/package-curl-ios | 2.0.0-beta.12 | 0.01 MB |
+| @cpp.js/package-curl-ios | 2.0.0-beta.13 | 25.46 MB |
 | @cpp.js/package-curl-android | 2.0.0-beta.12 | 26.21 MB |
-| @cpp.js/package-curl | 2.0.0-beta.12 | 0.01 MB |
+| @cpp.js/package-curl | 2.0.0-beta.13 | 0.01 MB |
 | @cpp.js/core-embind-jsi | 2.0.0-beta.14 | 0.35 MB |
 ## Released Packages (Size Order) (82)
 
 | Package Name | Version | Size |
 |---|---|---|
 | @cpp.js/package-gdal-android | 2.0.0-beta.12 | 542.61 MB |
+| @cpp.js/package-gdal-ios | 2.0.0-beta.13 | 378.43 MB |
+| @cpp.js/package-spatialite-ios | 2.0.0-beta.13 | 305.61 MB |
 | @cpp.js/package-proj-ios | 2.0.0-beta.12 | 256.66 MB |
 | @cpp.js/package-openssl-ios | 2.0.0-beta.12 | 221.25 MB |
+| @cpp.js/package-geos-ios | 2.0.0-beta.13 | 164.57 MB |
 | @cpp.js/package-geos-android | 2.0.0-beta.12 | 161.26 MB |
 | @cpp.js/package-proj-android | 2.0.0-beta.12 | 117.34 MB |
 | @cpp.js/package-gdal-wasm | 2.0.0-beta.12 | 101.27 MB |
@@ -112,6 +115,7 @@ Generated on: 2026-04-26T19:46:45.225Z
 | @cpp.js/package-spatialite-android | 2.0.0-beta.12 | 32.59 MB |
 | @cpp.js/package-openssl-android | 2.0.0-beta.12 | 32.33 MB |
 | @cpp.js/package-curl-android | 2.0.0-beta.12 | 26.21 MB |
+| @cpp.js/package-curl-ios | 2.0.0-beta.13 | 25.46 MB |
 | @cpp.js/package-openssl-wasm | 2.0.0-beta.12 | 25.31 MB |
 | @cpp.js/package-geos-wasm | 2.0.0-beta.12 | 23.19 MB |
 | @cpp.js/package-iconv-ios | 2.0.0-beta.12 | 18.77 MB |
@@ -124,6 +128,7 @@ Generated on: 2026-04-26T19:46:45.225Z
 | @cpp.js/package-sqlite3-wasm | 2.0.0-beta.12 | 5.11 MB |
 | @cpp.js/package-sqlite3-android | 2.0.0-beta.12 | 4.55 MB |
 | @cpp.js/package-zlib-ios | 2.0.0-beta.12 | 4.27 MB |
+| @cpp.js/package-expat-ios | 2.0.0-beta.13 | 3.40 MB |
 | @cpp.js/sample-lib-prebuilt-matrix | 2.0.0-beta.12 | 2.90 MB |
 | @cpp.js/package-curl-wasm | 2.0.0-beta.12 | 2.88 MB |
 | @cpp.js/package-iconv-wasm | 2.0.0-beta.12 | 2.76 MB |
@@ -131,26 +136,23 @@ Generated on: 2026-04-26T19:46:45.225Z
 | @cpp.js/package-iconv-android | 2.0.0-beta.12 | 2.25 MB |
 | @cpp.js/package-zlib-wasm | 2.0.0-beta.12 | 2.13 MB |
 | @cpp.js/package-webp-wasm | 2.0.0-beta.12 | 1.94 MB |
-| @cpp.js/package-expat-android | 2.0.0-beta.12 | 1.69 MB |
+| @cpp.js/package-expat-android | 2.0.0-beta.13 | 1.66 MB |
 | @cpp.js/sample-mobile-reactnative-expo | 2.0.0-beta.12 | 1.38 MB |
 | @cpp.js/package-tiff-wasm | 2.0.0-beta.12 | 1.29 MB |
 | @cpp.js/package-geotiff-wasm | 2.0.0-beta.12 | 0.77 MB |
-| @cpp.js/package-expat-wasm | 2.0.0-beta.12 | 0.71 MB |
 | @cpp.js/package-geotiff-android | 2.0.0-beta.12 | 0.69 MB |
+| @cpp.js/package-expat-wasm | 2.0.0-beta.13 | 0.69 MB |
 | @cpp.js/core-embind-jsi | 2.0.0-beta.14 | 0.35 MB |
 | @cpp.js/sample-mobile-reactnative-cli | 2.0.0-beta.12 | 0.25 MB |
 | @cpp.js/package-openssl | 2.0.0-beta.12 | 0.23 MB |
 | cpp.js | 2.0.0-beta.13 | 0.17 MB |
-| @cpp.js/package-spatialite-ios | 2.0.0-beta.12 | 0.04 MB |
-| @cpp.js/package-spatialite | 2.0.0-beta.12 | 0.04 MB |
+| @cpp.js/package-spatialite | 2.0.0-beta.13 | 0.04 MB |
 | @cpp.js/package-iconv | 2.0.0-beta.12 | 0.03 MB |
-| @cpp.js/package-geos-ios | 2.0.0-beta.12 | 0.03 MB |
-| @cpp.js/package-geos | 2.0.0-beta.12 | 0.03 MB |
-| @cpp.js/package-gdal-ios | 2.0.0-beta.12 | 0.03 MB |
+| @cpp.js/package-geos | 2.0.0-beta.13 | 0.03 MB |
 | @cpp.js/sample-web-react-vite | 2.0.0-beta.12 | 0.02 MB |
 | @cpp.js/plugin-react-native | 2.0.0-beta.14 | 0.02 MB |
 | @cpp.js/playground-web-rspack | 2.0.0-beta.8 | 0.02 MB |
-| @cpp.js/package-gdal | 2.0.0-beta.12 | 0.02 MB |
+| @cpp.js/package-gdal | 2.0.0-beta.13 | 0.02 MB |
 | create-cpp.js | 2.0.0-beta.12 | 0.01 MB |
 | @cpp.js/sample-web-vue-vite | 2.0.0-beta.12 | 0.01 MB |
 | @cpp.js/sample-web-vanilla | 2.0.0-beta.12 | 0.01 MB |
@@ -165,8 +167,7 @@ Generated on: 2026-04-26T19:46:45.225Z
 | @cpp.js/playground-web-vite | 2.0.0-beta.8 | 0.01 MB |
 | @cpp.js/playground-web-vanilla | 2.0.0-beta.8 | 0.01 MB |
 | @cpp.js/package-geotiff | 2.0.0-beta.12 | 0.01 MB |
-| @cpp.js/package-curl-ios | 2.0.0-beta.12 | 0.01 MB |
-| @cpp.js/package-curl | 2.0.0-beta.12 | 0.01 MB |
+| @cpp.js/package-curl | 2.0.0-beta.13 | 0.01 MB |
 | @cpp.js/sample-lib-source | 2.0.0-beta.12 | 0.00 MB |
 | @cpp.js/sample-lib-cmake | 2.0.0-beta.12 | 0.00 MB |
 | @cpp.js/sample-cloud-cloudflare-worker | 2.0.0-beta.12 | 0.00 MB |
@@ -180,5 +181,4 @@ Generated on: 2026-04-26T19:46:45.225Z
 | @cpp.js/package-tiff | 2.0.0-beta.12 | 0.00 MB |
 | @cpp.js/package-sqlite3 | 2.0.0-beta.12 | 0.00 MB |
 | @cpp.js/package-proj | 2.0.0-beta.12 | 0.00 MB |
-| @cpp.js/package-expat-ios | 2.0.0-beta.12 | 0.00 MB |
-| @cpp.js/package-expat | 2.0.0-beta.12 | 0.00 MB |
+| @cpp.js/package-expat | 2.0.0-beta.13 | 0.00 MB |
