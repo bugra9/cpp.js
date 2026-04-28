@@ -22,7 +22,8 @@
     "dependencies": {
         "@cpp.js/package-proj-wasm": "workspace:^",
         "@cpp.js/package-tiff-wasm": "workspace:^",
-        "@cpp.js/package-zlib-wasm": "workspace:^"
+        "@cpp.js/package-zlib-wasm": "workspace:^",
+        "@cpp.js/package-jpegturbo-wasm": "workspace:^"
     },
     "devDependencies": {
         "cpp.js": "workspace:^"

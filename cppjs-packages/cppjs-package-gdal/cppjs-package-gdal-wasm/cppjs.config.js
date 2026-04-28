@@ -2,6 +2,7 @@ import expatWasm from '@cpp.js/package-expat-wasm/cppjs.config.js';
 import geosWasm from '@cpp.js/package-geos-wasm/cppjs.config.js';
 import geotiffWasm from '@cpp.js/package-geotiff-wasm/cppjs.config.js';
 import iconvWasm from '@cpp.js/package-iconv-wasm/cppjs.config.js';
+import jpegturboWasm from '@cpp.js/package-jpegturbo-wasm/cppjs.config.js';
 import projWasm from '@cpp.js/package-proj-wasm/cppjs.config.js';
 import spatialiteWasm from '@cpp.js/package-spatialite-wasm/cppjs.config.js';
 import sqlite3Wasm from '@cpp.js/package-sqlite3-wasm/cppjs.config.js';
@@ -15,6 +16,7 @@ export default {
     geosWasm,
     geotiffWasm,
     iconvWasm,
+    jpegturboWasm,
     projWasm,
     spatialiteWasm,
     sqlite3Wasm,

@@ -1,7 +1,7 @@
 {
     "private": true,
     "scripts": {
-        "build:packages": "pnpm --filter=@cpp.js/package-iconv* run build && pnpm --filter=@cpp.js/package-zlib* run build && pnpm --filter=@cpp.js/package-expat* run build && pnpm --filter=@cpp.js/package-webp* run build && pnpm --filter=@cpp.js/package-tiff* run build && pnpm --filter=@cpp.js/package-sqlite3* run build && pnpm --filter=@cpp.js/package-proj* run build && pnpm --filter=@cpp.js/package-geotiff* run build && pnpm --filter=@cpp.js/package-geos* run build && pnpm --filter=@cpp.js/package-spatialite* run build && pnpm --filter=@cpp.js/package-openssl* run build && pnpm --filter=@cpp.js/package-curl* run build && pnpm --filter=@cpp.js/package-gdal* run build",
+        "build:packages": "pnpm --filter=@cpp.js/package-iconv* run build && pnpm --filter=@cpp.js/package-zlib* run build && pnpm --filter=@cpp.js/package-expat* run build && pnpm --filter=@cpp.js/package-webp* run build && pnpm --filter=@cpp.js/package-jpegturbo* run build && pnpm --filter=@cpp.js/package-tiff* run build && pnpm --filter=@cpp.js/package-sqlite3* run build && pnpm --filter=@cpp.js/package-proj* run build && pnpm --filter=@cpp.js/package-geotiff* run build && pnpm --filter=@cpp.js/package-geos* run build && pnpm --filter=@cpp.js/package-spatialite* run build && pnpm --filter=@cpp.js/package-openssl* run build && pnpm --filter=@cpp.js/package-curl* run build && pnpm --filter=@cpp.js/package-gdal* run build",
         "build:samples": "pnpm --filter=@cpp.js/sample-* run build",
         "build:samples:lib": "pnpm --filter=@cpp.js/sample-lib-* run build",
         "build:samples:lib:wasm": "pnpm --filter=@cpp.js/sample-lib-* run build:wasm",

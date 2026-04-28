@@ -51,6 +51,7 @@ export default {
         `-DSQLite3_INCLUDE_DIR=${depPaths.sqlite3.header}`, `-DSQLite3_LIBRARY=${depPaths.sqlite3.lib}`,
         `-DPROJ_INCLUDE_DIR=${depPaths.proj.header}`, `-DPROJ_LIBRARY_RELEASE=${depPaths.proj.lib}`,
         `-DTIFF_INCLUDE_DIR=${depPaths.tiff.header}`, `-DTIFF_LIBRARY_RELEASE=${depPaths.tiff.lib}`,
+        '-DGDAL_USE_JPEG=ON', `-DJPEG_INCLUDE_DIR=${depPaths.jpeg.header}`, `-DJPEG_LIBRARY_RELEASE=${depPaths.jpeg.lib}`,
         `-DGEOTIFF_INCLUDE_DIR=${depPaths.geotiff.header}`, `-DGEOTIFF_LIBRARY_RELEASE=${depPaths.geotiff.lib}`,
         `-DZLIB_INCLUDE_DIR=${depPaths.z.header}`, `-DZLIB_LIBRARY_RELEASE=${depPaths.z.lib}`,
         `-DSPATIALITE_INCLUDE_DIR=${depPaths.spatialite.header}`, `-DSPATIALITE_LIBRARY=${depPaths.spatialite.lib}`,

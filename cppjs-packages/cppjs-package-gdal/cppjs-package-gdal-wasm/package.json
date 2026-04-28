@@ -24,6 +24,7 @@
         "@cpp.js/package-geos-wasm": "workspace:^",
         "@cpp.js/package-geotiff-wasm": "workspace:^",
         "@cpp.js/package-iconv-wasm": "workspace:^",
+        "@cpp.js/package-jpegturbo-wasm": "workspace:^",
         "@cpp.js/package-proj-wasm": "workspace:^",
         "@cpp.js/package-spatialite-wasm": "workspace:^",
         "@cpp.js/package-sqlite3-wasm": "workspace:^",
