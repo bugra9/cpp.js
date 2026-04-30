@@ -3,7 +3,7 @@ const platformBuild = {
 };
 
 const platformExtraLibs = {
-    'wasm': ['-lsqlite3'],
+    'wasm': ['-lsqlite3', '-ljpeg'],
 };
 
 export default {

@@ -318,6 +318,9 @@ importers:
       '@cpp.js/package-iconv-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-iconv/cppjs-package-iconv-wasm
+      '@cpp.js/package-jpegturbo-wasm':
+        specifier: workspace:^
+        version: link:../../cppjs-package-jpegturbo/cppjs-package-jpegturbo-wasm
       '@cpp.js/package-proj-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-proj/cppjs-package-proj-wasm
@@ -425,6 +428,9 @@ importers:
 
   cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm:
     dependencies:
+      '@cpp.js/package-jpegturbo-wasm':
+        specifier: workspace:^
+        version: link:../../cppjs-package-jpegturbo/cppjs-package-jpegturbo-wasm
       '@cpp.js/package-proj-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-proj/cppjs-package-proj-wasm
@@ -468,6 +474,22 @@ importers:
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm:
+    devDependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../../cppjs-core/cpp.js
+
+  cppjs-packages/cppjs-package-jpegturbo/cppjs-package-jpegturbo:
+    dependencies:
+      '@cpp.js/package-jpegturbo-wasm':
+        specifier: workspace:^
+        version: link:../cppjs-package-jpegturbo-wasm
+    devDependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../../cppjs-core/cpp.js
+
+  cppjs-packages/cppjs-package-jpegturbo/cppjs-package-jpegturbo-wasm:
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -728,6 +750,9 @@ importers:
 
   cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm:
     dependencies:
+      '@cpp.js/package-jpegturbo-wasm':
+        specifier: workspace:^
+        version: link:../../cppjs-package-jpegturbo/cppjs-package-jpegturbo-wasm
       '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-zlib/cppjs-package-zlib-wasm

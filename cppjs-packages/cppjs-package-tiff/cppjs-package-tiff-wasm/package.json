@@ -20,7 +20,8 @@
         "prepublishOnly": "cppjs build -p wasm"
     },
     "dependencies": {
-        "@cpp.js/package-zlib-wasm": "workspace:^"
+        "@cpp.js/package-zlib-wasm": "workspace:^",
+        "@cpp.js/package-jpegturbo-wasm": "workspace:^"
     },
     "devDependencies": {
         "cpp.js": "workspace:^"
