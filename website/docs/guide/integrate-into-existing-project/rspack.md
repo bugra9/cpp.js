@@ -17,41 +17,13 @@ To enable the plugin, modify the `rspack.config.mjs` file as shown below.
 export default defineConfig({
 	module: {
 		rules: [
-+            {
-+                test: /\.h$/,
-+                loader: '@cpp.js/plugin-webpack-loader',
-+                options: { compiler },
-+            }
++           cppjsWebpackPlugin.getRule(),
 		]
 	},
 	plugins: [
 +         cppjsWebpackPlugin,
 	].filter(Boolean),
-+     devServer: {
-+         watchFiles: compiler.config.paths.native,
-+         setupMiddlewares: (middlewares, devServer) => {
-+             if (!devServer) {
-+                 throw new Error('@rspack/dev-server is not defined');
-+             }
-+ 
-+             middlewares.unshift({
-+                 name: '/cpp.js',
-+                 path: '/cpp.js',
-+                 middleware: (req, res) => {
-+                     res.sendFile(`${compiler.config.paths.temp}/${compiler.config.general.name}.browser.js`);
-+                 },
-+             });
-+             middlewares.unshift({
-+                 name: '/cpp.wasm',
-+                 path: '/cpp.wasm',
-+                 middleware: (req, res) => {
-+                     res.send(fs.readFileSync(`${compiler.config.paths.temp}/${compiler.config.general.name}.wasm`));
-+                 },
-+             });
-+ 
-+             return middlewares;
-+         },
-+     },
++   devServer: cppjsWebpackPlugin.getDevServerConfig(),
 });
 ```
 

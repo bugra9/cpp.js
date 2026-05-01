@@ -20,13 +20,10 @@ module.exports = {
   ],
   module: {
     rules: [
-+     {
-+       test: /\.h$/,
-+       loader: '@cpp.js/plugin-webpack-loader',
-+       options: { compiler },
-+     }
++     cppjsWebpackPlugin.getRule(),
     ],
   },
++ devServer: cppjsWebpackPlugin.getDevServerConfig(),
 };
 ```
 

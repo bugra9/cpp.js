@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/plugin-webpack",
-    "version": "2.0.0-beta.12",
+    "version": "2.0.0-beta.13",
     "description": "Cpp.js Webpack plugin: A tool for seamless C++ integration with the Webpack bundler.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-plugin-rollup#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",

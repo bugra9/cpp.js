@@ -68,4 +68,51 @@ export default class CppjsWebpackPlugin {
             getFilteredBuildTargets
         };
     }
+
+    getRule() {
+        return {
+            test: new RegExp(`\\.(${state.config.ext.header.join('|')})$`),
+            loader: '@cpp.js/plugin-webpack-loader',
+            options: { ...this.getLoaderOptions() },
+        };
+    }
+
+    setDevServerMiddleware(middlewares, devServer) {
+        if (!devServer) {
+            throw new Error('devServer is not defined');
+        }
+
+        middlewares.unshift({
+            name: '/cpp.js',
+            path: '/cpp.js',
+            middleware: (req, res) => {
+                const filePath = `${state.config.paths.build}/${buildTargetDebug.jsName}`;
+                res.setHeader('Content-Type', 'application/javascript');
+                fs.createReadStream(filePath).pipe(res);
+            },
+        });
+
+        middlewares.unshift({
+            name: '/cpp.wasm',
+            path: '/cpp.wasm',
+            middleware: (req, res) => {
+                const filePath = `${state.config.paths.build}/${buildTargetDebug.wasmName}`;
+                res.setHeader('Content-Type', 'application/wasm');
+                fs.createReadStream(filePath).pipe(res);
+            },
+        });
+
+        return middlewares;
+    }
+
+    getDevServerConfig() {
+        return {
+            watchFiles: state.config.paths.native,
+            hot: true,
+            liveReload: true,
+            setupMiddlewares: (middlewares, devServer) => {
+                return this.setDevServerMiddleware(middlewares, devServer);
+            },
+        };
+    }
 }

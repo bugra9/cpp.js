@@ -35,11 +35,7 @@ export default defineConfig({
     },
     module: {
         rules: [
-            {
-                test: /\.h$/,
-                loader: '@cpp.js/plugin-webpack-loader',
-                options: { ...cppjsLoaderOptions },
-            },
+            cppjsWebpackPlugin.getRule(),
             {
                 test: /\.svg$/,
                 type: 'asset',
@@ -78,41 +74,5 @@ export default defineConfig({
         }),
         isDev && new ReactRefreshRspackPlugin(),
     ],
-    devServer: {
-        watchFiles: {
-            paths: ['src/**/*'],
-            options: {
-                ignored: /node_modules/,
-            },
-        },
-        hot: true,
-        liveReload: true,
-        setupMiddlewares: (middlewares, devServer) => {
-            if (!devServer) {
-                throw new Error('@rspack/dev-server is not defined');
-            }
-
-            middlewares.unshift({
-                name: '/cpp.js',
-                path: '/cpp.js',
-                middleware: (req, res) => {
-                    const filePath = `${state.config.paths.build}/${buildTargetDebug.jsName}`;
-                    res.setHeader('Content-Type', 'application/javascript');
-                    fs.createReadStream(filePath).pipe(res);
-                },
-            });
-
-            middlewares.unshift({
-                name: '/cpp.wasm',
-                path: '/cpp.wasm',
-                middleware: (req, res) => {
-                    const filePath = `${state.config.paths.build}/${buildTargetDebug.wasmName}`;
-                    res.setHeader('Content-Type', 'application/wasm');
-                    fs.createReadStream(filePath).pipe(res);
-                },
-            });
-
-            return middlewares;
-        },
-    },
+    devServer: cppjsWebpackPlugin.getDevServerConfig(),
 });

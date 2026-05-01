@@ -10,7 +10,7 @@ You can use cpp.js to compile native code from your project into WebAssembly. To
 {
     "name": "myapp",
     "scripts": {
-+       "build": "cppjs build -p wasm"
++       "build": "cppjs build -p wasm -a wasm32 -r st -e browser -b release"
     },
     "devDependencies": {
 +       "cpp.js": "^2.0.0-beta"
@@ -56,7 +56,7 @@ Before proceeding, ensure that you have met all the [prerequisites](/docs/guide/
 npm run build
 ```
 
-This command will generate myapp.wasm, myapp.browser.js, and myapp.node.js files inside the dist folder.
+This command will generate myapp-wasm-wasm32-st-release.browser.js and myapp-wasm-wasm32-st-release.browser.wasm files inside the dist folder.
 
 ```
 ├── src
@@ -64,13 +64,12 @@ This command will generate myapp.wasm, myapp.browser.js, and myapp.node.js files
 |       └── MySampleClass.h
 |
 ├── dist
-│   └── myapp.wasm
-|   └── myapp.browser.js
-|   └── myapp.node.js
+│   └── myapp-wasm-wasm32-st-release.browser.js
+|   └── myapp-wasm-wasm32-st-release.browser.wasm
 ├── ...
 ```
 
-You can now access your native code by importing **dist/myapp.browser.js** into your JavaScript file. For a minimal setup, create a index.html and add the following content.
+You can now access your native code by importing **dist/myapp-wasm-wasm32-st-release.browser.js** into your JavaScript file. For a minimal setup, create a index.html and add the following content.
 
 ```html title="index.html"
 <!DOCTYPE html>
@@ -78,7 +77,7 @@ You can now access your native code by importing **dist/myapp.browser.js** into 
    <head>
       <meta charset = "utf-8">
       <title>Cpp.js Vanilla sample</title>
-      <script src="./dist/myapp.browser.js"></script>
+      <script src="./dist/myapp-wasm-wasm32-st-release.browser.js"></script>
       <script>
         initCppJs({ path: './dist' }).then(({ MySampleClass }) => {
             document.querySelector('#cppMessage').innerHTML = MySampleClass.sample();
@@ -103,7 +102,7 @@ To add `serve` as a project dependency, follow these steps:
        "build": "cppjs build -p wasm",
     },
     "devDependencies": {
-+      "serve": "^14.2.3",
++      "serve": "^14.2.6",
        "cpp.js": "^2.0.0-beta"
     }
 }
