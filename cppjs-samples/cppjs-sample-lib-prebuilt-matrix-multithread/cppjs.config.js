@@ -2,8 +2,8 @@ export default {
     general: {
         name: 'cppjs-sample-lib-prebuilt-matrix-multithread',
     },
-    build: {
-        usePthread: true
+    target: {
+        runtime: 'mt',
     },
     export: {
         type: 'cmake',

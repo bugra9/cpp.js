@@ -20,9 +20,19 @@ if (!buildTargetDebug) {
 
 const viteCppjsPlugin = (options) => {
     let isServe = false;
+    let wasmBuilt = false;
     const bridges = [];
     const headerRegex = new RegExp(`\\.(${state.config.ext.header.join('|')})$`);
     const sourceRegex = new RegExp(`\\.(${state.config.ext.source.join('|')})$`);
+
+    async function ensureWasmBuilt() {
+        if (!wasmBuilt) {
+            createLib(buildTargetDebug, 'Source', { buildSource: true });
+            createLib(buildTargetDebug, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
+            await buildWasm(buildTargetDebug);
+            wasmBuilt = true;
+        }
+    }
 
     return [
         rollupCppjsPlugin(options, bridges),
@@ -30,9 +40,7 @@ const viteCppjsPlugin = (options) => {
             name: 'vite-plugin-cppjs',
             async load(source) {
                 if (isServe && source === '/cpp.js') {
-                    createLib(buildTargetDebug, 'Source', { buildSource: true });
-                    createLib(buildTargetDebug, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
-                    await buildWasm(buildTargetDebug);
+                    await ensureWasmBuilt();
                     return fs.readFileSync(`${state.config.paths.build}/${buildTargetDebug.jsName}`, { encoding: 'utf8', flag: 'r' });
                 }
                 return null;
@@ -45,12 +53,63 @@ const viteCppjsPlugin = (options) => {
             },
             configureServer(server) {
                 if (isServe) {
-                    server.middlewares.use((req, res, next) => {
-                        res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-                        res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-                        if (req.url === '/cpp.wasm') req.url = `/@fs/${state.config.paths.build}/${buildTargetDebug.wasmName}`;
-                        else if (req.url === '/cpp.data.txt') req.url = `/@fs/${state.config.paths.build}/${buildTargetDebug.dataTxtName}`;
-                        // else if (req.url === '/cpp.worker.js') req.url = `/@fs/${state.config.paths.build}/${state.config.general.name}.js`;
+                    server.middlewares.use(async (req, res, next) => {
+                        res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+                        res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+
+                        // /cpp.js stays on Vite's load() hook above (so SPA HMR keeps working).
+                        // The middleware only handles assets that bypass Vite's import pipeline:
+                        // wasm/data files (rewritten to /@fs), Nuxt's /_nuxt/* prefixes (SSR
+                        // resolves these server-side), and Emscripten's pthread worker URLs.
+
+                        if (req.url === '/cpp.wasm') {
+                            req.url = `/@fs/${state.config.paths.build}/${buildTargetDebug.wasmName}`;
+                        } else if (req.url === '/cpp.data.txt') {
+                            req.url = `/@fs/${state.config.paths.build}/${buildTargetDebug.dataTxtName}`;
+                        } else if (req.url === '/_nuxt/cpp.js') {
+                            try {
+                                await ensureWasmBuilt();
+                                res.setHeader('Content-Type', 'application/javascript');
+                                res.end(fs.readFileSync(`${state.config.paths.build}/${buildTargetDebug.jsName}`, 'utf8'));
+                                return;
+                            } catch (err) {
+                                console.error('Error serving /_nuxt/cpp.js:', err);
+                            }
+                        } else if (req.url === '/_nuxt/cpp.wasm') {
+                            try {
+                                await ensureWasmBuilt();
+                                const buf = fs.readFileSync(`${state.config.paths.build}/${buildTargetDebug.wasmName}`);
+                                res.setHeader('Content-Type', 'application/wasm');
+                                res.setHeader('Content-Length', buf.length.toString());
+                                res.end(buf);
+                                return;
+                            } catch (err) {
+                                console.error('Error serving /_nuxt/cpp.wasm:', err);
+                            }
+                        } else if (req.url === '/_nuxt/cpp.data.txt') {
+                            const dataPath = `${state.config.paths.build}/${buildTargetDebug.dataTxtName}`;
+                            if (fs.existsSync(dataPath)) {
+                                res.setHeader('Content-Type', 'text/plain');
+                                res.end(fs.readFileSync(dataPath));
+                                return;
+                            }
+                        } else if (
+                            req.url === '/cpp.browser.js' || req.url === '/_nuxt/cpp.browser.js'
+                            || req.url === '/cpp.worker.js' || req.url === '/_nuxt/cpp.worker.js'
+                        ) {
+                            // Emscripten pthread mode loads the same browser JS inside its workers.
+                            try {
+                                await ensureWasmBuilt();
+                                const workerJsPath = `${state.config.paths.build}/${buildTargetDebug.jsName}`;
+                                if (fs.existsSync(workerJsPath)) {
+                                    res.setHeader('Content-Type', 'application/javascript');
+                                    res.end(fs.readFileSync(workerJsPath, 'utf8'));
+                                    return;
+                                }
+                            } catch (err) {
+                                console.error('Error serving cpp.browser.js:', err);
+                            }
+                        }
                         next();
                     });
                 }
