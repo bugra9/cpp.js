@@ -6,12 +6,12 @@ You can use cpp.js to compile native code from your project into WebAssembly. To
 {
     "name": "myapp",
     "scripts": {
-+       "build": "cppjs build -p WebAssembly",
++       "build": "cppjs build -p wasm -e edge -r st",
         "dev": "wrangler dev",
         "deploy": "wrangler dev"
     },
     "devDependencies": {
-+       "cpp.js": "^1.0.0",
++       "cpp.js": "^2.0.0-beta",
         "wrangler": "^3.75.0"
     }
 }
@@ -63,17 +63,17 @@ This command will generate myapp.wasm, myapp.browser.js, and myapp.node.js files
 |       └── MySampleClass.h
 |
 ├── dist
-│   └── myapp.wasm
-|   └── myapp.browser.js
-|   └── myapp.node.js
+│   └── myapp-wasm-wasm32-st-release.edge.js
+│   └── myapp-wasm-wasm32-st-release.edge.wasm
+|
 ├── ...
 ```
 
-You can now access your native code by importing **dist/myapp.browser.js** into your JavaScript file. For a minimal setup, create a index.js and add the following content.
+You can now access your native code by importing **dist/myapp-wasm-wasm32-st-release.edge.js** into your JavaScript file. For a minimal setup, create a index.js and add the following content.
 
 ```js title="index.js"
-import initCppJs from './dist/myapp.browser.js';
-import wasmContent from './dist/myapp.wasm';
+import initCppJs from './dist/myapp-wasm-wasm32-st-release.edge.js';
+import wasmContent from './dist/myapp-wasm-wasm32-st-release.edge.wasm';
 
 const { MySampleClass } = await initCppJs({ getWasmFunction: () => wasmContent });
 
@@ -97,5 +97,5 @@ npm run deploy
 ```
 
 :::info
-**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-cloud-cloudflare-worker).
+**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/cppjs-samples/cppjs-sample-cloud-cloudflare-worker).
 :::

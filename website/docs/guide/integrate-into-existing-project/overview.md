@@ -20,7 +20,6 @@ If you are using a bundler you can continue with its page. If not, you can integ
 | [Rollup](rollup)         |                              |                   |                                        |
 | [Vite](vite)             |                              |                   |                                        |
 | [Rspack](rspack)         |
-| [CRA(Create React App)](create-react-app)         |
 :::warning
 Before proceeding, ensure that you have met all the [prerequisites](/docs/guide/getting-started/prerequisites) for setting up a working development environment.
 :::

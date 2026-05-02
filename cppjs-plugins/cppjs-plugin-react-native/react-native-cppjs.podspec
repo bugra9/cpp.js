@@ -1,7 +1,7 @@
 require "json"
 
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
-system("cd \"#{Pod::Config.instance.installation_root}/..\" && node \"#{__dir__}/script/build_js.js\" ios && node \"#{__dir__}/script/build_ios.js\"", :out => File::NULL)
+system("cd \"#{Pod::Config.instance.installation_root}/..\" && node \"#{__dir__}/script/build_js.js\" ios && node \"#{__dir__}/script/build_ios.js\" Debug", :out => File::NULL)
 
 Pod::Spec.new do |s|
   s.name         = "react-native-cppjs"
@@ -12,13 +12,30 @@ Pod::Spec.new do |s|
   s.authors      = "Cpp.js Authors"
 
   s.platforms    = { :ios => min_ios_version_supported }
-  s.source       = { :http => "file:${PODS_ROOT}/../../.cppjs/react-native-cppjs.xcframework.zip", :type => "zip" }
+  s.source       = { :http => "https://cpp.js.org" }
 
   s.vendored_frameworks = 'react-native-cppjs.xcframework'
 
   s.script_phase = {
     :name => 'Cpp.js',
-    :script => 'cd "${PODS_ROOT}/../.." && node "${PODS_TARGET_SRCROOT}/script/build_js.js" ios && node "${PODS_TARGET_SRCROOT}/script/build_ios.js"',
+    # The Pods `[CP] Copy XCFrameworks` phase extracts the vendored xcframework slice into
+    # PODS_XCFRAMEWORKS_BUILD_DIR before this script runs, so even though build_ios.js
+    # rebuilds the xcframework with the user's bridge symbols, the linker would still see
+    # the stale extracted .a unless we overwrite it here.
+    :script => 'set -e
+cd "${PODS_ROOT}/../.."
+node "${PODS_TARGET_SRCROOT}/script/build_js.js" ios
+node "${PODS_TARGET_SRCROOT}/script/build_ios.js" "${CONFIGURATION}"
+case "${PLATFORM_NAME}" in
+  iphonesimulator) SLICE="ios-arm64_x86_64-simulator" ;;
+  *) SLICE="ios-arm64_arm64e" ;;
+esac
+SRC="${PODS_TARGET_SRCROOT}/react-native-cppjs.xcframework/${SLICE}/libreact-native-cppjs.a"
+DST="${PODS_XCFRAMEWORKS_BUILD_DIR}/react-native-cppjs/libreact-native-cppjs.a"
+if [ -f "${SRC}" ]; then
+  mkdir -p "$(dirname "${DST}")"
+  cp -f "${SRC}" "${DST}"
+fi',
     :execution_position => :before_compile,
     :output_files => ['$(PODS_XCFRAMEWORKS_BUILD_DIR)/react-native-cppjs/libreact-native-cppjs.a']
   }

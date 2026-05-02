@@ -15,16 +15,14 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  platform: {
-    'Android-arm64-v8a': {
-      env: {
-        'CURL_CA_BUNDLE': '_CPPJS_DATA_PATH_/certs/cacert.pem'
-      }
-    },
-    'Android-x86_64': {
-      env: {
-        'CURL_CA_BUNDLE': '_CPPJS_DATA_PATH_/certs/cacert.pem'
+  targetSpecs: [
+    {
+      platform: 'android',
+      specs: {
+        env: {
+          'CURL_CA_BUNDLE': '_CPPJS_DATA_PATH_/certs/cacert.pem'
+        }
       }
     }
-  }
+  ],
 };

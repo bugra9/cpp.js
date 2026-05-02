@@ -15,16 +15,15 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  platform: {
-    'iOS-iphoneos': {
-      env: {
-        'CURL_CA_BUNDLE': '_CPPJS_DATA_PATH_/certs/cacert.pem'
-      }
-    },
-    'iOS-iphonesimulator': {
-      env: {
-        'CURL_CA_BUNDLE': '_CPPJS_DATA_PATH_/certs/cacert.pem'
+
+  targetSpecs: [
+    {
+      platform: 'ios',
+      specs: {
+        env: {
+          'CURL_CA_BUNDLE': '_CPPJS_DATA_PATH_/certs/cacert.pem'
+        }
       }
     }
-  }
+  ],
 };

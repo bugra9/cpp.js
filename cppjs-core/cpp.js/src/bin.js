@@ -11,15 +11,22 @@ import createLib from './actions/createLib.js';
 import buildWasm from './actions/buildWasm.js';
 import createXCFramework from './actions/createXCFramework.js';
 import runCppjsApp from './actions/run.js';
+import { getBuildTargets, getFilteredBuildTargets, getFilteredTargetSpec } from './actions/target.js';
+
 import downloadAndExtractFile from './utils/downloadAndExtractFile.js';
 import writeJson from './utils/writeJson.js';
 import systemKeys from './utils/systemKeys.js';
-
 import { getDockerImage } from './utils/pullDockerImage.js';
 import { getContentHash } from './utils/hash.js';
 import findFiles from './utils/findFiles.js';
 
 const packageJSON = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url)));
+
+const platforms = [...new Set(state.targets.map(target => target.platform).filter(t => t))];
+const archs = [...new Set(state.targets.map(target => target.arch).filter(t => t))];
+const runtimes = [...new Set(state.targets.map(target => target.runtime).filter(t => t))];
+const buildTypes = [...new Set(state.targets.map(target => target.buildType).filter(t => t))];
+const runtimeEnvs = [...new Set(state.targets.map(target => target.runtimeEnv).filter(t => t))];
 
 const program = new Command();
 
@@ -29,132 +36,109 @@ program
     .version(packageJSON.version)
     .showHelpAfterError();
 
-const commandBuild = program.command('build')
+program.command('build')
     .description('compile the project that was set up using Cpp.js')
-    .addOption(new Option('-p, --platform <platform>', 'target platform').default('All').choices(['All', 'WebAssembly', 'Android', 'iOS']));
+    .addOption(new Option('-p, --platform <platform>', 'target platform').argParser(createListParser(platforms)))
+    .addOption(new Option('-a, --arch <arch>', 'target architecture').argParser(createListParser(archs)))
+    .addOption(new Option('-r, --runtime <runtime>', 'target runtime').argParser(createListParser(runtimes)))
+    .addOption(new Option('-b, --build-type <buildType>', 'target build type').argParser(createListParser(buildTypes)))
+    .addOption(new Option('-e, --runtime-env <runtimeEnv>', 'target runtime environment').argParser(createListParser(runtimeEnvs)))
+    .action((options) => {
+        const targetParams = { ...options };
 
-const commandDocker = program.command('docker')
-    .description('manage docker');
-const commandRun = commandDocker.command('run').description('run docker application');
-commandDocker.command('create').description('create docker container');
-commandDocker.command('start').description('start docker container');
-commandDocker.command('stop').description('stop docker container');
-commandDocker.command('delete').description('delete docker container');
+        if (!targetParams.arch) {
+            targetParams.arch = archs.filter(item => item !== 'wasm64');
+        }
+        if (!targetParams.buildType) {
+            targetParams.buildType = ['release'];
+        }
+
+        targetParams.platform = targetParams.platform || platforms;
+        targetParams.arch = targetParams.arch || archs;
+        targetParams.runtime = targetParams.runtime || runtimes;
+        targetParams.buildType = targetParams.buildType || buildTypes;
+        targetParams.runtimeEnv = targetParams.runtimeEnv || runtimeEnvs;
+
+        if (state.config.build.withBuildConfig) {
+            buildExternal(targetParams);
+        } else {
+            build(targetParams);
+        }
+    });
+
+const dockerContainerName = () =>
+    `${getDockerImage()}-${getContentHash(state.config.paths.base)}`
+        .replace('/', '-')
+        .replace(':', '-');
+
+const dockerExec = (args) => {
+    try {
+        execFileSync('docker', args, { stdio: 'inherit' });
+    } catch (e) {
+        console.error('An error occurred while running the application. Please check the logs for more details.');
+        process.exit();
+    }
+};
+
+const commandDocker = program.command('docker').description('manage docker');
+
+commandDocker.command('run')
+    .description('run docker application')
+    .argument('<program>', 'program to execute inside the container')
+    .argument('[params...]', 'arguments passed to the program')
+    .action((programName, params) => run(programName, params));
+
+commandDocker.command('create')
+    .description('create docker container')
+    .action(() => dockerExec([
+        'run', '-dit',
+        '--name', dockerContainerName(),
+        '-v', `${state.config.paths.base}:/tmp/cppjs/live`,
+        getDockerImage(),
+        'bash',
+    ]));
+
+commandDocker.command('start')
+    .description('start docker container')
+    .action(() => dockerExec(['start', dockerContainerName()]));
+
+commandDocker.command('stop')
+    .description('stop docker container')
+    .action(() => dockerExec(['stop', dockerContainerName()]));
+
+commandDocker.command('delete')
+    .description('delete docker container')
+    .action(() => dockerExec(['rm', dockerContainerName()]));
 
 const commandConfig = program.command('config')
     .description('manage the Cpp.js configuration files');
-commandConfig.command('get').description('get the Cpp.js system configuration');
-commandConfig.command('set').description('set the Cpp.js system configuration');
-commandConfig.command('delete').description('delete the Cpp.js system configuration');
-const commandConfigList = commandConfig.command('list').description('list the Cpp.js configurations')
-    .addOption(new Option('-t, --type <type>', 'config type').default('system').choices(['all', 'system', 'project']));
-commandConfig.command('keys').description('list all available system configuration keys for Cpp.js');
+
+commandConfig.command('get')
+    .description('get the Cpp.js system configuration')
+    .argument('<key>', 'configuration key to read')
+    .action((key) => getSystemConfig(key));
+
+commandConfig.command('set')
+    .description('set the Cpp.js system configuration')
+    .argument('<key>', 'configuration key to set')
+    .argument('<value>', 'value to assign')
+    .action((key, value) => setSystemConfig(key, value));
+
+commandConfig.command('delete')
+    .description('delete the Cpp.js system configuration')
+    .argument('<key>', 'configuration key to remove')
+    .action((key) => deleteSystemConfig(key));
+
+commandConfig.command('list')
+    .description('list the Cpp.js configurations')
+    .addOption(new Option('-t, --type <type>', 'config type').default('system').choices(['all', 'system', 'project']))
+    .action((options) => listSystemConfig(options.type));
+
+commandConfig.command('keys')
+    .description('list all available system configuration keys for Cpp.js')
+    .action(() => listSystemKeys());
 
 program.parse(process.argv);
-
-switch (program.args[0]) {
-    case 'build': {
-        const { platform } = commandBuild.opts();
-        if (state.config.build.withBuildConfig) {
-            buildExternal(platform);
-        } else {
-            build(platform);
-        }
-        break;
-    }
-    case 'docker': {
-        switch (program.args[1]) {
-            case 'run': {
-                const [programName, ...params] = commandRun.args;
-                run(programName, params);
-                break;
-            }
-            case 'create': {
-                const args = [
-                    'run',
-                    '-dit',
-                    '--name',
-                    `${getDockerImage()}-${getContentHash(state.config.paths.base)}`.replace('/', '-').replace(':', '-'),
-                    '-v', `${state.config.paths.base}:/tmp/cppjs/live`,
-                    getDockerImage(),
-                    'bash',
-                ];
-                try {
-                    execFileSync('docker', args, { stdio: 'inherit' });
-                } catch (e) {
-                    console.error('An error occurred while running the application. Please check the logs for more details.');
-                    process.exit();
-                }
-                break;
-            }
-            case 'start': {
-                const args = [
-                    'start',
-                    `${getDockerImage()}-${getContentHash(state.config.paths.base)}`.replace('/', '-').replace(':', '-'),
-                ];
-                try {
-                    execFileSync('docker', args, { stdio: 'inherit' });
-                } catch (e) {
-                    console.error('An error occurred while running the application. Please check the logs for more details.');
-                    process.exit();
-                }
-                break;
-            }
-            case 'stop': {
-                const args = [
-                    'stop',
-                    `${getDockerImage()}-${getContentHash(state.config.paths.base)}`.replace('/', '-').replace(':', '-'),
-                ];
-                try {
-                    execFileSync('docker', args, { stdio: 'inherit' });
-                } catch (e) {
-                    console.error('An error occurred while running the application. Please check the logs for more details.');
-                    process.exit();
-                }
-                break;
-            }
-            case 'delete': {
-                const args = [
-                    'rm',
-                    `${getDockerImage()}-${getContentHash(state.config.paths.base)}`.replace('/', '-').replace(':', '-'),
-                ];
-                try {
-                    execFileSync('docker', args, { stdio: 'inherit' });
-                } catch (e) {
-                    console.error('An error occurred while running the application. Please check the logs for more details.');
-                    process.exit();
-                }
-                break;
-            }
-            default:
-        }
-        break;
-    }
-    case 'config': {
-        switch (program.args[1]) {
-            case 'get':
-                getSystemConfig(program.args[2]);
-                break;
-            case 'set':
-                setSystemConfig(program.args[2], program.args[3]);
-                break;
-            case 'delete':
-                deleteSystemConfig(program.args[2]);
-                break;
-            case 'list':
-                listSystemConfig(commandConfigList.opts().type);
-                break;
-            case 'keys':
-                listSystemKeys();
-                break;
-            default:
-                break;
-        }
-        break;
-    }
-    default:
-        break;
-}
 
 function listSystemKeys() {
     console.info('Available configurations:');
@@ -221,7 +205,7 @@ function run(programName, params) {
     runCppjsApp(programName, params, null, null, { console: true });
 }
 
-async function buildExternal(platform) {
+async function buildExternal(targetParams) {
     const version = state.config.package.nativeVersion;
     if (!version) {
         console.error('no version found!');
@@ -245,9 +229,10 @@ async function buildExternal(platform) {
         });
     }
 
-    buildLib(platform);
+    buildLib(targetParams);
 
     if (copyToDist) {
+        const targets = getBuildTargets(targetParams);
         Object.entries(copyToDist).forEach(([key, value]) => {
             const values = [];
             if (Array.isArray(value)) {
@@ -256,27 +241,33 @@ async function buildExternal(platform) {
                 values.push(value);
             }
             values.forEach(v => {
-                const targetPath = `${state.config.paths.output}/prebuilt/${v}`;
-                if (!fs.existsSync(targetPath)) {
-                    fs.copyFileSync(`${state.config.paths.project}/${key}`, targetPath);
-                }
+                targets.forEach(target => {
+                    const assetPath = `${state.config.paths.output}/prebuilt/${target.path}/${v}`;
+                    if (!fs.existsSync(assetPath)) {
+                        fs.copyFileSync(`${state.config.paths.project}/${key}`, assetPath);
+                    }
+                });
             });
         });
     }
 }
 
-async function build(platform) {
-    buildLib(platform);
-    if (platform === 'WebAssembly' || platform === 'All') {
-        createWasmJs();
-    }
+async function build(targetParams) {
+    buildLib(targetParams);
+    createWasmJs(targetParams);
 }
 
-function buildLib(platform) {
+function buildLib(targetParams) {
     let isChanged = false;
-    state.platforms[platform].forEach((p) => {
-        if (!fs.existsSync(`${state.config.paths.output}/prebuilt/${p}/lib`)) {
-            createLib(p, 'Source', { isProd: true, buildSource: true });
+    const targets = getBuildTargets(targetParams);
+    if (targets.length === 0) {
+        console.error('No targets found for the given parameters.', targetParams);
+        throw new Error('No targets found for the given parameters.');
+    }
+
+    targets.forEach((target) => {
+        if (!fs.existsSync(`${state.config.paths.output}/prebuilt/${target.path}/lib`)) {
+            createLib(target, 'Source', { buildSource: true });
 
             const modules = [];
             state.config.paths.module.forEach((modulePath) => {
@@ -284,32 +275,57 @@ function buildLib(platform) {
                 modules.push(...findFiles('*.i', { cwd: modulePath }));
             });
             if (modules.length > 0) {
-                fs.mkdirSync(`${state.config.paths.output}/prebuilt/${p}/swig`, { recursive: true });
+                fs.mkdirSync(`${state.config.paths.output}/prebuilt/${target.path}/swig`, { recursive: true });
             }
             modules.forEach((modulePath) => {
                 const fileName = modulePath.split('/').at(-1);
-                fs.copyFileSync(modulePath, `${state.config.paths.output}/prebuilt/${p}/swig/${fileName}`);
+                fs.copyFileSync(modulePath, `${state.config.paths.output}/prebuilt/${target.path}/swig/${fileName}`);
             });
             isChanged = true;
         } else {
-            console.log(`${state.config.general.name} is already compiled to ${p} architecture.`);
+            console.log(`${state.config.general.name} is already compiled to ${target.path} architecture.`);
         }
     });
 
     if (isChanged && fs.existsSync(`${state.config.paths.build}/Source-Release/prebuilt`)) {
         fs.cpSync(`${state.config.paths.build}/Source-Release/prebuilt`, `${state.config.paths.output}/prebuilt`, { recursive: true, dereference: true });
     }
+    if (isChanged && fs.existsSync(`${state.config.paths.build}/Source-Debug/prebuilt`)) {
+        fs.cpSync(`${state.config.paths.build}/Source-Debug/prebuilt`, `${state.config.paths.output}/prebuilt`, { recursive: true, dereference: true });
+    }
 
     createXCFramework();
 
+    const iosTargets = getBuildTargets({ platform: ['ios'], arch: ['iphoneos'], runtime: ['mt'], buildType: ['release'] });
+    const podSpecs = findFiles('*.podspec', { cwd: state.config.paths.project });
+    if (podSpecs.length === 0 && targets.length > 0) {
+        const iosTarget = iosTargets[0];
+        const resources = getFilteredTargetSpec(state.config.targetSpecs, iosTarget).map(s => s.data).filter(s => s).map(d => Object.keys(d)).flat();
+        const uniqueResources = [...new Set(resources)].map(r => `dist/prebuilt/${iosTarget.path}/${r}`);
+        const xcFrameworks = [];
+        xcFrameworks.push(...state.config.export.libName.map((l) => `${l}.xcframework`));
+        if (!xcFrameworks.some(f => !fs.existsSync(`${state.config.paths.project}/${f}`))) {
+            xcFrameworks.push(...state.config.dependencies.map((d) => d.export.libName.map((l) => `${l}.xcframework`)).flat());
+            const distPodSpecContent = fs.readFileSync(`${state.config.paths.cli}/assets/cppjs-package.podspec`, { encoding: 'utf8', flag: 'r' })
+                .replaceAll('___PROJECT_NAME___', state.config.general.name)
+                .replace('___PROJECT_FRAMEWORKS___', xcFrameworks.map(f => `'${f}'`).join(', '))
+                .replace('___PROJECT_RESOURCES___', JSON.stringify(uniqueResources));
+            fs.writeFileSync(`${state.config.paths.project}/${state.config.general.name}.podspec`, distPodSpecContent);
+        }
+    }
+
     const distCmakeContent = fs.readFileSync(`${state.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
         .replace('___PROJECT_NAME___', state.config.general.name)
-        .replace('___PROJECT_HOST___', state.platforms[platform].join(';'))
+        .replace('___PROJECT_HOST___', targets.map((t) => t.path).join(';'))
         .replace('___PROJECT_LIBS___', state.config.export.libName.join(';'));
     fs.writeFileSync(`${state.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
 }
 
-async function createWasmJs() {
+async function createWasmJs(targetParams) {
+    const targets = getFilteredBuildTargets(targetParams, { platform: 'wasm' });
+    if (targets.length === 0) {
+        return;
+    }
     let headers = [];
     state.config.paths.header.forEach((headerPath) => {
         headers.push(findFiles('**/*.h', { cwd: headerPath }));
@@ -323,30 +339,42 @@ async function createWasmJs() {
     });
 
     const opt = {
-        isProd: true,
         buildSource: false,
         nativeGlob: [
             `${state.config.paths.cli}/assets/commonBridges.cpp`,
             ...bridges,
         ],
     };
-    createLib('Emscripten-x86_64', 'Bridge', opt);
 
-    await buildWasm('browser', true);
-    await buildWasm('node', true);
+    for (const target of targets) {
+        if (fs.existsSync(`${state.config.paths.output}/${target.jsName}`) && fs.existsSync(`${state.config.paths.output}/${target.wasmName}`)) {
+            console.log(`${state.config.general.name} wasm is already compiled to ${target.path} ${target.runtimeEnv || ''} architecture.`);
+            continue;
+        }
+        createLib(target, 'Bridge', opt);
+        await buildWasm(target);
 
-    fs.rmSync(`${state.config.paths.output}/data`, { recursive: true, force: true });
-    if (fs.existsSync(`${state.config.paths.build}/data`)) {
-        fs.renameSync(`${state.config.paths.build}/data`, `${state.config.paths.output}/data`);
+        fs.rmSync(`${state.config.paths.output}/data`, { recursive: true, force: true });
+        if (fs.existsSync(`${state.config.paths.build}/data`)) {
+            fs.renameSync(`${state.config.paths.build}/data`, `${state.config.paths.output}/data`);
+        }
+
+        fs.copyFileSync(`${state.config.paths.build}/${target.jsName}`, `${state.config.paths.output}/${target.jsName}`);
+        fs.copyFileSync(`${state.config.paths.build}/${target.wasmName}`, `${state.config.paths.output}/${target.wasmName}`);
+        if (fs.existsSync(`${state.config.paths.build}/${target.dataTxtName}`)) {
+            fs.copyFileSync(`${state.config.paths.build}/${target.dataTxtName}`, `${state.config.paths.output}/${target.dataTxtName}`);
+        }
     }
+}
 
-    fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.node.js`, `${state.config.paths.output}/${state.config.general.name}.node.js`);
-    fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, `${state.config.paths.output}/${state.config.general.name}.browser.js`);
-    fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`, `${state.config.paths.output}/${state.config.general.name}.wasm`);
-    if (fs.existsSync(`${state.config.paths.build}/${state.config.general.name}.data.txt`)) {
-        fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.data.txt`, `${state.config.paths.output}/${state.config.general.name}.data.txt`);
-    }
-    /* if (fs.existsSync(`${state.config.paths.build}/${state.config.general.name}.js`)) {
-        fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.js`, `${state.config.paths.output}/${state.config.general.name}.js`);
-    } */
+function createListParser(validList) {
+    return (value, previous) => {
+        const items = value.split(',').map(item => item.trim());
+        for (const item of items) {
+            if (!validList.includes(item)) {
+                throw new Error(`Invalid value: "${item}". Allowed values: ${validList.join(', ')}`);
+            }
+        }
+        return previous ? previous.concat(items) : items;
+    };
 }

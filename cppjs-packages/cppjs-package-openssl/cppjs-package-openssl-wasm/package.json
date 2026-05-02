@@ -1,7 +1,7 @@
 {
     "name": "@cpp.js/package-openssl-wasm",
-    "version": "2.0.0-beta.1",
-    "nativeVersion": "3.6.0",
+    "version": "2.0.0-beta.12",
+    "nativeVersion": "4.0.0",
     "description": "This package provides a OpenSSL library compiled with Cpp.js, enabling seamless usage of OpenSSL functionalities in JavaScript, WebAssembly and React Native projects. It supports cryptography and secure communication for web and mobile applications.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-openssl#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -18,9 +18,9 @@
         "react-native"
     ],
     "scripts": {
-        "build": "cppjs build -p WebAssembly",
+        "build": "cppjs build -p wasm",
         "clear": "rm -rf .cppjs dist *.xcframework",
-        "prepublishOnly": "cppjs build -p WebAssembly"
+        "prepublishOnly": "cppjs build -p wasm"
     },
     "devDependencies": {
         "cpp.js": "workspace:^"

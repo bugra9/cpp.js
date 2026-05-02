@@ -1,14 +1,27 @@
-/* eslint-disable object-curly-newline */
+
 import fs from 'node:fs';
-import { state, createLib, buildWasm, createBridgeFile, getData, getCppJsScript } from 'cpp.js';
+import { state, createLib, buildWasm, createBridgeFile, getData, getCppJsScript, getTargetParams, getFilteredBuildTargets } from 'cpp.js';
+
+const targetParams = getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
+let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
+let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
+
+if (!buildTargetRelease && !buildTargetDebug) {
+    throw new Error('No build targets found');
+}
+
+if (!buildTargetDebug) {
+    buildTargetDebug = buildTargetRelease;
+} else if (!buildTargetRelease) {
+    buildTargetRelease = buildTargetDebug;
+}
 
 export default class CppjsWebpackPlugin {
     static defaultOptions = {};
-    static hasBuilt = false; // Static flag shared across all instances (for Next.js multi-compiler)
-    static bridges = []; // Static bridges array shared across all instances
 
     constructor(options = {}) {
         this.options = { ...CppjsWebpackPlugin.defaultOptions, ...options };
+        this.bridges = [];
     }
 
     apply(compiler) {
@@ -24,52 +37,82 @@ export default class CppjsWebpackPlugin {
 
     async onDone({ compilation }) {
         const isDev = compilation.options.mode === 'development';
-
-        // In dev mode, skip rebuild if already built (prevents infinite loop)
-        // Use static flag to share state across multiple webpack instances (Next.js)
-        if (isDev && CppjsWebpackPlugin.hasBuilt) {
-            return;
-        }
-
-        // In dev mode, defer build until bridges is populated (loader has run)
-        // This handles the case where server compilation finishes before client compilation
-        if (isDev && CppjsWebpackPlugin.bridges.length === 0) {
-            return;
-        }
-
-        // Set flag BEFORE building to prevent race conditions with parallel onDone calls
-        CppjsWebpackPlugin.hasBuilt = true;
-
-
-
-        createLib('Emscripten-x86_64', 'Source', { isProd: true, buildSource: true });
-        createLib('Emscripten-x86_64', 'Bridge', { isProd: true, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...CppjsWebpackPlugin.bridges] });
-        await buildWasm('browser', true);
-
+        const buildTarget = isDev ? buildTargetDebug : buildTargetRelease;
+        createLib(buildTarget, 'Source', { buildSource: true });
+        createLib(buildTarget, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...this.bridges] });
+        await buildWasm(buildTarget);
         if (!isDev) {
             const output = state.config.paths.output === state.config.paths.build ? compilation.options.output.path : state.config.paths.output;
-            fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, `${output}/cpp.js`);
-            fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`, `${output}/cpp.wasm`);
+            fs.copyFileSync(`${state.config.paths.build}/${buildTarget.jsName}`, `${output}/cpp.js`);
+            fs.copyFileSync(`${state.config.paths.build}/${buildTarget.wasmName}`, `${output}/cpp.wasm`);
 
-            const dataFilePath = `${state.config.paths.build}/${state.config.general.name}.data.txt`;
+            const dataFilePath = `${state.config.paths.build}/${buildTarget.dataTxtName}`;
             if (fs.existsSync(dataFilePath)) {
                 fs.copyFileSync(dataFilePath, `${output}/cpp.data.txt`);
             }
-            // Copy browser.js for pthread worker support (workers load this file)
-            const browserJsPath = `${state.config.paths.build}/${state.config.general.name}.browser.js`;
-            if (fs.existsSync(browserJsPath)) {
-                fs.copyFileSync(browserJsPath, `${output}/cpp.browser.js`);
-            }
+            /* const workerFilePath = `${state.config.paths.build}/${state.config.general.name}.js`;
+            if (fs.existsSync(workerFilePath)) {
+                fs.copyFileSync(workerFilePath, `${output}/cpp.worker.js`);
+            } */
         }
     }
 
     getLoaderOptions() {
         return {
-            bridges: CppjsWebpackPlugin.bridges,
+            bridges: this.bridges,
             createBridgeFile,
             getData,
             state,
             getCppJsScript,
+            getTargetParams,
+            getFilteredBuildTargets
+        };
+    }
+
+    getRule() {
+        return {
+            test: new RegExp(`\\.(${state.config.ext.header.join('|')})$`),
+            loader: '@cpp.js/plugin-webpack-loader',
+            options: { ...this.getLoaderOptions() },
+        };
+    }
+
+    setDevServerMiddleware(middlewares, devServer) {
+        if (!devServer) {
+            throw new Error('devServer is not defined');
+        }
+
+        middlewares.unshift({
+            name: '/cpp.js',
+            path: '/cpp.js',
+            middleware: (req, res) => {
+                const filePath = `${state.config.paths.build}/${buildTargetDebug.jsName}`;
+                res.setHeader('Content-Type', 'application/javascript');
+                fs.createReadStream(filePath).pipe(res);
+            },
+        });
+
+        middlewares.unshift({
+            name: '/cpp.wasm',
+            path: '/cpp.wasm',
+            middleware: (req, res) => {
+                const filePath = `${state.config.paths.build}/${buildTargetDebug.wasmName}`;
+                res.setHeader('Content-Type', 'application/wasm');
+                fs.createReadStream(filePath).pipe(res);
+            },
+        });
+
+        return middlewares;
+    }
+
+    getDevServerConfig() {
+        return {
+            watchFiles: state.config.paths.native,
+            hot: true,
+            liveReload: true,
+            setupMiddlewares: (middlewares, devServer) => {
+                return this.setDevServerMiddleware(middlewares, devServer);
+            },
         };
     }
 }

@@ -1,11 +1,11 @@
-/* eslint-disable prefer-destructuring */
+ 
 import fs from 'node:fs';
 import upath from 'upath';
 import state, { saveCache } from '../state/index.js';
 import { getFileHash } from '../utils/hash.js';
 import run from './run.js';
 
-export default function createBridgeFile(headerOrModuleFilePath) {
+export default function createBridgeFile(headerOrModuleFilePath, target = state.targets.find((t) => t.platform === 'wasm')) {
     const interfaceFilePath = upath.resolve(headerOrModuleFilePath);
     if (!fs.existsSync(`${state.config.paths.build}/interface`)) {
         fs.mkdirSync(`${state.config.paths.build}/interface`, { recursive: true });
@@ -13,17 +13,18 @@ export default function createBridgeFile(headerOrModuleFilePath) {
     if (!fs.existsSync(`${state.config.paths.build}/bridge`)) {
         fs.mkdirSync(`${state.config.paths.build}/bridge`, { recursive: true });
     }
-    const interfaceFile = createInterfaceFile(interfaceFilePath);
-    return createBridgeFileFromInterfaceFile(interfaceFile);
+    const interfaceFile = createInterfaceFile(interfaceFilePath, target);
+    return createBridgeFileFromInterfaceFile(interfaceFile, target);
 }
 
-function createInterfaceFile(headerOrModuleFilePath) {
+function createInterfaceFile(headerOrModuleFilePath, target) {
     if (!headerOrModuleFilePath) {
         return null;
     }
     const fileHash = getFileHash(headerOrModuleFilePath);
-    if (state.cache.hashes[headerOrModuleFilePath] === fileHash) {
-        return state.cache.interfaces[headerOrModuleFilePath];
+    const cachedInterface = state.cache.interfaces[headerOrModuleFilePath];
+    if (state.cache.hashes[headerOrModuleFilePath] === fileHash && cachedInterface && fs.existsSync(cachedInterface)) {
+        return cachedInterface;
     }
 
     const moduleRegex = new RegExp(`.(${state.config.ext.module.join('|')})$`);
@@ -37,7 +38,7 @@ function createInterfaceFile(headerOrModuleFilePath) {
         return newPath;
     }
 
-    const headerPaths = (state.config.dependencyParameters?.pathsOfCmakeDepends?.split(';') || [])
+    const headerPaths = (state.config.dependencyParameters?.getCmakeDependsPathAndName(target).pathsOfCmakeDepends || [])
         .filter((d) => d.startsWith(state.config.paths.base));
 
     const temp2 = headerPaths
@@ -92,21 +93,22 @@ function createInterfaceFile(headerOrModuleFilePath) {
     return outputFilePath;
 }
 
-function createBridgeFileFromInterfaceFile(interfaceFilePath) {
+function createBridgeFileFromInterfaceFile(interfaceFilePath, target) {
     if (!interfaceFilePath) {
         return null;
     }
 
     const fileHash = getFileHash(interfaceFilePath);
-    if (state.cache.hashes[interfaceFilePath] === fileHash) {
-        return state.cache.bridges[interfaceFilePath];
+    const cachedBridge = state.cache.bridges[interfaceFilePath];
+    if (state.cache.hashes[interfaceFilePath] === fileHash && cachedBridge && fs.existsSync(cachedBridge)) {
+        return cachedBridge;
     }
 
     const allHeaders = state.config.dependencyParameters.headerPathWithDepends.split(';');
 
     let includePath = [
-        ...state.config.allDependencies.map((d) => `${d.paths.output}/prebuilt/Emscripten-x86_64/include`),
-        ...state.config.allDependencies.map((d) => `${d.paths.output}/prebuilt/Emscripten-x86_64/swig`),
+        ...state.config.allDependencies.map((d) => `${d.paths.output}/prebuilt/${target.path}/include`),
+        ...state.config.allDependencies.map((d) => `${d.paths.output}/prebuilt/${target.path}/swig`),
         ...state.config.paths.header,
         ...allHeaders,
     ].filter((path) => !!path.toString()).map((path) => `-I${path}`);
@@ -118,7 +120,7 @@ function createBridgeFileFromInterfaceFile(interfaceFilePath) {
         '-o', `${state.config.paths.build}/bridge/${interfaceFilePath.split('/').at(-1)}.cpp`,
         ...includePath,
         interfaceFilePath,
-    ]);
+    ], null, target);
 
     state.cache.bridges[interfaceFilePath] = `${state.config.paths.build}/bridge/${interfaceFilePath.split('/').at(-1)}.cpp`;
     state.cache.hashes[interfaceFilePath] = fileHash;

@@ -2,6 +2,7 @@ import expatWasm from '@cpp.js/package-expat-wasm/cppjs.config.js';
 import geosWasm from '@cpp.js/package-geos-wasm/cppjs.config.js';
 import geotiffWasm from '@cpp.js/package-geotiff-wasm/cppjs.config.js';
 import iconvWasm from '@cpp.js/package-iconv-wasm/cppjs.config.js';
+import jpegturboWasm from '@cpp.js/package-jpegturbo-wasm/cppjs.config.js';
 import projWasm from '@cpp.js/package-proj-wasm/cppjs.config.js';
 import spatialiteWasm from '@cpp.js/package-spatialite-wasm/cppjs.config.js';
 import sqlite3Wasm from '@cpp.js/package-sqlite3-wasm/cppjs.config.js';
@@ -15,6 +16,7 @@ export default {
     geosWasm,
     geotiffWasm,
     iconvWasm,
+    jpegturboWasm,
     projWasm,
     spatialiteWasm,
     sqlite3Wasm,
@@ -33,30 +35,21 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  platform: {
-    'Emscripten-x86_64-browser': {
-      'data': {
-        'share/gdal': '/usr/share/gdal'
-      },
-      env: {
-        GDAL_DATA: '/usr/share/gdal',
-        DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
-        GDAL_NUM_THREADS: '0',
-        GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
-        CPL_LOG_ERRORS: 'ON'
-      }
-    },
-    'Emscripten-x86_64-node': {
-      'data': {
-        'share/gdal': 'gdal'
-      },
-      env: {
-        GDAL_DATA: '_CPPJS_DATA_PATH_/gdal',
-        DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
-        GDAL_NUM_THREADS: '0',
-        GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
-        CPL_LOG_ERRORS: 'ON'
+  targetSpecs: [
+    {
+      platform: 'wasm',
+      specs: {
+        'data': {
+          'share/gdal': 'gdal'
+        },
+        env: {
+          GDAL_DATA: '_CPPJS_DATA_PATH_/gdal',
+          DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
+          GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
+          CPL_LOG_ERRORS: 'ON',
+          GDAL_NUM_THREADS: '0',
+        }
       }
     }
-  }
+  ],
 };

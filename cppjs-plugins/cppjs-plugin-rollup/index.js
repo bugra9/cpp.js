@@ -1,9 +1,26 @@
-/* eslint-disable no-restricted-syntax */
-// eslint-disable-next-line object-curly-newline
-import { state, createLib, createBridgeFile, buildWasm, getCppJsScript, getDependFilePath } from 'cpp.js';
+
+
+import {
+    state, createLib, createBridgeFile, buildWasm, getCppJsScript,
+    getDependFilePath, getTargetParams, getFilteredBuildTargets,
+} from 'cpp.js';
 
 import fs from 'node:fs';
 import p from 'node:path';
+
+const targetParams = getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
+let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
+let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
+
+if (!buildTargetRelease && !buildTargetDebug) {
+    throw new Error('No build targets found');
+}
+
+if (!buildTargetDebug) {
+    buildTargetDebug = buildTargetRelease;
+} else if (!buildTargetRelease) {
+    buildTargetRelease = buildTargetDebug;
+}
 
 const rollupCppjsPlugin = (options, bridges = []) => {
     const headerRegex = new RegExp(`\\.(${state.config.ext.header.join('|')})$`);
@@ -19,7 +36,7 @@ const rollupCppjsPlugin = (options, bridges = []) => {
                 return { id: source, external: false };
             }
 
-            const dependFilePath = getDependFilePath(source, 'Emscripten-x86_64');
+            const dependFilePath = getDependFilePath(source, buildTargetRelease);
             if (dependFilePath) {
                 return dependFilePath;
             }
@@ -28,7 +45,7 @@ const rollupCppjsPlugin = (options, bridges = []) => {
         },
         load(id) {
             if (id === 'cpp.js') {
-                return getCppJsScript('Emscripten-x86_64');
+                return getCppJsScript(buildTargetRelease);
             }
             return null;
         },
@@ -40,7 +57,7 @@ const rollupCppjsPlugin = (options, bridges = []) => {
             const bridgeFile = createBridgeFile(path);
             bridges.push(bridgeFile);
 
-            return getCppJsScript('Emscripten-x86_64', bridgeFile);
+            return getCppJsScript(buildTargetRelease, bridgeFile);
         },
         buildStart() {
             const watch = (dirs) => {
@@ -65,21 +82,22 @@ const rollupCppjsPlugin = (options, bridges = []) => {
             }
         },
         async generateBundle() {
-            createLib('Emscripten-x86_64', 'Source', { isProd: true, buildSource: true });
-            createLib('Emscripten-x86_64', 'Bridge', { isProd: true, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
-            await buildWasm('browser', true);
-            await buildWasm('node', true);
+            createLib(buildTargetRelease, 'Source', { buildSource: true });
+            createLib(buildTargetRelease, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
+            await buildWasm(buildTargetRelease);
+
             this.emitFile({
                 type: 'asset',
-                source: fs.readFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`),
+                source: fs.readFileSync(`${state.config.paths.build}/${buildTargetRelease.jsName}`),
                 fileName: 'cpp.js',
             });
+
             this.emitFile({
                 type: 'asset',
-                source: fs.readFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`),
+                source: fs.readFileSync(`${state.config.paths.build}/${buildTargetRelease.wasmName}`),
                 fileName: 'cpp.wasm',
             });
-            const dataFilePath = `${state.config.paths.build}/${state.config.general.name}.data.txt`;
+            const dataFilePath = `${state.config.paths.build}/${buildTargetRelease.dataTxtName}`;
             if (fs.existsSync(dataFilePath)) {
                 this.emitFile({
                     type: 'asset',

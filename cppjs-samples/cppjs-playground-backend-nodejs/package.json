@@ -1,12 +1,13 @@
 {
     "name": "@cpp.js/sample-backend-nodejs-wasm",
-    "version": "2.0.0-beta.1",
+    "version": "2.0.0-beta.12",
+    "private": true,
     "description": "Cpp.js - Node.js webassembly sample",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-backend-nodejs-wasm#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "license": "MIT",
     "scripts": {
-        "build": "cppjs build -p WebAssembly"
+        "build": "cppjs build -p wasm -e node -r st"
     },
     "dependencies": {
         "cpp.js": "workspace:^",
@@ -24,7 +25,7 @@
         "@cpp.js/package-tiff": "workspace:^",
         "@cpp.js/package-webp": "workspace:^",
         "@cpp.js/package-zlib": "workspace:^",
-        "ws": "8.18.3",
+        "ws": "8.20.0",
         "xhr2": "^0.2.1"
     },
     "keywords": [

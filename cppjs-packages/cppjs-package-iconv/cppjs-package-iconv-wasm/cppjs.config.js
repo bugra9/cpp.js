@@ -14,11 +14,14 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  platform: {
-    'Emscripten-x86_64': {
-      'ignoreLibName': [
-        'charset'
-      ]
+  targetSpecs: [
+    {
+      platform: 'wasm',
+      specs: {
+        'ignoreLibName': [
+          'charset'
+        ]
+      }
     }
-  }
+  ],
 };

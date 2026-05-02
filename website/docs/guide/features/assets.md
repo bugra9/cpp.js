@@ -7,42 +7,58 @@ export default {
     paths: {
         config: import.meta.url,
     },
-    platform: {
-        'Emscripten-x86_64-browser': {
-            data: {
-                'share/proj': '/usr/share/proj',
-            },
-            env: {
-                PROJ_LIB: '/usr/share/proj',
-            },
-        },
-        'Emscripten-x86_64-node': {
-            data: {
-                'share/proj': 'proj',
-            },
-            env: {
-                PROJ_LIB: '_CPPJS_DATA_PATH_/proj',
+    targetSpecs: [
+        {
+            platform: 'wasm',
+            runtimeEnv: 'browser',
+            specs: {
+                data: {
+                    'share/proj': '/usr/share/proj',
+                },
+                env: {
+                    PROJ_LIB: '/usr/share/proj',
+                },
             },
         },
-        'Android-arm64-v8a': {
-            data: {
-                'share/proj': 'proj',
-            },
-            env: {
-                PROJ_LIB: '_CPPJS_DATA_PATH_/proj',
-            },
-        },
-        'iOS-iphoneos': {
-            data: {
-                'share/proj': 'proj',
-            },
-            env: {
-                PROJ_LIB: '_CPPJS_DATA_PATH_/proj',
+        {
+            platform: 'wasm',
+            runtimeEnv: 'node',
+            specs: {
+                data: {
+                    'share/proj': 'proj',
+                },
+                env: {
+                    PROJ_LIB: '_CPPJS_DATA_PATH_/proj',
+                },
             },
         },
-    },
+        {
+            platform: 'android',
+            specs: {
+                data: {
+                    'share/proj': 'proj',
+                },
+                env: {
+                    PROJ_LIB: '_CPPJS_DATA_PATH_/proj',
+                },
+            },
+        },
+        {
+            platform: 'ios',
+            specs: {
+                data: {
+                    'share/proj': 'proj',
+                },
+                env: {
+                    PROJ_LIB: '_CPPJS_DATA_PATH_/proj',
+                },
+            },
+        },
+    ],
 };
 ```
+
+Each entry in `targetSpecs` is a filter: any combination of `platform`, `arch`, `runtime`, `buildType`, and `runtimeEnv` may be specified, and the entry is applied to every build target that matches all of the provided fields. Omit a field to match all of its values.
 
 In the provided example, the project creates the assets it will use during compilation in the `share/proj` directory.
 

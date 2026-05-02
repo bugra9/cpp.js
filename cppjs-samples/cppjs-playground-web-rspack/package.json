@@ -1,6 +1,7 @@
 {
     "name": "@cpp.js/playground-web-rspack",
-    "version": "2.0.0-beta.1",
+    "version": "2.0.0-beta.12",
+    "private": true,
     "description": "Cpp.js Rspack Playground",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-playground-web-rspack#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -11,8 +12,8 @@
         "preview": "serve dist -c ../serve.json"
     },
     "dependencies": {
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0",
+        "react": "^19.2.5",
+        "react-dom": "^19.2.5",
         "@cpp.js/plugin-webpack": "workspace:^",
         "@cpp.js/plugin-webpack-loader": "workspace:^",
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^",
@@ -31,15 +32,16 @@
         "@cpp.js/package-zlib": "workspace:^"
     },
     "devDependencies": {
-        "@rspack/plugin-react-refresh": "^1.0.1",
-        "@rspack/cli": "^1.1.8",
-        "@rspack/core": "^1.1.8",
-        "@types/react": "^19.0.2",
-        "@types/react-dom": "^19.0.2",
-        "cross-env": "^7.0.3",
-        "react-refresh": "^0.16.0",
-        "@playwright/test": "^1.49.1",
-        "serve": "^14.2.4"
+        "@rspack/plugin-react-refresh": "^2.0.0",
+        "@rspack/cli": "^2.0.0",
+        "@rspack/core": "^2.0.0",
+        "@rspack/dev-server": "^2.0.0",
+        "@types/react": "^19.2.14",
+        "@types/react-dom": "^19.2.3",
+        "cross-env": "^10.1.0",
+        "react-refresh": "^0.18.0",
+        "@playwright/test": "^1.59.1",
+        "serve": "^14.2.6"
     },
     "keywords": [
         "cpp.js-sample",

@@ -79,14 +79,13 @@ const iosParams = [
     '-e', `LDFLAGS="${IOS_HOST_FLAGS}"`,
 ]; */
 
-export default function run(program, params = [], platformPrefix = null, platform = null, dockerOptions = {}) {
-    const buildPath = platformPrefix ? `${state.config.paths.build}/${platformPrefix}/${platform}` : state.config.paths.build;
+export default function run(program, params = [], platformPrefix = null, target = null, dockerOptions = {}) {
+    const buildPath = platformPrefix ? `${state.config.paths.build}/${platformPrefix}/${target.path}` : state.config.paths.build;
     if (!fs.existsSync(buildPath)) {
         fs.mkdirSync(buildPath, { recursive: true });
     }
 
-    const [basePlatform, ...arch] = (platform || 'unknown-unknown').split('-'); // Emscripten-x86_64, Android-arm64-v8a, iOS-iphoneos, iOS-iphonesimulator
-    if (basePlatform !== 'iOS' || program !== null) {
+    if (target.platform !== 'ios' || program !== null) {
         pullDockerImage();
     }
 
@@ -94,30 +93,30 @@ export default function run(program, params = [], platformPrefix = null, platfor
     let dParams = params;
     let platformParams = [];
     if (program === null) {
-        switch (basePlatform) {
-            case 'Emscripten':
+        switch (target.platform) {
+            case 'wasm':
                 platformParams = ['-e', 'CXXFLAGS=-fwasm-exceptions', '-e', 'CFLAGS=-fwasm-exceptions'];
                 if (params[0].includes('configure')) dProgram = 'emconfigure';
                 else if (params[0] === 'make') dProgram = 'emmake';
                 else if (params[0] === 'cmake') dProgram = 'emcmake';
                 else if (params[0] === 'cc') dProgram = 'emcc';
                 break;
-            case 'Android':
+            case 'android':
                 [dProgram, ...dParams] = params;
-                platformParams = arch[0] === 'x86_64' ? androidParamsX86_64 : androidParamsArm64;
+                platformParams = target.arch === 'x86_64' ? androidParamsX86_64 : androidParamsArm64;
                 if (dProgram === 'cmake') {
                     dParams = [
                         ...dParams,
-                        '-DCMAKE_SYSTEM_NAME=Android', '-DCMAKE_SYSTEM_VERSION=33',
-                        `-DCMAKE_ANDROID_ARCH_ABI=${arch[0] === 'x86_64' ? 'x86_64' : 'arm64-v8a'}`,
-                        `-DCMAKE_ANDROID_NDK=${ANDROID_NDK}`,
+                        `-DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake`,
+                        `-DANDROID_ABI=${target.arch === 'x86_64' ? 'x86_64' : 'arm64-v8a'}`,
+                        '-DANDROID_PLATFORM=android-33',
                         `-DANDROID_NDK=${ANDROID_NDK}`,
                     ];
                 }
                 break;
-            case 'iOS':
+            case 'ios':
                 [dProgram, ...dParams] = params;
-                platformParams = [...iosParams, ...(arch[0] === 'iphoneos' ? IOS_IPHONE_PARAMS : IOS_SIM_PARAMS)];
+                platformParams = [...iosParams, ...(target.arch === 'iphoneos' ? IOS_IPHONE_PARAMS : IOS_SIM_PARAMS)];
                 if (dProgram === 'cmake') {
                     platformParams = [];
                     if (dParams[0] !== '--build' && dParams[0] !== '--install') {
@@ -130,10 +129,10 @@ export default function run(program, params = [], platformPrefix = null, platfor
                             '-DCMAKE_SYSTEM_NAME=iOS',
                             `-DMACOSX_FRAMEWORK_IDENTIFIER=org.js.cpp.${state.config.general.name}`,
                             `-DCMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER=org.js.cpp.${state.config.general.name}`,
-                            `-DCMAKE_OSX_SYSROOT='${arch[0] === 'iphoneos' ? iosSdkPath : iosSimSdkPath}'`,
-                            `-DCMAKE_OSX_ARCHITECTURES=${arch[0] === 'iphoneos' ? 'arm64;arm64e' : 'arm64;x86_64'}`,
-                            `-DCMAKE_C_FLAGS=${arch[0] === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
-                            `-DCMAKE_CXX_FLAGS=${arch[0] === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
+                            `-DCMAKE_OSX_SYSROOT='${target.arch === 'iphoneos' ? iosSdkPath : iosSimSdkPath}'`,
+                            `-DCMAKE_OSX_ARCHITECTURES=${target.arch === 'iphoneos' ? 'arm64;arm64e' : 'arm64;x86_64'}`,
+                            `-DCMAKE_C_FLAGS=${target.arch === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
+                            `-DCMAKE_CXX_FLAGS=${target.arch === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
                             '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY=\'iPhone Developer\'',
                             `-DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=${state.config.system.XCODE_DEVELOPMENT_TEAM}`,
                         ];
@@ -145,8 +144,8 @@ export default function run(program, params = [], platformPrefix = null, platfor
                         dParams = [
                             ...dParams,
                             `-DCMAKE_TOOLCHAIN_FILE='${state.config.paths.cli}/assets/ios.toolchain.cmake'`,
-                            `-DPLATFORM=${arch[0] === 'iphoneos' ? 'OS64' : 'SIMULATORARM64'}`,
-                            `-DARCHS=${arch[0] === 'iphoneos' ? 'arm64;arm64e' : 'arm64;x86_64'}`,
+                            `-DPLATFORM=${target.arch === 'iphoneos' ? 'OS64' : 'SIMULATORARM64'}`,
+                            `-DARCHS=${target.arch === 'iphoneos' ? 'arm64;arm64e' : 'arm64;x86_64'}`,
                             '-DENABLE_BITCODE=TRUE',
                             '-DBUILD_SHARED_LIBS=OFF',
                             '-DFRAMEWORK=TRUE',
@@ -154,10 +153,10 @@ export default function run(program, params = [], platformPrefix = null, platfor
                             '-DCMAKE_SYSTEM_NAME=iOS',
                             `-DMACOSX_FRAMEWORK_IDENTIFIER=org.js.cpp.${state.config.general.name}`,
                             `-DCMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER=org.js.cpp.${state.config.general.name}`,
-                            `-DCMAKE_OSX_SYSROOT='${arch[0] === 'iphoneos' ? iosSdkPath : iosSimSdkPath}'`,
-                            `-DCMAKE_OSX_ARCHITECTURES=${arch[0] === 'iphoneos' ? 'arm64;arm64e' : 'arm64;x86_64'}`,
-                            `-DCMAKE_C_FLAGS=${arch[0] === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
-                            `-DCMAKE_CXX_FLAGS=${arch[0] === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
+                            `-DCMAKE_OSX_SYSROOT='${target.arch === 'iphoneos' ? iosSdkPath : iosSimSdkPath}'`,
+                            `-DCMAKE_OSX_ARCHITECTURES=${target.arch === 'iphoneos' ? 'arm64;arm64e' : 'arm64;x86_64'}`,
+                            `-DCMAKE_C_FLAGS=${target.arch === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
+                            `-DCMAKE_CXX_FLAGS=${target.arch === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
                             '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY=\'iPhone Developer\'',
                             `-DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=${state.config.system.XCODE_DEVELOPMENT_TEAM}`,
                         ];
@@ -170,7 +169,7 @@ export default function run(program, params = [], platformPrefix = null, platfor
 
     const env = {};
     let runner = 'DOCKER';
-    if ((basePlatform === 'iOS' && program === null) || state.config.system.RUNNER === 'LOCAL') {
+    if ((target.platform === 'ios' && program === null) || state.config.system.RUNNER === 'LOCAL') {
         runner = 'LOCAL';
     }
 

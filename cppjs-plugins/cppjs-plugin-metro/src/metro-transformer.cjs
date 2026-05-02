@@ -1,5 +1,5 @@
 /* eslint-disable import/no-unresolved */
-/* eslint-disable global-require */
+ 
 const upstreamTransformer = (() => {
     try {
         return require('@expo/metro-config/babel-transformer');
@@ -29,13 +29,14 @@ module.exports.transform = async ({ src, filename, ...rest }) => {
     const moduleRegex = new RegExp(`\\.(${state.config.ext.module.join('|')})$`);
 
     if (headerRegex.test(filename) || moduleRegex.test(filename)) {
-        const bridgeFile = createBridgeFile(filename);
+        let target = null;
+        if (rest.options.platform === 'ios') target = state.targets.find((t) => t.platform === 'ios');
+        else if (rest.options.platform === 'android') target = state.targets.find((t) => t.platform === 'android');
+        else target = state.targets.find((t) => t.platform === 'wasm');
 
-        let platform = null;
-        if (rest.options.platform === 'ios') platform = 'iOS-iphoneos';
-        else if (rest.options.platform === 'android') platform = 'Android-arm64-v8a';
-        else platform = 'Emscripten-x86_64';
-        return upstreamTransformer.transform({ src: getCppJsScript(platform, bridgeFile), filename, ...rest });
+        const bridgeFile = createBridgeFile(filename, target);
+
+        return upstreamTransformer.transform({ src: getCppJsScript(target, bridgeFile), filename, ...rest });
     }
 
     return upstreamTransformer.transform({ src, filename, ...rest });

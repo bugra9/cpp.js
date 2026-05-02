@@ -1,7 +1,5 @@
 const platformCmake = {
-    'Emscripten-x86_64': ['-DBUILD_SHARED_LIBS=OFF'],
-    'Android-arm64-v8a': ['-DCMAKE_ANDROID_STL_TYPE=c++_shared'],
-    'Android-x86_64': ['-DCMAKE_ANDROID_STL_TYPE=c++_shared'],
+    'wasm': ['-DBUILD_SHARED_LIBS=OFF'],
 };
 
 export default {
@@ -33,16 +31,27 @@ export default {
             replacement: 'add_library(${GDAL_LIB_TARGET_NAME} gcore/gdal.h gcore/gdal_empty_file.cpp)',
             paths: ['gdal.cmake'],
         },
+        {
+            regex: 'CPL_CPUID\\(1, cpuinfo\\);',
+            replacement: '#ifdef __wasm__\n    cpuinfo[0]=0;cpuinfo[1]=0;cpuinfo[2]=0;cpuinfo[3]=0;\n#else\n    CPL_CPUID(1, cpuinfo);\n#endif',
+            paths: ['port/cpl_cpu_features.cpp'],
+        },
+        {
+            regex: '__asm__\\("xgetbv" : "=a"\\(nXCRLow\\), "=d"\\(nXCRHigh\\) : "c"\\(0\\)\\);',
+            replacement: '#ifdef __wasm__\n    nXCRLow = 0; nXCRHigh = 0;\n#else\n    $&\n#endif',
+            paths: ['port/cpl_cpu_features.cpp'],
+        },
     ],
     buildType: 'cmake',
-    getBuildParams: (platform, depPaths) => [
-        ...(platformCmake[platform] || []),
+    getBuildParams: (target, depPaths) => [
+        ...(platformCmake[target.platform] || []),
         '-DBUILD_APPS=OFF', '-DBUILD_TESTING=OFF', '-DACCEPT_MISSING_SQLITE3_MUTEX_ALLOC=ON',
         '-DOGR_ENABLE_DRIVER_GPSBABEL=OFF', '-DGDAL_USE_HDF5=OFF', '-DGDAL_USE_HDFS=OFF',
         '-DGDAL_USE_ZSTD=OFF', '-DGDAL_ENABLE_DRIVER_PDS=OFF',
         `-DSQLite3_INCLUDE_DIR=${depPaths.sqlite3.header}`, `-DSQLite3_LIBRARY=${depPaths.sqlite3.lib}`,
         `-DPROJ_INCLUDE_DIR=${depPaths.proj.header}`, `-DPROJ_LIBRARY_RELEASE=${depPaths.proj.lib}`,
         `-DTIFF_INCLUDE_DIR=${depPaths.tiff.header}`, `-DTIFF_LIBRARY_RELEASE=${depPaths.tiff.lib}`,
+        '-DGDAL_USE_JPEG=ON', `-DJPEG_INCLUDE_DIR=${depPaths.jpeg.header}`, `-DJPEG_LIBRARY_RELEASE=${depPaths.jpeg.lib}`,
         `-DGEOTIFF_INCLUDE_DIR=${depPaths.geotiff.header}`, `-DGEOTIFF_LIBRARY_RELEASE=${depPaths.geotiff.lib}`,
         `-DZLIB_INCLUDE_DIR=${depPaths.z.header}`, `-DZLIB_LIBRARY_RELEASE=${depPaths.z.lib}`,
         `-DSPATIALITE_INCLUDE_DIR=${depPaths.spatialite.header}`, `-DSPATIALITE_LIBRARY=${depPaths.spatialite.lib}`,

@@ -1,6 +1,6 @@
 {
     "name": "create-cpp.js",
-    "version": "2.0.0-beta.1",
+    "version": "2.0.0-beta.12",
     "description": "Create Cpp.js Applications",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-core-create-app#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -32,9 +32,9 @@
         "@cpp.js/sample-cloud-cloudflare-worker": "workspace:^",
         "@cpp.js/sample-mobile-reactnative-cli": "workspace:^",
         "@cpp.js/sample-mobile-reactnative-cli-multithread": "workspace:^",
-        "@cpp.js/sample-mobile-reactnative-expo": "1.0.1",
+        "@cpp.js/sample-mobile-reactnative-expo": "2.0.0-beta.12",
         "@cpp.js/sample-mobile-reactnative-expo-multithread": "workspace:^",
-        "fs-extra": "^11.2.0",
+        "fs-extra": "^11.3.4",
         "kleur": "^4.1.5",
         "prompts": "^2.4.2",
         "replace": "^1.2.2"

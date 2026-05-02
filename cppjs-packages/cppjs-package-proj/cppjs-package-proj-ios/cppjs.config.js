@@ -17,14 +17,17 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  platform: {
-    'iOS-iphoneos': {
-      'data': {
-        'share/proj': 'proj'
-      },
-      env: {
-        PROJ_LIB: '_CPPJS_DATA_PATH_/proj'
+  targetSpecs: [
+    {
+      platform: 'ios',
+      specs: {
+        data: {
+          'share/proj': 'proj'
+        },
+        env: {
+          PROJ_DATA: '_CPPJS_DATA_PATH_/proj'
+        }
       }
     }
-  }
+  ],
 };

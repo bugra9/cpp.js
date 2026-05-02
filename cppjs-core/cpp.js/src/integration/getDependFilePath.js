@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import state from '../state/index.js';
 
-export default function getDependFilePath(source, platform) {
+export default function getDependFilePath(source, target) {
     const headerRegex = new RegExp(`\\.(${state.config.ext.header.join('|')})$`);
     const moduleRegex = new RegExp(`\\.(${state.config.ext.module.join('|')})$`);
 
@@ -13,11 +13,11 @@ export default function getDependFilePath(source, platform) {
 
         let path;
         if (headerRegex.test(source)) {
-            path = `${dependPackage.paths.output}/prebuilt/${platform}/include`;
+            path = `${dependPackage.paths.output}/prebuilt/${target.path}/include`;
         } else if (moduleRegex.test(source)) {
-            path = `${dependPackage.paths.output}/prebuilt/${platform}/swig`;
+            path = `${dependPackage.paths.output}/prebuilt/${target.path}/swig`;
         } else {
-            path = `${dependPackage.paths.output}/prebuilt/${platform}`;
+            path = `${dependPackage.paths.output}/prebuilt/${target.path}`;
         }
 
         if (fs.existsSync(`${path}/${configName}/${filePath}`)) {

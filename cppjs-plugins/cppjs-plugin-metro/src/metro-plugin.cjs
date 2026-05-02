@@ -1,6 +1,8 @@
 let getDependFilePathFunc;
-import('cpp.js').then(({ getDependFilePath }) => {
+let cppjsState;
+import('cpp.js').then(({ getDependFilePath, state }) => {
     getDependFilePathFunc = getDependFilePath;
+    cppjsState = state;
 });
 
 module.exports = function CppjsMetroPlugin(defaultConfig) {
@@ -9,8 +11,8 @@ module.exports = function CppjsMetroPlugin(defaultConfig) {
         resolver: {
             sourceExts: [...defaultConfig.resolver.sourceExts, ...['h', 'hpp', 'hxx', 'hh'], ...['i']],
             resolveRequest: (context, moduleName, platform) => {
-                const fullPlatform = platform === 'ios' ? 'iOS-iphoneos' : 'Android-arm64-v8a';
-                const dependFilePath = getDependFilePathFunc(moduleName, fullPlatform);
+                const target = cppjsState.targets.find((t) => t.platform === platform);
+                const dependFilePath = getDependFilePathFunc(moduleName, target);
                 if (dependFilePath) {
                     return context.resolveRequest(context, dependFilePath, platform);
                 }

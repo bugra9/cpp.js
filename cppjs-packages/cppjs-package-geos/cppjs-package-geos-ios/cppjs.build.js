@@ -3,5 +3,6 @@ export default {
     buildType: 'cmake',
     getBuildParams: () => [
         '-DBUILD_TESTING=OFF',
+        '-DBUILD_GEOSOP=OFF',
     ],
 };

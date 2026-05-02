@@ -19,7 +19,6 @@
                 "guide/integrate-into-existing-project/rollup",
                 "guide/integrate-into-existing-project/vite",
                 "guide/integrate-into-existing-project/rspack",
-                "guide/integrate-into-existing-project/create-react-app",
                 "guide/integrate-into-existing-project/nodejs",
                 "guide/integrate-into-existing-project/cloudflare-worker",
                 "guide/integrate-into-existing-project/react-native",

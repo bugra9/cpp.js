@@ -1,10 +1,22 @@
-// eslint-disable-next-line object-curly-newline
-import { state, createLib, createBridgeFile, buildWasm } from 'cpp.js';
+
+import { state, createLib, createBridgeFile, buildWasm, getTargetParams, getFilteredBuildTargets } from 'cpp.js';
 import rollupCppjsPlugin from '@cpp.js/plugin-rollup';
 
 import fs from 'node:fs';
 
-let wasmBuilt = false;
+const targetParams = getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
+let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
+let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
+
+if (!buildTargetRelease && !buildTargetDebug) {
+    throw new Error('No build targets found');
+}
+
+if (!buildTargetDebug) {
+    buildTargetDebug = buildTargetRelease;
+} else if (!buildTargetRelease) {
+    buildTargetRelease = buildTargetDebug;
+}
 
 const viteCppjsPlugin = (options) => {
     let isServe = false;
@@ -12,19 +24,19 @@ const viteCppjsPlugin = (options) => {
     const headerRegex = new RegExp(`\\.(${state.config.ext.header.join('|')})$`);
     const sourceRegex = new RegExp(`\\.(${state.config.ext.source.join('|')})$`);
 
-    async function ensureWasmBuilt() {
-        if (!wasmBuilt) {
-            createLib('Emscripten-x86_64', 'Source', { isProd: false, buildSource: true });
-            createLib('Emscripten-x86_64', 'Bridge', { isProd: false, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
-            await buildWasm('browser', false);
-            wasmBuilt = true;
-        }
-    }
-
     return [
         rollupCppjsPlugin(options, bridges),
         {
             name: 'vite-plugin-cppjs',
+            async load(source) {
+                if (isServe && source === '/cpp.js') {
+                    createLib(buildTargetDebug, 'Source', { buildSource: true });
+                    createLib(buildTargetDebug, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
+                    await buildWasm(buildTargetDebug);
+                    return fs.readFileSync(`${state.config.paths.build}/${buildTargetDebug.jsName}`, { encoding: 'utf8', flag: 'r' });
+                }
+                return null;
+            },
             configResolved(config) {
                 isServe = config.command === 'serve';
                 if (isServe) {
@@ -33,69 +45,12 @@ const viteCppjsPlugin = (options) => {
             },
             configureServer(server) {
                 if (isServe) {
-                    // Serve cpp.js as ES module - must be before Vite's middleware
-                    server.middlewares.use(async (req, res, next) => {
+                    server.middlewares.use((req, res, next) => {
                         res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
                         res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-
-                        // Handle cpp.js - serve as ES module with global assignment
-                        if (req.url === '/cpp.js' || req.url === '/_nuxt/cpp.js') {
-                            try {
-                                await ensureWasmBuilt();
-                                const jsPath = `${state.config.paths.build}/${state.config.general.name}.browser.js`;
-                                const content = fs.readFileSync(jsPath, 'utf-8');
-                                res.setHeader('Content-Type', 'application/javascript');
-                                res.end(content);
-                                return;
-                            } catch (err) {
-                                console.error('Error serving cpp.js:', err);
-                            }
-                        }
-                        // Handle wasm file - serve directly
-                        else if (req.url === '/cpp.wasm' || req.url === '/_nuxt/cpp.wasm') {
-                            try {
-                                await ensureWasmBuilt();
-                                const wasmPath = `${state.config.paths.build}/${state.config.general.name}.wasm`;
-                                const wasmBuffer = fs.readFileSync(wasmPath);
-                                res.setHeader('Content-Type', 'application/wasm');
-                                res.setHeader('Content-Length', wasmBuffer.length.toString());
-                                res.end(wasmBuffer);
-                                return;
-                            } catch (err) {
-                                console.error('Error serving cpp.wasm:', err);
-                            }
-                        }
-                        // Handle data file - serve directly
-                        else if (req.url === '/cpp.data.txt' || req.url === '/_nuxt/cpp.data.txt') {
-                            try {
-                                const dataPath = `${state.config.paths.build}/${state.config.general.name}.data.txt`;
-                                if (fs.existsSync(dataPath)) {
-                                    const dataContent = fs.readFileSync(dataPath);
-                                    res.setHeader('Content-Type', 'text/plain');
-                                    res.end(dataContent);
-                                    return;
-                                }
-                            } catch (err) {
-                                console.error('Error serving cpp.data.txt:', err);
-                            }
-                        }
-                        // Handle pthread worker file - serve the browser JS for web workers
-                        // Workers request /cpp.browser.js in pthread mode
-                        else if (req.url === '/cpp.browser.js' || req.url === '/_nuxt/cpp.browser.js' || req.url === '/cpp.worker.js' || req.url === '/_nuxt/cpp.worker.js') {
-                            try {
-                                await ensureWasmBuilt();
-                                // Emscripten pthread mode uses the .browser.js file for workers
-                                const workerJsPath = `${state.config.paths.build}/${state.config.general.name}.browser.js`;
-                                if (fs.existsSync(workerJsPath)) {
-                                    const content = fs.readFileSync(workerJsPath, 'utf-8');
-                                    res.setHeader('Content-Type', 'application/javascript');
-                                    res.end(content);
-                                    return;
-                                }
-                            } catch (err) {
-                                console.error('Error serving cpp.browser.js:', err);
-                            }
-                        }
+                        if (req.url === '/cpp.wasm') req.url = `/@fs/${state.config.paths.build}/${buildTargetDebug.wasmName}`;
+                        else if (req.url === '/cpp.data.txt') req.url = `/@fs/${state.config.paths.build}/${buildTargetDebug.dataTxtName}`;
+                        // else if (req.url === '/cpp.worker.js') req.url = `/@fs/${state.config.paths.build}/${state.config.general.name}.js`;
                         next();
                     });
                 }
@@ -107,12 +62,12 @@ const viteCppjsPlugin = (options) => {
                 if (headerRegex.test(file)) {
                     const bridgeFile = createBridgeFile(file);
                     bridges.push(bridgeFile);
-                    createLib('Emscripten-x86_64', 'Bridge', { isProd: false, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
-                    await buildWasm('browser', true);
+                    createLib(buildTargetDebug, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
+                    await buildWasm(buildTargetDebug);
                     server.ws.send({ type: 'full-reload' });
                 } else if (sourceRegex.test(file)) {
-                    createLib('Emscripten-x86_64', 'Source', { isProd: false, buildSource: true, bypassCmake: true });
-                    await buildWasm('browser', false);
+                    createLib(buildTargetDebug, 'Source', { buildSource: true, bypassCmake: true });
+                    await buildWasm(buildTargetDebug);
                     server.ws.send({ type: 'full-reload' });
                 }
             },

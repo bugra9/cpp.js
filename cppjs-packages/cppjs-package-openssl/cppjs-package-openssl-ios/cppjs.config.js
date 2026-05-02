@@ -14,16 +14,14 @@ export default {
     base: '../..',
     output: 'dist'
   },
-  platform: {
-    'iOS-iphoneos': {
-      'data': {
-        'ssl/certs': 'certs'
-      }
-    },
-    'iOS-iphonesimulator': {
-      'data': {
-        'ssl/certs': 'certs'
+  targetSpecs: [
+    {
+      platform: 'ios',
+      specs: {
+        data: {
+          'ssl/certs': 'certs'
+        }
       }
     }
-  }
+  ],
 };

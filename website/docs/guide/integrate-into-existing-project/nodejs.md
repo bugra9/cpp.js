@@ -6,10 +6,10 @@ You can use cpp.js to compile native code from your project into WebAssembly. To
 {
     "name": "myapp",
     "scripts": {
-+       "build": "cppjs build -p WebAssembly"
++       "build": "cppjs build -p wasm -e node -r st"
     },
     "devDependencies": {
-+       "cpp.js": "^1.0.0"
++       "cpp.js": "^2.0.0-beta"
     }
 }
 ```
@@ -60,16 +60,15 @@ This command will generate myapp.wasm, myapp.browser.js, and myapp.node.js files
 |       └── MySampleClass.h
 |
 ├── dist
-│   └── myapp.wasm
-|   └── myapp.browser.js
-|   └── myapp.node.js
+│   └── myapp-wasm-wasm32-st-release.node.js
+│   └── myapp-wasm-wasm32-st-release.node.wasm
 ├── ...
 ```
 
-You can now access your native code by importing **dist/myapp.node.js** into your JavaScript file. For a minimal setup, create a src/index.js and add the following content.
+You can now access your native code by importing **dist/myapp-wasm-wasm32-st-release.node.js** into your JavaScript file. For a minimal setup, create a src/index.js and add the following content.
 
 ```js title="src/index.js"
-const initCppJs = require('../dist/myapp.node.js');
+const initCppJs = require('../dist/myapp-wasm-wasm32-st-release.node.js');
 
 initCppJs().then(({ MySampleClass }) => {
     console.log(`Response from c++ : ${MySampleClass.sample()}`);
@@ -86,7 +85,7 @@ node ./src/index.js
 For module (ES) usage, create a src/index.mjs and add the following content.
 
 ```js title="src/index.mjs"
-import initCppJs from '../dist/myapp.node.js';
+import initCppJs from '../dist/myapp-wasm-wasm32-st-release.node.js';
 
 initCppJs().then(({ MySampleClass }) => {
     console.log(`Matrix multiplier with c++ => ${MySampleClass.sample()}`);
@@ -101,5 +100,5 @@ node ./src/index.mjs
 :::
 
 :::info
-**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-backend-nodejs-wasm).
+**Sample Source Code:** You can access the sample source code from [this link](https://github.com/bugra9/cpp.js/tree/main/cppjs-samples/cppjs-sample-backend-nodejs-wasm).
 :::

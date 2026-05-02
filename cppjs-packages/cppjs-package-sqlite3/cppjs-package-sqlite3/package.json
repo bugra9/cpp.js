@@ -1,7 +1,7 @@
 {
     "name": "@cpp.js/package-sqlite3",
-    "version": "2.0.0-beta.2",
-    "nativeVersion": "3.51.1",
+    "version": "2.0.0-beta.12",
+    "nativeVersion": "3.53.0",
     "description": "This package provides the precompiled sqlite3 library, built using cpp.js, for easy integration into JavaScript, WebAssembly and React Native projects. It offers database functionalities through the sqlite3 API, ensuring high performance and cross-platform compatibility. Ideal for use in web and mobile applications.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-sqlite3#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",

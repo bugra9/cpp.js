@@ -5,7 +5,7 @@ import TabItem from '@theme/TabItem';
 To begin building your project with Cpp.js, you’ll first need to install a few dependencies:
 
 - **Docker**
-- **Node.js** version 18 or higher
+- **Node.js** version 22 or higher
 - **CMake** version 3.28 or higher (only required for Mobile development)
 - **Xcode** (only required for iOS development)
 - **Cocoapods** (only required for iOS development)

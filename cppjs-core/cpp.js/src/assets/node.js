@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved */
 /* eslint-disable import/first */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable no-undef */
+
+
 
 import Module from 'cpp.js/module';
 import systemConfig from 'cpp.js/systemConfig';
@@ -77,7 +77,7 @@ function initCppJs(userConfig = {}) {
                 ({ ENV }) => {
                     if (ENV && config && config.env) {
                         Object.entries(config.env).forEach(([key, value]) => {
-                            // eslint-disable-next-line no-param-reassign
+
                             ENV[key] = value;
                         });
                     }
@@ -87,7 +87,7 @@ function initCppJs(userConfig = {}) {
                 if (config.onRuntimeInitialized) config.onRuntimeInitialized(m);
             },
             getPreloadedPackage(packageName) {
-                // eslint-disable-next-line global-require
+
                 const a = require('fs').readFileSync(`./${packageName}`, { flag: 'r' }).buffer;
                 return a;
             },
@@ -95,17 +95,21 @@ function initCppJs(userConfig = {}) {
                 if (!path) return new Uint8Array();
                 return m.FS.readFile(path, { encoding: 'binary' });
             },
-            getFileList(path = 'virtual') {
-                const contents = path.split('/').reduce((accumulator, currentValue) => accumulator.contents[currentValue], m.FS.root).contents;
+            getFileList(path = '/memfs') {
                 const fileList = [];
-                Object.keys(contents).forEach((name) => {
-                    const obj = contents[name];
-                    if (obj.usedBytes) fileList.push({ path: `/${path}/${name}`, size: obj.usedBytes });
-                    else if (obj.contents) fileList.push(...m.getFileList(`${path}/${name}`));
-                });
+                for (const name of m.FS.readdir(path)) {
+                    if (name === '.' || name === '..') continue;
+                    const fullPath = path === '/' ? `/${name}` : `${path}/${name}`;
+                    const stat = m.FS.stat(fullPath);
+                    const type = stat.mode & 0o170000;
+                    if (type === 0o040000) {
+                        fileList.push(...m.getFileList(fullPath));
+                    } else if (type === 0o100000) {
+                        fileList.push({ path: fullPath, size: stat.size });
+                    }
+                }
                 return fileList;
             },
-
             toArray(vector) {
                 const output = [];
                 for (let i = 0; i < vector.size(); i += 1) {

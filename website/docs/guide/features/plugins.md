@@ -45,9 +45,16 @@ To resolve packages files correctly, integration via a hook is required.
 Here is a minimal example:
 ```js title="@cpp.js/plugin-rollup/index.js"
 
-import { state, createLib, createBridgeFile, buildWasm, getCppJsScript, getDependFilePath } from 'cpp.js';
+import {
+    state, createLib, createBridgeFile, buildWasm, getCppJsScript,
+    getDependFilePath, getTargetParams, getFilteredBuildTargets,
+} from 'cpp.js';
 import fs from 'node:fs';
 import p from 'node:path';
+
+const targetParams = getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
+const buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
+const buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
 
 const rollupCppjsPlugin = (options, bridges = []) => {
     return {
@@ -60,7 +67,7 @@ const rollupCppjsPlugin = (options, bridges = []) => {
                 return { id: source, external: false };
             }
 
-            const dependFilePath = getDependFilePath(source, 'Emscripten-x86_64');
+            const dependFilePath = getDependFilePath(source, buildTargetRelease);
             if (dependFilePath) {
                 return dependFilePath;
             }
@@ -72,6 +79,8 @@ const rollupCppjsPlugin = (options, bridges = []) => {
 
 export default rollupCppjsPlugin;
 ```
+
+The helpers `getTargetParams` and `getFilteredBuildTargets` resolve a build target object (carrying platform, arch, runtime, runtimeEnv, jsName, wasmName, dataTxtName, ...) that is passed to all subsequent Cpp.js APIs. In v2 the platform string `'Emscripten-x86_64'` is no longer accepted — every helper now takes a target object.
 
 ### Create Bridge Files and Return Cpp.js Script
 The `createBridgeFile` function in Cpp.js generates a bridge file for the imported header and returns the bridge file path.
@@ -93,11 +102,11 @@ const rollupCppjsPlugin = (options, bridges = []) => {
 +           const bridgeFile = createBridgeFile(path);
 +           bridges.push(bridgeFile);
 +
-+           return getCppJsScript('Emscripten-x86_64', bridgeFile);
++           return getCppJsScript(buildTargetRelease, bridgeFile);
 +       },
 +       load(id) {
 +           if (id === 'cpp.js') {
-+               return getCppJsScript('Emscripten-x86_64');
++               return getCppJsScript(buildTargetRelease);
 +           }
 +           return null;
 +       }
@@ -106,13 +115,11 @@ const rollupCppjsPlugin = (options, bridges = []) => {
 ```
 
 ### Compile
-For web projects, the code is compiled to WebAssembly using `createLib` and `buildWasm` function. As a result of the compilation, the following files are generated in the `temp` directory:
+For web projects, the code is compiled to WebAssembly using `createLib` and `buildWasm` functions. The build output filenames now embed the target descriptor (for example `myapp-wasm-wasm32-st-release.browser.js`) and are accessible via the target object's `jsName`, `wasmName`, and `dataTxtName` fields. As a result of the compilation, the following files are generated in the build directory and should be moved to the appropriate location to complete the build process:
 
-- `NAME.browser.js`
-- `NAME.wasm`
-- `NAME.data.txt`
-
-These files should then be moved to the appropriate location to complete the build process.
+- `<target.jsName>` (e.g. `myapp-wasm-wasm32-st-release.browser.js`)
+- `<target.wasmName>` (e.g. `myapp-wasm-wasm32-st-release.browser.wasm`)
+- `<target.dataTxtName>` (optional, when assets are present)
 
 Here is a minimal example:
 ```diff title="@cpp.js/plugin-rollup/index.js"
@@ -122,21 +129,20 @@ const rollupCppjsPlugin = (options, bridges = []) => {
         resolveId(source) {},
         async transform(code, path) {},
 +       async generateBundle() {
-+           createLib('Emscripten-x86_64', 'Source', { isProd: true, buildSource: true });
-+           createLib('Emscripten-x86_64', 'Bridge', { isProd: true, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
-+           await buildWasm('browser', true);
-+           await buildWasm('node', true);
++           createLib(buildTargetRelease, 'Source', { buildSource: true });
++           createLib(buildTargetRelease, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
++           await buildWasm(buildTargetRelease);
 +           this.emitFile({
 +               type: 'asset',
-+               source: fs.readFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`),
++               source: fs.readFileSync(`${state.config.paths.build}/${buildTargetRelease.jsName}`),
 +               fileName: 'cpp.js',
 +           });
 +           this.emitFile({
 +               type: 'asset',
-+               source: fs.readFileSync(`${state.config.paths.build}/${state.config.general.name}.wasm`),
++               source: fs.readFileSync(`${state.config.paths.build}/${buildTargetRelease.wasmName}`),
 +               fileName: 'cpp.wasm',
 +           });
-+           const dataFilePath = `${state.config.paths.build}/${state.config.general.name}.data.txt`;
++           const dataFilePath = `${state.config.paths.build}/${buildTargetRelease.dataTxtName}`;
 +           if (fs.existsSync(dataFilePath)) {
 +               this.emitFile({
 +                   type: 'asset',
@@ -163,9 +169,15 @@ To ensure Cpp.js operates correctly in the development server environment, follo
 
 Here is a minimal example:
 ```js title="@cpp.js/plugin-vite/index.js"
-import { state, createLib, createBridgeFile, buildWasm } from 'cpp.js';
+import {
+    state, createLib, createBridgeFile, buildWasm,
+    getTargetParams, getFilteredBuildTargets,
+} from 'cpp.js';
 import rollupCppjsPlugin from '@cpp.js/plugin-rollup';
 import fs from 'node:fs';
+
+const targetParams = getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
+const buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
 
 const viteCppjsPlugin = (options) => {
     let isServe = false;
@@ -179,10 +191,10 @@ const viteCppjsPlugin = (options) => {
             name: 'vite-plugin-cppjs',
             async load(source) {
                 if (isServe && source === '/cpp.js') {
-                    createLib('Emscripten-x86_64', 'Source', { isProd: false, buildSource: true });
-                    createLib('Emscripten-x86_64', 'Bridge', { isProd: false, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
-                    await buildWasm('browser', false);
-                    return fs.readFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, { encoding: 'utf8', flag: 'r' });
+                    createLib(buildTargetDebug, 'Source', { buildSource: true });
+                    createLib(buildTargetDebug, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
+                    await buildWasm(buildTargetDebug);
+                    return fs.readFileSync(`${state.config.paths.build}/${buildTargetDebug.jsName}`, { encoding: 'utf8', flag: 'r' });
                 }
                 return null;
             },
@@ -195,7 +207,7 @@ const viteCppjsPlugin = (options) => {
             configureServer(server) {
                 if (isServe) {
                     server.middlewares.use((req, res, next) => {
-                        if (req.url === '/cpp.wasm') req.url = `/@fs/${state.config.paths.build}/${state.config.general.name}.wasm`;
+                        if (req.url === '/cpp.wasm') req.url = `/@fs/${state.config.paths.build}/${buildTargetDebug.wasmName}`;
                         next();
                     });
                 }
@@ -232,12 +244,12 @@ const viteCppjsPlugin = (options) => {
 +               if (headerRegex.test(file)) {
 +                   const bridgeFile = createBridgeFile(file);
 +                   bridges.push(bridgeFile);
-+                   createLib('Emscripten-x86_64', 'Bridge', { isProd: false, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
-+                   await buildWasm('browser', true);
++                   createLib(buildTargetDebug, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
++                   await buildWasm(buildTargetDebug);
 +                   server.ws.send({ type: 'full-reload' });
 +               } else if (sourceRegex.test(file)) {
-+                   createLib('Emscripten-x86_64', 'Source', { isProd: false, buildSource: true, bypassCmake: true });
-+                   await buildWasm('browser', false);
++                   createLib(buildTargetDebug, 'Source', { buildSource: true, bypassCmake: true });
++                   await buildWasm(buildTargetDebug);
 +                   server.ws.send({ type: 'full-reload' });
 +               }
 +           },

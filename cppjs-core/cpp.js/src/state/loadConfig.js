@@ -1,4 +1,5 @@
 import os from 'node:os';
+import fs from 'node:fs';
 import systemKeys from '../utils/systemKeys.js';
 import loadJs from '../utils/loadJs.js';
 import loadJson from '../utils/loadJson.js';
@@ -38,10 +39,12 @@ function getFilledConfig(config, options = { isDepend: false }) {
         paths: config.paths || {},
         ext: config.ext || {},
         export: config.export || {},
-        platform: config.platform || {},
+        targetSpecs: config.targetSpecs || [],
         build: config.build || {},
+        target: config.target || {},
         extensions: config.extensions || [],
         package: null,
+        functions: config.functions || {},
     };
 
     if (newConfig.paths.config && !newConfig.paths.project) {
@@ -88,14 +91,6 @@ function getFilledConfig(config, options = { isDepend: false }) {
     newConfig.export.libName = newConfig.export.libName || [newConfig.general.name];
     newConfig.export.binHeaders = newConfig.export.binHeaders || [];
 
-    newConfig.platform['Emscripten-x86_64'] = newConfig.platform['Emscripten-x86_64'] || {};
-    newConfig.platform['Emscripten-x86_64-browser'] = newConfig.platform['Emscripten-x86_64-browser'] || {};
-    newConfig.platform['Emscripten-x86_64-node'] = newConfig.platform['Emscripten-x86_64-node'] || {};
-    newConfig.platform['Android-arm64-v8a'] = newConfig.platform['Android-arm64-v8a'] || {};
-    newConfig.platform['Android-x86_64'] = newConfig.platform['Android-x86_64'] || {};
-    newConfig.platform['iOS-iphoneos'] = newConfig.platform['iOS-iphoneos'] || {};
-    newConfig.platform['iOS-iphonesimulator'] = newConfig.platform['iOS-iphonesimulator'] || {};
-
     newConfig.allDependencies = (() => {
         const output = {};
         [...newConfig.dependencies, ...newConfig.dependencies.map((d) => d.allDependencies).flat()].forEach((d) => {
@@ -108,11 +103,17 @@ function getFilledConfig(config, options = { isDepend: false }) {
         e?.loadConfig?.after(newConfig);
     });
 
-    newConfig.build.usePthread = newConfig.build.usePthread || false;
-
-    if (!newConfig.build.usePthread) {
-        newConfig.build.usePthread = newConfig.allDependencies.some((d) => d?.build?.usePthread);
+    if (newConfig.target.runtime !== 'mt' && newConfig.allDependencies.some((d) => d?.target?.runtime === 'mt')) {
+        newConfig.target.runtime = 'mt';
     }
+
+    newConfig.functions.isEnabled = newConfig.functions.isEnabled || ((target) => {
+        return (
+            fs.existsSync(`${newConfig.paths.cmakeDir}/${target.path}`)
+            || fs.existsSync(`${newConfig.paths.cmakeDir}/${target.releasePath}`)
+            || (target.platform === 'ios' && fs.existsSync(`${newConfig.paths.cmakeDir}/../../${newConfig.general.name}-${target.runtime}.xcframework`))
+        );
+    });
 
     newConfig.dependencyParameters = calculateDependencyParameters(newConfig);
     // newConfig.cmakeParameters = getCmakeParameters(newConfig);

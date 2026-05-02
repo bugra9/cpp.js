@@ -9,7 +9,6 @@ tmp
 *.xcframework.zip
 *.tgz
 pnpm-publish-summary.json
-beta-releases.md
 
 # dependencies
 node_modules
@@ -22,6 +21,7 @@ node_modules
 *.launch
 .settings/
 *.sublime-workspace
+.gradle
 
 # IDE - VSCode
 .vscode/*
@@ -45,3 +45,4 @@ testem.log
 Thumbs.db
 
 .vscode
+.claude
