@@ -41,8 +41,14 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
-      - name: Build cppjs-sample-lib-prebuilt-matrix
-        run: pnpm --filter=@cpp.js/sample-lib-prebuilt-matrix run build:android
+      - name: Build cppjs-sample-lib-prebuilt-matrix (st + mt)
+        # Glob picks up both @cpp.js/sample-lib-prebuilt-matrix and the
+        # -multithread variant. The mt sample-mobile-reactnative-cli's
+        # native.cpp does `#include <Matrix.h>` which resolves to the
+        # prebuilt artifacts under matrix-mt's dist/prebuilt/<target>/
+        # — without this build the e2e:android step fails for the mt
+        # sample with "fatal error: 'Matrix.h' file not found".
+        run: pnpm --filter='@cpp.js/sample-lib-prebuilt-matrix*' run build:android
 
       - name: Install Maestro
         run: |

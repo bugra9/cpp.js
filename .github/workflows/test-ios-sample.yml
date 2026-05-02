@@ -75,8 +75,11 @@ jobs:
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
       - name: Restore cached bridge files
         run: cp -r ./cppjs-samples/cppjs-sample-mobile-reactnative-cli/ci/.cppjs ./cppjs-samples/cppjs-sample-mobile-reactnative-cli
-      - name: Build cppjs-sample-lib-prebuilt-matrix
-        run: pnpm --filter=@cpp.js/sample-lib-prebuilt-matrix run build:ios
+      - name: Build cppjs-sample-lib-prebuilt-matrix (st + mt)
+        # Same fix as test-android-sample.yml: glob also matches the
+        # -multithread variant so the mt mobile sample's <Matrix.h>
+        # resolves at native compile.
+        run: pnpm --filter='@cpp.js/sample-lib-prebuilt-matrix*' run build:ios
       - name: Pod install
         run: cd cppjs-samples/cppjs-sample-mobile-reactnative-cli/ios && pod install && cd ../../../
       - name: E2E IOS
