@@ -18,11 +18,8 @@
 </script>
 
 <main>
-  <p>Matrix multiplier with c++</p>
-  <br />
-  <p>Standard Result &nbsp;&nbsp;:&nbsp;&nbsp; {standardResult}</p>
-  <br />
-  <p>Thread result &nbsp;&nbsp;:&nbsp;&nbsp; {threadResult}</p>
+  <p>Matrix multiplier with c++ &nbsp;&nbsp;=&gt;&nbsp;&nbsp; {standardResult}</p>
+  <p>{threadResult}</p>
 </main>
 
 
