@@ -114,6 +114,19 @@ const viteCppjsPlugin = (options) => {
                     });
                 }
             },
+            configurePreviewServer(server) {
+                // `vite preview` (and the playwright e2e:prod webServer) is just
+                // a static file server — without COOP/COEP, SharedArrayBuffer is
+                // unavailable and the pthread worker the mt builds spawn never
+                // initialises, leaving the page stuck on its initial state. The
+                // dev middleware above already sets these headers; mirror that
+                // for preview so prod builds load identically.
+                server.middlewares.use((req, res, next) => {
+                    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+                    res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+                    next();
+                });
+            },
             async handleHotUpdate({ file, server }) {
                 if (file.startsWith(state.config.paths.build)) {
                     return;
