@@ -121,12 +121,33 @@ async function main() {
         }));
     }
 
-    let templatePath;
+    // Get the template object
+    let template;
     if (selectedBundler) {
-        templatePath = samples[selectedType][selectedPlatform][selectedBundler].path;
+        template = samples[selectedType][selectedPlatform][selectedBundler];
     } else {
-        templatePath = samples[selectedType][selectedPlatform].path;
+        template = samples[selectedType][selectedPlatform];
     }
+
+    // Check if multithread is available and ask user
+    let useMultithread = false;
+    if (template.multithreadPath) {
+        ({ useMultithread } = await prompts({
+            type: 'confirm',
+            name: 'useMultithread',
+            message: 'Enable multithread support?',
+            initial: false,
+        }, {
+            onCancel: () => {
+                process.exit(1);
+            },
+        }));
+    }
+
+    // Determine the template path based on multithread selection
+    const templatePath = useMultithread && template.multithreadPath
+        ? template.multithreadPath
+        : template.path;
 
     fse.copySync(templatePath, cwd, { overwrite: true });
 

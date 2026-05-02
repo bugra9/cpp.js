@@ -1,0 +1,28 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "mergeConfidence:all-badges"],
+  "enabledManagers": ["npm"],
+  "includePaths": [
+    "cppjs-samples/cppjs-sample-*/**"
+  ],
+  "ignoreDeps": [
+    "@cpp.js/core-embind-jsi",
+    "@cpp.js/plugin-metro",
+    "@cpp.js/plugin-react-native",
+    "@cpp.js/plugin-react-native-ios-helper",
+    "@cpp.js/plugin-vite",
+    "@cpp.js/plugin-webpack",
+    "@cpp.js/plugin-rollup",
+    "@cpp.js/sample-lib-prebuilt-matrix"
+  ],
+  "packageRules": [
+    {
+      "description": "Group all sample dependencies together",
+      "matchPaths": ["cppjs-samples/cppjs-sample-*/**"],
+      "groupName": "sample dependencies",
+      "matchUpdateTypes": ["minor", "patch"]
+    }
+  ],
+  "schedule": ["* * * * 0,6"]
+}
+

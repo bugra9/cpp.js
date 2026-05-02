@@ -3,6 +3,13 @@ packages:
   - 'cppjs-plugins/*'
   - 'cppjs-samples/*'
   - '!cppjs-samples/cppjs-sample-mobile-reactnative-expo'
+  # Playgrounds depending on @cpp.js/package-*-multithread workspace packages
+  # that don't exist yet. Excluded so pnpm install and CI build:samples skip
+  # them. Files stay on disk for development; re-include when the mt package
+  # set is added to cppjs-packages/.
+  - '!cppjs-samples/cppjs-playground-backend-nodejs-multithread'
+  - '!cppjs-samples/cppjs-playground-mobile-reactnative-cli-multithread'
+  - '!cppjs-samples/cppjs-playground-web-vite-multithread'
   - 'cppjs-packages/*/*'
   - 'cppjs-extensions/*'
   - 'website'

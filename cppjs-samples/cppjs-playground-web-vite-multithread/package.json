@@ -1,7 +1,6 @@
 {
-    "name": "@cpp.js/playground-web-vite",
-    "version": "2.0.0-beta.12",
-    "private": true,
+    "name": "@cpp.js/playground-web-vite-multithread",
+    "version": "2.0.0-beta.1",
     "description": "Cpp.js Vite Playground",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-playground-web-vite#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -14,26 +13,26 @@
         "serve": "serve dist -c ../serve.json"
     },
     "dependencies": {
-        "vue": "^3.5.33",
+        "vue": "^3.5.13",
         "@cpp.js/plugin-vite": "workspace:^",
-        "@cpp.js/package-curl": "workspace:^",
-        "@cpp.js/package-expat": "workspace:^",
-        "@cpp.js/package-gdal": "workspace:^",
-        "@cpp.js/package-geos": "workspace:^",
-        "@cpp.js/package-geotiff": "workspace:^",
-        "@cpp.js/package-iconv": "workspace:^",
-        "@cpp.js/package-openssl": "workspace:^",
-        "@cpp.js/package-proj": "workspace:^",
-        "@cpp.js/package-spatialite": "workspace:^",
-        "@cpp.js/package-sqlite3": "workspace:^",
-        "@cpp.js/package-tiff": "workspace:^",
-        "@cpp.js/package-webp": "workspace:^",
-        "@cpp.js/package-zlib": "workspace:^"
+        "@cpp.js/package-curl-multithread": "workspace:^",
+        "@cpp.js/package-expat-multithread": "workspace:^",
+        "@cpp.js/package-gdal-multithread": "workspace:^",
+        "@cpp.js/package-geos-multithread": "workspace:^",
+        "@cpp.js/package-geotiff-multithread": "workspace:^",
+        "@cpp.js/package-iconv-multithread": "workspace:^",
+        "@cpp.js/package-openssl-multithread": "workspace:^",
+        "@cpp.js/package-proj-multithread": "workspace:^",
+        "@cpp.js/package-spatialite-multithread": "workspace:^",
+        "@cpp.js/package-sqlite3-multithread": "workspace:^",
+        "@cpp.js/package-tiff-multithread": "workspace:^",
+        "@cpp.js/package-webp-multithread": "workspace:^",
+        "@cpp.js/package-zlib-multithread": "workspace:^"
     },
     "devDependencies": {
-        "@vitejs/plugin-vue": "^6.0.6",
-        "vite": "^8.0.10",
-        "@playwright/test": "^1.59.1"
+        "@vitejs/plugin-vue": "^5.2.1",
+        "vite": "^6.0.5",
+        "@playwright/test": "^1.49.1"
     },
     "keywords": [
         "cpp.js-sample",

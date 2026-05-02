@@ -1,4 +1,4 @@
-import initCppJs from '../dist/cppjs-sample-backend-nodejs-wasm-wasm-wasm32-mt-release.node.js';
+import initCppJs from '../dist/cppjs-sample-backend-nodejs-wasm.node.js';
 
 function wait(ms, fn) {
     return new Promise((resolve) => {
