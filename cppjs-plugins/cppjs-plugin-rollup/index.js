@@ -1,0 +1,120 @@
+
+
+import {
+    state, createLib, createBridgeFile, buildWasm, getCppJsScript,
+    getDependFilePath, getTargetParams, getFilteredBuildTargets,
+} from 'cpp.js';
+
+import fs from 'node:fs';
+import p from 'node:path';
+
+const targetParams = getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
+let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
+let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
+
+if (!buildTargetRelease && !buildTargetDebug) {
+    throw new Error('No build targets found');
+}
+
+if (!buildTargetDebug) {
+    buildTargetDebug = buildTargetRelease;
+} else if (!buildTargetRelease) {
+    buildTargetRelease = buildTargetDebug;
+}
+
+const rollupCppjsPlugin = (options, bridges = []) => {
+    const headerRegex = new RegExp(`\\.(${state.config.ext.header.join('|')})$`);
+    const moduleRegex = new RegExp(`\\.(${state.config.ext.module.join('|')})$`);
+
+    return {
+        name: 'rollup-plugin-cppjs',
+        resolveId(source) {
+            if (source === '/cpp.js') {
+                return { id: source, external: true };
+            }
+            if (source === 'cpp.js') {
+                return { id: source, external: false };
+            }
+
+            const dependFilePath = getDependFilePath(source, buildTargetRelease);
+            if (dependFilePath) {
+                return dependFilePath;
+            }
+
+            return null;
+        },
+        load(id) {
+            if (id === 'cpp.js') {
+                return getCppJsScript(buildTargetRelease);
+            }
+            return null;
+        },
+        async transform(code, path) {
+            if (!headerRegex.test(path) && !moduleRegex.test(path)) {
+                return null;
+            }
+
+            const bridgeFile = createBridgeFile(path);
+            bridges.push(bridgeFile);
+
+            return getCppJsScript(buildTargetRelease, bridgeFile);
+        },
+        buildStart() {
+            const watch = (dirs) => {
+                dirs.forEach((dir) => {
+                    const filesToWatch = fs.readdirSync(dir);
+
+                    for (const file of filesToWatch) {
+                        const fullPath = p.join(dir, file);
+                        const stats = fs.statSync(fullPath);
+
+                        if (stats.isFile()) {
+                            this.addWatchFile(fullPath);
+                        } else if (stats.isDirectory()) {
+                            watch([fullPath]);
+                        }
+                    }
+                });
+            };
+
+            if (fs.existsSync(state.config.paths.native)) {
+                watch(state.config.paths.native);
+            }
+        },
+        async generateBundle() {
+            createLib(buildTargetRelease, 'Source', { buildSource: true });
+            createLib(buildTargetRelease, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
+            await buildWasm(buildTargetRelease);
+
+            this.emitFile({
+                type: 'asset',
+                source: fs.readFileSync(`${state.config.paths.build}/${buildTargetRelease.jsName}`),
+                fileName: 'cpp.js',
+            });
+
+            this.emitFile({
+                type: 'asset',
+                source: fs.readFileSync(`${state.config.paths.build}/${buildTargetRelease.wasmName}`),
+                fileName: 'cpp.wasm',
+            });
+            const dataFilePath = `${state.config.paths.build}/${buildTargetRelease.dataTxtName}`;
+            if (fs.existsSync(dataFilePath)) {
+                this.emitFile({
+                    type: 'asset',
+                    source: fs.readFileSync(dataFilePath),
+                    fileName: 'cpp.data.txt',
+                });
+            }
+            /* const workerFilePath = `${state.config.paths.build}/${state.config.general.name}.js`;
+            if (fs.existsSync(workerFilePath)) {
+                this.emitFile({
+                    type: 'asset',
+                    source: fs.readFileSync(workerFilePath),
+                    fileName: `cpp.worker.js`,
+                });
+            } */
+        },
+    };
+};
+
+export default rollupCppjsPlugin;

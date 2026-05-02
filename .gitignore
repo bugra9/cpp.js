@@ -8,6 +8,7 @@ tmp
 *.xcframework
 *.xcframework.zip
 *.tgz
+pnpm-publish-summary.json
 
 # dependencies
 node_modules
@@ -44,3 +45,4 @@ testem.log
 Thumbs.db
 
 .vscode
+.claude

@@ -1,0 +1,25 @@
+{
+    "name": "@cpp.js/package-proj",
+    "version": "2.0.0-beta.12",
+    "nativeVersion": "9.8.1",
+    "description": "This package provides the precompiled proj library, built using cpp.js, for easy integration into JavaScript, WebAssembly and React Native projects. It allows users to perform geodetic computations such as projections and coordinate transformations, ensuring high performance and cross-platform compatibility. Ideal for use in web and mobile applications.",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-proj#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "type": "module",
+    "license": "MIT",
+    "keywords": [
+        "proj",
+        "libproj",
+        "cpp.js-package",
+        "webassembly",
+        "react-native"
+    ],
+    "dependencies": {
+        "@cpp.js/package-proj-wasm": "workspace:^",
+        "@cpp.js/package-proj-android": "workspace:^",
+        "@cpp.js/package-proj-ios": "workspace:^"
+    },
+    "devDependencies": {
+        "cpp.js": "workspace:^"
+    }
+}

@@ -1,0 +1,28 @@
+{
+    "name": "@cpp.js/package-curl-ios",
+    "version": "2.0.0-beta.13",
+    "nativeVersion": "8.19.0",
+    "description": "This package provides a CURL library compiled with Cpp.js, enabling seamless usage of CURL functionalities in JavaScript, WebAssembly and React Native projects. Client-side URL transfers for web and mobile applications.",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-curl#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "type": "module",
+    "license": "curl",
+    "keywords": [
+        "curl",
+        "libcurl",
+        "cpp.js-package",
+        "webassembly",
+        "react-native"
+    ],
+    "scripts": {
+        "build": "cppjs build -p ios",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "prepublishOnly": "cppjs build -p ios"
+    },
+    "dependencies": {
+        "@cpp.js/package-openssl-ios": "workspace:^"
+    },
+    "devDependencies": {
+        "cpp.js": "workspace:^"
+    }
+}

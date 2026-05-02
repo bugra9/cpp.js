@@ -5,17 +5,21 @@ on:
     branches:
       - main
     paths:
-      - packages/**
+      - cppjs-core/**
+      - cppjs-extensions/**
+      - cppjs-packages/**
+      - cppjs-plugins/**
+      - cppjs-samples/**
       - .github/workflows/test-android-sample.yml
   pull_request:
     branches:
       - main
     paths:
-      - packages/cpp.js/**
-      - packages/cppjs-plugin-metro/**
-      - packages/cppjs-plugin-react-native/**
-      - packages/cppjs-sample-lib-prebuilt-matrix/**
-      - packages/cppjs-sample-mobile-reactnative-cli/**
+      - cppjs-core/cpp.js/**
+      - cppjs-plugins/cppjs-plugin-metro/**
+      - cppjs-plugins/cppjs-plugin-react-native/**
+      - cppjs-samples/cppjs-sample-lib-prebuilt-matrix/**
+      - cppjs-samples/cppjs-sample-mobile-reactnative-cli/**
       - .github/workflows/test-android-sample.yml
 
 permissions: {}
@@ -52,25 +56,25 @@ jobs:
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@0bdd871935719febd78681f197cd39af5b6e16a6 #v4
       - name: create AVD
-        uses: reactivecircus/android-emulator-runner@62dbb605bba737720e10b196cb4220d374026a6d #v2
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a #v2.37.0
         with:
-          api-level: 30
-          target: google_apis
+          api-level: 36
+          target: default
           arch: x86_64
-          cmake: 3.31.1
-          ndk: 26.1.10909125
+          cmake: 4.1.2
+          ndk: 29.0.14206865
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
           script: echo "Generated AVD snapshot for caching."
       - name: E2E Android
-        uses: reactivecircus/android-emulator-runner@62dbb605bba737720e10b196cb4220d374026a6d #v2
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a #v2.37.0
         with:
-          api-level: 30
-          target: google_apis
+          api-level: 36
+          target: default
           arch: x86_64
-          cmake: 3.31.1
-          ndk: 26.1.10909125
+          cmake: 4.1.2
+          ndk: 29.0.14206865
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true

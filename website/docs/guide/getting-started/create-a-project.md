@@ -6,10 +6,10 @@ sidebar_position: 3
 In this section, you will learn how to set up your Cpp.js project and write a minimal starter application. By the end of this section, you should be able to run a working Cpp.js app in development mode from your terminal.
 
 ```shell npm2yarn
-npm init cpp.js@latest
+npm create cpp.js@beta
 ```
 
-This command will install and execute [create-cpp.js](https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-core-create-app), the official Cpp.js project scaffolding tool. You will be presented with prompts for several optional features such as React.
+This command will install and execute [create-cpp.js](https://github.com/bugra9/cpp.js/tree/main/cppjs-core/cppjs-core-create-app), the official Cpp.js project scaffolding tool. You will be presented with prompts for several optional features such as React.
 
 ```bash
 Welcome to Cpp.js!

@@ -1,0 +1,28 @@
+{
+    "name": "@cpp.js/sample-lib-prebuilt-matrix",
+    "version": "2.0.0-beta.12",
+    "description": "Cpp.js sample prebuilt library: matrix multiplier",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-lib-prebuilt-matrix#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "build": "cppjs build",
+        "builda": "cppjs build -p wasm -p android",
+        "build:wasm": "cppjs build -p wasm",
+        "build:android": "cppjs build -p android",
+        "build:ios": "cppjs build -p ios",
+        "clear": "rm -rf .cppjs dist *.xcframework",
+        "prepublishOnly": "cppjs build"
+    },
+    "devDependencies": {
+        "cpp.js": "workspace:^"
+    },
+    "keywords": [
+        "cpp.js-sample",
+        "matrix",
+        "cpp.js-sample",
+        "webassembly",
+        "react-native"
+    ]
+}

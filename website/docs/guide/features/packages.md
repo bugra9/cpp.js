@@ -4,6 +4,8 @@ Cpp.js offers flexibility with three types of packages, all available on NPM. Yo
 ### Prebuilt Packages
 This package includes prebuilt libraries for different platforms (Web, Android, iOS), enabling quick integration without needing to compile. By default, a package is of this type, meaning that most packages fall into this category.
 
+Starting with v2, prebuilt packages are split into a small meta package plus three platform-specific packages so that consumers only download artifacts for the platforms they actually target. For example, `@cpp.js/package-gdal` is a thin meta package that depends on `@cpp.js/package-gdal-wasm`, `@cpp.js/package-gdal-android`, and `@cpp.js/package-gdal-ios`. Importing the meta package automatically pulls in the right platform variant for the target you build.
+
 #### Usage
 Import the necessary header file directly from the package. Header files can be accessed from the `dist/prebuilt/PLATFORM_NAME/include` path.
 
@@ -15,65 +17,71 @@ await initCppJs();
 ```
 
 #### Build
-Cpp.js can compile external projects using CMake and configure. To set up the build process for an external project, you can create a cppjs.build.js file in your project’s home directory to configure the build process. Once configured, use the cppjs build command to compile the project.
+Cpp.js can compile external projects using CMake and configure. To set up the build process for an external project, you can create a cppjs.build.js file in the platform-specific package directory to configure the build process. Once configured, use the cppjs build command to compile the project.
 
 Here are some examples of how cppjs.build.js files are structured for different projects:
 
-- [@cpp.js/package-zlib/cppjs.build.js](https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-package-zlib/cppjs.build.js)
-- [@cpp.js/package-webp/cppjs.build.js](https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-package-webp/cppjs.build.js)
-- [@cpp.js/package-gdal/cppjs.build.js](https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-package-gdal/cppjs.build.js)
-- [@cpp.js/package-spatialite/cppjs.build.js](https://github.com/bugra9/cpp.js/blob/main/packages/cppjs-package-spatialite/cppjs.build.js)
+- [@cpp.js/package-zlib-wasm/cppjs.build.js](https://github.com/bugra9/cpp.js/blob/main/cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm/cppjs.build.js)
+- [@cpp.js/package-webp-wasm/cppjs.build.js](https://github.com/bugra9/cpp.js/blob/main/cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm/cppjs.build.js)
+- [@cpp.js/package-gdal-wasm/cppjs.build.js](https://github.com/bugra9/cpp.js/blob/main/cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm/cppjs.build.js)
+- [@cpp.js/package-spatialite-wasm/cppjs.build.js](https://github.com/bugra9/cpp.js/blob/main/cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm/cppjs.build.js)
 
 #### Package Structure
 ```
 ├── dist
-│   ├── mylib.wasm
-│   ├── mylib.browser.js
-│   ├── mylib.node.js
+│   ├── mylib-wasm-wasm32-st-release.browser.js
+│   ├── mylib-wasm-wasm32-st-release.browser.wasm
+│   ├── mylib-wasm-wasm32-st-release.node.js
+│   ├── mylib-wasm-wasm32-st-release.node.wasm
 │   └── prebuilt
-│       ├── Android-arm64-v8a
+│       ├── wasm-wasm32-st-release
 │       │   ├── include
 │       │   │   └── ...
 │       │   └── lib
-│       │       └── mylib.so
+│       │       └── libmylib.a
 │       │
-│       ├── Android-x86_64
+│       ├── wasm-wasm32-mt-release
 │       │   ├── include
 │       │   │   └── ...
 │       │   └── lib
-│       │       └── mylib.so
+│       │       └── libmylib.a
 │       │
-│       ├── Emscripten-x86_64
+│       ├── android-arm64-v8a-mt-release
 │       │   ├── include
 │       │   │   └── ...
 │       │   └── lib
-│       │       └── mylib.a
+│       │       └── libmylib.a
 │       │
-│       ├── iOS-iphoneos
+│       ├── android-x86_64-mt-release
 │       │   ├── include
 │       │   │   └── ...
 │       │   └── lib
-│       │       └── mylib.a
+│       │       └── libmylib.a
 │       │
-│       ├── iOS-iphonesimulator
+│       ├── ios-iphoneos-mt-release
 │       │   ├── include
 │       │   │   └── ...
 │       │   └── lib
-│       │       └── mylib.a
+│       │       └── libmylib.a
 │       │
-│       ├── mylib.xcframework.zip
+│       ├── ios-iphonesimulator-mt-release
+│       │   ├── include
+│       │   │   └── ...
+│       │   └── lib
+│       │       └── libmylib.a
+│       │
 │       └── CMakeLists.txt
 |
 └── mylib.xcframework
     ├── ios-arm64_arm64e
     │   ├── Headers
     │   │   └── ...
-    │   └── mylib.a
+    │   └── libmylib.a
     │
-    ├── ios-arm64_arm64e_x86_64-simulator
+    ├── ios-arm64_x86_64-simulator
     │   ├── Headers
     │   │   └── ...
-    │   └── mylib.a
+    │   └── libmylib.a
     │
     └── Info.plist
  

@@ -1,0 +1,4 @@
+{
+    "name": "@cpp.js/sample-extension-pthread",
+    "main": "index.mjs"
+}

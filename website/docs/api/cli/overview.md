@@ -18,5 +18,5 @@ Commands:
 <br />
 
 :::info 
-**Binary function:** You can access the binary function from [this link](https://github.com/bugra9/cpp.js/blob/main/packages/cpp.js/src/bin.js).  
+**Binary function:** You can access the binary function from [this link](https://github.com/bugra9/cpp.js/blob/main/cppjs-core/cpp.js/src/bin.js).  
 :::

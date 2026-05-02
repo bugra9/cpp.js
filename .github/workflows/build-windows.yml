@@ -5,14 +5,18 @@ on:
     branches:
       - main
     paths:
-      - packages/**
+      - cppjs-core/**
+      - cppjs-extensions/**
+      - cppjs-packages/**
+      - cppjs-plugins/**
+      - cppjs-samples/**
       - .github/workflows/build-windows.yml
   pull_request:
     branches:
       - main
     paths:
-      - packages/cpp.js/**
-      - packages/cppjs-plugin-*/**
+      - cppjs-core/cpp.js/**
+      - cppjs-plugins/**
       - .github/workflows/build-windows.yml
 
 permissions: {}

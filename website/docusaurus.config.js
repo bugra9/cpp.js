@@ -68,49 +68,49 @@ const config = {
                     // Please change this to your repo.
                     // Remove this to remove the "edit this page" links.
                     editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+                        'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
                 },
                 theme: {
-                    customCss: require.resolve('./src/css/custom.css'),
+                    customCss: './src/css/custom.css',
                 },
             }),
         ],
     ],
 
     themeConfig:
-    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
-    ({
-        // Replace with your project's social card
-        colorMode: {
-            defaultMode: 'dark',
-        },
-        image: 'img/cppjs-social-card.png',
-        navbar: {
-            title: 'Cpp.js',
-            logo: {
-                alt: 'Cpp.js Logo',
-                src: 'img/logo.png',
+        /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+        ({
+            // Replace with your project's social card
+            colorMode: {
+                defaultMode: 'dark',
             },
-            items: navbar,
-        },
-        footer: {
-            style: 'light',
-            links: [],
-            copyright: `Released under the <a href="https://github.com/bugra9/cpp.js/blob/main/LICENSE" target="_blank">MIT License</a>.<br />Copyright © ${new Date().getFullYear()} <a href="https://github.com/bugra9" target="_blank">Buğra Sarı</a>.`,
-        },
-        prism: {
-            theme: lightCodeTheme,
-            darkTheme: darkCodeTheme,
-            additionalLanguages: ['diff', 'bash'],
-        },
-    }),
+            image: 'img/cppjs-social-card.png',
+            navbar: {
+                title: 'Cpp.js',
+                logo: {
+                    alt: 'Cpp.js Logo',
+                    src: 'img/logo.png',
+                },
+                items: navbar,
+            },
+            footer: {
+                style: 'light',
+                links: [],
+                copyright: `Released under the <a href="https://github.com/bugra9/cpp.js/blob/main/LICENSE" target="_blank">MIT License</a>.<br />Copyright © ${new Date().getFullYear()} <a href="https://github.com/bugra9" target="_blank">Buğra Sarı</a>.`,
+            },
+            prism: {
+                theme: lightCodeTheme,
+                darkTheme: darkCodeTheme,
+                additionalLanguages: ['diff', 'bash'],
+            },
+        }),
     plugins: [
         async function myPlugin(context, options) {
             return {
                 name: "docusaurus-tailwindcss",
                 configurePostCss(postcssOptions) {
                     // Appends TailwindCSS and AutoPrefixer.
-                    postcssOptions.plugins.push(require("tailwindcss"));
+                    postcssOptions.plugins.push(require("@tailwindcss/postcss"));
                     postcssOptions.plugins.push(require("autoprefixer"));
                     return postcssOptions;
                 },
