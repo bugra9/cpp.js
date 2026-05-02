@@ -7,15 +7,15 @@ function App() {
   const [threadResult, setThreadResult] = useState('...')
 
   useEffect(() => {
-    initCppJs().then(() => {
-        setStandardResult(Native.sample());
-        
+    initCppJs().then(async () => {
+        setStandardResult(await Native.sample());
+
         // Run computation on a separate thread
-        Native.runOnThread();
-        
+        await Native.runOnThread();
+
         // Poll for thread result after a short delay
-        setTimeout(() => {
-            setThreadResult(Native.getThreadResult());
+        setTimeout(async () => {
+            setThreadResult(await Native.getThreadResult());
         }, 1000);
     });
   }, []);

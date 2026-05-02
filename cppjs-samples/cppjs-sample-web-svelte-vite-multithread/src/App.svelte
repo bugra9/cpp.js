@@ -4,23 +4,20 @@
     let standardResult = $state('compiling ...');
     let threadResult = $state('...');
 
-    initCppJs().then(() => {
-        standardResult = Native.sample();
-        
+    initCppJs().then(async () => {
+        standardResult = await Native.sample();
+
         // Run computation on a separate thread
-        Native.runOnThread();
-        
+        await Native.runOnThread();
+
         // Poll for thread result after a short delay
-        setTimeout(() => {
-            threadResult = Native.getThreadResult();
+        setTimeout(async () => {
+            threadResult = await Native.getThreadResult();
         }, 1000);
     });
 </script>
 
 <main>
-  <div class="logo">
-    <img src={svelteLogo} alt="Svelte Logo" />
-  </div>
   <p>Matrix multiplier with c++</p>
   <br />
   <p>Standard Result &nbsp;&nbsp;:&nbsp;&nbsp; {standardResult}</p>

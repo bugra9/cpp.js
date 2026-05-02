@@ -13,16 +13,18 @@ export default function Home() {
         wasm: '/cpp.wasm',
         js: '/cpp.js',
       }
-    }).then(() => {
+    }).then(async () => {
       // AllSymbols contains all exported symbols after initialization
       console.log('AllSymbols:', AllSymbols);
       console.log('AllSymbols.Native:', AllSymbols.Native);
 
       if (AllSymbols.Native) {
-        const result = AllSymbols.Native.sample();
+        const result = await AllSymbols.Native.sample();
         setMessage(result);
-        AllSymbols.Native.runOnThread();
-        setThreadResult(AllSymbols.Native.getThreadResult());
+        await AllSymbols.Native.runOnThread();
+        setTimeout(async () => {
+          setThreadResult(await AllSymbols.Native.getThreadResult());
+        }, 1000);
       } else {
         setMessage('Native class not found in AllSymbols');
       }

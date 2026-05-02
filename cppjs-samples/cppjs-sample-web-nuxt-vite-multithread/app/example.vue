@@ -12,10 +12,12 @@ onMounted(async () => {
   try {
     await initCppJs()
     console.log('initCppJs completed, Native:', Native)
-    message.value = Native.sample()
+    message.value = await Native.sample()
     console.log('Result:', message.value)
-    Native.runOnThread()
-    threadResult.value = Native.getThreadResult()
+    await Native.runOnThread()
+    setTimeout(async () => {
+      threadResult.value = await Native.getThreadResult()
+    }, 1000)
   } catch (e) {
     console.error('Error in initCppJs:', e)
     message.value = 'Error: ' + e.message

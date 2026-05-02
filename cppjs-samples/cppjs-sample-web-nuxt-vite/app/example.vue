@@ -11,7 +11,7 @@ onMounted(async () => {
   try {
     await initCppJs()
     console.log('initCppJs completed, Native:', Native)
-    message.value = Native.sample()
+    message.value = await Native.sample()
     console.log('Result:', message.value)
   } catch (e) {
     console.error('Error in initCppJs:', e)
