@@ -12,7 +12,7 @@ export default {
         base: '../..', /* Delete this line for create-cpp.js */
         output: 'dist',
     },
-    build: {
-        usePthread: true
+    target: {
+        runtime: 'mt',
     }
 };

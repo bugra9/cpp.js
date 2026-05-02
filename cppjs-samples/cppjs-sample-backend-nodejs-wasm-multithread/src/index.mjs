@@ -1,9 +1,9 @@
-import initCppJs from '../dist/cppjs-sample-backend-nodejs-wasm.node.js';
+import initCppJs from '../dist/cppjs-sample-backend-nodejs-wasm-multithread-wasm-wasm32-mt-release.node.js';
 
-initCppJs().then(({ Native }) => {
-    console.log(`Matrix multiplier with c++ => ${Native.sample()}`);
-    Native.runOnThread();
-    setTimeout(() => {
-        console.log(`Thread result: ${Native.getThreadResult()}`);
+initCppJs().then(async ({ Native }) => {
+    console.log(`Matrix multiplier with c++ => ${await Native.sample()}`);
+    await Native.runOnThread();
+    setTimeout(async () => {
+        console.log(`Thread result: ${await Native.getThreadResult()}`);
     }, 1000);
 });
