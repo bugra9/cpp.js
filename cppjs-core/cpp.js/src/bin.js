@@ -315,11 +315,13 @@ function buildLib(targetParams) {
         }
     }
 
-    const distCmakeContent = fs.readFileSync(`${state.config.paths.cli}/assets/cmake/dist.cmake`, { encoding: 'utf8', flag: 'r' })
-        .replace('___PROJECT_NAME___', state.config.general.name)
-        .replace('___PROJECT_HOST___', targets.map((t) => t.path).join(';'))
-        .replace('___PROJECT_LIBS___', state.config.export.libName.join(';'));
-    fs.writeFileSync(`${state.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
+    if (fs.existsSync(`${state.config.paths.output}/prebuilt`)) {
+        const distCmakeContent = fs.readFileSync(`${state.config.paths.cli}/assets/cmake/dist.cmake`, { encoding: 'utf8', flag: 'r' })
+            .replace('___PROJECT_NAME___', state.config.general.name)
+            .replace('___PROJECT_HOST___', targets.map((t) => t.path).join(';'))
+            .replace('___PROJECT_LIBS___', state.config.export.libName.join(';'));
+        fs.writeFileSync(`${state.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
+    }
 }
 
 async function createWasmJs(targetParams) {

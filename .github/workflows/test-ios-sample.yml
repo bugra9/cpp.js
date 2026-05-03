@@ -74,7 +74,9 @@ jobs:
           curl -fsSL "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
       - name: Restore cached bridge files
-        run: cp -r ./cppjs-samples/cppjs-sample-mobile-reactnative-cli/ci/.cppjs ./cppjs-samples/cppjs-sample-mobile-reactnative-cli
+        run: |
+          mkdir -p ./cppjs-samples/cppjs-sample-mobile-reactnative-cli/.cppjs
+          cp -r ./cppjs-samples/cppjs-sample-mobile-reactnative-cli/ci/cppjs-snapshot/. ./cppjs-samples/cppjs-sample-mobile-reactnative-cli/.cppjs/
       - name: Build cppjs-sample-lib-prebuilt-matrix
         run: pnpm --filter=@cpp.js/sample-lib-prebuilt-matrix run build:ios
       - name: Pod install
