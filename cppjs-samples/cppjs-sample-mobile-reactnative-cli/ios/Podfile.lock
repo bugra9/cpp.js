@@ -2080,7 +2080,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  cppjs-sample-lib-prebuilt-matrix: c8a7788fe42f5086e3b0b48b9756edde0a63c429
+  cppjs-sample-lib-prebuilt-matrix: e8ab1fffacc624daad0a64fe33273cfe11e38399
   FBLazyVector: 26fd21c75314e101f280d401e97f27d54f3f7064
   hermes-engine: b6cef8f1f6c726240e275520fd5cfdb6b2ff6826
   RCTDeprecation: c7a2768f905d76ca6d2cfefb26e4349eacbdfca3
