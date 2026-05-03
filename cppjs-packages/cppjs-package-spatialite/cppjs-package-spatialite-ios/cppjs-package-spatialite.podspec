@@ -10,4 +10,6 @@ Pod::Spec.new do |s|
   s.author       = "Spatialite Authors"
   s.source       = { :http => "https://cpp.js.org" }
   s.vendored_frameworks = 'spatialite.xcframework', 'geos.xcframework', 'iconv.xcframework', 'proj.xcframework', 'sqlite3.xcframework', 'z.xcframework'
+  # arm64-only iOS simulator slice; drop x86_64 to avoid linker errors on consumer apps.
+  s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'x86_64' }
 end

@@ -1,12 +1,14 @@
 import projIos from '@cpp.js/package-proj-ios/cppjs.config.js';
 import tiffIos from '@cpp.js/package-tiff-ios/cppjs.config.js';
 import zlibIos from '@cpp.js/package-zlib-ios/cppjs.config.js';
+import jpegturboIos from '@cpp.js/package-jpegturbo-ios/cppjs.config.js';
 
 export default {
   dependencies: [
     projIos,
     tiffIos,
     zlibIos,
+    jpegturboIos,
   ],
   general: {
     name: 'geotiff'

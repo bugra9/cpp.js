@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-gdal-android",
-    "version": "2.0.0-beta.12",
+    "version": "2.0.0-beta.15",
     "nativeVersion": "3.12.4",
     "description": "This package provides the precompiled GDAL, built using Cpp.js, for seamless integration into JavaScript, WebAssembly, and React Native projects. It enables advanced geospatial data processing, including raster and vector data manipulation, format conversion, and spatial analysis, ensuring high performance and cross-platform compatibility. Perfect for web, server-side, and mobile geospatial applications.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-gdal#readme",
@@ -25,12 +25,15 @@
         "@cpp.js/package-geos-android": "workspace:^",
         "@cpp.js/package-geotiff-android": "workspace:^",
         "@cpp.js/package-iconv-android": "workspace:^",
+        "@cpp.js/package-jpegturbo-android": "workspace:^",
         "@cpp.js/package-proj-android": "workspace:^",
         "@cpp.js/package-spatialite-android": "workspace:^",
         "@cpp.js/package-sqlite3-android": "workspace:^",
         "@cpp.js/package-tiff-android": "workspace:^",
         "@cpp.js/package-webp-android": "workspace:^",
-        "@cpp.js/package-zlib-android": "workspace:^"
+        "@cpp.js/package-zlib-android": "workspace:^",
+        "@cpp.js/package-zstd-android": "workspace:^",
+        "@cpp.js/package-lerc-android": "workspace:^"
     },
     "devDependencies": {
         "cpp.js": "workspace:^"

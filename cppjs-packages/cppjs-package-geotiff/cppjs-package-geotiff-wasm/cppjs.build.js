@@ -3,7 +3,7 @@ const platformBuild = {
 };
 
 const platformExtraLibs = {
-    'wasm': ['-lsqlite3', '-ljpeg'],
+    'wasm': ['-lsqlite3'],
 };
 
 export default {
@@ -11,7 +11,8 @@ export default {
     buildType: 'configure',
     getBuildParams: (target, depPaths) => [
         ...(platformBuild[target.platform] || []),
-        `--with-proj=${depPaths.proj.root}`, `--with-libtiff=${depPaths.tiff.root}`, `--with-zlib=${depPaths.z.root}`,
+        `--with-proj=${depPaths.proj.root}`, `--with-libtiff=${depPaths.tiff.root}`,
+        `--with-zlib=${depPaths.z.root}`, `--with-jpeg=${depPaths.jpeg.root}`,
     ],
     getExtraLibs: (target) => platformExtraLibs[target.platform] || [],
     replaceList: [

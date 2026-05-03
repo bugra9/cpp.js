@@ -6,6 +6,7 @@ import run from './run.js';
 import getCmakeParameters from './getCmakeParameters.js';
 import triggerExtensions from './extensions.js';
 import state from '../state/index.js';
+import logger from '../utils/logger.js';
 
 const cpuCount = os.cpus().length - 1;
 const sharedPlatforms = ['android'];
@@ -23,8 +24,8 @@ export default function createLib(target, fileType, options = {}) {
     const platformPrefix = `${fileType ? `${fileType}-` : ''}${buildType}`;
     const libdir = `${state.config.paths.build}/${platformPrefix}/prebuilt/${target.path}`;
     const buildPath = `${state.config.paths.build}/${platformPrefix}/${target.path}`;
-    if (fs.existsSync(`${libdir}/lib`)) {
-        console.log(`${target.path} is already built`);
+    if (!options.force && fs.existsSync(`${libdir}/lib`)) {
+        logger.cachedStep(target, fileType);
         return;
     }
 
@@ -102,7 +103,7 @@ export default function createLib(target, fileType, options = {}) {
         }
     }
 
-    console.log(`${target.path} ${target.runtimeEnv || ''} ${fileType} is compiling...`);
+    logger.startStep(target, fileType);
     const t0 = performance.now();
     const cmakeDir = state.config.build.withBuildConfig ? `${state.config.paths.build}/source` : state.config.paths.cmakeDir;
 
@@ -145,5 +146,8 @@ export default function createLib(target, fileType, options = {}) {
         run(null, ['make', `-j${cpuCount}`, 'install'], platformPrefix, target, { console: buildEnv.console });
     }
     const t2 = performance.now();
-    console.log(`${target.path} ${target.runtimeEnv || ''} ${fileType} compiled`, platformPrefix, `full time: ${Math.round(t2 - t0)}ms`, `cmake: ${Math.round(t1 - t0)}ms`, `build: ${Math.round(t2 - t1)}ms`, `core: ${cpuCount}`);
+    const cmakeMs = Math.round(t1 - t0);
+    const buildMs = Math.round(t2 - t1);
+    const detail = `cmake ${cmakeMs < 1000 ? `${cmakeMs}ms` : `${(cmakeMs / 1000).toFixed(1)}s`}, make ${buildMs < 1000 ? `${buildMs}ms` : `${(buildMs / 1000).toFixed(1)}s`}, j${cpuCount}`;
+    logger.doneStep(target, fileType, detail);
 }

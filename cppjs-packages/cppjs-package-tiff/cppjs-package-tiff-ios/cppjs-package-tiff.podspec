@@ -9,5 +9,7 @@ Pod::Spec.new do |s|
   s.homepage     = "https://libtiff.gitlab.io/libtiff/index.html"
   s.author       = "Tiff Authors"
   s.source       = { :http => "https://cpp.js.org" }
-  s.vendored_frameworks = 'z.xcframework', 'tiff.xcframework', 'tiffxx.xcframework'
+  s.vendored_frameworks = 'z.xcframework', 'jpeg.xcframework', 'zstd.xcframework', 'Lerc.xcframework', 'tiff.xcframework', 'tiffxx.xcframework'
+  # arm64-only iOS simulator slice; drop x86_64 to avoid linker errors on consumer apps.
+  s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'x86_64' }
 end

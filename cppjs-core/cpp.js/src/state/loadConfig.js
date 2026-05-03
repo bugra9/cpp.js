@@ -79,7 +79,7 @@ function getFilledConfig(config, options = { isDepend: false }) {
     );
     newConfig.paths.cmakeDir = getParentPath(newConfig.paths.cmake);
     newConfig.paths.cli = getParentPath(getParentPath(import.meta.url));
-    newConfig.paths.cliCMakeListsTxt = `${newConfig.paths.cli}/assets/CMakeLists.txt`;
+    newConfig.paths.cliCMakeListsTxt = `${newConfig.paths.cli}/assets/cmake/CMakeLists.txt`;
 
     newConfig.ext.header = newConfig.ext.header || ['h', 'hpp', 'hxx', 'hh'];
     newConfig.ext.source = newConfig.ext.source || ['c', 'cpp', 'cxx', 'cc'];

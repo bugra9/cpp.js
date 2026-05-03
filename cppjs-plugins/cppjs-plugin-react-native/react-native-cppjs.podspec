@@ -27,8 +27,8 @@ cd "${PODS_ROOT}/../.."
 node "${PODS_TARGET_SRCROOT}/script/build_js.js" ios
 node "${PODS_TARGET_SRCROOT}/script/build_ios.js" "${CONFIGURATION}"
 case "${PLATFORM_NAME}" in
-  iphonesimulator) SLICE="ios-arm64_x86_64-simulator" ;;
-  *) SLICE="ios-arm64_arm64e" ;;
+  iphonesimulator) SLICE="ios-arm64-simulator" ;;
+  *) SLICE="ios-arm64" ;;
 esac
 SRC="${PODS_TARGET_SRCROOT}/react-native-cppjs.xcframework/${SLICE}/libreact-native-cppjs.a"
 DST="${PODS_XCFRAMEWORKS_BUILD_DIR}/react-native-cppjs/libreact-native-cppjs.a"
@@ -39,5 +39,13 @@ fi',
     :execution_position => :before_compile,
     :output_files => ['$(PODS_XCFRAMEWORKS_BUILD_DIR)/react-native-cppjs/libreact-native-cppjs.a']
   }
-  s.user_target_xcconfig = { 'OTHER_LDFLAGS' => '-ObjC -force_load $(PODS_XCFRAMEWORKS_BUILD_DIR)/react-native-cppjs/libreact-native-cppjs.a' }
+  # cpp.js xcframework slices ship arm64 only for iOS simulator. Apple
+  # Silicon Macs always build for arm64, but Release configs default to
+  # ONLY_ACTIVE_ARCH=NO and would otherwise also try to link x86_64, which
+  # has no matching slice. Drop x86_64 explicitly so consumer apps (clean
+  # React Native installs included) don't have to patch their pbxproj.
+  s.user_target_xcconfig = {
+    'OTHER_LDFLAGS' => '-ObjC -force_load $(PODS_XCFRAMEWORKS_BUILD_DIR)/react-native-cppjs/libreact-native-cppjs.a',
+    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'x86_64'
+  }
 end

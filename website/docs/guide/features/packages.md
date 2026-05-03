@@ -73,12 +73,12 @@ Here are some examples of how cppjs.build.js files are structured for different 
 │       └── CMakeLists.txt
 |
 └── mylib.xcframework
-    ├── ios-arm64_arm64e
+    ├── ios-arm64
     │   ├── Headers
     │   │   └── ...
     │   └── libmylib.a
     │
-    ├── ios-arm64_x86_64-simulator
+    ├── ios-arm64-simulator
     │   ├── Headers
     │   │   └── ...
     │   └── libmylib.a

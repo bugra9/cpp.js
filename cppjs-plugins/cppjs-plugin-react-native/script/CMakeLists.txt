@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.28)
 
 execute_process(
     COMMAND node ${CMAKE_SOURCE_DIR}/getCliPath.js
@@ -76,4 +76,4 @@ endwhile()
 message("PROJECT_NAME = ${PROJECT_NAME}")
 message("NODE_OUTPUT = ${NODE_OUTPUT}")
 
-include("${CPPJS_CLI_PATH}/assets/CMakeLists.txt")
+include("${CPPJS_CLI_PATH}/assets/cmake/CMakeLists.txt")

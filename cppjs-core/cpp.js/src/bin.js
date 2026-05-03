@@ -16,6 +16,7 @@ import { getBuildTargets, getFilteredBuildTargets, getFilteredTargetSpec } from 
 import downloadAndExtractFile from './utils/downloadAndExtractFile.js';
 import writeJson from './utils/writeJson.js';
 import systemKeys from './utils/systemKeys.js';
+import logger from './utils/logger.js';
 import { getDockerImage } from './utils/pullDockerImage.js';
 import { getContentHash } from './utils/hash.js';
 import findFiles from './utils/findFiles.js';
@@ -283,7 +284,7 @@ function buildLib(targetParams) {
             });
             isChanged = true;
         } else {
-            console.log(`${state.config.general.name} is already compiled to ${target.path} architecture.`);
+            logger.cachedStep(target, 'lib');
         }
     });
 
@@ -306,7 +307,7 @@ function buildLib(targetParams) {
         xcFrameworks.push(...state.config.export.libName.map((l) => `${l}.xcframework`));
         if (!xcFrameworks.some(f => !fs.existsSync(`${state.config.paths.project}/${f}`))) {
             xcFrameworks.push(...state.config.dependencies.map((d) => d.export.libName.map((l) => `${l}.xcframework`)).flat());
-            const distPodSpecContent = fs.readFileSync(`${state.config.paths.cli}/assets/cppjs-package.podspec`, { encoding: 'utf8', flag: 'r' })
+            const distPodSpecContent = fs.readFileSync(`${state.config.paths.cli}/assets/packaging/cppjs-package.podspec`, { encoding: 'utf8', flag: 'r' })
                 .replaceAll('___PROJECT_NAME___', state.config.general.name)
                 .replace('___PROJECT_FRAMEWORKS___', xcFrameworks.map(f => `'${f}'`).join(', '))
                 .replace('___PROJECT_RESOURCES___', JSON.stringify(uniqueResources));
@@ -314,7 +315,7 @@ function buildLib(targetParams) {
         }
     }
 
-    const distCmakeContent = fs.readFileSync(`${state.config.paths.cli}/assets/dist.cmake`, { encoding: 'utf8', flag: 'r' })
+    const distCmakeContent = fs.readFileSync(`${state.config.paths.cli}/assets/cmake/dist.cmake`, { encoding: 'utf8', flag: 'r' })
         .replace('___PROJECT_NAME___', state.config.general.name)
         .replace('___PROJECT_HOST___', targets.map((t) => t.path).join(';'))
         .replace('___PROJECT_LIBS___', state.config.export.libName.join(';'));
@@ -341,14 +342,14 @@ async function createWasmJs(targetParams) {
     const opt = {
         buildSource: false,
         nativeGlob: [
-            `${state.config.paths.cli}/assets/commonBridges.cpp`,
+            `${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`,
             ...bridges,
         ],
     };
 
     for (const target of targets) {
         if (fs.existsSync(`${state.config.paths.output}/${target.jsName}`) && fs.existsSync(`${state.config.paths.output}/${target.wasmName}`)) {
-            console.log(`${state.config.general.name} wasm is already compiled to ${target.path} ${target.runtimeEnv || ''} architecture.`);
+            logger.cachedStep(target, 'wasm+js');
             continue;
         }
         createLib(target, 'Bridge', opt);

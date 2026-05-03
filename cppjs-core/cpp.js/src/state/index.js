@@ -260,9 +260,9 @@ function setAllDependecyPaths() {
                 if (target.platform === 'ios') {
                     let xcRoot;
                     if (target.arch === 'iphoneos') {
-                        xcRoot = `${d.paths.project}/${name}.xcframework/ios-arm64_arm64e`;
+                        xcRoot = `${d.paths.project}/${name}.xcframework/ios-arm64`;
                     } else if (target.arch === 'iphonesimulator') {
-                        xcRoot = `${d.paths.project}/${name}.xcframework/ios-arm64_x86_64-simulator`;
+                        xcRoot = `${d.paths.project}/${name}.xcframework/ios-arm64-simulator`;
                     }
                     dep.header = `${xcRoot}/Headers`;
                     dep.libPath = xcRoot;

@@ -6,13 +6,14 @@ import getData from './getData.js';
 import buildJs from './buildJs.js';
 import triggerExtensions from './extensions.js';
 import state from '../state/index.js';
+import logger from '../utils/logger.js';
 
-export default async function buildWasm(target) {
+export default async function buildWasm(target, options = {}) {
     const isProd = target.buildType === 'release';
     const buildType = isProd ? 'Release' : 'Debug';
 
-    if (fs.existsSync(`${state.config.paths.build}/${target.jsName}`) && fs.existsSync(`${state.config.paths.build}/${target.wasmName}`)) {
-        console.log(`${target.path} ${target.runtimeEnv || ''} wasm is already built`);
+    if (!options.force && fs.existsSync(`${state.config.paths.build}/${target.jsName}`) && fs.existsSync(`${state.config.paths.build}/${target.wasmName}`)) {
+        logger.cachedStep(target, 'wasm+js');
         return;
     }
 
@@ -41,7 +42,7 @@ export default async function buildWasm(target) {
     }
 
     if (target.runtimeEnv === 'browser') {
-        console.log('wasm compiling for browser...');
+        logger.startStep(target, 'wasm');
         const t0 = performance.now();
 
         triggerExtensions('buildWasm', 'beforeBuildBrowser', [emccFlags]);
@@ -53,7 +54,7 @@ export default async function buildWasm(target) {
             // '-lwebsocket.js', '-sPROXY_POSIX_SOCKETS', '-sWEBSOCKET_DEBUG=1', '-sJSPI', '-g', '-sWASMFS',
             '-sWASM_BIGINT=1', '-s', 'FORCE_FILESYSTEM=1',
             '-sEXPORT_NAME=Module2', // '-pthread', '-sPTHREAD_POOL_SIZE=5',
-            ...libs, `${state.config.paths.cli}/assets/browser.cpp`,
+            ...libs, `${state.config.paths.cli}/assets/cpp-runtime/browser.cpp`,
             ...(isProd ? ['-O3'] : []),
             '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
             '-s', 'RESERVED_FUNCTION_POINTERS=200', // '-s', 'FORCE_FILESYSTEM=1',
@@ -66,8 +67,8 @@ export default async function buildWasm(target) {
             ...data,
         ], null, target);
         const t1 = performance.now();
-        console.log('wasm compiled for browser...', Math.round(t1 - t0));
-        console.log('js compiling for browser...');
+        logger.doneStep(target, 'wasm');
+        logger.startStep(target, 'js');
         replace({
             regex: 'var _scriptName = ',
             replacement: `var _scriptName = 'cpp.worker.js'; //`,
@@ -86,12 +87,11 @@ export default async function buildWasm(target) {
         // fs.rmSync(`${state.config.paths.build}/${state.config.general.name}.js`);
         // fs.copyFileSync(`${state.config.paths.build}/${state.config.general.name}.browser.js`, `${state.config.paths.build}/${state.config.general.name}.js`);
         // fs.renameSync(`${state.config.paths.build}/${state.config.general.name}.js`, `${state.config.paths.build}/${state.config.general.name}.worker.browser.js`);
-        const t2 = performance.now();
-        console.log('js compiled for browser...', Math.round(t2 - t1));
+        logger.doneStep(target, 'js');
     }
 
     if (target.runtimeEnv === 'edge') {
-        console.log('wasm compiling for edge...');
+        logger.startStep(target, 'wasm');
         const t0 = performance.now();
 
         triggerExtensions('buildWasm', 'beforeBuildEdge', [emccFlags]);
@@ -114,15 +114,14 @@ export default async function buildWasm(target) {
             ...data,
         ], null, target);
         const t1 = performance.now();
-        console.log('wasm compiled for edge...', Math.round(t1 - t0));
-        console.log('js compiling for edge...');
+        logger.doneStep(target, 'wasm');
+        logger.startStep(target, 'js');
         await buildJs(target);
-        const t2 = performance.now();
-        console.log('js compiled for edge...', Math.round(t2 - t1));
+        logger.doneStep(target, 'js');
     }
 
     if (target.runtimeEnv === 'node') {
-        console.log('wasm compiling for node...');
+        logger.startStep(target, 'wasm');
 
         triggerExtensions('buildWasm', 'beforeBuildNodeJS', [emccFlags]);
 
@@ -131,7 +130,7 @@ export default async function buildWasm(target) {
             ...emccFlags,
             // '-s', 'FETCH', '-sJSPI', '-sWASM_BIGINT=1', '-pthread', '-sPTHREAD_POOL_SIZE=5',
             '-sWASM_BIGINT=1', '-s', 'FORCE_FILESYSTEM=1',
-            ...libs, `${state.config.paths.cli}/assets/node.cpp`,
+            ...libs, `${state.config.paths.cli}/assets/cpp-runtime/node.cpp`,
             ...(isProd ? ['-O3'] : []),
             '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
             '-s', 'RESERVED_FUNCTION_POINTERS=200', // '-s', 'DISABLE_EXCEPTION_CATCHING=0', '-s', 'FORCE_FILESYSTEM=1',
@@ -143,14 +142,14 @@ export default async function buildWasm(target) {
             '-fwasm-exceptions',
             '-o', `${state.config.paths.build}/${target.rawJsName}`,
         ], null, target);
-        console.log('wasm compiled for node...');
-        console.log('js compiling for node...');
+        logger.doneStep(target, 'wasm');
+        logger.startStep(target, 'js');
         await buildJs(target);
         if (emccFlags.includes('FETCH')) {
             fs.appendFileSync(`${state.config.paths.build}/${target.jsName}`, 'var XMLHttpRequest = require(\'xhr2\');\n');
         }
         // fs.renameSync(`${state.config.paths.build}/${state.config.general.name}.js`, `${state.config.paths.build}/${state.config.general.name}.worker.node.js`);
-        console.log('js compiled for node...');
+        logger.doneStep(target, 'js');
 
         Object.entries(getData('data', target)).forEach(([key, value]) => {
             if (fs.existsSync(key)) {

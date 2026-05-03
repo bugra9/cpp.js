@@ -1,5 +1,5 @@
 PODS:
-  - cppjs-sample-lib-prebuilt-matrix (2.0.0-beta.12)
+  - cppjs-sample-lib-prebuilt-matrix (2.0.0-beta.15)
   - EXConstants (55.0.15):
     - ExpoModulesCore
   - Expo (55.0.17):
@@ -1508,8 +1508,8 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-  - react-native-cppjs (2.0.0-beta.14)
-  - react-native-cppjs-ios-helper (2.0.0-beta.14):
+  - react-native-cppjs (2.0.0-beta.15)
+  - react-native-cppjs-ios-helper (2.0.0-beta.15):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2528,7 +2528,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  cppjs-sample-lib-prebuilt-matrix: 11f49025c8d8cd9dc077e3934422341328fffca4
+  cppjs-sample-lib-prebuilt-matrix: c8a7788fe42f5086e3b0b48b9756edde0a63c429
   EXConstants: b2ff8818e17593c8e0a4dc19fa256c804473fed4
   Expo: c79996d5f6184eb844af559e2647fac4b4f74091
   ExpoAsset: e5a93c1082e763fb7b59a0b3a16c38224ba07f8a
@@ -2589,8 +2589,8 @@ SPEC CHECKSUMS:
   React-logger: 8f320ad2007af122573c11ced727bf3ef795c58b
   React-Mapbuffer: b6935d45926a7a230806e70afd0e67d3daa24ae7
   React-microtasksnativemodule: 0698007c05abab165ee02ee8b1f23a9f577f31bd
-  react-native-cppjs: 7c4eacd0be341d84a2bb9886a5f47d3b9e49fdff
-  react-native-cppjs-ios-helper: f9c7ef27d879ac46c3ad1ca1f95146c9ba1ae182
+  react-native-cppjs: 0d375309bdca55ed0e6590e9de662c28f41b1713
+  react-native-cppjs-ios-helper: fc10ee7be5b9f1f3a94eb364c52da7e2006716a5
   react-native-safe-area-context: 53f796cb6c814661bbe99fbdfd0585d07b996cdd
   React-NativeModulesApple: 9af02ea7a28301aee846322b8ba14eeed9077c2e
   React-networking: 5332952e3074bca9383c3e2c4c1a786243bbf427

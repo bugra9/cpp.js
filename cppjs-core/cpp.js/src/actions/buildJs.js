@@ -7,6 +7,18 @@ import virtual from '@rollup/plugin-virtual';
 import state from '../state/index.js';
 import getData from './getData.js';
 
+const SUPPRESSED_WARN_CODES = new Set([
+    'MISSING_GLOBAL_NAME',
+    'MISSING_NODE_BUILTINS',
+    'MIXED_EXPORTS',
+]);
+
+function suppressNodeBuiltinWarnings(warning, defaultHandler) {
+    if (SUPPRESSED_WARN_CODES.has(warning.code)) return;
+    if (warning.code === 'UNRESOLVED_IMPORT' && /^node:/.test(warning.exporter || warning.source || warning.id || '')) return;
+    defaultHandler(warning);
+}
+
 const nodeLibs = {
     fs: 'export default {};', 'node:fs': 'export default {};',
     path: 'export default {};', 'node:path': 'export default {};',
@@ -40,8 +52,15 @@ const options = {
 options.edge = options.browser;
 
 export default async function buildJS(target) {
-    const entryJS = `${state.config.paths.cli}/assets/${target.runtimeEnv}.js`;
-    const env = JSON.stringify(getData('env', target));
+    const entryJS = `${state.config.paths.cli}/assets/js-runtime/${target.runtimeEnv}.js`;
+    const rawEnv = getData('env', target);
+    const resolvedEnv = Object.fromEntries(
+        Object.entries(rawEnv).map(([key, value]) => [
+            key,
+            typeof value === 'function' ? value(state, target) : value,
+        ]),
+    );
+    const env = JSON.stringify(resolvedEnv);
     const systemConfig = `export default {
         env: ${env},
         useWorker: !!globalThis.Worker,
@@ -67,6 +86,7 @@ export default async function buildJS(target) {
     }), ...option.plugins];
     option.input = entryJS;
     option.output.file = `${state.config.paths.build}/${target.jsName}`;
+    option.onwarn = suppressNodeBuiltinWarnings;
     const bundle = await rollup(option);
     await bundle.write(option.output);
     // fs.rmSync(`${input}.raw.js`, { force: true });

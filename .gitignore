@@ -46,3 +46,9 @@ Thumbs.db
 
 .vscode
 .claude
+default.profraw
+
+# Stale outputs from former check-* scripts (now print to terminal)
+/beta-releases.md
+/external-dependencies.md
+/native-versions.md

@@ -41,7 +41,7 @@ const options = {
     name: 'react-native-cppjs',
     buildSource: true,
     nativeGlob: [
-        `${state.config.paths.cli}/assets/commonBridges.cpp`,
+        `${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`,
         ...bridges,
         `${RNEmbindProjectPath}/cpp/src/emscripten/bind.cpp`,
         `${state.config.paths.project}/node_modules/react-native/ReactCommon/jsi/jsi/jsi.cpp`,

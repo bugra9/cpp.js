@@ -4,6 +4,6 @@ export default {
     getBuildParams: () => [
         '-DENABLE_SHARED=OFF',
         '-DENABLE_STATIC=ON',
-        '-DWITH_TURBOJPEG=OFF', // GDAL uses standard libjpeg API only; skip libturbojpeg.a (unused) to save build output.
+        '-DWITH_TURBOJPEG=OFF',
     ],
 };

@@ -2,6 +2,9 @@ import expatIos from '@cpp.js/package-expat-ios/cppjs.config.js';
 import geosIos from '@cpp.js/package-geos-ios/cppjs.config.js';
 import geotiffIos from '@cpp.js/package-geotiff-ios/cppjs.config.js';
 import iconvIos from '@cpp.js/package-iconv-ios/cppjs.config.js';
+import jpegturboIos from '@cpp.js/package-jpegturbo-ios/cppjs.config.js';
+import zstdIos from '@cpp.js/package-zstd-ios/cppjs.config.js';
+import lercIos from '@cpp.js/package-lerc-ios/cppjs.config.js';
 import projIos from '@cpp.js/package-proj-ios/cppjs.config.js';
 import spatialiteIos from '@cpp.js/package-spatialite-ios/cppjs.config.js';
 import sqlite3Ios from '@cpp.js/package-sqlite3-ios/cppjs.config.js';
@@ -15,6 +18,9 @@ export default {
     geosIos,
     geotiffIos,
     iconvIos,
+    jpegturboIos,
+    zstdIos,
+    lercIos,
     projIos,
     spatialiteIos,
     sqlite3Ios,
@@ -46,7 +52,6 @@ export default {
           DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
           GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
           CPL_LOG_ERRORS: 'ON',
-          GDAL_NUM_THREADS: '0',
         }
       }
     }

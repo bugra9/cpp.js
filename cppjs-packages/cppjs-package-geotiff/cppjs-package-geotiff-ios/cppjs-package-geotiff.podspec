@@ -9,5 +9,7 @@ Pod::Spec.new do |s|
   s.homepage     = "https://github.com/OSGeo/libgeotiff"
   s.author       = "GeoTiff Authors"
   s.source       = { :http => "https://cpp.js.org" }
-  s.vendored_frameworks = 'geotiff.xcframework', 'proj.xcframework', 'tiff.xcframework', 'z.xcframework'
+  s.vendored_frameworks = 'geotiff.xcframework', 'proj.xcframework', 'tiff.xcframework', 'jpeg.xcframework', 'z.xcframework'
+  # arm64-only iOS simulator slice; drop x86_64 to avoid linker errors on consumer apps.
+  s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'x86_64' }
 end

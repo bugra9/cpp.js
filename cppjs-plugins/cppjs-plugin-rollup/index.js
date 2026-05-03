@@ -2,7 +2,7 @@
 
 import {
     state, createLib, createBridgeFile, buildWasm, getCppJsScript,
-    getDependFilePath, getTargetParams, getFilteredBuildTargets,
+    getDependFilePath, getTargetParams, getFilteredBuildTargets, isSourceNewer,
 } from 'cpp.js';
 
 import fs from 'node:fs';
@@ -77,14 +77,17 @@ const rollupCppjsPlugin = (options, bridges = []) => {
                 });
             };
 
-            if (fs.existsSync(state.config.paths.native)) {
-                watch(state.config.paths.native);
-            }
+            state.config.paths.native.forEach((dir) => {
+                if (fs.existsSync(dir)) {
+                    watch([dir]);
+                }
+            });
         },
         async generateBundle() {
-            createLib(buildTargetRelease, 'Source', { buildSource: true });
-            createLib(buildTargetRelease, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
-            await buildWasm(buildTargetRelease);
+            const force = isSourceNewer(buildTargetRelease);
+            createLib(buildTargetRelease, 'Source', { force, buildSource: true });
+            createLib(buildTargetRelease, 'Bridge', { force, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...bridges] });
+            await buildWasm(buildTargetRelease, { force });
 
             this.emitFile({
                 type: 'asset',

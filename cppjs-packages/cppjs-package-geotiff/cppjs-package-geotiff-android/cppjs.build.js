@@ -12,7 +12,8 @@ export default {
     buildType: 'configure',
     getBuildParams: (target, depPaths) => [
         ...(platformBuild[`${target.platform}-${target.arch}`] || []),
-        `--with-proj=${depPaths.proj.root}`, `--with-libtiff=${depPaths.tiff.root}`, `--with-zlib=${depPaths.z.root}`,
+        `--with-proj=${depPaths.proj.root}`, `--with-libtiff=${depPaths.tiff.root}`,
+        `--with-zlib=${depPaths.z.root}`, `--with-jpeg=${depPaths.jpeg.root}`,
     ],
     getExtraLibs: (target) => platformExtraLibs[target.platform] || [],
     replaceList: [

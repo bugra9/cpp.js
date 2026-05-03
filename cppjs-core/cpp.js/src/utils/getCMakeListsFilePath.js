@@ -13,5 +13,5 @@ export default function getCMakeListsFilePath(basePath = process.cwd()) {
 
 export function getCliCMakeListsFile() {
     const cliPath = getParentPath(getParentPath(import.meta.url));
-    return `${cliPath}/assets/CMakeLists.txt`;
+    return `${cliPath}/assets/cmake/CMakeLists.txt`;
 }

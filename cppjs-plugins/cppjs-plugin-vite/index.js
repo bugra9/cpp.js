@@ -1,5 +1,7 @@
 
-import { state, createLib, createBridgeFile, buildWasm, getTargetParams, getFilteredBuildTargets } from 'cpp.js';
+import {
+    state, createLib, createBridgeFile, buildWasm, getTargetParams, getFilteredBuildTargets, isSourceNewer,
+} from 'cpp.js';
 import rollupCppjsPlugin from '@cpp.js/plugin-rollup';
 
 import fs from 'node:fs';
@@ -30,9 +32,10 @@ const viteCppjsPlugin = (options) => {
             name: 'vite-plugin-cppjs',
             async load(source) {
                 if (isServe && source === '/cpp.js') {
-                    createLib(buildTargetDebug, 'Source', { buildSource: true });
-                    createLib(buildTargetDebug, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
-                    await buildWasm(buildTargetDebug);
+                    const force = isSourceNewer(buildTargetDebug);
+                    createLib(buildTargetDebug, 'Source', { force, buildSource: true });
+                    createLib(buildTargetDebug, 'Bridge', { force, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...bridges] });
+                    await buildWasm(buildTargetDebug, { force });
                     return fs.readFileSync(`${state.config.paths.build}/${buildTargetDebug.jsName}`, { encoding: 'utf8', flag: 'r' });
                 }
                 return null;
@@ -55,6 +58,13 @@ const viteCppjsPlugin = (options) => {
                     });
                 }
             },
+            configurePreviewServer(server) {
+                server.middlewares.use((req, res, next) => {
+                    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+                    res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+                    next();
+                });
+            },
             async handleHotUpdate({ file, server }) {
                 if (file.startsWith(state.config.paths.build)) {
                     return;
@@ -62,12 +72,12 @@ const viteCppjsPlugin = (options) => {
                 if (headerRegex.test(file)) {
                     const bridgeFile = createBridgeFile(file);
                     bridges.push(bridgeFile);
-                    createLib(buildTargetDebug, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
-                    await buildWasm(buildTargetDebug);
+                    createLib(buildTargetDebug, 'Bridge', { force: true, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...bridges] });
+                    await buildWasm(buildTargetDebug, { force: true });
                     server.ws.send({ type: 'full-reload' });
                 } else if (sourceRegex.test(file)) {
-                    createLib(buildTargetDebug, 'Source', { buildSource: true, bypassCmake: true });
-                    await buildWasm(buildTargetDebug);
+                    createLib(buildTargetDebug, 'Source', { force: true, buildSource: true, bypassCmake: true });
+                    await buildWasm(buildTargetDebug, { force: true });
                     server.ws.send({ type: 'full-reload' });
                 }
             },

@@ -40,8 +40,8 @@ const androidParamsX86_64 = [
     '-e', `CFLAGS=--sysroot=${t2}/sysroot`,
 ];
 
-const IOS_HOST_FLAGS = `-arch arm64 -arch arm64e -isysroot ${iosSdkPath} -fembed-bitcode`;
-const IOS_SIM_HOST_FLAGS = `-arch x86_64 -arch arm64 -isysroot ${iosSimSdkPath} -fembed-bitcode`;
+const IOS_HOST_FLAGS = `-arch arm64 -isysroot ${iosSdkPath} -fembed-bitcode`;
+const IOS_SIM_HOST_FLAGS = `-arch arm64 -isysroot ${iosSimSdkPath} -fembed-bitcode`;
 const IOS_IPHONE_PARAMS = [
     '-e', `CFLAGS="${IOS_HOST_FLAGS}"`,
     '-e', `CXXFLAGS="${IOS_HOST_FLAGS}"`,
@@ -130,7 +130,8 @@ export default function run(program, params = [], platformPrefix = null, target 
                             `-DMACOSX_FRAMEWORK_IDENTIFIER=org.js.cpp.${state.config.general.name}`,
                             `-DCMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER=org.js.cpp.${state.config.general.name}`,
                             `-DCMAKE_OSX_SYSROOT='${target.arch === 'iphoneos' ? iosSdkPath : iosSimSdkPath}'`,
-                            `-DCMAKE_OSX_ARCHITECTURES=${target.arch === 'iphoneos' ? 'arm64;arm64e' : 'arm64;x86_64'}`,
+                            '-DCMAKE_OSX_ARCHITECTURES=arm64',
+                            '-DCMAKE_SYSTEM_PROCESSOR=arm64',
                             `-DCMAKE_C_FLAGS=${target.arch === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
                             `-DCMAKE_CXX_FLAGS=${target.arch === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
                             '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY=\'iPhone Developer\'',
@@ -143,9 +144,9 @@ export default function run(program, params = [], platformPrefix = null, target 
                     if (dParams[0] !== '--build' && dParams[0] !== '--install') {
                         dParams = [
                             ...dParams,
-                            `-DCMAKE_TOOLCHAIN_FILE='${state.config.paths.cli}/assets/ios.toolchain.cmake'`,
+                            `-DCMAKE_TOOLCHAIN_FILE='${state.config.paths.cli}/assets/cmake/ios.toolchain.cmake'`,
                             `-DPLATFORM=${target.arch === 'iphoneos' ? 'OS64' : 'SIMULATORARM64'}`,
-                            `-DARCHS=${target.arch === 'iphoneos' ? 'arm64;arm64e' : 'arm64;x86_64'}`,
+                            '-DARCHS=arm64',
                             '-DENABLE_BITCODE=TRUE',
                             '-DBUILD_SHARED_LIBS=OFF',
                             '-DFRAMEWORK=TRUE',
@@ -154,7 +155,8 @@ export default function run(program, params = [], platformPrefix = null, target 
                             `-DMACOSX_FRAMEWORK_IDENTIFIER=org.js.cpp.${state.config.general.name}`,
                             `-DCMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER=org.js.cpp.${state.config.general.name}`,
                             `-DCMAKE_OSX_SYSROOT='${target.arch === 'iphoneos' ? iosSdkPath : iosSimSdkPath}'`,
-                            `-DCMAKE_OSX_ARCHITECTURES=${target.arch === 'iphoneos' ? 'arm64;arm64e' : 'arm64;x86_64'}`,
+                            '-DCMAKE_OSX_ARCHITECTURES=arm64',
+                            '-DCMAKE_SYSTEM_PROCESSOR=arm64',
                             `-DCMAKE_C_FLAGS=${target.arch === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
                             `-DCMAKE_CXX_FLAGS=${target.arch === 'iphoneos' ? '-fembed-bitcode' : '-fembed-bitcode-marker'}`,
                             '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY=\'iPhone Developer\'',

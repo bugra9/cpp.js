@@ -130,7 +130,7 @@ const rollupCppjsPlugin = (options, bridges = []) => {
         async transform(code, path) {},
 +       async generateBundle() {
 +           createLib(buildTargetRelease, 'Source', { buildSource: true });
-+           createLib(buildTargetRelease, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
++           createLib(buildTargetRelease, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...bridges] });
 +           await buildWasm(buildTargetRelease);
 +           this.emitFile({
 +               type: 'asset',
@@ -192,7 +192,7 @@ const viteCppjsPlugin = (options) => {
             async load(source) {
                 if (isServe && source === '/cpp.js') {
                     createLib(buildTargetDebug, 'Source', { buildSource: true });
-                    createLib(buildTargetDebug, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
+                    createLib(buildTargetDebug, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...bridges] });
                     await buildWasm(buildTargetDebug);
                     return fs.readFileSync(`${state.config.paths.build}/${buildTargetDebug.jsName}`, { encoding: 'utf8', flag: 'r' });
                 }
@@ -244,7 +244,7 @@ const viteCppjsPlugin = (options) => {
 +               if (headerRegex.test(file)) {
 +                   const bridgeFile = createBridgeFile(file);
 +                   bridges.push(bridgeFile);
-+                   createLib(buildTargetDebug, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...bridges] });
++                   createLib(buildTargetDebug, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...bridges] });
 +                   await buildWasm(buildTargetDebug);
 +                   server.ws.send({ type: 'full-reload' });
 +               } else if (sourceRegex.test(file)) {

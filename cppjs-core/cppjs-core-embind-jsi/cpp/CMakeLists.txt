@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.28)
 set(CMAKE_CXX_COMPILER clang++)
 set(MODULE_NAME react_native_embind)
 add_definitions(-D__wasm64__)

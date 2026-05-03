@@ -1,6 +1,8 @@
 
 import fs from 'node:fs';
-import { state, createLib, buildWasm, createBridgeFile, getData, getCppJsScript, getTargetParams, getFilteredBuildTargets } from 'cpp.js';
+import {
+    state, createLib, buildWasm, createBridgeFile, getData, getCppJsScript, getTargetParams, getFilteredBuildTargets, isSourceNewer,
+} from 'cpp.js';
 
 const targetParams = getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
 let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
@@ -38,9 +40,10 @@ export default class CppjsWebpackPlugin {
     async onDone({ compilation }) {
         const isDev = compilation.options.mode === 'development';
         const buildTarget = isDev ? buildTargetDebug : buildTargetRelease;
-        createLib(buildTarget, 'Source', { buildSource: true });
-        createLib(buildTarget, 'Bridge', { buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/commonBridges.cpp`, ...this.bridges] });
-        await buildWasm(buildTarget);
+        const force = isSourceNewer(buildTarget);
+        createLib(buildTarget, 'Source', { force, buildSource: true });
+        createLib(buildTarget, 'Bridge', { force, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...this.bridges] });
+        await buildWasm(buildTarget, { force });
         if (!isDev) {
             const output = state.config.paths.output === state.config.paths.build ? compilation.options.output.path : state.config.paths.output;
             fs.copyFileSync(`${state.config.paths.build}/${buildTarget.jsName}`, `${output}/cpp.js`);
@@ -88,6 +91,8 @@ export default class CppjsWebpackPlugin {
             middleware: (req, res) => {
                 const filePath = `${state.config.paths.build}/${buildTargetDebug.jsName}`;
                 res.setHeader('Content-Type', 'application/javascript');
+                res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+                res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
                 fs.createReadStream(filePath).pipe(res);
             },
         });
@@ -98,6 +103,8 @@ export default class CppjsWebpackPlugin {
             middleware: (req, res) => {
                 const filePath = `${state.config.paths.build}/${buildTargetDebug.wasmName}`;
                 res.setHeader('Content-Type', 'application/wasm');
+                res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+                res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
                 fs.createReadStream(filePath).pipe(res);
             },
         });
@@ -110,6 +117,10 @@ export default class CppjsWebpackPlugin {
             watchFiles: state.config.paths.native,
             hot: true,
             liveReload: true,
+            headers: {
+                'Cross-Origin-Opener-Policy': 'same-origin',
+                'Cross-Origin-Embedder-Policy': 'require-corp',
+            },
             setupMiddlewares: (middlewares, devServer) => {
                 return this.setDevServerMiddleware(middlewares, devServer);
             },
