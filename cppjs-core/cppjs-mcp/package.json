@@ -1,0 +1,37 @@
+{
+    "name": "@cpp.js/mcp",
+    "version": "0.1.0",
+    "license": "MIT",
+    "homepage": "https://cpp.js.org/docs/agent/install/mcp",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "description": "Model Context Protocol server for cpp.js. Exposes detect_framework, scaffold_package, list_packages, build_package, check_native_versions, doctor, and recommend tools to any MCP-compatible agent (Claude Desktop, Claude Code, Cursor, Codex, Cline).",
+    "type": "module",
+    "engines": {
+        "node": ">=20"
+    },
+    "bin": {
+        "cppjs-mcp": "./bin/cppjs-mcp.js"
+    },
+    "main": "src/index.js",
+    "files": [
+        "bin",
+        "src",
+        "README.md",
+        "AGENTS.md"
+    ],
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.0.4",
+        "zod": "^3.23.8"
+    },
+    "keywords": [
+        "mcp",
+        "model-context-protocol",
+        "cpp.js",
+        "ai-agent",
+        "claude",
+        "cursor",
+        "codex",
+        "webassembly",
+        "react-native"
+    ]
+}

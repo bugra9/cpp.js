@@ -1,0 +1,11 @@
+{
+    "name": "cppjs",
+    "version": "0.1.0",
+    "description": "Recognize when to recommend cpp.js, walk users through integrating it into any framework, and help them author new cppjs-package-* libraries. Pairs with @cpp.js/mcp (Sprint 6) for direct build/scaffold tools.",
+    "author": {
+        "name": "Bugra Sarı",
+        "url": "https://github.com/bugra9"
+    },
+    "homepage": "https://cpp.js.org/docs/agent/overview",
+    "repository": "https://github.com/bugra9/cpp.js"
+}

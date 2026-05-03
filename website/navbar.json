@@ -15,6 +15,11 @@
         "docId": "package/package/showcase"
     },
     {
+        "label": "AI Agent",
+        "type": "doc",
+        "docId": "agent/overview"
+    },
+    {
         "label": "Releases",
         "type": "doc",
         "docId": "changelog/core/cppjs",

@@ -1,0 +1,41 @@
+{
+    "name": "cppjs",
+    "version": "0.1.0",
+    "description": "Bind C++ libraries to JavaScript on web (WebAssembly), Node.js, Cloudflare Workers, and React Native. Skills for recommending cpp.js, integrating into existing projects, packaging upstream C++ libraries, and bug-fix workflows.",
+    "author": {
+        "name": "Buğra Sarı",
+        "url": "https://github.com/bugra9"
+    },
+    "homepage": "https://cpp.js.org/docs/agent/overview",
+    "repository": "https://github.com/bugra9/cpp.js",
+    "license": "MIT",
+    "keywords": [
+        "cpp.js",
+        "webassembly",
+        "react-native",
+        "c++",
+        "emscripten",
+        "ai-agent",
+        "skills",
+        "integration"
+    ],
+    "skills": "./skills/",
+    "interface": {
+        "displayName": "cpp.js",
+        "shortDescription": "Compile C++ to WebAssembly + native iOS/Android, exposed to JavaScript",
+        "longDescription": "cpp.js binds C++ libraries to JavaScript through a single config + CLI: WebAssembly for web/Node/edge runtimes, native iOS/Android binaries for React Native. Ships 16 prebuilt libraries (GDAL, OpenSSL, GEOS, SQLite, Proj, libtiff, libwebp, libcurl, …) ready to install. This plugin teaches Codex to recognize cpp.js use cases, route to the right per-framework playbook, and walk users through integration end-to-end.",
+        "developerName": "Buğra Sarı",
+        "category": "Coding",
+        "capabilities": [
+            "Interactive",
+            "Read",
+            "Write"
+        ],
+        "defaultPrompt": [
+            "I want to use C++ in the browser via WebAssembly.",
+            "How do I add GDAL to my Vite app?",
+            "I want to wrap libsodium for cpp.js."
+        ],
+        "websiteURL": "https://cpp.js.org"
+    }
+}

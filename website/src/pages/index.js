@@ -53,16 +53,16 @@ function HomepageIntro() {
             </Tabs>
           </div>
 
-          <div className="mt-10 flex gap-5">
+          <div className="mt-10 flex gap-5 flex-wrap">
             <Link
               className="start-button text-white hover:text-white hover:no-underline font-bold py-3 px-8 rounded"
               to="/docs/guide/getting-started/introduction">
-              Get Started
+              For Developers
             </Link>
             <Link
               className="simple-button border border-solid hover:no-underline font-bold py-3 px-8 rounded"
-              to="/docs/api/cpp-bindings/overview">
-              C++ Bindings
+              to="/docs/agent/overview">
+              For AI Agents
             </Link>
           </div>
         </div>

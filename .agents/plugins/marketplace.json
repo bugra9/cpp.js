@@ -1,0 +1,16 @@
+{
+    "name": "cppjs",
+    "version": "0.1.0",
+    "description": "cpp.js plugin marketplace for Codex CLI",
+    "owner": {
+        "name": "Buğra Sarı",
+        "url": "https://github.com/bugra9"
+    },
+    "plugins": [
+        {
+            "name": "cppjs",
+            "source": "./cppjs-agents",
+            "description": "Add cpp.js intelligence to Codex: skills, slash commands, and per-framework integration playbooks."
+        }
+    ]
+}

@@ -59,6 +59,10 @@ initCppJs().then(() => {
 
 The project is now fully set up and ready to run.
 
+:::tip Multithreaded builds
+For `runtime: 'mt'`, your production host must send `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` headers (Vercel, Netlify, nginx, …). See the [threading guide](/docs/api/configuration/threading) for per-host snippets.
+:::
+
 :::warning
 Before proceeding, ensure that you have met all the [prerequisites](/docs/guide/getting-started/prerequisites) for setting up a working development environment.
 :::

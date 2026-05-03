@@ -6,11 +6,23 @@
     "repository": "https://github.com/bugra9/cpp.js.git",
     "description": "Bind C++ to JavaScript without extra code. Cpp.js supports WebAssembly and React Native for cross-platform compatibility.",
     "type": "module",
+    "engines": {
+        "node": ">=20"
+    },
     "bin": {
         "cpp.js": "./src/bin.js",
         "cppjs": "./src/bin.js"
     },
     "main": "src/index.js",
+    "scripts": {
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage"
+    },
+    "devDependencies": {
+        "vitest": "^2.1.4",
+        "@vitest/coverage-v8": "^2.1.4"
+    },
     "dependencies": {
         "@rollup/plugin-commonjs": "^29.0.2",
         "@rollup/plugin-json": "^6.1.0",

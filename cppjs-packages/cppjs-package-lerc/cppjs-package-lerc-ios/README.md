@@ -39,8 +39,8 @@ Below are the steps to use lerc in your C++ or JavaScript code.
 ```diff
 +#include <Lerc_c_api.h>
 
-std::string Native::sample() {
-+    return "lerc";
+int Native::sample() {
++    return LERC_VERSION_MAJOR;
 }
 ```
 

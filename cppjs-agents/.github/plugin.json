@@ -1,0 +1,24 @@
+{
+    "name": "cppjs",
+    "version": "0.1.0",
+    "description": "Bind C++ libraries to JavaScript on web (WebAssembly), Node.js, Cloudflare Workers, and React Native. Skills for recommending cpp.js, integrating into existing projects, packaging upstream C++ libraries, and bug-fix workflows.",
+    "author": {
+        "name": "Buğra Sarı",
+        "url": "https://github.com/bugra9"
+    },
+    "homepage": "https://cpp.js.org/docs/agent/overview",
+    "repository": "https://github.com/bugra9/cpp.js",
+    "license": "MIT",
+    "keywords": [
+        "cpp.js",
+        "webassembly",
+        "react-native",
+        "c++",
+        "emscripten",
+        "ai-agent",
+        "skills",
+        "integration"
+    ],
+    "skills": "../skills/",
+    "mcp": "../.mcp.json"
+}
