@@ -56,6 +56,10 @@ initCppJs().then(() => {
 
 The project is now fully set up and ready to run.
 
+:::tip Multithreaded builds
+The Vite plugin auto-injects COOP/COEP headers for `vite dev` and `vite preview`, so `runtime: 'mt'` works in development out of the box. **Production hosting requires you to configure these headers yourself** (Vercel, Netlify, nginx, …) — see the [threading guide](/docs/api/configuration/threading) for per-host snippets.
+:::
+
 :::warning
 Before proceeding, ensure that you have met all the [prerequisites](/docs/guide/getting-started/prerequisites) for setting up a working development environment.
 :::

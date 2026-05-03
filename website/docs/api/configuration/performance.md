@@ -1,0 +1,218 @@
+# Performance — Defaults & Safe Overrides
+
+cpp.js picks production-grade defaults for every Emscripten and CMake flag. **Most apps should change nothing.** This page lists every default cpp.js sets, marks each as "safe to override" or "don't touch", and shows when to reach for a tweak.
+
+The rule: **if your build runs and your app works, the defaults are fine**. Only touch performance flags after measuring.
+
+## Defaults reference
+
+### Emscripten flags (always-on)
+
+| Flag | Value | Purpose | Safe to override? |
+|------|-------|---------|--|
+| `-O3` | (release) | Max optimization | 🔒 Don't override unless debugging a codegen issue |
+| `-O0` | (debug) | No optimization | ✅ Already debug — fine |
+| `-msimd128` | wasm | SIMD128 instruction set | 🔒 Already optimal |
+| `-sMEMORY64=1` | wasm64 only | 64-bit memory | 🔒 Set by `target.arch`, not flag override |
+| `-pthread` + `-sPTHREAD_POOL_SIZE=4` | mt only | Thread pool | ✅ `PTHREAD_POOL_SIZE` is tunable |
+| `-lembind` | always | Embind binding lib | 🔒 Required |
+| `-Wl,--whole-archive` | always | Link all objects | 🔒 Required for static lib symbol retention |
+| `-fwasm-exceptions` | always | C++ exceptions via Wasm EH | 🔒 Required for proper `throw` semantics |
+| `-sWASM_BIGINT=1` | always | BigInt for i64 | 🔒 Required for modern browsers |
+| `-sWASM=1` | always | Output wasm (not asm.js) | 🔒 Don't touch |
+| `-sMODULARIZE=1` | always | ES module wrapper | 🔒 cpp.js bundling depends on this |
+| `-sDYNAMIC_EXECUTION=0` | always | Disable eval / new Function | 🔒 Required for CSP-strict environments |
+| `-sRESERVED_FUNCTION_POINTERS=200` | always | Function table size | ⚠️ Increase if "Cannot enlarge function table" |
+| `-sALLOW_MEMORY_GROWTH=1` | always | Heap can grow at runtime | 🔒 Don't disable |
+| `-sFORCE_FILESYSTEM=1` | browser, node | Always include FS | 🔒 cpp.js fs adapters depend on this |
+| `-sWASMFS` | browser, node | New filesystem backend | 🔒 OPFS depends on this |
+| `-sEXPORT_NAME=Module2` | always | JS namespace name | 🔒 cpp.js bundling depends on this |
+
+### Per-runtimeEnv flags
+
+| runtimeEnv | `-sENVIRONMENT` | `-sEXPORTED_RUNTIME_METHODS` |
+|------------|---|---|
+| browser | `web,webview,worker` | `["FS", "ENV"]` |
+| edge | `web` | `["ENV"]` |
+| node | `node` | `["FS", "ENV"]` |
+
+### CMake flags
+
+| Flag | Value | Purpose | Safe to override? |
+|------|-------|---------|--|
+| `-DPROJECT_NAME` | `general.name` | Internal | 🔒 Don't change |
+| `-DPROJECT_TARGET_*` | platform/arch/runtime/buildType | Routing | 🔒 Don't change |
+| `-DBUILD_TYPE=STATIC` | wasm, ios | Static libs | 🔒 Required by emcc / iOS frameworks |
+| `-DBUILD_TYPE=SHARED` | android | Shared libs | 🔒 Required by Android dynamic loading |
+| `-DBUILD_SHARED_LIBS=OFF` | wasm, ios | Inverse of above | 🔒 Don't override |
+| `-DCMAKE_TOOLCHAIN_FILE` | per-platform | Toolchain pin | 🔒 Don't override |
+| `-DANDROID_PLATFORM=android-33` | android | NDK API level | ⚠️ Lower for older devices |
+| `-DCMAKE_OSX_DEPLOYMENT_TARGET=13.0` | ios | iOS minimum | ⚠️ Lower for older iOS |
+
+### System defaults
+
+| Variable | Default | Source |
+|----------|---------|--------|
+| Android NDK | 27.3.13750724 | Docker image pin |
+| Android API | 33 | CMake flag |
+| iOS deployment | 13.0 | CMake flag |
+| Bitcode | embedded (release) / marker (debug) | iOS only |
+| Emscripten cache | `~/.cppjs/emscripten/` | Docker volume |
+
+## What's safe to override
+
+### `INITIAL_MEMORY` (default: 16MB Wasm default)
+
+If you allocate large objects on startup (loading a model, opening a large geo dataset), the runtime grows memory dynamically — but you'll see growth pauses. Pre-allocating reduces pauses:
+
+```js
+// cppjs.config.js
+targetSpecs: [{
+    platform: 'wasm',
+    specs: { emccFlags: ['-sINITIAL_MEMORY=64MB'] },
+}]
+```
+
+Sweet spot: pre-allocate ~2× your steady-state usage. Going higher just delays startup.
+
+### `MAXIMUM_MEMORY` (default: ~2GB on wasm32)
+
+Browser cap is ~4GB on wasm32. If you genuinely need more (large geospatial / scientific datasets), use **wasm64** target instead:
+
+```js
+// cppjs.config.js
+target: { arch: 'wasm64' }
+```
+
+Don't try to push wasm32 past 4GB — Wasm spec doesn't allow it.
+
+### `PTHREAD_POOL_SIZE` (default: 4)
+
+Default 4 worker threads in the pool. Match to your workload:
+
+- Image / video / geo / crypto with `runtime: 'mt'`: bump to `navigator.hardwareConcurrency` worth.
+- Background tasks where you want main thread responsive: leave at 4 or lower.
+
+```js
+targetSpecs: [{
+    platform: 'wasm', runtime: 'mt',
+    specs: { emccFlags: ['-sPTHREAD_POOL_SIZE=8'] },
+}]
+```
+
+Spawning more than `hardwareConcurrency` doesn't help — context-switching costs dominate.
+
+### `RESERVED_FUNCTION_POINTERS` (default: 200)
+
+If you see `Cannot enlarge function table` at runtime, bump this:
+
+```js
+targetSpecs: [{ specs: { emccFlags: ['-sRESERVED_FUNCTION_POINTERS=1024'] } }]
+```
+
+Most apps never hit this. Function pointers are used by virtual methods, `std::function` captures, and JS callbacks into C++.
+
+### Android API level
+
+Default `android-33` (Android 13). Lower if you support older devices:
+
+```js
+targetSpecs: [{
+    platform: 'android',
+    specs: { cmake: ['-DANDROID_PLATFORM=android-26'] },  // Android 8.0
+}]
+```
+
+Don't go below 26 unless you absolutely have to — older NDK lacks key APIs (e.g. `aligned_alloc`, modern `<filesystem>`).
+
+### iOS deployment target
+
+Default `13.0`. Lower if you support older iOS:
+
+```js
+targetSpecs: [{
+    platform: 'ios',
+    specs: { cmake: ['-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0'] },
+}]
+```
+
+Don't go below 12.0 — older iOS lacks the C++17 standard library features cpp.js auto-generated code uses.
+
+### `JSPI` (experimental, Chrome-only)
+
+Lets C++ code synchronously await JS promises. Use only when you have a specific cross-boundary async pattern (background fetching mid-C++):
+
+```js
+targetSpecs: [{
+    platform: 'wasm',
+    specs: { emccFlags: ['-sJSPI'] },
+}]
+```
+
+Cost: larger Wasm binary (~10-20% bigger), slower call boundary. Only enable if you measure improvement. Pair with the `_JSPI` naming convention — see [C++ binding rules](/docs/api/cpp-bindings/overview).
+
+## What NOT to override
+
+### `-O3` (release)
+
+Always use `-O3` in release. Don't switch to `-O2` or `-Os` thinking you'll get a smaller binary — `-O3` produces faster *and* often smaller output for typical C++ workloads.
+
+### `-fwasm-exceptions`
+
+Required. Without it, C++ exceptions either silently abort or use the slower legacy emulation.
+
+### `-sFORCE_FILESYSTEM=1`, `-sWASMFS`
+
+Required. cpp.js's fs adapters (browser-fs, node-fs) depend on these. Disabling breaks `m.FS.*`.
+
+### `-sMODULARIZE=1`, `-sEXPORT_NAME=Module2`
+
+Required. cpp.js's runtime entry assumes the modular wrapper with this exact export name.
+
+### `-sDYNAMIC_EXECUTION=0`
+
+Disabling re-enables `eval` / `new Function` inside the Wasm runtime. Breaks CSP-strict deployments.
+
+### `-msimd128`
+
+Already optimal for Wasm. Removing it removes a free 2-4× speedup on supported workloads.
+
+## Common "performance" mistakes
+
+### "I'll switch to `-Os` for smaller bundle"
+
+`-O3 + bundler-side dead code elimination` already produces smaller binaries than `-Os` for typical apps. Measure before assuming.
+
+### "I'll disable `ALLOW_MEMORY_GROWTH` for predictable allocation"
+
+You'll just hit "out of memory" in the first user interaction that needs more than `INITIAL_MEMORY`. Memory growth is cheap; OOM crashes aren't.
+
+### "I'll disable `WASMFS` since I don't need files"
+
+cpp.js's adapter layer assumes `m.FS` exists. Disabling breaks even simple operations like reading a file you bundled into the `.data` preload.
+
+### "I'll remove `-fwasm-exceptions` since my code doesn't throw"
+
+Your C++ might not throw, but `std::vector` / `std::string` / `std::map` can. Removing exception support causes them to abort instead of throwing — silent crashes.
+
+### "I'll bump `PTHREAD_POOL_SIZE` to 32 for max parallelism"
+
+Going past `hardwareConcurrency` adds context-switching overhead. Most users have 4-8 cores; pool size 4 is the right default. Bump only when you've measured a benefit.
+
+## Profiling
+
+Before reaching for any override, measure:
+
+1. **Browser DevTools Performance tab** — timing breakdown of JS / Wasm calls.
+2. **Wasm-side `printf`** — quick timestamps with `console.debug` (cpp.js's `print` hook).
+3. **Memory tab** — heap profile to see allocation patterns.
+4. **Lighthouse / PageSpeed** — Wasm bundle download is part of FCP / LCP.
+
+Don't optimize speculatively. The defaults handle 99% of workloads.
+
+## See also
+
+- [Threading guide](/docs/api/configuration/threading) — `runtime: 'mt'` and COOP/COEP.
+- [Override mechanisms](/docs/api/configuration/overrides) — full catalog of where each tweak lives.
+- [Troubleshooting](/docs/guide/troubleshooting) — out-of-memory and codegen errors.
+- [C++ binding rules](/docs/api/cpp-bindings/overview) — JSPI flag and `_JSPI` naming convention.

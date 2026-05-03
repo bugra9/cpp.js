@@ -35,7 +35,8 @@
                 "guide/features/packages",
                 "guide/features/plugins"
             ]
-        }
+        },
+        "guide/troubleshooting"
     ],
     "API": [
         {
@@ -45,7 +46,8 @@
                 "api/cpp-bindings/overview",
                 "api/cpp-bindings/data-types",
                 "api/cpp-bindings/functions",
-                "api/cpp-bindings/classes"
+                "api/cpp-bindings/classes",
+                "api/cpp-bindings/swig-escape"
             ]
         },
         {
@@ -67,7 +69,11 @@
                 "api/configuration/paths",
                 "api/configuration/extensions",
                 "api/configuration/export",
-                "api/configuration/platform"
+                "api/configuration/platform",
+                "api/configuration/threading",
+                "api/configuration/overrides",
+                "api/configuration/performance",
+                "api/configuration/build-hooks"
             ]
         },
         {
@@ -118,6 +124,80 @@
             ]
         }
     ],
+    "agent": [
+        "agent/overview",
+        {
+            "type": "category",
+            "label": "Install",
+            "items": [
+                "agent/install/overview",
+                "agent/install/claude-code",
+                "agent/install/cursor",
+                "agent/install/codex",
+                "agent/install/copilot",
+                "agent/install/gemini",
+                "agent/install/opencode",
+                "agent/install/mcp",
+                "agent/install/skills-cli",
+                "agent/install/snippet"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "Runtime / Config API",
+            "items": [
+                "agent/runtime-api/overview",
+                "agent/runtime-api/init",
+                "agent/runtime-api/cppjs-config",
+                "agent/runtime-api/cppjs-build",
+                "agent/runtime-api/filesystem",
+                "agent/runtime-api/threading",
+                "agent/runtime-api/cpp-binding-rules",
+                "agent/runtime-api/swig-escape",
+                "agent/runtime-api/build-state",
+                "agent/runtime-api/overrides",
+                "agent/runtime-api/troubleshooting",
+                "agent/runtime-api/performance",
+                "agent/runtime-api/lifecycle-and-types"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "Playbooks",
+            "items": [
+                "agent/playbooks/recommend",
+                "agent/playbooks/integrate",
+                "agent/playbooks/new-package",
+                "agent/playbooks/bug-fix",
+                "agent/playbooks/code-review",
+                "agent/playbooks/verify-install"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "Decisions (ADR)",
+            "items": [
+                "agent/decisions/overview",
+                "agent/decisions/0001-agent-first-class-support",
+                "agent/decisions/0002-pnpm-topological-build-order",
+                "agent/decisions/0003-function-typed-env-values",
+                "agent/decisions/0004-three-layer-agent-distribution"
+            ]
+        },
+        {
+            "type": "category",
+            "label": "Reference",
+            "items": [
+                "agent/reference/agents-md",
+                "agent/reference/llms",
+                {
+                    "type": "link",
+                    "label": "llms-full.txt",
+                    "href": "pathname:///llms-full.txt"
+                }
+            ]
+        }
+    ],
     "package": [
         {
             "type": "category",
@@ -129,10 +209,15 @@
                 "package/package/cppjs-package-spatialite",
                 "package/package/cppjs-package-geos",
                 "package/package/cppjs-package-sqlite3",
+                "package/package/cppjs-package-openssl",
+                "package/package/cppjs-package-curl",
                 "package/package/cppjs-package-iconv",
                 "package/package/cppjs-package-zlib",
+                "package/package/cppjs-package-zstd",
                 "package/package/cppjs-package-geotiff",
                 "package/package/cppjs-package-tiff",
+                "package/package/cppjs-package-jpegturbo",
+                "package/package/cppjs-package-lerc",
                 "package/package/cppjs-package-webp",
                 "package/package/cppjs-package-expat"
             ]
@@ -165,17 +250,22 @@
             "type": "category",
             "label": "Packages",
             "items": [
+                "changelog/packages/cppjs-package-curl",
                 "changelog/packages/cppjs-package-expat",
                 "changelog/packages/cppjs-package-gdal",
                 "changelog/packages/cppjs-package-geos",
                 "changelog/packages/cppjs-package-geotiff",
                 "changelog/packages/cppjs-package-iconv",
+                "changelog/packages/cppjs-package-jpegturbo",
+                "changelog/packages/cppjs-package-lerc",
+                "changelog/packages/cppjs-package-openssl",
                 "changelog/packages/cppjs-package-proj",
                 "changelog/packages/cppjs-package-spatialite",
                 "changelog/packages/cppjs-package-sqlite3",
                 "changelog/packages/cppjs-package-tiff",
                 "changelog/packages/cppjs-package-webp",
-                "changelog/packages/cppjs-package-zlib"
+                "changelog/packages/cppjs-package-zlib",
+                "changelog/packages/cppjs-package-zstd"
             ]
         },
         {

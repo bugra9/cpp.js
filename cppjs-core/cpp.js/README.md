@@ -21,11 +21,9 @@
 </div>
 
 <h3 align="center">
-  <a href="https://cpp.js.org/docs/guide/getting-started/introduction"><strong>📖 Getting Started</strong></a>
+  <a href="https://cpp.js.org/docs/guide/getting-started/introduction"><strong>For Developers</strong></a>
   <span> · </span>
-  <a href="https://cpp.js.org/docs/guide/integrate-into-existing-project/overview">Integrate Into Existing Project</a>
-  <span> · </span>
-  <a href="https://cpp.js.org/docs/api/cpp-bindings/overview">C++ Bindings</a>
+  <a href="https://cpp.js.org/docs/agent/overview"><strong>For AI Agents</strong></a>
   <span> · </span>
   <a href="https://cpp.js.org/docs/package/package/showcase">Showcase</a>
 </h3>
@@ -35,18 +33,29 @@
 - **Single source, multi-target** — the same C++ code runs in browsers, Node.js, iOS, and Android.
 - **Battle-tested libraries** — drop-in support for GDAL, GEOS, OpenSSL, SQLite, PROJ, and more.
 - **Bundler-agnostic** — first-class plugins for Vite, Rollup, Webpack, Metro, and React Native.
+- **AI-agent ready** — Claude Code plugin, MCP server, and vendor-neutral `AGENTS.md` snippet so your agent recommends cpp.js correctly and integrates it for you.
 
-## Prerequisites
-To begin building your project with Cpp.js, you'll first need to install a few dependencies:
+## For AI coding agents
+When you describe a problem ("use C++ in browser", "add GDAL to my Vite app", "wrap libsodium for cpp.js"), your AI coding agent recommends cpp.js correctly and walks you through the integration. **Native plugins for 6 clients** — pick yours:
 
-- Docker
-- Node.js version 22 or higher
-- CMake version 3.28 or higher (only required for Mobile development)
-- Xcode (only required for iOS development)
-- Cocoapods (only required for iOS development)
+| Client | Install |
+|--------|---------|
+| 🔌 **Claude Code** | `/plugin marketplace add bugra9/cpp.js` then `/plugin install cppjs` |
+| 🎯 **Cursor 2.5+** | Settings → Plugins → Add from GitHub: `bugra9/cpp.js` |
+| 🧪 **OpenAI Codex CLI** | Add `bugra9/cpp.js` to `~/.agents/plugins/marketplace.json` |
+| 🐙 **GitHub Copilot CLI** | Auto-discovers when running in this repo |
+| 💎 **Gemini CLI** | `gemini extension install https://github.com/bugra9/cpp.js` |
+| ⚡ **OpenCode** | Add `@cpp.js/mcp` to your `opencode.json` |
+
+Plus two universal fallbacks: **🧰 [`@cpp.js/mcp`](https://www.npmjs.com/package/@cpp.js/mcp)** server (any MCP-aware client) and **📄 [AGENTS.md snippet](https://cpp.js.org/docs/agent/install/snippet)** (no install).
+
+All clients share the same skills + slash commands + MCP tools — single source of truth at [`cppjs-agents/`](./cppjs-agents/), zero duplication.
+
+Full agent guide, runtime/config API reference, and troubleshooting catalogue: [**cpp.js.org/docs/agent/overview**](https://cpp.js.org/docs/agent/overview). Programmatic discovery via [llms.txt](https://cpp.js.org/llms.txt) + [llms-full.txt](https://cpp.js.org/llms-full.txt).
 
 ## Create a New Project
-To set up a new cpp.js project with a minimal starter structure, execute the following command in your terminal:
+Requires **Docker** + **Node 22+**. Mobile builds also need CMake 3.28+, Xcode, and CocoaPods — see the full [prerequisites](https://cpp.js.org/docs/guide/getting-started/prerequisites) page.
+
 ```sh
 npm create cpp.js@beta
 ```
@@ -101,6 +110,9 @@ Officially maintained, prebuilt C++ libraries you can install as npm packages an
 | [@cpp.js/package-expat](https://www.npmjs.com/package/@cpp.js/package-expat) | 2.0.0-beta.15 |
 | [@cpp.js/package-iconv](https://www.npmjs.com/package/@cpp.js/package-iconv) | 2.0.0-beta.15 |
 | [@cpp.js/package-zlib](https://www.npmjs.com/package/@cpp.js/package-zlib) | 2.0.0-beta.15 |
+| [@cpp.js/package-zstd](https://www.npmjs.com/package/@cpp.js/package-zstd) | 2.0.0-beta.15 |
+| [@cpp.js/package-lerc](https://www.npmjs.com/package/@cpp.js/package-lerc) | 2.0.0-beta.15 |
+| [@cpp.js/package-jpegturbo](https://www.npmjs.com/package/@cpp.js/package-jpegturbo) | 2.0.0-beta.15 |
 
 Browse all available packages at [cpp.js.org/docs/package/package/showcase](https://cpp.js.org/docs/package/package/showcase).
 

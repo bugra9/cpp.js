@@ -1,0 +1,12 @@
+{
+    "name": "cppjs",
+    "version": "0.1.0",
+    "description": "cpp.js — bind C++ libraries to JavaScript on web, Node.js, Cloudflare Workers, and React Native. Extension wires the @cpp.js/mcp server (typed tools) into Gemini CLI and references GEMINI.md for project context.",
+    "mcpServers": {
+        "cppjs": {
+            "command": "npx",
+            "args": ["-y", "@cpp.js/mcp"]
+        }
+    },
+    "contextFileName": "GEMINI.md"
+}

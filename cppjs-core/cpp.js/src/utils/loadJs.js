@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
 export default async function loadJs(path, fileName, fileExt = ['json', 'js', 'mjs', 'cjs', 'ts']) {
     let filePath;
@@ -12,13 +13,11 @@ export default async function loadJs(path, fileName, fileExt = ['json', 'js', 'm
     });
 
     if (filePath) {
-        let file;
-        if (typeof module !== 'undefined' && module.exports) {
-            file = require(`file:///${filePath}`);
-        } else {
-            file = await import(`file:///${filePath}`);
-        }
-        if (file.default) file = file.default;
+        let file = filePath.endsWith('.json')
+            ? JSON.parse(fs.readFileSync(filePath, 'utf8'))
+            : await import(pathToFileURL(filePath).href);
+
+        if (file && file.default) file = file.default;
 
         if (typeof file === 'function') {
             return file();

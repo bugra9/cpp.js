@@ -1,0 +1,217 @@
+# C++ Binding Rules — write C++ that cpp.js can auto-bind
+
+> cpp.js generates JS bindings automatically. There are no `EMSCRIPTEN_BINDINGS` macros to hand-write. But the generator only handles a constrained subset of C++. Stay inside that subset and you get binding-for-free; step outside and you'll need a wrapper or a SWIG escape (`swig-escape.md`).
+
+This doc tells you the rules. **For the canonical type table** (which JS type maps to which C++ type, with `toArray`/`toVector` examples), use the website:
+
+- `https://cpp.js.org/docs/api/cpp-bindings/overview`
+- `https://cpp.js.org/docs/api/cpp-bindings/data-types`
+
+This page covers what the website doesn't: the **rules** an agent must follow when writing C++ that cpp.js will bind.
+
+## The hard rules
+
+### 1. No raw pointers in public API
+
+```cpp
+// ❌ Won't bind
+MyClass* getInstance();
+void process(int* data, size_t len);
+char* getName();
+
+// ✅ Bind cleanly
+std::shared_ptr<MyClass> getInstance();
+void process(const std::vector<int>& data);
+std::string getName();
+```
+
+cpp.js doesn't expose pointer arithmetic, lifetime, or aliasing semantics to JS. If your library uses raw pointers, you have two options:
+
+- **Wrap it** (preferred — see [§ Wrapper pattern](#wrapper-pattern) below).
+- **Hide it behind a SWIG `.i` file** (escape hatch — see `swig-escape.md`).
+
+### 2. C++11 minimum, C++17 recommended
+
+Build defaults assume modern C++. Use:
+
+- `std::string`, `std::vector<T>`, `std::map<K,V>`, `std::unordered_map<K,V>`
+- `std::shared_ptr<T>` for heap-allocated objects you return to JS
+- `std::optional<T>` (C++17), `std::variant<...>` (C++17) — supported via website type table
+- Range-based for, `auto`, lambdas, `nullptr`
+
+Avoid:
+
+- `std::unique_ptr` returned by value across the binding (use `shared_ptr` for cross-boundary ownership)
+- C-style strings (`char*`) and C-style arrays (`int[]`) in public API
+- Custom allocators, placement new, manual `malloc`/`free` exposed to JS
+
+### 3. Class members must be public to bind
+
+```cpp
+class Matrix {
+  public:
+    int rows;            // ✅ accessible from JS
+    int cols;
+    int get(int i, int j) const;
+  private:
+    std::vector<int> data;  // ❌ not exposed (still works internally)
+};
+```
+
+Private members are fine — they just won't appear in JS. Don't try to hide everything `private` and expect JS to call into your class.
+
+### 4. Inheritance + virtual works; multiple inheritance doesn't
+
+Single-base `virtual` polymorphism is supported. Multiple inheritance (especially diamond) breaks the auto-binder. Refactor to composition or use a `.i` wrapper.
+
+### 5. Templates must be explicitly instantiated
+
+```cpp
+// ❌ Won't bind — template only
+template<typename T> class Buffer { ... };
+
+// ✅ Bind these specific instantiations
+template class Buffer<int>;
+template class Buffer<float>;
+```
+
+The auto-binder needs concrete types. Add `template class Buffer<T>;` declarations for every instantiation you want to expose.
+
+### 6. Memory + lifecycle is C++-side
+
+You **don't** call `m.delete()` in JS. cpp.js doesn't expose raw pointers, so JS-side manual cleanup isn't required. C++ destructors and `shared_ptr` reference counting handle it. See `lifecycle-and-types.md`.
+
+### 7. Exceptions: thrown C++ exceptions become JS exceptions
+
+`throw std::runtime_error("...")` in C++ surfaces as a thrown JS `Error` with the message. Use this rather than out-parameters or status codes — it's the binding-friendly path.
+
+```cpp
+double sqrt(double x) {
+    if (x < 0) throw std::invalid_argument("sqrt of negative");
+    return std::sqrt(x);
+}
+```
+
+In JS:
+
+```js
+try {
+    m.sqrt(-1);
+} catch (e) {
+    console.error(e.message);  // "sqrt of negative"
+}
+```
+
+## Wrapper pattern
+
+If the upstream library you're using has raw pointers, multiple inheritance, templates, or other unbindable patterns, you wrap it. Two locations work:
+
+### A. App-side wrapper (preferred for one-off integration)
+
+You're building an app that uses an unwrapped C++ library. Write the wrapper in your `src/native/` folder:
+
+```
+my-app/
+└── src/native/
+    ├── upstream/         # vendored upstream lib
+    │   └── upstream.h    # has raw pointers
+    └── wrapper.h         # YOUR clean API
+    └── wrapper.cpp
+```
+
+```cpp
+// wrapper.h
+#include "upstream/upstream.h"
+
+class CleanWrapper {
+  public:
+    CleanWrapper();
+    std::vector<float> process(const std::vector<float>& input);
+  private:
+    std::shared_ptr<upstream::RawType> raw_;
+};
+```
+
+cpp.js binds `CleanWrapper`; the raw type stays internal.
+
+### B. Lib-side wrapper (when authoring a `cppjs-package-*`)
+
+If you're writing a reusable `@cpp.js/package-X`, put the wrapper inside the package's source folder so all consumers benefit:
+
+```
+cppjs-package-mylib/
+└── cppjs-package-mylib-wasm/
+    └── src/native/
+        └── wrapper.h        # exposed binding API
+```
+
+App-side wrapper is the default; lib-side only when you're publishing a package.
+
+## Advanced: JSPI flag (experimental)
+
+The Emscripten `-sJSPI` flag enables JavaScript Promise Integration — letting C++ code call into JS-promising code synchronously (the C++ stack suspends on `await`). Used in `cppjs-playground-web-vite` for async iteration over geospatial datasets.
+
+You'd opt in via `targetSpecs[].specs.emccFlags` in `cppjs.config.js`:
+
+```js
+targetSpecs: [{
+    platform: 'wasm',
+    specs: { emccFlags: ['-sJSPI'] },
+}]
+```
+
+### Naming rule: `_JSPI` suffix
+
+Once `-sJSPI` is enabled, **any C++ method or function that should be JSPI-wrapped must end with `_JSPI`**. The cpp.js auto-binder detects the suffix and emits `emscripten::async()` on the binding so the call returns a `Promise` on the JS side and the C++ stack can suspend mid-execution.
+
+```cpp
+// native.h
+class Native {
+public:
+  static std::string sample();          // regular sync binding
+  static void ops_JSPI();               // JSPI-wrapped — async on JS side
+  static std::vector<std::string> listVirtualFiles_JSPI();
+};
+```
+
+The auto-generated bridge becomes:
+
+```cpp
+.class_function("sample", &Native::sample)
+.class_function("ops_JSPI", &Native::ops_JSPI, emscripten::async())
+.class_function("listVirtualFiles_JSPI", &Native::listVirtualFiles_JSPI, emscripten::async())
+```
+
+On the JS side, call the function with the suffix preserved and `await` it:
+
+```js
+await m.Native.ops_JSPI();
+const files = await m.Native.listVirtualFiles_JSPI();
+```
+
+If you forget the suffix, the binding stays synchronous; calls into JS promises from inside that C++ function will then crash with `Cannot suspend without JSPI` at runtime.
+
+This is **experimental and Chrome-only** at the time of writing. Use cases: callbacks into JS that fetch network data, awaiting JS promises mid-C++. Don't enable it unless you specifically need synchronous cross-boundary `await`. See `performance.md` for override safety.
+
+## Common mistakes (from the build-pipeline source code)
+
+1. **Returning a `unique_ptr` from a bindable function** → binding silently fails or returns null. Use `shared_ptr`.
+2. **Defining the class in the `.cpp` only** (forward-declared in `.h`, full definition hidden) → binder needs the full definition in the header it scans.
+3. **Anonymous namespaces wrapping the public API** → not exposed. Public API stays in named or no namespace.
+4. **`extern "C"` decoration on C++ class methods** → invalid. Only use `extern "C"` for C-style free functions.
+5. **Returning a reference or pointer to a stack object** → undefined behavior; binder doesn't catch it. Always return by value or by `shared_ptr`.
+
+## When the rules don't fit
+
+Three escape hatches, in order of preference:
+
+1. **Wrap it in C++** (above) — most maintainable.
+2. **Write a `.i` file** for SWIG (`swig-escape.md`) — fine for selective custom types.
+3. **Open an issue** — if a common pattern keeps falling outside the auto-binder, the binder itself can be extended.
+
+## See also
+
+- [`swig-escape.md`](./swig-escape.md) — when and how to write a manual SWIG `.i` file.
+- [`lifecycle-and-types.md`](./lifecycle-and-types.md) — why JS-side `m.delete()` isn't a thing in cpp.js.
+- [`cppjs-config.md`](./cppjs-config.md) — `targetSpecs[]` for emccFlags overrides like `-sJSPI`.
+- Website: [Type table](https://cpp.js.org/docs/api/cpp-bindings/data-types), [Classes & functions](https://cpp.js.org/docs/api/cpp-bindings/overview).
