@@ -30,7 +30,8 @@ export default async function buildWasm(target, options = {}) {
 
     if (target.runtime === 'mt' && !emccFlags.includes('-pthread')) {
         emccFlags.push('-pthread');
-        emccFlags.push('-sPTHREAD_POOL_SIZE=4');
+        emccFlags.push('-sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency');
+        emccFlags.push('-sPTHREAD_POOL_SIZE_STRICT=2');
     }
 
     if (target.platform === 'wasm') {
