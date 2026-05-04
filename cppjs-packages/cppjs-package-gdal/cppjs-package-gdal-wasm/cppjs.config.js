@@ -51,7 +51,7 @@ export default {
           DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
           GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
           CPL_LOG_ERRORS: 'ON',
-          GDAL_NUM_THREADS: (state, target) => (target.runtime === 'st' ? '0' : 'ALL_CPUS'),
+          GDAL_NUM_THREADS: (state, target) => (target.runtime === 'st' ? '0' : '1'),
         }
       }
     }

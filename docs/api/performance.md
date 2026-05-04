@@ -14,7 +14,7 @@ The rule: **if your build runs and your app works, the defaults are fine**. Only
 | `-O0` | (debug) | No optimization | ✅ Already debug — fine |
 | `-msimd128` | wasm | SIMD128 instruction set | 🔒 Already optimal |
 | `-sMEMORY64=1` | wasm64 only | 64-bit memory | 🔒 Set by target.arch, not flag override |
-| `-pthread` + `-sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency` | mt only | Thread pool sized to device CPU at module load | ✅ `PTHREAD_POOL_SIZE` is tunable (see below) |
+| `-pthread` + `-sPTHREAD_POOL_SIZE=Math.min(navigator.hardwareConcurrency \|\| 1, 2)` | mt only | Thread pool capped at 2 workers (1 if `hardwareConcurrency` is unavailable) | ✅ `PTHREAD_POOL_SIZE` is tunable (see below) |
 | `-sPTHREAD_POOL_SIZE_STRICT=2` | mt only | Abort if more pthreads requested than pool (no dynamic growth) | ⚠️ Drop to `1` (warn + grow) or `0` (silent grow) only if your code spawns unbounded threads |
 | `-lembind` | always | Embind binding lib | 🔒 Required |
 | `-Wl,--whole-archive` | always | Link all objects | 🔒 Required for static lib symbol retention |
@@ -87,30 +87,35 @@ target: { arch: 'wasm64' }
 
 Don't try to push wasm32 past 4GB — Wasm spec doesn't allow it.
 
-### `PTHREAD_POOL_SIZE` (default: `navigator.hardwareConcurrency`)
+### `PTHREAD_POOL_SIZE` (default: `Math.min(navigator.hardwareConcurrency || 1, 2)`)
 
-The pool is sized to the device's CPU count at module load — `navigator.hardwareConcurrency` is evaluated as a JS expression by Emscripten at runtime, not baked in at build time. Most apps need no override.
+The default expression is evaluated by Emscripten at module load (not baked at build time):
 
-Paired with `-sPTHREAD_POOL_SIZE_STRICT=2`: if your code requests more pthreads than the pool, the runtime **aborts**. No dynamic growth, no main-thread deadlock risk. If your thread count is bounded by `hardwareConcurrency` you're fine; otherwise either bump the pool or relax strictness.
+- Caps the pool at **2 worker threads**, even on 16-core devices.
+- Falls back to **1** if `navigator.hardwareConcurrency` is unavailable (older browsers, Node, edge runtimes).
 
-Override only when:
+Why the cap? Each pthread is a Web Worker — non-trivial memory footprint, startup latency, and WASM heap duplication. For typical workloads two workers (main + one) covers parallelism; going past 2 trades memory and load time for diminishing returns. Bump only when you've measured CPU-bound parallelism that scales further.
 
-- **Background tasks where you want the main thread responsive** — cap below CPU count:
+Paired with `-sPTHREAD_POOL_SIZE_STRICT=2`: if your code requests more pthreads than the pool, the runtime **aborts**. No dynamic growth, no main-thread deadlock risk. If you bump the pool, also relax strictness or keep your spawn count under the new cap.
+
+Override scenarios:
+
+- **CPU-bound parallelism that benefits from more workers** (tile-by-tile image processing, parallel decoding) — bump the pool and relax strict mode:
   ```js
   targetSpecs: [{
       platform: 'wasm', runtime: 'mt',
-      specs: { emccFlags: ['-sPTHREAD_POOL_SIZE=2'] },
+      specs: { emccFlags: ['-sPTHREAD_POOL_SIZE=8', '-sPTHREAD_POOL_SIZE_STRICT=1'] },
   }]
   ```
-- **Workloads that spawn more threads than CPU count** — bump pool size, or relax strict mode:
+- **Want even less memory pressure** — pin to one worker:
   ```js
   targetSpecs: [{
       platform: 'wasm', runtime: 'mt',
-      specs: { emccFlags: ['-sPTHREAD_POOL_SIZE=16', '-sPTHREAD_POOL_SIZE_STRICT=1'] },
+      specs: { emccFlags: ['-sPTHREAD_POOL_SIZE=1'] },
   }]
   ```
 
-Spawning more than `hardwareConcurrency` doesn't speed things up — context-switching costs dominate.
+Past `hardwareConcurrency` real cores, context-switching costs dominate anyway.
 
 ### `RESERVED_FUNCTION_POINTERS` (default: 200)
 
@@ -207,7 +212,7 @@ Your C++ might not throw, but std::vector / std::string / std::map can. Removing
 
 ### "I'll bump `PTHREAD_POOL_SIZE` to 32 for max parallelism"
 
-Going past `hardwareConcurrency` adds context-switching overhead. The default already matches the device CPU count at runtime — bumping it past that doesn't help. Bump only when your code spawns more concurrent threads than the device has cores AND you've measured a benefit (you'll also need `-sPTHREAD_POOL_SIZE_STRICT=1` so the extra threads don't trip the strict abort).
+Each pthread is a Web Worker with its own WASM instance — bumping pool size to 32 inflates memory and module startup time without a matching speedup. The default caps at 2 deliberately: enough to parallelize the hot path, cheap to spin up. Bump only when measurement shows your workload scales (e.g. embarrassingly parallel image / geo / crypto loops), and pair the bump with `-sPTHREAD_POOL_SIZE_STRICT=1` so spawning more than the new cap doesn't trip the strict abort.
 
 ## Profiling
 
