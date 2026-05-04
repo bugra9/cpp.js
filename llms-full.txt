@@ -3288,7 +3288,8 @@ The rule: **if your build runs and your app works, the defaults are fine**. Only
 | `-O0` | (debug) | No optimization | ✅ Already debug — fine |
 | `-msimd128` | wasm | SIMD128 instruction set | 🔒 Already optimal |
 | `-sMEMORY64=1` | wasm64 only | 64-bit memory | 🔒 Set by target.arch, not flag override |
-| `-pthread` + `-sPTHREAD_POOL_SIZE=4` | mt only | Thread pool | ✅ `PTHREAD_POOL_SIZE` is tunable (see below) |
+| `-pthread` + `-sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency` | mt only | Thread pool sized to device CPU at module load | ✅ `PTHREAD_POOL_SIZE` is tunable (see below) |
+| `-sPTHREAD_POOL_SIZE_STRICT=2` | mt only | Abort if more pthreads requested than pool (no dynamic growth) | ⚠️ Drop to `1` (warn + grow) or `0` (silent grow) only if your code spawns unbounded threads |
 | `-lembind` | always | Embind binding lib | 🔒 Required |
 | `-Wl,--whole-archive` | always | Link all objects | 🔒 Required for static lib symbol retention |
 | `-fwasm-exceptions` | always | C++ exceptions via Wasm EH | 🔒 Required for proper `throw` semantics |
@@ -3360,21 +3361,30 @@ target: { arch: 'wasm64' }
 
 Don't try to push wasm32 past 4GB — Wasm spec doesn't allow it.
 
-### `PTHREAD_POOL_SIZE` (default: 4)
+### `PTHREAD_POOL_SIZE` (default: `navigator.hardwareConcurrency`)
 
-Default 4 worker threads in the pool. Match to your workload:
+The pool is sized to the device's CPU count at module load — `navigator.hardwareConcurrency` is evaluated as a JS expression by Emscripten at runtime, not baked in at build time. Most apps need no override.
 
-- Image / video / geo / crypto with `runtime: 'mt'`: bump to `navigator.hardwareConcurrency` worth.
-- Background tasks where you want main thread responsive: leave at 4 or lower.
+Paired with `-sPTHREAD_POOL_SIZE_STRICT=2`: if your code requests more pthreads than the pool, the runtime **aborts**. No dynamic growth, no main-thread deadlock risk. If your thread count is bounded by `hardwareConcurrency` you're fine; otherwise either bump the pool or relax strictness.
 
-```js
-targetSpecs: [{
-    platform: 'wasm', runtime: 'mt',
-    specs: { emccFlags: ['-sPTHREAD_POOL_SIZE=8'] },
-}]
-```
+Override only when:
 
-Spawning more than `hardwareConcurrency` doesn't help — context-switching costs dominate.
+- **Background tasks where you want the main thread responsive** — cap below CPU count:
+  ```js
+  targetSpecs: [{
+      platform: 'wasm', runtime: 'mt',
+      specs: { emccFlags: ['-sPTHREAD_POOL_SIZE=2'] },
+  }]
+  ```
+- **Workloads that spawn more threads than CPU count** — bump pool size, or relax strict mode:
+  ```js
+  targetSpecs: [{
+      platform: 'wasm', runtime: 'mt',
+      specs: { emccFlags: ['-sPTHREAD_POOL_SIZE=16', '-sPTHREAD_POOL_SIZE_STRICT=1'] },
+  }]
+  ```
+
+Spawning more than `hardwareConcurrency` doesn't speed things up — context-switching costs dominate.
 
 ### `RESERVED_FUNCTION_POINTERS` (default: 200)
 
@@ -3471,7 +3481,7 @@ Your C++ might not throw, but std::vector / std::string / std::map can. Removing
 
 ### "I'll bump `PTHREAD_POOL_SIZE` to 32 for max parallelism"
 
-Going past `hardwareConcurrency` adds context-switching overhead. Most users have 4-8 cores; pool size 4 is the right default. Bump only when you've measured a benefit.
+Going past `hardwareConcurrency` adds context-switching overhead. The default already matches the device CPU count at runtime — bumping it past that doesn't help. Bump only when your code spawns more concurrent threads than the device has cores AND you've measured a benefit (you'll also need `-sPTHREAD_POOL_SIZE_STRICT=1` so the extra threads don't trip the strict abort).
 
 ## Profiling
 
