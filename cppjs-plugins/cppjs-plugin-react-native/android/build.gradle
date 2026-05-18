@@ -1,5 +1,23 @@
 apply plugin: 'com.android.library'
 
+// React Native's new-arch autolinking generates its own CMakeLists for this
+// module and ignores the `externalNativeBuild { path "../script/CMakeLists.txt" }`
+// block below, so the bridge generator that was wired through that CMakeLists
+// never ran when the module was consumed via autolinking. Run build_js.js
+// directly at Gradle configuration phase instead: by the time any native
+// compile task starts the SWIG bridges are already on disk.
+def __cppjsAppRoot = new File(rootProject.projectDir, '..').absolutePath
+def __cppjsScript = new File(projectDir, '../script/build_js.js').absolutePath
+logger.lifecycle("[cppjs] Generating SWIG bridges :: ${__cppjsScript} (cwd=${__cppjsAppRoot})")
+def __cppjsProc = new ProcessBuilder('node', __cppjsScript, 'android')
+    .directory(new File(__cppjsAppRoot))
+    .inheritIO()
+    .start()
+def __cppjsExitCode = __cppjsProc.waitFor()
+if (__cppjsExitCode != 0) {
+    throw new GradleException("[cppjs] build_js.js android failed with exit code ${__cppjsExitCode}")
+}
+
 android {
     compileSdkVersion 34
     buildToolsVersion "34.0.0"

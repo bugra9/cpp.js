@@ -1,37 +1,106 @@
 import fs from 'node:fs';
 import state from '../state/index.js';
 
+const LAYOUT = { header: 'include', module: 'swig', source: '' };
+
+let extRegexCache = { key: null, header: null, module: null };
+function getExtRegex() {
+    const { header, module } = state.config.ext;
+    const key = `${header.join(',')}|${module.join(',')}`;
+    if (extRegexCache.key !== key) {
+        extRegexCache = {
+            key,
+            header: new RegExp(`\\.(${header.join('|')})$`),
+            module: new RegExp(`\\.(${module.join('|')})$`),
+        };
+    }
+    return extRegexCache;
+}
+
+const existsCache = new Map();
+function existsCached(p) {
+    if (existsCache.has(p)) return existsCache.get(p);
+    const result = fs.existsSync(p);
+    existsCache.set(p, result);
+    return result;
+}
+
+function getAlias(pkg) {
+    const a = pkg.general.alias;
+    if (!a) return null;
+    if (typeof a !== 'object' || !a.package) {
+        throw new Error(
+            `Invalid alias for package "${pkg.package.name}": expected { package, lib? }.`,
+        );
+    }
+    return {
+        package: a.package,
+        lib: a.lib ?? a.package.replace(/[^a-zA-Z0-9]/g, ''),
+    };
+}
+
+function getMatchingPackages(source) {
+    const matches = [];
+    for (const pkg of state.config.allDependencies) {
+        const alias = getAlias(pkg);
+        const prefixes = [pkg.package.name];
+        if (alias) prefixes.push(alias.package);
+
+        for (const prefix of prefixes) {
+            if (source === prefix || source.startsWith(`${prefix}/`)) {
+                matches.push({
+                    pkg,
+                    alias,
+                    relativePath: source.slice(prefix.length + 1),
+                });
+                break;
+            }
+        }
+    }
+    return matches;
+}
+
+function getLayoutSubdir(source) {
+    const ext = getExtRegex();
+    if (ext.header.test(source)) return LAYOUT.header;
+    if (ext.module.test(source)) return LAYOUT.module;
+    return LAYOUT.source;
+}
+
+function getFolderCandidates(pkg, alias) {
+    const candidates = [];
+    if (alias) candidates.push(alias.lib);
+    candidates.push(pkg.general.name, pkg.package.name, '');
+    return [...new Set(candidates)];
+}
+
 export default function getDependFilePath(source, target) {
-    const headerRegex = new RegExp(`\\.(${state.config.ext.header.join('|')})$`);
-    const moduleRegex = new RegExp(`\\.(${state.config.ext.module.join('|')})$`);
+    const matches = getMatchingPackages(source);
+    if (matches.length === 0) return null;
 
-    const dependPackage = state.config.allDependencies.find((d) => source.startsWith(d.package.name));
-    if (dependPackage) {
-        const depName = dependPackage.package.name;
-        const configName = dependPackage.general.name;
-        const filePath = source.substring(depName.length + 1);
+    const subdir = getLayoutSubdir(source);
+    const tried = [];
 
-        let path;
-        if (headerRegex.test(source)) {
-            path = `${dependPackage.paths.output}/prebuilt/${target.path}/include`;
-        } else if (moduleRegex.test(source)) {
-            path = `${dependPackage.paths.output}/prebuilt/${target.path}/swig`;
-        } else {
-            path = `${dependPackage.paths.output}/prebuilt/${target.path}`;
+    for (const { pkg, alias, relativePath } of matches) {
+        const prebuiltRoot = `${pkg.paths.output}/prebuilt/${target.path}`;
+        // Skip packages that don't produce artifacts for this target — multiple
+        // packages may share the same alias (one per platform), so this filters
+        // out the wrong-platform matches without needing explicit metadata.
+        if (!existsCached(prebuiltRoot)) continue;
+
+        const baseDir = subdir ? `${prebuiltRoot}/${subdir}` : prebuiltRoot;
+        for (const candidate of getFolderCandidates(pkg, alias)) {
+            const fullPath = candidate
+                ? `${baseDir}/${candidate}/${relativePath}`
+                : `${baseDir}/${relativePath}`;
+            tried.push(fullPath);
+            if (existsCached(fullPath)) return fullPath;
         }
-
-        if (fs.existsSync(`${path}/${configName}/${filePath}`)) {
-            path = `${path}/${configName}/${filePath}`;
-        } else if (fs.existsSync(`${path}/${depName}/${filePath}`)) {
-            path = `${path}/${depName}/${filePath}`;
-        } else if (fs.existsSync(`${path}/${filePath}`)) {
-            path = `${path}/${filePath}`;
-        } else {
-            throw new Error(`${source} not found in ${depName} package.`);
-        }
-
-        return path;
     }
 
-    return null;
+    const matchNames = matches.map((m) => m.pkg.package.name).join(', ');
+    throw new Error(
+        `Could not resolve "${source}" in package(s) [${matchNames}] for target "${target.path}". Tried:\n`
+        + tried.map((t) => `  - ${t}`).join('\n'),
+    );
 }

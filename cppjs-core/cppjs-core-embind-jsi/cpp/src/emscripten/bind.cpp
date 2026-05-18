@@ -35,6 +35,12 @@ namespace emscripten {
     facebook::jsi::Runtime* jsRuntime = nullptr;
     namespace internal {
 
+        // Dynamic heap window registration. JS side keeps multiple ArrayBuffer
+        // windows over native memory; this ensures every pointer we hand to JS
+        // is covered by at least one window before being read/written there.
+        void ensureWindowFor(uint64_t ptr);
+        void registerHeapWindow(uint64_t offset);
+
         template<typename T>
         struct Bugra {
             static jsi::Value toValue(T rawValue);
@@ -52,12 +58,16 @@ namespace emscripten {
 
         template<typename T>
         jsi::Value Bugra<T>::toValue(T* rawValue) {
-            return jsi::BigInt::fromUint64(*jsRuntime, reinterpret_cast<uint64_t>(rawValue));
+            uint64_t ptr = reinterpret_cast<uint64_t>(rawValue);
+            ensureWindowFor(ptr);
+            return jsi::BigInt::fromUint64(*jsRuntime, ptr);
         }
 
         template<typename T>
         jsi::Value Bugra<T>::toValue(T** rawValue) {
-            return jsi::BigInt::fromUint64(*jsRuntime, reinterpret_cast<uint64_t>(rawValue));
+            uint64_t ptr = reinterpret_cast<uint64_t>(rawValue);
+            ensureWindowFor(ptr);
+            return jsi::BigInt::fromUint64(*jsRuntime, ptr);
         }
 
         template<typename T>
@@ -146,7 +156,9 @@ namespace emscripten {
         }
 
         template<> inline jsi::Value Bugra<EM_DESTRUCTORS*>::toValue(EM_DESTRUCTORS* rawValue) {
-            return jsi::BigInt::fromUint64(*jsRuntime, reinterpret_cast<uint64_t>(rawValue));
+            uint64_t ptr = reinterpret_cast<uint64_t>(rawValue);
+            ensureWindowFor(ptr);
+            return jsi::BigInt::fromUint64(*jsRuntime, ptr);
         }
 
 
@@ -912,48 +924,61 @@ namespace emscripten {
             uint64_t offset;
         };
 
+        // Tracks every heap window currently exposed to JS. Single-threaded
+        // access assumed (all JSI traffic flows through the JS thread today).
+        static std::vector<uint64_t> registeredOffsets;
+
+        void registerHeapWindow(uint64_t offset) {
+            auto buf = std::make_shared<FixedBuffer>(offset);
+            auto arrayBuffer = facebook::jsi::ArrayBuffer(*jsRuntime, buf);
+            jsRuntime->global()
+                .getPropertyAsFunction(*jsRuntime, "__cppjs_register_heap_window")
+                .call(*jsRuntime,
+                      jsi::BigInt::fromUint64(*jsRuntime, offset),
+                      arrayBuffer);
+            registeredOffsets.push_back(offset);
+        }
+
+        void ensureWindowFor(uint64_t ptr) {
+            for (uint64_t offset : registeredOffsets) {
+                if (ptr >= offset && (ptr - offset) < UINT32_MAX) return;
+            }
+            // Center the new window on `ptr` so nearby allocations also land in it.
+            uint64_t newOffset = (ptr > UINT32_MAX / 2)
+                ? (ptr - UINT32_MAX / 2)
+                : 0;
+            registerHeapWindow(newOffset);
+        }
+
 
         EMSCRIPTEN_KEEPALIVE void _embind_initialize_bindings(jsi::Runtime& rt, std::string path) {
             CPPJS_DATA_PATH = path;
             CppJS::setEnv("CPPJS_DATA_PATH", path, false);
             jsRuntime = &rt;
 
-#ifdef __ANDROID__
-            sleep(2);
-#endif
 
+            // Initial seed windows: anchored around .rodata (string literals)
+            // and the C++ heap. Additional windows are registered on demand
+            // by ensureWindowFor() as new pointer regions are exposed to JS.
             char* name = "M";
             uint64_t namePtrNumber = reinterpret_cast<uint64_t>(name);
-            // uint64_t offset = (namePtrNumber >> 32) << 32;
-            uint64_t offset = namePtrNumber - UINT32_MAX;
-            auto buf = std::make_shared<FixedBuffer>(offset);
-            auto arrayBuffer = facebook::jsi::ArrayBuffer(rt, buf);
-            rt.global().setProperty(rt, "jsiArrayBuffer", arrayBuffer);
 
-            uint64_t bufPtrNumber = reinterpret_cast<uint64_t>(buf.get());
-            // uint64_t offset2 = (bufPtrNumber >> 32) << 32;
-            uint64_t offset2 = bufPtrNumber - UINT32_MAX;
-            auto buf2 = std::make_shared<FixedBuffer>(offset2);
-            auto arrayBuffer2 = facebook::jsi::ArrayBuffer(rt, buf2);
-            rt.global().setProperty(rt, "jsiArrayBuffer2", arrayBuffer2);
+            // Reference allocation to discover the heap region.
+            auto heapProbe = std::make_shared<FixedBuffer>(0);
+            uint64_t heapPtrNumber = reinterpret_cast<uint64_t>(heapProbe.get());
 
-            uint64_t offset3 = offset - UINT32_MAX;
-            auto buf3 = std::make_shared<FixedBuffer>(offset3);
-            auto arrayBuffer3 = facebook::jsi::ArrayBuffer(rt, buf3);
-            rt.global().setProperty(rt, "jsiArrayBuffer3", arrayBuffer3);
+            uint64_t offsetRodataLow = (namePtrNumber > UINT32_MAX)
+                ? (namePtrNumber - UINT32_MAX) : 0;
+            uint64_t offsetHeapLow = (heapPtrNumber > UINT32_MAX)
+                ? (heapPtrNumber - UINT32_MAX) : 0;
+            uint64_t offsetRodataLowest = (offsetRodataLow > UINT32_MAX)
+                ? (offsetRodataLow - UINT32_MAX) : 0;
+            uint64_t offsetRodataHigh = namePtrNumber;
 
-            uint64_t offset4 = namePtrNumber;
-            auto buf4 = std::make_shared<FixedBuffer>(offset4);
-            auto arrayBuffer4 = facebook::jsi::ArrayBuffer(rt, buf4);
-            rt.global().setProperty(rt, "jsiArrayBuffer4", arrayBuffer4);
-
-            jsRuntime->global().getPropertyAsFunction(rt, "updateMemoryViews").call(
-                    *jsRuntime,
-                    jsi::BigInt::fromUint64(rt, reinterpret_cast<uint64_t>(offset)),
-                    jsi::BigInt::fromUint64(rt, reinterpret_cast<uint64_t>(offset2)),
-                    jsi::BigInt::fromUint64(rt, reinterpret_cast<uint64_t>(offset3)),
-                    jsi::BigInt::fromUint64(rt, reinterpret_cast<uint64_t>(offset4))
-                    );
+            registerHeapWindow(offsetRodataLow);
+            registerHeapWindow(offsetHeapLow);
+            registerHeapWindow(offsetRodataLowest);
+            registerHeapWindow(offsetRodataHigh);
 
             for (auto *f = init_funcs; f; f = f->next) {
                 f->init_func();

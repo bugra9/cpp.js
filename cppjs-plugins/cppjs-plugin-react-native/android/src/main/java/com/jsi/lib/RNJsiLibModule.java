@@ -19,8 +19,24 @@ public class RNJsiLibModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void start(Promise promise) {
-    install(this.reactContext.getJavaScriptContextHolder().get(), this.reactContext.getCacheDir().getAbsolutePath());
-    promise.resolve(true);
+    // @ReactMethod calls run on RN's native-modules thread, but Hermes is
+    // thread-affine: any JSI access from a non-JS thread is UB. install()
+    // does heavy JSI work (embind class registration) so it must execute on
+    // the JS queue thread. Dispatch via runOnJSQueueThread to make that
+    // explicit instead of relying on a sleep() race.
+    final long jsContextHolder = this.reactContext.getJavaScriptContextHolder().get();
+    final String cachePath = this.reactContext.getCacheDir().getAbsolutePath();
+    this.reactContext.runOnJSQueueThread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          install(jsContextHolder, cachePath);
+          promise.resolve(true);
+        } catch (Exception e) {
+          promise.reject("RNJSI_INSTALL_FAILED", e);
+        }
+      }
+    });
   }
 
   @Override

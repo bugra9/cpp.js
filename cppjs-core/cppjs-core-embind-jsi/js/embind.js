@@ -480,18 +480,38 @@ function updateMemoryViews(offset, offset2, offset3, offset4) {
   DATA_VIEW.push(new DataView(b4));
 }
 
-function getHeapIndex(ptr) {
-  let heapIndex = -1;
-  if (ptr >= HEAP_OFFSET[1]) heapIndex = 1;
-  else if (ptr >= HEAP_OFFSET[3]) heapIndex = 3;
-  else if (ptr >= HEAP_OFFSET[0]) heapIndex = 0;
-  else if (ptr >= HEAP_OFFSET[2]) heapIndex = 2;
+function __cppjs_register_heap_window(offset, arrayBuffer) {
+  for (let i = 0; i < HEAP_OFFSET.length; i++) {
+    if (HEAP_OFFSET[i] === offset) return;
+  }
+  HEAP_OFFSET.push(offset);
+  HEAP8.push(new Int8Array(arrayBuffer));
+  HEAPU8.push(new Uint8Array(arrayBuffer));
+  DATA_VIEW.push(new DataView(arrayBuffer));
+}
+globalThis.__cppjs_register_heap_window = __cppjs_register_heap_window;
 
-  if (heapIndex === -1 || ptr - HEAP_OFFSET[heapIndex] > 4294967295) {
-    throw (`Heap error !!! pointer: ${ptr}, heap index: ${heapIndex}, HEAPS: ${HEAP_OFFSET}`);
+const UINT32_MAX_BIGINT = 4294967295n;
+
+function getHeapIndex(ptr) {
+  let bestIdx = -1;
+  let bestDelta = UINT32_MAX_BIGINT;
+  for (let i = 0; i < HEAP_OFFSET.length; i++) {
+    const offset = HEAP_OFFSET[i];
+    if (ptr >= offset) {
+      const delta = ptr - offset;
+      if (delta < bestDelta) {
+        bestDelta = delta;
+        bestIdx = i;
+      }
+    }
   }
 
-  return heapIndex;
+  if (bestIdx === -1) {
+    throw (`Heap error !!! pointer: ${ptr}, no covering window in: ${HEAP_OFFSET}`);
+  }
+
+  return bestIdx;
 }
 
 function writeToMemoryUsingShift(pointer, signed, shift, value) {
