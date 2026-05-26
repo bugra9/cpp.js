@@ -2,21 +2,30 @@ apply plugin: 'com.android.library'
 
 // React Native's new-arch autolinking generates its own CMakeLists for this
 // module and ignores the `externalNativeBuild { path "../script/CMakeLists.txt" }`
-// block below, so the bridge generator that was wired through that CMakeLists
-// never ran when the module was consumed via autolinking. Run build_js.js
-// directly at Gradle configuration phase instead: by the time any native
-// compile task starts the SWIG bridges are already on disk.
+// block below, so neither `build_js.js` (SWIG bridges) nor `build_android.js`
+// (native asset copy under android/app/src/main/assets/cppjs) ran when the
+// module was consumed via autolinking. Invoke both directly at Gradle
+// configuration phase: by the time any native compile or APK-packaging task
+// starts, bridges and runtime assets are already on disk.
 def __cppjsAppRoot = new File(rootProject.projectDir, '..').absolutePath
-def __cppjsScript = new File(projectDir, '../script/build_js.js').absolutePath
-logger.lifecycle("[cppjs] Generating SWIG bridges :: ${__cppjsScript} (cwd=${__cppjsAppRoot})")
-def __cppjsProc = new ProcessBuilder('node', __cppjsScript, 'android')
-    .directory(new File(__cppjsAppRoot))
-    .inheritIO()
-    .start()
-def __cppjsExitCode = __cppjsProc.waitFor()
-if (__cppjsExitCode != 0) {
-    throw new GradleException("[cppjs] build_js.js android failed with exit code ${__cppjsExitCode}")
+def __cppjsScriptDir = new File(projectDir, '../script').absolutePath
+
+def __cppjsRun = { String label, List<String> args ->
+    logger.lifecycle("[cppjs] ${label} :: node ${args.join(' ')} (cwd=${__cppjsAppRoot})")
+    def proc = new ProcessBuilder(['node'] + args)
+        .directory(new File(__cppjsAppRoot))
+        .inheritIO()
+        .start()
+    def code = proc.waitFor()
+    if (code != 0) {
+        throw new GradleException("[cppjs] ${label} failed with exit code ${code}")
+    }
 }
+
+__cppjsRun("Generate SWIG bridges", [new File(__cppjsScriptDir, 'build_js.js').absolutePath, 'android'])
+// Asset copy is ABI-agnostic (GDAL share files are plain text) — pin to
+// arm64-v8a/Release so the script can resolve a buildTarget and proceed.
+__cppjsRun("Copy native runtime assets", [new File(__cppjsScriptDir, 'build_android.js').absolutePath, 'arm64-v8a', 'Release'])
 
 android {
     compileSdkVersion 34
