@@ -325,6 +325,9 @@ function buildLib(targetParams) {
 }
 
 async function createWasmJs(targetParams) {
+    if (state.config.export.bundle === false) {
+        return;
+    }
     const targets = getFilteredBuildTargets(targetParams, { platform: 'wasm' });
     if (targets.length === 0) {
         return;

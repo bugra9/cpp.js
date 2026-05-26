@@ -90,6 +90,7 @@ function getFilledConfig(config, options = { isDepend: false }) {
     newConfig.export.libPath = getPath(newConfig.export.libPath || 'lib');
     newConfig.export.libName = newConfig.export.libName || [newConfig.general.name];
     newConfig.export.binHeaders = newConfig.export.binHeaders || [];
+    newConfig.export.bundle = newConfig.export.bundle ?? true;
 
     newConfig.allDependencies = (() => {
         const output = {};

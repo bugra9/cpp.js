@@ -12,6 +12,13 @@ export default async function buildWasm(target, options = {}) {
     const isProd = target.buildType === 'release';
     const buildType = isProd ? 'Release' : 'Debug';
 
+    // Caller can opt out of the final emcc link entirely (e.g. when the
+    // package is consumed only as a static library by downstream builds).
+    if (state.config.export.bundle === false) {
+        logger.info(`[${target.path}] wasm+js skipped (export.bundle = false)`);
+        return;
+    }
+
     if (!options.force && fs.existsSync(`${state.config.paths.build}/${target.jsName}`) && fs.existsSync(`${state.config.paths.build}/${target.wasmName}`)) {
         logger.cachedStep(target, 'wasm+js');
         return;
