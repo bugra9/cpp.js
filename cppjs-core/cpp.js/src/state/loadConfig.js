@@ -8,11 +8,20 @@ import getAbsolutePath from '../utils/getAbsolutePath.js';
 import fixPackageName from '../utils/fixPackageName.js';
 import getCMakeListsFilePath from '../utils/getCMakeListsFilePath.js';
 import calculateDependencyParameters from './calculateDependencyParameters.js';
+import logger from '../utils/logger.js';
 // import getCmakeParameters from './getCmakeParameters.js';
 
 export default async function loadConfig(configDir = process.cwd(), configName = 'cppjs.config') {
     const config = await loadJs(configDir, configName) || {};
-    const output = getFilledConfig(config);
+    const exclude = config.excludedDependencies || [];
+    const seen = new Set();
+    const output = getFilledConfig(config, { isDepend: false, exclude, seen });
+
+    const unmatched = exclude.filter((e) => !seen.has(e));
+    if (unmatched.length) {
+        logger.info(`cppjs: excludedDependencies not found: ${unmatched.join(', ')}. Available: ${[...seen].sort().join(', ')}`);
+    }
+
     const build = await loadJs(configDir, 'cppjs.build');
 
     if (build) {
@@ -32,10 +41,22 @@ export default async function loadConfig(configDir = process.cwd(), configName =
     return output;
 }
 
-function getFilledConfig(config, options = { isDepend: false }) {
+export function getFilledConfig(config, options = { isDepend: false }) {
+    const exclude = options.exclude || [];
+    const { seen } = options;
+
+    const dependencies = (config.dependencies || [])
+        .map((d) => getFilledConfig(d, { isDepend: true, exclude, seen }))
+        .filter((fd) => {
+            const names = [fd.general.name, fd.package?.name, fd.general.alias?.package].filter(Boolean);
+            names.forEach((n) => seen?.add(n));
+            return !names.some((n) => exclude.includes(n));
+        });
+
     const newConfig = {
         general: config.general || {},
-        dependencies: (config.dependencies || []).map((d) => getFilledConfig(d, { isDepend: true })),
+        dependencies,
+        excludedDependencies: config.excludedDependencies || [],
         paths: config.paths || {},
         ext: config.ext || {},
         export: config.export || {},

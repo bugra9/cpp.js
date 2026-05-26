@@ -49,6 +49,10 @@ export default async function buildWasm(target, options = {}) {
         emccFlags.push('-sMEMORY64=1');
     }
 
+    if (state.config.excludedDependencies?.length && !emccFlags.includes('-sERROR_ON_UNDEFINED_SYMBOLS=0')) {
+        emccFlags.push('-sERROR_ON_UNDEFINED_SYMBOLS=0');
+    }
+
     if (target.runtimeEnv === 'browser') {
         logger.startStep(target, 'wasm');
         const t0 = performance.now();
