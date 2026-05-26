@@ -15,6 +15,7 @@ import { getBuildTargets, getFilteredBuildTargets, getFilteredTargetSpec } from 
 
 import downloadAndExtractFile from './utils/downloadAndExtractFile.js';
 import writeJson from './utils/writeJson.js';
+import flattenConfigForTable from './utils/flattenConfigForTable.js';
 import systemKeys from './utils/systemKeys.js';
 import logger from './utils/logger.js';
 import { getDockerImage } from './utils/pullDockerImage.js';
@@ -197,8 +198,8 @@ function listSystemConfig(type) {
     }
 
     if (type === 'all' || type === 'project') {
-        console.log('Project Configuration');
-        console.table(projectConfig);
+        console.log(`Project Configuration (paths relative to ${projectConfig.paths.base})`);
+        console.table(flattenConfigForTable(projectConfig, { base: projectConfig.paths.base }));
     }
 }
 
