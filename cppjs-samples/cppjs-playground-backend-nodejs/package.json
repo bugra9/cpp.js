@@ -25,7 +25,7 @@
         "@cpp.js/package-tiff": "workspace:^",
         "@cpp.js/package-webp": "workspace:^",
         "@cpp.js/package-zlib": "workspace:^",
-        "ws": "8.20.0",
+        "ws": "8.21.0",
         "xhr2": "^0.2.1"
     },
     "keywords": [

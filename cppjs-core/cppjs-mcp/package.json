@@ -20,8 +20,8 @@
         "AGENTS.md"
     ],
     "dependencies": {
-        "@modelcontextprotocol/sdk": "^1.0.4",
-        "zod": "^3.23.8"
+        "@modelcontextprotocol/sdk": "^1.29.0",
+        "zod": "^4.4.3"
     },
     "keywords": [
         "mcp",

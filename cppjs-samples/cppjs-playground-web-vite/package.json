@@ -14,7 +14,7 @@
         "serve": "serve dist -c ../serve.json"
     },
     "dependencies": {
-        "vue": "^3.5.33",
+        "vue": "^3.5.34",
         "@cpp.js/plugin-vite": "workspace:^",
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^",
         "@cpp.js/package-expat": "workspace:^",
@@ -31,9 +31,9 @@
         "@cpp.js/package-zlib": "workspace:^"
     },
     "devDependencies": {
-        "@vitejs/plugin-vue": "^6.0.6",
-        "vite": "^8.0.10",
-        "@playwright/test": "^1.59.1"
+        "@vitejs/plugin-vue": "^6.0.7",
+        "vite": "^8.0.14",
+        "@playwright/test": "^1.60.0"
     },
     "keywords": [
         "cpp.js-sample",

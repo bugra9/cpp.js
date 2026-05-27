@@ -24,8 +24,8 @@
         "cpp.js": "workspace:^"
     },
     "devDependencies": {
-        "wrangler": "^4.85.0",
-        "@playwright/test": "^1.59.1"
+        "wrangler": "^4.95.0",
+        "@playwright/test": "^1.60.0"
     },
     "keywords": [
         "cpp.js-sample",

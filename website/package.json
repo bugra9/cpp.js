@@ -25,23 +25,23 @@
     "copy": "pnpm run copy:readme && pnpm run copy:changelog:core && pnpm run copy:changelog:plugin && pnpm run copy:changelog:package && pnpm run copy:changelog:sample"
   },
   "dependencies": {
-    "@docusaurus/core": "^3.10.0",
-    "@docusaurus/preset-classic": "^3.10.0",
-    "@docusaurus/remark-plugin-npm2yarn": "^3.10.0",
-    "@docusaurus/theme-mermaid": "^3.10.0",
+    "@docusaurus/core": "^3.10.1",
+    "@docusaurus/preset-classic": "^3.10.1",
+    "@docusaurus/remark-plugin-npm2yarn": "^3.10.1",
+    "@docusaurus/theme-mermaid": "^3.10.1",
     "@mdx-js/react": "^3.1.1",
     "autoprefixer": "^10.5.0",
     "clsx": "^2.1.1",
-    "postcss": "^8.5.10",
+    "postcss": "^8.5.15",
     "prism-react-renderer": "^2.4.1",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "tailwindcss": "^4.2.4"
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "^3.10.0",
-    "@docusaurus/types": "^3.10.0",
-    "@tailwindcss/postcss": "^4.2.4",
+    "@docusaurus/module-type-aliases": "^3.10.1",
+    "@docusaurus/types": "^3.10.1",
+    "@tailwindcss/postcss": "^4.3.0",
     "typescript": "^6.0.3",
     "remark-cli": "^12.0.1",
     "remark-lint-no-dead-urls": "^2.0.1"
