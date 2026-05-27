@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunk_cpp_js_website=self.webpackChunk_cpp_js_website||[]).push([[6787],{46787:(e,s,c)=>{c.d(s,{createArchitectureServices:()=>p.S});var p=c(27521);c(22913)}}]);
