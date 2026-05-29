@@ -1,6 +1,6 @@
 {
     "name": "create-cpp.js",
-    "version": "2.0.0-beta.15",
+    "version": "2.0.0-beta.18",
     "description": "Create Cpp.js Applications",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-core-create-app#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -8,24 +8,19 @@
     "bin": "src/index.js",
     "main": "src/index.js",
     "type": "module",
+    "engines": {
+        "node": ">=20"
+    },
+    "files": [
+        "src",
+        "templates"
+    ],
+    "scripts": {
+        "build-templates": "node scripts/build-templates.js",
+        "prepublishOnly": "node scripts/build-templates.js"
+    },
     "dependencies": {
-        "cpp.js": "workspace:^",
-        "@cpp.js/sample-lib-cmake": "workspace:^",
-        "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^",
-        "@cpp.js/sample-lib-source": "workspace:^",
-        "@cpp.js/sample-web-vanilla": "workspace:^",
-        "@cpp.js/sample-web-react-rspack": "workspace:^",
-        "@cpp.js/sample-web-react-vite": "workspace:^",
-        "@cpp.js/sample-web-svelte-vite": "workspace:^",
-        "@cpp.js/sample-web-vue-vite": "workspace:^",
-        "@cpp.js/sample-backend-nodejs-wasm": "workspace:^",
-        "@cpp.js/sample-cloud-cloudflare-worker": "workspace:^",
-        "@cpp.js/sample-mobile-reactnative-cli": "workspace:^",
-        "@cpp.js/sample-mobile-reactnative-expo": "2.0.0-beta.15",
-        "fs-extra": "^11.3.5",
-        "kleur": "^4.1.5",
-        "prompts": "^2.4.2",
-        "replace": "^1.2.2"
+        "@clack/prompts": "^1.4.0"
     },
     "keywords": [
         "cpp.js",

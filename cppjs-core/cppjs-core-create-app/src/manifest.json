@@ -1,0 +1,14 @@
+[
+  { "key": "web-vanilla",             "group": "Web",     "framework": null,           "label": "Vanilla",           "kind": "app", "source": "cppjs-samples/cppjs-sample-web-vanilla" },
+  { "key": "web-react-rspack",        "group": "Web",     "framework": "React",        "label": "Rspack",            "kind": "app", "source": "cppjs-samples/cppjs-sample-web-react-rspack" },
+  { "key": "web-react-vite",          "group": "Web",     "framework": "React",        "label": "Vite",              "kind": "app", "source": "cppjs-samples/cppjs-sample-web-react-vite" },
+  { "key": "web-vue-vite",            "group": "Web",     "framework": "Vue",          "label": "Vite",              "kind": "app", "source": "cppjs-samples/cppjs-sample-web-vue-vite" },
+  { "key": "web-svelte-vite",         "group": "Web",     "framework": "Svelte",       "label": "Vite",              "kind": "app", "source": "cppjs-samples/cppjs-sample-web-svelte-vite" },
+  { "key": "mobile-reactnative-cli",  "group": "Mobile",  "framework": "React Native", "label": "Native CLI",        "kind": "app", "source": "cppjs-samples/cppjs-sample-mobile-reactnative-cli", "nativeFolders": true },
+  { "key": "mobile-reactnative-expo", "group": "Mobile",  "framework": "React Native", "label": "Expo",              "kind": "app", "source": "cppjs-samples/cppjs-sample-mobile-reactnative-expo", "nativeFolders": false, "keepLockfile": true },
+  { "key": "backend-nodejs-wasm",     "group": "Backend", "framework": "Node.js",      "label": "WebAssembly",       "kind": "app", "source": "cppjs-samples/cppjs-sample-backend-nodejs-wasm" },
+  { "key": "cloud-cloudflare-worker", "group": "Cloud",   "framework": null,           "label": "Cloudflare Worker", "kind": "app", "source": "cppjs-samples/cppjs-sample-cloud-cloudflare-worker" },
+  { "key": "lib-prebuilt",            "group": "Library", "framework": null,           "label": "Prebuilt",          "kind": "lib", "source": "cppjs-samples/cppjs-sample-lib-prebuilt-matrix" },
+  { "key": "lib-source",              "group": "Library", "framework": null,           "label": "Source",            "kind": "lib", "source": "cppjs-samples/cppjs-sample-lib-source" },
+  { "key": "lib-cmake",               "group": "Library", "framework": null,           "label": "CMake",             "kind": "lib", "source": "cppjs-samples/cppjs-sample-lib-cmake" }
+]

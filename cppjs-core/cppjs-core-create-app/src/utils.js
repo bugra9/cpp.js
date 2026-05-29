@@ -1,17 +1,8 @@
-import { fileURLToPath } from 'node:url';
-
-const pkgFromUserAgent = (userAgent) => {
+function pkgFromUserAgent(userAgent) {
     if (!userAgent) return {};
-    const pkgSpec = userAgent.split(' ')[0];
-    const pkgSpecArr = pkgSpec.split('/');
-    return {
-        name: pkgSpecArr[0],
-        version: pkgSpecArr[1],
-    };
-};
+    const [pkgSpec] = userAgent.split(' ');
+    const [name, version] = pkgSpec.split('/');
+    return { name, version };
+}
 
 export const pkgManager = pkgFromUserAgent(process.env.npm_config_user_agent).name || 'npm';
-
-export function getPath(path) {
-    return fileURLToPath(new URL(`../${path}`, import.meta.url).href);
-}
