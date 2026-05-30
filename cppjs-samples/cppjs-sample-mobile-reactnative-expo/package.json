@@ -18,7 +18,7 @@
   "dependencies": {
     "@cpp.js/core-embind-jsi": "2.0.0-beta.17",
     "@cpp.js/plugin-metro": "2.0.0-beta.15",
-    "@cpp.js/plugin-react-native": "2.0.0-beta.18",
+    "@cpp.js/plugin-react-native": "2.0.0-beta.20",
     "@cpp.js/plugin-react-native-ios-helper": "2.0.0-beta.15",
     "@cpp.js/sample-lib-prebuilt-matrix": "2.0.0-beta.15",
     "hermes-compiler": "*",

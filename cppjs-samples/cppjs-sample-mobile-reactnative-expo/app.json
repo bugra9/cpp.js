@@ -40,7 +40,8 @@
       "expo-font",
       "expo-image",
       "expo-status-bar",
-      "expo-web-browser"
+      "expo-web-browser",
+      "@cpp.js/plugin-react-native"
     ],
     "experiments": {
       "typedRoutes": true,

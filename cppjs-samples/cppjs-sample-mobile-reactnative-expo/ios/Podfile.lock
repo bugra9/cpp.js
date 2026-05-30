@@ -1518,7 +1518,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-cppjs (2.0.0-beta.18)
+  - react-native-cppjs (2.0.0-beta.20)
   - react-native-cppjs-ios-helper (2.0.0-beta.15):
     - hermes-engine
     - RCTRequired
@@ -1541,7 +1541,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-safe-area-context (5.7.0):
+  - react-native-safe-area-context (5.8.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1553,8 +1553,8 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-safe-area-context/common (= 5.7.0)
-    - react-native-safe-area-context/fabric (= 5.7.0)
+    - react-native-safe-area-context/common (= 5.8.0)
+    - react-native-safe-area-context/fabric (= 5.8.0)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -1565,7 +1565,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-safe-area-context/common (5.7.0):
+  - react-native-safe-area-context/common (5.8.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1587,7 +1587,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-safe-area-context/fabric (5.7.0):
+  - react-native-safe-area-context/fabric (5.8.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2637,9 +2637,9 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 1aa9126122d4247ffc24bf9d28d50ce923499a71
   React-microtasksnativemodule: d86581169e9bb5bb6f5fc3c5052f890016c1bf21
   React-mutationobservernativemodule: 9a0c4e866f1ef2a57acebc902ebacbdf469ae741
-  react-native-cppjs: ea92338c513ae54a2160fb6f6e05e31ae657c12e
+  react-native-cppjs: ca239e2ab537ca169d64da23e08e01373623c7d5
   react-native-cppjs-ios-helper: 86581df2af205f62fb5d6f0637ddb9ad3409003b
-  react-native-safe-area-context: a2325922b8594ddd27f98fb13437aec126be2502
+  react-native-safe-area-context: c1eb308f4b36372a4de4b3bdaa8ed695ec3dd461
   React-NativeModulesApple: cc6ec4767844d610e92cc358bd3ea34937438d56
   React-networking: a8ce15641ed7775d5b54a9d0d32defc367c2216e
   React-oscompat: 64a0c7ef5441855dc6e2a6afe8ba8f92aa05075e
@@ -2685,6 +2685,6 @@ SPEC CHECKSUMS:
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   Yoga: 36fee8f1fca3f54a28c3d7f80e69f66d73d3af96
 
-PODFILE CHECKSUM: 5d9f323d20765a6cb5168ee04b23c5a0b3f900b6
+PODFILE CHECKSUM: a27ee40b07e4c82d816e8cc0da716c92fd4143d1
 
 COCOAPODS: 1.16.2
