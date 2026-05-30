@@ -34,6 +34,7 @@
         "e2e:android": "pnpm -r --workspace-concurrency=1 e2e:android",
         "e2e:mobile": "pnpm run e2e:ios && pnpm run e2e:android",
         "e2e": "pnpm run e2e:dev && pnpm run e2e:prod && pnpm run e2e:mobile",
+        "e2e:templates": "node scripts/e2e-templates.js",
         "publish:samples": "pnpm --filter='@cpp.js/sample-*' publish --no-git-checks",
         "publish:plugins": "pnpm --filter='@cpp.js/plugin-*' publish --no-git-checks",
         "publish:core": "pnpm --filter=cpp.js publish --no-git-checks",
