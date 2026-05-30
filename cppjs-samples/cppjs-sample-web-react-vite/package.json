@@ -1,5 +1,6 @@
 {
     "name": "@cpp.js/sample-web-react-vite",
+    "private": true,
     "version": "2.0.0-beta.15",
     "description": "Cpp.js React Vite sample",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-web-react-vite#readme",
