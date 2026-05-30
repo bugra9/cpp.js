@@ -30,5 +30,13 @@ target 'cppjsSampleReactNativeCLI' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+    # cpp.js ships arm64-only iOS simulator slices. Release configs build for all
+    # archs (ONLY_ACTIVE_ARCH=NO), so exclude x86_64 from every Pod target too —
+    # the app target alone is not enough once Pods are built for the simulator.
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |build_config|
+        build_config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'x86_64'
+      end
+    end
   end
 end

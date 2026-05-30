@@ -54,6 +54,33 @@ const REGISTRY = 'https://registry.npmjs.org';
 
 const DEP_FIELDS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'];
 
+// Dependencies intentionally pinned for specific packages — never reported as
+// outdated nor auto-bumped to npm "latest". The React Native CLI sample +
+// playground + Expo sample must track the React Native 0.85 / Expo SDK 56
+// toolchain (react 19.2.3, react-native 0.85.3, eslint 8, jest 29, typescript
+// 5.8, the @react-native/* + react-native-* + expo-* families); those versions
+// are dictated by react-native / the Expo SDK, not by npm latest. Bumping them
+// breaks the native build or the React renderer (react and react-native-renderer
+// must be the exact same version).
+const PINNED = [
+    {
+        packages: ['@cpp.js/sample-mobile-reactnative-cli', '@cpp.js/playground-mobile-reactnative-cli', '@cpp.js/sample-mobile-reactnative-expo'],
+        deps: ['react', 'react-dom', 'react-test-renderer', 'react-native', 'eslint', 'jest', '@types/jest', 'typescript'],
+        scopes: ['@react-native/', '@react-native-community/', 'react-native-', 'expo'],
+        reason: 'React Native 0.85 / Expo SDK 56 toolchain',
+    },
+];
+
+function pinnedReason(pkgName, depName) {
+    for (const rule of PINNED) {
+        if (!rule.packages.includes(pkgName)) continue;
+        if (rule.deps.includes(depName) || rule.scopes.some((s) => depName.startsWith(s))) {
+            return rule.reason;
+        }
+    }
+    return null;
+}
+
 // ---------------------------------------------------------------------------
 // Version comparison (zero-dep, semver-lite). Returns 1 if a > b, -1 if a < b,
 // 0 if equal. Treats a non-prerelease as newer than any prerelease sharing the
@@ -234,12 +261,18 @@ async function main() {
     //     usages: [{ field, spec, parsed, pkgPath, pkgName }],
     //   }
     const depsByName = new Map();
+    const pinnedUsages = [];
     for (const { path: pkgPath, json } of parsed) {
         for (const field of DEP_FIELDS) {
             const block = json[field];
             if (!block || typeof block !== 'object') continue;
             for (const [name, spec] of Object.entries(block)) {
                 if (workspaceNames.has(name)) continue;
+                const pinned = pinnedReason(json.name, name);
+                if (pinned) {
+                    pinnedUsages.push({ dep: name, pkgName: json.name, reason: pinned });
+                    continue;
+                }
                 const parsedRange = parseRange(spec);
                 // Skip non-version specs (workspace:, file:, git, etc.).
                 if (
@@ -260,6 +293,10 @@ async function main() {
         }
     }
 
+    if (pinnedUsages.length) {
+        console.error(`Skipping ${pinnedUsages.length} pinned dependency usage(s) (not auto-bumped to latest):`);
+        for (const u of pinnedUsages) console.error(`  - ${u.dep} in ${u.pkgName} (${u.reason})`);
+    }
     const sortedNames = [...depsByName.keys()].sort();
     console.error(`Found ${parsed.length} workspace package.json file(s).`);
     console.error(`Found ${sortedNames.length} unique external dependency name(s). Querying npm registry...`);

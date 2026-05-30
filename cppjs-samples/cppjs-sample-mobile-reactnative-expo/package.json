@@ -1,5 +1,6 @@
 {
   "name": "@cpp.js/sample-mobile-reactnative-expo",
+  "private": true,
   "main": "expo-router/entry",
   "version": "2.0.0-beta.15",
   "description": "Cpp.js Expo sample",
@@ -15,9 +16,12 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@cpp.js/core-embind-jsi": "2.0.0-beta.17",
+    "@cpp.js/plugin-metro": "2.0.0-beta.15",
     "@cpp.js/plugin-react-native": "2.0.0-beta.18",
     "@cpp.js/plugin-react-native-ios-helper": "2.0.0-beta.15",
     "@cpp.js/sample-lib-prebuilt-matrix": "2.0.0-beta.15",
+    "hermes-compiler": "*",
     "expo": "^56.0.5",
     "expo-constants": "~56.0.16",
     "expo-device": "~56.0.4",
@@ -31,8 +35,8 @@
     "expo-symbols": "~56.0.5",
     "expo-system-ui": "~56.0.5",
     "expo-web-browser": "~56.0.5",
-    "react": "19.2.6",
-    "react-dom": "19.2.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-native": "0.85.3",
     "react-native-gesture-handler": "~2.31.2",
     "react-native-reanimated": "4.3.1",
