@@ -6,8 +6,9 @@
  *   - web/cloud e2e runs `e2e:prod` (falls back to `e2e:dev`) after installing
  *     Playwright browsers
  *   - mobile picks `e2e:ios` (macOS + simulator) or `e2e:android` (attached
- *     emulator), both gated on Maestro; Expo has no e2e flow, so it gets an
- *     `expo prebuild` smoke instead
+ *     emulator), both gated on Maestro and run WITHOUT CI (so `expo run:ios`
+ *     exits instead of attaching to Metro); with no device/Maestro, Expo falls
+ *     back to an `expo prebuild` smoke
  *   - backend / lib-source / lib-cmake have no e2e; their build (or just a clean
  *     scaffold+install) is the assertion
  *
@@ -135,20 +136,19 @@ async function runTemplate(item, ctx) {
             }
         }
 
-        // Expo ships no e2e flow; a prebuild smoke proves the config plugin works.
-        if (item.key === 'mobile-reactnative-expo') {
-            if (flags.skipE2e) return done('pass', 'e2e skipped');
-            const pre = await record('expo-prebuild', 'npx', ['--yes', 'expo', 'prebuild', '--no-install'], {
-                cwd: projectDir,
-                timeoutMs: TIMEOUTS.build,
-            });
-            return pre.ok ? done('pass') : done('fail', 'expo prebuild failed');
-        }
-
         if (flags.skipE2e) return done('pass', 'e2e skipped');
 
         const e2e = pickE2e(scripts, item.klass, caps);
         if (!e2e) {
+            // Expo with no attached device/Maestro: a prebuild smoke still proves the
+            // config plugin generates the native project.
+            if (item.key === 'mobile-reactnative-expo') {
+                const pre = await record('expo-prebuild', 'npx', ['--yes', 'expo', 'prebuild', '--no-install'], {
+                    cwd: projectDir,
+                    timeoutMs: TIMEOUTS.build,
+                });
+                return pre.ok ? done('pass', 'prebuild smoke (no device for full e2e)') : done('fail', 'expo prebuild failed');
+            }
             const reason = scripts.build ? undefined : 'no build/e2e scripts (scaffold+install only)';
             return done('pass', reason);
         }
@@ -169,16 +169,35 @@ async function runTemplate(item, ctx) {
             await record('playwright-install', 'npx', pwArgs, { cwd: projectDir, timeoutMs: TIMEOUTS.install });
         }
 
-        // Mirrors the iOS CI: a freshly scaffolded RN project has no Pods/ until `pod install` runs.
-        if (e2e.script === 'e2e:ios' && fs.existsSync(path.join(projectDir, 'ios', 'Podfile'))) {
+        // Expo ships no native project (nativeFolders:false). `expo run:ios` would
+        // prebuild implicitly on first launch; do it explicitly up front so the native
+        // project is guaranteed to exist before the build.
+        if (item.key === 'mobile-reactnative-expo') {
+            const platform = e2e.script === 'e2e:android' ? 'android' : 'ios';
+            const pre = await record('expo-prebuild', 'npx', ['--yes', 'expo', 'prebuild', '-p', platform, '--no-install'], {
+                cwd: projectDir,
+                timeoutMs: TIMEOUTS.build,
+            });
+            if (!pre.ok) return done('fail', 'expo prebuild failed');
+        }
+
+        // Mirrors the iOS CI: a freshly scaffolded RN CLI project has no Pods/ until
+        // `pod install` runs. Expo is excluded — its own `run:ios` installs pods the
+        // expo way (a plain `pod install` here would diverge from that proven path).
+        if (e2e.script === 'e2e:ios' && item.key !== 'mobile-reactnative-expo' && fs.existsSync(path.join(projectDir, 'ios', 'Podfile'))) {
             const pod = await record('pod-install', 'pod', ['install'], { cwd: path.join(projectDir, 'ios'), timeoutMs: TIMEOUTS.install });
             if (!pod.ok) return done('fail', 'pod install failed');
         }
 
+        // CI=1 makes Playwright run headless for web/cloud. It is harmful for mobile:
+        // under CI, `expo run:ios` starts Metro in CI mode and attaches (never exits),
+        // so the `run:ios && maestro` chain hangs. Run mobile e2e without CI — exactly
+        // how a developer runs `npm run e2e:ios` locally.
+        const e2eEnv = item.klass === 'web' || item.klass === 'cloud' ? { CI: '1' } : undefined;
         const e2eRun = await record(`e2e:${e2e.script.replace('e2e:', '')}`, pm, ['run', e2e.script], {
             cwd: projectDir,
             timeoutMs: TIMEOUTS.e2e,
-            env: { CI: '1' },
+            env: e2eEnv,
         });
         if (!e2eRun.ok) return done('fail', `${e2e.script} failed`);
 

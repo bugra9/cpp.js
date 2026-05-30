@@ -134,9 +134,9 @@ function printTable(headers, rows) {
 // Human-readable preview of what would run for an item, given host caps.
 function previewAction(item, caps, flags) {
     if (item.klass === 'mobile') {
-        if (item.key === 'mobile-reactnative-expo') return 'install + expo prebuild';
         const e2e = pickE2e({ 'e2e:ios': 1, 'e2e:android': 1 }, 'mobile', caps);
-        return e2e ? `e2e (${e2e.script})` : 'SKIP e2e (no device/maestro)';
+        if (e2e) return `e2e (${e2e.script})`;
+        return item.key === 'mobile-reactnative-expo' ? 'install + expo prebuild (no device)' : 'SKIP e2e (no device/maestro)';
     }
     const buildMiss = item.buildCaps.length ? missingCaps(item.buildCaps, caps) : [];
     if (buildMiss.length && (item.klass === 'web' || item.klass === 'cloud')) {
