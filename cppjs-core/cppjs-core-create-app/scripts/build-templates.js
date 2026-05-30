@@ -70,7 +70,9 @@ function makeFilter(entry) {
         'node_modules', '.cppjs', 'dist', '.gradle', '.cxx', 'Pods', 'build',
         '.expo', '.wrangler', '.next', '.svelte-kit', 'playwright-report', 'test-results', 'coverage',
     ]);
-    const skipFiles = new Set(['.DS_Store', 'pnpm-lock.yaml']);
+    // Podfile.lock is a generated lock pinned to a specific react-native version; shipping it makes
+    // a fresh `pod install` fail when it drifts. The official RN template ships only the Podfile.
+    const skipFiles = new Set(['.DS_Store', 'pnpm-lock.yaml', 'Podfile.lock']);
     if (!entry.keepLockfile) skipFiles.add('package-lock.json');
     return (src) => {
         const base = path.basename(src);

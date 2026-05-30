@@ -66,6 +66,25 @@ async function ensureEmpty(dir) {
     if (!cont) { p.cancel('Cancelled.'); process.exit(0); }
 }
 
+// Build the post-scaffold "Next steps" from the template's own scripts so we
+// never suggest a command the template doesn't define (e.g. `run dev` only
+// exists for some web/cloud templates; mobile needs platform-specific setup).
+function runSteps(entry, scripts, pm) {
+    const has = (script) => Boolean(scripts[script]);
+
+    if (entry.group === 'Mobile') {
+        const launch = `${pm} run ios   # or: ${pm} run android`;
+        if (entry.key === 'mobile-reactnative-expo') return ['npx expo prebuild', launch];
+        return ['cd ios && pod install && cd ..', launch];
+    }
+    if (entry.kind === 'lib') return [`${pm} run build`];
+    if (has('dev')) return [`${pm} run dev`];
+    if (has('start')) return [`${pm} start`];
+    if (has('preview')) return [`${pm} run build`, `${pm} run preview`];
+    if (has('build')) return [`${pm} run build`];
+    return [];
+}
+
 async function main() {
     p.intro(styleText(['cyan', 'bold'], `create-cpp.js v${version}`));
 
@@ -101,10 +120,12 @@ async function main() {
     await fsp.cp(src, cwd, { recursive: true });
 
     const pjPath = path.join(cwd, 'package.json');
+    let scripts = {};
     if (fs.existsSync(pjPath)) {
         const pkg = JSON.parse(await fsp.readFile(pjPath, 'utf8'));
         pkg.name = entry.kind === 'lib' ? `cppjs-lib-${name}` : name;
         await fsp.writeFile(pjPath, `${JSON.stringify(pkg, null, 2)}\n`);
+        scripts = pkg.scripts || {};
     }
 
     const gradlew = path.join(cwd, 'android', 'gradlew');
@@ -112,13 +133,12 @@ async function main() {
 
     spin.stop(`Created ${path.relative(process.cwd(), cwd) || '.'}`);
 
-    const steps = [];
     const rel = path.relative(process.cwd(), cwd);
-    if (rel) steps.push(`cd ${rel}`);
-    steps.push(`${pkgManager} install`);
-    if (entry.key === 'mobile-reactnative-expo') steps.push('npx expo prebuild');
-    if (entry.kind === 'app') steps.push(`${pkgManager} run dev`);
-    if (entry.kind === 'lib') steps.push(`${pkgManager} run build`);
+    const steps = [
+        ...(rel ? [`cd ${rel}`] : []),
+        `${pkgManager} install`,
+        ...runSteps(entry, scripts, pkgManager),
+    ];
 
     p.note(steps.map((s, i) => `${i + 1}. ${styleText('cyan', s)}`).join('\n'), 'Next steps');
     p.outro(styleText('green', 'Done!'));
