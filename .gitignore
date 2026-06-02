@@ -61,3 +61,6 @@ default.profraw
 /beta-releases.md
 /external-dependencies.md
 /native-versions.md
+
+# local README-rewrite research notes (auto-generated, not part of the project)
+docs/research/
