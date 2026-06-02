@@ -1,12 +1,5 @@
-export default {
-    general: {
-        name: 'z',
-    },
-    export: {
-        type: 'cmake',
-    },
-    paths: {
-        config: import.meta.url,
-        output: 'dist',
-    },
-};
+import mergeConfig from '@cpp.js/package-zlib/mergeConfig.mjs';
+
+export default mergeConfig({
+    paths: { config: import.meta.url },
+});

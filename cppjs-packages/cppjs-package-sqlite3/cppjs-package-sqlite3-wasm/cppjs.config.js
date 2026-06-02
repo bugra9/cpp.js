@@ -1,18 +1,7 @@
-import zlib from '@cpp.js/package-zlib-wasm/cppjs.config.js';
+import mergeConfig from '@cpp.js/package-sqlite3/mergeConfig.mjs';
+import zlibWasm from '@cpp.js/package-zlib-wasm/cppjs.config.js';
 
-export default {
-    general: {
-        name: 'sqlite3',
-    },
-    export: {
-        type: 'cmake',
-    },
-    dependencies: [
-        zlib,
-    ],
-    paths: {
-        config: import.meta.url,
-        base: '../..',
-        output: 'dist',
-    },
-};
+export default mergeConfig({
+    dependencies: [zlibWasm],
+    paths: { config: import.meta.url },
+});

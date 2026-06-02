@@ -1,8 +1,8 @@
 {
     "name": "@cpp.js/package-zlib-ios",
-    "version": "2.0.0-beta.15",
+    "version": "2.0.0-beta.21",
     "nativeVersion": "1.3.2",
-    "description": "This package provides the precompiled zlib library, built using cpp.js, for easy integration into JavaScript, WebAssembly and React Native projects. It offers compression and decompression functionalities through the zlib API, ensuring high performance and cross-platform compatibility. Ideal for use in web and mobile applications.",
+    "description": "iOS build of the precompiled zlib library, built with cpp.js. Use it together with the main package @cpp.js/package-zlib.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-zlib#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "license": "Zlib",
@@ -12,15 +12,19 @@
         "clear": "rm -rf .cppjs dist",
         "prepublishOnly": "cppjs build -p ios"
     },
+    "dependencies": {
+        "@cpp.js/package-zlib": "workspace:^"
+    },
     "devDependencies": {
         "cpp.js": "workspace:^"
     },
     "keywords": [
-        "z",
         "zlib",
         "libz",
+        "compression",
+        "cpp.js",
         "cpp.js-package",
-        "webassembly",
+        "ios",
         "react-native"
     ]
 }

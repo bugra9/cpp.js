@@ -11,21 +11,28 @@
     <img alt="License" src="https://img.shields.io/npm/l/%40cpp.js%2Fpackage-lerc?style=for-the-badge" />
 </a>
 
+> Use it together with **[cpp.js](https://cpp.js.org)** — the toolchain for using C++ libraries from JavaScript, TypeScript, WebAssembly, Node.js and React Native. Learn more at **[cpp.js.org](https://cpp.js.org)**.
+
 ## Integration
-Start by installing these package with the following command:
+Install the main package together with the platform builds:
 
 ```sh
-npm install @cpp.js/package-lerc
+npm install @cpp.js/package-lerc @cpp.js/package-lerc-wasm @cpp.js/package-lerc-android @cpp.js/package-lerc-ios
 ```
 
-To enable the library, modify the cppjs.config.js file as shown below.
+Then import all three platforms in `cppjs.config.js` — cpp.js compiles only the one matching each build target:
+
 ```diff
-+import lerc from '@cpp.js/package-lerc/cppjs.config.js';
++import lercWasm from '@cpp.js/package-lerc-wasm/cppjs.config.js';
++import lercAndroid from '@cpp.js/package-lerc-android/cppjs.config.js';
++import lercIos from '@cpp.js/package-lerc-ios/cppjs.config.js';
 
 export default {
     dependencies: [
-+        lerc
-    ]
++        lercWasm,
++        lercAndroid,
++        lercIos,
+    ],
     paths: {
         config: import.meta.url,
     }
@@ -33,7 +40,7 @@ export default {
 ```
 
 ## Usage
-Below are the steps to use lerc in your C++ or JavaScript code.
+Below are the steps to use LERC in your C++ or JavaScript code.
 
 ### Usage in C++ Code
 ```diff
@@ -44,8 +51,16 @@ int Native::sample() {
 }
 ```
 
+## Supported platforms
+This is the main package; the precompiled binaries are shipped per platform:
+
+| Platform | Package | Targets |
+|---|---|---|
+| WebAssembly | [`@cpp.js/package-lerc-wasm`](https://www.npmjs.com/package/@cpp.js/package-lerc-wasm) | `wasm32` — single-threaded & multi-threaded |
+| Android | [`@cpp.js/package-lerc-android`](https://www.npmjs.com/package/@cpp.js/package-lerc-android) | `arm64-v8a` (64-bit ARM), `x86_64` (emulator) |
+| iOS | [`@cpp.js/package-lerc-ios`](https://www.npmjs.com/package/@cpp.js/package-lerc-ios) | device (`arm64`), simulator (`arm64`) |
+
 ## License
-This project includes the precompiled LERC library, which is distributed under the
-[LERC License](https://github.com/Esri/lerc/blob/master/LICENSE).
+This project includes the precompiled LERC library, which is distributed under the [LERC License](https://github.com/Esri/lerc/blob/master/LICENSE).
 
 LERC Homepage: [https://github.com/Esri/lerc](https://github.com/Esri/lerc)

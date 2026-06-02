@@ -1,3 +1,5 @@
+import mergeConfig from '@cpp.js/package-gdal/mergeConfig.mjs';
+import curlIos from '@cpp.js/package-curl-ios/cppjs.config.js';
 import expatIos from '@cpp.js/package-expat-ios/cppjs.config.js';
 import geosIos from '@cpp.js/package-geos-ios/cppjs.config.js';
 import geotiffIos from '@cpp.js/package-geotiff-ios/cppjs.config.js';
@@ -12,8 +14,9 @@ import tiffIos from '@cpp.js/package-tiff-ios/cppjs.config.js';
 import webpIos from '@cpp.js/package-webp-ios/cppjs.config.js';
 import zlibIos from '@cpp.js/package-zlib-ios/cppjs.config.js';
 
-export default {
-  dependencies: [
+export default mergeConfig({
+    dependencies: [
+    curlIos,
     expatIos,
     geosIos,
     geotiffIos,
@@ -27,33 +30,6 @@ export default {
     tiffIos,
     webpIos,
     zlibIos,
-  ],
-  general: {
-    name: 'gdal'
-  },
-  export: {
-    type: 'cmake'
-  },
-  paths: {
-    config: import.meta.url,
-    base: '../..',
-    output: 'dist'
-  },
-
-  targetSpecs: [
-    {
-      platform: 'ios',
-      specs: {
-        'data': {
-          'share/gdal': 'gdal'
-        },
-        env: {
-          GDAL_DATA: '_CPPJS_DATA_PATH_/gdal',
-          DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
-          GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
-          CPL_LOG_ERRORS: 'ON',
-        }
-      }
-    }
-  ],
-};
+    ],
+    paths: { config: import.meta.url },
+});

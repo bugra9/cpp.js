@@ -1,8 +1,8 @@
 {
     "name": "@cpp.js/package-lerc-ios",
-    "version": "2.0.0-beta.15",
+    "version": "2.0.0-beta.21",
     "nativeVersion": "4.1.0",
-    "description": "This package provides the LERC (Limited Error Raster Compression) library compiled with Cpp.js, enabling seamless usage of LERC raster compression in JavaScript, WebAssembly and React Native projects.",
+    "description": "iOS build of the precompiled LERC (Limited Error Raster Compression) library, built with cpp.js. Use it together with the main package @cpp.js/package-lerc.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/cppjs-packages/cppjs-package-lerc#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "type": "module",
@@ -11,8 +11,9 @@
         "lerc",
         "libLerc",
         "raster-compression",
+        "cpp.js",
         "cpp.js-package",
-        "webassembly",
+        "ios",
         "react-native"
     ],
     "scripts": {
@@ -20,7 +21,9 @@
         "clear": "rm -rf .cppjs dist *.xcframework",
         "prepublishOnly": "cppjs build -p ios"
     },
-    "dependencies": {},
+    "dependencies": {
+        "@cpp.js/package-lerc": "workspace:^"
+    },
     "devDependencies": {
         "cpp.js": "workspace:^"
     }

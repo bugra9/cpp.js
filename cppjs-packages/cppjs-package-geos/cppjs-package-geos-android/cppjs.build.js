@@ -1,7 +1,1 @@
-export default {
-    getURL: (version) => `https://download.osgeo.org/geos/geos-${version}.tar.bz2`,
-    buildType: 'cmake',
-    getBuildParams: () => [
-        '-DBUILD_TESTING=OFF',
-    ],
-};
+export { default } from '@cpp.js/package-geos/build.mjs';

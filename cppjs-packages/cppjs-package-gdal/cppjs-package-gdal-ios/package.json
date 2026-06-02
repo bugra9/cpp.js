@@ -1,8 +1,8 @@
 {
     "name": "@cpp.js/package-gdal-ios",
-    "version": "2.0.0-beta.15",
-    "nativeVersion": "3.12.4",
-    "description": "This package provides the precompiled GDAL, built using Cpp.js, for seamless integration into JavaScript, WebAssembly, and React Native projects. It enables advanced geospatial data processing, including raster and vector data manipulation, format conversion, and spatial analysis, ensuring high performance and cross-platform compatibility. Perfect for web, server-side, and mobile geospatial applications.",
+    "version": "2.0.0-beta.21",
+    "nativeVersion": "3.13.0",
+    "description": "iOS build of the precompiled GDAL geospatial library, built with cpp.js. Use it together with the main package @cpp.js/package-gdal.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-gdal#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "type": "module",
@@ -10,8 +10,13 @@
     "keywords": [
         "gdal",
         "libgdal",
+        "gis",
+        "geospatial",
+        "raster",
+        "vector",
+        "cpp.js",
         "cpp.js-package",
-        "webassembly",
+        "ios",
         "react-native"
     ],
     "scripts": {
@@ -20,6 +25,8 @@
         "prepublishOnly": "cppjs build -p ios"
     },
     "dependencies": {
+        "@cpp.js/package-gdal": "workspace:^",
+        "@cpp.js/package-curl-ios": "workspace:^",
         "@cpp.js/package-expat-ios": "workspace:^",
         "@cpp.js/package-geos-ios": "workspace:^",
         "@cpp.js/package-geotiff-ios": "workspace:^",

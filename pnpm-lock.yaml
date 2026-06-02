@@ -120,24 +120,13 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
 
-  cppjs-packages/cppjs-package-curl/cppjs-package-curl:
-    dependencies:
-      '@cpp.js/package-curl-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-curl-android
-      '@cpp.js/package-curl-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-curl-ios
-      '@cpp.js/package-curl-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-curl-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-curl/cppjs-package-curl: {}
 
   cppjs-packages/cppjs-package-curl/cppjs-package-curl-android:
     dependencies:
+      '@cpp.js/package-curl':
+        specifier: workspace:^
+        version: link:../cppjs-package-curl
       '@cpp.js/package-openssl-android':
         specifier: workspace:^
         version: link:../../cppjs-package-openssl/cppjs-package-openssl-android
@@ -148,6 +137,9 @@ importers:
 
   cppjs-packages/cppjs-package-curl/cppjs-package-curl-ios:
     dependencies:
+      '@cpp.js/package-curl':
+        specifier: workspace:^
+        version: link:../cppjs-package-curl
       '@cpp.js/package-openssl-ios':
         specifier: workspace:^
         version: link:../../cppjs-package-openssl/cppjs-package-openssl-ios
@@ -158,6 +150,9 @@ importers:
 
   cppjs-packages/cppjs-package-curl/cppjs-package-curl-wasm:
     dependencies:
+      '@cpp.js/package-curl':
+        specifier: workspace:^
+        version: link:../cppjs-package-curl
       '@cpp.js/package-openssl-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-openssl/cppjs-package-openssl-wasm
@@ -166,61 +161,51 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-expat/cppjs-package-expat:
-    dependencies:
-      '@cpp.js/package-expat-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-expat-android
-      '@cpp.js/package-expat-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-expat-ios
-      '@cpp.js/package-expat-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-expat-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-expat/cppjs-package-expat: {}
 
   cppjs-packages/cppjs-package-expat/cppjs-package-expat-android:
+    dependencies:
+      '@cpp.js/package-expat':
+        specifier: workspace:^
+        version: link:../cppjs-package-expat
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-expat/cppjs-package-expat-ios:
+    dependencies:
+      '@cpp.js/package-expat':
+        specifier: workspace:^
+        version: link:../cppjs-package-expat
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm:
+    dependencies:
+      '@cpp.js/package-expat':
+        specifier: workspace:^
+        version: link:../cppjs-package-expat
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-gdal/cppjs-package-gdal:
-    dependencies:
-      '@cpp.js/package-gdal-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-gdal-android
-      '@cpp.js/package-gdal-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-gdal-ios
-      '@cpp.js/package-gdal-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-gdal-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-gdal/cppjs-package-gdal: {}
 
   cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-android:
     dependencies:
+      '@cpp.js/package-curl-android':
+        specifier: workspace:^
+        version: link:../../cppjs-package-curl/cppjs-package-curl-android
       '@cpp.js/package-expat-android':
         specifier: workspace:^
         version: link:../../cppjs-package-expat/cppjs-package-expat-android
+      '@cpp.js/package-gdal':
+        specifier: workspace:^
+        version: link:../cppjs-package-gdal
       '@cpp.js/package-geos-android':
         specifier: workspace:^
         version: link:../../cppjs-package-geos/cppjs-package-geos-android
@@ -264,9 +249,15 @@ importers:
 
   cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-ios:
     dependencies:
+      '@cpp.js/package-curl-ios':
+        specifier: workspace:^
+        version: link:../../cppjs-package-curl/cppjs-package-curl-ios
       '@cpp.js/package-expat-ios':
         specifier: workspace:^
         version: link:../../cppjs-package-expat/cppjs-package-expat-ios
+      '@cpp.js/package-gdal':
+        specifier: workspace:^
+        version: link:../cppjs-package-gdal
       '@cpp.js/package-geos-ios':
         specifier: workspace:^
         version: link:../../cppjs-package-geos/cppjs-package-geos-ios
@@ -310,9 +301,15 @@ importers:
 
   cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm:
     dependencies:
+      '@cpp.js/package-curl-wasm':
+        specifier: workspace:^
+        version: link:../../cppjs-package-curl/cppjs-package-curl-wasm
       '@cpp.js/package-expat-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-expat/cppjs-package-expat-wasm
+      '@cpp.js/package-gdal':
+        specifier: workspace:^
+        version: link:../cppjs-package-gdal
       '@cpp.js/package-geos-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-geos/cppjs-package-geos-wasm
@@ -354,58 +351,45 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-geos/cppjs-package-geos:
-    dependencies:
-      '@cpp.js/package-geos-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-geos-android
-      '@cpp.js/package-geos-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-geos-ios
-      '@cpp.js/package-geos-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-geos-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-geos/cppjs-package-geos: {}
 
   cppjs-packages/cppjs-package-geos/cppjs-package-geos-android:
+    dependencies:
+      '@cpp.js/package-geos':
+        specifier: workspace:^
+        version: link:../cppjs-package-geos
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-geos/cppjs-package-geos-ios:
+    dependencies:
+      '@cpp.js/package-geos':
+        specifier: workspace:^
+        version: link:../cppjs-package-geos
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm:
+    dependencies:
+      '@cpp.js/package-geos':
+        specifier: workspace:^
+        version: link:../cppjs-package-geos
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff:
-    dependencies:
-      '@cpp.js/package-geotiff-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-geotiff-android
-      '@cpp.js/package-geotiff-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-geotiff-ios
-      '@cpp.js/package-geotiff-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-geotiff-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff: {}
 
   cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-android:
     dependencies:
+      '@cpp.js/package-geotiff':
+        specifier: workspace:^
+        version: link:../cppjs-package-geotiff
       '@cpp.js/package-jpegturbo-android':
         specifier: workspace:^
         version: link:../../cppjs-package-jpegturbo/cppjs-package-jpegturbo-android
@@ -425,6 +409,9 @@ importers:
 
   cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-ios:
     dependencies:
+      '@cpp.js/package-geotiff':
+        specifier: workspace:^
+        version: link:../cppjs-package-geotiff
       '@cpp.js/package-jpegturbo-ios':
         specifier: workspace:^
         version: link:../../cppjs-package-jpegturbo/cppjs-package-jpegturbo-ios
@@ -444,6 +431,9 @@ importers:
 
   cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm:
     dependencies:
+      '@cpp.js/package-geotiff':
+        specifier: workspace:^
+        version: link:../cppjs-package-geotiff
       '@cpp.js/package-jpegturbo-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-jpegturbo/cppjs-package-jpegturbo-wasm
@@ -461,160 +451,141 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-iconv/cppjs-package-iconv:
-    dependencies:
-      '@cpp.js/package-iconv-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-iconv-android
-      '@cpp.js/package-iconv-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-iconv-ios
-      '@cpp.js/package-iconv-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-iconv-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-iconv/cppjs-package-iconv: {}
 
   cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-android:
+    dependencies:
+      '@cpp.js/package-iconv':
+        specifier: workspace:^
+        version: link:../cppjs-package-iconv
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-ios:
+    dependencies:
+      '@cpp.js/package-iconv':
+        specifier: workspace:^
+        version: link:../cppjs-package-iconv
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm:
+    dependencies:
+      '@cpp.js/package-iconv':
+        specifier: workspace:^
+        version: link:../cppjs-package-iconv
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-jpegturbo/cppjs-package-jpegturbo:
-    dependencies:
-      '@cpp.js/package-jpegturbo-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-jpegturbo-android
-      '@cpp.js/package-jpegturbo-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-jpegturbo-ios
-      '@cpp.js/package-jpegturbo-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-jpegturbo-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-jpegturbo/cppjs-package-jpegturbo: {}
 
   cppjs-packages/cppjs-package-jpegturbo/cppjs-package-jpegturbo-android:
+    dependencies:
+      '@cpp.js/package-jpegturbo':
+        specifier: workspace:^
+        version: link:../cppjs-package-jpegturbo
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-jpegturbo/cppjs-package-jpegturbo-ios:
+    dependencies:
+      '@cpp.js/package-jpegturbo':
+        specifier: workspace:^
+        version: link:../cppjs-package-jpegturbo
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-jpegturbo/cppjs-package-jpegturbo-wasm:
+    dependencies:
+      '@cpp.js/package-jpegturbo':
+        specifier: workspace:^
+        version: link:../cppjs-package-jpegturbo
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-lerc/cppjs-package-lerc:
-    dependencies:
-      '@cpp.js/package-lerc-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-lerc-android
-      '@cpp.js/package-lerc-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-lerc-ios
-      '@cpp.js/package-lerc-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-lerc-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-lerc/cppjs-package-lerc: {}
 
   cppjs-packages/cppjs-package-lerc/cppjs-package-lerc-android:
+    dependencies:
+      '@cpp.js/package-lerc':
+        specifier: workspace:^
+        version: link:../cppjs-package-lerc
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-lerc/cppjs-package-lerc-ios:
+    dependencies:
+      '@cpp.js/package-lerc':
+        specifier: workspace:^
+        version: link:../cppjs-package-lerc
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-lerc/cppjs-package-lerc-wasm:
+    dependencies:
+      '@cpp.js/package-lerc':
+        specifier: workspace:^
+        version: link:../cppjs-package-lerc
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-openssl/cppjs-package-openssl:
-    dependencies:
-      '@cpp.js/package-openssl-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-openssl-android
-      '@cpp.js/package-openssl-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-openssl-ios
-      '@cpp.js/package-openssl-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-openssl-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-openssl/cppjs-package-openssl: {}
 
   cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-android:
+    dependencies:
+      '@cpp.js/package-openssl':
+        specifier: workspace:^
+        version: link:../cppjs-package-openssl
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-ios:
+    dependencies:
+      '@cpp.js/package-openssl':
+        specifier: workspace:^
+        version: link:../cppjs-package-openssl
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm:
+    dependencies:
+      '@cpp.js/package-openssl':
+        specifier: workspace:^
+        version: link:../cppjs-package-openssl
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-proj/cppjs-package-proj:
-    dependencies:
-      '@cpp.js/package-proj-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-proj-android
-      '@cpp.js/package-proj-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-proj-ios
-      '@cpp.js/package-proj-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-proj-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-proj/cppjs-package-proj: {}
 
   cppjs-packages/cppjs-package-proj/cppjs-package-proj-android:
     dependencies:
+      '@cpp.js/package-proj':
+        specifier: workspace:^
+        version: link:../cppjs-package-proj
       '@cpp.js/package-sqlite3-android':
         specifier: workspace:^
         version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-android
@@ -628,6 +599,9 @@ importers:
 
   cppjs-packages/cppjs-package-proj/cppjs-package-proj-ios:
     dependencies:
+      '@cpp.js/package-proj':
+        specifier: workspace:^
+        version: link:../cppjs-package-proj
       '@cpp.js/package-sqlite3-ios':
         specifier: workspace:^
         version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-ios
@@ -641,6 +615,9 @@ importers:
 
   cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm:
     dependencies:
+      '@cpp.js/package-proj':
+        specifier: workspace:^
+        version: link:../cppjs-package-proj
       '@cpp.js/package-sqlite3-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
@@ -652,21 +629,7 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite:
-    dependencies:
-      '@cpp.js/package-spatialite-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-spatialite-android
-      '@cpp.js/package-spatialite-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-spatialite-ios
-      '@cpp.js/package-spatialite-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-spatialite-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite: {}
 
   cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-android:
     dependencies:
@@ -679,6 +642,9 @@ importers:
       '@cpp.js/package-proj-android':
         specifier: workspace:^
         version: link:../../cppjs-package-proj/cppjs-package-proj-android
+      '@cpp.js/package-spatialite':
+        specifier: workspace:^
+        version: link:../cppjs-package-spatialite
       '@cpp.js/package-sqlite3-android':
         specifier: workspace:^
         version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-android
@@ -701,6 +667,9 @@ importers:
       '@cpp.js/package-proj-ios':
         specifier: workspace:^
         version: link:../../cppjs-package-proj/cppjs-package-proj-ios
+      '@cpp.js/package-spatialite':
+        specifier: workspace:^
+        version: link:../cppjs-package-spatialite
       '@cpp.js/package-sqlite3-ios':
         specifier: workspace:^
         version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-ios
@@ -723,6 +692,9 @@ importers:
       '@cpp.js/package-proj-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-proj/cppjs-package-proj-wasm
+      '@cpp.js/package-spatialite':
+        specifier: workspace:^
+        version: link:../cppjs-package-spatialite
       '@cpp.js/package-sqlite3-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
@@ -734,24 +706,13 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3:
-    dependencies:
-      '@cpp.js/package-sqlite3-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-sqlite3-android
-      '@cpp.js/package-sqlite3-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-sqlite3-ios
-      '@cpp.js/package-sqlite3-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-sqlite3-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3: {}
 
   cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-android:
     dependencies:
+      '@cpp.js/package-sqlite3':
+        specifier: workspace:^
+        version: link:../cppjs-package-sqlite3
       '@cpp.js/package-zlib-android':
         specifier: workspace:^
         version: link:../../cppjs-package-zlib/cppjs-package-zlib-android
@@ -762,6 +723,9 @@ importers:
 
   cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-ios:
     dependencies:
+      '@cpp.js/package-sqlite3':
+        specifier: workspace:^
+        version: link:../cppjs-package-sqlite3
       '@cpp.js/package-zlib-ios':
         specifier: workspace:^
         version: link:../../cppjs-package-zlib/cppjs-package-zlib-ios
@@ -772,6 +736,9 @@ importers:
 
   cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm:
     dependencies:
+      '@cpp.js/package-sqlite3':
+        specifier: workspace:^
+        version: link:../cppjs-package-sqlite3
       '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-zlib/cppjs-package-zlib-wasm
@@ -780,21 +747,7 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-tiff/cppjs-package-tiff:
-    dependencies:
-      '@cpp.js/package-tiff-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-tiff-android
-      '@cpp.js/package-tiff-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-tiff-ios
-      '@cpp.js/package-tiff-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-tiff-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-tiff/cppjs-package-tiff: {}
 
   cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-android:
     dependencies:
@@ -804,6 +757,9 @@ importers:
       '@cpp.js/package-lerc-android':
         specifier: workspace:^
         version: link:../../cppjs-package-lerc/cppjs-package-lerc-android
+      '@cpp.js/package-tiff':
+        specifier: workspace:^
+        version: link:../cppjs-package-tiff
       '@cpp.js/package-zlib-android':
         specifier: workspace:^
         version: link:../../cppjs-package-zlib/cppjs-package-zlib-android
@@ -823,6 +779,9 @@ importers:
       '@cpp.js/package-lerc-ios':
         specifier: workspace:^
         version: link:../../cppjs-package-lerc/cppjs-package-lerc-ios
+      '@cpp.js/package-tiff':
+        specifier: workspace:^
+        version: link:../cppjs-package-tiff
       '@cpp.js/package-zlib-ios':
         specifier: workspace:^
         version: link:../../cppjs-package-zlib/cppjs-package-zlib-ios
@@ -842,6 +801,9 @@ importers:
       '@cpp.js/package-lerc-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-lerc/cppjs-package-lerc-wasm
+      '@cpp.js/package-tiff':
+        specifier: workspace:^
+        version: link:../cppjs-package-tiff
       '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
         version: link:../../cppjs-package-zlib/cppjs-package-zlib-wasm
@@ -853,103 +815,97 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-webp/cppjs-package-webp:
-    dependencies:
-      '@cpp.js/package-webp-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-webp-android
-      '@cpp.js/package-webp-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-webp-ios
-      '@cpp.js/package-webp-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-webp-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-webp/cppjs-package-webp: {}
 
   cppjs-packages/cppjs-package-webp/cppjs-package-webp-android:
+    dependencies:
+      '@cpp.js/package-webp':
+        specifier: workspace:^
+        version: link:../cppjs-package-webp
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-webp/cppjs-package-webp-ios:
+    dependencies:
+      '@cpp.js/package-webp':
+        specifier: workspace:^
+        version: link:../cppjs-package-webp
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm:
+    dependencies:
+      '@cpp.js/package-webp':
+        specifier: workspace:^
+        version: link:../cppjs-package-webp
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-zlib/cppjs-package-zlib:
-    dependencies:
-      '@cpp.js/package-zlib-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-zlib-android
-      '@cpp.js/package-zlib-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-zlib-ios
-      '@cpp.js/package-zlib-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-zlib-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-zlib/cppjs-package-zlib: {}
 
   cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-android:
+    dependencies:
+      '@cpp.js/package-zlib':
+        specifier: workspace:^
+        version: link:../cppjs-package-zlib
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-ios:
+    dependencies:
+      '@cpp.js/package-zlib':
+        specifier: workspace:^
+        version: link:../cppjs-package-zlib
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm:
+    dependencies:
+      '@cpp.js/package-zlib':
+        specifier: workspace:^
+        version: link:../cppjs-package-zlib
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
-  cppjs-packages/cppjs-package-zstd/cppjs-package-zstd:
-    dependencies:
-      '@cpp.js/package-zstd-android':
-        specifier: workspace:^
-        version: link:../cppjs-package-zstd-android
-      '@cpp.js/package-zstd-ios':
-        specifier: workspace:^
-        version: link:../cppjs-package-zstd-ios
-      '@cpp.js/package-zstd-wasm':
-        specifier: workspace:^
-        version: link:../cppjs-package-zstd-wasm
-    devDependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../../cppjs-core/cpp.js
+  cppjs-packages/cppjs-package-zstd/cppjs-package-zstd: {}
 
   cppjs-packages/cppjs-package-zstd/cppjs-package-zstd-android:
+    dependencies:
+      '@cpp.js/package-zstd':
+        specifier: workspace:^
+        version: link:../cppjs-package-zstd
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-zstd/cppjs-package-zstd-ios:
+    dependencies:
+      '@cpp.js/package-zstd':
+        specifier: workspace:^
+        version: link:../cppjs-package-zstd
     devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-zstd/cppjs-package-zstd-wasm:
+    dependencies:
+      '@cpp.js/package-zstd':
+        specifier: workspace:^
+        version: link:../cppjs-package-zstd
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -1031,45 +987,45 @@ importers:
 
   cppjs-samples/cppjs-playground-backend-nodejs:
     dependencies:
-      '@cpp.js/package-curl':
+      '@cpp.js/package-curl-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl
-      '@cpp.js/package-expat':
+        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-wasm
+      '@cpp.js/package-expat-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat
-      '@cpp.js/package-gdal':
+        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm
+      '@cpp.js/package-gdal-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal
-      '@cpp.js/package-geos':
+        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm
+      '@cpp.js/package-geos-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos
-      '@cpp.js/package-geotiff':
+        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm
+      '@cpp.js/package-geotiff-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff
-      '@cpp.js/package-iconv':
+        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm
+      '@cpp.js/package-iconv-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv
-      '@cpp.js/package-openssl':
+        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm
+      '@cpp.js/package-openssl-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl
-      '@cpp.js/package-proj':
+        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm
+      '@cpp.js/package-proj-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj
-      '@cpp.js/package-spatialite':
+        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm
+      '@cpp.js/package-spatialite-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite
-      '@cpp.js/package-sqlite3':
+        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm
+      '@cpp.js/package-sqlite3-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3
-      '@cpp.js/package-tiff':
+        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
+      '@cpp.js/package-tiff-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff
-      '@cpp.js/package-webp':
+        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm
+      '@cpp.js/package-webp-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp
-      '@cpp.js/package-zlib':
+        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm
+      '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib
+        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
@@ -1085,45 +1041,45 @@ importers:
 
   cppjs-samples/cppjs-playground-backend-nodejs-multithread:
     dependencies:
-      '@cpp.js/package-curl':
+      '@cpp.js/package-curl-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl
-      '@cpp.js/package-expat':
+        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-wasm
+      '@cpp.js/package-expat-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat
-      '@cpp.js/package-gdal':
+        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm
+      '@cpp.js/package-gdal-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal
-      '@cpp.js/package-geos':
+        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm
+      '@cpp.js/package-geos-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos
-      '@cpp.js/package-geotiff':
+        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm
+      '@cpp.js/package-geotiff-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff
-      '@cpp.js/package-iconv':
+        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm
+      '@cpp.js/package-iconv-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv
-      '@cpp.js/package-openssl':
+        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm
+      '@cpp.js/package-openssl-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl
-      '@cpp.js/package-proj':
+        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm
+      '@cpp.js/package-proj-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj
-      '@cpp.js/package-spatialite':
+        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm
+      '@cpp.js/package-spatialite-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite
-      '@cpp.js/package-sqlite3':
+        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm
+      '@cpp.js/package-sqlite3-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3
-      '@cpp.js/package-tiff':
+        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
+      '@cpp.js/package-tiff-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff
-      '@cpp.js/package-webp':
+        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm
+      '@cpp.js/package-webp-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp
-      '@cpp.js/package-zlib':
+        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm
+      '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib
+        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
       cpp.js:
         specifier: workspace:^
         version: link:../../cppjs-core/cpp.js
@@ -1136,42 +1092,42 @@ importers:
 
   cppjs-samples/cppjs-playground-cloud-cloudflare-worker:
     dependencies:
-      '@cpp.js/package-expat':
+      '@cpp.js/package-expat-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat
-      '@cpp.js/package-gdal':
+        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm
+      '@cpp.js/package-gdal-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal
-      '@cpp.js/package-geos':
+        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm
+      '@cpp.js/package-geos-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos
-      '@cpp.js/package-geotiff':
+        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm
+      '@cpp.js/package-geotiff-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff
-      '@cpp.js/package-iconv':
+        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm
+      '@cpp.js/package-iconv-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv
-      '@cpp.js/package-openssl':
+        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm
+      '@cpp.js/package-openssl-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl
-      '@cpp.js/package-proj':
+        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm
+      '@cpp.js/package-proj-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj
-      '@cpp.js/package-spatialite':
+        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm
+      '@cpp.js/package-spatialite-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite
-      '@cpp.js/package-sqlite3':
+        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm
+      '@cpp.js/package-sqlite3-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3
-      '@cpp.js/package-tiff':
+        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
+      '@cpp.js/package-tiff-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff
-      '@cpp.js/package-webp':
+        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm
+      '@cpp.js/package-webp-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp
-      '@cpp.js/package-zlib':
+        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm
+      '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib
+        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
       cpp.js:
         specifier: workspace:^
         version: link:../../cppjs-core/cpp.js
@@ -1188,81 +1144,81 @@ importers:
       '@cpp.js/core-embind-jsi':
         specifier: workspace:^
         version: link:../../cppjs-core/cppjs-core-embind-jsi
-      '@cpp.js/package-curl':
+      '@cpp.js/package-curl-android':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl
+        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-android
       '@cpp.js/package-curl-ios':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-ios
-      '@cpp.js/package-expat':
+      '@cpp.js/package-expat-android':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat
+        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-android
       '@cpp.js/package-expat-ios':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-ios
-      '@cpp.js/package-gdal':
+      '@cpp.js/package-gdal-android':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal
+        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-android
       '@cpp.js/package-gdal-ios':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-ios
-      '@cpp.js/package-geos':
+      '@cpp.js/package-geos-android':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos
+        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-android
       '@cpp.js/package-geos-ios':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-ios
-      '@cpp.js/package-geotiff':
+      '@cpp.js/package-geotiff-android':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff
+        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-android
       '@cpp.js/package-geotiff-ios':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-ios
-      '@cpp.js/package-iconv':
+      '@cpp.js/package-iconv-android':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv
+        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-android
       '@cpp.js/package-iconv-ios':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-ios
-      '@cpp.js/package-openssl':
+      '@cpp.js/package-openssl-android':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl
+        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-android
       '@cpp.js/package-openssl-ios':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-ios
-      '@cpp.js/package-proj':
+      '@cpp.js/package-proj-android':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj
+        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-android
       '@cpp.js/package-proj-ios':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-ios
-      '@cpp.js/package-spatialite':
+      '@cpp.js/package-spatialite-android':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite
+        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-android
       '@cpp.js/package-spatialite-ios':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-ios
-      '@cpp.js/package-sqlite3':
+      '@cpp.js/package-sqlite3-android':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3
+        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-android
       '@cpp.js/package-sqlite3-ios':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-ios
-      '@cpp.js/package-tiff':
+      '@cpp.js/package-tiff-android':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff
+        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-android
       '@cpp.js/package-tiff-ios':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-ios
-      '@cpp.js/package-webp':
+      '@cpp.js/package-webp-android':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp
+        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-android
       '@cpp.js/package-webp-ios':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-ios
-      '@cpp.js/package-zlib':
+      '@cpp.js/package-zlib-android':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib
+        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-android
       '@cpp.js/package-zlib-ios':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-ios
@@ -1357,45 +1313,45 @@ importers:
 
   cppjs-samples/cppjs-playground-web-rspack:
     dependencies:
-      '@cpp.js/package-curl':
+      '@cpp.js/package-curl-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl
-      '@cpp.js/package-expat':
+        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-wasm
+      '@cpp.js/package-expat-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat
-      '@cpp.js/package-gdal':
+        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm
+      '@cpp.js/package-gdal-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal
-      '@cpp.js/package-geos':
+        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm
+      '@cpp.js/package-geos-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos
-      '@cpp.js/package-geotiff':
+        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm
+      '@cpp.js/package-geotiff-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff
-      '@cpp.js/package-iconv':
+        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm
+      '@cpp.js/package-iconv-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv
-      '@cpp.js/package-openssl':
+        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm
+      '@cpp.js/package-openssl-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl
-      '@cpp.js/package-proj':
+        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm
+      '@cpp.js/package-proj-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj
-      '@cpp.js/package-spatialite':
+        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm
+      '@cpp.js/package-spatialite-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite
-      '@cpp.js/package-sqlite3':
+        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm
+      '@cpp.js/package-sqlite3-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3
-      '@cpp.js/package-tiff':
+        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
+      '@cpp.js/package-tiff-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff
-      '@cpp.js/package-webp':
+        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm
+      '@cpp.js/package-webp-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp
-      '@cpp.js/package-zlib':
+        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm
+      '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib
+        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
       '@cpp.js/plugin-webpack':
         specifier: workspace:^
         version: link:../../cppjs-plugins/cppjs-plugin-webpack
@@ -1445,45 +1401,45 @@ importers:
 
   cppjs-samples/cppjs-playground-web-vanilla:
     dependencies:
-      '@cpp.js/package-curl':
+      '@cpp.js/package-curl-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl
-      '@cpp.js/package-expat':
+        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-wasm
+      '@cpp.js/package-expat-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat
-      '@cpp.js/package-gdal':
+        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm
+      '@cpp.js/package-gdal-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal
-      '@cpp.js/package-geos':
+        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm
+      '@cpp.js/package-geos-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos
-      '@cpp.js/package-geotiff':
+        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm
+      '@cpp.js/package-geotiff-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff
-      '@cpp.js/package-iconv':
+        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm
+      '@cpp.js/package-iconv-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv
-      '@cpp.js/package-openssl':
+        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm
+      '@cpp.js/package-openssl-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl
-      '@cpp.js/package-proj':
+        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm
+      '@cpp.js/package-proj-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj
-      '@cpp.js/package-spatialite':
+        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm
+      '@cpp.js/package-spatialite-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite
-      '@cpp.js/package-sqlite3':
+        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm
+      '@cpp.js/package-sqlite3-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3
-      '@cpp.js/package-tiff':
+        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
+      '@cpp.js/package-tiff-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff
-      '@cpp.js/package-webp':
+        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm
+      '@cpp.js/package-webp-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp
-      '@cpp.js/package-zlib':
+        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm
+      '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib
+        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
@@ -1500,42 +1456,42 @@ importers:
 
   cppjs-samples/cppjs-playground-web-vite:
     dependencies:
-      '@cpp.js/package-expat':
+      '@cpp.js/package-expat-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat
-      '@cpp.js/package-gdal':
+        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm
+      '@cpp.js/package-gdal-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal
-      '@cpp.js/package-geos':
+        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm
+      '@cpp.js/package-geos-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos
-      '@cpp.js/package-geotiff':
+        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm
+      '@cpp.js/package-geotiff-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff
-      '@cpp.js/package-iconv':
+        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm
+      '@cpp.js/package-iconv-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv
-      '@cpp.js/package-openssl':
+        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm
+      '@cpp.js/package-openssl-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl
-      '@cpp.js/package-proj':
+        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm
+      '@cpp.js/package-proj-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj
-      '@cpp.js/package-spatialite':
+        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm
+      '@cpp.js/package-spatialite-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite
-      '@cpp.js/package-sqlite3':
+        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm
+      '@cpp.js/package-sqlite3-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3
-      '@cpp.js/package-tiff':
+        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
+      '@cpp.js/package-tiff-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff
-      '@cpp.js/package-webp':
+        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm
+      '@cpp.js/package-webp-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp
-      '@cpp.js/package-zlib':
+        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm
+      '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib
+        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
       '@cpp.js/plugin-vite':
         specifier: workspace:^
         version: link:../../cppjs-plugins/cppjs-plugin-vite
@@ -1558,45 +1514,45 @@ importers:
 
   cppjs-samples/cppjs-playground-web-vite-multithread:
     dependencies:
-      '@cpp.js/package-curl':
+      '@cpp.js/package-curl-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl
-      '@cpp.js/package-expat':
+        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-wasm
+      '@cpp.js/package-expat-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat
-      '@cpp.js/package-gdal':
+        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm
+      '@cpp.js/package-gdal-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal
-      '@cpp.js/package-geos':
+        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm
+      '@cpp.js/package-geos-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos
-      '@cpp.js/package-geotiff':
+        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm
+      '@cpp.js/package-geotiff-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff
-      '@cpp.js/package-iconv':
+        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm
+      '@cpp.js/package-iconv-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv
-      '@cpp.js/package-openssl':
+        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm
+      '@cpp.js/package-openssl-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl
-      '@cpp.js/package-proj':
+        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm
+      '@cpp.js/package-proj-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj
-      '@cpp.js/package-spatialite':
+        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm
+      '@cpp.js/package-spatialite-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite
-      '@cpp.js/package-sqlite3':
+        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm
+      '@cpp.js/package-sqlite3-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3
-      '@cpp.js/package-tiff':
+        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
+      '@cpp.js/package-tiff-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff
-      '@cpp.js/package-webp':
+        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm
+      '@cpp.js/package-webp-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp
-      '@cpp.js/package-zlib':
+        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm
+      '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib
+        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
       '@cpp.js/plugin-vite':
         specifier: workspace:^
         version: link:../../cppjs-plugins/cppjs-plugin-vite

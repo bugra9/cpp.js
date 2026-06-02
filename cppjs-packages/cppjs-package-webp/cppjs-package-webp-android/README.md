@@ -1,50 +1,12 @@
-# @cpp.js/package-webp
-**Precompiled webp library built with cpp.js for seamless integration in JavaScript, WebAssembly and React Native projects.**  
+# @cpp.js/package-webp-android
 
-<a href="https://www.npmjs.com/package/@cpp.js/package-webp">
-    <img alt="NPM version" src="https://img.shields.io/npm/v/@cpp.js/package-webp?style=for-the-badge" />
-</a>
-<a href="https://chromium.googlesource.com/webm/libwebp">
-    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Funpkg.com%2F%40cpp.js%2Fpackage-webp%2Fpackage.json&query=%24.nativeVersion&style=for-the-badge&label=WebP" />
-</a>
-<a href="https://chromium.googlesource.com/webm/libwebp/+/refs/heads/main/COPYING">
-    <img alt="License" src="https://img.shields.io/npm/l/%40cpp.js%2Fpackage-webp?style=for-the-badge" />
-</a>
+The **Android** build of the precompiled **WebP** library, built with [cpp.js](https://cpp.js.org).
 
-## Integration
-Start by installing these package with the following command:
+> For installation and usage, see the main package: **[@cpp.js/package-webp](https://www.npmjs.com/package/@cpp.js/package-webp)**.
 
-```sh
-npm install @cpp.js/package-webp
-```
-
-To enable the library, modify the cppjs.config.js file as shown below.
-```diff
-+import webp from '@cpp.js/package-webp/cppjs.config.js';
-
-export default {
-    dependencies: [
-+        webp
-    ]
-    paths: {
-        config: import.meta.url,
-    }
-};
-```
-
-## Usage
-Below are the steps to use the webp in your C++ or JavaScript code.
-
-### Usage in C++ Code
-```diff
-+#include <webp/decode.h>
-
-std::string Native::sample() {
-+    return std::to_string(WebPGetDecoderVersion());
-}
-```
+## Supported targets
+- Android `arm64-v8a` — 64-bit ARM (physical devices)
+- Android `x86_64` — 64-bit (emulators)
 
 ## License
-This project includes the precompiled webp library, which is distributed under the [BSD 3-Clause License](https://chromium.googlesource.com/webm/libwebp/+/refs/heads/main/COPYING).
-
-WebP Homepage: [https://developers.google.com/speed/webp](https://developers.google.com/speed/webp)
+This project includes the precompiled WebP library, distributed under the [BSD 3-Clause License](https://chromium.googlesource.com/webm/libwebp/+/refs/heads/main/COPYING).

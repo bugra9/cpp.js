@@ -1,8 +1,8 @@
 {
     "name": "@cpp.js/package-expat-wasm",
-    "version": "2.0.0-beta.15",
-    "nativeVersion": "2.8.0",
-    "description": "This package provides the precompiled Expat XML parser library, built using Cpp.js, for seamless integration into JavaScript, WebAssembly, and React Native projects. It enables fast and efficient parsing of XML data, making it ideal for applications requiring robust XML handling across platforms. Perfect for web, server-side, and mobile development environments.",
+    "version": "2.0.0-beta.21",
+    "nativeVersion": "2.8.1",
+    "description": "WebAssembly build of the precompiled Expat XML parser library, built with cpp.js. Use it together with the main package @cpp.js/package-expat.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-expat#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "type": "module",
@@ -10,14 +10,19 @@
     "keywords": [
         "expat",
         "libexpat",
+        "xml",
+        "cpp.js",
         "cpp.js-package",
         "webassembly",
-        "react-native"
+        "wasm"
     ],
     "scripts": {
         "build": "cppjs build -p wasm",
         "clear": "rm -rf .cppjs dist *.xcframework",
         "prepublishOnly": "cppjs build -p wasm"
+    },
+    "dependencies": {
+        "@cpp.js/package-expat": "workspace:^"
     },
     "devDependencies": {
         "cpp.js": "workspace:^"

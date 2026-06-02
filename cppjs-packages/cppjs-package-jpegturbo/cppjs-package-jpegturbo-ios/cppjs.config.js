@@ -1,18 +1,5 @@
-export default {
-    dependencies:[
-    ],
-    general: {
-        name: 'jpeg',
-    },
-    export: {
-        type: 'cmake',
-        libName: [
-            'jpeg'
-        ],
-    },
-    paths: {
-        config: import.meta.url,
-        base: '../..',
-        output: 'dist'
-    }
-};
+import mergeConfig from '@cpp.js/package-jpegturbo/mergeConfig.mjs';
+
+export default mergeConfig({
+    paths: { config: import.meta.url },
+});

@@ -1,8 +1,8 @@
 {
     "name": "@cpp.js/package-jpegturbo",
-    "version": "2.0.0-beta.15",
+    "version": "2.0.0-beta.21",
     "nativeVersion": "3.1.4.1",
-    "description": "This package provides a libjpegturbo library compiled with Cpp.js, enabling seamless usage of JPEG functionalities in JavaScript, WebAssembly and React Native projects.",
+    "description": "This package provides a libjpeg-turbo library compiled with Cpp.js, enabling seamless usage of JPEG functionalities in JavaScript, WebAssembly and React Native projects.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/cppjs-packages/cppjs-package-jpegturbo#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "type": "module",
@@ -10,16 +10,14 @@
     "keywords": [
         "jpegturbo",
         "libjpeg-turbo",
+        "jpeg",
+        "image",
+        "cpp.js",
         "cpp.js-package",
         "webassembly",
+        "wasm",
+        "android",
+        "ios",
         "react-native"
-    ],
-    "dependencies": {
-        "@cpp.js/package-jpegturbo-wasm": "workspace:^",
-        "@cpp.js/package-jpegturbo-android": "workspace:^",
-        "@cpp.js/package-jpegturbo-ios": "workspace:^"
-    },
-    "devDependencies": {
-        "cpp.js": "workspace:^"
-    }
+    ]
 }

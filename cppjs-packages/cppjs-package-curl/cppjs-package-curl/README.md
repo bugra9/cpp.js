@@ -1,5 +1,5 @@
 # @cpp.js/package-curl
-**Precompiled CURL library built with cpp.js for seamless integration in JavaScript, WebAssembly and React Native projects.**  
+**Precompiled libcurl (CURL) library built with cpp.js for seamless integration in JavaScript, WebAssembly and React Native projects.**
 
 <a href="https://www.npmjs.com/package/@cpp.js/package-curl">
     <img alt="NPM version" src="https://img.shields.io/npm/v/@cpp.js/package-curl?style=for-the-badge" />
@@ -11,21 +11,28 @@
     <img alt="License" src="https://img.shields.io/npm/l/%40cpp.js%2Fpackage-curl?style=for-the-badge" />
 </a>
 
+> Use it together with **[cpp.js](https://cpp.js.org)** — the toolchain for using C++ libraries from JavaScript, TypeScript, WebAssembly, Node.js and React Native. Learn more at **[cpp.js.org](https://cpp.js.org)**.
+
 ## Integration
-Start by installing these package with the following command:
+Install the main package together with the platform builds:
 
 ```sh
-npm install @cpp.js/package-curl
+npm install @cpp.js/package-curl @cpp.js/package-curl-wasm @cpp.js/package-curl-android @cpp.js/package-curl-ios
 ```
 
-To enable the library, modify the cppjs.config.js file as shown below.
+Then import all three platforms in `cppjs.config.js` — cpp.js compiles only the one matching each build target:
+
 ```diff
-+import curl from '@cpp.js/package-curl/cppjs.config.js';
++import curlWasm from '@cpp.js/package-curl-wasm/cppjs.config.js';
++import curlAndroid from '@cpp.js/package-curl-android/cppjs.config.js';
++import curlIos from '@cpp.js/package-curl-ios/cppjs.config.js';
 
 export default {
     dependencies: [
-+        curl
-    ]
++        curlWasm,
++        curlAndroid,
++        curlIos,
+    ],
     paths: {
         config: import.meta.url,
     }
@@ -33,51 +40,27 @@ export default {
 ```
 
 ## Usage
-Below are the steps to use the curl in your C++ or JavaScript code.
+Below are the steps to use CURL in your C++ or JavaScript code.
 
 ### Usage in C++ Code
 ```diff
 +#include <curl/curl.h>
 
-+size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* output) {
-+    size_t totalSize = size * nmemb;
-+    output->append((char*)contents, totalSize);
-+    return totalSize;
-+}
-
 std::string Native::sample() {
-+    std::string result = "";
-+    std::string response;
-+    char errbuf[CURL_ERROR_SIZE*100];
-+
-+    CURL* curl = curl_easy_init(); // Initialize libcurl
-+    curl_easy_setopt(curl, CURLOPT_CAINFO, getenv("CURL_CA_BUNDLE"));
-+    curl_easy_setopt(curl, CURLOPT_URL, "https://test22.free.beeceptor.com"); // Set the URL
-+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "{\"a\": 2}");
-+    struct curl_slist *headers = NULL;
-+    headers = curl_slist_append(headers, "Content-Type: application/json");
-+    headers = curl_slist_append(headers, "Accept: application/json");
-+
-+    curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
-+    errbuf[0] = 0;
-+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback); // Set callback to handle data
-+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response); // Pass the response string
-+    CURLcode res = curl_easy_perform(curl);
-+    if (res == CURLE_OK) {
-+        result = "response: " + response;
-+    } else {
-+        std::string errorStr = errbuf[0] ? std::string(errbuf) : curl_easy_strerror(res);
-+        result = "curl error: " + errorStr;
-+    }
-+
-+    curl_slist_free_all(headers);
-+    curl_easy_cleanup(curl);
-+
-+    return result;
++    return std::string(curl_version());
 }
 ```
 
+## Supported platforms
+This is the main package; the precompiled binaries are shipped per platform:
+
+| Platform | Package | Targets |
+|---|---|---|
+| WebAssembly | [`@cpp.js/package-curl-wasm`](https://www.npmjs.com/package/@cpp.js/package-curl-wasm) | `wasm32` — single-threaded & multi-threaded |
+| Android | [`@cpp.js/package-curl-android`](https://www.npmjs.com/package/@cpp.js/package-curl-android) | `arm64-v8a` (64-bit ARM), `x86_64` (emulator) |
+| iOS | [`@cpp.js/package-curl-ios`](https://www.npmjs.com/package/@cpp.js/package-curl-ios) | device (`arm64`), simulator (`arm64`) |
+
 ## License
-This project includes the precompiled CURL library, which is distributed under the [CURL License](https://github.com/curl/curl/blob/master/COPYING).
+This project includes the precompiled libcurl library, which is distributed under the [curl License](https://github.com/curl/curl/blob/master/COPYING).
 
 CURL Homepage: [https://curl.se/](https://curl.se/)

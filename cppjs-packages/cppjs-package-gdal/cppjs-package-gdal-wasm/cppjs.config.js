@@ -1,3 +1,5 @@
+import mergeConfig from '@cpp.js/package-gdal/mergeConfig.mjs';
+import curlWasm from '@cpp.js/package-curl-wasm/cppjs.config.js';
 import expatWasm from '@cpp.js/package-expat-wasm/cppjs.config.js';
 import geosWasm from '@cpp.js/package-geos-wasm/cppjs.config.js';
 import geotiffWasm from '@cpp.js/package-geotiff-wasm/cppjs.config.js';
@@ -12,8 +14,9 @@ import tiffWasm from '@cpp.js/package-tiff-wasm/cppjs.config.js';
 import webpWasm from '@cpp.js/package-webp-wasm/cppjs.config.js';
 import zlibWasm from '@cpp.js/package-zlib-wasm/cppjs.config.js';
 
-export default {
-  dependencies: [
+export default mergeConfig({
+    dependencies: [
+    curlWasm,
     expatWasm,
     geosWasm,
     geotiffWasm,
@@ -27,33 +30,6 @@ export default {
     tiffWasm,
     webpWasm,
     zlibWasm,
-  ],
-  general: {
-    name: 'gdal'
-  },
-  export: {
-    type: 'cmake'
-  },
-  paths: {
-    config: import.meta.url,
-    base: '../..',
-    output: 'dist'
-  },
-  targetSpecs: [
-    {
-      platform: 'wasm',
-      specs: {
-        'data': {
-          'share/gdal': 'gdal'
-        },
-        env: {
-          GDAL_DATA: '_CPPJS_DATA_PATH_/gdal',
-          DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
-          GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
-          CPL_LOG_ERRORS: 'ON',
-          GDAL_NUM_THREADS: (state, target) => (target.runtime === 'st' ? '0' : '1'),
-        }
-      }
-    }
-  ],
-};
+    ],
+    paths: { config: import.meta.url },
+});

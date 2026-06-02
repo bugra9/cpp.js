@@ -1,8 +1,8 @@
 {
     "name": "@cpp.js/package-spatialite-ios",
-    "version": "2.0.0-beta.15",
+    "version": "2.0.0-beta.21",
     "nativeVersion": "5.1.0",
-    "description": "This package provides SpatiaLite, a spatial extension to SQLite, compiled with Cpp.js for seamless integration in JavaScript, WebAssembly and React Native environments. By using Cpp.js, this package enables high-performance spatial database operations both on the web (via WebAssembly) and native mobile environments (via machine code).",
+    "description": "iOS build of the precompiled SpatiaLite (spatial SQLite extension) library, built with cpp.js. Use it together with the main package @cpp.js/package-spatialite.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-spatialite#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "type": "module",
@@ -10,8 +10,12 @@
     "keywords": [
         "spatialite",
         "libspatialite",
+        "sqlite",
+        "spatial",
+        "gis",
+        "cpp.js",
         "cpp.js-package",
-        "webassembly",
+        "ios",
         "react-native"
     ],
     "scripts": {
@@ -20,6 +24,7 @@
         "prepublishOnly": "cppjs build -p ios"
     },
     "dependencies": {
+        "@cpp.js/package-spatialite": "workspace:^",
         "@cpp.js/package-geos-ios": "workspace:^",
         "@cpp.js/package-proj-ios": "workspace:^",
         "@cpp.js/package-sqlite3-ios": "workspace:^",

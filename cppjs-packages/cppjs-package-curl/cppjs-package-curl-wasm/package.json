@@ -1,8 +1,8 @@
 {
     "name": "@cpp.js/package-curl-wasm",
-    "version": "2.0.0-beta.15",
+    "version": "2.0.0-beta.21",
     "nativeVersion": "8.20.0",
-    "description": "This package provides a CURL library compiled with Cpp.js, enabling seamless usage of CURL functionalities in JavaScript, WebAssembly and React Native projects. Client-side URL transfers for web and mobile applications.",
+    "description": "WebAssembly build of the precompiled libcurl (CURL) library, built with cpp.js. Use it together with the main package @cpp.js/package-curl.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-curl#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "type": "module",
@@ -10,9 +10,12 @@
     "keywords": [
         "curl",
         "libcurl",
+        "http",
+        "networking",
+        "cpp.js",
         "cpp.js-package",
         "webassembly",
-        "react-native"
+        "wasm"
     ],
     "scripts": {
         "build": "cppjs build -p wasm",
@@ -20,6 +23,7 @@
         "prepublishOnly": "cppjs build -p wasm"
     },
     "dependencies": {
+        "@cpp.js/package-curl": "workspace:^",
         "@cpp.js/package-openssl-wasm": "workspace:^"
     },
     "devDependencies": {

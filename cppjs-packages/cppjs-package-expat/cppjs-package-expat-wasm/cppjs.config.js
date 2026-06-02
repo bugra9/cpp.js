@@ -1,13 +1,5 @@
-export default {
-  general: {
-    name: 'expat'
-  },
-  export: {
-    type: 'cmake'
-  },
-  paths: {
-    config: import.meta.url,
-    base: '../..',
-    output: 'dist'
-  }
-};
+import mergeConfig from '@cpp.js/package-expat/mergeConfig.mjs';
+
+export default mergeConfig({
+    paths: { config: import.meta.url },
+});

@@ -1,8 +1,8 @@
 {
     "name": "@cpp.js/package-zstd-ios",
-    "version": "2.0.0-beta.15",
+    "version": "2.0.0-beta.21",
     "nativeVersion": "1.5.7",
-    "description": "This package provides a libzstd library compiled with Cpp.js, enabling seamless usage of Zstandard (de)compression functionalities in JavaScript, WebAssembly and React Native projects.",
+    "description": "iOS build of the precompiled Zstandard (zstd) library, built with cpp.js. Use it together with the main package @cpp.js/package-zstd.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/cppjs-packages/cppjs-package-zstd#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "type": "module",
@@ -11,8 +11,10 @@
         "zstd",
         "zstandard",
         "libzstd",
+        "compression",
+        "cpp.js",
         "cpp.js-package",
-        "webassembly",
+        "ios",
         "react-native"
     ],
     "scripts": {
@@ -20,7 +22,9 @@
         "clear": "rm -rf .cppjs dist *.xcframework",
         "prepublishOnly": "cppjs build -p ios"
     },
-    "dependencies": {},
+    "dependencies": {
+        "@cpp.js/package-zstd": "workspace:^"
+    },
     "devDependencies": {
         "cpp.js": "workspace:^"
     }

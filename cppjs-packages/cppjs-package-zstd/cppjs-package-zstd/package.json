@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-zstd",
-    "version": "2.0.0-beta.15",
+    "version": "2.0.0-beta.21",
     "nativeVersion": "1.5.7",
     "description": "This package provides a libzstd library compiled with Cpp.js, enabling seamless usage of Zstandard (de)compression functionalities in JavaScript, WebAssembly and React Native projects.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/cppjs-packages/cppjs-package-zstd#readme",
@@ -11,16 +11,13 @@
         "zstd",
         "zstandard",
         "libzstd",
+        "compression",
+        "cpp.js",
         "cpp.js-package",
         "webassembly",
+        "wasm",
+        "android",
+        "ios",
         "react-native"
-    ],
-    "dependencies": {
-        "@cpp.js/package-zstd-wasm": "workspace:^",
-        "@cpp.js/package-zstd-android": "workspace:^",
-        "@cpp.js/package-zstd-ios": "workspace:^"
-    },
-    "devDependencies": {
-        "cpp.js": "workspace:^"
-    }
+    ]
 }

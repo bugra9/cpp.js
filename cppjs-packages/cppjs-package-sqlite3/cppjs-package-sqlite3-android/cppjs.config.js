@@ -1,18 +1,7 @@
-import zlib from '@cpp.js/package-zlib-android/cppjs.config.js';
+import mergeConfig from '@cpp.js/package-sqlite3/mergeConfig.mjs';
+import zlibAndroid from '@cpp.js/package-zlib-android/cppjs.config.js';
 
-export default {
-    general: {
-        name: 'sqlite3',
-    },
-    export: {
-        type: 'cmake',
-    },
-    dependencies: [
-        zlib,
-    ],
-    paths: {
-        config: import.meta.url,
-        base: '../..',
-        output: 'dist',
-    },
-};
+export default mergeConfig({
+    dependencies: [zlibAndroid],
+    paths: { config: import.meta.url },
+});

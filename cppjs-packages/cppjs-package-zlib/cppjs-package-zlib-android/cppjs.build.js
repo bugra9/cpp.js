@@ -1,5 +1,1 @@
-export default {
-    getURL: (version) => `https://zlib.net/zlib-${version}.tar.gz`,
-    buildType: 'cmake',
-    getBuildParams: () => ['-DZLIB_BUILD_STATIC=OFF', '-DZLIB_BUILD_TESTING=OFF'],
-};
+export { default } from '@cpp.js/package-zlib/build.mjs';

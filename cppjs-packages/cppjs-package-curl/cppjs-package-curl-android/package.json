@@ -1,8 +1,8 @@
 {
     "name": "@cpp.js/package-curl-android",
-    "version": "2.0.0-beta.15",
+    "version": "2.0.0-beta.21",
     "nativeVersion": "8.20.0",
-    "description": "This package provides a CURL library compiled with Cpp.js, enabling seamless usage of CURL functionalities in JavaScript, WebAssembly and React Native projects. Client-side URL transfers for web and mobile applications.",
+    "description": "Android build of the precompiled libcurl (CURL) library, built with cpp.js. Use it together with the main package @cpp.js/package-curl.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-curl#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "type": "module",
@@ -10,8 +10,11 @@
     "keywords": [
         "curl",
         "libcurl",
+        "http",
+        "networking",
+        "cpp.js",
         "cpp.js-package",
-        "webassembly",
+        "android",
         "react-native"
     ],
     "scripts": {
@@ -21,6 +24,7 @@
         "build:android": "cppjs build -p android"
     },
     "dependencies": {
+        "@cpp.js/package-curl": "workspace:^",
         "@cpp.js/package-openssl-android": "workspace:^"
     },
     "devDependencies": {

@@ -1,7 +1,7 @@
 {
     "name": "@cpp.js/sample-mobile-reactnative-cli",
     "private": true,
-    "version": "2.0.0-beta.15",
+    "version": "2.0.0-beta.21",
     "description": "Cpp.js React Native sample",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-mobile-reactnative-cli#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",

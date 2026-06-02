@@ -1,25 +1,22 @@
 {
     "name": "@cpp.js/package-webp",
-    "version": "2.0.0-beta.15",
+    "version": "2.0.0-beta.21",
     "nativeVersion": "1.6.0",
     "description": "This package provides a WebP library compiled with Cpp.js, enabling seamless usage of WebP functionalities in JavaScript, WebAssembly and React Native projects. It supports efficient image processing for web and mobile applications.",
-    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-webp#readme",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/cppjs-packages/cppjs-package-webp#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "type": "module",
     "license": "BSD-3-Clause",
     "keywords": [
         "webp",
         "libwebp",
+        "image",
+        "cpp.js",
         "cpp.js-package",
         "webassembly",
+        "wasm",
+        "android",
+        "ios",
         "react-native"
-    ],
-    "dependencies": {
-        "@cpp.js/package-webp-wasm": "workspace:^",
-        "@cpp.js/package-webp-android": "workspace:^",
-        "@cpp.js/package-webp-ios": "workspace:^"
-    },
-    "devDependencies": {
-        "cpp.js": "workspace:^"
-    }
+    ]
 }

@@ -1,3 +1,5 @@
+import mergeConfig from '@cpp.js/package-gdal/mergeConfig.mjs';
+import curlAndroid from '@cpp.js/package-curl-android/cppjs.config.js';
 import expatAndroid from '@cpp.js/package-expat-android/cppjs.config.js';
 import geosAndroid from '@cpp.js/package-geos-android/cppjs.config.js';
 import geotiffAndroid from '@cpp.js/package-geotiff-android/cppjs.config.js';
@@ -12,8 +14,9 @@ import tiffAndroid from '@cpp.js/package-tiff-android/cppjs.config.js';
 import webpAndroid from '@cpp.js/package-webp-android/cppjs.config.js';
 import zlibAndroid from '@cpp.js/package-zlib-android/cppjs.config.js';
 
-export default {
-  dependencies: [
+export default mergeConfig({
+    dependencies: [
+    curlAndroid,
     expatAndroid,
     geosAndroid,
     geotiffAndroid,
@@ -27,33 +30,6 @@ export default {
     tiffAndroid,
     webpAndroid,
     zlibAndroid,
-  ],
-  general: {
-    name: 'gdal'
-  },
-  export: {
-    type: 'cmake'
-  },
-  paths: {
-    config: import.meta.url,
-    base: '../..',
-    output: 'dist'
-  },
-
-  targetSpecs: [
-    {
-      platform: 'android',
-      specs: {
-        'data': {
-          'share/gdal': 'gdal'
-        },
-        env: {
-          GDAL_DATA: '_CPPJS_DATA_PATH_/gdal',
-          DXF_FEATURE_LIMIT_PER_BLOCK: '-1',
-          GDAL_ENABLE_DEPRECATED_DRIVER_GTM: 'YES',
-          CPL_LOG_ERRORS: 'ON',
-        }
-      }
-    }
-  ],
-};
+    ],
+    paths: { config: import.meta.url },
+});

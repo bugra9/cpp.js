@@ -1,34 +1,60 @@
 import matrix from '@cpp.js/sample-lib-prebuilt-matrix/cppjs.config.js';
-import curl from '@cpp.js/package-curl/cppjs.config.js';
-import expat from '@cpp.js/package-expat/cppjs.config.js';
-import gdal from '@cpp.js/package-gdal/cppjs.config.js';
-import geos from '@cpp.js/package-geos/cppjs.config.js';
-import geotiff from '@cpp.js/package-geotiff/cppjs.config.js';
-import iconv from '@cpp.js/package-iconv/cppjs.config.js';
-import openssl from '@cpp.js/package-openssl/cppjs.config.js';
-import proj from '@cpp.js/package-proj/cppjs.config.js';
-import spatialite from '@cpp.js/package-spatialite/cppjs.config.js';
-import sqlite3 from '@cpp.js/package-sqlite3/cppjs.config.js';
-import tiff from '@cpp.js/package-tiff/cppjs.config.js';
-import webp from '@cpp.js/package-webp/cppjs.config.js';
-import zlib from '@cpp.js/package-zlib/cppjs.config.js';
+import curlAndroid from '@cpp.js/package-curl-android/cppjs.config.js';
+import curlIos from '@cpp.js/package-curl-ios/cppjs.config.js';
+import expatAndroid from '@cpp.js/package-expat-android/cppjs.config.js';
+import expatIos from '@cpp.js/package-expat-ios/cppjs.config.js';
+import gdalAndroid from '@cpp.js/package-gdal-android/cppjs.config.js';
+import gdalIos from '@cpp.js/package-gdal-ios/cppjs.config.js';
+import geosAndroid from '@cpp.js/package-geos-android/cppjs.config.js';
+import geosIos from '@cpp.js/package-geos-ios/cppjs.config.js';
+import geotiffAndroid from '@cpp.js/package-geotiff-android/cppjs.config.js';
+import geotiffIos from '@cpp.js/package-geotiff-ios/cppjs.config.js';
+import iconvAndroid from '@cpp.js/package-iconv-android/cppjs.config.js';
+import iconvIos from '@cpp.js/package-iconv-ios/cppjs.config.js';
+import opensslAndroid from '@cpp.js/package-openssl-android/cppjs.config.js';
+import opensslIos from '@cpp.js/package-openssl-ios/cppjs.config.js';
+import projAndroid from '@cpp.js/package-proj-android/cppjs.config.js';
+import projIos from '@cpp.js/package-proj-ios/cppjs.config.js';
+import spatialiteAndroid from '@cpp.js/package-spatialite-android/cppjs.config.js';
+import spatialiteIos from '@cpp.js/package-spatialite-ios/cppjs.config.js';
+import sqlite3Android from '@cpp.js/package-sqlite3-android/cppjs.config.js';
+import sqlite3Ios from '@cpp.js/package-sqlite3-ios/cppjs.config.js';
+import tiffAndroid from '@cpp.js/package-tiff-android/cppjs.config.js';
+import tiffIos from '@cpp.js/package-tiff-ios/cppjs.config.js';
+import webpAndroid from '@cpp.js/package-webp-android/cppjs.config.js';
+import webpIos from '@cpp.js/package-webp-ios/cppjs.config.js';
+import zlibAndroid from '@cpp.js/package-zlib-android/cppjs.config.js';
+import zlibIos from '@cpp.js/package-zlib-ios/cppjs.config.js';
 
 export default {
     dependencies: [
         matrix,
-        curl,
-        expat,
-        gdal,
-        geos,
-        geotiff,
-        iconv,
-        openssl,
-        proj,
-        spatialite,
-        sqlite3,
-        tiff,
-        webp,
-        zlib
+        curlAndroid,
+        curlIos,
+        expatAndroid,
+        expatIos,
+        gdalAndroid,
+        gdalIos,
+        geosAndroid,
+        geosIos,
+        geotiffAndroid,
+        geotiffIos,
+        iconvAndroid,
+        iconvIos,
+        opensslAndroid,
+        opensslIos,
+        projAndroid,
+        projIos,
+        spatialiteAndroid,
+        spatialiteIos,
+        sqlite3Android,
+        sqlite3Ios,
+        tiffAndroid,
+        tiffIos,
+        webpAndroid,
+        webpIos,
+        zlibAndroid,
+        zlibIos,
     ],
     paths: {
         config: import.meta.url,

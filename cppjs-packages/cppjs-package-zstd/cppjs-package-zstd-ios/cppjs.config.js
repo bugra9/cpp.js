@@ -1,18 +1,5 @@
-export default {
-    dependencies:[
-    ],
-    general: {
-        name: 'zstd',
-    },
-    export: {
-        type: 'cmake',
-        libName: [
-            'zstd'
-        ],
-    },
-    paths: {
-        config: import.meta.url,
-        base: '../..',
-        output: 'dist'
-    }
-};
+import mergeConfig from '@cpp.js/package-zstd/mergeConfig.mjs';
+
+export default mergeConfig({
+    paths: { config: import.meta.url },
+});

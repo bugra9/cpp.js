@@ -1,25 +1,23 @@
 {
     "name": "@cpp.js/package-iconv",
-    "version": "2.0.0-beta.15",
+    "version": "2.0.0-beta.21",
     "nativeVersion": "1.19",
     "description": "This package provides the precompiled iconv library, built using cpp.js, for easy integration into JavaScript, WebAssembly and React Native projects. It provides a high-performance solution for converting between character encodings, ensuring cross-platform compatibility. Ideal for use in web and mobile applications.",
-    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-iconv#readme",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/cppjs-packages/cppjs-package-iconv#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "type": "module",
     "license": "LGPL",
     "keywords": [
         "iconv",
         "libiconv",
+        "charset",
+        "encoding",
+        "cpp.js",
         "cpp.js-package",
         "webassembly",
+        "wasm",
+        "android",
+        "ios",
         "react-native"
-    ],
-    "dependencies": {
-        "@cpp.js/package-iconv-wasm": "workspace:^",
-        "@cpp.js/package-iconv-android": "workspace:^",
-        "@cpp.js/package-iconv-ios": "workspace:^"
-    },
-    "devDependencies": {
-        "cpp.js": "workspace:^"
-    }
+    ]
 }
