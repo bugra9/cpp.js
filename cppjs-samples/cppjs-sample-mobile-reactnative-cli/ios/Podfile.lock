@@ -1,5 +1,5 @@
 PODS:
-  - cppjs-sample-lib-prebuilt-matrix (2.0.0-beta.15)
+  - cppjs-sample-lib-prebuilt-matrix (2.0.0-beta.21)
   - FBLazyVector (0.85.3)
   - hermes-engine (250829098.0.10):
     - hermes-engine/Pre-built (= 250829098.0.10)
@@ -1403,8 +1403,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-cppjs (2.0.0-beta.18)
-  - react-native-cppjs-ios-helper (2.0.0-beta.15):
+  - react-native-cppjs (2.0.0-beta.21)
+  - react-native-cppjs-ios-helper (2.0.0-beta.21):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2123,7 +2123,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  cppjs-sample-lib-prebuilt-matrix: e8ab1fffacc624daad0a64fe33273cfe11e38399
+  cppjs-sample-lib-prebuilt-matrix: 62ba6e745986f6eb9a5e268efc159085e0ed73d2
   FBLazyVector: 24e62c765683b8d89006a88a2c8f5cf019f0074d
   hermes-engine: b6cef8f1f6c726240e275520fd5cfdb6b2ff6826
   RCTDeprecation: a4c521821fab57cbb125b36effe84d897d0dfa12
@@ -2163,8 +2163,8 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 1aa9126122d4247ffc24bf9d28d50ce923499a71
   React-microtasksnativemodule: d86581169e9bb5bb6f5fc3c5052f890016c1bf21
   React-mutationobservernativemodule: 9a0c4e866f1ef2a57acebc902ebacbdf469ae741
-  react-native-cppjs: ea92338c513ae54a2160fb6f6e05e31ae657c12e
-  react-native-cppjs-ios-helper: 86581df2af205f62fb5d6f0637ddb9ad3409003b
+  react-native-cppjs: f61f19d988efe83bc7ba538357b10e0efd96bd04
+  react-native-cppjs-ios-helper: 0a61ec434000b6191bff5d1cc3763a7510447ff2
   react-native-safe-area-context: c1eb308f4b36372a4de4b3bdaa8ed695ec3dd461
   React-NativeModulesApple: cc6ec4767844d610e92cc358bd3ea34937438d56
   React-networking: a8ce15641ed7775d5b54a9d0d32defc367c2216e
@@ -2197,7 +2197,7 @@ SPEC CHECKSUMS:
   React-utils: 2851415c698da4b18331f9a445825d260fffa32c
   React-webperformancenativemodule: 9f29ed34f6f6c01dac688b95fd2dfcbccf3aed7a
   ReactAppDependencyProvider: a54c0c9b976766e1b6d5e2bb4d1ad0d15913e9e1
-  ReactCodegen: 18113f4ca2e2ad5952b57dfe371585061d14cb72
+  ReactCodegen: 77344c05a784ee7f51cf0ad04f561b5096cbf0a3
   ReactCommon: 3ec2a55999d296af90c24beb66c8a77dc660d3ef
   ReactNativeDependencies: 28e6fdecd4f9dbe78e487818b4ba48ace254303e
   Yoga: 36fee8f1fca3f54a28c3d7f80e69f66d73d3af96

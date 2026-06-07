@@ -97,22 +97,22 @@ Officially maintained, prebuilt C++ libraries you can install as npm packages an
 
 | Package | Version |
 | --- | --- |
-| [@cpp.js/package-gdal](https://www.npmjs.com/package/@cpp.js/package-gdal) | 2.0.0-beta.15 |
-| [@cpp.js/package-geos](https://www.npmjs.com/package/@cpp.js/package-geos) | 2.0.0-beta.15 |
-| [@cpp.js/package-proj](https://www.npmjs.com/package/@cpp.js/package-proj) | 2.0.0-beta.15 |
-| [@cpp.js/package-spatialite](https://www.npmjs.com/package/@cpp.js/package-spatialite) | 2.0.0-beta.15 |
-| [@cpp.js/package-sqlite3](https://www.npmjs.com/package/@cpp.js/package-sqlite3) | 2.0.0-beta.15 |
-| [@cpp.js/package-openssl](https://www.npmjs.com/package/@cpp.js/package-openssl) | 2.0.0-beta.15 |
-| [@cpp.js/package-curl](https://www.npmjs.com/package/@cpp.js/package-curl) | 2.0.0-beta.15 |
-| [@cpp.js/package-tiff](https://www.npmjs.com/package/@cpp.js/package-tiff) | 2.0.0-beta.15 |
-| [@cpp.js/package-geotiff](https://www.npmjs.com/package/@cpp.js/package-geotiff) | 2.0.0-beta.15 |
-| [@cpp.js/package-webp](https://www.npmjs.com/package/@cpp.js/package-webp) | 2.0.0-beta.15 |
-| [@cpp.js/package-expat](https://www.npmjs.com/package/@cpp.js/package-expat) | 2.0.0-beta.15 |
-| [@cpp.js/package-iconv](https://www.npmjs.com/package/@cpp.js/package-iconv) | 2.0.0-beta.15 |
-| [@cpp.js/package-zlib](https://www.npmjs.com/package/@cpp.js/package-zlib) | 2.0.0-beta.15 |
-| [@cpp.js/package-zstd](https://www.npmjs.com/package/@cpp.js/package-zstd) | 2.0.0-beta.15 |
-| [@cpp.js/package-lerc](https://www.npmjs.com/package/@cpp.js/package-lerc) | 2.0.0-beta.15 |
-| [@cpp.js/package-jpegturbo](https://www.npmjs.com/package/@cpp.js/package-jpegturbo) | 2.0.0-beta.15 |
+| [@cpp.js/package-gdal](https://www.npmjs.com/package/@cpp.js/package-gdal) | 2.0.0-beta.21 |
+| [@cpp.js/package-geos](https://www.npmjs.com/package/@cpp.js/package-geos) | 2.0.0-beta.21 |
+| [@cpp.js/package-proj](https://www.npmjs.com/package/@cpp.js/package-proj) | 2.0.0-beta.21 |
+| [@cpp.js/package-spatialite](https://www.npmjs.com/package/@cpp.js/package-spatialite) | 2.0.0-beta.21 |
+| [@cpp.js/package-sqlite3](https://www.npmjs.com/package/@cpp.js/package-sqlite3) | 2.0.0-beta.21 |
+| [@cpp.js/package-openssl](https://www.npmjs.com/package/@cpp.js/package-openssl) | 2.0.0-beta.21 |
+| [@cpp.js/package-curl](https://www.npmjs.com/package/@cpp.js/package-curl) | 2.0.0-beta.21 |
+| [@cpp.js/package-tiff](https://www.npmjs.com/package/@cpp.js/package-tiff) | 2.0.0-beta.21 |
+| [@cpp.js/package-geotiff](https://www.npmjs.com/package/@cpp.js/package-geotiff) | 2.0.0-beta.21 |
+| [@cpp.js/package-webp](https://www.npmjs.com/package/@cpp.js/package-webp) | 2.0.0-beta.21 |
+| [@cpp.js/package-expat](https://www.npmjs.com/package/@cpp.js/package-expat) | 2.0.0-beta.21 |
+| [@cpp.js/package-iconv](https://www.npmjs.com/package/@cpp.js/package-iconv) | 2.0.0-beta.21 |
+| [@cpp.js/package-zlib](https://www.npmjs.com/package/@cpp.js/package-zlib) | 2.0.0-beta.21 |
+| [@cpp.js/package-zstd](https://www.npmjs.com/package/@cpp.js/package-zstd) | 2.0.0-beta.21 |
+| [@cpp.js/package-lerc](https://www.npmjs.com/package/@cpp.js/package-lerc) | 2.0.0-beta.21 |
+| [@cpp.js/package-jpegturbo](https://www.npmjs.com/package/@cpp.js/package-jpegturbo) | 2.0.0-beta.21 |
 
 Browse all available packages at [cpp.js.org/docs/package/package/showcase](https://cpp.js.org/docs/package/package/showcase).
 
