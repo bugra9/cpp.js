@@ -17,9 +17,23 @@
  */
 
 const fs = require('node:fs');
+const net = require('node:net');
 const path = require('node:path');
 const { run, MINUTE } = require('./exec');
 const { missingCaps } = require('./env');
+
+// OS-assigned free port: unique per template, immune to whatever already listens
+// on the shared preview defaults (4173/3000).
+function getFreePort() {
+    return new Promise((resolve, reject) => {
+        const server = net.createServer();
+        server.once('error', reject);
+        server.listen(0, () => {
+            const { port } = server.address();
+            server.close(() => resolve(String(port)));
+        });
+    });
+}
 
 const TIMEOUTS = {
     scaffold: 5 * MINUTE,
@@ -193,7 +207,15 @@ async function runTemplate(item, ctx) {
         // under CI, `expo run:ios` starts Metro in CI mode and attaches (never exits),
         // so the `run:ios && maestro` chain hangs. Run mobile e2e without CI — exactly
         // how a developer runs `npm run e2e:ios` locally.
-        const e2eEnv = item.klass === 'web' || item.klass === 'cloud' ? { CI: '1' } : undefined;
+        // Each web/cloud template also gets a fresh OS-assigned port (CPPJS_E2E_PORT):
+        // the shared preview defaults race with the previous template's teardown and
+        // with anything already listening on the host.
+        let e2eEnv;
+        if (item.klass === 'web' || item.klass === 'cloud') {
+            const e2ePort = await getFreePort();
+            logStream.write(`[e2e-templates] CPPJS_E2E_PORT=${e2ePort}\n`);
+            e2eEnv = { CI: '1', CPPJS_E2E_PORT: e2ePort };
+        }
         const e2eRun = await record(`e2e:${e2e.script.replace('e2e:', '')}`, pm, ['run', e2e.script], {
             cwd: projectDir,
             timeoutMs: TIMEOUTS.e2e,
