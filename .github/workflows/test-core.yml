@@ -6,18 +6,24 @@ on:
       - main
     paths:
       - cppjs-core/cpp.js/**
+      - cppjs-packages/**
       - .github/workflows/test-core.yml
   pull_request:
     branches:
       - main
     paths:
       - cppjs-core/cpp.js/**
+      - cppjs-packages/**
       - .github/workflows/test-core.yml
 
 permissions: {}
 jobs:
   unit:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Install pnpm
@@ -29,5 +35,13 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
+      - name: Unit tests with coverage thresholds
+        if: matrix.os == 'ubuntu-latest'
+        run: pnpm --filter cpp.js test:coverage
       - name: Unit tests
+        if: matrix.os == 'windows-latest'
         run: pnpm --filter cpp.js test
+      - name: License SPDX check
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: cppjs-samples/cppjs-playground-web-vanilla
+        run: node ../../cppjs-core/cpp.js/src/bin.js licenses --check
