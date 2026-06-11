@@ -7,6 +7,14 @@
     "license": "MIT",
     "main": "js/index.js",
     "type": "module",
+    "codegenConfig": {
+        "name": "RNCppjsSpec",
+        "type": "modules",
+        "jsSrcsDir": "spec",
+        "android": {
+            "javaPackageName": "com.jsi.lib"
+        }
+    },
     "peerDependencies": {
         "react-native": "*",
         "metro": "*",

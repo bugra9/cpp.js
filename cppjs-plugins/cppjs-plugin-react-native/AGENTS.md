@@ -8,10 +8,15 @@
 - `react-native-cppjs.podspec` — CocoaPods manifest. iOS app's `pod install` discovers this, runs the iOS build hooks (`script/build_ios.js`).
 - `android/build.gradle` — Android Gradle Plugin module config; defers native compilation to `script/CMakeLists.txt` via `externalNativeBuild`.
 - `script/CMakeLists.txt` — top-level CMake script Gradle's externalNativeBuild calls; shells out to Node scripts that produce the actual JS bridge + native lib.
-- `script/build_android.js` — runs `cppjs build -p android` for both arches.
-- `script/build_ios.js` — runs `cppjs build -p ios` + `createXCFramework`.
-- `script/build_js.js` — generates the JS-side bridge module Metro bundles.
-- `script/getCliPath.js` — helper that resolves the cpp.js CLI path inside Gradle's CMake context.
+- `script/build_android.js` — emits the per-ABI CMake parameter list into the file given as 3rd argument (consumed by `script/CMakeLists.txt`).
+- `script/build_android_assets.js` — copies dependency data assets into the app's `android/app/src/main/assets/cppjs` (gradle config phase).
+- `script/build_android_deps.js` — source-rebuilds dependencies flagged via `cppjs.overrides.js` / `CPPJS_REBUILD_DEPS`; prints `CPPJS_DEPS_STAMP=` for `build.gradle`.
+- `script/resolveBuildTarget.js` — shared Android buildTarget resolution used by the two scripts above.
+- `script/build_ios.js` — runs `cppjs build -p ios` + `createXCFramework`. Skips the native build when inputs are unchanged (see `iosLibCache.js`); force with `CPPJS_NO_IOS_CACHE=1`.
+- `script/iosLibCache.js` — content-hash stamp (`.cppjs/build/ios-libs-stamp-<buildType>.json`) plus mtime-pinned xcframework outputs (plugin dir can be shared between apps) deciding whether `build_ios.js` can skip.
+- `script/build_js.js` — generates the JS-side bridge module Metro bundles. Skips Metro when inputs are unchanged (see `bridgeCache.js`); force with `CPPJS_NO_BRIDGE_CACHE=1`.
+- `script/bridgeCache.js` — content-hash stamp (`.cppjs/build/bridge-stamp-<platform>.json`) over app + dependency sources deciding whether `build_js.js` can skip Metro.
+- `script/getCliPath.js` — resolves the cpp.js CLI path inside Gradle's CMake context. Deliberately state-free: CMake parses its stdout, so it must never load cpp.js config (which can log to stdout).
 - `cpp/` — C++ glue used by the JSI bridge.
 - `js/` — JS-side runtime that user code imports.
 - `cppjs.config.mjs` — plugin's own cpp.js config (used to expose its native helpers as deps).
@@ -23,10 +28,10 @@ Sibling packages:
 ## Build flow on Android
 
 1. User runs `pnpm android` (or `react-native run-android`).
-2. Gradle's externalNativeBuild fires `script/CMakeLists.txt` per ABI (arm64-v8a, x86_64).
-3. CMake calls `node script/build_android.js <abi> <buildType>`.
-4. `build_android.js` invokes `createLib + getCmakeParameters` for the user's project, producing `lib<name>.so`.
-5. CMake links the result into the app's APK.
+2. At gradle configuration phase `android/build.gradle` runs `build_js.js` (bridges), `build_android_deps.js` (dependency source rebuilds; returns the deps stamp) and `build_android_assets.js` (runtime assets).
+3. Gradle's externalNativeBuild fires `script/CMakeLists.txt` per requested ABI (intersection of `reactNativeArchitectures` with arm64-v8a/x86_64), passing `-DCPPJS_DEPS_STAMP` so a changed rebuilt-dependency set invalidates AGP's configure cache.
+4. CMake calls `node script/build_android.js <abi> <buildType> <paramsFile>` and reads the CMake parameters from that file (stdout is the cpp.js log channel — never print params there).
+5. CMake builds `lib<name>.so` via `getCmakeParameters` output, links JSI/fbjni from the ReactAndroid prefab, and the result lands in the app's APK.
 
 ## Build flow on iOS
 

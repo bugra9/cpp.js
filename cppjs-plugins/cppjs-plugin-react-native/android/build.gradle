@@ -1,50 +1,89 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.facebook.react'
 
-// React Native's new-arch autolinking generates its own CMakeLists for this
-// module and ignores the `externalNativeBuild { path "../script/CMakeLists.txt" }`
-// block below, so neither `build_js.js` (SWIG bridges) nor `build_android.js`
-// (native asset copy under android/app/src/main/assets/cppjs) ran when the
-// module was consumed via autolinking. Invoke both directly at Gradle
-// configuration phase: by the time any native compile or APK-packaging task
-// starts, bridges and runtime assets are already on disk.
+// build_js.js (SWIG/embind bridges), build_android_deps.js (dependency source
+// rebuilds) and build_android_assets.js (runtime asset copy under
+// android/app/src/main/assets/cppjs) are cpp.js-specific steps with no React
+// Native gradle equivalent. Run them at configuration phase so bridges, deps and
+// assets land on disk before any native compile or APK-packaging task starts.
 def __cppjsAppRoot = new File(rootProject.projectDir, '..').absolutePath
 def __cppjsScriptDir = new File(projectDir, '../script').absolutePath
 
+// cpp.js ships Android prebuilts for arm64-v8a and x86_64 only. Build the
+// intersection with the app's reactNativeArchitectures so only the requested
+// supported ABIs are built (never an unsupported one).
+def cppjsAndroidAbis = ['arm64-v8a', 'x86_64']
+def cppjsResolveAbis = {
+    def value = rootProject.getProperties().get("reactNativeArchitectures")
+    def requested = value ? (value.split(",") as List) : cppjsAndroidAbis
+    def abis = requested.intersect(cppjsAndroidAbis)
+    return abis ?: cppjsAndroidAbis
+}
+def cppjsAbis = cppjsResolveAbis()
+
+// Streams the script's output and returns the value of its CPPJS_DEPS_STAMP=
+// line, if any (stdout is also the cpp.js log channel, so scan line by line).
 def __cppjsRun = { String label, List<String> args ->
     logger.lifecycle("[cppjs] ${label} :: node ${args.join(' ')} (cwd=${__cppjsAppRoot})")
     def proc = new ProcessBuilder(['node'] + args)
         .directory(new File(__cppjsAppRoot))
-        .inheritIO()
+        .redirectErrorStream(true)
         .start()
+    def stamp = null
+    proc.inputStream.eachLine { line ->
+        println(line)
+        if (line.startsWith('CPPJS_DEPS_STAMP=')) {
+            stamp = line.substring('CPPJS_DEPS_STAMP='.length())
+        }
+    }
     def code = proc.waitFor()
     if (code != 0) {
         throw new GradleException("[cppjs] ${label} failed with exit code ${code}")
     }
+    return stamp
 }
 
 __cppjsRun("Generate SWIG bridges", [new File(__cppjsScriptDir, 'build_js.js').absolutePath, 'android'])
-// Asset copy is ABI-agnostic (GDAL share files are plain text) — pin to
-// arm64-v8a/Release so the script can resolve a buildTarget and proceed.
-__cppjsRun("Copy native runtime assets", [new File(__cppjsScriptDir, 'build_android.js').absolutePath, 'arm64-v8a', 'Release'])
+// Rebuild any cpp.js dependency flagged for source rebuild (cppjs.overrides.js / CPPJS_REBUILD_DEPS)
+// at config phase; the CMake phase consumes the fresh artifacts via the rebuild marker (loadConfig).
+// Pinned to Release: dependency prebuilts ship Release-only, debug app builds link the same deps.
+def cppjsDepsStamp = __cppjsRun("Rebuild cpp.js dependencies",
+    [new File(__cppjsScriptDir, 'build_android_deps.js').absolutePath, 'Release', cppjsAbis.join(',')]) ?: 'none'
+// Asset copy is ABI-agnostic (data files are identical across ABIs) — pass the first
+// requested ABI only so the script can resolve a buildTarget.
+__cppjsRun("Copy native runtime assets",
+    [new File(__cppjsScriptDir, 'build_android_assets.js').absolutePath, cppjsAbis[0], 'Release'])
 
 android {
     compileSdkVersion 34
     buildToolsVersion "34.0.0"
 
+    buildFeatures {
+        prefab true
+    }
+
     defaultConfig {
-        minSdkVersion 23
+        // RN 0.85's prefab (jsi/reactnative/hermestooling) is built for API 24, so the
+        // consuming library must declare minSdk >= 24. Track the app's value when set.
+        minSdkVersion(rootProject.ext.has('minSdkVersion') ? rootProject.ext.minSdkVersion : 24)
         targetSdkVersion 34
         versionCode 100
         versionName "1.0.0"
 
         externalNativeBuild {
              cmake {
-                 arguments "-DCPPJS_PROJECT_PATH=${rootProject.projectDir.parent}"
+                 // RN's prefab (jsi/reactnative/hermestooling) is built against the shared
+                 // libc++; the consuming library must match or prefab linking is rejected.
+                 // CPPJS_DEPS_STAMP keys AGP's configure cache to the consumed rebuilt-dependency
+                 // set: when it changes, AGP reruns CMake configure and picks up the fresh paths.
+                 arguments "-DCPPJS_PROJECT_PATH=${rootProject.projectDir.parent}",
+                     "-DANDROID_STL=c++_shared",
+                     "-DCPPJS_DEPS_STAMP=${cppjsDepsStamp}"
             }
         }
 
         ndk {
-            abiFilters 'arm64-v8a', 'x86_64'
+            abiFilters(*cppjsAbis)
         }
     }
 

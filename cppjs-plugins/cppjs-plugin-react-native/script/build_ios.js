@@ -1,9 +1,10 @@
 import {
-    state, createLib, getParentPath,
+    state, createLib, getParentPath, buildDependencies,
     createXCFramework, getAllBridges, getTargetParams, getFilteredBuildTargets
 } from 'cpp.js';
 import RNEmbind from '@cpp.js/core-embind-jsi/cppjs.config.mjs';
 import RNCppjsPluginReactNative from '../cppjs.config.mjs';
+import { isIosLibsFresh, saveIosLibsStamp } from './iosLibCache.js';
 
 const buildType = process.argv[2] || 'Release';
 
@@ -55,22 +56,32 @@ const options = {
     ],
 };
 
-createLib(buildTargetIPhoneOS, 'Full', options);
-createLib(buildTargetIPhoneSimulator, 'Full', options);
-
-const overrideConfig = {
-    paths: {
-        project: projectPath,
-        output: `${state.config.paths.build}/Full-${buildType}`,
-    },
-    export: {
-        libName: ['react-native-cppjs'],
-    },
-    targetParams: {
-        platform: ['ios'],
-        arch: ['iphoneos', 'iphonesimulator'],
-        runtime: ['mt'],
-        buildType: [buildTargetIPhoneOS.buildType],
-    }
+const iosTargetParams = {
+    platform: ['ios'],
+    arch: [buildTargetIPhoneOS.arch, buildTargetIPhoneSimulator.arch],
+    runtime: [buildTargetIPhoneOS.runtime],
+    buildType: [buildTargetIPhoneOS.buildType],
 };
-createXCFramework(overrideConfig);
+
+await buildDependencies({ targetParams: iosTargetParams });
+
+const cacheKeyArgs = [buildType, projectPath, [projectPath, RNEmbindProjectPath]];
+if (isIosLibsFresh(...cacheKeyArgs)) {
+    console.log(`cppjs: iOS libs (${buildType}) up to date — skipping native build.`);
+} else {
+    createLib(buildTargetIPhoneOS, 'Full', options);
+    createLib(buildTargetIPhoneSimulator, 'Full', options);
+
+    const overrideConfig = {
+        paths: {
+            project: projectPath,
+            output: `${state.config.paths.build}/Full-${buildType}`,
+        },
+        export: {
+            libName: ['react-native-cppjs'],
+        },
+        targetParams: iosTargetParams,
+    };
+    createXCFramework(overrideConfig);
+    saveIosLibsStamp(...cacheKeyArgs);
+}

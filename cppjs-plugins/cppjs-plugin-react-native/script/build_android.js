@@ -1,45 +1,23 @@
 import fs from 'node:fs';
 import {
-    state, getCmakeParameters, getParentPath,
-    getAllBridges, getData, getTargetParams, getFilteredBuildTargets
+    state, getCmakeParameters, getParentPath, getAllBridges,
 } from 'cpp.js';
 import RNEmbind from '@cpp.js/core-embind-jsi/cppjs.config.mjs';
 import RNCppjsPluginReactNative from '../cppjs.config.mjs';
+import resolveBuildTarget from './resolveBuildTarget.js';
 
+const arch = process.argv[2];
 const buildType = process.argv[3] || 'Release';
+const outFile = process.argv[4];
 
-const targetParams = getTargetParams({ platform: ['android'], arch: [process.argv[2]], runtime: ['mt'] }, true);
-let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
-let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
-
-if (!buildTargetRelease && !buildTargetDebug) {
-    throw new Error('No build targets found');
+if (!arch || !outFile) {
+    throw new Error('Usage: node build_android.js <abi> <buildType> <paramsOutFile>');
 }
 
-if (!buildTargetDebug) {
-    buildTargetDebug = buildTargetRelease;
-} else if (!buildTargetRelease) {
-    buildTargetRelease = buildTargetDebug;
-}
-
-const buildTarget = buildType === 'Release' ? buildTargetRelease : buildTargetDebug;
+const buildTarget = resolveBuildTarget(arch, buildType);
 
 const projectPath = getParentPath(RNCppjsPluginReactNative.paths.config);
 const RNEmbindProjectPath = getParentPath(RNEmbind.paths.config);
-
-const androidAssetPath = `${state.config.paths.project}/android/app/src/main/assets/cppjs`;
-if (!fs.existsSync(androidAssetPath)) {
-    fs.mkdirSync(androidAssetPath, { recursive: true });
-}
-Object.entries(getData('data', buildTarget)).forEach(([key, value]) => {
-    if (fs.existsSync(key)) {
-        const dAssetPath = `${androidAssetPath}/${value}`;
-        if (!fs.existsSync(dAssetPath)) {
-            fs.mkdirSync(dAssetPath, { recursive: true });
-            fs.cpSync(key, dAssetPath, { recursive: true });
-        }
-    }
-});
 
 const bridges = getAllBridges();
 const options = {
@@ -50,14 +28,14 @@ const options = {
         ...bridges,
         `${projectPath}/cpp/src/JSI_module.cpp`,
         `${RNEmbindProjectPath}/cpp/src/emscripten/bind.cpp`,
-        `${state.config.paths.project}/node_modules/react-native/ReactCommon/jsi/jsi/jsi.cpp`,
     ],
     headerDirs: [
         `${projectPath}/cpp/src`,
         `${RNEmbindProjectPath}/cpp/src`,
-        `${state.config.paths.project}/node_modules/react-native/ReactCommon/jsi`,
     ],
 };
 const params = getCmakeParameters(buildTarget, options);
 
-console.log(params.join(';;;'));
+// Written to a file, not stdout: cpp.js logging shares stdout, so CMake parsing the
+// process output would break the parameter list on any log line.
+fs.writeFileSync(outFile, params.join(';;;'));
