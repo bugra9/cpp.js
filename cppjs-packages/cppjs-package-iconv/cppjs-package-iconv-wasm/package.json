@@ -6,7 +6,7 @@
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-iconv#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "type": "module",
-    "license": "LGPL",
+    "license": "LGPL-2.1-or-later",
     "keywords": [
         "iconv",
         "libiconv",

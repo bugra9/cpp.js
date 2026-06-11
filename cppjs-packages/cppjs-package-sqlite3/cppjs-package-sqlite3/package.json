@@ -6,7 +6,7 @@
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-sqlite3#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "type": "module",
-    "license": "Public Domain",
+    "license": "blessing",
     "keywords": [
         "sqlite",
         "sqlite3",
