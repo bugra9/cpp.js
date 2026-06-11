@@ -1,11 +1,11 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.facebook.react'
 
-// build_js.js (SWIG/embind bridges), build_android_deps.js (dependency source
-// rebuilds) and build_android_assets.js (runtime asset copy under
-// android/app/src/main/assets/cppjs) are cpp.js-specific steps with no React
-// Native gradle equivalent. Run them at configuration phase so bridges, deps and
-// assets land on disk before any native compile or APK-packaging task starts.
+// build_js.js (SWIG/embind bridges), build_android_deps.js (dependency source rebuilds)
+// and build_android_assets.js (runtime asset copy into this library's assets) run as
+// registered tasks — no external process at configuration time, so the build stays
+// configuration-cache compatible. Each script is content-cached internally, which keeps
+// the always-run tasks cheap.
 def __cppjsAppRoot = new File(rootProject.projectDir, '..').absolutePath
 def __cppjsScriptDir = new File(projectDir, '../script').absolutePath
 
@@ -13,46 +13,33 @@ def __cppjsScriptDir = new File(projectDir, '../script').absolutePath
 // intersection with the app's reactNativeArchitectures so only the requested
 // supported ABIs are built (never an unsupported one).
 def cppjsAndroidAbis = ['arm64-v8a', 'x86_64']
-def cppjsResolveAbis = {
-    def value = rootProject.getProperties().get("reactNativeArchitectures")
-    def requested = value ? (value.split(",") as List) : cppjsAndroidAbis
-    def abis = requested.intersect(cppjsAndroidAbis)
-    return abis ?: cppjsAndroidAbis
-}
-def cppjsAbis = cppjsResolveAbis()
+def cppjsAbis = providers.gradleProperty('reactNativeArchitectures')
+    .map { value -> (value.split(',') as List).intersect(cppjsAndroidAbis) ?: cppjsAndroidAbis }
+    .getOrElse(cppjsAndroidAbis)
 
-// Streams the script's output and returns the value of its CPPJS_DEPS_STAMP=
-// line, if any (stdout is also the cpp.js log channel, so scan line by line).
-def __cppjsRun = { String label, List<String> args ->
-    logger.lifecycle("[cppjs] ${label} :: node ${args.join(' ')} (cwd=${__cppjsAppRoot})")
-    def proc = new ProcessBuilder(['node'] + args)
-        .directory(new File(__cppjsAppRoot))
-        .redirectErrorStream(true)
-        .start()
-    def stamp = null
-    proc.inputStream.eachLine { line ->
-        println(line)
-        if (line.startsWith('CPPJS_DEPS_STAMP=')) {
-            stamp = line.substring('CPPJS_DEPS_STAMP='.length())
-        }
-    }
-    def code = proc.waitFor()
-    if (code != 0) {
-        throw new GradleException("[cppjs] ${label} failed with exit code ${code}")
-    }
-    return stamp
+def cppjsBridges = tasks.register('cppjsBridges', Exec) {
+    workingDir __cppjsAppRoot
+    commandLine 'node', new File(__cppjsScriptDir, 'build_js.js').absolutePath, 'android'
+}
+def cppjsDeps = tasks.register('cppjsDeps', Exec) {
+    workingDir __cppjsAppRoot
+    // Pinned to Release: dependency prebuilts ship Release-only, debug app builds link the same deps.
+    commandLine 'node', new File(__cppjsScriptDir, 'build_android_deps.js').absolutePath, 'Release', cppjsAbis.join(',')
+}
+def cppjsAssets = tasks.register('cppjsAssets', Exec) {
+    // Asset data may come from a freshly rebuilt dependency.
+    dependsOn cppjsDeps
+    workingDir __cppjsAppRoot
+    // Asset copy is ABI-agnostic (data files are identical across ABIs) — pass the first
+    // requested ABI only so the script can resolve a buildTarget.
+    commandLine 'node', new File(__cppjsScriptDir, 'build_android_assets.js').absolutePath, cppjsAbis[0], 'Release'
 }
 
-__cppjsRun("Generate SWIG bridges", [new File(__cppjsScriptDir, 'build_js.js').absolutePath, 'android'])
-// Rebuild any cpp.js dependency flagged for source rebuild (cppjs.overrides.js / CPPJS_REBUILD_DEPS)
-// at config phase; the CMake phase consumes the fresh artifacts via the rebuild marker (loadConfig).
-// Pinned to Release: dependency prebuilts ship Release-only, debug app builds link the same deps.
-def cppjsDepsStamp = __cppjsRun("Rebuild cpp.js dependencies",
-    [new File(__cppjsScriptDir, 'build_android_deps.js').absolutePath, 'Release', cppjsAbis.join(',')]) ?: 'none'
-// Asset copy is ABI-agnostic (data files are identical across ABIs) — pass the first
-// requested ABI only so the script can resolve a buildTarget.
-__cppjsRun("Copy native runtime assets",
-    [new File(__cppjsScriptDir, 'build_android_assets.js').absolutePath, cppjsAbis[0], 'Release'])
+tasks.named('preBuild').configure { dependsOn(cppjsBridges, cppjsDeps, cppjsAssets) }
+// CMake configure can also be triggered without preBuild (IDE sync, direct invocation).
+tasks.matching { it.name.startsWith('configureCMake') }.configureEach {
+    dependsOn(cppjsBridges, cppjsDeps)
+}
 
 android {
     compileSdkVersion 34
@@ -74,11 +61,8 @@ android {
              cmake {
                  // RN's prefab (jsi/reactnative/hermestooling) is built against the shared
                  // libc++; the consuming library must match or prefab linking is rejected.
-                 // CPPJS_DEPS_STAMP keys AGP's configure cache to the consumed rebuilt-dependency
-                 // set: when it changes, AGP reruns CMake configure and picks up the fresh paths.
                  arguments "-DCPPJS_PROJECT_PATH=${rootProject.projectDir.parent}",
-                     "-DANDROID_STL=c++_shared",
-                     "-DCPPJS_DEPS_STAMP=${cppjsDepsStamp}"
+                     "-DANDROID_STL=c++_shared"
             }
         }
 

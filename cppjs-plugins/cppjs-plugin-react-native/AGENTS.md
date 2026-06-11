@@ -28,10 +28,11 @@ Sibling packages:
 ## Build flow on Android
 
 1. User runs `pnpm android` (or `react-native run-android`).
-2. At gradle configuration phase `android/build.gradle` runs `build_js.js` (bridges), `build_android_deps.js` (dependency source rebuilds; returns the deps stamp) and `build_android_assets.js` (runtime assets).
-3. Gradle's externalNativeBuild fires `script/CMakeLists.txt` per requested ABI (intersection of `reactNativeArchitectures` with arm64-v8a/x86_64), passing `-DCPPJS_DEPS_STAMP` so a changed rebuilt-dependency set invalidates AGP's configure cache.
-4. CMake calls `node script/build_android.js <abi> <buildType> <paramsFile>` and reads the CMake parameters from that file (stdout is the cpp.js log channel — never print params there).
-5. CMake builds `lib<name>.so` via `getCmakeParameters` output, links JSI/fbjni from the ReactAndroid prefab, and the result lands in the app's APK.
+2. Registered gradle tasks (`cppjsBridges`, `cppjsDeps`, `cppjsAssets` — wired before `preBuild`/`configureCMake*`) run the scripts; no process runs at configuration time, so the build is **configuration-cache compatible**. Each script content-caches itself, so the always-run tasks cost ~1 s warm.
+3. `cppjsAssets` copies dependency data into **this library's own** `android/src/main/assets/cppjs` (AGP merges library assets into the APK — no cross-project mergeAssets coupling); `cppjsDeps` refreshes `.cppjs/deps-stamp` only when the consumed rebuilt-dependency set changes.
+4. Gradle's externalNativeBuild fires `script/CMakeLists.txt` per requested ABI (intersection of `reactNativeArchitectures` with arm64-v8a/x86_64). The stamp file is registered as `CMAKE_CONFIGURE_DEPENDS`, so ninja re-runs the configure automatically when it changes.
+5. CMake calls `node script/build_android.js <abi> <buildType> <paramsFile>` and reads one `-DKEY=VALUE` per line from that file (stdout is the cpp.js log channel — never print params there).
+6. CMake builds `lib<name>.so` via `getCmakeParameters` output, links JSI/fbjni from the ReactAndroid prefab, and the result lands in the app's APK.
 
 ## Build flow on iOS
 

@@ -37,48 +37,40 @@ if(NODE_RESULT)
     message(FATAL_ERROR "Node script failed")
 endif()
 
-file(READ "${CPPJS_PARAMS_FILE}" NODE_OUTPUT)
-string(STRIP "${NODE_OUTPUT}" NODE_OUTPUT)
+# One -DKEY=VALUE per line; file(STRINGS) escapes embedded semicolons so list
+# values (globs, search paths) survive intact.
+file(STRINGS "${CPPJS_PARAMS_FILE}" CPPJS_PARAM_LINES)
 
-set(remaining "${NODE_OUTPUT}")
+foreach(arg IN LISTS CPPJS_PARAM_LINES)
+    if("${arg}" STREQUAL "")
+        continue()
+    endif()
+    string(SUBSTRING "${arg}" 2 -1 def)
+    string(FIND "${def}" "=" eq_pos)
 
-while(TRUE)
-    string(FIND "${remaining}" ";;;" delim_pos)
-
-    if(delim_pos EQUAL -1)
-        set(arg "${remaining}")
+    if(eq_pos EQUAL -1)
+        set(key "${def}")
+        set(value "")
     else()
-        string(SUBSTRING "${remaining}" 0 ${delim_pos} arg)
-        math(EXPR next_pos "${delim_pos} + 3")
-        string(SUBSTRING "${remaining}" ${next_pos} -1 remaining)
+        string(SUBSTRING "${def}" 0 ${eq_pos} key)
+        math(EXPR val_pos "${eq_pos} + 1")
+        string(SUBSTRING "${def}" ${val_pos} -1 value)
     endif()
 
-    if(NOT "${arg}" STREQUAL "")
-        string(SUBSTRING "${arg}" 2 -1 def)
-        string(FIND "${def}" "=" eq_pos)
-
-        if(eq_pos EQUAL -1)
-            set(key "${def}")
-            set(value "")
-        else()
-            string(SUBSTRING "${def}" 0 ${eq_pos} key)
-            math(EXPR val_pos "${eq_pos} + 1")
-            string(SUBSTRING "${def}" ${val_pos} -1 value)
-        endif()
-
-        set(${key} "${value}")
-        message("${key} = ${value}")
-    endif()
-
-    if(delim_pos EQUAL -1)
-        break()
-    endif()
-endwhile()
+    set(${key} "${value}")
+    message("${key} = ${value}")
+endforeach()
 
 message("PROJECT_NAME = ${PROJECT_NAME}")
-message("NODE_OUTPUT = ${NODE_OUTPUT}")
-# Passed from build.gradle solely to invalidate AGP's cached configure when the
-# source-rebuilt dependency set changes; referencing it also avoids the unused-variable warning.
+
+# build_android_deps.js (gradle task cppjsDeps) refreshes this stamp whenever the
+# consumed rebuilt-dependency set changes; registering it as a configure dependency
+# makes ninja re-run CMake automatically — no gradle-argument tricks needed.
+set(CPPJS_DEPS_STAMP_FILE "${CPPJS_PROJECT_PATH}/.cppjs/deps-stamp")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CPPJS_DEPS_STAMP_FILE}")
+if(EXISTS "${CPPJS_DEPS_STAMP_FILE}")
+    file(READ "${CPPJS_DEPS_STAMP_FILE}" CPPJS_DEPS_STAMP)
+endif()
 message("CPPJS_DEPS_STAMP = ${CPPJS_DEPS_STAMP}")
 
 include("${CPPJS_CLI_PATH}/assets/cmake/CMakeLists.txt")

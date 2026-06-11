@@ -36,6 +36,6 @@ const options = {
 };
 const params = getCmakeParameters(buildTarget, options);
 
-// Written to a file, not stdout: cpp.js logging shares stdout, so CMake parsing the
-// process output would break the parameter list on any log line.
-fs.writeFileSync(outFile, params.join(';;;'));
+// Written to a file (one parameter per line), not stdout: cpp.js logging shares
+// stdout, so CMake parsing the process output would break on any log line.
+fs.writeFileSync(outFile, params.join('\n'));

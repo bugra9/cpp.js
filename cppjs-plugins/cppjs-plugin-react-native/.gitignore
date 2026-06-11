@@ -68,3 +68,6 @@ yarn-error.log
 
 # testing
 /coverage
+
+# cpp.js: generated runtime assets (dependency data + stamp), produced by the cppjsAssets task
+android/src/main/assets/cppjs/
