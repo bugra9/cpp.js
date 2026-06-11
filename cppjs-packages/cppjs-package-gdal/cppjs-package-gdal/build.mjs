@@ -19,7 +19,7 @@ export default {
         },
         {
             regex: '#include <iconv.h>',
-            replacement: '# include <iconv.h>\nextern "C" {\n    extern __attribute__((__visibility__("default"))) iconv_t libiconv_open (const char* tocode, const char* fromcode);\n    extern __attribute__((__visibility__("default"))) size_t libiconv (iconv_t cd,  char* * inbuf, size_t *inbytesleft, char* * outbuf, size_t *outbytesleft);\n}',
+            replacement: '# include <iconv.h>\nextern "C" {\n    extern __attribute__((__visibility__("default"))) iconv_t libiconv_open (const char* tocode, const char* fromcode);\n    extern __attribute__((__visibility__("default"))) size_t libiconv (iconv_t cd,  ICONV_CPP_CONST char* * inbuf, size_t *inbytesleft, char* * outbuf, size_t *outbytesleft);\n}',
             paths: ['port/cpl_recode_iconv.cpp'],
         },
         {
