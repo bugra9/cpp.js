@@ -61,6 +61,8 @@ Playbooks added in Sprint 9:
 
 - [`playbooks/code-review.md`](./playbooks/code-review.md) — review checklist for package + fix/feature PRs.
 - [`playbooks/verify-install.md`](./playbooks/verify-install.md) — verify your plugin / MCP / AGENTS.md install actually works.
+- [`playbooks/override-dependencies.md`](./playbooks/override-dependencies.md) — rebuild/override dependencies from source via `cppjs.overrides.js` (all platforms), marker/stamp mechanics, `cppjs clean-deps`.
+- [`playbooks/licensing-lgpl.md`](./playbooks/licensing-lgpl.md) — shipping closed-source apps with LGPL native deps; `cppjs licenses` (SPDX table, `--notices`, `--check`).
 
 ## "Why was X decided this way?" → architecture decisions
 
