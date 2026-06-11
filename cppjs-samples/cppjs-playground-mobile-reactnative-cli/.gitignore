@@ -84,3 +84,6 @@ yarn-error.log
 
 !ci/.cppjs
 !ci/.cppjs/build
+
+# cpp.js: generated runtime assets (copied dependency data + stamp)
+android/app/src/main/assets/cppjs/
