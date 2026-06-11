@@ -24,9 +24,15 @@ export default async function buildWasm(target, options = {}) {
         return;
     }
 
+    // buildLib's cache is keyed on paths.output/prebuilt; after a cache clean the
+    // build-dir copy can be gone while the output artifact is still valid — link it then.
+    const sourceLibCandidates = [
+        `${state.config.paths.build}/Source-${buildType}/${target.path}/lib${state.config.general.name}.a`,
+        `${state.config.paths.output}/prebuilt/${target.path}/lib/lib${state.config.general.name}.a`,
+    ];
     const libs = [
         ...getDependLibs(target),
-        `${state.config.paths.build}/Source-${buildType}/${target.path}/lib${state.config.general.name}.a`,
+        sourceLibCandidates.find((lib) => fs.existsSync(lib)) ?? sourceLibCandidates[0],
         `${state.config.paths.build}/Bridge-${buildType}/${target.path}/lib${state.config.general.name}.a`,
     ];
 
