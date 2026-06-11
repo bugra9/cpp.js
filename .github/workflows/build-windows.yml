@@ -1,23 +1,11 @@
 name: build windows
+# Runs on a SELF-HOSTED Windows runner (label: Windows) with Docker Desktop running
+# Linux images — GitHub-hosted Windows runners cannot run Linux containers, so this
+# is manual-only: no push trigger (queued-then-cancelled noise while the runner is
+# offline) and no pull_request trigger (public repo: fork PRs must never execute on
+# a self-hosted machine). Hosted Windows coverage lives in test-core's windows lane.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - cppjs-core/**
-      - cppjs-extensions/**
-      - cppjs-packages/**
-      - cppjs-plugins/**
-      - cppjs-samples/**
-      - .github/workflows/build-windows.yml
-  pull_request:
-    branches:
-      - main
-    paths:
-      - cppjs-core/cpp.js/**
-      - cppjs-plugins/**
-      - .github/workflows/build-windows.yml
 
 permissions: {}
 jobs:
