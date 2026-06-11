@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import pullDockerImage, { getDockerImage } from '../utils/pullDockerImage.js';
 import getOsUserAndGroupId from '../utils/getOsUserAndGroupId.js';
 import { getContentHash } from '../utils/hash.js';
+import replaceBasePathForDockerUtil from '../utils/replaceBasePathForDocker.js';
 import state from '../state/index.js';
 
 const CROSSCOMPILER_ARM64 = 'aarch64-linux-android33';
@@ -85,7 +86,7 @@ export default function run(program, params = [], platformPrefix = null, target 
         fs.mkdirSync(buildPath, { recursive: true });
     }
 
-    if (target.platform !== 'ios' || program !== null) {
+    if (target?.platform !== 'ios' || program !== null) {
         pullDockerImage();
     }
 
@@ -171,7 +172,7 @@ export default function run(program, params = [], platformPrefix = null, target 
 
     const env = {};
     let runner = 'DOCKER';
-    if ((target.platform === 'ios' && program === null) || state.config.system.RUNNER === 'LOCAL') {
+    if ((target?.platform === 'ios' && program === null) || state.config.system.RUNNER === 'LOCAL') {
         runner = 'LOCAL';
     }
 
@@ -252,25 +253,12 @@ export default function run(program, params = [], platformPrefix = null, target 
     try {
         execFileSync(...fileExecParams);
     } catch (e) {
-        console.log(e?.stdout?.toString() || 'stdout is empty');
-        console.error(e?.stderr?.toString() || 'stderr is empty');
-        console.error('An error occurred while running the application. Please check the logs for more details.');
-        process.exit();
+        if (e?.stdout?.length) console.log(e.stdout.toString());
+        if (e?.stderr?.length) console.error(e.stderr.toString());
+        throw new Error(`cppjs: command failed${dProgram ? ` (${dProgram})` : ''} with exit code ${e?.status ?? 'unknown'}`, { cause: e });
     }
 }
 
 function replaceBasePathForDocker(data) {
-    if (typeof data === 'string' || data instanceof String) {
-        return data.replaceAll(state.config.paths.base, '/tmp/cppjs/live');
-    }
-    if (Array.isArray(data)) {
-        return data.map((d) => replaceBasePathForDocker(d));
-    }
-    if (typeof value === 'object' && data !== null) {
-        const newData = {};
-        Object.entries(data).forEach(([key, value]) => {
-            newData[key] = replaceBasePathForDocker(value);
-        });
-    }
-    return data;
+    return replaceBasePathForDockerUtil(data, state.config.paths.base);
 }
