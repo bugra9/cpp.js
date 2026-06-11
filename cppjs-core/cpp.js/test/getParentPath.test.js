@@ -1,10 +1,14 @@
 import { describe, test, expect } from 'vitest';
+import { pathToFileURL } from 'node:url';
+import upath from 'upath';
 import getParentPath from '../src/utils/getParentPath.js';
 
 describe('getParentPath', () => {
+    // Built with pathToFileURL so the URL is valid on Windows too (drive letter);
+    // a hardcoded POSIX file:// URL is rejected by fileURLToPath there.
     test('strips the file segment from a file:// URL', () => {
-        const input = 'file:///Users/me/project/cppjs-core/cpp.js/src/index.js';
-        expect(getParentPath(input)).toBe('/Users/me/project/cppjs-core/cpp.js/src');
+        const input = pathToFileURL(upath.resolve('/Users/me/project/cppjs-core/cpp.js/src/index.js')).href;
+        expect(getParentPath(input)).toBe(upath.resolve('/Users/me/project/cppjs-core/cpp.js/src'));
     });
 
     test('strips the file segment from a plain absolute path', () => {

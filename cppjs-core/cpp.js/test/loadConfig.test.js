@@ -2,6 +2,7 @@ import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import upath from 'upath';
 import loadConfig, { getFilledConfig } from '../src/state/loadConfig.js';
 
 describe('excludedDependencies', () => {
@@ -156,7 +157,7 @@ describe('dependency replacement', () => {
         expect(dep.general.name).toBe('gdal');
         expect(dep.general.alias.package).toBe('@cpp.js/package-gdal');
         expect(dep.export.libName).toEqual(['gdal']);
-        expect(dep.paths.project).toBe('/new/aaagdal');
+        expect(dep.paths.project).toBe(upath.resolve('/new/aaagdal'));
     });
 
     test('leaves a dependency untouched when no replace entry matches', () => {
@@ -166,7 +167,7 @@ describe('dependency replacement', () => {
             dependencies: [{ general: { name: 'gdal' }, paths: { project: '/old/gdal' } }],
         };
         const dep = fill(app, { proj: { replace: {} } }).allDependencies[0];
-        expect(dep.paths.project).toBe('/old/gdal');
+        expect(dep.paths.project).toBe(upath.resolve('/old/gdal'));
     });
 });
 
@@ -192,6 +193,6 @@ describe('raw config isolation', () => {
         first.paths.output = '/app/.cppjs/deps/z/dist';
 
         expect(rawDep.paths.project).toBe('/pkg/zlib-wasm');
-        expect(fill(app).allDependencies[0].paths.project).toBe('/pkg/zlib-wasm');
+        expect(fill(app).allDependencies[0].paths.project).toBe(upath.resolve('/pkg/zlib-wasm'));
     });
 });

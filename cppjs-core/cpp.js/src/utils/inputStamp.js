@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import upath from 'upath';
 import findFiles from './findFiles.js';
 import { getContentHash, getFileHash } from './hash.js';
 
@@ -13,9 +14,10 @@ export function collectInputFiles(roots, exts, extraFiles = []) {
             cwd: root,
             ignore: EXCLUDED_DIRS.map((dir) => `**/${dir}/**`),
         }).forEach((file) => files.add(file));
-        if (fs.existsSync(`${root}/package.json`)) files.add(`${root}/package.json`);
+        const packageJson = upath.join(root, 'package.json');
+        if (fs.existsSync(packageJson)) files.add(packageJson);
     });
-    extraFiles.forEach((file) => files.add(file));
+    extraFiles.forEach((file) => files.add(upath.normalize(file)));
     return [...files].filter((file) => fs.existsSync(file)).sort();
 }
 

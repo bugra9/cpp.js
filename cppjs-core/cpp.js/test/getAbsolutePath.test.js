@@ -11,12 +11,14 @@ describe('getAbsolutePath', () => {
         expect(getAbsolutePath('/some/project', undefined)).toBeNull();
     });
 
+    // upath.resolve anchors POSIX-style absolutes to the current drive on Windows,
+    // so expectations resolve the same way instead of hardcoding the POSIX literal.
     test('returns the path as-is when it is already absolute', () => {
-        expect(getAbsolutePath('/some/project', '/etc/foo')).toBe('/etc/foo');
+        expect(getAbsolutePath('/some/project', '/etc/foo')).toBe(upath.resolve('/etc/foo'));
     });
 
     test('joins relative path against the projectPath when projectPath is provided', () => {
-        expect(getAbsolutePath('/some/project', 'src/native')).toBe('/some/project/src/native');
+        expect(getAbsolutePath('/some/project', 'src/native')).toBe(upath.resolve('/some/project/src/native'));
     });
 
     test('resolves relative path against cwd when projectPath is missing', () => {
@@ -25,6 +27,6 @@ describe('getAbsolutePath', () => {
     });
 
     test('normalizes ../ in relative paths against the projectPath', () => {
-        expect(getAbsolutePath('/some/project/sub', '../sibling')).toBe('/some/project/sibling');
+        expect(getAbsolutePath('/some/project/sub', '../sibling')).toBe(upath.resolve('/some/project/sibling'));
     });
 });

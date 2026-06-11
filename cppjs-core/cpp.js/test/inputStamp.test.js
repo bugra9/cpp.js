@@ -2,16 +2,19 @@ import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import upath from 'upath';
 import { collectInputFiles, computeInputStamp } from '../src/utils/inputStamp.js';
 
 describe('inputStamp', () => {
     let root;
 
+    // collectInputFiles returns upath-normalized paths (glob posix output), so
+    // expectations normalize the same way for Windows.
     const write = (rel, content = '') => {
         const file = path.join(root, rel);
         fs.mkdirSync(path.dirname(file), { recursive: true });
         fs.writeFileSync(file, content);
-        return file;
+        return upath.normalize(file);
     };
 
     beforeEach(() => {
