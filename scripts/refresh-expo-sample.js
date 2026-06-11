@@ -52,8 +52,7 @@ function workspacePackages() {
 function dependencyClosure(sampleDir, workspace) {
     const read = (dir) => JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'));
     const sample = read(sampleDir);
-    const queue = Object.keys({ ...sample.dependencies, ...sample.devDependencies })
-        .filter((name) => workspace.has(name));
+    const queue = Object.keys({ ...sample.dependencies, ...sample.devDependencies }).filter((name) => workspace.has(name));
     const seen = new Set();
     while (queue.length > 0) {
         const name = queue.shift();
