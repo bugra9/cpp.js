@@ -1,6 +1,6 @@
 
 import {
-    state, createLib, createBridgeFile, buildWasm, getTargetParams, getFilteredBuildTargets, isSourceNewer,
+    state, createLib, createBridgeFile, buildWasm, buildDependencies, getTargetParams, getFilteredBuildTargets, isSourceNewer,
 } from 'cpp.js';
 import rollupCppjsPlugin from '@cpp.js/plugin-rollup';
 
@@ -16,8 +16,6 @@ if (!buildTargetRelease && !buildTargetDebug) {
 
 if (!buildTargetDebug) {
     buildTargetDebug = buildTargetRelease;
-} else if (!buildTargetRelease) {
-    buildTargetRelease = buildTargetDebug;
 }
 
 const viteCppjsPlugin = (options) => {
@@ -32,6 +30,7 @@ const viteCppjsPlugin = (options) => {
             name: 'vite-plugin-cppjs',
             async load(source) {
                 if (isServe && source === '/cpp.js') {
+                    await buildDependencies({ targetParams: { ...targetParams, buildType: [buildTargetDebug.buildType] } });
                     const force = isSourceNewer(buildTargetDebug);
                     createLib(buildTargetDebug, 'Source', { force, buildSource: true });
                     createLib(buildTargetDebug, 'Bridge', { force, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...bridges] });

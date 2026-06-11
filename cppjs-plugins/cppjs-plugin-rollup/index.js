@@ -1,7 +1,7 @@
 
 
 import {
-    state, createLib, createBridgeFile, buildWasm, getCppJsScript,
+    state, createLib, createBridgeFile, buildWasm, getCppJsScript, buildDependencies,
     getDependFilePath, getTargetParams, getFilteredBuildTargets, isSourceNewer,
 } from 'cpp.js';
 
@@ -16,9 +16,7 @@ if (!buildTargetRelease && !buildTargetDebug) {
     throw new Error('No build targets found');
 }
 
-if (!buildTargetDebug) {
-    buildTargetDebug = buildTargetRelease;
-} else if (!buildTargetRelease) {
+if (!buildTargetRelease) {
     buildTargetRelease = buildTargetDebug;
 }
 
@@ -84,6 +82,7 @@ const rollupCppjsPlugin = (options, bridges = []) => {
             });
         },
         async generateBundle() {
+            await buildDependencies({ targetParams: { ...targetParams, buildType: [buildTargetRelease.buildType] } });
             const force = isSourceNewer(buildTargetRelease);
             createLib(buildTargetRelease, 'Source', { force, buildSource: true });
             createLib(buildTargetRelease, 'Bridge', { force, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...bridges] });

@@ -1,7 +1,7 @@
 
 import fs from 'node:fs';
 import {
-    state, createLib, buildWasm, createBridgeFile, getData, getCppJsScript, getTargetParams, getFilteredBuildTargets, isSourceNewer,
+    state, createLib, buildWasm, createBridgeFile, getData, getCppJsScript, buildDependencies, getTargetParams, getFilteredBuildTargets, isSourceNewer,
 } from 'cpp.js';
 
 const targetParams = getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
@@ -40,6 +40,7 @@ export default class CppjsWebpackPlugin {
     async onDone({ compilation }) {
         const isDev = compilation.options.mode === 'development';
         const buildTarget = isDev ? buildTargetDebug : buildTargetRelease;
+        await buildDependencies({ targetParams: { ...targetParams, buildType: [buildTarget.buildType] } });
         const force = isSourceNewer(buildTarget);
         createLib(buildTarget, 'Source', { force, buildSource: true });
         createLib(buildTarget, 'Bridge', { force, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...this.bridges] });
