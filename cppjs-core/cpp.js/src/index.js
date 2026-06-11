@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/prefer-default-export
 export { default as state } from './state/index.js';
 export { default as getParentPath } from './utils/getParentPath.js';
 export { default as createLib } from './actions/createLib.js';
@@ -13,3 +12,7 @@ export { default as run } from './actions/run.js';
 export { getTargetParams, getBuildTargets, getFilteredBuildTargets, getFilteredTargetSpec } from './actions/target.js';
 export { default as getCppJsScript } from './integration/getCppJsScript.js';
 export { default as getDependFilePath } from './integration/getDependFilePath.js';
+export { default as buildDependencies, getDependenciesStamp } from './actions/buildDependencies.js';
+export { default as findFiles } from './utils/findFiles.js';
+export { getContentHash, getFileHash } from './utils/hash.js';
+export { collectInputFiles, computeInputStamp } from './utils/inputStamp.js';

@@ -2,6 +2,9 @@ import os from 'node:os';
 import fs from 'node:fs';
 import systemKeys from '../utils/systemKeys.js';
 import loadJs from '../utils/loadJs.js';
+import {
+    resolveDependencyOverride, resolveDependencyReplace, restampIdentity, resolveExcludedNames, getOverrideKey,
+} from '../utils/overrideDependency.js';
 import loadJson from '../utils/loadJson.js';
 import getParentPath from '../utils/getParentPath.js';
 import getAbsolutePath from '../utils/getAbsolutePath.js';
@@ -13,14 +16,14 @@ import logger from '../utils/logger.js';
 
 export default async function loadConfig(configDir = process.cwd(), configName = 'cppjs.config') {
     const config = await loadJs(configDir, configName) || {};
-    const exclude = config.excludedDependencies || [];
-    const seen = new Set();
-    const output = getFilledConfig(config, { isDepend: false, exclude, seen });
-
-    const unmatched = exclude.filter((e) => !seen.has(e));
-    if (unmatched.length) {
-        logger.info(`cppjs: excludedDependencies not found: ${unmatched.join(', ')}. Available: ${[...seen].sort().join(', ')}`);
+    if (config.excludedDependencies?.length) {
+        logger.info('cppjs: `excludedDependencies` in cppjs.config.js is no longer read — declare exclusions in cppjs.overrides.js as { <name>: false }.');
     }
+    const overrides = await loadJs(configDir, 'cppjs.overrides');
+    const exclude = resolveExcludedNames(overrides);
+    const seen = new Set();
+    const output = getFilledConfig(config, { isDepend: false, exclude, seen, replaces: overrides });
+    output.excludedDependencies = exclude;
 
     const build = await loadJs(configDir, 'cppjs.build');
 
@@ -28,6 +31,42 @@ export default async function loadConfig(configDir = process.cwd(), configName =
         build.withBuildConfig = true;
     }
     output.build = { ...build, ...output.build };
+
+    if (overrides) {
+        Object.entries(overrides).forEach(([key, value]) => {
+            if (!value || typeof value !== 'object') {
+                logger.info(`cppjs: cppjs.overrides["${key}"] must be an object — { rebuild: true } / { exclude: true } / { replace: ... }.`);
+            }
+        });
+        output.allDependencies.forEach((d) => {
+            const resolved = resolveDependencyOverride(overrides, d);
+            if (resolved) {
+                d.overrideBuild = resolved.override;
+                d.rebuild = true;
+            }
+        });
+        const unmatched = Object.keys(overrides).filter((k) => !seen.has(k));
+        if (unmatched.length) {
+            logger.info(`cppjs: cppjs.overrides entries not matched to any dependency: ${unmatched.join(', ')}. Available: ${[...seen].sort().join(', ')}`);
+        }
+    }
+
+    // Consume any dependency already rebuilt from source (buildDependencies writes the marker) so the
+    // fresh artifacts win across processes — e.g. Android rebuilds at the Gradle config phase and is
+    // consumed when the CMake phase reloads the config.
+    output.allDependencies.forEach((d) => {
+        const depsDir = `${output.paths.cache}/deps/${d.general.name}`;
+        const meta = loadJson(`${depsDir}/.cppjs-rebuild.json`);
+        if (!meta || meta.key !== getOverrideKey(d)) return;
+        if (!fs.existsSync(`${depsDir}/dist/prebuilt/CMakeLists.txt`)) {
+            logger.info(`cppjs: rebuilt cache for "${d.general.name}" is incomplete (missing dist/prebuilt/CMakeLists.txt) — using prebuilt. Rebuild, or reset with \`cppjs clean-deps\`.`);
+            return;
+        }
+        d.paths.output = `${depsDir}/dist`;
+        if (d.export.libName.some((n) => fs.existsSync(`${depsDir}/${n}.xcframework`))) {
+            d.paths.project = depsDir;
+        }
+    });
 
     output.paths.systemConfig = `${os.homedir()}/.cppjs.json`;
     output.system = loadJson(output.paths.systemConfig) || {};
@@ -43,10 +82,15 @@ export default async function loadConfig(configDir = process.cwd(), configName =
 
 export function getFilledConfig(config, options = { isDepend: false }) {
     const exclude = options.exclude || [];
-    const { seen } = options;
+    const { seen, replaces } = options;
 
     const dependencies = (config.dependencies || [])
-        .map((d) => getFilledConfig(d, { isDepend: true, exclude, seen }))
+        .map((d) => {
+            const filled = getFilledConfig(d, { isDepend: true, exclude, seen, replaces });
+            const replacement = resolveDependencyReplace(replaces, filled);
+            if (!replacement) return filled;
+            return restampIdentity(getFilledConfig(replacement, { isDepend: true, exclude, seen, replaces }), filled);
+        })
         .filter((fd) => {
             const names = [fd.general.name, fd.package?.name, fd.general.alias?.package].filter(Boolean);
             names.forEach((n) => seen?.add(n));
@@ -56,8 +100,9 @@ export function getFilledConfig(config, options = { isDepend: false }) {
     const newConfig = {
         general: config.general || {},
         dependencies,
-        excludedDependencies: config.excludedDependencies || [],
-        paths: config.paths || {},
+        // Cloned: raw cppjs.config modules are import singletons; later path mutations
+        // (e.g. rebuild-marker consumption) must not leak into them across loadConfig calls.
+        paths: { ...(config.paths || {}) },
         ext: config.ext || {},
         export: config.export || {},
         targetSpecs: config.targetSpecs || [],

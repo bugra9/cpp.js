@@ -1,0 +1,52 @@
+import fs from 'node:fs';
+import replace from 'replace';
+import downloadAndExtractFile from '../utils/downloadAndExtractFile.js';
+import { getBuildTargets } from './target.js';
+import state from '../state/index.js';
+import buildLib from './buildLib.js';
+
+export default async function buildExternal(targetParams, options = {}) {
+    const version = state.config.package.nativeVersion;
+    if (!version) {
+        throw new Error(`cppjs: "${state.config.general?.name}" has a cppjs.build recipe but no "nativeVersion" in package.json — cannot build from source.`);
+    }
+
+    const { getURL, replaceList, copyToSource, copyToDist } = state.config.build;
+    const isNewlyCreated = await downloadAndExtractFile(getURL(version), state.config.paths.build);
+    const sourcePath = `${state.config.paths.build}/source`;
+    if (isNewlyCreated && replaceList) {
+        replaceList.forEach(({ regex, replacement, paths }) => {
+            replace({
+                regex, replacement, paths: paths.map((p) => `${sourcePath}/${p}`), recursive: false, silent: true,
+            });
+        });
+    }
+
+    if (isNewlyCreated && copyToSource) {
+        Object.entries(copyToSource).forEach(([key, value]) => {
+            fs.copyFileSync(`${state.config.paths.project}/${key}`, `${sourcePath}/${value}`);
+        });
+    }
+
+    buildLib(targetParams, options);
+
+    if (copyToDist) {
+        const targets = getBuildTargets(targetParams);
+        Object.entries(copyToDist).forEach(([key, value]) => {
+            const values = [];
+            if (Array.isArray(value)) {
+                values.push(...value);
+            } else {
+                values.push(value);
+            }
+            values.forEach(v => {
+                targets.forEach(target => {
+                    const assetPath = `${state.config.paths.output}/prebuilt/${target.path}/${v}`;
+                    if (!fs.existsSync(assetPath)) {
+                        fs.copyFileSync(`${state.config.paths.project}/${key}`, assetPath);
+                    }
+                });
+            });
+        });
+    }
+}

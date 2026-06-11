@@ -8,15 +8,15 @@ function getRecursiveData(obj, config, dependency, field, target) {
     Object.entries(entries).forEach(([dKey, value]) => {
         if (field === 'data') {
             let key;
-            if (fs.existsSync(`${dependency.paths.project}/dist/prebuilt/${target.path}`)) {
-                key = `${dependency.paths.project}/dist/prebuilt/${target.path}/${dKey}`;
+            if (fs.existsSync(`${dependency.paths.output}/prebuilt/${target.path}`)) {
+                key = `${dependency.paths.output}/prebuilt/${target.path}/${dKey}`;
             } else {
                 const releaseTarget = getBuildTargets({
                     platform: [target.platform], arch: [target.arch], runtime: [target.runtime],
                     runtimeEnv: [target.runtimeEnv], buildType: ['release']
                 })?.[0];
                 if (releaseTarget) {
-                    key = `${dependency.paths.project}/dist/prebuilt/${releaseTarget.path}/${dKey}`;
+                    key = `${dependency.paths.output}/prebuilt/${releaseTarget.path}/${dKey}`;
                 } else {
                     throw new Error('Data not found');
                 }

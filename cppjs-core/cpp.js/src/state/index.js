@@ -238,7 +238,7 @@ function loadCacheState() {
     return loadJson(stateFilePath) || state.cache;
 }
 
-function setAllDependecyPaths() {
+export function setAllDependecyPaths() {
     state.config.allDependencyPaths = {};
     state.targets.forEach((target) => {
         state.config.allDependencyPaths[target.path] = { cmake: {} };

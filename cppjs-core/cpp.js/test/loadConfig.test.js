@@ -106,13 +106,12 @@ describe('excludedDependencies', () => {
         expect(depNames(fill(config, ['@myorg/zlib']))).toEqual(['jpeg']);
     });
 
-    test('loadConfig prunes via the excludedDependencies config field', async () => {
+    test('loadConfig prunes via cppjs.overrides (exclude)', async () => {
         const appDir = project('app');
         const zDir = project('z');
         const jpegDir = project('jpeg');
         fs.writeFileSync(path.join(appDir, 'cppjs.config.mjs'), `export default {
   general: { name: 'app' },
-  excludedDependencies: ['z'],
   paths: { project: ${JSON.stringify(appDir)} },
   dependencies: [
     { general: { name: 'z' }, paths: { project: ${JSON.stringify(zDir)} } },
@@ -120,8 +119,79 @@ describe('excludedDependencies', () => {
   ],
 };
 `);
+        fs.writeFileSync(path.join(appDir, 'cppjs.overrides.mjs'), 'export default { z: { exclude: true } };\n');
         const cfg = await loadConfig(appDir);
         expect(depNames(cfg)).toEqual(['jpeg']);
         expect(cfg.excludedDependencies).toEqual(['z']);
+    });
+});
+
+describe('dependency replacement', () => {
+    const fill = (config, replaces) => getFilledConfig(
+        config,
+        { isDepend: false, exclude: [], seen: new Set(), replaces },
+    );
+
+    test('replaces a dependency, keeping old identity and taking new implementation', () => {
+        const app = {
+            general: { name: 'app' },
+            paths: { project: '/app' },
+            dependencies: [{
+                general: { name: 'gdal', alias: { package: '@cpp.js/package-gdal' } },
+                paths: { project: '/old/gdal' },
+                export: { libName: ['gdal'] },
+            }],
+        };
+        const replaces = {
+            '@cpp.js/package-gdal': {
+                replace: {
+                    general: { name: 'aaagdal' },
+                    paths: { project: '/new/aaagdal' },
+                    export: { libName: ['aaagdal'] },
+                },
+            },
+        };
+
+        const dep = fill(app, replaces).allDependencies[0];
+        expect(dep.general.name).toBe('gdal');
+        expect(dep.general.alias.package).toBe('@cpp.js/package-gdal');
+        expect(dep.export.libName).toEqual(['gdal']);
+        expect(dep.paths.project).toBe('/new/aaagdal');
+    });
+
+    test('leaves a dependency untouched when no replace entry matches', () => {
+        const app = {
+            general: { name: 'app' },
+            paths: { project: '/app' },
+            dependencies: [{ general: { name: 'gdal' }, paths: { project: '/old/gdal' } }],
+        };
+        const dep = fill(app, { proj: { replace: {} } }).allDependencies[0];
+        expect(dep.paths.project).toBe('/old/gdal');
+    });
+});
+
+describe('raw config isolation', () => {
+    const fill = (config) => getFilledConfig(
+        config,
+        { isDepend: false, exclude: [], seen: new Set() },
+    );
+
+    // Raw cppjs.config modules are import singletons: mutating a filled node (e.g. the
+    // rebuild-marker consumption setting paths.project) must never leak into the raw
+    // config, or the next loadConfig in the same process refills from poisoned paths.
+    test('mutating a filled dependency path does not poison the raw config', () => {
+        const rawDep = { general: { name: 'z' }, paths: { project: '/pkg/zlib-wasm' } };
+        const app = {
+            general: { name: 'app' },
+            paths: { project: '/app' },
+            dependencies: [rawDep],
+        };
+
+        const first = fill(app).allDependencies[0];
+        first.paths.project = '/app/.cppjs/deps/z';
+        first.paths.output = '/app/.cppjs/deps/z/dist';
+
+        expect(rawDep.paths.project).toBe('/pkg/zlib-wasm');
+        expect(fill(app).allDependencies[0].paths.project).toBe('/pkg/zlib-wasm');
     });
 });
