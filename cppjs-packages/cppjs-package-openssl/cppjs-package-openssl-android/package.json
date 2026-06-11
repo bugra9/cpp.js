@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-openssl-android",
-    "version": "2.0.0-beta.21",
+    "version": "2.0.0-beta.23",
     "nativeVersion": "4.0.1",
     "description": "Android build of the precompiled OpenSSL library, built with cpp.js. Use it together with the main package @cpp.js/package-openssl.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-openssl#readme",

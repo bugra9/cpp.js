@@ -2,7 +2,7 @@
   "name": "@cpp.js/sample-mobile-reactnative-expo",
   "private": true,
   "main": "expo-router/entry",
-  "version": "2.0.0-beta.21",
+  "version": "2.0.0-beta.23",
   "description": "Cpp.js Expo sample",
   "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-mobile-reactnative-expo#readme",
   "repository": "https://github.com/bugra9/cpp.js.git",

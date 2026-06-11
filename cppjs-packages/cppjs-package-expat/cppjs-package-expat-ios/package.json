@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-expat-ios",
-    "version": "2.0.0-beta.21",
+    "version": "2.0.0-beta.23",
     "nativeVersion": "2.8.1",
     "description": "iOS build of the precompiled Expat XML parser library, built with cpp.js. Use it together with the main package @cpp.js/package-expat.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-expat#readme",
