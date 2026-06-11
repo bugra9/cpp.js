@@ -1,5 +1,5 @@
 {
-    "name": "@cpp.js/playground-web-vite",
+    "name": "@cpp.js/playground-web-vite-multithread",
     "version": "2.0.0-beta.23",
     "private": true,
     "description": "Cpp.js Vite Playground",
