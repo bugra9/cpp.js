@@ -3,23 +3,26 @@
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { Command, Option } from 'commander';
-import replace from 'replace';
 
 import { state } from './index.js';
 import createBridgeFile from './actions/createInterface.js';
 import createLib from './actions/createLib.js';
 import buildWasm from './actions/buildWasm.js';
-import createXCFramework from './actions/createXCFramework.js';
+import buildExternal from './actions/buildExternal.js';
+import buildLib from './actions/buildLib.js';
+import buildDependencies from './actions/buildDependencies.js';
 import runCppjsApp from './actions/run.js';
-import { getBuildTargets, getFilteredBuildTargets, getFilteredTargetSpec } from './actions/target.js';
+import { getFilteredBuildTargets } from './actions/target.js';
 
-import downloadAndExtractFile from './utils/downloadAndExtractFile.js';
 import writeJson from './utils/writeJson.js';
 import flattenConfigForTable from './utils/flattenConfigForTable.js';
 import systemKeys from './utils/systemKeys.js';
 import logger from './utils/logger.js';
 import { getDockerImage } from './utils/pullDockerImage.js';
 import { getContentHash } from './utils/hash.js';
+import { cleanDepsCache } from './utils/dependencyRebuild.js';
+import collectLicenseRows from './actions/licenses.js';
+import { formatNoticesMarkdown, validateSpdx } from './utils/licenseReport.js';
 import findFiles from './utils/findFiles.js';
 
 const packageJSON = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url)));
@@ -29,6 +32,21 @@ const archs = [...new Set(state.targets.map(target => target.arch).filter(t => t
 const runtimes = [...new Set(state.targets.map(target => target.runtime).filter(t => t))];
 const buildTypes = [...new Set(state.targets.map(target => target.buildType).filter(t => t))];
 const runtimeEnvs = [...new Set(state.targets.map(target => target.runtimeEnv).filter(t => t))];
+
+// Build failures bubble up as exceptions with a `cause` chain (see actions/run.js);
+// show the operator a single line — DEBUG=1 for the full stack — and exit non-zero.
+const handleFatal = (e) => {
+    if (process.env.DEBUG) {
+        console.error(e);
+    } else {
+        let message = e?.message || String(e);
+        if (e?.cause?.message) message += `\n  caused by: ${e.cause.message.split('\n')[0]}`;
+        console.error(message);
+    }
+    process.exit(1);
+};
+process.on('uncaughtException', handleFatal);
+process.on('unhandledRejection', handleFatal);
 
 const program = new Command();
 
@@ -45,8 +63,10 @@ program.command('build')
     .addOption(new Option('-r, --runtime <runtime>', 'target runtime').argParser(createListParser(runtimes)))
     .addOption(new Option('-b, --build-type <buildType>', 'target build type').argParser(createListParser(buildTypes)))
     .addOption(new Option('-e, --runtime-env <runtimeEnv>', 'target runtime environment').argParser(createListParser(runtimeEnvs)))
+    .option('--rebuild-deps [list]', 'rebuild dependencies from source instead of using prebuilt (all, or a comma-separated list of names)')
     .action((options) => {
-        const targetParams = { ...options };
+        const { rebuildDeps, ...rest } = options;
+        const targetParams = { ...rest };
 
         if (!targetParams.arch) {
             targetParams.arch = archs.filter(item => item !== 'wasm64');
@@ -64,7 +84,53 @@ program.command('build')
         if (state.config.build.withBuildConfig) {
             buildExternal(targetParams);
         } else {
-            build(targetParams);
+            build(targetParams, rebuildDeps);
+        }
+    });
+
+program.command('licenses')
+    .description('list bundled native dependencies with SPDX license, versions and source URL')
+    .option('--notices [file]', 'write a THIRD-PARTY-NOTICES markdown file (default: THIRD-PARTY-NOTICES.md)')
+    .option('--check', 'exit non-zero when a license field is missing or not valid SPDX')
+    .action(async (options) => {
+        const rows = await collectLicenseRows();
+        rows.forEach((row) => {
+            console.log(`${row.isCopyleft ? '! ' : '  '}${(row.name || '').padEnd(14)} ${String(row.license || '(missing)').padEnd(48)} native ${String(row.nativeVersion || '-').padEnd(10)} ${row.sourceUrl || ''}`);
+        });
+        const copyleftRows = rows.filter((row) => row.isCopyleft);
+        if (copyleftRows.length > 0) {
+            console.log(`\n! ${copyleftRows.length} copyleft-licensed ${copyleftRows.length === 1 ? 'dependency' : 'dependencies'} (${copyleftRows.map((row) => row.name).join(', ')}) — see docs/playbooks/licensing-lgpl.md`);
+        }
+        if (options.notices) {
+            const file = typeof options.notices === 'string' ? options.notices : `${state.config.paths.project}/THIRD-PARTY-NOTICES.md`;
+            fs.writeFileSync(file, formatNoticesMarkdown(rows));
+            logger.info(`cppjs: wrote ${file}`);
+        }
+        if (options.check) {
+            const invalid = rows
+                .map((row) => ({ row, result: validateSpdx(row.license) }))
+                .filter(({ result }) => !result.isValid);
+            invalid.forEach(({ row, result }) => console.error(`x ${row.name} (${row.npmName}): ${result.error}`));
+            if (invalid.length > 0) process.exit(1);
+            console.log('✓ all license fields are valid SPDX');
+        }
+    });
+
+program.command('clean-deps')
+    .description('remove the source-rebuilt dependency cache (all, or only the named dependencies)')
+    .argument('[names...]', 'dependency names (general name, package name or alias)')
+    .action((names) => {
+        const dirNames = names.length === 0 ? undefined : names.map((given) => {
+            const match = state.config.allDependencies.find((d) => [
+                d.general?.name, d.package?.name, d.general?.alias?.package,
+            ].filter(Boolean).includes(given));
+            return match ? match.general.name : given;
+        });
+        const removed = cleanDepsCache(state.config.paths.cache, dirNames);
+        if (removed.length === 0) {
+            logger.info('cppjs: no rebuilt dependency cache to remove.');
+        } else {
+            logger.info(`cppjs: removed rebuilt cache for: ${removed.join(', ')}.`);
         }
     });
 
@@ -77,8 +143,8 @@ const dockerExec = (args) => {
     try {
         execFileSync('docker', args, { stdio: 'inherit' });
     } catch (e) {
-        console.error('An error occurred while running the application. Please check the logs for more details.');
-        process.exit();
+        console.error(`cppjs: docker command failed with exit code ${e?.status ?? 'unknown'}.`);
+        process.exit(e?.status || 1);
     }
 };
 
@@ -140,7 +206,16 @@ commandConfig.command('keys')
     .description('list all available system configuration keys for Cpp.js')
     .action(() => listSystemKeys());
 
-program.parse(process.argv);
+// `pnpm run <script> -- --flag` forwards the `--` literally and commander would then
+// treat the flags as positionals. Strip the first separator for commands where every
+// argument is an option; `run`/`docker run` keep it for program arguments.
+const argv = [...process.argv];
+if (['build', 'clean-deps', 'licenses'].includes(argv[2])) {
+    const separatorIndex = argv.indexOf('--');
+    if (separatorIndex !== -1) argv.splice(separatorIndex, 1);
+}
+
+program.parse(argv);
 
 function listSystemKeys() {
     console.info('Available configurations:');
@@ -207,122 +282,10 @@ function run(programName, params) {
     runCppjsApp(programName, params, null, null, { console: true });
 }
 
-async function buildExternal(targetParams) {
-    const version = state.config.package.nativeVersion;
-    if (!version) {
-        console.error('no version found!');
-        return;
-    }
-
-    const { getURL, replaceList, copyToSource, copyToDist } = state.config.build;
-    const isNewlyCreated = await downloadAndExtractFile(getURL(version), state.config.paths.build);
-    const sourcePath = `${state.config.paths.build}/source`;
-    if (isNewlyCreated && replaceList) {
-        replaceList.forEach(({ regex, replacement, paths }) => {
-            replace({
-                regex, replacement, paths: paths.map((p) => `${sourcePath}/${p}`), recursive: false, silent: true,
-            });
-        });
-    }
-
-    if (isNewlyCreated && copyToSource) {
-        Object.entries(copyToSource).forEach(([key, value]) => {
-            fs.copyFileSync(`${state.config.paths.project}/${key}`, `${sourcePath}/${value}`);
-        });
-    }
-
-    buildLib(targetParams);
-
-    if (copyToDist) {
-        const targets = getBuildTargets(targetParams);
-        Object.entries(copyToDist).forEach(([key, value]) => {
-            const values = [];
-            if (Array.isArray(value)) {
-                values.push(...value);
-            } else {
-                values.push(value);
-            }
-            values.forEach(v => {
-                targets.forEach(target => {
-                    const assetPath = `${state.config.paths.output}/prebuilt/${target.path}/${v}`;
-                    if (!fs.existsSync(assetPath)) {
-                        fs.copyFileSync(`${state.config.paths.project}/${key}`, assetPath);
-                    }
-                });
-            });
-        });
-    }
-}
-
-async function build(targetParams) {
+async function build(targetParams, rebuildOption) {
+    await buildDependencies({ targetParams, rebuildOption });
     buildLib(targetParams);
     createWasmJs(targetParams);
-}
-
-function buildLib(targetParams) {
-    let isChanged = false;
-    const targets = getBuildTargets(targetParams);
-    if (targets.length === 0) {
-        console.error('No targets found for the given parameters.', targetParams);
-        throw new Error('No targets found for the given parameters.');
-    }
-
-    targets.forEach((target) => {
-        if (!fs.existsSync(`${state.config.paths.output}/prebuilt/${target.path}/lib`)) {
-            createLib(target, 'Source', { buildSource: true });
-
-            const modules = [];
-            state.config.paths.module.forEach((modulePath) => {
-                modules.push(...findFiles('**/*.i', { cwd: modulePath }));
-                modules.push(...findFiles('*.i', { cwd: modulePath }));
-            });
-            if (modules.length > 0) {
-                fs.mkdirSync(`${state.config.paths.output}/prebuilt/${target.path}/swig`, { recursive: true });
-            }
-            modules.forEach((modulePath) => {
-                const fileName = modulePath.split('/').at(-1);
-                fs.copyFileSync(modulePath, `${state.config.paths.output}/prebuilt/${target.path}/swig/${fileName}`);
-            });
-            isChanged = true;
-        } else {
-            logger.cachedStep(target, 'lib');
-        }
-    });
-
-    if (isChanged && fs.existsSync(`${state.config.paths.build}/Source-Release/prebuilt`)) {
-        fs.cpSync(`${state.config.paths.build}/Source-Release/prebuilt`, `${state.config.paths.output}/prebuilt`, { recursive: true, dereference: true });
-    }
-    if (isChanged && fs.existsSync(`${state.config.paths.build}/Source-Debug/prebuilt`)) {
-        fs.cpSync(`${state.config.paths.build}/Source-Debug/prebuilt`, `${state.config.paths.output}/prebuilt`, { recursive: true, dereference: true });
-    }
-
-    createXCFramework();
-
-    const iosTargets = getBuildTargets({ platform: ['ios'], arch: ['iphoneos'], runtime: ['mt'], buildType: ['release'] });
-    const podSpecs = findFiles('*.podspec', { cwd: state.config.paths.project });
-    if (podSpecs.length === 0 && targets.length > 0) {
-        const iosTarget = iosTargets[0];
-        const resources = getFilteredTargetSpec(state.config.targetSpecs, iosTarget).map(s => s.data).filter(s => s).map(d => Object.keys(d)).flat();
-        const uniqueResources = [...new Set(resources)].map(r => `dist/prebuilt/${iosTarget.path}/${r}`);
-        const xcFrameworks = [];
-        xcFrameworks.push(...state.config.export.libName.map((l) => `${l}.xcframework`));
-        if (!xcFrameworks.some(f => !fs.existsSync(`${state.config.paths.project}/${f}`))) {
-            xcFrameworks.push(...state.config.dependencies.map((d) => d.export.libName.map((l) => `${l}.xcframework`)).flat());
-            const distPodSpecContent = fs.readFileSync(`${state.config.paths.cli}/assets/packaging/cppjs-package.podspec`, { encoding: 'utf8', flag: 'r' })
-                .replaceAll('___PROJECT_NAME___', state.config.general.name)
-                .replace('___PROJECT_FRAMEWORKS___', xcFrameworks.map(f => `'${f}'`).join(', '))
-                .replace('___PROJECT_RESOURCES___', JSON.stringify(uniqueResources));
-            fs.writeFileSync(`${state.config.paths.project}/${state.config.general.name}.podspec`, distPodSpecContent);
-        }
-    }
-
-    if (fs.existsSync(`${state.config.paths.output}/prebuilt`)) {
-        const distCmakeContent = fs.readFileSync(`${state.config.paths.cli}/assets/cmake/dist.cmake`, { encoding: 'utf8', flag: 'r' })
-            .replace('___PROJECT_NAME___', state.config.general.name)
-            .replace('___PROJECT_HOST___', targets.map((t) => t.path).join(';'))
-            .replace('___PROJECT_LIBS___', state.config.export.libName.join(';'));
-        fs.writeFileSync(`${state.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
-    }
 }
 
 async function createWasmJs(targetParams) {

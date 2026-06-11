@@ -20,24 +20,25 @@
         "test:coverage": "vitest run --coverage"
     },
     "devDependencies": {
-        "vitest": "^4.1.7",
-        "@vitest/coverage-v8": "^4.1.7"
+        "@vitest/coverage-v8": "^4.1.7",
+        "vitest": "^4.1.7"
     },
     "dependencies": {
         "@rollup/plugin-commonjs": "^29.0.2",
         "@rollup/plugin-json": "^6.1.0",
         "@rollup/plugin-node-resolve": "^16.0.3",
         "@rollup/plugin-virtual": "^3.0.2",
+        "comlink": "^4.4.2",
         "commander": "^14.0.3",
-        "glob": "^13.0.6",
-        "rollup": "^4.60.4",
-        "upath": "^3.0.7",
         "decompress": "^4.2.1",
         "follow-redirects": "^1.16.0",
-        "replace": "^1.2.2",
-        "comlink": "^4.4.2",
+        "glob": "^13.0.6",
         "log-update": "^8.0.0",
-        "picocolors": "^1.1.1"
+        "picocolors": "^1.1.1",
+        "replace": "^1.2.2",
+        "rollup": "^4.60.4",
+        "spdx-expression-parse": "^4.0.0",
+        "upath": "^3.0.7"
     },
     "keywords": [
         "webassembly",
