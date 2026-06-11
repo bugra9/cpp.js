@@ -22,6 +22,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { pathToFileURL } = require('url');
 
 const ROOT = path.resolve(__dirname, '..');
 const PACKAGES_DIR = path.join(ROOT, 'cppjs-packages');
@@ -47,37 +48,21 @@ function detectPlatform(pkgDirName) {
     return null;
 }
 
-// Extracts `general.name` and `export.libName` from a cppjs.config.js file
-// without executing it (avoids resolving workspace ESM imports).
-function parseConfig(configPath) {
-    const src = fs.readFileSync(configPath, 'utf8');
+// The gdal3.js-layout platform configs are thin mergeConfig() calls — name and
+// libName live in the core package. Import the config for real instead of
+// regex-parsing it; workspace links resolve the core from the package dir.
+async function loadConfigMeta(configPath, platform) {
+    const config = (await import(pathToFileURL(configPath).href)).default;
 
-    const nameMatch = src.match(/general\s*:\s*\{[^}]*?name\s*:\s*['"]([^'"]+)['"]/s);
-    const generalName = nameMatch ? nameMatch[1] : null;
+    const generalName = config?.general?.name ?? null;
+    let libNames = config?.export?.libName?.length > 0 ? [...config.export.libName] : generalName ? [generalName] : [];
 
-    const exportBlockMatch = src.match(/export\s*:\s*\{([\s\S]*?)\n\s*\}/);
-    let libNames = null;
-    if (exportBlockMatch) {
-        const arrMatch = exportBlockMatch[1].match(/libName\s*:\s*\[([\s\S]*?)\]/);
-        if (arrMatch) {
-            libNames = arrMatch[1]
-                .split(',')
-                .map((s) => s.trim())
-                .filter(Boolean)
-                .map((s) => s.replace(/^['"]|['"]$/g, ''));
-        }
-    }
+    const specs = (config?.targetSpecs || []).filter((spec) => !spec.platform || spec.platform === platform);
+    const libType = specs.map((spec) => spec.libType ?? spec.specs?.libType).find(Boolean) ?? null;
+    const ignored = specs.flatMap((spec) => spec.ignoreLibName ?? spec.specs?.ignoreLibName ?? []);
+    libNames = libNames.filter((name) => !ignored.includes(name));
 
-    // Each platform-specific package contains a single platform entry in
-    // targetSpecs, so a global libType match is unambiguous here.
-    const libTypeMatch = src.match(/libType\s*:\s*['"]([^'"]+)['"]/);
-    const libType = libTypeMatch ? libTypeMatch[1] : null;
-
-    return {
-        name: generalName,
-        libNames: libNames && libNames.length > 0 ? libNames : generalName ? [generalName] : [],
-        libType,
-    };
+    return { name: generalName, libNames, libType };
 }
 
 function findPlatformPackages() {
@@ -103,7 +88,7 @@ function findPlatformPackages() {
     return out;
 }
 
-function checkPackage(pkg) {
+async function checkPackage(pkg) {
     const issues = [];
     const distDir = path.join(pkg.dir, 'dist');
     const prebuiltDir = path.join(distDir, 'prebuilt');
@@ -124,9 +109,16 @@ function checkPackage(pkg) {
         return { issues, libNames: [] };
     }
 
-    const { libNames, libType } = parseConfig(configPath);
+    let meta;
+    try {
+        meta = await loadConfigMeta(configPath, pkg.platform);
+    } catch (e) {
+        issues.push(`cppjs.config.js failed to import: ${e.message}`);
+        return { issues, libNames: [] };
+    }
+    const { libNames, libType } = meta;
     if (libNames.length === 0) {
-        issues.push('could not parse libName from cppjs.config.js');
+        issues.push('no libName resolved from cppjs.config.js');
         return { issues, libNames };
     }
 
@@ -166,9 +158,12 @@ function checkPackage(pkg) {
     return { issues, libNames };
 }
 
-function main() {
+async function main() {
     const packages = findPlatformPackages();
-    const results = packages.map((pkg) => ({ pkg, ...checkPackage(pkg) }));
+    const results = [];
+    for (const pkg of packages) {
+        results.push({ pkg, ...(await checkPackage(pkg)) });
+    }
 
     const ok = results.filter((r) => r.issues.length === 0);
     const failed = results.filter((r) => r.issues.length > 0);
