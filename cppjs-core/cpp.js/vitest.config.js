@@ -16,6 +16,14 @@ export default defineConfig({
             provider: 'v8',
             reporter: ['text', 'html'],
             include: ['src/utils/**/*.js'],
+            all: true,
+            // Floors just under current coverage: green today, red on regression.
+            thresholds: {
+                statements: 75,
+                branches: 74,
+                functions: 76,
+                lines: 72,
+            },
         },
     },
 });
