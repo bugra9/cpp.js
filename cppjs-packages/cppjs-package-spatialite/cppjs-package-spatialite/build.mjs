@@ -23,6 +23,8 @@ const platformSourceReplaceList = {
     ],
 };
 
+const ifDep = (dep, params) => (dep ? params(dep) : []);
+
 export default {
     getURL: (version) => `https://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-${version}.tar.gz`,
     copyToSource: { 'config.sub': 'config.sub' },
@@ -32,9 +34,11 @@ export default {
         ...(platformBuild[target.platform] || platformBuild[`${target.platform}-${target.arch}`] || []),
         '--enable-geosadvanced=yes', '--enable-geopackage=yes', '--enable-examples=no', '--enable-minizip=no',
         '--enable-libxml2=no', '--enable-freexl=no', '--disable-rttopo', '--disable-gcp',
-        `--with-geosconfig=${depPaths.geos.bin}/geos-config`,
-        `SQLITE3_CFLAGS=-I${depPaths.sqlite3.header}`,
-        `SQLITE3_LIBS=-L${depPaths.sqlite3.libPath}`,
+        ...ifDep(depPaths.geos, (d) => [`--with-geosconfig=${d.bin}/geos-config`]),
+        ...ifDep(depPaths.sqlite3, (d) => [
+            `SQLITE3_CFLAGS=-I${d.header}`,
+            `SQLITE3_LIBS=-L${d.libPath}`,
+        ]),
     ],
     getExtraLibs: (target) => platformLibs[target.platform] || [],
 };

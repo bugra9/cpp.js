@@ -12,13 +12,17 @@ const platformExtraLibs = {
     'ios': ['-lc++'],
 };
 
+const ifDep = (dep, params) => (dep ? params(dep) : []);
+
 export default {
     getURL: (version) => `https://download.osgeo.org/geotiff/libgeotiff/libgeotiff-${version}.tar.gz`,
     buildType: 'configure',
     getBuildParams: (target, depPaths) => [
         ...(platformBuild[target.platform] || platformBuild[`${target.platform}-${target.arch}`] || []),
-        `--with-proj=${depPaths.proj.root}`, `--with-libtiff=${depPaths.tiff.root}`,
-        `--with-zlib=${depPaths.z.root}`, `--with-jpeg=${depPaths.jpeg.root}`,
+        ...ifDep(depPaths.proj, (d) => [`--with-proj=${d.root}`]),
+        ...ifDep(depPaths.tiff, (d) => [`--with-libtiff=${d.root}`]),
+        ...ifDep(depPaths.z, (d) => [`--with-zlib=${d.root}`]),
+        ...ifDep(depPaths.jpeg, (d) => [`--with-jpeg=${d.root}`]),
     ],
     getExtraLibs: (target) => platformExtraLibs[target.platform] || [],
     replaceList: [

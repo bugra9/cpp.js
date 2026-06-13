@@ -12,9 +12,13 @@ export default {
     buildType: 'cmake',
     getBuildParams: (target, depPaths) => [
         ...(platformBuild[target.platform] || []),
-        `-DOPENSSL_INCLUDE_DIR=${depPaths.ssl.header}`,
-        `-DOPENSSL_SSL_LIBRARY=${depPaths.ssl.lib}`,
-        `-DOPENSSL_CRYPTO_LIBRARY=${depPaths.crypto.lib}`,
+        ...(depPaths.ssl && depPaths.crypto
+            ? [
+                `-DOPENSSL_INCLUDE_DIR=${depPaths.ssl.header}`,
+                `-DOPENSSL_SSL_LIBRARY=${depPaths.ssl.lib}`,
+                `-DOPENSSL_CRYPTO_LIBRARY=${depPaths.crypto.lib}`,
+            ]
+            : []),
         '-DBUILD_EXAMPLES=OFF', '-DBUILD_CURL_EXE=OFF', '-DBUILD_LIBCURL_DOCS=OFF',
         '-DBUILD_TESTING=OFF',
         '-DENABLE_CURL_MANUAL=OFF',
