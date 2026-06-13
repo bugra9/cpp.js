@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-tiff-android",
-    "version": "2.0.0-beta.23",
+    "version": "2.0.0-beta.24",
     "nativeVersion": "4.7.1",
     "description": "Android build of the precompiled TIFF (libtiff) image library, built with cpp.js. Use it together with the main package @cpp.js/package-tiff.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-tiff#readme",

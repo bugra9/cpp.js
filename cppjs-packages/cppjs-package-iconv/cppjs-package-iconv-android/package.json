@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-iconv-android",
-    "version": "2.0.0-beta.23",
+    "version": "2.0.0-beta.24",
     "nativeVersion": "1.19",
     "description": "Android build of the precompiled libiconv character-encoding library, built with cpp.js. Use it together with the main package @cpp.js/package-iconv.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-iconv#readme",

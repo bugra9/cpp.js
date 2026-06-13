@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-geos-ios",
-    "version": "2.0.0-beta.23",
+    "version": "2.0.0-beta.24",
     "nativeVersion": "3.14.1",
     "description": "iOS build of the precompiled GEOS geometry library, built with cpp.js. Use it together with the main package @cpp.js/package-geos.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-geos#readme",
