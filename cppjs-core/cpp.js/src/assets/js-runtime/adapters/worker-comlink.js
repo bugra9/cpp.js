@@ -132,6 +132,28 @@ Comlink.transferHandlers.set('embindObject', {
     },
 });
 
+// 6. embindProxyArray: a plain JS array that contains proxied embind objects
+//    can't be structured-cloned across the
+//    worker boundary, because the element proxies are functions. Resolve each
+//    registered proxy element back to its worker-side original, the same way the
+//    embindProxy handler does for a single argument.
+Comlink.transferHandlers.set('embindProxyArray', {
+    canHandle(obj) {
+        return Array.isArray(obj) && obj.some((e) => embindProxyIds.has(e));
+    },
+    serialize(arr) {
+        return [
+            arr.map((e) => (embindProxyIds.has(e) ? { __embindRef: embindProxyIds.get(e) } : e)),
+            [],
+        ];
+    },
+    deserialize(arr) {
+        return arr.map((e) => (e != null && typeof e === 'object' && '__embindRef' in e
+            ? embindRegistry.get(e.__embindRef)
+            : e));
+    },
+});
+
 let _worker = null;
 
 function resolveScriptUrl(config) {
