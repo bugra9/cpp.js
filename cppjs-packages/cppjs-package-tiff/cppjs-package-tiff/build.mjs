@@ -6,6 +6,12 @@ export default {
     getBuildParams: (target, depPaths) => [
         '-Dtiff-tools=OFF', '-Dtiff-tests=OFF', '-Dtiff-contrib=OFF',
         '-Dtiff-docs=OFF', '-Dld-version-script=OFF',
+        ...ifDep(depPaths.z, (d) => [
+            '-Dzlib=ON',
+            `-DZLIB_INCLUDE_DIR=${d.header}`,
+            `-DZLIB_LIBRARY=${d.lib}`,
+            `-DZLIB_LIBRARY_RELEASE=${d.lib}`,
+        ]),
         ...ifDep(depPaths.jpeg, (d) => [
             '-Djpeg=ON',
             `-DJPEG_INCLUDE_DIR=${d.header}`,
