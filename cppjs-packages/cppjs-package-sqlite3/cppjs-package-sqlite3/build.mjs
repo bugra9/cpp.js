@@ -9,10 +9,13 @@ const platformBuild = {
 const SQLITE_DEFINES = '-DSQLITE_NOHAVE_SYSTEM -DSQLITE_DISABLE_LFS -DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_FTS3_PARENTHESIS -DSQLITE_ENABLE_JSON1 -DSQLITE_ENABLE_NORMALIZE -DSQLITE_ENABLE_COLUMN_METADATA -DHAVE_GETHOSTUUID=0 -DSQLITE_ENABLE_RTREE=1';
 
 export default {
+    // SQLite hosts each release under its release-year directory; bump RELEASE_YEAR together with
+    // nativeVersion (the year cannot be derived from the version number).
     getURL: (version) => {
+        const RELEASE_YEAR = 2026;
         const versionArray = version.split('.');
         const VERSION = (versionArray[0] * 1000000 + versionArray[1] * 10000 + versionArray[2] * 100).toString();
-        return `https://www.sqlite.org/2026/sqlite-autoconf-${VERSION}.tar.gz`;
+        return `https://www.sqlite.org/${RELEASE_YEAR}/sqlite-autoconf-${VERSION}.tar.gz`;
     },
     buildType: 'configure',
     getBuildParams: (target) => [
