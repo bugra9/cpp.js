@@ -28,7 +28,9 @@ export default class CppjsWebpackPlugin {
 
     apply(compiler) {
         const pluginName = this.constructor.name;
-        compiler.hooks.done.tap(pluginName, this.onDone.bind(this));
+        // tapPromise (not tap) so webpack awaits the native C++/wasm build and a build
+        // failure surfaces as a compilation error instead of an unhandled rejection.
+        compiler.hooks.done.tapPromise(pluginName, this.onDone.bind(this));
         compiler.hooks.afterCompile.tapAsync(pluginName, this.afterCompile.bind(this));
     }
 
