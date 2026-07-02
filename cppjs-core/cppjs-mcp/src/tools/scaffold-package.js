@@ -9,10 +9,10 @@ export const config = {
     title: 'Scaffold a new cppjs-package-* family',
     description: 'Create a new cppjs-package-<name> directory tree (wasm + android + ios sub-arches) by copying the cppjs-package-zlib template and rewriting names, scope, license, and library symbols. Wraps scripts/scaffold-package.js. Must run from inside the cpp.js monorepo.',
     inputSchema: {
-        name: z.string().describe('Short package name, e.g. "libsodium" → produces cppjs-package-libsodium.'),
+        name: z.string().regex(/^[a-z0-9][a-z0-9-]*$/, 'lowercase letters, digits and dashes only').describe('Short package name, e.g. "libsodium" → produces cppjs-package-libsodium.'),
         scope: z.string().optional().describe('npm scope. Pass "" (empty) for community / user-org unscoped packages. Defaults to "@cpp.js".'),
         license: z.string().optional().describe('SPDX license identifier. Defaults to MIT.'),
-        lib: z.string().optional().describe('Override the linker library name (lib<lib>.a). Defaults to <name>.'),
+        lib: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_-]*$/, 'letters, digits, underscore and dash only').optional().describe('Override the linker library name (lib<lib>.a). Defaults to <name>.'),
         output: z.string().optional().describe('Override output directory. Defaults to cppjs-packages/cppjs-package-<name>/.'),
         force: z.boolean().optional().describe('Overwrite an existing target directory. Defaults to false.'),
     },
@@ -25,7 +25,13 @@ export async function handler({ name: pkgName, scope, license, lib, output, forc
     if (scope !== undefined) args.push('--scope', scope);
     if (license) args.push('--license', license);
     if (lib) args.push('--lib', lib);
-    if (output) args.push('--output', output);
+    if (output) {
+        const resolvedOutput = path.resolve(root, output);
+        if (resolvedOutput !== root && !resolvedOutput.startsWith(`${root}${path.sep}`)) {
+            return error('output must resolve inside the cpp.js repository.');
+        }
+        args.push('--output', resolvedOutput);
+    }
     if (force) args.push('--force');
 
     const { exitCode, stdout, stderr, timedOut } = await runNodeScript(script, args, { cwd: root, timeoutMs: 60_000 });

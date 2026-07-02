@@ -25,7 +25,7 @@ const GITHUB_BASE = 'https://github.com/bugra9/cpp.js/blob/main/docs/api';
 
 export const config = {
     title: 'Get cpp.js API reference doc by topic',
-    description: 'Return the canonical reference document for a cpp.js API surface. Use BEFORE answering questions about initCppJs(opts), cppjs.config.js fields, cppjs.build.js hooks, OPFS / persistent storage / filesystem, threading (st vs mt), useWorker, COOP/COEP, or edge-runtime limits. The 6 topics map 1:1 to docs/api/*.md files. Reads the file from the local cpp.js checkout when available; otherwise returns the GitHub URL the agent can fetch.',
+    description: 'Return the canonical reference document for a cpp.js API surface. Use BEFORE answering questions about initCppJs(opts), cppjs.config.js fields, cppjs.build.js hooks, OPFS / persistent storage / filesystem, threading (st vs mt), useWorker, COOP/COEP, or edge-runtime limits. The 13 topics map 1:1 to docs/api/*.md files. Reads the file from the local cpp.js checkout when available; otherwise returns the GitHub URL the agent can fetch.',
     inputSchema: {
         topic: z
             .enum([

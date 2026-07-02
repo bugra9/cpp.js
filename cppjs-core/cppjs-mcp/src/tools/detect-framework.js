@@ -13,16 +13,14 @@ export const config = {
             .string()
             .optional()
             .describe('Absolute path to the project directory. Defaults to the MCP server\'s cwd.'),
-        scriptPath: z
-            .string()
-            .optional()
-            .describe('Override path to detect-framework.js. Defaults to the bundled copy in the cpp.js repo.'),
     },
 };
 
-export async function handler({ projectPath, scriptPath }) {
+export async function handler({ projectPath }) {
     const targetPath = projectPath ? path.resolve(projectPath) : process.cwd();
-    const script = scriptPath || resolveDetectScript();
+    // Always run the bundled script from the cpp.js checkout; a caller-supplied path would
+    // let a prompt-injected agent execute an arbitrary file as node.
+    const script = resolveDetectScript();
 
     if (!script) {
         return errorResponse(
