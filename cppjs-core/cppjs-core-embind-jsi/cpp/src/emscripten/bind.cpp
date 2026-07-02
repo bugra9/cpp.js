@@ -1047,10 +1047,9 @@ int CppJS::setEnv(std::string key, std::string value, bool overwrite) {
     return setenv(key.c_str(), value.c_str(), overwrite);
 }
 std::string CppJS::getEnv(std::string key) {
-    char* value = getenv(key.c_str());
-    std::string valueStr = std::string(value);
-    // free(value);
-    return valueStr;
+    const char* value = getenv(key.c_str());
+    // getenv returns nullptr for an unset key; constructing std::string(nullptr) is UB.
+    return value ? std::string(value) : std::string();
 }
 
 EMSCRIPTEN_BINDINGS(builtin) {

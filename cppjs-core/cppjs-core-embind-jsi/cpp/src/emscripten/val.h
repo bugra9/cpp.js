@@ -12,6 +12,7 @@
 #endif
 
 #include <cassert>
+#include <cstdlib>
 #include <array>
 #include <climits>
 #include "./wire.h"
@@ -245,9 +246,16 @@ void writeGenericWireType(GenericWireType*& cursor, T* wt) {
 template<typename ElementType>
 inline void writeGenericWireType(GenericWireType*& cursor, const memory_view<ElementType>& wt) {
   uintptr_t short_ptr = reinterpret_cast<uintptr_t>(wt.data);
+  // This wire slot stores the data pointer in 32 bits (upstream wasm32 layout). On 64-bit
+  // native a pointer above 4 GiB cannot fit; abort loudly rather than silently truncating to
+  // a bogus address (release builds compile out the assert). Full 64-bit memory_view support
+  // needs a wider wire encoding on both the writer and the reader.
   assert(short_ptr <= UINT32_MAX);
+  if (short_ptr > UINT32_MAX) {
+    abort();
+  }
   cursor->w[0].u = wt.size;
-  cursor->w[1].p = short_ptr;
+  cursor->w[1].p = static_cast<uint32_t>(short_ptr);
   ++cursor;
 }
 
