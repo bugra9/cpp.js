@@ -69,10 +69,13 @@ function makeFilter(entry) {
     const skipDirs = new Set([
         'node_modules', '.cppjs', 'dist', '.gradle', '.cxx', 'Pods', 'build',
         '.expo', '.wrangler', '.next', '.svelte-kit', 'playwright-report', 'test-results', 'coverage',
+        'xcuserdata',
     ]);
     // Podfile.lock is a generated lock pinned to a specific react-native version; shipping it makes
     // a fresh `pod install` fail when it drifts. The official RN template ships only the Podfile.
-    const skipFiles = new Set(['.DS_Store', 'pnpm-lock.yaml', 'Podfile.lock']);
+    // .xcode.env.local pins an absolute NODE_BINARY from the author's machine; shipping it breaks
+    // every consumer's Xcode build and leaks the author's home path — the portable .xcode.env stays.
+    const skipFiles = new Set(['.DS_Store', '.xcode.env.local', 'pnpm-lock.yaml', 'Podfile.lock']);
     if (!entry.keepLockfile) skipFiles.add('package-lock.json');
     return (src) => {
         const base = path.basename(src);
@@ -80,6 +83,7 @@ function makeFilter(entry) {
         if (skipFiles.has(base)) return false;
         if (base.endsWith('.xcframework')) return false;
         if (base.endsWith('.profraw')) return false;
+        if (base.endsWith('.xcuserstate')) return false;
         if (entry.nativeFolders === false) {
             // The Expo template asks users to run `expo prebuild`; ship no native dirs.
             const rel = path.relative(path.join(REPO_ROOT, entry.source), src);
