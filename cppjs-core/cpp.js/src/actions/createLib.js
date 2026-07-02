@@ -8,7 +8,7 @@ import triggerExtensions from './extensions.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
 
-const cpuCount = os.cpus().length - 1;
+const cpuCount = Math.max(1, os.cpus().length - 1);
 const sharedPlatforms = ['android'];
 
 export default function createLib(target, fileType, options = {}) {

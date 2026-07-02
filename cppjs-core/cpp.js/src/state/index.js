@@ -203,12 +203,6 @@ const state = {
     },
 };
 
-if (typeof module !== 'undefined' && module.exports) {
-    initProcessState();
-} else {
-    await initProcessState();
-}
-
 await initProcessState();
 
 async function initProcessState() {

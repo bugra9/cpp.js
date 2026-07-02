@@ -126,6 +126,9 @@ export function getFilledConfig(config, options = { isDepend: false }) {
     newConfig.package = loadJson(`${newConfig.paths.project}/package.json`);
 
     if (!newConfig?.general?.name) {
+        if (!newConfig.package) {
+            throw new Error(`cppjs: no package.json found in ${newConfig.paths.project}. Run cppjs from your project root, or scaffold a project with \`npm create cpp.js\`.`);
+        }
         newConfig.general.name = fixPackageName(newConfig.package.name) || 'cppjssample';
     }
 

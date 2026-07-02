@@ -18,8 +18,7 @@ import writeJson from './utils/writeJson.js';
 import flattenConfigForTable from './utils/flattenConfigForTable.js';
 import systemKeys from './utils/systemKeys.js';
 import logger from './utils/logger.js';
-import { getDockerImage } from './utils/pullDockerImage.js';
-import { getContentHash } from './utils/hash.js';
+import { getDockerImage, getDockerContainerName } from './utils/pullDockerImage.js';
 import { cleanDepsCache } from './utils/dependencyRebuild.js';
 import collectLicenseRows from './actions/licenses.js';
 import { formatNoticesMarkdown, validateSpdx } from './utils/licenseReport.js';
@@ -134,10 +133,7 @@ program.command('clean-deps')
         }
     });
 
-const dockerContainerName = () =>
-    `${getDockerImage()}-${getContentHash(state.config.paths.base)}`
-        .replace('/', '-')
-        .replace(':', '-');
+const dockerContainerName = () => getDockerContainerName(state.config.paths.base);
 
 const dockerExec = (args) => {
     try {

@@ -46,7 +46,7 @@ function createInterfaceFile(headerOrModuleFilePath, target) {
         .filter((p) => p && p.length === 2);
 
     const temp = headerOrModuleFilePath.match(/^(.*)\..+?$/);
-    if (temp.length < 2) return null;
+    if (!temp || temp.length < 2) return null;
 
     const filePathWithoutExt = temp[1];
     const interfaceFile = `${filePathWithoutExt}.i`;

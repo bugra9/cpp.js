@@ -1,11 +1,13 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
-import pullDockerImage, { getDockerImage } from '../utils/pullDockerImage.js';
+import pullDockerImage, { getDockerImage, getDockerContainerName } from '../utils/pullDockerImage.js';
 import getOsUserAndGroupId from '../utils/getOsUserAndGroupId.js';
-import { getContentHash } from '../utils/hash.js';
 import replaceBasePathForDockerUtil from '../utils/replaceBasePathForDocker.js';
 import state from '../state/index.js';
 
+// Native builds (make -jN, emcc) can emit far more than Node's 1 MiB default
+// pipe buffer; without a raised cap a large but successful build dies with ENOBUFS.
+const EXEC_MAX_BUFFER = 512 * 1024 * 1024;
 const CROSSCOMPILER_ARM64 = 'aarch64-linux-android33';
 const CROSSCOMPILER_x86_64 = 'x86_64-linux-android33';
 const ANDROID_NDK = '/opt/android-sdk/ndk/27.3.13750724';
@@ -214,6 +216,7 @@ export default function run(program, params = [], platformPrefix = null, target 
             cwd: dockerOptions.workdir || buildPath,
             stdio: dockerOptions.console ? 'inherit' : ['ignore', 'pipe', 'pipe'],
             env,
+            maxBuffer: EXEC_MAX_BUFFER,
         };
         fileExecParams = [dProgram, dParams, options];
     } else if (runner === 'DOCKER') {
@@ -221,15 +224,15 @@ export default function run(program, params = [], platformPrefix = null, target 
         Object.entries(env).forEach(([key, value]) => {
             dockerEnv.push('-e', `${key}=${value}`);
         });
-        const options = { cwd: buildPath, stdio: dockerOptions.console ? 'inherit' : ['ignore', 'pipe', 'pipe'] };
+        const options = { cwd: buildPath, stdio: dockerOptions.console ? 'inherit' : ['ignore', 'pipe', 'pipe'], maxBuffer: EXEC_MAX_BUFFER };
 
-        let runnerParams = [];
-        let imageOrContainer = null;
+        let runnerParams;
+        let imageOrContainer;
         if (state.config.system.RUNNER === 'DOCKER_RUN') {
             imageOrContainer = getDockerImage();
             runnerParams = ['run', '--rm', '-v', `${state.config.paths.base}:/tmp/cppjs/live`];
         } else if (state.config.system.RUNNER === 'DOCKER_EXEC') {
-            imageOrContainer = `${getDockerImage()}-${getContentHash(state.config.paths.base)}`.replace('/', '-').replace(':', '-');
+            imageOrContainer = getDockerContainerName(state.config.paths.base);
             runnerParams = ['exec'];
         } else {
             throw new Error(`The runner ${state.config.system.RUNNER} is invalid.`);

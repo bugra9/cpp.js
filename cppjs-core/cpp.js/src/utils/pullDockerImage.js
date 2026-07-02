@@ -1,9 +1,14 @@
 import { execFileSync } from 'node:child_process';
+import { getContentHash } from './hash.js';
 
 let isDockerImageAvailable = false;
 
 export function getDockerImage() {
     return 'bugra9/cpp.js:0.3.2';
+}
+
+export function getDockerContainerName(base) {
+    return `${getDockerImage()}-${getContentHash(base)}`.replaceAll('/', '-').replaceAll(':', '-');
 }
 
 export default function pullDockerImage() {
@@ -21,6 +26,7 @@ export default function pullDockerImage() {
         console.log('');
         console.log('===========================================================');
         console.log('');
-        isDockerImageAvailable = true;
     }
+
+    isDockerImageAvailable = true;
 }
