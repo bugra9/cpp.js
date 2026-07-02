@@ -1,5 +1,13 @@
 # cpp.js
 
+## 2.0.0-beta
+
+The 2.0.0 line is a ground-up rework — native iOS/Android via JSI, multi-bundler
+plugins (Vite, Rollup, Webpack, Metro), an MCP server, and per-library
+`@cpp.js/package-*` families — published on the `beta` dist-tag. Per-release
+notes for the beta line are tracked in the git history and on npm until 2.0
+stabilises; the entries below cover the 1.x line.
+
 ## 1.0.4
 
 ### Patch Changes

@@ -190,5 +190,5 @@ These are concrete patterns we've burned on. Each one cost real time to diagnose
 - `scripts/check-native-versions.js` — outdated native libs
 - `scripts/check-external-dependencies.js` — outdated npm deps
 - `scripts/check-beta-status.js` — npm beta tag inventory
-- `scripts/detect-framework.js` *(coming in Sprint 2)* — identify the user's project framework
-- `scripts/doctor.sh` *(coming in Sprint 4)* — toolchain readiness check
+- `scripts/detect-framework.js` — identify the user's project framework
+- `scripts/doctor.sh` — toolchain readiness check

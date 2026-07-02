@@ -95,24 +95,24 @@ public:
 ## Official Packages
 Officially maintained, prebuilt C++ libraries you can install as npm packages and use directly from JavaScript:
 
-| Package | Version |
+| Package | Latest (beta) |
 | --- | --- |
-| [@cpp.js/package-gdal](https://www.npmjs.com/package/@cpp.js/package-gdal) | 2.0.0-beta.21 |
-| [@cpp.js/package-geos](https://www.npmjs.com/package/@cpp.js/package-geos) | 2.0.0-beta.21 |
-| [@cpp.js/package-proj](https://www.npmjs.com/package/@cpp.js/package-proj) | 2.0.0-beta.21 |
-| [@cpp.js/package-spatialite](https://www.npmjs.com/package/@cpp.js/package-spatialite) | 2.0.0-beta.21 |
-| [@cpp.js/package-sqlite3](https://www.npmjs.com/package/@cpp.js/package-sqlite3) | 2.0.0-beta.21 |
-| [@cpp.js/package-openssl](https://www.npmjs.com/package/@cpp.js/package-openssl) | 2.0.0-beta.21 |
-| [@cpp.js/package-curl](https://www.npmjs.com/package/@cpp.js/package-curl) | 2.0.0-beta.21 |
-| [@cpp.js/package-tiff](https://www.npmjs.com/package/@cpp.js/package-tiff) | 2.0.0-beta.21 |
-| [@cpp.js/package-geotiff](https://www.npmjs.com/package/@cpp.js/package-geotiff) | 2.0.0-beta.21 |
-| [@cpp.js/package-webp](https://www.npmjs.com/package/@cpp.js/package-webp) | 2.0.0-beta.21 |
-| [@cpp.js/package-expat](https://www.npmjs.com/package/@cpp.js/package-expat) | 2.0.0-beta.21 |
-| [@cpp.js/package-iconv](https://www.npmjs.com/package/@cpp.js/package-iconv) | 2.0.0-beta.21 |
-| [@cpp.js/package-zlib](https://www.npmjs.com/package/@cpp.js/package-zlib) | 2.0.0-beta.21 |
-| [@cpp.js/package-zstd](https://www.npmjs.com/package/@cpp.js/package-zstd) | 2.0.0-beta.21 |
-| [@cpp.js/package-lerc](https://www.npmjs.com/package/@cpp.js/package-lerc) | 2.0.0-beta.21 |
-| [@cpp.js/package-jpegturbo](https://www.npmjs.com/package/@cpp.js/package-jpegturbo) | 2.0.0-beta.21 |
+| [@cpp.js/package-gdal](https://www.npmjs.com/package/@cpp.js/package-gdal) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-gdal/beta) |
+| [@cpp.js/package-geos](https://www.npmjs.com/package/@cpp.js/package-geos) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-geos/beta) |
+| [@cpp.js/package-proj](https://www.npmjs.com/package/@cpp.js/package-proj) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-proj/beta) |
+| [@cpp.js/package-spatialite](https://www.npmjs.com/package/@cpp.js/package-spatialite) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-spatialite/beta) |
+| [@cpp.js/package-sqlite3](https://www.npmjs.com/package/@cpp.js/package-sqlite3) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-sqlite3/beta) |
+| [@cpp.js/package-openssl](https://www.npmjs.com/package/@cpp.js/package-openssl) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-openssl/beta) |
+| [@cpp.js/package-curl](https://www.npmjs.com/package/@cpp.js/package-curl) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-curl/beta) |
+| [@cpp.js/package-tiff](https://www.npmjs.com/package/@cpp.js/package-tiff) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-tiff/beta) |
+| [@cpp.js/package-geotiff](https://www.npmjs.com/package/@cpp.js/package-geotiff) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-geotiff/beta) |
+| [@cpp.js/package-webp](https://www.npmjs.com/package/@cpp.js/package-webp) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-webp/beta) |
+| [@cpp.js/package-expat](https://www.npmjs.com/package/@cpp.js/package-expat) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-expat/beta) |
+| [@cpp.js/package-iconv](https://www.npmjs.com/package/@cpp.js/package-iconv) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-iconv/beta) |
+| [@cpp.js/package-zlib](https://www.npmjs.com/package/@cpp.js/package-zlib) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-zlib/beta) |
+| [@cpp.js/package-zstd](https://www.npmjs.com/package/@cpp.js/package-zstd) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-zstd/beta) |
+| [@cpp.js/package-lerc](https://www.npmjs.com/package/@cpp.js/package-lerc) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-lerc/beta) |
+| [@cpp.js/package-jpegturbo](https://www.npmjs.com/package/@cpp.js/package-jpegturbo) | ![npm](https://img.shields.io/npm/v/@cpp.js/package-jpegturbo/beta) |
 
 Browse all available packages at [cpp.js.org/docs/package/package/showcase](https://cpp.js.org/docs/package/package/showcase).
 
