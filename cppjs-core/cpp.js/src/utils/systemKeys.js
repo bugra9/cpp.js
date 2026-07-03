@@ -8,11 +8,6 @@ const systemKeys = {
         options: ['DOCKER_RUN', 'DOCKER_EXEC', 'LOCAL'],
         default: 'DOCKER_RUN',
     },
-    LOG_LEVEL: {
-        description: 'The verbosity of log output.',
-        options: ['DEBUG', 'INFO', 'WARN', 'ERROR'],
-        default: 'INFO',
-    },
 };
 
 export default systemKeys;
