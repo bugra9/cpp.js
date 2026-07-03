@@ -69,8 +69,11 @@ const cacheKeyArgs = [buildType, projectPath, [projectPath, RNEmbindProjectPath]
 if (isIosLibsFresh(...cacheKeyArgs)) {
     console.log(`cppjs: iOS libs (${buildType}) up to date — skipping native build.`);
 } else {
-    createLib(buildTargetIPhoneOS, 'Full', options);
-    createLib(buildTargetIPhoneSimulator, 'Full', options);
+    // We only reach this branch when the stamp says the libs are stale (a bridge/embind
+    // source changed) or missing, so force the recompile: createLib otherwise skips when the
+    // output lib dir already exists, which would repackage the xcframework from stale objects.
+    createLib(buildTargetIPhoneOS, 'Full', { ...options, force: true });
+    createLib(buildTargetIPhoneSimulator, 'Full', { ...options, force: true });
 
     const overrideConfig = {
         paths: {
