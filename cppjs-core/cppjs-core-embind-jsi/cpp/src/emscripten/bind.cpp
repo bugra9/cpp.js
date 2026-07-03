@@ -422,6 +422,9 @@ namespace emscripten {
                     *jsRuntime,
                     Bugra<EM_VAL>::toValue(object)
             );
+            // __emval_throw always throws in JS, so control never returns here; tell the
+            // compiler so this [[noreturn]] bool function has no fall-through return path.
+            __builtin_unreachable();
         }
 
 
@@ -960,7 +963,7 @@ namespace emscripten {
             // Initial seed windows: anchored around .rodata (string literals)
             // and the C++ heap. Additional windows are registered on demand
             // by ensureWindowFor() as new pointer regions are exposed to JS.
-            char* name = "M";
+            const char* name = "M";
             uint64_t namePtrNumber = reinterpret_cast<uint64_t>(name);
 
             // Reference allocation to discover the heap region.
