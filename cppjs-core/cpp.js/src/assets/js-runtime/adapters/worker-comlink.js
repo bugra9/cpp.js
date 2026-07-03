@@ -18,6 +18,105 @@ function registerEmbindObject(obj) {
     return id;
 }
 
+// === Plain array -> embind vector coercion ===
+// Vectors RETURNED across the worker boundary arrive as plain arrays (see the
+// embindVector handler below), so callers naturally try to pass plain arrays
+// back as vector PARAMETERS - which embind rejects with
+// 'Cannot pass "..." as a VectorX'. Every worker-side invocation goes through
+// callWithVectorCoercion: when that error names a registered Vector class and
+// a plain-array argument remains, the first remaining array is converted with
+// Module.toVector and the call retried, so mixed signatures (VectorDataset +
+// VectorString, ...) resolve left to right, matching embind's argument order.
+// embind passes std::vector parameters by value, so the temporaries are
+// deleted after the call instead of leaking wasm memory.
+let coercionModule = null;
+
+const EXPECTED_VECTOR_RE = /as a (Vector\w+)\b/;
+
+function setCoercionModule(m) {
+    coercionModule = m;
+}
+
+function callWithVectorCoercion(fn, thisArg, args) {
+    const temp = [];
+    const cleanup = () => {
+        for (const v of temp) {
+            try {
+                v.delete();
+            } catch (e) { /* already deleted by the callee */ }
+        }
+    };
+    const current = args.slice();
+    for (;;) {
+        let result;
+        try {
+            result = Reflect.apply(fn, thisArg, current);
+        } catch (e) {
+            const match = EXPECTED_VECTOR_RE.exec(String((e && e.message) || e));
+            const VectorClass = match && coercionModule ? coercionModule[match[1]] : undefined;
+            const index = current.findIndex((a) => Array.isArray(a));
+            if (typeof VectorClass !== 'function' || index < 0) {
+                cleanup();
+                throw e;
+            }
+            let vector;
+            try {
+                vector = coercionModule.toVector(VectorClass, current[index]);
+            } catch (convError) {
+                cleanup();
+                throw e;
+            }
+            temp.push(vector);
+            current[index] = vector;
+            continue;
+        }
+        if (temp.length && result && typeof result.then === 'function') {
+            // Async (JSPI-style) binding: arguments were already converted
+            // synchronously, but hold the temporaries until it settles.
+            return result.then(
+                (value) => {
+                    cleanup();
+                    return value;
+                },
+                (err) => {
+                    cleanup();
+                    throw err;
+                },
+            );
+        }
+        cleanup();
+        return result;
+    }
+}
+
+// Wraps a worker-side object so every method reached through it (at any
+// depth: Module.Gdal.openEx, dataset.translate, ...) is invoked through
+// callWithVectorCoercion. Constructors pass through untouched.
+function wrapWithVectorCoercion(value, thisArg) {
+    if (value == null || (typeof value !== 'object' && typeof value !== 'function')) {
+        return value;
+    }
+    return new Proxy(value, {
+        get(target, prop) {
+            const member = Reflect.get(target, prop);
+            if (typeof member === 'function' || (member !== null && typeof member === 'object')) {
+                // Proxy invariant: non-configurable, non-writable data
+                // properties (a class's .prototype, notably) must be returned
+                // as-is, or the engine throws on access.
+                const desc = Reflect.getOwnPropertyDescriptor(target, prop);
+                if (desc && desc.configurable === false && desc.writable === false) {
+                    return member;
+                }
+                return wrapWithVectorCoercion(member, target);
+            }
+            return member;
+        },
+        apply(target, applyThis, args) {
+            return callWithVectorCoercion(target, thisArg !== undefined ? thisArg : applyThis, args);
+        },
+    });
+}
+
 // Reorder transfer handlers for correct priority
 const _proxyHandler = Comlink.transferHandlers.get('proxy');
 const _throwHandler = Comlink.transferHandlers.get('throw');
@@ -90,7 +189,7 @@ Comlink.transferHandlers.set('embindVector', {
             if (elem !== null && typeof elem === 'object') {
                 const id = registerEmbindObject(elem);
                 const { port1, port2 } = new MessageChannel();
-                Comlink.expose(elem, port1);
+                Comlink.expose(wrapWithVectorCoercion(elem), port1);
                 transferables.push(port2);
                 elements[i] = { __comlinkProxy: true, __embindId: id, port: port2 };
             }
@@ -121,7 +220,7 @@ Comlink.transferHandlers.set('embindObject', {
     serialize(obj) {
         const id = registerEmbindObject(obj);
         const { port1, port2 } = new MessageChannel();
-        Comlink.expose(obj, port1);
+        Comlink.expose(wrapWithVectorCoercion(obj), port1);
         return [{ __embindId: id, port: port2 }, [port2]];
     },
     deserialize(data) {
@@ -173,7 +272,8 @@ function exposeWorker(systemConfig, createModule) {
         async init(userConfig = {}) {
             const config = mergeDeep(systemConfig, userConfig);
             const m = await createModule(config);
-            return Comlink.proxy(m);
+            setCoercionModule(m);
+            return Comlink.proxy(wrapWithVectorCoercion(m));
         },
     };
     Comlink.expose(workerApi);
@@ -228,4 +328,6 @@ export default {
 
 export {
     isWorkerScope, exposeWorker, initWithWorker, terminate,
+    // exported for unit tests
+    callWithVectorCoercion, wrapWithVectorCoercion, setCoercionModule,
 };

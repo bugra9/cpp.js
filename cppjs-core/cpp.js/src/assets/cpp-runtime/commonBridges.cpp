@@ -2,6 +2,7 @@
 
 EMSCRIPTEN_BINDINGS(CommonBridges) {
   emscripten::register_vector<char>("VectorChar");
+  emscripten::register_vector<unsigned char>("VectorUChar");
   emscripten::register_vector<short>("VectorShort");
   emscripten::register_vector<int>("VectorInt");
   emscripten::register_vector<int64_t>("VectorInt64");
