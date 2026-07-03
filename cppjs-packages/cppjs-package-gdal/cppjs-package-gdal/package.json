@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-gdal",
-    "version": "2.0.0-beta.25",
+    "version": "2.0.0-beta.26",
     "nativeVersion": "3.13.1",
     "description": "This package provides the precompiled GDAL, built using Cpp.js, for seamless integration into JavaScript, WebAssembly, and React Native projects. It enables advanced geospatial data processing, including raster and vector data manipulation, format conversion, and spatial analysis, ensuring high performance and cross-platform compatibility. Perfect for web, server-side, and mobile geospatial applications.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-gdal#readme",

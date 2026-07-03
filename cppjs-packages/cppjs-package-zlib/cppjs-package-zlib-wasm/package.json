@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-zlib-wasm",
-    "version": "2.0.0-beta.24",
+    "version": "2.0.0-beta.26",
     "nativeVersion": "1.3.2",
     "description": "WebAssembly build of the precompiled zlib library, built with cpp.js. Use it together with the main package @cpp.js/package-zlib.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-zlib#readme",

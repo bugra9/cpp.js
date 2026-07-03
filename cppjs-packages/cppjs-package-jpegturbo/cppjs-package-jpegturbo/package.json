@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-jpegturbo",
-    "version": "2.0.0-beta.24",
+    "version": "2.0.0-beta.26",
     "nativeVersion": "3.1.4.1",
     "description": "This package provides a libjpeg-turbo library compiled with Cpp.js, enabling seamless usage of JPEG functionalities in JavaScript, WebAssembly and React Native projects.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/cppjs-packages/cppjs-package-jpegturbo#readme",

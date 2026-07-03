@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-iconv-wasm",
-    "version": "2.0.0-beta.24",
+    "version": "2.0.0-beta.26",
     "nativeVersion": "1.19",
     "description": "WebAssembly build of the precompiled libiconv character-encoding library, built with cpp.js. Use it together with the main package @cpp.js/package-iconv.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-iconv#readme",
