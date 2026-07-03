@@ -10,6 +10,9 @@
     "dependencies": {
         "cpp.js": "workspace:^"
     },
+    "peerDependencies": {
+        "webpack": ">=5"
+    },
     "keywords": [
         "cpp.js-plugin",
         "webpack",

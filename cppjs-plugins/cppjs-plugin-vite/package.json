@@ -11,6 +11,9 @@
         "cpp.js": "workspace:^",
         "@cpp.js/plugin-rollup": "workspace:^"
     },
+    "peerDependencies": {
+        "vite": ">=5"
+    },
     "keywords": [
         "cpp.js-plugin",
         "vite",
