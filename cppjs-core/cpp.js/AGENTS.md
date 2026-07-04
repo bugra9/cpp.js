@@ -71,6 +71,7 @@ Plus, depending on the area:
 - Touched a new public export → search consumers: `grep -rn "from 'cpp\.js'" cppjs-plugins cppjs-samples scripts`.
 - Touched `actions/run.js` (Docker / Xcode shell-out) → smoke a fresh `pnpm cppjs build` against `cppjs-samples/cppjs-sample-lib-prebuilt-matrix` (smallest C++ surface).
 - Touched `src/assets/js-runtime/` (browser/node/edge adapters) → at least one sample per runtime must build + run (`cppjs-sample-web-vue-vite`, `cppjs-sample-backend-nodejs-wasm`, `cppjs-sample-cloud-cloudflare-worker`).
+- Touched `src/assets/js-runtime/adapters/worker-comlink.js` → coverage MUST include embind **instance** methods, not just statics: statics skip embind's `this` conversion, so a statics-only smoke passes while every instance call is broken (this shipped once, as beta.26's "Expected null or instance of X, got an instance of X"). Run the `cppjs-playground-web-vite-multithread` e2e (its Counter spec exists for exactly this), and before publishing run gdal3.js's `packages/wasm-test` suite against the packed tarball — it calls every binding, one method at a time.
 - Touched `state/loadConfig.js` defaults → assume blast radius = whole monorepo. Run the full matrix.
 
 ## Common pitfalls

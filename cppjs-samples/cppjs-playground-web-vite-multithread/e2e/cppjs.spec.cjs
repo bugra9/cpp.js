@@ -9,4 +9,7 @@ test('boots the module in a worker and runs a std::thread', async ({ page, brows
     await page.goto('/')
     await expect(page.getByText('ready (worker + pthreads)')).toBeVisible()
     await expect(page.getByText('hello from thread')).toBeVisible()
+    // Instance methods + plain-array vector coercion through the worker:
+    // statics cannot catch `this`-identity regressions, this line can.
+    await expect(page.getByText('count:42 a+b')).toBeVisible()
 });

@@ -48,6 +48,32 @@ void Native::runOnThread() {
 
 std::string Native::getThreadResult() { return threadResult; }
 
+Counter::Counter(int start) : value(start) {}
+
+std::shared_ptr<Counter> Counter::create(int start) {
+  return std::make_shared<Counter>(start);
+}
+
+int Counter::increment(int by) {
+  value += by;
+  return value;
+}
+
+int Counter::current() { return value; }
+
+std::string Counter::describe(std::string prefix) {
+  return prefix + ":" + std::to_string(value);
+}
+
+std::string Counter::joinTags(std::vector<std::string> tags) {
+  std::string out;
+  for (size_t i = 0; i < tags.size(); i++) {
+    if (i) out += "+";
+    out += tags[i];
+  }
+  return out;
+}
+
 size_t WriteCallback(void *contents, size_t size, size_t nmemb,
                      std::string *output) {
   size_t totalSize = size * nmemb;
