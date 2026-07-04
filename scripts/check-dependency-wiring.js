@@ -37,11 +37,6 @@ const ALLOWLIST = {
         zlib: 'configure auto-detects zlib via the -I/-L createLib adds for every dependency',
         iconv: 'configure auto-detects iconv via the -I/-L createLib adds for every dependency',
     },
-    // NOTE: sqlite3 core does not link zlib; the dependency may be droppable. Left allow-listed
-    // (configure build, zlib reachable via CFLAGS/LDFLAGS) pending a maintainer decision.
-    sqlite3: {
-        zlib: 'configure build; zlib is reachable via CFLAGS/LDFLAGS if needed (core SQLite does not use it)',
-    },
 };
 
 async function importDefault(file) {
@@ -78,17 +73,25 @@ function declaredDeps(family, platform) {
 // (recorded via Proxy), plus any -l<name> in env / getExtraLibs.
 function referencedLibKeys(recipe, target) {
     const keys = new Set();
-    const depPaths = new Proxy({}, {
-        get(_t, prop) {
-            if (typeof prop !== 'string') return undefined;
-            keys.add(prop);
-            // A truthy sentinel so ifDep(depPaths.x, ...) enters and reads .header/.lib/...
-            return {
-                header: `__H_${prop}__`, lib: `__L_${prop}__`, libPath: `__P_${prop}__`, package: prop,
-            };
+    const depPaths = new Proxy(
+        {},
+        {
+            get(_t, prop) {
+                if (typeof prop !== 'string') return undefined;
+                keys.add(prop);
+                // A truthy sentinel so ifDep(depPaths.x, ...) enters and reads .header/.lib/...
+                return {
+                    header: `__H_${prop}__`,
+                    lib: `__L_${prop}__`,
+                    libPath: `__P_${prop}__`,
+                    package: prop,
+                };
+            },
+            has() {
+                return true;
+            },
         },
-        has() { return true; },
-    });
+    );
 
     const collectLinkFlags = (value) => {
         const scan = (v) => {
@@ -102,13 +105,26 @@ function referencedLibKeys(recipe, target) {
         scan(value);
     };
 
-    try { if (typeof recipe.getBuildParams === 'function') collectLinkFlags(recipe.getBuildParams(target, depPaths, 'a', '/tmp/build')); } catch { /* ignore */ }
-    try { if (typeof recipe.env === 'function') collectLinkFlags(recipe.env(target, depPaths)); } catch { /* ignore */ }
-    try { if (typeof recipe.getExtraLibs === 'function') collectLinkFlags(recipe.getExtraLibs(target, depPaths)); } catch { /* ignore */ }
+    try {
+        if (typeof recipe.getBuildParams === 'function') collectLinkFlags(recipe.getBuildParams(target, depPaths, 'a', '/tmp/build'));
+    } catch {
+        /* ignore */
+    }
+    try {
+        if (typeof recipe.env === 'function') collectLinkFlags(recipe.env(target, depPaths));
+    } catch {
+        /* ignore */
+    }
+    try {
+        if (typeof recipe.getExtraLibs === 'function') collectLinkFlags(recipe.getExtraLibs(target, depPaths));
+    } catch {
+        /* ignore */
+    }
     return keys;
 }
 
-const families = fs.readdirSync(PKGROOT)
+const families = fs
+    .readdirSync(PKGROOT)
     .filter((d) => d.startsWith('cppjs-package-'))
     .map((d) => d.replace('cppjs-package-', ''))
     .sort();
@@ -119,7 +135,8 @@ let checked = 0;
 for (const family of families) {
     const recipe = await importDefault(path.join(PKGROOT, `cppjs-package-${family}`, `cppjs-package-${family}`, 'build.mjs'));
     // No build recipe (prebuilt-only), or a recipe that takes no dependencies to wire.
-    if (!recipe || (typeof recipe.getBuildParams !== 'function' && typeof recipe.env !== 'function' && typeof recipe.getExtraLibs !== 'function')) continue;
+    if (!recipe || (typeof recipe.getBuildParams !== 'function' && typeof recipe.env !== 'function' && typeof recipe.getExtraLibs !== 'function'))
+        continue;
 
     for (const target of PLATFORMS) {
         const deps = declaredDeps(family, target.platform);
@@ -131,7 +148,10 @@ for (const family of families) {
             const libKeys = await libKeysOfFamily(dep);
             if (libKeys && !libKeys.some((k) => referenced.has(k))) {
                 gaps.push({
-                    family, platform: target.platform, dep, libKey: libKeys.join('/'),
+                    family,
+                    platform: target.platform,
+                    dep,
+                    libKey: libKeys.join('/'),
                 });
             }
         }
@@ -147,5 +167,7 @@ console.error('cppjs: dependency-wiring gaps found (declared + built, but never 
 for (const g of gaps) {
     console.error(`  - @cpp.js/package-${g.family} [${g.platform}] declares ${g.dep} (lib "${g.libKey}") but its build recipe never references it.`);
 }
-console.error(`\n${gaps.length} gap(s). Wire the dependency in build.mjs (getBuildParams/env), or drop it from the platform's dependencies if it is not needed.`);
+console.error(
+    `\n${gaps.length} gap(s). Wire the dependency in build.mjs (getBuildParams/env), or drop it from the platform's dependencies if it is not needed.`,
+);
 process.exit(STRICT ? 1 : 0);

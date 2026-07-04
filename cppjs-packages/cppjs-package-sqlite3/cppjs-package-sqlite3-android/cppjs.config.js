@@ -1,7 +1,6 @@
 import mergeConfig from '@cpp.js/package-sqlite3/mergeConfig.mjs';
-import zlibAndroid from '@cpp.js/package-zlib-android/cppjs.config.js';
 
 export default mergeConfig({
-    dependencies: [zlibAndroid],
+    dependencies: [],
     paths: { config: import.meta.url },
 });

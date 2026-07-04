@@ -13,8 +13,7 @@
         "prepublishOnly": "cppjs build -p android"
     },
     "dependencies": {
-        "@cpp.js/package-sqlite3": "workspace:^",
-        "@cpp.js/package-zlib-android": "workspace:^"
+        "@cpp.js/package-sqlite3": "workspace:^"
     },
     "devDependencies": {
         "cpp.js": "workspace:^"

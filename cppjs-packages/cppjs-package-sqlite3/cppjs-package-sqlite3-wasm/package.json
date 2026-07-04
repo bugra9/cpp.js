@@ -13,8 +13,7 @@
         "prepublishOnly": "cppjs build -p wasm"
     },
     "dependencies": {
-        "@cpp.js/package-sqlite3": "workspace:^",
-        "@cpp.js/package-zlib-wasm": "workspace:^"
+        "@cpp.js/package-sqlite3": "workspace:^"
     },
     "devDependencies": {
         "cpp.js": "workspace:^"
