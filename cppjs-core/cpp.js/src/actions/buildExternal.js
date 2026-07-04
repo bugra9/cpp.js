@@ -11,8 +11,8 @@ export default async function buildExternal(targetParams, options = {}) {
         throw new Error(`cppjs: "${state.config.general?.name}" has a cppjs.build recipe but no "nativeVersion" in package.json — cannot build from source.`);
     }
 
-    const { getURL, replaceList, copyToSource, copyToDist } = state.config.build;
-    const isNewlyCreated = await downloadAndExtractFile(getURL(version), state.config.paths.build);
+    const { getURL, sha256, replaceList, copyToSource, copyToDist } = state.config.build;
+    const isNewlyCreated = await downloadAndExtractFile(getURL(version), state.config.paths.build, sha256);
     const sourcePath = `${state.config.paths.build}/source`;
     if (isNewlyCreated && replaceList) {
         replaceList.forEach(({ regex, replacement, paths }) => {
