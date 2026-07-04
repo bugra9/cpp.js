@@ -1,5 +1,8 @@
 import * as Comlink from 'comlink';
 import { mergeDeep } from '../core.js';
+import {
+    callWithVectorCoercion, wrapWithVectorCoercion, setCoercionModule,
+} from './vector-coercion.js';
 
 const isWorkerScope = typeof WorkerGlobalScope !== 'undefined'
     && typeof self !== 'undefined'
@@ -16,142 +19,6 @@ function registerEmbindObject(obj) {
     const id = nextEmbindId++;
     embindRegistry.set(id, obj);
     return id;
-}
-
-// === Plain array -> embind vector coercion ===
-// Vectors RETURNED across the worker boundary arrive as plain arrays (see the
-// embindVector handler below), so callers naturally try to pass plain arrays
-// back as vector PARAMETERS - which embind rejects with
-// 'Cannot pass "..." as a VectorX'. Every worker-side invocation goes through
-// callWithVectorCoercion: when that error names a registered Vector class and
-// a plain-array argument remains, the first remaining array is converted with
-// Module.toVector and the call retried, so mixed signatures (VectorDataset +
-// VectorString, ...) resolve left to right, matching embind's argument order.
-// embind passes std::vector parameters by value, so the temporaries are
-// deleted after the call instead of leaking wasm memory.
-let coercionModule = null;
-
-const EXPECTED_VECTOR_RE = /as a (Vector\w+)\b/;
-
-function setCoercionModule(m) {
-    coercionModule = m;
-}
-
-function callWithVectorCoercion(fn, thisArg, args) {
-    const temp = [];
-    const cleanup = () => {
-        for (const v of temp) {
-            try {
-                v.delete();
-            } catch (e) { /* already deleted by the callee */ }
-        }
-    };
-    const current = args.slice();
-    for (;;) {
-        let result;
-        try {
-            result = Reflect.apply(fn, thisArg, current);
-        } catch (e) {
-            const match = EXPECTED_VECTOR_RE.exec(String((e && e.message) || e));
-            const VectorClass = match && coercionModule ? coercionModule[match[1]] : undefined;
-            const index = current.findIndex((a) => Array.isArray(a));
-            if (typeof VectorClass !== 'function' || index < 0) {
-                cleanup();
-                throw e;
-            }
-            let vector;
-            try {
-                vector = coercionModule.toVector(VectorClass, current[index]);
-            } catch (convError) {
-                cleanup();
-                throw e;
-            }
-            temp.push(vector);
-            current[index] = vector;
-            continue;
-        }
-        if (temp.length && result && typeof result.then === 'function') {
-            // Async (JSPI-style) binding: arguments were already converted
-            // synchronously, but hold the temporaries until it settles.
-            return result.then(
-                (value) => {
-                    cleanup();
-                    return value;
-                },
-                (err) => {
-                    cleanup();
-                    throw err;
-                },
-            );
-        }
-        cleanup();
-        return result;
-    }
-}
-
-// Proxies created by wrapWithVectorCoercion, mapped back to their raw
-// targets. embind rejects a proxied `this` or argument (its class checks
-// compare $$.ptrType.registeredClass by identity), so every invocation
-// unwraps them back to the raw objects first.
-const coercionProxies = new WeakMap();
-
-function unwrapCoercionProxy(value) {
-    const raw = coercionProxies.get(value);
-    return raw === undefined ? value : raw;
-}
-
-// Wraps a worker-side object so every method reached through it (at any
-// depth: Module.Gdal.openEx, dataset.translate, ...) is invoked through
-// callWithVectorCoercion. Constructors pass through untouched.
-function wrapWithVectorCoercion(value, thisArg) {
-    if (value == null || (typeof value !== 'object' && typeof value !== 'function')) {
-        return value;
-    }
-    const proxy = new Proxy(value, {
-        get(target, prop) {
-            const member = Reflect.get(target, prop);
-            // Comlink invokes exposed methods as rawValue.apply(parent, args)
-            // with parent being the WRAPPED object. Handle Function.prototype
-            // apply/call here so `this` and the argument list reach
-            // callWithVectorCoercion unwrapped and flat (retries depend on
-            // seeing the real argument positions).
-            if (typeof target === 'function' && member === Function.prototype.apply) {
-                return (applyThis, applyArgs) => callWithVectorCoercion(
-                    target,
-                    applyThis === undefined && thisArg !== undefined
-                        ? thisArg
-                        : unwrapCoercionProxy(applyThis),
-                    applyArgs ? Array.prototype.map.call(applyArgs, unwrapCoercionProxy) : [],
-                );
-            }
-            if (typeof target === 'function' && member === Function.prototype.call) {
-                return (callThis, ...callArgs) => callWithVectorCoercion(
-                    target,
-                    callThis === undefined && thisArg !== undefined
-                        ? thisArg
-                        : unwrapCoercionProxy(callThis),
-                    callArgs.map(unwrapCoercionProxy),
-                );
-            }
-            if (typeof member === 'function' || (member !== null && typeof member === 'object')) {
-                // Proxy invariant: non-configurable, non-writable data
-                // properties (a class's .prototype, notably) must be returned
-                // as-is, or the engine throws on access.
-                const desc = Reflect.getOwnPropertyDescriptor(target, prop);
-                if (desc && desc.configurable === false && desc.writable === false) {
-                    return member;
-                }
-                return wrapWithVectorCoercion(member, target);
-            }
-            return member;
-        },
-        apply(target, applyThis, args) {
-            const boundThis = thisArg !== undefined ? thisArg : unwrapCoercionProxy(applyThis);
-            return callWithVectorCoercion(target, boundThis, args.map(unwrapCoercionProxy));
-        },
-    });
-    coercionProxies.set(proxy, value);
-    return proxy;
 }
 
 // Reorder transfer handlers for correct priority

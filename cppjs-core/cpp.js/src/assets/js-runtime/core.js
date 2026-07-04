@@ -1,4 +1,5 @@
 /* eslint-disable no-restricted-syntax, guard-for-in */
+import { setCoercionModule, wrapModuleForCoercion } from './adapters/vector-coercion.js';
 
 export function isObject(item) {
     return (item && typeof item === 'object' && !Array.isArray(item));
@@ -157,7 +158,13 @@ export function createInitCppJs({
         if (worker && config.useWorker && !worker.isWorkerScope) {
             cppJsPromise = worker.initWithWorker(config, userConfig);
         } else {
-            cppJsPromise = createModule(config);
+            // Direct (non-worker) mode: wrap the module so plain-array arguments coerce to
+            // embind vectors like they do in worker mode. Narrow wrapper — only the module's
+            // own calls, leaving HEAP*/FS/returned objects raw (see wrapModuleForCoercion).
+            cppJsPromise = createModule(config).then((m) => {
+                setCoercionModule(m);
+                return wrapModuleForCoercion(m);
+            });
         }
 
         return cppJsPromise;
