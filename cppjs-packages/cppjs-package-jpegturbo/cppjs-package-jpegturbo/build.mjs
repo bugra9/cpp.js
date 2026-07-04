@@ -1,4 +1,5 @@
 export default {
+    sha256: 'ecae8008e2cc9ade2f2c1bb9d5e6d4fb73e7c433866a056bd82980741571a022', // libjpeg-turbo-3.1.4.1.tar.gz
     getURL: (version) => `https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/${version}/libjpeg-turbo-${version}.tar.gz`,
     buildType: 'cmake',
     getBuildParams: (target) => {

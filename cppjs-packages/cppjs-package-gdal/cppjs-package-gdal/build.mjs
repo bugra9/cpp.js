@@ -6,6 +6,7 @@ const platformCmake = {
 const ifDep = (dep, params) => (dep ? params(dep) : []);
 
 export default {
+    sha256: 'e04e9813bd215b56753d5554330c53be25f3df2d7ed7e6413a19e6b66751c675', // gdal-3.13.1.tar.gz
     getURL: (version) => `https://github.com/OSGeo/gdal/releases/download/v${version}/gdal-${version}.tar.gz`,
     copyToSource: { 'assets/gdal_empty_file.cpp': 'gcore/gdal_empty_file.cpp' },
     replaceList: [

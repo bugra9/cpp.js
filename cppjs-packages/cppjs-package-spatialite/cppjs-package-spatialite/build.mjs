@@ -26,6 +26,7 @@ const platformSourceReplaceList = {
 const ifDep = (dep, params) => (dep ? params(dep) : []);
 
 export default {
+    sha256: '43be2dd349daffe016dd1400c5d11285828c22fea35ca5109f21f3ed50605080', // libspatialite-5.1.0.tar.gz
     getURL: (version) => `https://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-${version}.tar.gz`,
     copyToSource: { 'config.sub': 'config.sub' },
     sourceReplaceList: (target) => [...(platformSourceReplaceList[target.platform] || [])],

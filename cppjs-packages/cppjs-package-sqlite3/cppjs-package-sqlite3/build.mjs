@@ -9,6 +9,7 @@ const platformBuild = {
 const SQLITE_DEFINES = '-DSQLITE_NOHAVE_SYSTEM -DSQLITE_DISABLE_LFS -DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_FTS3_PARENTHESIS -DSQLITE_ENABLE_JSON1 -DSQLITE_ENABLE_NORMALIZE -DSQLITE_ENABLE_COLUMN_METADATA -DHAVE_GETHOSTUUID=0 -DSQLITE_ENABLE_RTREE=1';
 
 export default {
+    sha256: '588ad51949419a56ebe81fe56193d510c559eb94c9a57748387860b5d3069316', // sqlite-autoconf-3530200.tar.gz
     // SQLite hosts each release under its release-year directory; bump RELEASE_YEAR together with
     // nativeVersion (the year cannot be derived from the version number).
     getURL: (version) => {

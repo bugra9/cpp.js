@@ -15,6 +15,7 @@ const platformExtraLibs = {
 const ifDep = (dep, params) => (dep ? params(dep) : []);
 
 export default {
+    sha256: 'c598d04fdf2ba25c4352844dafa81dde3f7fd968daa7ad131228cd91e9d3dc47', // libgeotiff-1.7.4.tar.gz
     getURL: (version) => `https://download.osgeo.org/geotiff/libgeotiff/libgeotiff-${version}.tar.gz`,
     buildType: 'configure',
     getBuildParams: (target, depPaths) => [

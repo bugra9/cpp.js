@@ -1,4 +1,5 @@
 export default {
+    sha256: 'eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3', // zstd-1.5.7.tar.gz
     getURL: (version) => `https://github.com/facebook/zstd/releases/download/v${version}/zstd-${version}.tar.gz`,
     // zstd ships its CMake project under build/cmake/, not at the source root.
     // copyToSource places a thin wrapper CMakeLists.txt at the extracted
