@@ -1,5 +1,13 @@
 # cpp.js
 
+## 2.0.0-beta.26
+
+**Potentially breaking — `VectorUChar`.** The shared runtime (`commonBridges.cpp`) now
+registers `std::vector<unsigned char>` as `VectorUChar` for every target (wasm and the
+native JSI runtimes). If your own code — or a wrapped library such as gdal3.js —
+already registers `VectorUChar` locally, remove that registration before upgrading:
+embind aborts initialisation when the same vector name is registered twice.
+
 ## 2.0.0-beta
 
 The 2.0.0 line is a ground-up rework — native iOS/Android via JSI, multi-bundler
