@@ -89,6 +89,17 @@ function callWithVectorCoercion(fn, thisArg, args) {
     }
 }
 
+// Proxies created by wrapWithVectorCoercion, mapped back to their raw
+// targets. embind rejects a proxied `this` or argument (its class checks
+// compare $$.ptrType.registeredClass by identity), so every invocation
+// unwraps them back to the raw objects first.
+const coercionProxies = new WeakMap();
+
+function unwrapCoercionProxy(value) {
+    const raw = coercionProxies.get(value);
+    return raw === undefined ? value : raw;
+}
+
 // Wraps a worker-side object so every method reached through it (at any
 // depth: Module.Gdal.openEx, dataset.translate, ...) is invoked through
 // callWithVectorCoercion. Constructors pass through untouched.
@@ -96,9 +107,32 @@ function wrapWithVectorCoercion(value, thisArg) {
     if (value == null || (typeof value !== 'object' && typeof value !== 'function')) {
         return value;
     }
-    return new Proxy(value, {
+    const proxy = new Proxy(value, {
         get(target, prop) {
             const member = Reflect.get(target, prop);
+            // Comlink invokes exposed methods as rawValue.apply(parent, args)
+            // with parent being the WRAPPED object. Handle Function.prototype
+            // apply/call here so `this` and the argument list reach
+            // callWithVectorCoercion unwrapped and flat (retries depend on
+            // seeing the real argument positions).
+            if (typeof target === 'function' && member === Function.prototype.apply) {
+                return (applyThis, applyArgs) => callWithVectorCoercion(
+                    target,
+                    applyThis === undefined && thisArg !== undefined
+                        ? thisArg
+                        : unwrapCoercionProxy(applyThis),
+                    applyArgs ? Array.prototype.map.call(applyArgs, unwrapCoercionProxy) : [],
+                );
+            }
+            if (typeof target === 'function' && member === Function.prototype.call) {
+                return (callThis, ...callArgs) => callWithVectorCoercion(
+                    target,
+                    callThis === undefined && thisArg !== undefined
+                        ? thisArg
+                        : unwrapCoercionProxy(callThis),
+                    callArgs.map(unwrapCoercionProxy),
+                );
+            }
             if (typeof member === 'function' || (member !== null && typeof member === 'object')) {
                 // Proxy invariant: non-configurable, non-writable data
                 // properties (a class's .prototype, notably) must be returned
@@ -112,9 +146,12 @@ function wrapWithVectorCoercion(value, thisArg) {
             return member;
         },
         apply(target, applyThis, args) {
-            return callWithVectorCoercion(target, thisArg !== undefined ? thisArg : applyThis, args);
+            const boundThis = thisArg !== undefined ? thisArg : unwrapCoercionProxy(applyThis);
+            return callWithVectorCoercion(target, boundThis, args.map(unwrapCoercionProxy));
         },
     });
+    coercionProxies.set(proxy, value);
+    return proxy;
 }
 
 // Reorder transfer handlers for correct priority

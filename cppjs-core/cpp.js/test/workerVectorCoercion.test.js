@@ -184,6 +184,52 @@ describe('wrapWithVectorCoercion', () => {
         expect(wrapped.ns.method(['-a', '-b'])).toBe('ns:-a,-b');
     });
 
+    test('keeps raw `this` identity through the Comlink invocation route', () => {
+        // Comlink resolves the method and its parent through the wrapper, then
+        // invokes rawValue.apply(parent, args): `this` must reach the target
+        // function UNWRAPPED, or embind's identity checks reject it.
+        const ns = {
+            method(opts) {
+                if (!(opts instanceof VectorString)) throw bindingError('VectorString', opts);
+                return this === ns;
+            },
+        };
+        const wrapped = wrapWithVectorCoercion({ ns });
+
+        const rawValue = wrapped.ns.method;
+        const parent = wrapped.ns;
+
+        expect(rawValue.apply(parent, [['-a']])).toBe(true);
+        expect(rawValue.call(parent, ['-b'])).toBe(true);
+    });
+
+    test('coerces plain arrays at their real positions via .apply', () => {
+        const target = {
+            method(dest, opts) {
+                if (!(opts instanceof VectorString)) throw bindingError('VectorString', opts);
+                return `${dest}:${opts.items.join(',')}`;
+            },
+        };
+        const wrapped = wrapWithVectorCoercion(target);
+
+        const result = wrapped.method.apply(wrapped, ['/out.tif', ['-of', 'COG']]);
+
+        expect(result).toBe('/out.tif:-of,COG');
+    });
+
+    test('unwraps proxied arguments back to raw objects', () => {
+        const dataset = { marker: 'raw' };
+        const api = {
+            dataset,
+            use(arg) {
+                return arg === dataset;
+            },
+        };
+        const wrapped = wrapWithVectorCoercion(api);
+
+        expect(wrapped.use(wrapped.dataset)).toBe(true);
+    });
+
     test('leaves constructors usable', () => {
         class Thing {
             constructor(value) {
