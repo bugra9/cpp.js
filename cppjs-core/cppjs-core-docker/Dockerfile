@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 emscripten/emsdk:6.0.2
+FROM --platform=linux/amd64 emscripten/emsdk:6.0.2@sha256:644883f58ca15c38c8be59b3a727ba0eff347729bc31d50a3348a6c9ed92bc07
 
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends sqlite3 openjdk-21-jdk ca-certificates gpg
