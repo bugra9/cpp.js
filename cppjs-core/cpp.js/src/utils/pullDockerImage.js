@@ -6,8 +6,8 @@ import { getContentHash } from './hash.js';
 // same image kept only for a readable, stable container name — a digest's '@sha256:...' is not
 // valid in a Docker container name. Bump BOTH together when publishing a new image
 // (scripts/pin-docker-image.js reads the digest back from the registry).
-const IMAGE_TAG = 'bugra9/cpp.js:0.3.2';
-const IMAGE = 'bugra9/cpp.js@sha256:b99af109d096d21a09d44d8b119c671f0af3fe8725e5f88c6d47d7e48b612d2a';
+const IMAGE_TAG = 'bugra9/cpp.js:0.3.3';
+const IMAGE = 'bugra9/cpp.js@sha256:fbef6cff4c84b5ef2fb4fe1c6f5de2920327c55ff1f3bfbb60c8628dc2e8711d';
 
 let isDockerImageAvailable = false;
 
