@@ -77,6 +77,9 @@ export default async function buildWasm(target, options = {}) {
             '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
             '-s', 'RESERVED_FUNCTION_POINTERS=200', // '-s', 'FORCE_FILESYSTEM=1',
             '-s', 'ALLOW_MEMORY_GROWTH=1',
+            // emsdk 6 defaults GROWABLE_ARRAYBUFFERS=1; Firefox/WebKit TextDecoder rejects views
+            // over resizable ArrayBuffers, breaking every string crossing the wasm boundary.
+            '-s', 'GROWABLE_ARRAYBUFFERS=0',
             '-s', 'WASMFS',
             '-s', 'ENVIRONMENT=web,webview,worker',
             '-s', 'EXPORTED_RUNTIME_METHODS=["FS", "ENV"]',
@@ -125,6 +128,8 @@ export default async function buildWasm(target, options = {}) {
             '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
             '-s', 'RESERVED_FUNCTION_POINTERS=200', // '-s', 'FORCE_FILESYSTEM=1',
             '-s', 'ALLOW_MEMORY_GROWTH=1',
+            // See the GROWABLE_ARRAYBUFFERS note in the browser block (Firefox/WebKit TextDecoder).
+            '-s', 'GROWABLE_ARRAYBUFFERS=0',
             '-s', 'ENVIRONMENT=web',
             '-s', 'EXPORTED_RUNTIME_METHODS=["ENV"]',
             '-fwasm-exceptions',
@@ -153,6 +158,8 @@ export default async function buildWasm(target, options = {}) {
             '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
             '-s', 'RESERVED_FUNCTION_POINTERS=200', // '-s', 'DISABLE_EXCEPTION_CATCHING=0', '-s', 'FORCE_FILESYSTEM=1',
             '-s', 'ALLOW_MEMORY_GROWTH=1',
+            // See the GROWABLE_ARRAYBUFFERS note in the browser block (older Node V8 lacks it too).
+            '-s', 'GROWABLE_ARRAYBUFFERS=0',
             '-s', 'WASMFS',
             '-s', 'NODE_HOST_ENV=1',
             '-s', 'ENVIRONMENT=node',
