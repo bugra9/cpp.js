@@ -16,7 +16,15 @@ const isBrowserSupportOPFS = typeof navigator !== 'undefined'
 
 export default {
     extendModule(m, config) {
-        m.mainScriptUrlOrBlob = m.locateFile(config.paths.worker);
+        // Emscripten spawns pthread workers from mainScriptUrlOrBlob when it is
+        // set, and it wins over the runtime's own script detection. With
+        // paths.worker unset this used to produce the string "undefined", which
+        // the post-0.3.2 toolchain's pthread bootstrap actually fetches
+        // (new Worker("/undefined")), hanging init in direct (non-worker) mode.
+        const pthreadScript = config.paths.worker || config.paths.js;
+        if (pthreadScript) {
+            m.mainScriptUrlOrBlob = m.locateFile(pthreadScript);
+        }
 
         m.getDefaultPath = () => STATIC_PATHS[config.fs?.opfs !== false ? 'opfs' : 'memfs'];
 
