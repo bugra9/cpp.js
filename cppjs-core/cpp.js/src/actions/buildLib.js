@@ -66,9 +66,17 @@ export default function buildLib(targetParams, options = {}) {
     }
 
     if (fs.existsSync(`${state.config.paths.output}/prebuilt`)) {
+        // A partial build (e.g. `cppjs build -p wasm`) must not clobber the other platforms'
+        // entries: consumers resolve this CMakeLists for ios/android too, and a target missing
+        // from the list silently drops the dependency's include dirs and libs. Advertise every
+        // target already present in dist alongside the ones just built.
+        const distTargets = fs.readdirSync(`${state.config.paths.output}/prebuilt`, { withFileTypes: true })
+            .filter((e) => e.isDirectory() && fs.existsSync(`${state.config.paths.output}/prebuilt/${e.name}/lib`))
+            .map((e) => e.name);
+        const hostTargets = [...new Set([...distTargets, ...targets.map((t) => t.path)])];
         const distCmakeContent = fs.readFileSync(`${state.config.paths.cli}/assets/cmake/dist.cmake`, { encoding: 'utf8', flag: 'r' })
             .replace('___PROJECT_NAME___', state.config.general.name)
-            .replace('___PROJECT_HOST___', targets.map((t) => t.path).join(';'))
+            .replace('___PROJECT_HOST___', hostTargets.join(';'))
             .replace('___PROJECT_LIBS___', state.config.export.libName.join(';'));
         fs.writeFileSync(`${state.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
     }
