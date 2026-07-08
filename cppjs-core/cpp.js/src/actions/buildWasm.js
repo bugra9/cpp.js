@@ -93,20 +93,22 @@ export default async function buildWasm(target, options = {}) {
         // The pthread bootstrap spawns workers from _scriptName, captured from
         // document.currentScript at LOAD time - undefined when the bridge is
         // loaded as a module script, so workers would fetch "/undefined" and
-        // direct-mode mt init hangs. Inject Module.mainScriptUrlOrBlob (set by
-        // the browser adapter from paths.worker/paths.js) at SPAWN time
-        // instead. The previous spaced 'var _scriptName = ' rewrite no longer
-        // matched the minified glue and silently no-opped; the guard below
-        // turns any future format drift into a visible error instead.
+        // direct-mode mt init hangs. Inject Module.cppjsMainScript (set by the
+        // browser adapter from paths.worker/paths.js; a cppjs-specific key, as
+        // emscripten's own mainScriptUrlOrBlob trips emsdk 6 debug assertions
+        // on st targets) at SPAWN time instead. The previous spaced
+        // 'var _scriptName = ' rewrite no longer matched the minified glue and
+        // silently no-opped; the guard below turns any future format drift
+        // into a visible error instead.
         replace({
             regex: 'pthreadMainJs=_scriptName',
-            replacement: 'pthreadMainJs=Module["mainScriptUrlOrBlob"]||_scriptName',
+            replacement: 'pthreadMainJs=Module["cppjsMainScript"]||_scriptName',
             paths: [`${state.config.paths.build}/${target.rawJsName}`],
             recursive: false,
             silent: true,
         });
         const glue = fs.readFileSync(`${state.config.paths.build}/${target.rawJsName}`, 'utf8');
-        if (glue.includes('pthreadMainJs') && !glue.includes('Module["mainScriptUrlOrBlob"]||_scriptName')) {
+        if (glue.includes('pthreadMainJs') && !glue.includes('Module["cppjsMainScript"]||_scriptName')) {
             logger.error('pthread spawn rewrite missed (emscripten glue format changed?): mt builds may fetch /undefined workers');
         }
         /* replace({
