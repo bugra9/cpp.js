@@ -40,8 +40,8 @@ function sha256OfUrl(url) {
 // pins go right under `export default {`.
 function writeSha256(buildMjsPath, hash, basename) {
     let text = fs.readFileSync(buildMjsPath, 'utf8');
-    if (/sha256:\s*'[0-9a-fA-F]*'/.test(text)) {
-        text = text.replace(/sha256:\s*'[0-9a-fA-F]*'/, `sha256: '${hash}'`);
+    if (/sha256:\s*'[0-9a-fA-F]*',( \/\/ [^\n]*)?/.test(text)) {
+        text = text.replace(/sha256:\s*'[0-9a-fA-F]*',( \/\/ [^\n]*)?/, `sha256: '${hash}', // ${basename}`);
     } else {
         text = text.replace(/(export default \{\n)/, `$1    sha256: '${hash}', // ${basename}\n`);
     }
