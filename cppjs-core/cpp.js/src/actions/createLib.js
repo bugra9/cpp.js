@@ -39,6 +39,11 @@ export default function createLib(target, fileType, options = {}) {
         buildParams = getBuildParams ? getBuildParams(target, depPaths, ext, buildPath) : [];
         if (state.config.build?.buildType !== 'configure') {
             const cmakeBuildType = sharedPlatforms.includes(target.platform) ? 'SHARED' : 'STATIC';
+            // Upstream CMakeLists increasingly default BUILD_SHARED_LIBS=ON; on wasm that extra
+            // .so link fails under emsdk 6 (wasm-ld demands PIC deps) and nothing consumes it.
+            // Default the option to the platform's lib kind; recipes can still override since
+            // their -D flags come later on the command line.
+            buildParams.unshift(`-DBUILD_SHARED_LIBS=${cmakeBuildType === 'SHARED' ? 'ON' : 'OFF'}`);
             buildParams.push(`-DCMAKE_PREFIX_PATH=${libdir}`, `-DCMAKE_FIND_ROOT_PATH=${libdir}`, `-DBUILD_TYPE=${cmakeBuildType}`);
         }
 
