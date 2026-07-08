@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-sqlite3-android",
-    "version": "2.0.0-beta.26",
+    "version": "2.0.0-beta.29",
     "nativeVersion": "3.53.3",
     "description": "Android build of the precompiled SQLite3 database engine, built with cpp.js. Use it together with the main package @cpp.js/package-sqlite3.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-sqlite3#readme",

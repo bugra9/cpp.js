@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-webp-wasm",
-    "version": "2.0.0-beta.26",
+    "version": "2.0.0-beta.29",
     "nativeVersion": "1.6.0",
     "description": "WebAssembly build of the precompiled WebP image library, built with cpp.js. Use it together with the main package @cpp.js/package-webp.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-webp#readme",

@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-curl-wasm",
-    "version": "2.0.0-beta.26",
+    "version": "2.0.0-beta.29",
     "nativeVersion": "8.21.0",
     "description": "WebAssembly build of the precompiled libcurl (CURL) library, built with cpp.js. Use it together with the main package @cpp.js/package-curl.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-curl#readme",

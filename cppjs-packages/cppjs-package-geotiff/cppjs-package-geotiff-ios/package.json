@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-geotiff-ios",
-    "version": "2.0.0-beta.26",
+    "version": "2.0.0-beta.29",
     "nativeVersion": "1.7.4",
     "description": "iOS build of the precompiled libgeotiff (GeoTIFF) library, built with cpp.js. Use it together with the main package @cpp.js/package-geotiff.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-geotiff#readme",

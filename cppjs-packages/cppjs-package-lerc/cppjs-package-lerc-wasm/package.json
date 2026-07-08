@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-lerc-wasm",
-    "version": "2.0.0-beta.26",
+    "version": "2.0.0-beta.29",
     "nativeVersion": "4.1.1",
     "description": "WebAssembly build of the precompiled LERC (Limited Error Raster Compression) library, built with cpp.js. Use it together with the main package @cpp.js/package-lerc.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/cppjs-packages/cppjs-package-lerc#readme",
