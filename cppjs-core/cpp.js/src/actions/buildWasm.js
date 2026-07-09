@@ -58,11 +58,16 @@ export default async function buildWasm(target, options = {}) {
     // Link inputs (flags, lib set, preloaded data) are invisible to a pure
     // artifact-existence cache: a config emccFlags change used to keep
     // serving the old wasm until a manual .cppjs clear. Fingerprint them next
-    // to the artifact and treat a mismatch as a cache miss.
+    // to the artifact and treat a mismatch as a cache miss. Lib entries carry
+    // size+mtime, so a rebuilt dependency archive (same path, new content)
+    // forces the relink too.
     const linkFingerprintFile = `${state.config.paths.build}/${target.jsName}.fingerprint`;
     const linkFingerprint = getContentHash(JSON.stringify({
         emccFlags,
-        libs,
+        libs: libs.map((lib) => {
+            const stat = fs.existsSync(lib) ? fs.statSync(lib) : null;
+            return { lib, size: stat ? stat.size : null, mtimeMs: stat ? stat.mtimeMs : null };
+        }),
         data: getData('data', target),
     }));
     const linkChanged = !fs.existsSync(linkFingerprintFile)
