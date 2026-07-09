@@ -12,4 +12,7 @@ test('boots the module in a worker and runs a std::thread', async ({ page, brows
     // Instance methods + plain-array vector coercion through the worker:
     // statics cannot catch `this`-identity regressions, this line can.
     await expect(page.getByText('count:42 a+b')).toBeVisible()
+    // `new` through the worker proxy (Comlink CONSTRUCT + embind prototype
+    // identity): factories cannot catch construct regressions, this line can.
+    await expect(page.getByText('ctor:21')).toBeVisible()
 });
