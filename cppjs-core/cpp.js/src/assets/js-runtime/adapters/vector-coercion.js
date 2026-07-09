@@ -96,10 +96,9 @@ export function constructWithVectorCoercion(Class, args, newTarget) {
 }
 
 // Deep wrapper (WORKER mode): every method reached through the wrapped object - at any depth
-// (Module.Gdal.openEx, dataset.translate, ...) - is invoked through callWithVectorCoercion.
-// Constructors pass through untouched; the worker re-exposes constructed objects via Comlink,
-// which wraps them again on the way back. Safe here because the worker world is entirely
-// opaque Comlink proxies - nothing accesses raw memory or object identity through it.
+// (Module.Gdal.openEx, dataset.translate, ...) - is invoked through callWithVectorCoercion,
+// and every `new` through the construct trap below. Safe here because the worker world is
+// entirely opaque Comlink proxies - nothing accesses raw memory or object identity through it.
 export function wrapWithVectorCoercion(value, thisArg) {
     if (value == null || (typeof value !== 'object' && typeof value !== 'function')) {
         return value;
@@ -143,6 +142,17 @@ export function wrapWithVectorCoercion(value, thisArg) {
         apply(target, applyThis, args) {
             const boundThis = thisArg !== undefined ? thisArg : unwrapCoercionProxy(applyThis);
             return callWithVectorCoercion(target, boundThis, args.map(unwrapCoercionProxy));
+        },
+        construct(target, args) {
+            // Comlink's CONSTRUCT handler does `new rawValue(...args)` on the wrapped
+            // class. Without this trap the construction falls through with the PROXY as
+            // newTarget, whose get trap hands out a wrapped .prototype (embind classes
+            // are plain functions, so their prototype is writable and the proxy
+            // invariant early-return does not apply) - and embind's prototype-identity
+            // check rejects the instance with "Use 'new' to construct X". Constructing
+            // against the raw class keeps the real prototype and adds the same
+            // plain-array vector coercion that method calls get.
+            return constructWithVectorCoercion(target, args.map(unwrapCoercionProxy));
         },
     });
     coercionProxies.set(proxy, value);

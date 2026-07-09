@@ -1,4 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import * as Comlink from 'comlink';
 import {
     callWithVectorCoercion,
     wrapWithVectorCoercion,
@@ -242,5 +243,82 @@ describe('wrapWithVectorCoercion', () => {
 
         expect(instance).toBeInstanceOf(Thing);
         expect(instance.value).toBe(7);
+    });
+
+    test('constructs an embind-style plain-function class (prototype identity)', () => {
+        // embind classes are plain functions (writable .prototype), so a `new`
+        // falling through the proxy used to build `this` on a WRAPPED prototype
+        // and embind's identity check threw "Use 'new' to construct X".
+        function PlainCounter(start) {
+            if (Object.getPrototypeOf(this) !== PlainCounter.prototype) {
+                throw new Error("Use 'new' to construct PlainCounter");
+            }
+            this.value = start;
+        }
+        const wrapped = wrapWithVectorCoercion({ PlainCounter });
+
+        const instance = new wrapped.PlainCounter(41);
+
+        expect(instance).toBeInstanceOf(PlainCounter);
+        expect(instance.value).toBe(41);
+    });
+});
+
+describe('Comlink CONSTRUCT end to end (worker construct path)', () => {
+    afterEach(() => {
+        setCoercionModule(null);
+    });
+
+    test('news a class through a real Comlink channel and calls the instance back', async () => {
+        // The exact worker flow: the module is exposed wrapped, the main side news
+        // a class through the Comlink proxy (CONSTRUCT message), the constructed
+        // instance travels back through the modified 'proxy' transfer handler, and
+        // instance methods keep working across the wire.
+        function PlainCounter(start) {
+            if (Object.getPrototypeOf(this) !== PlainCounter.prototype) {
+                throw new Error("Use 'new' to construct PlainCounter");
+            }
+            this.value = start;
+            this.deletedFlag = false;
+        }
+        PlainCounter.prototype.increment = function increment(by) {
+            this.value += by;
+            return this.value;
+        };
+        PlainCounter.prototype.joinTags = function joinTags(tags) {
+            if (!(tags instanceof VectorString)) throw bindingError('VectorString', tags);
+            return tags.items.join(',');
+        };
+        PlainCounter.prototype.delete = function del() {
+            this.deletedFlag = true;
+        };
+        PlainCounter.prototype.isDeleted = function isDeleted() {
+            return this.deletedFlag;
+        };
+
+        const m = {
+            PlainCounter,
+            VectorString,
+            toVector(VectorClass, array = []) {
+                const vector = new VectorClass();
+                array.forEach((item) => vector.push_back(item));
+                return vector;
+            },
+        };
+        setCoercionModule(m);
+
+        const { port1, port2 } = new MessageChannel();
+        try {
+            Comlink.expose(wrapWithVectorCoercion(m), port1);
+            const remote = Comlink.wrap(port2);
+
+            const counter = await new remote.PlainCounter(40);
+            expect(await counter.increment(2)).toBe(42);
+            // Plain-array coercion must also hold on the constructed instance.
+            expect(await counter.joinTags(['a', 'b'])).toBe('a,b');
+        } finally {
+            port1.close();
+            port2.close();
+        }
     });
 });

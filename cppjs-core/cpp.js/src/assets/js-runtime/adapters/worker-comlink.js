@@ -1,7 +1,7 @@
 import * as Comlink from 'comlink';
 import { mergeDeep } from '../core.js';
 import {
-    callWithVectorCoercion, wrapWithVectorCoercion, setCoercionModule,
+    callWithVectorCoercion, wrapWithVectorCoercion, setCoercionModule, unwrapCoercionProxy,
 } from './vector-coercion.js';
 
 const isWorkerScope = typeof WorkerGlobalScope !== 'undefined'
@@ -44,12 +44,17 @@ Comlink.transferHandlers.set('embindProxy', {
 Comlink.transferHandlers.set('proxy', {
     canHandle: _proxyHandler.canHandle,
     serialize(obj) {
-        const [port, transferables] = _proxyHandler.serialize(obj);
         if (typeof obj.delete === 'function' && typeof obj.isDeleted === 'function') {
-            const id = registerEmbindObject(obj);
+            // CONSTRUCT results (Comlink marks them with proxy()) are exposed through
+            // the same coercion wrapper as method-returned objects (embindObject
+            // handler), and the registry keeps the RAW object so arguments resolve
+            // back to real embind identities.
+            const raw = unwrapCoercionProxy(obj);
+            const [port, transferables] = _proxyHandler.serialize(wrapWithVectorCoercion(raw));
+            const id = registerEmbindObject(raw);
             return [{ __embindId: id, __port: port }, transferables];
         }
-        return [port, transferables];
+        return _proxyHandler.serialize(obj);
     },
     deserialize(data) {
         if (data != null && typeof data === 'object' && '__embindId' in data) {
