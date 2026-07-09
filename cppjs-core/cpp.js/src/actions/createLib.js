@@ -7,6 +7,7 @@ import getCmakeParameters from './getCmakeParameters.js';
 import triggerExtensions from './extensions.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
+import { getFilesFingerprint } from '../utils/hash.js';
 
 const cpuCount = Math.max(1, os.cpus().length - 1);
 const sharedPlatforms = ['android'];
@@ -24,9 +25,30 @@ export default function createLib(target, fileType, options = {}) {
     const platformPrefix = `${fileType ? `${fileType}-` : ''}${buildType}`;
     const libdir = `${state.config.paths.build}/${platformPrefix}/prebuilt/${target.path}`;
     const buildPath = `${state.config.paths.build}/${platformPrefix}/${target.path}`;
-    if (!options.force && fs.existsSync(`${libdir}/lib`)) {
+
+    // A lib built from a nativeGlob is only valid for that exact file set: the
+    // same lib dir is reused while the bridge list grows as .h imports are
+    // processed, so an early build (e.g. /cpp.js requested before any header
+    // transform) must not satisfy later, larger sets. Fingerprint the glob and
+    // treat a mismatch as a cache miss even without force.
+    const fingerprintFile = `${libdir}/cppjs-nativeglob.fingerprint`;
+    const fingerprint = options.nativeGlob ? getFilesFingerprint(options.nativeGlob) : null;
+    const fingerprintChanged = fingerprint !== null
+        && (!fs.existsSync(fingerprintFile) || fs.readFileSync(fingerprintFile, { encoding: 'utf8' }) !== fingerprint);
+
+    if (!options.force && !fingerprintChanged && fs.existsSync(`${libdir}/lib`)) {
         logger.cachedStep(target, fileType);
-        return;
+        return false;
+    }
+
+    // Bridges guard _JSPI registrations behind CPPJS_JSPI (bridgeAsyncGuard);
+    // define it only when this target links with -sJSPI, so async bindings
+    // exist exactly where the runtime can support them.
+    const isJspiTarget = target.platform === 'wasm'
+        && (getData('binary', target)?.emccFlags || []).includes('-sJSPI');
+    if (fileType === 'Bridge' && target.platform === 'wasm' && !isJspiTarget
+        && options.nativeGlob?.some((f) => fs.existsSync(f) && fs.readFileSync(f, { encoding: 'utf8' }).includes('emscripten::async()'))) {
+        logger.info(`[${target.path}] _JSPI bindings skipped: this target links without -sJSPI (add it to binary.emccFlags to enable them)`);
     }
 
     const buildEnv = { params: [] };
@@ -67,6 +89,10 @@ export default function createLib(target, fileType, options = {}) {
             ldFlags.push('-msimd128');
         }
 
+        if (isJspiTarget) {
+            cFlags.push('-DCPPJS_JSPI');
+        }
+
         if (target.platform === 'wasm' && target.arch === 'wasm64') {
             cFlags.push('-sMEMORY64=1');
             ldFlags.push('-sMEMORY64=1');
@@ -105,6 +131,11 @@ export default function createLib(target, fileType, options = {}) {
             buildEnv.params.push('-e', `CFLAGS=-sMEMORY64=1`);
             buildEnv.params.push('-e', `CXXFLAGS=-sMEMORY64=1`);
             buildEnv.params.push('-e', `LDFLAGS=-sMEMORY64=1`);
+        }
+
+        if (isJspiTarget) {
+            buildEnv.params.push('-e', `CFLAGS=-DCPPJS_JSPI`);
+            buildEnv.params.push('-e', `CXXFLAGS=-DCPPJS_JSPI`);
         }
     }
 
@@ -155,4 +186,11 @@ export default function createLib(target, fileType, options = {}) {
     const buildMs = Math.round(t2 - t1);
     const detail = `cmake ${cmakeMs < 1000 ? `${cmakeMs}ms` : `${(cmakeMs / 1000).toFixed(1)}s`}, make ${buildMs < 1000 ? `${buildMs}ms` : `${(buildMs / 1000).toFixed(1)}s`}, j${cpuCount}`;
     logger.doneStep(target, fileType, detail);
+
+    if (fingerprint !== null) {
+        fs.mkdirSync(libdir, { recursive: true });
+        fs.writeFileSync(fingerprintFile, fingerprint);
+    }
+    // Callers can force the final link when a lib actually rebuilt.
+    return true;
 }

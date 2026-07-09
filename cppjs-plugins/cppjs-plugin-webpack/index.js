@@ -44,11 +44,17 @@ export default class CppjsWebpackPlugin {
         const buildTarget = isDev ? buildTargetDebug : buildTargetRelease;
         await buildDependencies({ targetParams: { ...targetParams, buildType: [buildTarget.buildType] } });
         const force = isSourceNewer(buildTarget);
-        createLib(buildTarget, 'Source', { force, buildSource: true });
-        createLib(buildTarget, 'Bridge', { force, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...this.bridges] });
-        await buildWasm(buildTarget, { force });
+        const sourceBuilt = createLib(buildTarget, 'Source', { force, buildSource: true });
+        // Bridge cache is keyed on the nativeGlob fingerprint: a changed bridge
+        // set rebuilds the lib even without source changes, and a rebuilt lib
+        // must force the final link too.
+        const bridgeBuilt = createLib(buildTarget, 'Bridge', { force, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...this.bridges] });
+        await buildWasm(buildTarget, { force: force || Boolean(sourceBuilt) || Boolean(bridgeBuilt) });
         if (!isDev) {
             const output = state.config.paths.output === state.config.paths.build ? compilation.options.output.path : state.config.paths.output;
+            // On a first-ever build the output dir may not exist yet when this
+            // hook runs; copyFileSync reports that as ENOENT too.
+            fs.mkdirSync(output, { recursive: true });
             fs.copyFileSync(`${state.config.paths.build}/${buildTarget.jsName}`, `${output}/cpp.js`);
             fs.copyFileSync(`${state.config.paths.build}/${buildTarget.wasmName}`, `${output}/cpp.wasm`);
 
@@ -108,6 +114,22 @@ export default class CppjsWebpackPlugin {
                 res.setHeader('Content-Type', 'application/wasm');
                 res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
                 res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+                fs.createReadStream(filePath).pipe(res);
+            },
+        });
+
+        middlewares.unshift({
+            name: '/cpp.data.txt',
+            path: '/cpp.data.txt',
+            middleware: (req, res) => {
+                const filePath = `${state.config.paths.build}/${buildTargetDebug.dataTxtName}`;
+                res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+                res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+                if (!fs.existsSync(filePath)) {
+                    res.statusCode = 404;
+                    res.end();
+                    return;
+                }
                 fs.createReadStream(filePath).pipe(res);
             },
         });

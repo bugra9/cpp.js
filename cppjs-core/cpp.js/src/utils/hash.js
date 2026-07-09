@@ -18,3 +18,16 @@ export function getContentHash(content) {
     hash.update(content);
     return hash.digest('hex');
 }
+
+// Order-insensitive fingerprint of a file LIST (path + content per entry).
+// Used as the Bridge lib cache key: the same lib dir is reused while the
+// bridge set grows, so a lib built from a different set must not satisfy the
+// cache. Missing files fingerprint as such instead of throwing.
+export function getFilesFingerprint(paths) {
+    return getContentHash(
+        (paths || [])
+            .map((path) => `${path}:${fs.existsSync(path) ? getFileHash(path) : 'missing'}`)
+            .sort()
+            .join('\n'),
+    );
+}

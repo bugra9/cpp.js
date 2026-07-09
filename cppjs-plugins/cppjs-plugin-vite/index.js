@@ -32,9 +32,13 @@ const viteCppjsPlugin = (options) => {
                 if (isServe && source === '/cpp.js') {
                     await buildDependencies({ targetParams: { ...targetParams, buildType: [buildTargetDebug.buildType] } });
                     const force = isSourceNewer(buildTargetDebug);
-                    createLib(buildTargetDebug, 'Source', { force, buildSource: true });
-                    createLib(buildTargetDebug, 'Bridge', { force, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...bridges] });
-                    await buildWasm(buildTargetDebug, { force });
+                    const sourceBuilt = createLib(buildTargetDebug, 'Source', { force, buildSource: true });
+                    // The Bridge cache is keyed on the nativeGlob fingerprint, so a
+                    // request that raced ahead of the .h transforms rebuilds here
+                    // once the bridge list has grown; a rebuilt lib must also force
+                    // the final link or the wasm keeps the stale registrations.
+                    const bridgeBuilt = createLib(buildTargetDebug, 'Bridge', { force, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...bridges] });
+                    await buildWasm(buildTargetDebug, { force: force || Boolean(sourceBuilt) || Boolean(bridgeBuilt) });
                     return fs.readFileSync(`${state.config.paths.build}/${buildTargetDebug.jsName}`, { encoding: 'utf8', flag: 'r' });
                 }
                 return null;
@@ -50,6 +54,15 @@ const viteCppjsPlugin = (options) => {
                     server.middlewares.use((req, res, next) => {
                         res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
                         res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+                        if (req.url === '/cpp.js') {
+                            // The glue depends on the bridge set, which grows as .h
+                            // imports are transformed; vite would otherwise serve the
+                            // cached load() result forever. Invalidate so the load
+                            // hook re-runs - cheap when nothing changed, and it heals
+                            // a request that raced ahead of the transforms.
+                            const mod = server.moduleGraph.getModuleById('/cpp.js');
+                            if (mod) server.moduleGraph.invalidateModule(mod);
+                        }
                         if (req.url === '/cpp.wasm') req.url = `/@fs/${state.config.paths.build}/${buildTargetDebug.wasmName}`;
                         else if (req.url === '/cpp.data.txt') req.url = `/@fs/${state.config.paths.build}/${buildTargetDebug.dataTxtName}`;
                         // else if (req.url === '/cpp.worker.js') req.url = `/@fs/${state.config.paths.build}/${state.config.general.name}.js`;

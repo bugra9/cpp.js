@@ -84,9 +84,12 @@ const rollupCppjsPlugin = (options, bridges = []) => {
         async generateBundle() {
             await buildDependencies({ targetParams: { ...targetParams, buildType: [buildTargetRelease.buildType] } });
             const force = isSourceNewer(buildTargetRelease);
-            createLib(buildTargetRelease, 'Source', { force, buildSource: true });
-            createLib(buildTargetRelease, 'Bridge', { force, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...bridges] });
-            await buildWasm(buildTargetRelease, { force });
+            const sourceBuilt = createLib(buildTargetRelease, 'Source', { force, buildSource: true });
+            // Bridge cache is keyed on the nativeGlob fingerprint: adding or
+            // removing a .h import rebuilds the bridge lib even when no source
+            // file changed, and a rebuilt lib must force the final link too.
+            const bridgeBuilt = createLib(buildTargetRelease, 'Bridge', { force, buildSource: false, nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...bridges] });
+            await buildWasm(buildTargetRelease, { force: force || Boolean(sourceBuilt) || Boolean(bridgeBuilt) });
 
             this.emitFile({
                 type: 'asset',
