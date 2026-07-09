@@ -3,5 +3,6 @@ const { test, expect } = require('@playwright/test');
 
 test('check string receiving from c++', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByText('Hello World, greetings from c++.')).toBeVisible()
+    // The playground worker responds with `- ${Native.sample()} -`.
+    await expect(page.getByText('- hello -')).toBeVisible()
 });

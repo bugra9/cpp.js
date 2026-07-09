@@ -6,9 +6,11 @@ const { defineConfig, devices } = require('@playwright/test');
  */
 module.exports = defineConfig({
   testDir: './e2e',
-  timeout: 30 * 1000,
+  // The first dev-server request compiles the DEBUG wasm on demand (deps +
+  // source + bridge + link); on a cold .cppjs that takes minutes, not seconds.
+  timeout: 300 * 1000,
   expect: {
-    timeout: 50000,
+    timeout: 240000,
   },
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

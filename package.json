@@ -3,6 +3,7 @@
     "scripts": {
         "build:packages": "pnpm --filter='@cpp.js/package-*' run build",
         "build:samples": "pnpm --filter='@cpp.js/sample-*' run build",
+        "build:playgrounds": "pnpm --filter='@cpp.js/playground-web-*' --filter='@cpp.js/playground-cloud-*' run build",
         "build:samples:lib": "pnpm --filter='@cpp.js/sample-lib-*' run build",
         "build:samples:lib:wasm": "pnpm --filter='@cpp.js/sample-lib-*' run build:wasm",
         "build:samples:lib:android": "pnpm --filter='@cpp.js/sample-lib-*' run build:android",
@@ -24,7 +25,7 @@
         "clear": "pnpm run clear:cache && pnpm run clear:dist && pnpm run clear:pack",
         "pack:list": "find cppjs-packages -name '*.tgz' -maxdepth 4 -type f",
         "ci:linux:build:package": "pnpm --filter=@cpp.js/package-zlib-* run build",
-        "ci:linux:build": "pnpm run build:samples && pnpm run ci:linux:build:package",
+        "ci:linux:build": "pnpm run build:samples && pnpm run build:playgrounds && pnpm run ci:linux:build:package",
         "ci:windows:build": "pnpm run build:samples:lib:wasm && pnpm run build:samples:lib:android && pnpm run ci:linux:build:package",
         "ci:ios:build:package": "pnpm --filter=@cpp.js/package-zlib-ios run build",
         "ci:macos:build": "pnpm run build:samples:lib:ios && pnpm run ci:ios:build:package",

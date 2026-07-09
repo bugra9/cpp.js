@@ -1,9 +1,8 @@
 import { dirname } from 'node:path';
-import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from '@rspack/cli';
 import { rspack } from '@rspack/core';
-import RefreshPlugin from '@rspack/plugin-react-refresh';
+import { ReactRefreshRspackPlugin } from '@rspack/plugin-react-refresh';
 import CppjsWebpackPlugin from '@cpp.js/plugin-webpack';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -14,21 +13,6 @@ const targets = ['chrome >= 87', 'edge >= 88', 'firefox >= 78', 'safari >= 14'];
 
 const cppjsWebpackPlugin = new CppjsWebpackPlugin();
 const cppjsLoaderOptions = cppjsWebpackPlugin.getLoaderOptions();
-const { state, getTargetParams, getFilteredBuildTargets } = cppjsLoaderOptions;
-
-const targetParams = getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
-let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
-let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
-
-if (!buildTargetRelease && !buildTargetDebug) {
-    throw new Error('No build targets found');
-}
-
-if (!buildTargetDebug) {
-    buildTargetDebug = buildTargetRelease;
-} else if (!buildTargetRelease) {
-    buildTargetRelease = buildTargetDebug;
-}
 
 export default defineConfig({
     context: __dirname,
@@ -48,6 +32,10 @@ export default defineConfig({
             {
                 test: /\.svg$/,
                 type: 'asset',
+            },
+            {
+                test: /\.css$/,
+                type: 'css/auto',
             },
             {
                 test: /\.(jsx?|tsx?)$/,
@@ -80,7 +68,7 @@ export default defineConfig({
         new rspack.HtmlRspackPlugin({
             template: './index.html',
         }),
-        isDev ? new RefreshPlugin() : null,
+        isDev ? new ReactRefreshRspackPlugin() : null,
     ].filter(Boolean),
     optimization: {
         minimizer: [
@@ -89,9 +77,6 @@ export default defineConfig({
                 minimizerOptions: { targets },
             }),
         ],
-    },
-    experiments: {
-        css: true,
     },
     devServer: {
         watchFiles: {
@@ -107,38 +92,10 @@ export default defineConfig({
             'Cross-Origin-Opener-Policy': 'same-origin',
         },
         setupMiddlewares: (middlewares, devServer) => {
-            if (!devServer) {
-                throw new Error('@rspack/dev-server is not defined');
-            }
-
-            middlewares.unshift({
-                name: '/cpp.js',
-                path: '/cpp.js',
-                middleware: (req, res) => {
-                    res.setHeader("Content-Type", "application/javascript");
-                    res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-                    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-                    res.sendFile(`${state.config.paths.build}/${buildTargetDebug.jsName}`);
-                },
-            });
-            middlewares.unshift({
-                name: '/cpp.wasm',
-                path: '/cpp.wasm',
-                middleware: (req, res) => {
-                    res.setHeader("Content-Type", "application/wasm");
-                    res.send(fs.readFileSync(`${state.config.paths.build}/${buildTargetDebug.wasmName}`));
-                },
-            });
-
-            middlewares.unshift({
-                name: '/cpp.data.txt',
-                path: '/cpp.data.txt',
-                middleware: (req, res) => {
-                    res.send(fs.readFileSync(`${state.config.paths.build}/${buildTargetDebug.dataTxtName}`));
-                },
-            });
-
-            return middlewares;
+            // The plugin helper streams /cpp.js, /cpp.wasm and /cpp.data.txt with
+            // plain-Node responses; res.sendFile/res.send are Express-only and do
+            // not exist on @rspack/dev-server 2 middlewares.
+            return cppjsWebpackPlugin.setDevServerMiddleware(middlewares, devServer);
         },
     },
 });

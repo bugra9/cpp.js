@@ -9,7 +9,8 @@
     "scripts": {
         "build": "cppjs build -p wasm -e edge -r st",
         "dev": "wrangler dev",
-        "deploy": "wrangler dev"
+        "deploy": "wrangler dev",
+        "e2e:dev": "playwright test --config playwright.dev.config.cjs"
     },
     "files": [
         "dist/@cpp.js/sample-cloud-cloudflare.edge.js",

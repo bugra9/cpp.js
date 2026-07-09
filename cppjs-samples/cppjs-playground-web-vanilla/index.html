@@ -7,19 +7,15 @@
     <title>Cpp.js Vanilla playground</title>
     <script src="./dist/cppjs-playground-web-vanilla-wasm-wasm32-mt-release.browser.js"></script>
     <script>
-        initCppJs({ path: './dist' }).then(({ Native }) => {
-            console.log('zzz');
-            Native.runOnThread();
-            const y = Native.ops_JSPI();
-            console.log('zzz2');
-            console.log(y);
-            y.then(() => {
-                console.log('aaa');
-                document.querySelector('#cppMessage').innerHTML = Native.sample();
-            });
-            setTimeout(() => {
-                document.querySelector('#threadResult').innerHTML = Native.getThreadResult();
-            }, 5000);
+        // No ops_JSPI here: this playground builds the mt (pthreads) browser
+        // runtime, which cannot carry -sJSPI, so the JSPI demo binding is
+        // guarded out of the build. The mt demo is the thread roundtrip below.
+        // await keeps the calls correct in both modes: the browser runtime
+        // defaults to useWorker, where every binding returns a Promise.
+        initCppJs({ path: './dist' }).then(async ({ Native }) => {
+            await Native.runOnThread();
+            document.querySelector('#cppMessage').innerHTML = 'ready (pthreads)';
+            document.querySelector('#threadResult').innerHTML = await Native.getThreadResult();
         });
     </script>
     <style>

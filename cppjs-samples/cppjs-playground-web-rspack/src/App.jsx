@@ -7,25 +7,20 @@ function App() {
 	const [message, setMessage] = useState("compiling ...");
 	const [threadResult, setThreadResult] = useState("...");
 
+    // No ops_JSPI here: this playground builds the mt (pthreads) browser
+    // runtime, which cannot carry -sJSPI, so the JSPI demo binding is guarded
+    // out of the build. The mt demo is the thread roundtrip below.
     initCppJs().then(() => {
-        console.log('zzz');
         Native.runOnThread();
-        const y = Native.ops_JSPI();
-        console.log('zzz2');
-        console.log(y);
-        y.then(() => {
-            console.log('aaa');
-            setMessage(Native.sample());
-        });
+        setMessage("ready (pthreads)");
         setTimeout(() => {
             setThreadResult(Native.getThreadResult());
-            // message.value = Native.sample();
-        }, 5000);
+        }, 1000);
     });
 
 	return (
         <div className="App">
-			<p>Matrix multiplier with c++ &nbsp;&nbsp;=&gt;&nbsp;&nbsp; {message}</p>
+			<p>Cpp.js module &nbsp;&nbsp;=&gt;&nbsp;&nbsp; {message}</p>
             <p>Thread result &nbsp;&nbsp;:&nbsp;&nbsp;  {threadResult}</p>
 		</div>
 	);

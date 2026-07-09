@@ -37,16 +37,10 @@ export default {
         config: import.meta.url,
         base: '../..', /* Delete this line for create-cpp.js */
     },
-    targetSpecs: [
-        {
-            platform: 'wasm',
-            specs: {
-                binary: {
-                    emccFlags: ['-sJSPI'],
-                }
-            }
-        }
-    ],
+    // No -sJSPI here: this playground builds the mt (pthreads) browser runtime,
+    // and JSPI cannot ride along (pthread-mailbox suspends throw SuspendError in
+    // Chromium; Playwright's Firefox has no JSPI API). The shared ops_JSPI demo
+    // is guarded out of non-JSPI builds by the bridge generator.
     target: {
         runtime: 'mt',
     }

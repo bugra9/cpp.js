@@ -1,3 +1,4 @@
 .cppjs
+.wrangler
 test-results
 playwright-report

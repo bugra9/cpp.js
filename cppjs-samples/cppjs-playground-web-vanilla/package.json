@@ -8,7 +8,8 @@
     "license": "MIT",
     "scripts": {
         "build": "cppjs build -p wasm -a wasm32 -r mt -e browser",
-        "preview": "serve -c ./serve.json"
+        "preview": "serve -c ./serve.json",
+        "e2e:prod": "playwright test --config playwright.prod.config.cjs"
     },
     "dependencies": {
         "cpp.js": "workspace:^",
