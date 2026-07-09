@@ -7,7 +7,7 @@ import getCmakeParameters from './getCmakeParameters.js';
 import triggerExtensions from './extensions.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
-import { getFilesFingerprint } from '../utils/hash.js';
+import { getFilesFingerprint, getContentHash } from '../utils/hash.js';
 
 const cpuCount = Math.max(1, os.cpus().length - 1);
 const sharedPlatforms = ['android'];
@@ -36,7 +36,16 @@ export default function createLib(target, fileType, options = {}) {
     const fingerprintChanged = fingerprint !== null
         && (!fs.existsSync(fingerprintFile) || fs.readFileSync(fingerprintFile, { encoding: 'utf8' }) !== fingerprint);
 
-    if (!options.force && !fingerprintChanged && fs.existsSync(`${libdir}/lib`)) {
+    // Config emccFlags feed compile-time state too (CPPJS_JSPI below), so a
+    // flag change must miss this cache instead of serving a lib compiled
+    // under the old flags.
+    const configEmccFlags = getData('binary', target)?.emccFlags || [];
+    const flagsFingerprintFile = `${libdir}/cppjs-emccflags.fingerprint`;
+    const flagsFingerprint = getContentHash(JSON.stringify(configEmccFlags));
+    const flagsChanged = !fs.existsSync(flagsFingerprintFile)
+        || fs.readFileSync(flagsFingerprintFile, { encoding: 'utf8' }) !== flagsFingerprint;
+
+    if (!options.force && !fingerprintChanged && !flagsChanged && fs.existsSync(`${libdir}/lib`)) {
         logger.cachedStep(target, fileType);
         return false;
     }
@@ -44,8 +53,7 @@ export default function createLib(target, fileType, options = {}) {
     // Bridges guard _JSPI registrations behind CPPJS_JSPI (bridgeAsyncGuard);
     // define it only when this target links with -sJSPI, so async bindings
     // exist exactly where the runtime can support them.
-    const isJspiTarget = target.platform === 'wasm'
-        && (getData('binary', target)?.emccFlags || []).includes('-sJSPI');
+    const isJspiTarget = target.platform === 'wasm' && configEmccFlags.includes('-sJSPI');
     if (fileType === 'Bridge' && target.platform === 'wasm' && !isJspiTarget
         && options.nativeGlob?.some((f) => fs.existsSync(f) && fs.readFileSync(f, { encoding: 'utf8' }).includes('emscripten::async()'))) {
         logger.info(`[${target.path}] _JSPI bindings skipped: this target links without -sJSPI (add it to binary.emccFlags to enable them)`);
@@ -187,10 +195,11 @@ export default function createLib(target, fileType, options = {}) {
     const detail = `cmake ${cmakeMs < 1000 ? `${cmakeMs}ms` : `${(cmakeMs / 1000).toFixed(1)}s`}, make ${buildMs < 1000 ? `${buildMs}ms` : `${(buildMs / 1000).toFixed(1)}s`}, j${cpuCount}`;
     logger.doneStep(target, fileType, detail);
 
+    fs.mkdirSync(libdir, { recursive: true });
     if (fingerprint !== null) {
-        fs.mkdirSync(libdir, { recursive: true });
         fs.writeFileSync(fingerprintFile, fingerprint);
     }
+    fs.writeFileSync(flagsFingerprintFile, flagsFingerprint);
     // Callers can force the final link when a lib actually rebuilt.
     return true;
 }

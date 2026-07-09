@@ -7,6 +7,7 @@ import buildJs from './buildJs.js';
 import triggerExtensions from './extensions.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
+import { getContentHash } from '../utils/hash.js';
 
 export default async function buildWasm(target, options = {}) {
     const isProd = target.buildType === 'release';
@@ -16,11 +17,6 @@ export default async function buildWasm(target, options = {}) {
     // package is consumed only as a static library by downstream builds).
     if (state.config.export.bundle === false) {
         logger.info(`[${target.path}] wasm+js skipped (export.bundle = false)`);
-        return;
-    }
-
-    if (!options.force && fs.existsSync(`${state.config.paths.build}/${target.jsName}`) && fs.existsSync(`${state.config.paths.build}/${target.wasmName}`)) {
-        logger.cachedStep(target, 'wasm+js');
         return;
     }
 
@@ -57,6 +53,24 @@ export default async function buildWasm(target, options = {}) {
 
     if (state.config.excludedDependencies?.length && !emccFlags.includes('-sERROR_ON_UNDEFINED_SYMBOLS=0')) {
         emccFlags.push('-sERROR_ON_UNDEFINED_SYMBOLS=0');
+    }
+
+    // Link inputs (flags, lib set, preloaded data) are invisible to a pure
+    // artifact-existence cache: a config emccFlags change used to keep
+    // serving the old wasm until a manual .cppjs clear. Fingerprint them next
+    // to the artifact and treat a mismatch as a cache miss.
+    const linkFingerprintFile = `${state.config.paths.build}/${target.jsName}.fingerprint`;
+    const linkFingerprint = getContentHash(JSON.stringify({
+        emccFlags,
+        libs,
+        data: getData('data', target),
+    }));
+    const linkChanged = !fs.existsSync(linkFingerprintFile)
+        || fs.readFileSync(linkFingerprintFile, { encoding: 'utf8' }) !== linkFingerprint;
+
+    if (!options.force && !linkChanged && fs.existsSync(`${state.config.paths.build}/${target.jsName}`) && fs.existsSync(`${state.config.paths.build}/${target.wasmName}`)) {
+        logger.cachedStep(target, 'wasm+js');
+        return;
     }
 
     if (target.runtimeEnv === 'browser') {
@@ -204,4 +218,6 @@ export default async function buildWasm(target, options = {}) {
     if (fs.existsSync(`${state.config.paths.build}/${target.dataName}`)) {
         fs.renameSync(`${state.config.paths.build}/${target.dataName}`, `${state.config.paths.build}/${target.dataTxtName}`);
     }
+
+    fs.writeFileSync(linkFingerprintFile, linkFingerprint);
 }
