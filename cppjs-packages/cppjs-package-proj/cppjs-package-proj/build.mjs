@@ -6,6 +6,12 @@ export default {
     buildType: 'cmake',
     getBuildParams: (target, depPaths) => [
         '-DENABLE_CURL=OFF', '-DBUILD_TESTING=OFF', '-DBUILD_APPS=OFF',
+        // PROJ defaults EMBED_RESOURCE_FILES=ON for static builds (ours, since
+        // BUILD_SHARED_LIBS=OFF), baking the ~10 MB proj.db into libproj.a and
+        // through --whole-archive into every consumer wasm - while the same
+        // proj.db already ships via the data preload. Keep the database out of
+        // the binary; runtimes point PROJ at the data path instead.
+        '-DEMBED_RESOURCE_FILES=OFF',
         ...ifDep(depPaths.sqlite3, (d) => [
             `-DSQLite3_INCLUDE_DIR=${d.header}`,
             `-DSQLite3_LIBRARY=${d.lib}`,
