@@ -110,7 +110,13 @@ Pick the matching gate based on what you touched:
 | `cppjs-core/cpp.js/` (CLI / build orchestration) | `pnpm run ci:linux:build && pnpm run e2e:dev && pnpm run e2e:prod` |
 | Any `cppjs-plugins/*` | `pnpm run ci:linux:build && pnpm run e2e:dev && pnpm run e2e:prod` |
 | A sample only | `pnpm --filter=@cpp.js/sample-<name> run build` + sample's own e2e |
+| A playground only | `pnpm --filter=@cpp.js/playground-<name> run build` + its `e2e:dev` / `e2e:prod` |
 | Docs / scripts / configs only | `pnpm run check` + targeted manual smoke |
+
+The aggregate `e2e:dev` / `e2e:prod` cover the playgrounds too (web, cloud and
+backend-node ones carry their own e2e scripts; `ci:linux:build` builds them).
+Playground dev configs allow minutes-long first runs: the dev server cold-compiles
+the DEBUG wasm on the first request.
 
 ### Clean (use sparingly)
 

@@ -112,6 +112,20 @@ state.cache = {
 
 `isSourceNewer` checks mtime against this cache to decide whether to rebuild a target.
 
+Alongside `cache.json`, the build writes fingerprint files next to its artifacts and
+treats a mismatch as a cache miss even when the artifact exists:
+
+- `…/prebuilt/<target>/cppjs-nativeglob.fingerprint` — the Bridge lib's bridge-file set
+  (names + contents), so a lib built from a smaller bridge set cannot satisfy later builds.
+- `…/prebuilt/<target>/cppjs-emccflags.fingerprint` — the config `emccFlags`, which also
+  feed compile-time state (`CPPJS_JSPI`).
+- `<jsName>.fingerprint` — the final link's inputs: resolved `emccFlags`, the lib list with
+  each archive's size+mtime, and the preloaded data map.
+
+Practical consequence: changing `emccFlags`, adding/removing a `.h` import, or rebuilding a
+dependency package re-links automatically — no manual `.cppjs` clear needed for those.
+A clear is still the answer when the toolchain itself changes (Docker image / emsdk).
+
 ### `state.system`
 
 Loaded from `~/.cppjs.json`, merged with defaults from `cppjs-core/cpp.js/src/utils/systemKeys.js`:

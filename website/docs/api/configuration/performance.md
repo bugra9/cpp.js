@@ -153,9 +153,9 @@ targetSpecs: [{
 
 Don't go below 12.0 — older iOS lacks the C++17 standard library features cpp.js auto-generated code uses.
 
-### `JSPI` (experimental, Chrome-only)
+### `JSPI` (experimental)
 
-Lets C++ code synchronously await JS promises. Use only when you have a specific cross-boundary async pattern (background fetching mid-C++):
+Lets C++ code synchronously await JS promises. Works in Node behind `--experimental-wasm-jspi` and in Chromium for st browser builds; Firefox/WebKit lack the API, and mt (pthreads) browser builds must NOT enable it — see the availability matrix in [C++ binding rules](/docs/api/cpp-bindings/overview). Use only when you have a specific cross-boundary async pattern (background fetching mid-C++):
 
 ```js
 targetSpecs: [{

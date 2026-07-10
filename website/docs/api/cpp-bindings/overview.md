@@ -84,9 +84,15 @@ The auto-generated bridge becomes:
 
 ```cpp
 .class_function("sample", &Native::sample)
+#ifdef CPPJS_JSPI
 .class_function("ops_JSPI", &Native::ops_JSPI, emscripten::async())
+#endif
+#ifdef CPPJS_JSPI
 .class_function("listVirtualFiles_JSPI", &Native::listVirtualFiles_JSPI, emscripten::async())
+#endif
 ```
+
+Every async registration is guarded behind `CPPJS_JSPI`, which cpp.js defines only for targets whose `emccFlags` include `-sJSPI`. One bridge file serves every target of a package, so on a target **without** the flag a `_JSPI` binding is simply absent on the JS side (the build logs `_JSPI bindings skipped`) instead of aborting DEBUG builds at embind registration time.
 
 On the JS side, call the function with the suffix preserved and `await` it:
 
@@ -97,7 +103,13 @@ const files = await Module.Native.listVirtualFiles_JSPI();
 
 If you forget the suffix, the binding stays synchronous; calls into JS promises from inside that C++ function will then crash with `Cannot suspend without JSPI` at runtime.
 
-This is **experimental and Chrome-only** at the time of writing. Use cases: callbacks into JS that fetch network data, awaiting JS promises mid-C++. Don't enable it unless you specifically need synchronous cross-boundary `await`. See [Performance defaults](/docs/api/configuration/performance) for override safety.
+Where JSPI actually works today:
+
+- **Node (st and mt)**: behind `node --experimental-wasm-jspi`; without the flag a JSPI-linked module aborts at boot.
+- **Browser, st runtime**: Chromium only — Firefox and WebKit ship no `WebAssembly.Suspending`, and a `-sJSPI` glue refuses to boot there even if nothing ever suspends.
+- **Browser, mt (pthreads) runtime**: do NOT combine with `-sJSPI` — the pthread mailbox enters wasm outside a promising export and Chromium throws `SuspendError` at boot.
+
+Use cases: callbacks into JS that fetch network data, awaiting JS promises mid-C++. Don't enable it unless you specifically need synchronous cross-boundary `await`. See [Performance defaults](/docs/api/configuration/performance) for override safety.
 
 ## Common mistakes
 

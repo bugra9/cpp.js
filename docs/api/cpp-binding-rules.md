@@ -149,7 +149,7 @@ App-side wrapper is the default; lib-side only when you're publishing a package.
 
 ## Advanced: JSPI flag (experimental)
 
-The Emscripten `-sJSPI` flag enables JavaScript Promise Integration — letting C++ code call into JS-promising code synchronously (the C++ stack suspends on `await`). Used in `cppjs-playground-web-vite` for async iteration over geospatial datasets.
+The Emscripten `-sJSPI` flag enables JavaScript Promise Integration — letting C++ code call into JS-promising code synchronously (the C++ stack suspends on `await`). The living demos are `cppjs-playground-backend-nodejs` and `cppjs-playground-backend-nodejs-multithread` (Node, run with `--experimental-wasm-jspi`), where a `_JSPI` method performs a curl request over the network.
 
 You'd opt in via `targetSpecs[].specs.emccFlags` in `cppjs.config.js`:
 
@@ -178,9 +178,15 @@ The auto-generated bridge becomes:
 
 ```cpp
 .class_function("sample", &Native::sample)
+#ifdef CPPJS_JSPI
 .class_function("ops_JSPI", &Native::ops_JSPI, emscripten::async())
+#endif
+#ifdef CPPJS_JSPI
 .class_function("listVirtualFiles_JSPI", &Native::listVirtualFiles_JSPI, emscripten::async())
+#endif
 ```
+
+Every async registration is guarded behind `CPPJS_JSPI`, which cpp.js defines only for targets whose `emccFlags` include `-sJSPI`. One bridge file serves every target of a package, so on a target **without** the flag a `_JSPI` binding is simply absent on the JS side — the build logs `_JSPI bindings skipped: this target links without -sJSPI` — instead of aborting emsdk DEBUG builds at embind registration time ("Async bindings are only supported with JSPI").
 
 On the JS side, call the function with the suffix preserved and `await` it:
 
@@ -191,7 +197,13 @@ const files = await m.Native.listVirtualFiles_JSPI();
 
 If you forget the suffix, the binding stays synchronous; calls into JS promises from inside that C++ function will then crash with `Cannot suspend without JSPI` at runtime.
 
-This is **experimental and Chrome-only** at the time of writing. Use cases: callbacks into JS that fetch network data, awaiting JS promises mid-C++. Don't enable it unless you specifically need synchronous cross-boundary `await`. See `performance.md` for override safety.
+Where JSPI actually works (verified against the playgrounds):
+
+- **Node (st and mt)**: works behind `node --experimental-wasm-jspi`; without the flag a JSPI-linked module aborts at boot ("JSPI not supported by current environment").
+- **Browser, st runtime**: Chromium only. Firefox and WebKit ship no `WebAssembly.Suspending`, and a glue linked with `-sJSPI` refuses to boot there even if nothing ever suspends.
+- **Browser, mt (pthreads) runtime**: do NOT combine with `-sJSPI`. The pthread mailbox enters wasm outside a promising export, so Chromium throws `SuspendError: trying to suspend without WebAssembly.promising` at boot. The mt web playgrounds deliberately carry no JSPI flag for this reason.
+
+Use cases: callbacks into JS that fetch network data, awaiting JS promises mid-C++. Don't enable it unless you specifically need synchronous cross-boundary `await`. See `performance.md` for override safety.
 
 ## Common mistakes (from the build-pipeline source code)
 

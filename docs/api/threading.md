@@ -82,6 +82,15 @@ console.log(typeof SharedArrayBuffer)  // must be 'function'
 - Switch to `Cross-Origin-Embedder-Policy: credentialless` (more permissive, supported in Chrome 96+, Firefox 110+).
 - Or proxy third-party assets through your own origin.
 
+### Known limitation: Playwright's WebKit never boots mt modules
+
+In Playwright's bundled WebKit an mt module hangs silently at init: `crossOriginIsolated`
+is `true`, `SharedArrayBuffer` exists, yet the `initCppJs` promise never settles and no
+console or page error is emitted (verified 2026-07-10 against the multithread
+playground). Chromium and Firefox boot the same build fine. The mt playground e2e specs
+carry a documented `test.skip(browserName === 'webkit', ...)` for this; treat real
+Safari separately — this observation is specifically about Playwright's WebKit build.
+
 ## `useWorker: true` (independent of threading)
 
 Wasm runs in a single dedicated Web Worker; main thread receives a Comlink-bridged proxy.
