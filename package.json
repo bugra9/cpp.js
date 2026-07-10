@@ -3,7 +3,7 @@
     "scripts": {
         "build:packages": "pnpm --filter='@cpp.js/package-*' run build",
         "build:samples": "pnpm --filter='@cpp.js/sample-*' run build",
-        "build:playgrounds": "pnpm --filter='@cpp.js/playground-web-*' --filter='@cpp.js/playground-cloud-*' run build",
+        "build:playgrounds": "pnpm --filter='@cpp.js/playground-web-*' --filter='@cpp.js/playground-cloud-*' --filter='@cpp.js/playground-backend-*' run build",
         "build:samples:lib": "pnpm --filter='@cpp.js/sample-lib-*' run build",
         "build:samples:lib:wasm": "pnpm --filter='@cpp.js/sample-lib-*' run build:wasm",
         "build:samples:lib:android": "pnpm --filter='@cpp.js/sample-lib-*' run build:android",
