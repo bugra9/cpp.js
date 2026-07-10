@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved, no-undef */
 import Module from 'cpp.js/module';
 import systemConfig from 'cpp.js/systemConfig';
 

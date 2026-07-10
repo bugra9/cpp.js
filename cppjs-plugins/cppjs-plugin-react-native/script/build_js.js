@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved */
 
 /* eslint-disable no-empty */
 import { state } from 'cpp.js';

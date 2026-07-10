@@ -1,7 +1,6 @@
 export default {
     extendModule(m) {
         m.getPreloadedPackage = function getPreloadedPackage(packageName) {
-            // eslint-disable-next-line global-require
             return require('fs').readFileSync(`./${packageName}`, { flag: 'r' }).buffer;
         };
 

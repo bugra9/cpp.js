@@ -1,4 +1,4 @@
-/* eslint-disable no-restricted-syntax, no-await-in-loop, no-constant-condition */
+/* global WorkerGlobalScope */
 import * as Comlink from 'comlink';
 
 const STATIC_PATHS = {

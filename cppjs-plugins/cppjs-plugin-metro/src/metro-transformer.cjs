@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved */
  
 const upstreamTransformer = (() => {
     try {
@@ -29,7 +28,7 @@ module.exports.transform = async ({ src, filename, ...rest }) => {
     const moduleRegex = new RegExp(`\\.(${state.config.ext.module.join('|')})$`);
 
     if (headerRegex.test(filename) || moduleRegex.test(filename)) {
-        let target = null;
+        let target;
         if (rest.options.platform === 'ios') target = state.targets.find((t) => t.platform === 'ios');
         else if (rest.options.platform === 'android') target = state.targets.find((t) => t.platform === 'android');
         else target = state.targets.find((t) => t.platform === 'wasm');

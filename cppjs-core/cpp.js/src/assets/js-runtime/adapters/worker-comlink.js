@@ -1,3 +1,4 @@
+/* global WorkerGlobalScope */
 import * as Comlink from 'comlink';
 import { mergeDeep } from '../core.js';
 import {
@@ -194,7 +195,6 @@ async function initWithWorker(config, userConfig) {
     const workerApi = Comlink.wrap(_worker);
 
     const {
-        // eslint-disable-next-line no-unused-vars
         logHandler, errorHandler, onRuntimeInitialized, getWasmFunction, useWorker, workerUrl,
         ...serializableConfig
     } = userConfig;

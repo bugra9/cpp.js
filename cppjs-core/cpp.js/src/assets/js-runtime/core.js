@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax, guard-for-in */
 import { setCoercionModule, wrapModuleForCoercion } from './adapters/vector-coercion.js';
 
 export function isObject(item) {
