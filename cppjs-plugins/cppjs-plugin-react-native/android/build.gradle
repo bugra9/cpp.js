@@ -35,10 +35,17 @@ def cppjsAssets = tasks.register('cppjsAssets', Exec) {
     commandLine 'node', new File(__cppjsScriptDir, 'build_android_assets.js').absolutePath, cppjsAbis[0], 'Release'
 }
 
-tasks.named('preBuild').configure { dependsOn(cppjsBridges, cppjsDeps, cppjsAssets) }
+// The library's own TurboModule codegen output (generated/source/codegen/jni) must
+// exist before the native build configures: on a fresh checkout the react plugin does
+// not order it ahead of CMake, and expo run:android failed with a missing jni dir
+// until generateCodegenArtifactsFromSchema was run by hand. Match by name, lazily -
+// the task is registered later by the react plugin.
+def cppjsCodegen = tasks.matching { it.name == 'generateCodegenArtifactsFromSchema' }
+
+tasks.named('preBuild').configure { dependsOn(cppjsBridges, cppjsDeps, cppjsAssets, cppjsCodegen) }
 // CMake configure can also be triggered without preBuild (IDE sync, direct invocation).
 tasks.matching { it.name.startsWith('configureCMake') }.configureEach {
-    dependsOn(cppjsBridges, cppjsDeps)
+    dependsOn(cppjsBridges, cppjsDeps, cppjsCodegen)
 }
 
 android {
