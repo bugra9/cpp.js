@@ -23,7 +23,10 @@ Are you on the browser?
     │   │
     │   └── Yes → REQUIRES useWorker: true  → mount under /opfs/<app>/
     │             ├── Browser supports OPFS? (Chrome 86+, FF 111+, Safari 15.2+)
-    │             │   ├── Yes → real persistence
+    │             │   ├── Yes → runtime preflight: getDirectory() actually works?
+    │             │   │   ├── Yes → real persistence
+    │             │   │   └── No  → logs error + falls back to /memfs/<app>/
+    │             │   │            (broken/blocked backends, e.g. Playwright WebKit)
     │             │   └── No  → cpp.js logs error + redirects to /memfs/<app>/
     │             │
     │             └── Mounted from main thread (no useWorker)?

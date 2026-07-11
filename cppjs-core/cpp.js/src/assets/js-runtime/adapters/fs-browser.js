@@ -14,6 +14,11 @@ const isBrowserSupportOPFS = typeof navigator !== 'undefined'
     && navigator.storage
     && navigator.storage.getDirectory;
 
+// Presence of the API does not guarantee a working backend: Playwright's WebKit
+// rejects getDirectory() with UnknownError, and storage-restricted contexts
+// reject too. false only after the onModuleReady preflight actually failed.
+let isOpfsFunctional = true;
+
 export default {
     extendModule(m, config) {
         // Hand the pthread spawn script to the glue via a cppjs-specific key. Using emscripten's
@@ -25,7 +30,7 @@ export default {
             m.cppjsMainScript = m.locateFile(pthreadScript);
         }
 
-        m.getDefaultPath = () => STATIC_PATHS[config.fs?.opfs !== false ? 'opfs' : 'memfs'];
+        m.getDefaultPath = () => STATIC_PATHS[(config.fs?.opfs !== false && isOpfsFunctional) ? 'opfs' : 'memfs'];
 
         m.getFinalPath = function getFinalPath(path) {
             let returnPath = path;
@@ -50,8 +55,8 @@ export default {
             if (backend === 'opfs' && !isWorkerScope) {
                 throw new Error(`Path ${path} starts with ${STATIC_PATHS.opfs} but OPFS is only available inside a Worker scope. Enable useWorker or mount under ${STATIC_PATHS.memfs}/ instead. Falling back to ${STATIC_PATHS.memfs}/.`);
             }
-            if (backend === 'opfs' && !isBrowserSupportOPFS) {
-                console.error(`Path ${path} starts with ${STATIC_PATHS.opfs} but OPFS is not supported in this browser. Falling back to ${STATIC_PATHS.memfs}/.`);
+            if (backend === 'opfs' && (!isBrowserSupportOPFS || !isOpfsFunctional)) {
+                console.error(`Path ${path} starts with ${STATIC_PATHS.opfs} but OPFS is not usable in this browser. Falling back to ${STATIC_PATHS.memfs}/.`);
                 returnPath = returnPath.replace(STATIC_PATHS.opfs, STATIC_PATHS.memfs);
             }
 
@@ -130,7 +135,7 @@ export default {
         };
     },
 
-    onModuleReady(m, config) {
+    async onModuleReady(m, config) {
         const appName = config.general?.name;
         try {
             m.FS.mkdirTree(`${STATIC_PATHS.memfs}/${appName}/automounted`);
@@ -138,15 +143,28 @@ export default {
             console.error(e);
         }
 
-        if (isWorkerScope && isBrowserSupportOPFS && config.fs?.opfs !== false && typeof m.cppjs_init_opfs === 'function') {
-            m.cppjs_init_opfs();
-            if (appName) {
-                const appDir = `${STATIC_PATHS.opfs}/${appName}/automounted`;
-                try {
-                    m.FS.mkdirTree(appDir);
-                } catch (e) {
-                    console.error(e);
-                }
+        if (!(isWorkerScope && isBrowserSupportOPFS && config.fs?.opfs !== false && typeof m.cppjs_init_opfs === 'function')) {
+            return;
+        }
+
+        // cppjs_init_opfs() blocks until the OPFS root opens; if the backend is
+        // broken, that rejection is swallowed inside the WASMFS proxy pthread and
+        // init deadlocks with no signal. Probe the root here first instead.
+        try {
+            await navigator.storage.getDirectory();
+        } catch (error) {
+            isOpfsFunctional = false;
+            console.error(`OPFS is present but not functional in this environment (${error}). Falling back to ${STATIC_PATHS.memfs}/.`);
+            return;
+        }
+
+        m.cppjs_init_opfs();
+        if (appName) {
+            const appDir = `${STATIC_PATHS.opfs}/${appName}/automounted`;
+            try {
+                m.FS.mkdirTree(appDir);
+            } catch (e) {
+                console.error(e);
             }
         }
     },

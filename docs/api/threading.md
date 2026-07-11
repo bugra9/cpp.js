@@ -82,14 +82,19 @@ console.log(typeof SharedArrayBuffer)  // must be 'function'
 - Switch to `Cross-Origin-Embedder-Policy: credentialless` (more permissive, supported in Chrome 96+, Firefox 110+).
 - Or proxy third-party assets through your own origin.
 
-### Known limitation: Playwright's WebKit never boots mt modules
+### Known environment quirk: Playwright's WebKit ships a broken OPFS backend
 
-In Playwright's bundled WebKit an mt module hangs silently at init: `crossOriginIsolated`
-is `true`, `SharedArrayBuffer` exists, yet the `initCppJs` promise never settles and no
-console or page error is emitted (verified 2026-07-10 against the multithread
-playground). Chromium and Firefox boot the same build fine. The mt playground e2e specs
-carry a documented `test.skip(browserName === 'webkit', ...)` for this; treat real
-Safari separately — this observation is specifically about Playwright's WebKit build.
+In Playwright's bundled WebKit, `navigator.storage.getDirectory()` exists but always
+rejects with `UnknownError: The operation failed for an unknown transient reason`.
+Threads themselves are fine there — pthreads, SharedArrayBuffer, wasm exceptions and
+SIMD all work (verified 2026-07-12 with per-worker instrumentation; real Safari 26.5
+works fully, OPFS included). Before the runtime preflight existed this broke mt boots:
+the WASMFS OPFS proxy thread swallowed the rejection and `initCppJs` deadlocked with no
+console or page error. The runtime now probes `getDirectory()` before mounting and
+falls back to `/memfs` with a logged error, so mt modules boot on all three Playwright
+engines and the mt playground e2e specs run WebKit again. If you ever see an mt init
+hang with zero signals, suspect a blocked storage backend first — presence of the OPFS
+API does not mean it works.
 
 ## `useWorker: true` (independent of threading)
 

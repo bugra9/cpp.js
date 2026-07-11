@@ -38,7 +38,11 @@ export function composeAdapters(adapters) {
         composed.extendModule = (m, config) => extendFns.forEach((fn) => fn(m, config));
     }
     if (readyFns.length) {
-        composed.onModuleReady = (m, config) => readyFns.forEach((fn) => fn(m, config));
+        composed.onModuleReady = async (m, config) => {
+            for (const fn of readyFns) {
+                await fn(m, config);
+            }
+        };
     }
     return composed;
 }
@@ -98,10 +102,6 @@ export function createBaseModule(Module, config, adapter) {
                     }
                 },
             ],
-            onRuntimeInitialized() {
-                if (adapter.onModuleReady) adapter.onModuleReady(m, config);
-                if (config.onRuntimeInitialized) config.onRuntimeInitialized(m);
-            },
             unmount() {},
             toArray(vector) {
                 if (Array.isArray(vector)) return vector;
@@ -132,7 +132,14 @@ export function createBaseModule(Module, config, adapter) {
             };
         }
 
-        Module(m).then(resolve).catch(reject);
+        // onModuleReady may need to await async setup (e.g. the OPFS preflight in
+        // fs-browser), which emscripten's onRuntimeInitialized callback cannot, so
+        // both hooks run after the factory settles - adapter first, then the user's.
+        Module(m).then(async (mod) => {
+            if (adapter.onModuleReady) await adapter.onModuleReady(mod, config);
+            if (config.onRuntimeInitialized) config.onRuntimeInitialized(mod);
+            return mod;
+        }).then(resolve).catch(reject);
     });
 }
 
