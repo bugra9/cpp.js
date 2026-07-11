@@ -7,7 +7,7 @@ import buildJs from './buildJs.js';
 import triggerExtensions from './extensions.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
-import { getContentHash } from '../utils/hash.js';
+import { getContentHash, getFilesFingerprint } from '../utils/hash.js';
 
 export default async function buildWasm(target, options = {}) {
     const isProd = target.buildType === 'release';
@@ -17,7 +17,7 @@ export default async function buildWasm(target, options = {}) {
     // package is consumed only as a static library by downstream builds).
     if (state.config.export.bundle === false) {
         logger.info(`[${target.path}] wasm+js skipped (export.bundle = false)`);
-        return;
+        return false;
     }
 
     // buildLib's cache is keyed on paths.output/prebuilt; after a cache clean the
@@ -62,6 +62,18 @@ export default async function buildWasm(target, options = {}) {
     // size+mtime, so a rebuilt dependency archive (same path, new content)
     // forces the relink too.
     const linkFingerprintFile = `${state.config.paths.build}/${target.jsName}.fingerprint`;
+    // The artifact also bundles the JS runtime (buildJs) and links the C runtime
+    // entries from cpp-runtime/ - inputs a flag/lib fingerprint cannot see, so a
+    // runtime edit used to keep serving the previously linked output.
+    const runtimeAssetDirs = [
+        `${state.config.paths.cli}/assets/js-runtime`,
+        `${state.config.paths.cli}/assets/cpp-runtime`,
+    ];
+    const runtimeAssets = runtimeAssetDirs.flatMap((dir) => (fs.existsSync(dir)
+        ? fs.readdirSync(dir, { recursive: true })
+            .map((file) => `${dir}/${file}`)
+            .filter((file) => fs.statSync(file).isFile())
+        : []));
     const linkFingerprint = getContentHash(JSON.stringify({
         emccFlags,
         libs: libs.map((lib) => {
@@ -69,13 +81,14 @@ export default async function buildWasm(target, options = {}) {
             return { lib, size: stat ? stat.size : null, mtimeMs: stat ? stat.mtimeMs : null };
         }),
         data: getData('data', target),
+        runtime: getFilesFingerprint(runtimeAssets),
     }));
     const linkChanged = !fs.existsSync(linkFingerprintFile)
         || fs.readFileSync(linkFingerprintFile, { encoding: 'utf8' }) !== linkFingerprint;
 
     if (!options.force && !linkChanged && fs.existsSync(`${state.config.paths.build}/${target.jsName}`) && fs.existsSync(`${state.config.paths.build}/${target.wasmName}`)) {
         logger.cachedStep(target, 'wasm+js');
-        return;
+        return false;
     }
 
     if (target.runtimeEnv === 'browser') {
@@ -225,4 +238,5 @@ export default async function buildWasm(target, options = {}) {
     }
 
     fs.writeFileSync(linkFingerprintFile, linkFingerprint);
+    return true;
 }

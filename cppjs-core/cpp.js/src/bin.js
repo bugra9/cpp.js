@@ -313,12 +313,18 @@ async function createWasmJs(targetParams) {
     };
 
     for (const target of targets) {
-        if (fs.existsSync(`${state.config.paths.output}/${target.jsName}`) && fs.existsSync(`${state.config.paths.output}/${target.wasmName}`)) {
-            logger.cachedStep(target, 'wasm+js');
+        // An artifact merely existing in dist used to short-circuit this whole
+        // step, which kept serving stale output after flag/runtime changes.
+        // Let the link fingerprint inside buildWasm decide instead; force the
+        // relink when dist is incomplete, because a fingerprint hit skips the
+        // link and the copy step below moved build/data away on the last run.
+        const distComplete = fs.existsSync(`${state.config.paths.output}/${target.jsName}`)
+            && fs.existsSync(`${state.config.paths.output}/${target.wasmName}`);
+        createLib(target, 'Bridge', opt);
+        const built = await buildWasm(target, { force: !distComplete });
+        if (!built) {
             continue;
         }
-        createLib(target, 'Bridge', opt);
-        await buildWasm(target);
 
         fs.rmSync(`${state.config.paths.output}/data`, { recursive: true, force: true });
         if (fs.existsSync(`${state.config.paths.build}/data`)) {
