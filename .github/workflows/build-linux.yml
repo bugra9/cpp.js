@@ -42,4 +42,7 @@ jobs:
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
       - name: Run Playwright tests
-        run: pnpm run e2e:prod
+        # Playgrounds are excluded: they exercise the CURRENT workspace state of
+        # every prebuilt package, and those prebuilt trees only exist on dev
+        # machines. Playgrounds are validated locally (see AGENTS.md).
+        run: pnpm run ci:linux:e2e

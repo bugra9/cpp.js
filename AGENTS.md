@@ -114,9 +114,13 @@ Pick the matching gate based on what you touched:
 | Docs / scripts / configs only | `pnpm run check` + targeted manual smoke |
 
 The aggregate `e2e:dev` / `e2e:prod` cover the playgrounds too (web, cloud and
-backend-node ones carry their own e2e scripts; `ci:linux:build` builds them).
-Playground dev configs allow minutes-long first runs: the dev server cold-compiles
-the DEBUG wasm on the first request.
+backend-node ones carry their own e2e scripts; `pnpm run build:playgrounds`
+builds them). Playgrounds validate LOCALLY only: they link every prebuilt
+package at its current workspace state via `workspace:^`, and those prebuilt
+trees do not exist on a fresh CI checkout — which is why `ci:linux:build` and
+the CI e2e (`ci:linux:e2e`) exclude them. Playground dev configs allow
+minutes-long first runs: the dev server cold-compiles the DEBUG wasm on the
+first request.
 
 ### Clean (use sparingly)
 
