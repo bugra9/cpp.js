@@ -1912,7 +1912,10 @@ Are you on the browser?
     │   │
     │   └── Yes → REQUIRES useWorker: true  → mount under /opfs/<app>/
     │             ├── Browser supports OPFS? (Chrome 86+, FF 111+, Safari 15.2+)
-    │             │   ├── Yes → real persistence
+    │             │   ├── Yes → runtime preflight: getDirectory() actually works?
+    │             │   │   ├── Yes → real persistence
+    │             │   │   └── No  → logs error + falls back to /memfs/<app>/
+    │             │   │            (broken/blocked backends, e.g. Playwright WebKit)
     │             │   └── No  → cpp.js logs error + redirects to /memfs/<app>/
     │             │
     │             └── Mounted from main thread (no useWorker)?
@@ -2103,6 +2106,20 @@ console.log(typeof SharedArrayBuffer)  // must be 'function'
 
 - Switch to `Cross-Origin-Embedder-Policy: credentialless` (more permissive, supported in Chrome 96+, Firefox 110+).
 - Or proxy third-party assets through your own origin.
+
+### Known environment quirk: Playwright's WebKit ships a broken OPFS backend
+
+In Playwright's bundled WebKit, `navigator.storage.getDirectory()` exists but always
+rejects with `UnknownError: The operation failed for an unknown transient reason`.
+Threads themselves are fine there — pthreads, SharedArrayBuffer, wasm exceptions and
+SIMD all work (verified 2026-07-12 with per-worker instrumentation; real Safari 26.5
+works fully, OPFS included). Before the runtime preflight existed this broke mt boots:
+the WASMFS OPFS proxy thread swallowed the rejection and `initCppJs` deadlocked with no
+console or page error. The runtime now probes `getDirectory()` before mounting and
+falls back to `/memfs` with a logged error, so mt modules boot on all three Playwright
+engines and the mt playground e2e specs run WebKit again. If you ever see an mt init
+hang with zero signals, suspect a blocked storage backend first — presence of the OPFS
+API does not mean it works.
 
 ## `useWorker: true` (independent of threading)
 
@@ -2322,7 +2339,7 @@ App-side wrapper is the default; lib-side only when you're publishing a package.
 
 ## Advanced: JSPI flag (experimental)
 
-The Emscripten `-sJSPI` flag enables JavaScript Promise Integration — letting C++ code call into JS-promising code synchronously (the C++ stack suspends on `await`). Used in `cppjs-playground-web-vite` for async iteration over geospatial datasets.
+The Emscripten `-sJSPI` flag enables JavaScript Promise Integration — letting C++ code call into JS-promising code synchronously (the C++ stack suspends on `await`). The living demos are `cppjs-playground-backend-nodejs` and `cppjs-playground-backend-nodejs-multithread` (Node, run with `--experimental-wasm-jspi`), where a `_JSPI` method performs a curl request over the network.
 
 You'd opt in via `targetSpecs[].specs.emccFlags` in `cppjs.config.js`:
 
@@ -2351,9 +2368,15 @@ The auto-generated bridge becomes:
 
 ```cpp
 .class_function("sample", &Native::sample)
+#ifdef CPPJS_JSPI
 .class_function("ops_JSPI", &Native::ops_JSPI, emscripten::async())
+#endif
+#ifdef CPPJS_JSPI
 .class_function("listVirtualFiles_JSPI", &Native::listVirtualFiles_JSPI, emscripten::async())
+#endif
 ```
+
+Every async registration is guarded behind `CPPJS_JSPI`, which cpp.js defines only for targets whose `emccFlags` include `-sJSPI`. One bridge file serves every target of a package, so on a target **without** the flag a `_JSPI` binding is simply absent on the JS side — the build logs `_JSPI bindings skipped: this target links without -sJSPI` — instead of aborting emsdk DEBUG builds at embind registration time ("Async bindings are only supported with JSPI").
 
 On the JS side, call the function with the suffix preserved and `await` it:
 
@@ -2364,7 +2387,13 @@ const files = await m.Native.listVirtualFiles_JSPI();
 
 If you forget the suffix, the binding stays synchronous; calls into JS promises from inside that C++ function will then crash with `Cannot suspend without JSPI` at runtime.
 
-This is **experimental and Chrome-only** at the time of writing. Use cases: callbacks into JS that fetch network data, awaiting JS promises mid-C++. Don't enable it unless you specifically need synchronous cross-boundary `await`. See `performance.md` for override safety.
+Where JSPI actually works (verified against the playgrounds):
+
+- **Node (st and mt)**: works behind `node --experimental-wasm-jspi`; without the flag a JSPI-linked module aborts at boot ("JSPI not supported by current environment").
+- **Browser, st runtime**: Chromium only. Firefox and WebKit ship no `WebAssembly.Suspending`, and a glue linked with `-sJSPI` refuses to boot there even if nothing ever suspends.
+- **Browser, mt (pthreads) runtime**: do NOT combine with `-sJSPI`. The pthread mailbox enters wasm outside a promising export, so Chromium throws `SuspendError: trying to suspend without WebAssembly.promising` at boot. The mt web playgrounds deliberately carry no JSPI flag for this reason.
+
+Use cases: callbacks into JS that fetch network data, awaiting JS promises mid-C++. Don't enable it unless you specifically need synchronous cross-boundary `await`. See `performance.md` for override safety.
 
 ## Common mistakes (from the build-pipeline source code)
 
@@ -2612,6 +2641,24 @@ state.cache = {
 ```
 
 `isSourceNewer` checks mtime against this cache to decide whether to rebuild a target.
+
+Alongside `cache.json`, the build writes fingerprint files next to its artifacts and
+treats a mismatch as a cache miss even when the artifact exists:
+
+- `…/prebuilt/<target>/cppjs-nativeglob.fingerprint` — the Bridge lib's bridge-file set
+  (names + contents), so a lib built from a smaller bridge set cannot satisfy later builds.
+- `…/prebuilt/<target>/cppjs-emccflags.fingerprint` — the config `emccFlags`, which also
+  feed compile-time state (`CPPJS_JSPI`).
+- `<jsName>.fingerprint` — the final link's inputs: resolved `emccFlags`, the lib list with
+  each archive's size+mtime, the preloaded data map, and the runtime assets bundled into
+  the artifact (`assets/js-runtime` + `assets/cpp-runtime`, content-hashed).
+
+Practical consequence: changing `emccFlags`, adding/removing a `.h` import, rebuilding a
+dependency package, or editing the cpp.js runtime itself re-links automatically — no manual
+`.cppjs` clear needed for those. The CLI's `cppjs build` also no longer short-circuits on a
+merely existing dist artifact; the link fingerprint decides there too (a wiped dist forces
+a fresh link). A clear is still the answer when the toolchain itself changes (Docker
+image / emsdk).
 
 ### `state.system`
 
@@ -6239,6 +6286,8 @@ Playbooks added in Sprint 9:
 
 - [`playbooks/code-review.md`](./playbooks/code-review.md) — review checklist for package + fix/feature PRs.
 - [`playbooks/verify-install.md`](./playbooks/verify-install.md) — verify your plugin / MCP / AGENTS.md install actually works.
+- [`playbooks/override-dependencies.md`](./playbooks/override-dependencies.md) — rebuild/override dependencies from source via `cppjs.overrides.js` (all platforms), marker/stamp mechanics, `cppjs clean-deps`.
+- [`playbooks/licensing-lgpl.md`](./playbooks/licensing-lgpl.md) — shipping closed-source apps with LGPL native deps; `cppjs licenses` (SPDX table, `--notices`, `--check`).
 
 ## "Why was X decided this way?" → architecture decisions
 
@@ -6555,7 +6604,13 @@ Pick the matching gate based on what you touched:
 | `cppjs-core/cpp.js/` (CLI / build orchestration) | `pnpm run ci:linux:build && pnpm run e2e:dev && pnpm run e2e:prod` |
 | Any `cppjs-plugins/*` | `pnpm run ci:linux:build && pnpm run e2e:dev && pnpm run e2e:prod` |
 | A sample only | `pnpm --filter=@cpp.js/sample-<name> run build` + sample's own e2e |
+| A playground only | `pnpm --filter=@cpp.js/playground-<name> run build` + its `e2e:dev` / `e2e:prod` |
 | Docs / scripts / configs only | `pnpm run check` + targeted manual smoke |
+
+The aggregate `e2e:dev` / `e2e:prod` cover the playgrounds too (web, cloud and
+backend-node ones carry their own e2e scripts; `ci:linux:build` builds them).
+Playground dev configs allow minutes-long first runs: the dev server cold-compiles
+the DEBUG wasm on the first request.
 
 ### Clean (use sparingly)
 
@@ -6635,7 +6690,7 @@ These are concrete patterns we've burned on. Each one cost real time to diagnose
 - `scripts/check-native-versions.js` — outdated native libs
 - `scripts/check-external-dependencies.js` — outdated npm deps
 - `scripts/check-beta-status.js` — npm beta tag inventory
-- `scripts/detect-framework.js` *(coming in Sprint 2)* — identify the user's project framework
-- `scripts/doctor.sh` *(coming in Sprint 4)* — toolchain readiness check
+- `scripts/detect-framework.js` — identify the user's project framework
+- `scripts/doctor.sh` — toolchain readiness check
 
 ---
