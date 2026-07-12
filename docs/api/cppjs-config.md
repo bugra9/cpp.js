@@ -79,6 +79,14 @@ export default {
     libPath: 'lib',              // .a output dir
     libName: ['<general.name>'], // .a basenames; one per item
     binHeaders: [],              // headers to ship as raw binary blobs
+
+    wholeArchive: false,
+      // By default only the generated Bridge archive is linked with
+      // --whole-archive; every other archive is dead-code-eliminated down to
+      // what the bridge actually reaches. Set true on an APP to restore the
+      // legacy layout (every archive linked wholesale), or on a PACKAGE's own
+      // config when its members self-register from static initializers and
+      // must never be stripped.
   },
 
   // ─────────────────────────────────────────────────────────────

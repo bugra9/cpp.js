@@ -8,6 +8,7 @@ import triggerExtensions from './extensions.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
 import { getContentHash, getFilesFingerprint } from '../utils/hash.js';
+import { buildLinkLibArgs } from '../utils/linkLayout.js';
 
 export default async function buildWasm(target, options = {}) {
     const isProd = target.buildType === 'release';
@@ -31,6 +32,21 @@ export default async function buildWasm(target, options = {}) {
         sourceLibCandidates.find((lib) => fs.existsSync(lib)) ?? sourceLibCandidates[0],
         `${state.config.paths.build}/Bridge-${buildType}/${target.path}/lib${state.config.general.name}.a`,
     ];
+
+    // By default only the Bridge archive is --whole-archive'd (see
+    // linkLayout.js) so wasm-ld dead-code-eliminates everything unreferenced.
+    // Two escape hatches, both `export.wholeArchive: true`: on the APP it
+    // restores the legacy layout (every archive wholesale); on a LIBRARY's
+    // own config it keeps that library's archives whole in every consumer
+    // link (for members that self-register from static initializers).
+    const wholeArchiveAll = state.config.export.wholeArchive === true;
+    const wholeArchiveNames = new Set();
+    state.config.dependencyParameters.getCmakeDepends(target).forEach((dep) => {
+        if (dep.export.wholeArchive === true) {
+            (dep.export.libName || []).forEach((name) => wholeArchiveNames.add(name));
+        }
+    });
+    const linkLibs = buildLinkLibArgs(libs, { wholeArchiveAll, wholeArchiveNames });
 
     const binary = getData('binary', target);
     const emccFlags = binary?.emccFlags || [];
@@ -75,6 +91,13 @@ export default async function buildWasm(target, options = {}) {
             .filter((file) => fs.statSync(file).isFile())
         : []));
     const linkFingerprint = getContentHash(JSON.stringify({
+        // Bump when the link-arg layout itself changes (e.g. the move to
+        // bridge-only --whole-archive), so cached artifacts from the old
+        // layout cannot satisfy the new one. The effective whole-archive
+        // set is part of the layout: flipping a config flag must relink.
+        linkLayout: 'v2-bridge-only-whole-archive',
+        wholeArchiveAll,
+        wholeArchiveNames: [...wholeArchiveNames].sort(),
         emccFlags,
         libs: libs.map((lib) => {
             const stat = fs.existsSync(lib) ? fs.statSync(lib) : null;
@@ -99,12 +122,12 @@ export default async function buildWasm(target, options = {}) {
 
         const data = Object.entries(getData('data', target)).map(([key, value]) => ['--preload-file', `${key.replaceAll('@', '@@')}@/cppjs/${value}`]).flat();
         run('emcc', [
-            '-lembind', '-Wl,--whole-archive',
+            '-lembind',
             ...emccFlags,
             // '-lwebsocket.js', '-sPROXY_POSIX_SOCKETS', '-sWEBSOCKET_DEBUG=1', '-sJSPI', '-g', '-sWASMFS',
             '-sWASM_BIGINT=1', '-s', 'FORCE_FILESYSTEM=1',
             '-sEXPORT_NAME=Module2', // '-pthread', '-sPTHREAD_POOL_SIZE=5',
-            ...libs, `${state.config.paths.cli}/assets/cpp-runtime/browser.cpp`,
+            ...linkLibs, `${state.config.paths.cli}/assets/cpp-runtime/browser.cpp`,
             ...(isProd ? ['-O3'] : []),
             '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
             '-s', 'RESERVED_FUNCTION_POINTERS=200', // '-s', 'FORCE_FILESYSTEM=1',
@@ -165,11 +188,11 @@ export default async function buildWasm(target, options = {}) {
 
         const data = Object.entries(getData('data', target)).map(([key, value]) => ['--preload-file', `${key.replaceAll('@', '@@')}@/cppjs/${value}`]).flat();
         run('emcc', [
-            '-lembind', '-Wl,--whole-archive',
+            '-lembind',
             ...emccFlags,
             '-sWASM_BIGINT=1',
             '-sEXPORT_NAME=Module2',
-            ...libs,
+            ...linkLibs,
             ...(isProd ? ['-O3'] : []),
             '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
             '-s', 'RESERVED_FUNCTION_POINTERS=200', // '-s', 'FORCE_FILESYSTEM=1',
@@ -195,11 +218,11 @@ export default async function buildWasm(target, options = {}) {
         triggerExtensions('buildWasm', 'beforeBuildNodeJS', [emccFlags]);
 
         run('emcc', [
-            '-lembind', '-Wl,--whole-archive',
+            '-lembind',
             ...emccFlags,
             // '-s', 'FETCH', '-sJSPI', '-sWASM_BIGINT=1', '-pthread', '-sPTHREAD_POOL_SIZE=5',
             '-sWASM_BIGINT=1', '-s', 'FORCE_FILESYSTEM=1',
-            ...libs, `${state.config.paths.cli}/assets/cpp-runtime/node.cpp`,
+            ...linkLibs, `${state.config.paths.cli}/assets/cpp-runtime/node.cpp`,
             ...(isProd ? ['-O3'] : []),
             '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
             '-s', 'RESERVED_FUNCTION_POINTERS=200', // '-s', 'DISABLE_EXCEPTION_CATCHING=0', '-s', 'FORCE_FILESYSTEM=1',

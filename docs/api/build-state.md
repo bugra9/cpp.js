@@ -120,8 +120,10 @@ treats a mismatch as a cache miss even when the artifact exists:
 - `…/prebuilt/<target>/cppjs-emccflags.fingerprint` — the config `emccFlags`, which also
   feed compile-time state (`CPPJS_JSPI`).
 - `<jsName>.fingerprint` — the final link's inputs: resolved `emccFlags`, the lib list with
-  each archive's size+mtime, the preloaded data map, and the runtime assets bundled into
-  the artifact (`assets/js-runtime` + `assets/cpp-runtime`, content-hashed).
+  each archive's size+mtime, the preloaded data map, the runtime assets bundled into
+  the artifact (`assets/js-runtime` + `assets/cpp-runtime`, content-hashed), and the
+  link layout (which archives are `--whole-archive`d — flipping `export.wholeArchive`
+  relinks automatically).
 
 Practical consequence: changing `emccFlags`, adding/removing a `.h` import, rebuilding a
 dependency package, or editing the cpp.js runtime itself re-links automatically — no manual

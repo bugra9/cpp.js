@@ -17,7 +17,7 @@ The rule: **if your build runs and your app works, the defaults are fine**. Only
 | `-pthread` + `-sPTHREAD_POOL_SIZE=Math.min(navigator.hardwareConcurrency \|\| 1, 2)` | mt only | Thread pool capped at 2 workers (1 if `hardwareConcurrency` is unavailable) | ✅ `PTHREAD_POOL_SIZE` is tunable (see below) |
 | `-sPTHREAD_POOL_SIZE_STRICT=2` | mt only | Abort if more pthreads requested than pool (no dynamic growth) | ⚠️ Drop to `1` (warn + grow) or `0` (silent grow) only if your code spawns unbounded threads |
 | `-lembind` | always | Embind binding lib | 🔒 Required |
-| `-Wl,--whole-archive` | always | Link all objects | 🔒 Required for static lib symbol retention |
+| `-Wl,--whole-archive` | Bridge archive only | Keep embind registrations (static initializers) alive | ✅ `export.wholeArchive: true` on the app restores the legacy all-archives layout; a library can declare the same in its own config |
 | `-fwasm-exceptions` | always | C++ exceptions via Wasm EH | 🔒 Required for proper `throw` semantics |
 | `-sWASM_BIGINT=1` | always | BigInt for i64 | 🔒 Required for modern browsers |
 | `-sWASM=1` | always | Output wasm (not asm.js) | 🔒 Don't touch |
