@@ -994,44 +994,44 @@ importers:
   cppjs-samples/cppjs-playground-backend-nodejs:
     dependencies:
       '@cpp.js/package-curl-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-expat-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-gdal-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-geos-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-geotiff-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-iconv-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-openssl-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-proj-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-spatialite-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-sqlite3-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-tiff-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-webp-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-zlib-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
@@ -1048,44 +1048,44 @@ importers:
   cppjs-samples/cppjs-playground-backend-nodejs-multithread:
     dependencies:
       '@cpp.js/package-curl-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-expat-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-gdal-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-geos-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-geotiff-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-iconv-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-openssl-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-proj-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-spatialite-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-sqlite3-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-tiff-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-webp-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-zlib-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       cpp.js:
         specifier: workspace:^
         version: link:../../cppjs-core/cpp.js
@@ -1099,41 +1099,41 @@ importers:
   cppjs-samples/cppjs-playground-cloud-cloudflare-worker:
     dependencies:
       '@cpp.js/package-expat-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-gdal-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-geos-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-geotiff-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-iconv-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-openssl-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-proj-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-spatialite-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-sqlite3-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-tiff-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-webp-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-zlib-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       cpp.js:
         specifier: workspace:^
         version: link:../../cppjs-core/cpp.js
@@ -1320,44 +1320,44 @@ importers:
   cppjs-samples/cppjs-playground-web-rspack:
     dependencies:
       '@cpp.js/package-curl-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-expat-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-gdal-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-geos-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-geotiff-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-iconv-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-openssl-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-proj-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-spatialite-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-sqlite3-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-tiff-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-webp-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-zlib-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/plugin-webpack':
         specifier: workspace:^
         version: link:../../cppjs-plugins/cppjs-plugin-webpack
@@ -1408,44 +1408,44 @@ importers:
   cppjs-samples/cppjs-playground-web-vanilla:
     dependencies:
       '@cpp.js/package-curl-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-expat-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-gdal-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-geos-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-geotiff-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-iconv-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-openssl-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-proj-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-spatialite-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-sqlite3-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-tiff-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-webp-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-zlib-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
@@ -1463,41 +1463,41 @@ importers:
   cppjs-samples/cppjs-playground-web-vite:
     dependencies:
       '@cpp.js/package-expat-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-gdal-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-geos-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-geotiff-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-iconv-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-openssl-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-proj-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-spatialite-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-sqlite3-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-tiff-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-webp-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-zlib-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/plugin-vite':
         specifier: workspace:^
         version: link:../../cppjs-plugins/cppjs-plugin-vite
@@ -1521,44 +1521,44 @@ importers:
   cppjs-samples/cppjs-playground-web-vite-multithread:
     dependencies:
       '@cpp.js/package-curl-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-curl/cppjs-package-curl-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-expat-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-gdal-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-geos-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-geotiff-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-geotiff/cppjs-package-geotiff-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-iconv-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-openssl-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-openssl/cppjs-package-openssl-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-proj-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-proj/cppjs-package-proj-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-spatialite-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-sqlite3-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-sqlite3/cppjs-package-sqlite3-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-tiff-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-tiff/cppjs-package-tiff-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-webp-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/package-zlib-wasm':
-        specifier: workspace:^
-        version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
+        specifier: 2.0.0-beta.29
+        version: 2.0.0-beta.29
       '@cpp.js/plugin-vite':
         specifier: workspace:^
         version: link:../../cppjs-plugins/cppjs-plugin-vite
@@ -3214,6 +3214,102 @@ packages:
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
+
+  '@cpp.js/package-curl-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-IDVpaFwrZcNkloeXTVG2i5fEDDGcIJy9PRl/jFA5Wau8s6AEt5wyuK0YQgwAb02m7PB8BWDskNpW0/Ew8ITYsg==}
+
+  '@cpp.js/package-curl@2.0.0-beta.29':
+    resolution: {integrity: sha512-MYN/214FANGtijJfd7kp5+tjIUm7C8CBYEMdArdY5rUVcqjdMF5r9YSAFrW0PwlVAVBst4id/TQ0N/yZDLIp6w==}
+
+  '@cpp.js/package-expat-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-DDMwGMQpzSdwAHJ5MsobxybPluYykDWWHYuN6/JKZ6vu5o+156CP6miQmeW0b8gGFXBpbPmW9I0OqWMX1Jdn0Q==}
+
+  '@cpp.js/package-expat@2.0.0-beta.29':
+    resolution: {integrity: sha512-vYz4A+aTmrbLnFNRrKeqL5Y55MooEyxNsIZiRS45w6SI4jXhSuoDxYcGVB9nG9vLKvngNHEhsE9/roBIGeXVuQ==}
+
+  '@cpp.js/package-gdal-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-eWsYC+djpigUAVcVYbW7qQnVPBVqMxYXIXFMv9lRQzEfRzn34w7FB4ntORFys//Bbc5uc31Xo2adarWjeXveqg==}
+
+  '@cpp.js/package-gdal@2.0.0-beta.31':
+    resolution: {integrity: sha512-Wdbpktwa0+LkHz+SkZRhOQgckNHYRrrDBtfHxLzJuoPiwL/VWOdSVYEnMkWXBjEFIIbp2tPtLsggYfBDft4iMg==}
+
+  '@cpp.js/package-geos-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-+iYjCJRkHNXk3XU3z09oENFhQpS0e11oTAAycQXtQNosKMOYo6PLchkTkasBhbYp58/oWy7OGwK2BaqeQ7d7zA==}
+
+  '@cpp.js/package-geos@2.0.0-beta.29':
+    resolution: {integrity: sha512-UBMKsMeQ+f3zYneV0VPJNiZ6UGjRh16v82tDnP/svgFd7Cw6OEzh62MOFceJHPSGgGA3lHCayEY4r3pLOjrt9w==}
+
+  '@cpp.js/package-geotiff-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-kkkSpKdbvSHLg9uhG9lwOakjWJtNnUdPjqffKsjcRIcsIdohCjlPCoQAj+neDpg05G2czgi33ITc1qUC9VtJhA==}
+
+  '@cpp.js/package-geotiff@2.0.0-beta.29':
+    resolution: {integrity: sha512-+jwEVNV/V3b4P4x7Ruj7yIaWtDIX98kTCRZqDu6dbhehs6vlxYpNzNUJvMyFdIwygq+PcvWtoPHAUK1vsbh90w==}
+
+  '@cpp.js/package-iconv-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-OPNJfy/a6tWdFHiXbtNmVgLJGjcdgyvG4H3jLkoH9u03TOKwlsEGHbRlzVjrUj5wnYche7nFGLS9BWYAqdVgmA==}
+
+  '@cpp.js/package-iconv@2.0.0-beta.29':
+    resolution: {integrity: sha512-53G5PmsI00rgg0js0iHUfT7cGPZJauaUKM+dyz1m/x3Wo/cmdy421fKsYqdFSCYF1hGAiHSM6S93q5aqvnWTdw==}
+
+  '@cpp.js/package-jpegturbo-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-gdwMfronsKbwDoIEWpyFUkbEI3UnDtKEAEAXGNzST67dq9VmMUXglKSreYIhDcohcKHSVWcMBUm9E8GD9v6NZA==}
+
+  '@cpp.js/package-jpegturbo@2.0.0-beta.29':
+    resolution: {integrity: sha512-8T6Gz4DS66RRe1I2GoJUP5lmTS2xPkAGkzSUF3irrJb/MSzt8rRsOn8VNOlXEPcX6vJ0DNpPUHIWEOu0dqX9hg==}
+
+  '@cpp.js/package-lerc-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-1a+/6B50EZhLUqB2fjLNtQRKdwozi1ilwfl2/6HEtwnvAlziO6pkrrV15/IYob/BeGOZ2pO5wKyHn8vMQ8OZWw==}
+
+  '@cpp.js/package-lerc@2.0.0-beta.29':
+    resolution: {integrity: sha512-8Vnz3+CHaoau4fOaw85oPQArGhCVMZKYtwDAn2lrpeZxSWILKH/+EwehFZ99vNnf+nqMnx0MCTNUMPuTd7MKSQ==}
+
+  '@cpp.js/package-openssl-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-WN9TqY7/GiWImsEmkidlbnkrsIAObXZsmCqHX5BFKcVyVS4VUjv9mQykRCO8QA3/cgmferQp1G+TlOVZS+hY1A==}
+
+  '@cpp.js/package-openssl@2.0.0-beta.29':
+    resolution: {integrity: sha512-SLiR40QGF61zxNjwTOvQ1G0CcMyrx0RZH5T6IxNMYZ5qHjT1ktbwe7dSuWqBoW6oWvsxxxMY7KW054t0O8q0YQ==}
+
+  '@cpp.js/package-proj-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-iTgxeeHov4QTcVaTqHvkau+8YSZwtfl92rUmKmb7Z0SKtjAN5e3NnTm7Hdg+K9cfP1GR4Ki0X4/vhnfyg23Pqw==}
+
+  '@cpp.js/package-proj@2.0.0-beta.31':
+    resolution: {integrity: sha512-e/PddEV12xYnXSu4AkIZaFU7fP70NRNuY9SileAwuM2PV0pkSw6qnVSaU9tYEy3SBOfaey2NixZd6/FABeFx2g==}
+
+  '@cpp.js/package-spatialite-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-zSSRGnFptX1g1c0QvEbTdCSxVz9tt7Au6ydMax59Xij4C3z9skceqm21cwAZmhNfOSvz+9f94SSvygOCYk7RjA==}
+
+  '@cpp.js/package-spatialite@2.0.0-beta.29':
+    resolution: {integrity: sha512-DkOK5AzON3wIDV2FnMWTvLkZQq3TksaRVNsrZV9QRkrLWSdsFZGivD3BOKQDHEJaxVZu6IqL4mD9BHPX9Jpwug==}
+
+  '@cpp.js/package-sqlite3-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-CLF1nv5L10g8Epu9pf5KrgBQkYgnm5KH2RgZbLzFUf0/mfOKVfRcWTgygvTyrF5c14LmGJVPBKOSEC4M51F8Jw==}
+
+  '@cpp.js/package-sqlite3@2.0.0-beta.29':
+    resolution: {integrity: sha512-DZpzpAfwAlukzup59PUkK1fHzdW56SGqJsxnVN1Xm6pqdWlsqnj1h1vN/WfKJkSSdolM+R3aSaV1hw30tFh0kQ==}
+
+  '@cpp.js/package-tiff-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-DyurSsaiLy1rigEkWyYwi1HiXXF13sceTZNwd+Ez6y6HW/56gLalfCCkHjWhH8aDc5MdePE1rpKoo09IvUcyeQ==}
+
+  '@cpp.js/package-tiff@2.0.0-beta.29':
+    resolution: {integrity: sha512-rSt1qO2e2qC6A/CQ9w1RgQ+eZQTTGNihLueQ5g3uzwmiLvjmayiaxrvVy22E0zc3FiDgn4udwSGJw+vtBvutOw==}
+
+  '@cpp.js/package-webp-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-X7OQbgrKGzImM3c0NVv+ycPArZV2eqyAUS5XelKnLLb3i7yBFal/u1SKB9tD9XSPVcERdylpkxzRIWp4hjJtNQ==}
+
+  '@cpp.js/package-webp@2.0.0-beta.29':
+    resolution: {integrity: sha512-CwHzKXNyq4l5kE0q3HUXwGojtOFSlZjTV9SQz42L5D1yIRTlLFb7vJ8SFInmZeDp6GJdEamo9cTy7PFu8pbeGw==}
+
+  '@cpp.js/package-zlib-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-XGGDMaNRqUp+43OWFHhdjoJFQIet+yN0gkHI7snNwvd8ETiDe+QDN7JxxLqsbluKCoOIlqzsNm2D1soRUKrNQw==}
+
+  '@cpp.js/package-zlib@2.0.0-beta.29':
+    resolution: {integrity: sha512-+Gm49PWrxLoJ3kPxzWo5tnBCCBrK28Z84b92owhCsuTKUkXoAJNhHUFcXoDrnA8gvx/0KEM0oeisovuA1pJ6/g==}
+
+  '@cpp.js/package-zstd-wasm@2.0.0-beta.29':
+    resolution: {integrity: sha512-ZHr66e5m5mlpgzhXbjMgYY6yZEGlwhm1Q+DF7A3vnDZqLT8w9LOZvpEWpEvZdaoTJc5MoDofkRTFCF4LZ1Z7BA==}
+
+  '@cpp.js/package-zstd@2.0.0-beta.29':
+    resolution: {integrity: sha512-TxxrLS9lbSTYXcYyscOp1gNF3a0sBvf2Qd97BHmANplvHQ8kytsuOkEL6efXrG8B0h777lVOCevC062sQbUMRg==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -14257,6 +14353,132 @@ snapshots:
 
   '@colors/colors@1.5.0':
     optional: true
+
+  '@cpp.js/package-curl-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-curl': 2.0.0-beta.29
+      '@cpp.js/package-openssl-wasm': 2.0.0-beta.29
+
+  '@cpp.js/package-curl@2.0.0-beta.29': {}
+
+  '@cpp.js/package-expat-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-expat': 2.0.0-beta.29
+
+  '@cpp.js/package-expat@2.0.0-beta.29': {}
+
+  '@cpp.js/package-gdal-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-curl-wasm': 2.0.0-beta.29
+      '@cpp.js/package-expat-wasm': 2.0.0-beta.29
+      '@cpp.js/package-gdal': 2.0.0-beta.31
+      '@cpp.js/package-geos-wasm': 2.0.0-beta.29
+      '@cpp.js/package-geotiff-wasm': 2.0.0-beta.29
+      '@cpp.js/package-iconv-wasm': 2.0.0-beta.29
+      '@cpp.js/package-jpegturbo-wasm': 2.0.0-beta.29
+      '@cpp.js/package-lerc-wasm': 2.0.0-beta.29
+      '@cpp.js/package-proj-wasm': 2.0.0-beta.29
+      '@cpp.js/package-spatialite-wasm': 2.0.0-beta.29
+      '@cpp.js/package-sqlite3-wasm': 2.0.0-beta.29
+      '@cpp.js/package-tiff-wasm': 2.0.0-beta.29
+      '@cpp.js/package-webp-wasm': 2.0.0-beta.29
+      '@cpp.js/package-zlib-wasm': 2.0.0-beta.29
+      '@cpp.js/package-zstd-wasm': 2.0.0-beta.29
+
+  '@cpp.js/package-gdal@2.0.0-beta.31': {}
+
+  '@cpp.js/package-geos-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-geos': 2.0.0-beta.29
+
+  '@cpp.js/package-geos@2.0.0-beta.29': {}
+
+  '@cpp.js/package-geotiff-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-geotiff': 2.0.0-beta.29
+      '@cpp.js/package-jpegturbo-wasm': 2.0.0-beta.29
+      '@cpp.js/package-proj-wasm': 2.0.0-beta.29
+      '@cpp.js/package-tiff-wasm': 2.0.0-beta.29
+      '@cpp.js/package-zlib-wasm': 2.0.0-beta.29
+
+  '@cpp.js/package-geotiff@2.0.0-beta.29': {}
+
+  '@cpp.js/package-iconv-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-iconv': 2.0.0-beta.29
+
+  '@cpp.js/package-iconv@2.0.0-beta.29': {}
+
+  '@cpp.js/package-jpegturbo-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-jpegturbo': 2.0.0-beta.29
+
+  '@cpp.js/package-jpegturbo@2.0.0-beta.29': {}
+
+  '@cpp.js/package-lerc-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-lerc': 2.0.0-beta.29
+
+  '@cpp.js/package-lerc@2.0.0-beta.29': {}
+
+  '@cpp.js/package-openssl-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-openssl': 2.0.0-beta.29
+
+  '@cpp.js/package-openssl@2.0.0-beta.29': {}
+
+  '@cpp.js/package-proj-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-proj': 2.0.0-beta.31
+      '@cpp.js/package-sqlite3-wasm': 2.0.0-beta.29
+      '@cpp.js/package-tiff-wasm': 2.0.0-beta.29
+
+  '@cpp.js/package-proj@2.0.0-beta.31': {}
+
+  '@cpp.js/package-spatialite-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-geos-wasm': 2.0.0-beta.29
+      '@cpp.js/package-iconv-wasm': 2.0.0-beta.29
+      '@cpp.js/package-proj-wasm': 2.0.0-beta.29
+      '@cpp.js/package-spatialite': 2.0.0-beta.29
+      '@cpp.js/package-sqlite3-wasm': 2.0.0-beta.29
+      '@cpp.js/package-zlib-wasm': 2.0.0-beta.29
+
+  '@cpp.js/package-spatialite@2.0.0-beta.29': {}
+
+  '@cpp.js/package-sqlite3-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-sqlite3': 2.0.0-beta.29
+
+  '@cpp.js/package-sqlite3@2.0.0-beta.29': {}
+
+  '@cpp.js/package-tiff-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-jpegturbo-wasm': 2.0.0-beta.29
+      '@cpp.js/package-lerc-wasm': 2.0.0-beta.29
+      '@cpp.js/package-tiff': 2.0.0-beta.29
+      '@cpp.js/package-zlib-wasm': 2.0.0-beta.29
+      '@cpp.js/package-zstd-wasm': 2.0.0-beta.29
+
+  '@cpp.js/package-tiff@2.0.0-beta.29': {}
+
+  '@cpp.js/package-webp-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-webp': 2.0.0-beta.29
+
+  '@cpp.js/package-webp@2.0.0-beta.29': {}
+
+  '@cpp.js/package-zlib-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-zlib': 2.0.0-beta.29
+
+  '@cpp.js/package-zlib@2.0.0-beta.29': {}
+
+  '@cpp.js/package-zstd-wasm@2.0.0-beta.29':
+    dependencies:
+      '@cpp.js/package-zstd': 2.0.0-beta.29
+
+  '@cpp.js/package-zstd@2.0.0-beta.29': {}
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
