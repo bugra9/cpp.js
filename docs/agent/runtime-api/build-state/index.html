@@ -5,8 +5,8 @@
 <meta name="generator" content="Docusaurus v3.10.1">
 <title data-rh="true">state and target shapes | Cpp.js</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://cpp.js.org/img/cppjs-social-card.png"><meta data-rh="true" name="twitter:image" content="https://cpp.js.org/img/cppjs-social-card.png"><meta data-rh="true" property="og:url" content="https://cpp.js.org/docs/agent/runtime-api/build-state"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="state and target shapes | Cpp.js"><meta data-rh="true" name="description" content="When you write a cppjs.build.js hook (prepare(state), build(state), getBuildParams(state, target), etc.), or an extensions[] plugin, you receive a state object and a target object. This doc enumerates every key on both. Source: cppjs-core/cpp.js/src/state/index.js."><meta data-rh="true" property="og:description" content="When you write a cppjs.build.js hook (prepare(state), build(state), getBuildParams(state, target), etc.), or an extensions[] plugin, you receive a state object and a target object. This doc enumerates every key on both. Source: cppjs-core/cpp.js/src/state/index.js."><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://cpp.js.org/docs/agent/runtime-api/build-state"><link data-rh="true" rel="alternate" href="https://cpp.js.org/docs/agent/runtime-api/build-state" hreflang="en"><link data-rh="true" rel="alternate" href="https://cpp.js.org/docs/agent/runtime-api/build-state" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"state / target","item":"https://cpp.js.org/docs/agent/runtime-api/build-state"}]}</script><link rel="alternate" type="application/rss+xml" href="/blog/rss.xml" title="Cpp.js RSS Feed">
 <link rel="alternate" type="application/atom+xml" href="/blog/atom.xml" title="Cpp.js Atom Feed"><link rel="stylesheet" href="/assets/css/styles.a8f00ed6.css">
-<script src="/assets/js/runtime~main.f327ed33.js" defer="defer"></script>
-<script src="/assets/js/main.d4db491e.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.eaf59cde.js" defer="defer"></script>
+<script src="/assets/js/main.92b7f582.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -33,8 +33,10 @@ treats a mismatch as a cache miss even when the artifact exists:</p>
 <li class=""><code>…/prebuilt/&lt;target&gt;/cppjs-emccflags.fingerprint</code> — the config <code>emccFlags</code>, which also
 feed compile-time state (<code>CPPJS_JSPI</code>).</li>
 <li class=""><code>&lt;jsName&gt;.fingerprint</code> — the final link&#x27;s inputs: resolved <code>emccFlags</code>, the lib list with
-each archive&#x27;s size+mtime, the preloaded data map, and the runtime assets bundled into
-the artifact (<code>assets/js-runtime</code> + <code>assets/cpp-runtime</code>, content-hashed).</li>
+each archive&#x27;s size+mtime, the preloaded data map, the runtime assets bundled into
+the artifact (<code>assets/js-runtime</code> + <code>assets/cpp-runtime</code>, content-hashed), and the
+link layout (which archives are <code>--whole-archive</code>d — flipping <code>export.wholeArchive</code>
+relinks automatically).</li>
 </ul>
 <p>Practical consequence: changing <code>emccFlags</code>, adding/removing a <code>.h</code> import, rebuilding a
 dependency package, or editing the cpp.js runtime itself re-links automatically — no manual

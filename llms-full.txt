@@ -1504,6 +1504,14 @@ export default {
     libPath: 'lib',              // .a output dir
     libName: ['<general.name>'], // .a basenames; one per item
     binHeaders: [],              // headers to ship as raw binary blobs
+
+    wholeArchive: false,
+      // By default only the generated Bridge archive is linked with
+      // --whole-archive; every other archive is dead-code-eliminated down to
+      // what the bridge actually reaches. Set true on an APP to restore the
+      // legacy layout (every archive linked wholesale), or on a PACKAGE's own
+      // config when its members self-register from static initializers and
+      // must never be stripped.
   },
 
   // ─────────────────────────────────────────────────────────────
@@ -2650,8 +2658,10 @@ treats a mismatch as a cache miss even when the artifact exists:
 - `…/prebuilt/<target>/cppjs-emccflags.fingerprint` — the config `emccFlags`, which also
   feed compile-time state (`CPPJS_JSPI`).
 - `<jsName>.fingerprint` — the final link's inputs: resolved `emccFlags`, the lib list with
-  each archive's size+mtime, the preloaded data map, and the runtime assets bundled into
-  the artifact (`assets/js-runtime` + `assets/cpp-runtime`, content-hashed).
+  each archive's size+mtime, the preloaded data map, the runtime assets bundled into
+  the artifact (`assets/js-runtime` + `assets/cpp-runtime`, content-hashed), and the
+  link layout (which archives are `--whole-archive`d — flipping `export.wholeArchive`
+  relinks automatically).
 
 Practical consequence: changing `emccFlags`, adding/removing a `.h` import, rebuilding a
 dependency package, or editing the cpp.js runtime itself re-links automatically — no manual
@@ -3338,7 +3348,7 @@ The rule: **if your build runs and your app works, the defaults are fine**. Only
 | `-pthread` + `-sPTHREAD_POOL_SIZE=Math.min(navigator.hardwareConcurrency \|\| 1, 2)` | mt only | Thread pool capped at 2 workers (1 if `hardwareConcurrency` is unavailable) | ✅ `PTHREAD_POOL_SIZE` is tunable (see below) |
 | `-sPTHREAD_POOL_SIZE_STRICT=2` | mt only | Abort if more pthreads requested than pool (no dynamic growth) | ⚠️ Drop to `1` (warn + grow) or `0` (silent grow) only if your code spawns unbounded threads |
 | `-lembind` | always | Embind binding lib | 🔒 Required |
-| `-Wl,--whole-archive` | always | Link all objects | 🔒 Required for static lib symbol retention |
+| `-Wl,--whole-archive` | Bridge archive only | Keep embind registrations (static initializers) alive | ✅ `export.wholeArchive: true` on the app restores the legacy all-archives layout; a library can declare the same in its own config |
 | `-fwasm-exceptions` | always | C++ exceptions via Wasm EH | 🔒 Required for proper `throw` semantics |
 | `-sWASM_BIGINT=1` | always | BigInt for i64 | 🔒 Required for modern browsers |
 | `-sWASM=1` | always | Output wasm (not asm.js) | 🔒 Don't touch |
@@ -6608,9 +6618,13 @@ Pick the matching gate based on what you touched:
 | Docs / scripts / configs only | `pnpm run check` + targeted manual smoke |
 
 The aggregate `e2e:dev` / `e2e:prod` cover the playgrounds too (web, cloud and
-backend-node ones carry their own e2e scripts; `ci:linux:build` builds them).
-Playground dev configs allow minutes-long first runs: the dev server cold-compiles
-the DEBUG wasm on the first request.
+backend-node ones carry their own e2e scripts; `pnpm run build:playgrounds`
+builds them). Playgrounds validate LOCALLY only: they link every prebuilt
+package at its current workspace state via `workspace:^`, and those prebuilt
+trees do not exist on a fresh CI checkout — which is why `ci:linux:build` and
+the CI e2e (`ci:linux:e2e`) exclude them. Playground dev configs allow
+minutes-long first runs: the dev server cold-compiles the DEBUG wasm on the
+first request.
 
 ### Clean (use sparingly)
 
