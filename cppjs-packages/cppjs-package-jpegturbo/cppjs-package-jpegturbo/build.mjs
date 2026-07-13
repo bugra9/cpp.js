@@ -24,6 +24,17 @@ export default {
                 '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED=NO',
             ];
         }
+        if (target.platform === 'wasi') {
+            // The library builds clean; only the bundled tools/tests fail
+            // to link as wasi commands - skip them.
+            return [
+                '-DENABLE_SHARED=OFF',
+                '-DENABLE_STATIC=ON',
+                '-DWITH_TURBOJPEG=OFF',
+                '-DWITH_TOOLS=OFF',
+                '-DWITH_TESTS=OFF',
+            ];
+        }
         // wasm
         return [
             '-DENABLE_SHARED=OFF',

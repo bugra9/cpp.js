@@ -1,0 +1,38 @@
+{
+    "name": "@cpp.js/package-spatialite-wasi",
+    "version": "2.0.0-beta.33",
+    "nativeVersion": "5.1.0",
+    "description": "WASI build of the precompiled SpatiaLite (spatial SQLite extension) library, built with cpp.js. Use it together with the main package @cpp.js/package-spatialite.",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-spatialite#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "type": "module",
+    "license": "MPL-1.1 OR GPL-2.0-or-later OR LGPL-2.1-or-later",
+    "keywords": [
+        "spatialite",
+        "libspatialite",
+        "sqlite",
+        "spatial",
+        "gis",
+        "cpp.js",
+        "cpp.js-package",
+        "webassembly",
+        "wasi"
+    ],
+    "scripts": {
+        "build": "cppjs build -p wasi",
+        "e2e": "node e2e/run.mjs",
+        "clear": "rm -rf .cppjs dist",
+        "prepublishOnly": "cppjs build -p wasi"
+    },
+    "dependencies": {
+        "@cpp.js/package-spatialite": "workspace:^",
+        "@cpp.js/package-geos-wasi": "workspace:^",
+        "@cpp.js/package-proj-wasi": "workspace:^",
+        "@cpp.js/package-sqlite3-wasi": "workspace:^",
+        "@cpp.js/package-zlib-wasi": "workspace:^",
+        "@cpp.js/package-iconv-wasi": "workspace:^"
+    },
+    "devDependencies": {
+        "cpp.js": "workspace:^"
+    }
+}

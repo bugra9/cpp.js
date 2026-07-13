@@ -1,5 +1,6 @@
 const platformBuild = {
     'wasm': ['--enable-shared=no', '--host=x86_64-pc-linux-gnu'],
+    'wasi': ['--enable-shared=no', '--host=x86_64-pc-linux-gnu'],
     'android-arm64-v8a': ['--enable-static=no', '--host=aarch64-linux-android'],
     'android-x86_64': ['--enable-static=no', '--host=x86_64-linux-android'],
     'ios-iphoneos': ['--enable-shared=no', '--host=arm-apple-darwin'],
@@ -9,6 +10,10 @@ const platformBuild = {
 const MOBILE_LIBS = ['-lstdc++', '-lsqlite3', '-lm', '-ltiff', '-lgeos'];
 const platformLibs = {
     'wasm': ['-lsqlite3'],
+    // The geos probes link C++ archives through the C driver; wasi-clang
+    // needs the C++/EH runtime spelled out, and -fwasm-exceptions at link
+    // selects the eh/ sysroot variant that has libunwind.
+    'wasi': ['-fwasm-exceptions', '-lc++', '-lc++abi', '-lunwind', '-lsqlite3'],
     'android': MOBILE_LIBS,
     'ios': MOBILE_LIBS,
 };

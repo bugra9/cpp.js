@@ -18,6 +18,7 @@
     ],
     "scripts": {
         "build": "cppjs build -p wasi",
+        "e2e": "node e2e/run.mjs",
         "clear": "rm -rf .cppjs dist",
         "prepublishOnly": "cppjs build -p wasi"
     },

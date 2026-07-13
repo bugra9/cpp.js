@@ -38,14 +38,27 @@ archives are dead-code-eliminated down to what `main` reaches, and the
 
 ## Prebuilt packages
 
-zlib, sqlite3, tiff, geotiff, proj and gdal have dedicated wasi platform
-packages — `@cpp.js/package-<name>-wasi`, next to their `-wasm`/`-android`/
-`-ios` siblings — carrying the `wasi-wasm32-st-release` prebuilts. Depend
-on the `-wasi` variant when targeting wasi; `pnpm build` inside such a
-package refreshes its prebuilt under the same wasi-sdk requirement as app
+Every library package except curl and openssl has a dedicated wasi platform
+package — `@cpp.js/package-<name>-wasi`, next to its `-wasm`/`-android`/
+`-ios` siblings — carrying the `wasi-wasm32-st-release` prebuilt: zlib,
+sqlite3, tiff, geotiff, proj, gdal, jpegturbo, zstd, lerc, webp, expat,
+geos, iconv and spatialite. curl needs sockets (none on WASI) and openssl
+only makes sense as a crypto-only custom build - both are deliberately out
+for now.
+
+Depend on the `-wasi` variant when targeting wasi; `pnpm build` inside such
+a package refreshes its prebuilt under the same wasi-sdk requirement as app
 builds. GDAL's `__wasi__` source patches (no processes, no `mkstemp`)
 travel inside its recipe, so a plain `cppjs build -p wasi` is all that is
 needed.
+
+Each `-wasi` package ships a standalone use case under `e2e/` (`pnpm e2e`,
+or `pnpm e2e:wasi` at the repo root): a small C program is compiled against
+the shipped archives and run under wasmtime - zlib/zstd roundtrips, a
+sqlite file database, a deflate tif, geokeys, an EPSG:4326→3857 transform
+through proj.db, jpeg/webp encodes, an expat parse, a geos intersection, an
+iconv conversion and a spatialite `MakePoint`. The scripts SKIP politely
+when the wasi-sdk, wasmtime or the prebuilt is absent.
 
 ## Limits
 

@@ -186,6 +186,16 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
+  cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasi:
+    dependencies:
+      '@cpp.js/package-expat':
+        specifier: workspace:^
+        version: link:../cppjs-package-expat
+    devDependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../../cppjs-core/cpp.js
+
   cppjs-packages/cppjs-package-expat/cppjs-package-expat-wasm:
     dependencies:
       '@cpp.js/package-expat':
@@ -401,6 +411,16 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
+  cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasi:
+    dependencies:
+      '@cpp.js/package-geos':
+        specifier: workspace:^
+        version: link:../cppjs-package-geos
+    devDependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../../cppjs-core/cpp.js
+
   cppjs-packages/cppjs-package-geos/cppjs-package-geos-wasm:
     dependencies:
       '@cpp.js/package-geos':
@@ -520,6 +540,16 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
+  cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasi:
+    dependencies:
+      '@cpp.js/package-iconv':
+        specifier: workspace:^
+        version: link:../cppjs-package-iconv
+    devDependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../../cppjs-core/cpp.js
+
   cppjs-packages/cppjs-package-iconv/cppjs-package-iconv-wasm:
     dependencies:
       '@cpp.js/package-iconv':
@@ -552,6 +582,16 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
+  cppjs-packages/cppjs-package-jpegturbo/cppjs-package-jpegturbo-wasi:
+    dependencies:
+      '@cpp.js/package-jpegturbo':
+        specifier: workspace:^
+        version: link:../cppjs-package-jpegturbo
+    devDependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../../cppjs-core/cpp.js
+
   cppjs-packages/cppjs-package-jpegturbo/cppjs-package-jpegturbo-wasm:
     dependencies:
       '@cpp.js/package-jpegturbo':
@@ -575,6 +615,16 @@ importers:
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-lerc/cppjs-package-lerc-ios:
+    dependencies:
+      '@cpp.js/package-lerc':
+        specifier: workspace:^
+        version: link:../cppjs-package-lerc
+    devDependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../../cppjs-core/cpp.js
+
+  cppjs-packages/cppjs-package-lerc/cppjs-package-lerc-wasi:
     dependencies:
       '@cpp.js/package-lerc':
         specifier: workspace:^
@@ -739,6 +789,31 @@ importers:
       '@cpp.js/package-zlib-ios':
         specifier: workspace:^
         version: link:../../cppjs-package-zlib/cppjs-package-zlib-ios
+    devDependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../../cppjs-core/cpp.js
+
+  cppjs-packages/cppjs-package-spatialite/cppjs-package-spatialite-wasi:
+    dependencies:
+      '@cpp.js/package-geos-wasi':
+        specifier: workspace:^
+        version: link:../../cppjs-package-geos/cppjs-package-geos-wasi
+      '@cpp.js/package-iconv-wasi':
+        specifier: workspace:^
+        version: link:../../cppjs-package-iconv/cppjs-package-iconv-wasi
+      '@cpp.js/package-proj-wasi':
+        specifier: workspace:^
+        version: link:../../cppjs-package-proj/cppjs-package-proj-wasi
+      '@cpp.js/package-spatialite':
+        specifier: workspace:^
+        version: link:../cppjs-package-spatialite
+      '@cpp.js/package-sqlite3-wasi':
+        specifier: workspace:^
+        version: link:../../cppjs-package-sqlite3/cppjs-package-sqlite3-wasi
+      '@cpp.js/package-zlib-wasi':
+        specifier: workspace:^
+        version: link:../../cppjs-package-zlib/cppjs-package-zlib-wasi
     devDependencies:
       cpp.js:
         specifier: workspace:^
@@ -914,6 +989,16 @@ importers:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
 
+  cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasi:
+    dependencies:
+      '@cpp.js/package-webp':
+        specifier: workspace:^
+        version: link:../cppjs-package-webp
+    devDependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../../cppjs-core/cpp.js
+
   cppjs-packages/cppjs-package-webp/cppjs-package-webp-wasm:
     dependencies:
       '@cpp.js/package-webp':
@@ -979,6 +1064,16 @@ importers:
         version: link:../../../cppjs-core/cpp.js
 
   cppjs-packages/cppjs-package-zstd/cppjs-package-zstd-ios:
+    dependencies:
+      '@cpp.js/package-zstd':
+        specifier: workspace:^
+        version: link:../cppjs-package-zstd
+    devDependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../../cppjs-core/cpp.js
+
+  cppjs-packages/cppjs-package-zstd/cppjs-package-zstd-wasi:
     dependencies:
       '@cpp.js/package-zstd':
         specifier: workspace:^
