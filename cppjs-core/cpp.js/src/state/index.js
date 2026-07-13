@@ -147,6 +147,18 @@ const state = {
             runtimeEnv: 'node',
         },
         {
+            platform: 'wasi',
+            arch: 'wasm32',
+            runtime: 'st',
+            buildType: 'release',
+        },
+        {
+            platform: 'wasi',
+            arch: 'wasm32',
+            runtime: 'st',
+            buildType: 'debug',
+        },
+        {
             platform: 'android',
             arch: 'arm64-v8a',
             runtime: 'mt',
@@ -218,6 +230,10 @@ async function initProcessState() {
             target.wasmName = `${state.config.general.name}-${target.path}.${target.runtimeEnv}.wasm`;
             target.dataName = `${state.config.general.name}-${target.path}.${target.runtimeEnv}.data`;
             target.dataTxtName = `${state.config.general.name}-${target.path}.${target.runtimeEnv}.data.txt`;
+        }
+        if (target.platform === 'wasi') {
+            // A wasi build is a single command module - no JS glue, no preload.
+            target.wasmName = `${state.config.general.name}-${target.path}.wasm`;
         }
     });
 

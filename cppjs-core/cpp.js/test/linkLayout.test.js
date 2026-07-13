@@ -49,4 +49,10 @@ describe('buildLinkLibArgs', () => {
     it('handles a bridge-only lib list', () => {
         expect(buildLinkLibArgs([bridge], {})).toEqual([W, bridge, N]);
     });
+
+    it('wrapLast:false wraps nothing by default (wasi command links)', () => {
+        expect(buildLinkLibArgs(libs, { wrapLast: false })).toEqual(libs);
+        expect(buildLinkLibArgs(libs, { wrapLast: false, wholeArchiveNames: new Set(['gdal']) }))
+            .toEqual(['/p/libproj.a', W, '/p/libgdal.a', N, source, bridge]);
+    });
 });

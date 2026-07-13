@@ -4,6 +4,7 @@ import pullDockerImage, { getDockerImage, getDockerContainerName } from '../util
 import getOsUserAndGroupId from '../utils/getOsUserAndGroupId.js';
 import replaceBasePathForDockerUtil from '../utils/replaceBasePathForDocker.js';
 import state from '../state/index.js';
+import { wasiCFlags, wasiCxxFlags, resolveWasiSdkPath } from '../utils/wasiToolchain.js';
 
 // Native builds (make -jN, emcc) can emit far more than Node's 1 MiB default
 // pipe buffer; without a raised cap a large but successful build dies with ENOBUFS.
@@ -88,7 +89,7 @@ export default function run(program, params = [], platformPrefix = null, target 
         fs.mkdirSync(buildPath, { recursive: true });
     }
 
-    if (target?.platform !== 'ios' || program !== null) {
+    if ((target?.platform !== 'ios' && target?.platform !== 'wasi') || program !== null) {
         pullDockerImage();
     }
 
@@ -104,6 +105,32 @@ export default function run(program, params = [], platformPrefix = null, target 
                 else if (params[0] === 'cmake') dProgram = 'emcmake';
                 else if (params[0] === 'cc') dProgram = 'emcc';
                 break;
+            case 'wasi': {
+                // Host-run toolchain like ios: wasi-sdk needs no emsdk env, so
+                // builds execute natively wherever WASI_SDK_PATH points.
+                const wasiSdk = resolveWasiSdkPath(state.config.system);
+                if (!wasiSdk) {
+                    throw new Error('cppjs: platform:\'wasi\' builds need a wasi-sdk. Set WASI_SDK_PATH in ~/.cppjs.json (or the CPPJS_WASI_SDK_PATH env var) to an extracted wasi-sdk >= 25.');
+                }
+                [dProgram, ...dParams] = params;
+                platformParams = [
+                    '-e', `CFLAGS=${wasiCFlags().join(' ')}`,
+                    '-e', `CXXFLAGS=${wasiCxxFlags().join(' ')}`,
+                ];
+                if (dProgram === 'cmake' && dParams[0] !== '--build' && dParams[0] !== '--install') {
+                    dParams = [
+                        ...dParams,
+                        `-DCMAKE_TOOLCHAIN_FILE=${wasiSdk}/share/cmake/wasi-sdk-p1.cmake`,
+                    ];
+                } else if (dProgram === 'wasi-clang++') {
+                    dProgram = `${wasiSdk}/bin/clang++`;
+                    platformParams = [];
+                } else if (dProgram === 'wasi-clang') {
+                    dProgram = `${wasiSdk}/bin/clang`;
+                    platformParams = [];
+                }
+                break;
+            }
             case 'android':
                 [dProgram, ...dParams] = params;
                 platformParams = target.arch === 'x86_64' ? androidParamsX86_64 : androidParamsArm64;
@@ -174,7 +201,7 @@ export default function run(program, params = [], platformPrefix = null, target 
 
     const env = {};
     let runner = 'DOCKER';
-    if ((target?.platform === 'ios' && program === null) || state.config.system.RUNNER === 'LOCAL') {
+    if (((target?.platform === 'ios' || target?.platform === 'wasi') && program === null) || state.config.system.RUNNER === 'LOCAL') {
         runner = 'LOCAL';
     }
 

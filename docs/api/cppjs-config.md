@@ -104,7 +104,7 @@ export default {
   targetSpecs: [
     {
       // Filter (any combination — entry matches if all set fields match)
-      platform:   'wasm' | 'android' | 'ios',     // optional
+      platform:   'wasm' | 'wasi' | 'android' | 'ios',     // optional
       arch:       'wasm32' | 'wasm64' | 'arm64-v8a' | 'x86_64' | 'iphoneos' | 'iphonesimulator',
       runtime:    'st' | 'mt',
       buildType:  'release' | 'debug',
@@ -117,6 +117,7 @@ export default {
         env:           { GDAL_NUM_THREADS: '0' },  // env vars passed to running Wasm + build env
         data:          { 'share/myapp': 'myapp/data' },  // bundle data files into .data preload
         ignoreLibName: ['libtiff_legacy'],         // suppress these .a names from link line
+    wasiFlags:     ['-Wl,--stack-first'],      // flags appended to the wasi command link (platform 'wasi' only; see wasi.md)
       },
     },
   ],

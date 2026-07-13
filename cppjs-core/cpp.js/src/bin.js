@@ -8,6 +8,7 @@ import { state } from './index.js';
 import createBridgeFile from './actions/createInterface.js';
 import createLib from './actions/createLib.js';
 import buildWasm from './actions/buildWasm.js';
+import buildWasiCommand from './actions/buildWasiCommand.js';
 import buildExternal from './actions/buildExternal.js';
 import buildLib from './actions/buildLib.js';
 import buildDependencies from './actions/buildDependencies.js';
@@ -282,6 +283,28 @@ async function build(targetParams, rebuildOption) {
     await buildDependencies({ targetParams, rebuildOption });
     buildLib(targetParams);
     createWasmJs(targetParams);
+    await createWasiCommands(targetParams);
+}
+
+async function createWasiCommands(targetParams) {
+    const targets = getFilteredBuildTargets(targetParams, { platform: 'wasi' });
+    if (targets.length === 0) {
+        return;
+    }
+    for (const target of targets) {
+        const distWasm = `${state.config.paths.output}/${target.wasmName}`;
+        const built = await buildWasiCommand(target, { force: !fs.existsSync(distWasm) });
+        if (!built) {
+            continue;
+        }
+        fs.copyFileSync(`${state.config.paths.build}/${target.wasmName}`, distWasm);
+        // Copied (not renamed) so a later fingerprint cache-hit still has the
+        // build-dir tree to serve from.
+        if (fs.existsSync(`${state.config.paths.build}/data`)) {
+            fs.rmSync(`${state.config.paths.output}/data`, { recursive: true, force: true });
+            fs.cpSync(`${state.config.paths.build}/data`, `${state.config.paths.output}/data`, { recursive: true });
+        }
+    }
 }
 
 async function createWasmJs(targetParams) {

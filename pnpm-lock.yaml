@@ -1096,6 +1096,12 @@ importers:
         specifier: ^0.2.1
         version: 0.2.1
 
+  cppjs-samples/cppjs-playground-cli-wasi:
+    devDependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../cppjs-core/cpp.js
+
   cppjs-samples/cppjs-playground-cloud-cloudflare-worker:
     dependencies:
       '@cpp.js/package-expat-wasm':

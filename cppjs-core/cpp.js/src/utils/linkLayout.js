@@ -13,11 +13,13 @@ export function libNameOf(libPath) {
     return match ? match[1] : base;
 }
 
-export function buildLinkLibArgs(libs, { wholeArchiveAll = false, wholeArchiveNames = new Set() } = {}) {
+export function buildLinkLibArgs(libs, { wholeArchiveAll = false, wholeArchiveNames = new Set(), wrapLast = true } = {}) {
     const args = [];
     let wrapped = false;
     libs.forEach((lib, index) => {
-        const isBridge = index === libs.length - 1;
+        // wrapLast covers the Bridge archive convention; wasi command links
+        // have no bridge (main() is the GC root), so they pass false.
+        const isBridge = wrapLast && index === libs.length - 1;
         const wantWrap = wholeArchiveAll || isBridge || wholeArchiveNames.has(libNameOf(lib));
         if (wantWrap !== wrapped) {
             args.push(wantWrap ? '-Wl,--whole-archive' : '-Wl,--no-whole-archive');
