@@ -1,5 +1,6 @@
 const platformBuild = {
     'wasm': ['--disable-shared', '--host=wasm32-unknown-emscripten'],
+
     'android-arm64-v8a': ['--disable-static', '--host=aarch64-linux-android', '--disable-rpath'],
     'android-x86_64': ['--disable-static', '--host=x86_64-linux-android', '--disable-rpath'],
     'ios-iphoneos': ['--disable-shared', '--host=arm-apple-darwin'],
@@ -20,7 +21,12 @@ export default {
     },
     buildType: 'configure',
     getBuildParams: (target) => [
-        ...(platformBuild[target.platform] || platformBuild[`${target.platform}-${target.arch}`] || []),
+        // sqlite's autosetup has first-class wasi support: --with-wasi-sdk
+        // wires the cross toolchain AND skips the shell binary (which needs
+        // getrusage/signal beyond the emulation set).
+        ...(target.platform === 'wasi'
+            ? ['--disable-shared', `--with-wasi-sdk=${process.env.CPPJS_WASI_SDK_PATH}`]
+            : (platformBuild[target.platform] || platformBuild[`${target.platform}-${target.arch}`] || [])),
         ...(target.runtime === 'mt' ? ['--enable-threadsafe'] : []),
     ],
     env: (target) => (target.platform === 'android'

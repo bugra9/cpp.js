@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-gdal-wasm",
-    "version": "2.0.0-beta.31",
+    "version": "2.0.0-beta.33",
     "nativeVersion": "3.13.1",
     "description": "WebAssembly build of the precompiled GDAL geospatial library, built with cpp.js. Use it together with the main package @cpp.js/package-gdal.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-gdal#readme",
@@ -21,6 +21,7 @@
     ],
     "scripts": {
         "build": "cppjs build -p wasm",
+        "build:wasi": "cppjs build -p wasi",
         "clear": "rm -rf .cppjs dist *.xcframework",
         "prepublishOnly": "cppjs build -p wasm"
     },

@@ -1,5 +1,8 @@
 const platformBuild = {
     'wasm': ['--enable-shared=no', '--host=x86_64-pc-linux-gnu'],
+    // The bundled config.sub predates wasi; fake a known host to force
+    // cross mode - the wasi CC decides the real target (same trick as wasm).
+    'wasi': ['--enable-shared=no', '--host=x86_64-pc-linux-gnu'],
     'android-arm64-v8a': ['--enable-static=no', '--host=aarch64-linux-android'],
     'android-x86_64': ['--enable-static=no', '--host=x86_64-linux-android'],
     'ios-iphoneos': ['--enable-shared=no', '--host=arm-apple-darwin'],
@@ -10,6 +13,11 @@ const platformExtraLibs = {
     'wasm': ['-lsqlite3'],
     'android': ['-lstdc++'],
     'ios': ['-lc++'],
+    // The bundled tools (geotifcp/listgeo) link C++ archives (proj) through
+    // the C driver; wasi-clang needs the C++/EH runtime spelled out, and
+    // -fwasm-exceptions at link selects the eh/ sysroot variant that has
+    // libunwind (emcc does all of this implicitly on wasm).
+    'wasi': ['-fwasm-exceptions', '-lc++', '-lc++abi', '-lunwind'],
 };
 
 const ifDep = (dep, params) => (dep ? params(dep) : []);
@@ -23,7 +31,8 @@ export default {
         ...ifDep(depPaths.proj, (d) => [`--with-proj=${d.root}`]),
         ...ifDep(depPaths.tiff, (d) => [`--with-libtiff=${d.root}`]),
         ...ifDep(depPaths.z, (d) => [`--with-zlib=${d.root}`]),
-        ...ifDep(depPaths.jpeg, (d) => [`--with-jpeg=${d.root}`]),
+        // jpeg has no wasi prebuilt yet; the wasi libtiff is zlib-only too.
+        ...ifDep(target.platform === 'wasi' ? null : depPaths.jpeg, (d) => [`--with-jpeg=${d.root}`]),
     ],
     getExtraLibs: (target) => platformExtraLibs[target.platform] || [],
     replaceList: [
