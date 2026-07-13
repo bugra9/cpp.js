@@ -114,6 +114,11 @@ export default function run(program, params = [], platformPrefix = null, target 
                 }
                 [dProgram, ...dParams] = params;
                 platformParams = [
+                    '-e', `CC=${wasiSdk}/bin/clang`,
+                    '-e', `CXX=${wasiSdk}/bin/clang++`,
+                    '-e', `AR=${wasiSdk}/bin/ar`,
+                    '-e', `RANLIB=${wasiSdk}/bin/ranlib`,
+                    '-e', `NM=${wasiSdk}/bin/nm`,
                     '-e', `CFLAGS=${wasiCFlags().join(' ')}`,
                     '-e', `CXXFLAGS=${wasiCxxFlags().join(' ')}`,
                 ];

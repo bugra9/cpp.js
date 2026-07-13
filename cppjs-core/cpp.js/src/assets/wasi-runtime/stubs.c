@@ -9,6 +9,12 @@
 
 #include <stddef.h>
 
+/* The command link feeds this file to the C++ driver, which would mangle
+ * these names right past the C references in the dependency archives. */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void *dlopen(const char *file, int mode)
 {
     (void)file;
@@ -41,3 +47,7 @@ int pthread_atfork(void (*prepare)(void), void (*parent)(void), void (*child)(vo
     (void)child;
     return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif

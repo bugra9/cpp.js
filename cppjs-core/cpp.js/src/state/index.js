@@ -220,6 +220,12 @@ await initProcessState();
 async function initProcessState() {
     state.cache = loadCacheState();
     state.config = await loadConfig();
+    // Recipes read the wasi-sdk location from the environment (lazily, in
+    // getBuildParams); mirror the system-config value there so both sources
+    // behave the same.
+    if (state.config.system.WASI_SDK_PATH && !process.env.CPPJS_WASI_SDK_PATH) {
+        process.env.CPPJS_WASI_SDK_PATH = state.config.system.WASI_SDK_PATH;
+    }
 
     state.targets.forEach((target) => {
         target.path = `${target.platform}-${target.arch}-${target.runtime}-${target.buildType}`;

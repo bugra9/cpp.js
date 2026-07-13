@@ -20,15 +20,24 @@ export const WASI_EH_CFLAGS = [
     '-mllvm', '-wasm-use-legacy-eh=false',
 ];
 
-// Link order matters: wasm-ld resolves left to right, so these must come
-// after every archive (libunwind also provides the __cpp_exception tag).
-export const WASI_LINK_LIBS = [
-    '-lunwind',
-    '-lsetjmp',
+// The emulation archives back the _WASI_EMULATED_* defines (getrusage,
+// mmap, signals, getpid). They live in the default sysroot lib dir, so
+// they are safe in configure-probe LIBS too.
+export const WASI_EMULATION_LIBS = [
     '-lwasi-emulated-signal',
     '-lwasi-emulated-process-clocks',
     '-lwasi-emulated-mman',
     '-lwasi-emulated-getpid',
+];
+
+// Full set for the final command link. Order matters (wasm-ld resolves left
+// to right, so these trail every archive), and -lunwind/-lsetjmp resolve
+// only when -fwasm-exceptions selects the eh/ sysroot variant - which is
+// why they must NOT leak into C-mode configure probes.
+export const WASI_LINK_LIBS = [
+    '-lunwind',
+    '-lsetjmp',
+    ...WASI_EMULATION_LIBS,
 ];
 
 export function wasiCFlags() {

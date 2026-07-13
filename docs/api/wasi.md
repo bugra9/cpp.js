@@ -36,6 +36,15 @@ archives are dead-code-eliminated down to what `main` reaches, and the
 - Link (after every archive — order matters): `-lunwind -lsetjmp -lwasi-emulated-*`, plus `assets/wasi-runtime/stubs.c` (clean-failing `dlopen` family, no-op `pthread_atfork`).
 - Extra flags per target: `targetSpecs.specs.wasiFlags`.
 
+## Prebuilt packages
+
+zlib, sqlite3, tiff, geotiff, proj and gdal ship `wasi-wasm32-st-release`
+prebuilt variants. Each `*-wasm` package has a `build:wasi` script that
+produces (or refreshes) the variant locally under the same wasi-sdk
+requirement as app builds. GDAL's `__wasi__` source patches (no processes,
+no `mkstemp`) travel inside its recipe, so a plain `cppjs build -p wasi`
+is all that is needed.
+
 ## Limits
 
 No processes, no dynamic loading, no sockets, single-threaded. Anything the

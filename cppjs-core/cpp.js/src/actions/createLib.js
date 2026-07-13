@@ -7,6 +7,7 @@ import getCmakeParameters from './getCmakeParameters.js';
 import triggerExtensions from './extensions.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
+import { WASI_EMULATION_LIBS } from '../utils/wasiToolchain.js';
 import { getFilesFingerprint, getContentHash } from '../utils/hash.js';
 
 const cpuCount = Math.max(1, os.cpus().length - 1);
@@ -25,6 +26,10 @@ export default function createLib(target, fileType, options = {}) {
     const platformPrefix = `${fileType ? `${fileType}-` : ''}${buildType}`;
     const libdir = `${state.config.paths.build}/${platformPrefix}/prebuilt/${target.path}`;
     const buildPath = `${state.config.paths.build}/${platformPrefix}/${target.path}`;
+    // Tool links inside wasi configure packages need the same runtime stubs
+    // the command link ships (dlopen family, pthread_atfork); compiled below,
+    // referenced from LIBS.
+    const wasiStubObj = `${buildPath}/cppjs-wasi-stubs.o`;
 
     // A lib built from a nativeGlob is only valid for that exact file set: the
     // same lib dir is reused while the bridge list grows as .h imports are
@@ -81,7 +86,13 @@ export default function createLib(target, fileType, options = {}) {
         const ldFlags = Object.values(depPaths).filter(d => d.libPath).map((d) => `-L${d.libPath}`);
         let dependLibs = '';
         if (state.config.build?.buildType === 'configure') {
-            dependLibs = Object.keys(depPaths).filter(d => d && d !== 'cmake').map((d) => `-l${d}`).join(' ');
+            dependLibs = Object.keys(depPaths)
+                .filter(d => d && d !== 'cmake')
+                // wasi prebuilts grow package by package; a declared dep
+                // without a wasi archive (e.g. jpeg) would fail every
+                // configure link probe, LIBS being part of each one.
+                .filter(d => target.platform !== 'wasi' || fs.existsSync(depPaths[d].lib))
+                .map((d) => `-l${d}`).join(' ');
         }
 
         const extraLibs = getExtraLibs ? getExtraLibs(target) : [];
@@ -109,7 +120,12 @@ export default function createLib(target, fileType, options = {}) {
         buildEnv.params.push('-e', `CFLAGS=${cFlags.join(' ')}`);
         buildEnv.params.push('-e', `CXXFLAGS=${cFlags.join(' ')}`);
         buildEnv.params.push('-e', `LDFLAGS=${ldFlags.join(' ')} ${extraLibs.join(' ')}`);
-        buildEnv.params.push('-e', `LIBS=${dependLibs} ${extraLibs.join(' ')}`);
+        // wasi-libc parks getrusage/mmap/signal shims in the emulation
+        // archives; configure-based recipes need them in LIBS (which lands
+        // after the objects, unlike LDFLAGS).
+        const wasiStubLib = state.config.build?.buildType === 'configure' ? `${wasiStubObj} ` : '';
+        const wasiLibs = target.platform === 'wasi' ? ` ${wasiStubLib}${WASI_EMULATION_LIBS.join(' ')}` : '';
+        buildEnv.params.push('-e', `LIBS=${dependLibs} ${extraLibs.join(' ')}${wasiLibs}`);
 
         let configBuildEnv = state.config.build.env;
         if (configBuildEnv && typeof configBuildEnv === 'function') {
@@ -167,6 +183,15 @@ export default function createLib(target, fileType, options = {}) {
                         regex, replacement, paths: paths.map((p) => `${buildPath}/${p}`), recursive: false, silent: true,
                     });
                 });
+            }
+            if (target.platform === 'wasi') {
+                // LIBS references the stub object, so every configure probe
+                // needs it on disk before the first link test runs.
+                run(null, [
+                    'wasi-clang', '-c',
+                    `${state.config.paths.cli}/assets/wasi-runtime/stubs.c`,
+                    '-o', wasiStubObj,
+                ], platformPrefix, target, { console: buildEnv.console });
             }
             run(null, [
                 './configure',
