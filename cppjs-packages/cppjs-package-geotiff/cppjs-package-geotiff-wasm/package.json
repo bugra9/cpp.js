@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-geotiff-wasm",
-    "version": "2.0.0-beta.33",
+    "version": "2.0.0-beta.29",
     "nativeVersion": "1.7.4",
     "description": "WebAssembly build of the precompiled libgeotiff (GeoTIFF) library, built with cpp.js. Use it together with the main package @cpp.js/package-geotiff.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-geotiff#readme",
@@ -19,7 +19,6 @@
     ],
     "scripts": {
         "build": "cppjs build -p wasm",
-        "build:wasi": "cppjs build -p wasi",
         "clear": "rm -rf .cppjs dist *.xcframework",
         "prepublishOnly": "cppjs build -p wasm"
     },

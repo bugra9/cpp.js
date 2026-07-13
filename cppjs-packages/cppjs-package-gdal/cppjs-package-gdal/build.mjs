@@ -21,10 +21,6 @@ const platformCmake = {
     'android': ['-DCMAKE_ANDROID_STL_TYPE=c++_shared', '-DCMAKE_DISABLE_FIND_PACKAGE_Python=ON', '-DBUILD_PYTHON_BINDINGS=OFF'],
 };
 
-// wasi prebuilts exist for these packages only; the other deps' cmake hints
-// would point at directories that do not exist for wasi targets.
-const WASI_READY_DEPS = new Set(['sqlite3', 'proj', 'tiff', 'geotiff', 'z']);
-
 const ifDep = (dep, params) => (dep ? params(dep) : []);
 
 export default {
@@ -87,11 +83,7 @@ export default {
         },
     ],
     buildType: 'cmake',
-    getBuildParams: (target, allDepPaths) => {
-        const depPaths = target.platform === 'wasi'
-            ? Object.fromEntries(Object.entries(allDepPaths).filter(([name]) => WASI_READY_DEPS.has(name)))
-            : allDepPaths;
-        return [
+    getBuildParams: (target, depPaths) => [
         ...(platformCmake[target.platform] || []),
         '-DBUILD_APPS=OFF', '-DBUILD_TESTING=OFF', '-DACCEPT_MISSING_SQLITE3_MUTEX_ALLOC=ON',
         '-DOGR_ENABLE_DRIVER_GPSBABEL=OFF', '-DGDAL_USE_HDF5=OFF', '-DGDAL_USE_HDFS=OFF',
@@ -113,8 +105,7 @@ export default {
         ...ifDep(depPaths.expat, (d) => [`-DEXPAT_INCLUDE_DIR=${d.header}`, `-DEXPAT_LIBRARY=${d.lib}`]),
         ...ifDep(depPaths.iconv, (d) => [`-DIconv_INCLUDE_DIR=${d.header}`, `-DIconv_LIBRARY=${d.lib}`]),
         ...ifDep(depPaths.curl, (d) => ['-DGDAL_USE_CURL=ON', `-DCURL_INCLUDE_DIR=${d.header}`, `-DCURL_LIBRARY=${d.lib}`]),
-        ];
-    },
+    ],
     env: [
         'CFLAGS="-DRENAME_INTERNAL_LIBTIFF_SYMBOLS"',
         'CPPFLAGS="-DRENAME_INTERNAL_LIBTIFF_SYMBOLS"',

@@ -1,10 +1,5 @@
 const ifDep = (dep, params) => (dep ? params(dep) : []);
 
-// jpeg/zstd/lerc have no wasi prebuilt variants yet - the wasi libtiff is
-// zlib-only (matching the gdal.wasm spike; codecs return when their
-// packages grow wasi targets).
-const ifDepOnPlatforms = (target, dep, params) => (target.platform === 'wasi' ? [] : ifDep(dep, params));
-
 export default {
     getURL: (version) => `https://download.osgeo.org/libtiff/tiff-${version}.tar.gz`,
     sha256: '672bd7d10aee4606171afb864f3570b83340f6a33e2c186dc0512f7145ffdf6a', // tiff-4.7.2.tar.gz
@@ -24,17 +19,17 @@ export default {
             `-DZLIB_LIBRARY=${d.lib}`,
             `-DZLIB_LIBRARY_RELEASE=${d.lib}`,
         ]),
-        ...ifDepOnPlatforms(target, depPaths.jpeg, (d) => [
+        ...ifDep(depPaths.jpeg, (d) => [
             '-Djpeg=ON',
             `-DJPEG_INCLUDE_DIR=${d.header}`,
             `-DJPEG_LIBRARY=${d.lib}`,
         ]),
-        ...ifDepOnPlatforms(target, depPaths.zstd, (d) => [
+        ...ifDep(depPaths.zstd, (d) => [
             '-Dzstd=ON',
             `-DZSTD_INCLUDE_DIR=${d.header}`,
             `-DZSTD_LIBRARY=${d.lib}`,
         ]),
-        ...ifDepOnPlatforms(target, depPaths.Lerc, (d) => [
+        ...ifDep(depPaths.Lerc, (d) => [
             '-Dlerc=ON',
             `-DLERC_INCLUDE_DIR=${d.header}`,
             `-DLERC_LIBRARY=${d.lib}`,

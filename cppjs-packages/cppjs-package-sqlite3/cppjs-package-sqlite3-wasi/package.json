@@ -1,16 +1,16 @@
 {
-    "name": "@cpp.js/package-sqlite3-wasm",
-    "version": "2.0.0-beta.29",
+    "name": "@cpp.js/package-sqlite3-wasi",
+    "version": "2.0.0-beta.33",
     "nativeVersion": "3.53.3",
-    "description": "WebAssembly build of the precompiled SQLite3 database engine, built with cpp.js. Use it together with the main package @cpp.js/package-sqlite3.",
+    "description": "WASI build of the precompiled SQLite3 database engine, built with cpp.js. Use it together with the main package @cpp.js/package-sqlite3.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-sqlite3#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "license": "blessing",
     "type": "module",
     "scripts": {
-        "build": "cppjs build -p wasm",
+        "build": "cppjs build -p wasi",
         "clear": "rm -rf .cppjs dist",
-        "prepublishOnly": "cppjs build -p wasm"
+        "prepublishOnly": "cppjs build -p wasi"
     },
     "dependencies": {
         "@cpp.js/package-sqlite3": "workspace:^"
@@ -27,6 +27,6 @@
         "cpp.js",
         "cpp.js-package",
         "webassembly",
-        "wasm"
+        "wasi"
     ]
 }

@@ -1,16 +1,16 @@
 {
-    "name": "@cpp.js/package-zlib-wasm",
-    "version": "2.0.0-beta.29",
+    "name": "@cpp.js/package-zlib-wasi",
+    "version": "2.0.0-beta.33",
     "nativeVersion": "1.3.2",
-    "description": "WebAssembly build of the precompiled zlib library, built with cpp.js. Use it together with the main package @cpp.js/package-zlib.",
+    "description": "WASI build of the precompiled zlib library, built with cpp.js. Use it together with the main package @cpp.js/package-zlib.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-zlib#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "license": "Zlib",
     "type": "module",
     "scripts": {
-        "build": "cppjs build -p wasm",
+        "build": "cppjs build -p wasi",
         "clear": "rm -rf .cppjs dist",
-        "prepublishOnly": "cppjs build -p wasm"
+        "prepublishOnly": "cppjs build -p wasi"
     },
     "dependencies": {
         "@cpp.js/package-zlib": "workspace:^"
@@ -25,6 +25,6 @@
         "cpp.js",
         "cpp.js-package",
         "webassembly",
-        "wasm"
+        "wasi"
     ]
 }

@@ -38,12 +38,14 @@ archives are dead-code-eliminated down to what `main` reaches, and the
 
 ## Prebuilt packages
 
-zlib, sqlite3, tiff, geotiff, proj and gdal ship `wasi-wasm32-st-release`
-prebuilt variants. Each `*-wasm` package has a `build:wasi` script that
-produces (or refreshes) the variant locally under the same wasi-sdk
-requirement as app builds. GDAL's `__wasi__` source patches (no processes,
-no `mkstemp`) travel inside its recipe, so a plain `cppjs build -p wasi`
-is all that is needed.
+zlib, sqlite3, tiff, geotiff, proj and gdal have dedicated wasi platform
+packages — `@cpp.js/package-<name>-wasi`, next to their `-wasm`/`-android`/
+`-ios` siblings — carrying the `wasi-wasm32-st-release` prebuilts. Depend
+on the `-wasi` variant when targeting wasi; `pnpm build` inside such a
+package refreshes its prebuilt under the same wasi-sdk requirement as app
+builds. GDAL's `__wasi__` source patches (no processes, no `mkstemp`)
+travel inside its recipe, so a plain `cppjs build -p wasi` is all that is
+needed.
 
 ## Limits
 

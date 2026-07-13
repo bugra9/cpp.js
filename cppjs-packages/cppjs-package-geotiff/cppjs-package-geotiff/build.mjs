@@ -31,8 +31,7 @@ export default {
         ...ifDep(depPaths.proj, (d) => [`--with-proj=${d.root}`]),
         ...ifDep(depPaths.tiff, (d) => [`--with-libtiff=${d.root}`]),
         ...ifDep(depPaths.z, (d) => [`--with-zlib=${d.root}`]),
-        // jpeg has no wasi prebuilt yet; the wasi libtiff is zlib-only too.
-        ...ifDep(target.platform === 'wasi' ? null : depPaths.jpeg, (d) => [`--with-jpeg=${d.root}`]),
+        ...ifDep(depPaths.jpeg, (d) => [`--with-jpeg=${d.root}`]),
     ],
     getExtraLibs: (target) => platformExtraLibs[target.platform] || [],
     replaceList: [
