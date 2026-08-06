@@ -1,0 +1,102 @@
+#!/usr/bin/env node
+// K1 gate: library packages must not publish executables - fail if any npm tarball
+// would carry dist/prebuilt/**/bin/ files beyond *-config scripts. -bin packages are
+// exempt for entries their bin map declares publish:true (package.json "cppjs.bin").
+// K4 gate: packages that publish bin tools must carry a derived cppjs.provenance
+// block (recipe, source hash, build environment) and ship the SBOM it points to.
+//
+//   node scripts/check-publish-hygiene.js
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const PACKAGES_DIR = path.join(ROOT, 'cppjs-packages');
+
+const packageDirs = [];
+for (const family of fs.readdirSync(PACKAGES_DIR)) {
+    const familyDir = path.join(PACKAGES_DIR, family);
+    if (!fs.statSync(familyDir).isDirectory()) continue;
+    for (const pkg of fs.readdirSync(familyDir)) {
+        const pkgDir = path.join(familyDir, pkg);
+        if (fs.existsSync(path.join(pkgDir, 'package.json'))) packageDirs.push(pkgDir);
+    }
+}
+
+let failures = 0;
+for (const pkgDir of packageDirs) {
+    const manifest = JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf8'));
+    if (manifest.private) continue;
+
+    // The bin map lives in the recipe (cppjs.build.js), contract C.
+    let allowed = new Set();
+    const recipeFile = path.join(pkgDir, 'cppjs.build.js');
+    if (fs.existsSync(recipeFile)) {
+        const recipe = (await import(pathToFileURL(recipeFile).href)).default;
+        allowed = new Set(
+            Object.entries(recipe?.bin?.tools ?? {})
+                .filter(([, tool]) => tool.publish)
+                .map(([name]) => name),
+        );
+    }
+
+    let files;
+    try {
+        const raw = execFileSync('npm', ['pack', '--dry-run', '--json'], {
+            cwd: pkgDir,
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'ignore'],
+            maxBuffer: 64 * 1024 * 1024,
+        });
+        files = JSON.parse(raw)[0].files.map((f) => f.path);
+    } catch (e) {
+        console.error(`check-publish-hygiene: npm pack failed in ${pkgDir}: ${e.message}`);
+        failures += 1;
+        continue;
+    }
+
+    const leaks = files.filter((f) => {
+        const match = f.match(/^dist\/prebuilt\/[^/]+\/bin\/(.+)$/);
+        if (!match) return false;
+        const name = match[1];
+        return !name.endsWith('-config') && !allowed.has(name);
+    });
+    if (leaks.length > 0) {
+        failures += 1;
+        console.error(`K1 violation in ${manifest.name}: tarball ships executables:`);
+        for (const leak of leaks) console.error(`  ${leak}`);
+    }
+
+    if (allowed.size > 0) {
+        const provenance = manifest.cppjs?.provenance;
+        const problems = [];
+        if (!provenance) problems.push('missing cppjs.provenance block (run the package build)');
+        else {
+            if (!provenance.recipe?.name || !provenance.recipe?.version) problems.push('recipe.name/version missing');
+            if (!provenance.source?.url || !provenance.source?.sha256) problems.push('source.url/sha256 missing');
+            if (!provenance.environment?.dockerImage) problems.push('environment.dockerImage missing');
+            if (!provenance.sbom) problems.push('sbom path missing');
+            else if (!files.includes(provenance.sbom)) problems.push(`sbom ${provenance.sbom} not in tarball (run cppjs licenses)`);
+            if (manifest.license && !manifest.license.includes(' AND '))
+                problems.push(
+                    'license field is a single license for an aggregate binary (expected the derived compound expression - run the package build)',
+                );
+            const licenseFile = path.join(pkgDir, 'LICENSE');
+            if (!fs.existsSync(licenseFile)) problems.push('LICENSE file missing (run the package build - it is derived)');
+            else if (manifest.license && !fs.readFileSync(licenseFile, 'utf8').includes(manifest.license))
+                problems.push('LICENSE file does not carry the derived license expression (run the package build)');
+        }
+        if (problems.length > 0) {
+            failures += 1;
+            console.error(`K4 violation in ${manifest.name}: ${problems.join('; ')}`);
+        }
+    }
+}
+
+if (failures > 0) {
+    console.error(`check-publish-hygiene: ${failures} package(s) violate the bin contract (K1/K4).`);
+    process.exit(1);
+}
+console.log(`check-publish-hygiene: ${packageDirs.length} packages checked, no K1/K4 violations.`);
