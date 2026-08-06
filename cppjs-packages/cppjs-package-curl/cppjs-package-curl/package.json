@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-curl",
-    "version": "2.0.0-beta.29",
+    "version": "2.0.0-beta.33",
     "nativeVersion": "8.21.0",
     "description": "This package provides a CURL library compiled with Cpp.js, enabling seamless usage of CURL functionalities in JavaScript, WebAssembly and React Native projects. Client-side URL transfers for web and mobile applications.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-curl#readme",
@@ -19,5 +19,17 @@
         "android",
         "ios",
         "react-native"
-    ]
+    ],
+    "cppjs": {
+        "upstream": {
+            "license": {
+                "declared": "curl",
+                "selected": null,
+                "files": [
+                    "COPYING"
+                ],
+                "copyright": null
+            }
+        }
+    }
 }

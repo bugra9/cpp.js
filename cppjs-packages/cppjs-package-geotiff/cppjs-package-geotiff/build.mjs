@@ -22,10 +22,20 @@ const platformExtraLibs = {
 
 const ifDep = (dep, params) => (dep ? params(dep) : []);
 
+// Library packages ship archives only: drop the utilities (applygeo/geotifcp/listgeo) from the build.
+const noToolsReplaceList = [
+    {
+        regex: 'SUBDIRS = libxtiff \\. bin man',
+        replacement: 'SUBDIRS = libxtiff . man',
+        paths: ['Makefile.in'],
+    },
+];
+
 export default {
     sha256: 'c598d04fdf2ba25c4352844dafa81dde3f7fd968daa7ad131228cd91e9d3dc47', // libgeotiff-1.7.4.tar.gz
     getURL: (version) => `https://download.osgeo.org/geotiff/libgeotiff/libgeotiff-${version}.tar.gz`,
     buildType: 'configure',
+    sourceReplaceList: () => noToolsReplaceList,
     getBuildParams: (target, depPaths) => [
         ...(platformBuild[target.platform] || platformBuild[`${target.platform}-${target.arch}`] || []),
         ...ifDep(depPaths.proj, (d) => [`--with-proj=${d.root}`]),

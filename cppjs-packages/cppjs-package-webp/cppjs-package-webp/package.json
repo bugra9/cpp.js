@@ -18,5 +18,17 @@
         "android",
         "ios",
         "react-native"
-    ]
+    ],
+    "cppjs": {
+        "upstream": {
+            "license": {
+                "declared": "BSD-3-Clause",
+                "selected": null,
+                "files": [
+                    "COPYING"
+                ],
+                "copyright": null
+            }
+        }
+    }
 }

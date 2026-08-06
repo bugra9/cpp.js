@@ -20,5 +20,18 @@
         "android",
         "ios",
         "react-native"
-    ]
+    ],
+    "cppjs": {
+        "upstream": {
+            "license": {
+                "declared": "MPL-1.1 OR GPL-2.0-or-later OR LGPL-2.1-or-later",
+                "selected": null,
+                "files": [
+                    "COPYING"
+                ],
+                "copyright": null,
+                "notes": "Tri-license; no election recorded yet."
+            }
+        }
+    }
 }

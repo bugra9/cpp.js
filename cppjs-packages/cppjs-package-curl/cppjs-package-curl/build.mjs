@@ -1,10 +1,17 @@
 const platformBuild = {
     'wasm': ['-DBUILD_SHARED_LIBS=OFF', '-DBUILD_STATIC_LIBS=ON'],
     'android': ['-DBUILD_SHARED_LIBS=ON', '-DBUILD_STATIC_LIBS=OFF'],
-    // _CURL_PREFILL=ON forces curl to load CMake/unix-cache.cmake, which sets
-    // HAVE_PIPE2=0 for APPLE. Without it, curl falls back to check_function_exists,
-    // which misdetects pipe2 as available on iPhoneSimulator SDK 26+ and breaks the build.
+    // _CURL_PREFILL=ON loads unix-cache.cmake (HAVE_PIPE2=0); iPhoneSimulator SDK 26+ misdetects pipe2 otherwise.
     'ios': ['-DBUILD_SHARED_LIBS=OFF', '-DBUILD_STATIC_LIBS=ON', '-D_CURL_PREFILL=ON'],
+    // wasi: HTTP(S)-only over wasi:sockets; no threads/socketpair/UNIX sockets; CA via CURLOPT_CAINFO.
+    'wasi': [
+        '-DBUILD_SHARED_LIBS=OFF', '-DBUILD_STATIC_LIBS=ON',
+        '-DHTTP_ONLY=ON',
+        '-DENABLE_THREADED_RESOLVER=OFF',
+        '-DCURL_DISABLE_SOCKETPAIR=ON',
+        '-DENABLE_UNIX_SOCKETS=OFF',
+        '-DCURL_CA_BUNDLE=none', '-DCURL_CA_PATH=none',
+    ],
 };
 
 export default {

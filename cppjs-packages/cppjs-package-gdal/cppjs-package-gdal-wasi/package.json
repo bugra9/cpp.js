@@ -1,7 +1,7 @@
 {
     "name": "@cpp.js/package-gdal-wasi",
     "version": "2.0.0-beta.33",
-    "nativeVersion": "3.13.1",
+    "nativeVersion": "3.13.2",
     "description": "WASI build of the precompiled GDAL geospatial library, built with cpp.js. Use it together with the main package @cpp.js/package-gdal.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-gdal#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
@@ -30,7 +30,8 @@
         "@cpp.js/package-proj-wasi": "workspace:^",
         "@cpp.js/package-tiff-wasi": "workspace:^",
         "@cpp.js/package-sqlite3-wasi": "workspace:^",
-        "@cpp.js/package-zlib-wasi": "workspace:^"
+        "@cpp.js/package-zlib-wasi": "workspace:^",
+        "@cpp.js/package-curl-wasi": "workspace:^"
     },
     "devDependencies": {
         "cpp.js": "workspace:^"

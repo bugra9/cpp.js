@@ -4,8 +4,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
-// Standalone use-case for this wasi prebuilt: compile e2e/main.c against the
-// shipped archives with wasi-sdk, run it under wasmtime, assert the marker.
+// Compile e2e/main.c against the shipped archives and assert the marker under wasmtime.
 const P = 'wasi-wasm32-st-release';
 const pkgDir = resolve(import.meta.dirname, '..');
 
@@ -15,6 +14,10 @@ if (!sdk) {
 }
 if (!sdk || !existsSync(sdk)) {
     console.log('SKIP: wasi-sdk not configured (CPPJS_WASI_SDK_PATH or ~/.cppjs.json WASI_SDK_PATH).');
+    process.exit(0);
+}
+if (!existsSync(join(sdk, 'share/wasi-sysroot/lib/wasm32-wasip3'))) {
+    console.log('SKIP: configured wasi-sdk has no wasm32-wasip3 sysroot (need wasi-sdk >= 34).');
     process.exit(0);
 }
 try {
@@ -49,12 +52,13 @@ try {
     const obj = join(work, 'main.o');
     const wasm = join(work, 'main.wasm');
     execFileSync(join(sdk, 'bin/clang'), [
-        '-c', join(pkgDir, 'e2e/main.c'), '-o', obj, '-O2',
+        '--target=wasm32-wasip3', '-c', join(pkgDir, 'e2e/main.c'), '-o', obj, '-O2',
         '-D_WASI_EMULATED_SIGNAL', '-D_WASI_EMULATED_PROCESS_CLOCKS',
         '-D_WASI_EMULATED_MMAN', '-D_WASI_EMULATED_GETPID',
         ...includes.map((i) => `-I${i}`),
     ], { stdio: 'inherit' });
     execFileSync(join(sdk, 'bin/clang++'), [
+        '--target=wasm32-wasip3',
         obj, ...archives,
         '-fwasm-exceptions', '-mexception-handling',
         '-mllvm', '-wasm-enable-sjlj', '-mllvm', '-wasm-use-legacy-eh=false',
@@ -63,7 +67,7 @@ try {
         '-o', wasm,
     ], { stdio: 'inherit' });
     const out = execFileSync('wasmtime', [
-        'run', '-W', 'exceptions=y', `--dir=${work}::/work`,
+        'run', `--dir=${work}::/work`,
         wasm,
     ], { encoding: 'utf8', timeout: 120000 });
     process.stdout.write(out);

@@ -1,20 +1,16 @@
 const platformCmake = {
     'wasm': ['-DBUILD_SHARED_LIBS=OFF'],
     'wasi': [
-        // try_compile probes cannot carry the trailing -lunwind the wasm-EH
-        // runtime needs; seed the stdc++ link check instead.
+        // Probes can't carry the trailing -lunwind; seed the stdc++ link check.
         '-D_TEST_LINK_STDCPP:INTERNAL=1',
-        // Jail finds to the passed prefixes - host package configs
-        // (Homebrew Arrow, ...) leak into the cross build otherwise.
+        // Jail finds to the passed prefixes; host configs (Homebrew Arrow, ...) leak otherwise.
         '-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY',
         '-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY',
         '-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY',
-        // The codec packages have no wasi prebuilts yet; bundle GDAL's
-        // internal copies instead.
+        // Codec deps have no wasi prebuilts; use GDAL's internal copies.
         '-DGDAL_USE_PNG_INTERNAL=ON', '-DGDAL_USE_JPEG_INTERNAL=ON',
         '-DGDAL_USE_JPEG12_INTERNAL=ON', '-DGDAL_USE_GIF_INTERNAL=ON',
-        // GPKG is an ogr_dependent_driver on SQLITE: without the explicit
-        // pair it stays silently disabled.
+        // GPKG needs the explicit SQLITE pair or it stays silently disabled.
         '-DOGR_ENABLE_DRIVER_SQLITE=ON', '-DOGR_ENABLE_DRIVER_GPKG=ON',
         '-DGDAL_USE_ICONV=OFF',
     ],
@@ -23,10 +19,22 @@ const platformCmake = {
 
 const ifDep = (dep, params) => (dep ? params(dep) : []);
 
+// GDAL-internal codec copies compiled into the library (GDAL_USE_*_INTERNAL);
+// declared per platform so notices/SBOM track exactly what each artifact embeds.
+const internalPng = { name: 'libpng', version: '1.6.43', license: 'libpng-2.0', files: ['frmts/png/libpng/LICENSE'], notes: 'GDAL internal copy (GDAL_USE_PNG_INTERNAL)' };
+const internalGif = { name: 'giflib', license: 'MIT', files: ['frmts/gif/giflib/COPYING'], notes: 'GDAL internal copy (GDAL_USE_GIF_INTERNAL)' };
+const internalJpeg = { name: 'libjpeg', version: '6b', license: 'IJG', files: ['frmts/jpeg/libjpeg/README'], notes: 'GDAL internal copy, 8- and 12-bit variants (GDAL_USE_JPEG_INTERNAL, GDAL_USE_JPEG12_INTERNAL)' };
+
 export default {
-    sha256: 'e04e9813bd215b56753d5554330c53be25f3df2d7ed7e6413a19e6b66751c675', // gdal-3.13.1.tar.gz
+    sha256: '1051c33db1d9e6a05907ac07cd06f5ce8ac0658f317c3229774cc2198a6c1252', // gdal-3.13.2.tar.gz
     getURL: (version) => `https://github.com/OSGeo/gdal/releases/download/v${version}/gdal-${version}.tar.gz`,
     copyToSource: { 'assets/gdal_empty_file.cpp': 'gcore/gdal_empty_file.cpp' },
+    bundled: {
+        wasi: [internalPng, internalJpeg, internalGif],
+        wasm: [internalPng, internalGif],
+        android: [internalPng, internalGif],
+        ios: [internalPng, internalGif],
+    },
     replaceList: [
         {
             regex: ' iconv_open',
@@ -53,12 +61,10 @@ export default {
             replacement: 'add_library(${GDAL_LIB_TARGET_NAME} gcore/gdal.h gcore/gdal_empty_file.cpp)',
             paths: ['gdal.cmake'],
         },
-        // WASI carries no processes (fork/exec/wait) and no mkstemp; the
-        // patches below are all __wasi__-guarded, so every other platform
-        // compiles the untouched upstream body.
+        // __wasi__-guarded patches: other platforms compile the untouched upstream body.
         {
             regex: '#include "cpl_port.h"\n#include "cpl_spawn.h"',
-            replacement: '#include "cpl_port.h"\n#include "cpl_spawn.h"\n\n/* WASI: no processes on wasm32-wasip1 - every spawn entry point fails\n   cleanly instead of referencing fork/exec/wait. */\n#ifdef __wasi__\n#include "cpl_error.h"\n\nint CPLSpawn(const char *const *, VSILFILE *, VSILFILE *, int bDisplayErr)\n{\n    if (bDisplayErr)\n        CPLError(CE_Failure, CPLE_NotSupported, "CPLSpawn not supported on WASI");\n    return -1;\n}\n\nCPLSpawnedProcess *CPLSpawnAsync(int (*)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),\n                                 const char *const *, int, int, int, char **)\n{\n    CPLError(CE_Failure, CPLE_NotSupported, "CPLSpawnAsync not supported on WASI");\n    return nullptr;\n}\n\nCPL_PID CPLSpawnAsyncGetChildProcessId(CPLSpawnedProcess *) { return -1; }\nint CPLSpawnAsyncFinish(CPLSpawnedProcess *, int, int) { return -1; }\nCPL_FILE_HANDLE CPLSpawnAsyncGetInputFileHandle(CPLSpawnedProcess *) { return -1; }\nCPL_FILE_HANDLE CPLSpawnAsyncGetOutputFileHandle(CPLSpawnedProcess *) { return -1; }\nCPL_FILE_HANDLE CPLSpawnAsyncGetErrorFileHandle(CPLSpawnedProcess *) { return -1; }\nvoid CPLSpawnAsyncCloseInputFileHandle(CPLSpawnedProcess *) {}\nvoid CPLSpawnAsyncCloseOutputFileHandle(CPLSpawnedProcess *) {}\nvoid CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess *) {}\nint CPLPipeRead(CPL_FILE_HANDLE, void *, int) { return FALSE; }\nint CPLPipeWrite(CPL_FILE_HANDLE, const void *, int) { return FALSE; }\n\n#else /* !__wasi__ */',
+            replacement: '#include "cpl_port.h"\n#include "cpl_spawn.h"\n\n/* WASI: no processes on WASI - every spawn entry point fails\n   cleanly instead of referencing fork/exec/wait. */\n#ifdef __wasi__\n#include "cpl_error.h"\n\nint CPLSpawn(const char *const *, VSILFILE *, VSILFILE *, int bDisplayErr)\n{\n    if (bDisplayErr)\n        CPLError(CE_Failure, CPLE_NotSupported, "CPLSpawn not supported on WASI");\n    return -1;\n}\n\nCPLSpawnedProcess *CPLSpawnAsync(int (*)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),\n                                 const char *const *, int, int, int, char **)\n{\n    CPLError(CE_Failure, CPLE_NotSupported, "CPLSpawnAsync not supported on WASI");\n    return nullptr;\n}\n\nCPL_PID CPLSpawnAsyncGetChildProcessId(CPLSpawnedProcess *) { return -1; }\nint CPLSpawnAsyncFinish(CPLSpawnedProcess *, int, int) { return -1; }\nCPL_FILE_HANDLE CPLSpawnAsyncGetInputFileHandle(CPLSpawnedProcess *) { return -1; }\nCPL_FILE_HANDLE CPLSpawnAsyncGetOutputFileHandle(CPLSpawnedProcess *) { return -1; }\nCPL_FILE_HANDLE CPLSpawnAsyncGetErrorFileHandle(CPLSpawnedProcess *) { return -1; }\nvoid CPLSpawnAsyncCloseInputFileHandle(CPLSpawnedProcess *) {}\nvoid CPLSpawnAsyncCloseOutputFileHandle(CPLSpawnedProcess *) {}\nvoid CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess *) {}\nint CPLPipeRead(CPL_FILE_HANDLE, void *, int) { return FALSE; }\nint CPLPipeWrite(CPL_FILE_HANDLE, const void *, int) { return FALSE; }\n\n#else /* !__wasi__ */',
             paths: ['port/cpl_spawn.cpp'],
         },
         {
@@ -73,13 +79,58 @@ export default {
         },
         {
             regex: '#include "gdalalg_external.h"\n#include "gdalalg_materialize.h"',
-            replacement: '#include "gdalalg_external.h"\n\n/* WASI: the external subcommand launches child processes, which do not\n   exist on wasm32-wasip1 - fail cleanly instead. */\n#ifdef __wasi__\n#include "cpl_error.h"\n\nGDALExternalAlgorithmBase::~GDALExternalAlgorithmBase() = default;\n\nbool GDALExternalAlgorithmBase::Run(const std::vector<std::string> &,\n                                    std::vector<GDALArgDatasetValue> &,\n                                    const std::string &, GDALArgDatasetValue &)\n{\n    CPLError(CE_Failure, CPLE_NotSupported,\n             "External pipeline steps are not supported on WASI");\n    return false;\n}\n\nGDALExternalRasterOrVectorAlgorithm::~GDALExternalRasterOrVectorAlgorithm() =\n    default;\nGDALExternalRasterAlgorithm::~GDALExternalRasterAlgorithm() = default;\nGDALExternalVectorAlgorithm::~GDALExternalVectorAlgorithm() = default;\n\n#else /* !__wasi__ */\n#include "gdalalg_materialize.h"',
+            replacement: '#include "gdalalg_external.h"\n\n/* WASI: the external subcommand launches child processes, which do not\n   exist on WASI - fail cleanly instead. */\n#ifdef __wasi__\n#include "cpl_error.h"\n\nGDALExternalAlgorithmBase::~GDALExternalAlgorithmBase() = default;\n\nbool GDALExternalAlgorithmBase::Run(const std::vector<std::string> &,\n                                    std::vector<GDALArgDatasetValue> &,\n                                    const std::string &, GDALArgDatasetValue &)\n{\n    CPLError(CE_Failure, CPLE_NotSupported,\n             "External pipeline steps are not supported on WASI");\n    return false;\n}\n\nGDALExternalRasterOrVectorAlgorithm::~GDALExternalRasterOrVectorAlgorithm() =\n    default;\nGDALExternalRasterAlgorithm::~GDALExternalRasterAlgorithm() = default;\nGDALExternalVectorAlgorithm::~GDALExternalVectorAlgorithm() = default;\n\n#else /* !__wasi__ */\n#include "gdalalg_materialize.h"',
             paths: ['apps/gdalalg_external.cpp'],
         },
         {
             regex: '//! @endcond',
             replacement: '//! @endcond\n\n#endif /* !__wasi__ */',
             paths: ['apps/gdalalg_external.cpp'],
+        },
+        // wasi-sdk 34's libc++ no longer surfaces std::strtoull here; the global name is portable.
+        {
+            regex: 'std::strtoull',
+            replacement: 'strtoull',
+            paths: [
+                'alg/zonal.cpp',
+                'apps/gdal_create.cpp',
+                'apps/gdalalg_vsi_sozip.cpp',
+                'frmts/airsar/airsardataset.cpp',
+                'frmts/basisu_ktx2/basisudataset.cpp',
+                'frmts/basisu_ktx2/ktx2dataset.cpp',
+                'frmts/e57/e57driver.cpp',
+                'frmts/grib/gribdataset.cpp',
+                'frmts/gtiff/gtiffdataset_read.cpp',
+                'frmts/jp2kak/jp2kakdataset.cpp',
+                'frmts/jpegxl/jpegxl.cpp',
+                'frmts/netcdf/netcdfmultidim.cpp',
+                'frmts/nitf/nitffile.cpp',
+                'frmts/pds/pds4dataset.cpp',
+                'frmts/tiledb/tiledbdense.cpp',
+                'frmts/tiledb/tiledbmultidim.cpp',
+                'frmts/tiledb/tiledbmultidimarray.cpp',
+                'frmts/tiledb/tiledbsparse.cpp',
+                'frmts/vrt/vrtmultidim.cpp',
+                'frmts/vrt/vrtrasterband.cpp',
+                'frmts/zarr/vsikerchunk_json_ref.cpp',
+                'frmts/zarr/vsikerchunk_parquet_ref.cpp',
+                'frmts/zarr/zarr_array.cpp',
+                'frmts/zarr/zarr_v2_array.cpp',
+                'frmts/zarr/zarr_v3_array.cpp',
+                'gcore/gdalpamrasterband.cpp',
+                'ogr/ogrsf_frmts/gpkg/ogrgeopackagetablelayer.cpp',
+                'ogr/ogrsf_frmts/pds/ogrpdsdatasource.cpp',
+                'port/cpl_minizip_zip.cpp',
+                'port/cpl_vsil_cache.cpp',
+                'port/cpl_vsil_curl.cpp',
+                'port/cpl_vsil_stdin.cpp',
+            ],
+        },
+        // libc++ hygiene: <atomic> is no longer transitively included here.
+        {
+            regex: '#include <limits>',
+            replacement: '#include <atomic>\n#include <limits>',
+            paths: ['apps/gdalalg_raster_tile.h'],
         },
     ],
     buildType: 'cmake',

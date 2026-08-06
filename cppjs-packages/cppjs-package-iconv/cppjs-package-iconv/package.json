@@ -19,5 +19,18 @@
         "android",
         "ios",
         "react-native"
-    ]
+    ],
+    "cppjs": {
+        "upstream": {
+            "license": {
+                "declared": "LGPL-2.1-or-later",
+                "selected": null,
+                "files": [
+                    "COPYING.LIB"
+                ],
+                "copyright": null,
+                "notes": "Library only; the GPL CLI is not built (see recipe)."
+            }
+        }
+    }
 }

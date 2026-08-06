@@ -19,5 +19,17 @@
         "android",
         "ios",
         "react-native"
-    ]
+    ],
+    "cppjs": {
+        "upstream": {
+            "license": {
+                "declared": "IJG AND BSD-3-Clause AND Zlib",
+                "selected": null,
+                "files": [
+                    "LICENSE.md"
+                ],
+                "copyright": null
+            }
+        }
+    }
 }

@@ -21,7 +21,7 @@ int main(void)
     return 0;
 }
 
-/* wasi runtime stubs: no dynamic loading / fork on wasm32-wasip1 */
+/* wasi runtime stubs: no dynamic loading / fork on WASI */
 void *dlopen(const char *f, int m) { (void)f; (void)m; return 0; }
 char *dlerror(void) { return (char *)"no dynamic loading on WASI"; }
 void *dlsym(void *h, const char *s) { (void)h; (void)s; return 0; }

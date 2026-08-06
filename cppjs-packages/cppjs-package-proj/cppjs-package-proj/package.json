@@ -19,5 +19,17 @@
         "android",
         "ios",
         "react-native"
-    ]
+    ],
+    "cppjs": {
+        "upstream": {
+            "license": {
+                "declared": "MIT",
+                "selected": null,
+                "files": [
+                    "COPYING"
+                ],
+                "copyright": null
+            }
+        }
+    }
 }

@@ -3,8 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-// Runs the built command under wasmtime. `-W exceptions=y` is required: the
-// module uses the standard (Wasm 3.0) exception format for C++ EH and sjlj.
+// Runs the built command under wasmtime (47+: Wasm 3.0 exceptions are on by default).
 const WASM = resolve(import.meta.dirname, '../dist/cppjs-playground-cli-wasi-wasi-wasm32-st-release.wasm');
 
 try {
@@ -18,7 +17,7 @@ const cwd = mkdtempSync(join(tmpdir(), 'cppjs-wasi-'));
 try {
     const out = execFileSync(
         'wasmtime',
-        ['run', '-W', 'exceptions=y', '--dir=.', WASM, 'merhaba'],
+        ['run', '--dir=.', WASM, 'merhaba'],
         { cwd, encoding: 'utf8', timeout: 60000 },
     );
     process.stdout.write(out);

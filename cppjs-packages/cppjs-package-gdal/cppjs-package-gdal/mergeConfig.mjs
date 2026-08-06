@@ -34,6 +34,12 @@ export default (newConfig = {}) => ({
                 },
             },
         },
+        {
+            platform: 'wasi',
+            specs: {
+                env: { GDAL_CACHEMAX: '64' },
+            },
+        },
         ...(newConfig.targetSpecs || []),
     ],
 });

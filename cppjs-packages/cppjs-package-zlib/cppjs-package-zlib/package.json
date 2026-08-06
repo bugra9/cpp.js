@@ -18,5 +18,17 @@
         "android",
         "ios",
         "react-native"
-    ]
+    ],
+    "cppjs": {
+        "upstream": {
+            "license": {
+                "declared": "Zlib",
+                "selected": null,
+                "files": [
+                    "LICENSE"
+                ],
+                "copyright": null
+            }
+        }
+    }
 }
