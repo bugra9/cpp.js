@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import state from '../state/index.js';
 
 const LAYOUT = { header: 'include', module: 'swig', source: '' };
@@ -75,6 +76,25 @@ function getFolderCandidates(pkg, alias) {
 }
 
 export default function getDependFilePath(source, target) {
+    // `cargo:<crate>` imports (the node:/npm: convention for a non-npm store) resolve to a
+    // generated marker .rs; the transformer turns it into the crate-import bridge (no surface
+    // file, no package). The scheme is unambiguous, so npm names never collide and an
+    // undeclared crate is a hard, actionable error instead of a silent npm fallthrough.
+    if (source.startsWith('cargo:')) {
+        const crateName = source.slice('cargo:'.length);
+        const cargoDeps = state.config.cargoDependencies ?? {};
+        if (!Object.hasOwn(cargoDeps, crateName)) {
+            throw new Error(`cppjs: '${source}' is not declared - add '${crateName}' to cargoDependencies in cppjs.config.`);
+        }
+        const marker = path.join(state.config.paths.cache, 'rust-crates', `${crateName}.rs`);
+        if (!fs.existsSync(marker)) {
+            fs.mkdirSync(path.dirname(marker), { recursive: true });
+            fs.writeFileSync(marker, `// cpp.js cargo crate import marker: ${crateName}\n`);
+        }
+        existsCache.set(marker, true);
+        return marker;
+    }
+
     const matches = getMatchingPackages(source);
     if (matches.length === 0) return null;
 
@@ -82,6 +102,12 @@ export default function getDependFilePath(source, target) {
     const tried = [];
 
     for (const { pkg, alias, relativePath } of matches) {
+        // A cargo package's bare import resolves to its crate root source; the bundler
+        // transformer then turns that .rs into the generated JS proxy module (Rust's .h analog).
+        if (pkg.export?.type === 'cargo' && relativePath === '') {
+            const libRs = path.resolve(pkg.paths.project, pkg.export.crate ?? 'crate', 'src/lib.rs');
+            if (existsCached(libRs)) return libRs;
+        }
         const prebuiltRoot = `${pkg.paths.output}/prebuilt/${target.path}`;
         // Skip packages that don't produce artifacts for this target — multiple
         // packages may share the same alias (one per platform), so this filters

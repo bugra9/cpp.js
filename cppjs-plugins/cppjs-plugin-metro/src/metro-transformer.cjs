@@ -15,23 +15,29 @@ let compilerClassPromise;
 const getCompilerClass = () => {
     if (compilerClassPromise) return compilerClassPromise;
     compilerClassPromise = new Promise((resolve, reject) => {
-        import('cpp.js').then(({ state, getCppJsScript, createBridgeFile }) => {
-            resolve({ state, getCppJsScript, createBridgeFile });
+        import('cpp.js').then(({ state, getCppJsScript, getRustJsScript, createBridgeFile }) => {
+            resolve({ state, getCppJsScript, getRustJsScript, createBridgeFile });
         }).catch((e) => reject(e));
     });
     return compilerClassPromise;
 };
 
 module.exports.transform = async ({ src, filename, ...rest }) => {
-    const { state, getCppJsScript, createBridgeFile } = await getCompilerClass();
+    const { state, getCppJsScript, getRustJsScript, createBridgeFile } = await getCompilerClass();
     const headerRegex = new RegExp(`\\.(${state.config.ext.header.join('|')})$`);
     const moduleRegex = new RegExp(`\\.(${state.config.ext.module.join('|')})$`);
 
-    if (headerRegex.test(filename) || moduleRegex.test(filename)) {
+    if (headerRegex.test(filename) || moduleRegex.test(filename) || filename.endsWith('.rs')) {
         let target;
         if (rest.options.platform === 'ios') target = state.targets.find((t) => t.platform === 'ios');
         else if (rest.options.platform === 'android') target = state.targets.find((t) => t.platform === 'android');
         else target = state.targets.find((t) => t.platform === 'wasm');
+
+        // Rust surfaces need no bridge file here: the native bridge is the package's generated
+        // companion crate; this only emits the JS proxy module (same shape as the .h flow).
+        if (filename.endsWith('.rs')) {
+            return upstreamTransformer.transform({ src: getRustJsScript(target, filename), filename, ...rest });
+        }
 
         const bridgeFile = createBridgeFile(filename, target);
 

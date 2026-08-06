@@ -1,5 +1,6 @@
 packages:
   - 'cppjs-core/*'
+  - 'cppjs-core/cppjs-core-embind-rust/demo'
   - 'cppjs-plugins/*'
   - 'cppjs-samples/*'
   - '!cppjs-samples/cppjs-sample-mobile-reactnative-expo'

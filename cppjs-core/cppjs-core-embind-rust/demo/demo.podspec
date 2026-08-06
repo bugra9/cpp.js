@@ -2,16 +2,16 @@ require "json"
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
 Pod::Spec.new do |s|
-  s.module_name  = "___PROJECT_MODULE_NAME___"
-  s.name         = "___PROJECT_NAME___"
+  s.module_name  = "demo"
+  s.name         = "demo"
   s.version      = package["nativeVersion"]
-  s.summary      = "___PROJECT_NAME___ package"
+  s.summary      = "demo package"
   s.homepage     = "https://cpp.js.org"
-  s.author       = "___PROJECT_NAME___ Authors"
+  s.author       = "demo Authors"
   s.source       = { :http => "https://cpp.js.org" }
-  s.vendored_frameworks = ___PROJECT_FRAMEWORKS___
-  s.resources = ___PROJECT_RESOURCES___
+  s.vendored_frameworks = 'demo.xcframework'
+  s.resources = []
   # arm64-only iOS simulator slice; drop x86_64 to avoid linker errors on consumer apps.
   # Cargo producers add a -force_load so their init-array constructors survive dead-strip.
-  s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'x86_64'___PROJECT_LDFLAGS___ }
+  s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'x86_64', 'OTHER_LDFLAGS' => '-Wl,-u,_cppjs_keep_demo' }
 end

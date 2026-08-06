@@ -8,10 +8,11 @@
     "type": "module",
     "main": "index.js",
     "dependencies": {
-        "cpp.js": "workspace:^"
+        "cpp.js": "workspace:^",
+        "@cpp.js/core-embind-rust": "workspace:^"
     },
     "peerDependencies": {
-        "rollup": ">=4"
+        "rollup": ">=4.62.4"
     },
     "keywords": [
         "cpp.js-plugin",

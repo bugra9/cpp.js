@@ -3,11 +3,13 @@ import fs from 'node:fs';
 import replace from 'replace';
 import getData from './getData.js';
 import run from './run.js';
+import buildCargo from './buildCargo.js';
+import { cargoTripleFor } from '../utils/cargoTarget.js';
 import getCmakeParameters from './getCmakeParameters.js';
 import triggerExtensions from './extensions.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
-import { WASI_EMULATION_LIBS } from '../utils/wasiToolchain.js';
+import { WASI_EMULATION_LIBS, WASI_LINK_LIBS, wasiCFlags, wasiCxxFlags } from '../utils/wasiToolchain.js';
 import { getFilesFingerprint, getContentHash } from '../utils/hash.js';
 
 const cpuCount = Math.max(1, os.cpus().length - 1);
@@ -26,38 +28,46 @@ export default function createLib(target, fileType, options = {}) {
     const platformPrefix = `${fileType ? `${fileType}-` : ''}${buildType}`;
     const libdir = `${state.config.paths.build}/${platformPrefix}/prebuilt/${target.path}`;
     const buildPath = `${state.config.paths.build}/${platformPrefix}/${target.path}`;
-    // Tool links inside wasi configure packages need the same runtime stubs
-    // the command link ships (dlopen family, pthread_atfork); compiled below,
-    // referenced from LIBS.
+    // wasi configure tool links need the runtime stubs; compiled below, referenced from LIBS.
     const wasiStubObj = `${buildPath}/cppjs-wasi-stubs.o`;
 
-    // A lib built from a nativeGlob is only valid for that exact file set: the
-    // same lib dir is reused while the bridge list grows as .h imports are
-    // processed, so an early build (e.g. /cpp.js requested before any header
-    // transform) must not satisfy later, larger sets. Fingerprint the glob and
-    // treat a mismatch as a cache miss even without force.
+    // The lib dir is reused while the bridge list grows, so an early smaller nativeGlob build must not satisfy later sets: fingerprint the glob and miss on mismatch.
     const fingerprintFile = `${libdir}/cppjs-nativeglob.fingerprint`;
     const fingerprint = options.nativeGlob ? getFilesFingerprint(options.nativeGlob) : null;
     const fingerprintChanged = fingerprint !== null
         && (!fs.existsSync(fingerprintFile) || fs.readFileSync(fingerprintFile, { encoding: 'utf8' }) !== fingerprint);
 
-    // Config emccFlags feed compile-time state too (CPPJS_JSPI below), so a
-    // flag change must miss this cache instead of serving a lib compiled
-    // under the old flags.
+    // Config emccFlags feed compile-time state too (CPPJS_JSPI below), so a flag change must miss this cache.
     const configEmccFlags = getData('binary', target)?.emccFlags || [];
     const flagsFingerprintFile = `${libdir}/cppjs-emccflags.fingerprint`;
     const flagsFingerprint = getContentHash(JSON.stringify(configEmccFlags));
     const flagsChanged = !fs.existsSync(flagsFingerprintFile)
         || fs.readFileSync(flagsFingerprintFile, { encoding: 'utf8' }) !== flagsFingerprint;
 
+    // Rust packages build with cargo on the host and stage the .a like any other prebuilt; the
+    // normal prebuilt-link machinery then links it for every platform (no SWIG bridge for Rust).
+    // Runs BEFORE the existence cache below: cargo is the incremental cache, and an existence
+    // skip would keep serving a stale staged .a after crate source edits.
+    if (state.config.export?.type === 'cargo') {
+        // Platforms with no cargo triple (wasi, ...) are skipped, so a plain `cppjs build`
+        // still completes every other platform instead of dying on the first unsupported one.
+        if (!cargoTripleFor(target)) {
+            logger.info(`[${target.path}] cargo package skipped (no cargo triple for this platform)`);
+            return false;
+        }
+        logger.startStep(target, fileType);
+        const changed = buildCargo(target, libdir);
+        if (fingerprint !== null) fs.writeFileSync(fingerprintFile, fingerprint);
+        fs.writeFileSync(flagsFingerprintFile, flagsFingerprint);
+        return changed;
+    }
+
     if (!options.force && !fingerprintChanged && !flagsChanged && fs.existsSync(`${libdir}/lib`)) {
         logger.cachedStep(target, fileType);
         return false;
     }
 
-    // Bridges guard _JSPI registrations behind CPPJS_JSPI (bridgeAsyncGuard);
-    // define it only when this target links with -sJSPI, so async bindings
-    // exist exactly where the runtime can support them.
+    // Bridges guard _JSPI registrations behind CPPJS_JSPI (bridgeAsyncGuard); define it only when this target links with -sJSPI.
     const isJspiTarget = target.platform === 'wasm' && configEmccFlags.includes('-sJSPI');
     if (fileType === 'Bridge' && target.platform === 'wasm' && !isJspiTarget
         && options.nativeGlob?.some((f) => fs.existsSync(f) && fs.readFileSync(f, { encoding: 'utf8' }).includes('emscripten::async()'))) {
@@ -74,10 +84,7 @@ export default function createLib(target, fileType, options = {}) {
         buildParams = getBuildParams ? getBuildParams(target, depPaths, ext, buildPath) : [];
         if (state.config.build?.buildType !== 'configure') {
             const cmakeBuildType = sharedPlatforms.includes(target.platform) ? 'SHARED' : 'STATIC';
-            // Upstream CMakeLists increasingly default BUILD_SHARED_LIBS=ON; on wasm that extra
-            // .so link fails under emsdk 6 (wasm-ld demands PIC deps) and nothing consumes it.
-            // Default the option to the platform's lib kind; recipes can still override since
-            // their -D flags come later on the command line.
+            // Upstream CMakeLists increasingly default BUILD_SHARED_LIBS=ON; on wasm that extra .so link fails under emsdk 6, so default to the platform's lib kind (recipe -D flags come later and can override).
             buildParams.unshift(`-DBUILD_SHARED_LIBS=${cmakeBuildType === 'SHARED' ? 'ON' : 'OFF'}`);
             buildParams.push(`-DCMAKE_PREFIX_PATH=${libdir}`, `-DCMAKE_FIND_ROOT_PATH=${libdir}`, `-DBUILD_TYPE=${cmakeBuildType}`);
         }
@@ -88,9 +95,7 @@ export default function createLib(target, fileType, options = {}) {
         if (state.config.build?.buildType === 'configure') {
             dependLibs = Object.keys(depPaths)
                 .filter(d => d && d !== 'cmake')
-                // wasi prebuilts grow package by package; a declared dep
-                // without a wasi archive (e.g. jpeg) would fail every
-                // configure link probe, LIBS being part of each one.
+                // A declared dep without a wasi archive (e.g. jpeg) would fail every configure probe.
                 .filter(d => target.platform !== 'wasi' || fs.existsSync(depPaths[d].lib))
                 .map((d) => `-l${d}`).join(' ');
         }
@@ -120,9 +125,7 @@ export default function createLib(target, fileType, options = {}) {
         buildEnv.params.push('-e', `CFLAGS=${cFlags.join(' ')}`);
         buildEnv.params.push('-e', `CXXFLAGS=${cFlags.join(' ')}`);
         buildEnv.params.push('-e', `LDFLAGS=${ldFlags.join(' ')} ${extraLibs.join(' ')}`);
-        // wasi-libc parks getrusage/mmap/signal shims in the emulation
-        // archives; configure-based recipes need them in LIBS (which lands
-        // after the objects, unlike LDFLAGS).
+        // Emulation archives must land in LIBS (after the objects), not LDFLAGS.
         const wasiStubLib = state.config.build?.buildType === 'configure' ? `${wasiStubObj} ` : '';
         const wasiLibs = target.platform === 'wasi' ? ` ${wasiStubLib}${WASI_EMULATION_LIBS.join(' ')}` : '';
         buildEnv.params.push('-e', `LIBS=${dependLibs} ${extraLibs.join(' ')}${wasiLibs}`);
@@ -174,6 +177,17 @@ export default function createLib(target, fileType, options = {}) {
         });
     }
 
+    // stubs.c lives outside the docker mount (paths.cli); stage it into the build tree.
+    const stageWasiStubs = () => {
+        const staged = `${buildPath}/cppjs-wasi-stubs.c`;
+        fs.mkdirSync(buildPath, { recursive: true });
+        fs.copyFileSync(`${state.config.paths.cli}/assets/wasi-runtime/stubs.c`, staged);
+        run(null, [
+            'wasi-clang', ...wasiCFlags(), '-c', staged,
+            '-o', wasiStubObj,
+        ], platformPrefix, target, { console: buildEnv.console });
+    };
+
     if (!options.bypassCmake) {
         if (state.config.build?.buildType === 'configure') {
             fs.cpSync(cmakeDir, buildPath, { recursive: true });
@@ -185,13 +199,8 @@ export default function createLib(target, fileType, options = {}) {
                 });
             }
             if (target.platform === 'wasi') {
-                // LIBS references the stub object, so every configure probe
-                // needs it on disk before the first link test runs.
-                run(null, [
-                    'wasi-clang', '-c',
-                    `${state.config.paths.cli}/assets/wasi-runtime/stubs.c`,
-                    '-o', wasiStubObj,
-                ], platformPrefix, target, { console: buildEnv.console });
+                // LIBS references the stub object before the first configure link probe.
+                stageWasiStubs();
             }
             run(null, [
                 './configure',
@@ -199,6 +208,11 @@ export default function createLib(target, fileType, options = {}) {
                 `--prefix=${libdir}`,
             ], platformPrefix, target, buildEnv);
         } else {
+            if (target.platform === 'wasi') {
+                // Upstream exe links (BUILD_APPS etc.) need the stubs + wasm-EH tail on CMAKE_EXE_LINKER_FLAGS so try_compile probes link the same way.
+                stageWasiStubs();
+                buildParams.push(`-DCMAKE_EXE_LINKER_FLAGS=${[...wasiCxxFlags(), wasiStubObj, ...WASI_LINK_LIBS].join(' ')}`);
+            }
             run(null, [
                 target.platform === 'ios' && state.config.build?.useIOSCMake ? 'ios-cmake' : 'cmake', cmakeDir,
                 `-DCMAKE_BUILD_TYPE=${buildType}`,
@@ -212,7 +226,12 @@ export default function createLib(target, fileType, options = {}) {
         const iOSCMakeBuilder = state.config.build?.useIOSCMake ? 'ios-cmake' : 'cmake';
         run(null, [iOSCMakeBuilder, '--build', '.', '-j', cpuCount, '--config', buildType, '--target', 'install'], platformPrefix, target, { console: buildEnv.console });
     } else {
-        run(null, ['make', `-j${cpuCount}`, 'install'], platformPrefix, target, { console: buildEnv.console });
+        // Some upstream makefiles race when one -j invocation carries multiple goals (openssl's
+        // install builds apps twice); recipes can split phases via build.makePhases.
+        const makePhases = state.config.build?.makePhases || [['install']];
+        makePhases.forEach((phase) => {
+            run(null, ['make', `-j${cpuCount}`, ...phase], platformPrefix, target, { console: buildEnv.console });
+        });
     }
     const t2 = performance.now();
     const cmakeMs = Math.round(t1 - t0);

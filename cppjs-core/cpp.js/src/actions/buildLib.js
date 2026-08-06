@@ -15,7 +15,10 @@ export default function buildLib(targetParams, options = {}) {
     }
 
     targets.forEach((target) => {
-        if (!fs.existsSync(`${state.config.paths.output}/prebuilt/${target.path}/lib`)) {
+        // Cargo re-enters the build unconditionally: cargo is the incremental cache, and the
+        // existence-only skip below would keep serving a stale staged staticlib after source edits.
+        const isCargo = state.config.export?.type === 'cargo';
+        if (isCargo || !fs.existsSync(`${state.config.paths.output}/prebuilt/${target.path}/lib`)) {
             createLib(target, 'Source', { buildSource: true });
 
             const modules = [];
@@ -56,10 +59,28 @@ export default function buildLib(targetParams, options = {}) {
             xcFrameworks.push(...state.config.export.libName.map((l) => `${l}.xcframework`));
             if (!xcFrameworks.some(f => !fs.existsSync(`${state.config.paths.project}/${f}`))) {
                 xcFrameworks.push(...state.config.dependencies.map((d) => d.export.libName.map((l) => `${l}.xcframework`)).flat());
+                // Cargo producers register through an init-array constructor that nothing references,
+                // so the linker would dead-strip it. Generated bridges pin their keep symbol with -u
+                // (NEVER force_load: every Rust staticlib bundles libstd, and fully loading two of
+                // them duplicates thousands of std symbols); manual-bindings crates have no keep
+                // symbol and fall back to force_load - safe only while they are the single loaded
+                // Rust archive in the app.
+                let ldFlags = '';
+                if (state.config.export?.type === 'cargo') {
+                    const crateLibRs = `${state.config.paths.project}/${state.config.export.crate ?? 'crate'}/src/lib.rs`.replace('/./', '/');
+                    const isManual = fs.existsSync(crateLibRs) && fs.readFileSync(crateLibRs, 'utf8').includes('bindings!');
+                    const flags = state.config.export.libName.map((l) => (isManual
+                        ? `-force_load $(PODS_XCFRAMEWORKS_BUILD_DIR)/${state.config.general.name}/lib${l}.a`
+                        : `-Wl,-u,_cppjs_keep_${l}`)).join(' ');
+                    ldFlags = `, 'OTHER_LDFLAGS' => '${flags}'`;
+                }
                 const distPodSpecContent = fs.readFileSync(`${state.config.paths.cli}/assets/packaging/cppjs-package.podspec`, { encoding: 'utf8', flag: 'r' })
+                    // module_name must be a valid C99 identifier (pod names may carry dashes).
+                    .replace('___PROJECT_MODULE_NAME___', state.config.general.name.replace(/[^a-zA-Z0-9_]/g, '_'))
                     .replaceAll('___PROJECT_NAME___', state.config.general.name)
                     .replace('___PROJECT_FRAMEWORKS___', xcFrameworks.map(f => `'${f}'`).join(', '))
-                    .replace('___PROJECT_RESOURCES___', JSON.stringify(uniqueResources));
+                    .replace('___PROJECT_RESOURCES___', JSON.stringify(uniqueResources))
+                    .replace('___PROJECT_LDFLAGS___', ldFlags);
                 fs.writeFileSync(`${state.config.paths.project}/${state.config.general.name}.podspec`, distPodSpecContent);
             }
         }
@@ -77,7 +98,13 @@ export default function buildLib(targetParams, options = {}) {
         const distCmakeContent = fs.readFileSync(`${state.config.paths.cli}/assets/cmake/dist.cmake`, { encoding: 'utf8', flag: 'r' })
             .replace('___PROJECT_NAME___', state.config.general.name)
             .replace('___PROJECT_HOST___', hostTargets.join(';'))
-            .replace('___PROJECT_LIBS___', state.config.export.libName.join(';'));
+            .replace('___PROJECT_LIBS___', state.config.export.libName.join(';'))
+            .replace('___PROJECT_WHOLE_ARCHIVE___', (() => {
+                if (state.config.export?.type !== 'cargo') return '';
+                const crateLibRs = `${state.config.paths.project}/${state.config.export.crate ?? 'crate'}/src/lib.rs`.replace('/./', '/');
+                const isManual = fs.existsSync(crateLibRs) && fs.readFileSync(crateLibRs, 'utf8').includes('bindings!');
+                return isManual ? 'FORCE' : 'KEEP';
+            })());
         fs.writeFileSync(`${state.config.paths.output}/prebuilt/CMakeLists.txt`, distCmakeContent);
     }
 }

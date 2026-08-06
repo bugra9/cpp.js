@@ -1,7 +1,7 @@
 
 
 import {
-    state, createLib, createBridgeFile, buildWasm, getCppJsScript, buildDependencies,
+    state, createLib, createBridgeFile, buildWasm, getCppJsScript, getRustJsScript, buildDependencies,
     getDependFilePath, getTargetParams, getFilteredBuildTargets, isSourceNewer,
 } from 'cpp.js';
 
@@ -48,6 +48,12 @@ const rollupCppjsPlugin = (options, bridges = []) => {
             return null;
         },
         async transform(code, path) {
+            // Rust surfaces need no bridge file here: the native bridge is the package's
+            // generated companion crate (or the app-local synthesized crate); this only emits
+            // the JS proxy module - the same shape as the .h flow.
+            if (path.endsWith('.rs')) {
+                return getRustJsScript(buildTargetRelease, path);
+            }
             if (!headerRegex.test(path) && !moduleRegex.test(path)) {
                 return null;
             }

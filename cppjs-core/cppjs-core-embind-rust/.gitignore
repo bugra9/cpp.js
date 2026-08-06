@@ -1,0 +1,6 @@
+target/
+node_modules/
+e2e/demo.mjs
+e2e/demo.wasm
+e2e/jsi-shape-check
+Cargo.lock

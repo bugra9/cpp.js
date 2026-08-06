@@ -6,9 +6,11 @@ import getData from './getData.js';
 import buildJs from './buildJs.js';
 import triggerExtensions from './extensions.js';
 import state from '../state/index.js';
+import resolveEmbindRustRoot from '../utils/resolveEmbindRust.js';
 import logger from '../utils/logger.js';
 import { getContentHash, getFilesFingerprint } from '../utils/hash.js';
 import { buildLinkLibArgs } from '../utils/linkLayout.js';
+import buildAppRustCrates from '../utils/appRustCrates.js';
 
 export default async function buildWasm(target, options = {}) {
     const isProd = target.buildType === 'release';
@@ -20,6 +22,11 @@ export default async function buildWasm(target, options = {}) {
         logger.info(`[${target.path}] wasm+js skipped (export.bundle = false)`);
         return false;
     }
+    // Cargo packages only stage their staticlib; the consuming app links and bundles it.
+    if (state.config.export.type === 'cargo') {
+        logger.info(`[${target.path}] wasm+js skipped (cargo package - staticlib only)`);
+        return false;
+    }
 
     // buildLib's cache is keyed on paths.output/prebuilt; after a cache clean the
     // build-dir copy can be gone while the output artifact is still valid — link it then.
@@ -27,8 +34,12 @@ export default async function buildWasm(target, options = {}) {
         `${state.config.paths.build}/Source-${buildType}/${target.path}/lib${state.config.general.name}.a`,
         `${state.config.paths.output}/prebuilt/${target.path}/lib/lib${state.config.general.name}.a`,
     ];
+    // App-local Rust surfaces (imported .rs files) arrive as ONE super staticlib; it is the
+    // single fully-loaded Rust archive of the link (see the libstd rule below).
+    const appRustLibs = buildAppRustCrates(target, state.config.paths.cache);
     const libs = [
         ...getDependLibs(target),
+        ...appRustLibs,
         sourceLibCandidates.find((lib) => fs.existsSync(lib)) ?? sourceLibCandidates[0],
         `${state.config.paths.build}/Bridge-${buildType}/${target.path}/lib${state.config.general.name}.a`,
     ];
@@ -41,15 +52,46 @@ export default async function buildWasm(target, options = {}) {
     // link (for members that self-register from static initializers).
     const wholeArchiveAll = state.config.export.wholeArchive === true;
     const wholeArchiveNames = new Set();
+    // Rust libstd rule: every Rust staticlib bundles its own libstd, so at most ONE Rust archive
+    // may be fully loaded (the app super staticlib). Generated cargo bridges are linked lazily
+    // with their keep symbol pinned (-u pulls just the registration object); manual-bindings
+    // crates have no keep symbol and fall back to whole-archive - safe only while they are the
+    // single loaded Rust archive.
+    const rustKeepFlags = [];
+    if (appRustLibs.length > 0) wholeArchiveNames.add('cppjs_app_super');
     state.config.dependencyParameters.getCmakeDepends(target).forEach((dep) => {
         if (dep.export.wholeArchive === true) {
             (dep.export.libName || []).forEach((name) => wholeArchiveNames.add(name));
         }
+        if (dep.export.type === 'cargo') {
+            const crateLibRs = `${dep.paths.project}/${dep.export.crate ?? 'crate'}/src/lib.rs`.replace('/./', '/');
+            const isManual = fs.existsSync(crateLibRs) && fs.readFileSync(crateLibRs, 'utf8').includes('bindings!');
+            (dep.export.libName || []).forEach((name) => {
+                // wasm-ld's -u does NOT pull archive members (it just leaves an import);
+                // --export forces the symbol to resolve, dragging the registration object in.
+                if (isManual) wholeArchiveNames.add(name);
+                else rustKeepFlags.push(`-Wl,--export=cppjs_keep_${name}`);
+            });
+        }
     });
+    // The whole-archived app super-staticlib and a lazily-pulled package bridge object each
+    // carry rustc's allocator/panic shims (codegen-units=1 places them in the same object as
+    // the pulled registrations). They are bit-identical toolchain synthetics; Mach-O dedups
+    // them as weak defs, wasm-ld sees strong duplicates - allow them for this combination only.
+    if (appRustLibs.length > 0 && rustKeepFlags.length > 0) {
+        rustKeepFlags.push('-Wl,--allow-multiple-definition');
+    }
     const linkLibs = buildLinkLibArgs(libs, { wholeArchiveAll, wholeArchiveNames });
 
+    // Any Rust archive in the link needs the web adapter TU: it provides the flat
+    // cppjs_embind_* C-ABI (typeid getters + passthroughs to emscripten's embind).
+    const hasRust = rustKeepFlags.length > 0 || appRustLibs.length > 0
+        || state.config.dependencyParameters.getCmakeDepends(target).some((dep) => dep.export.type === 'cargo');
+    // The adapter ships in @cpp.js/core-embind-rust (declared by the consumer, resolved here).
+    const rustSources = hasRust ? [`${resolveEmbindRustRoot()}/adapters/web.cpp`] : [];
+
     const binary = getData('binary', target);
-    const emccFlags = binary?.emccFlags || [];
+    const emccFlags = [...(binary?.emccFlags || []), ...rustKeepFlags];
 
     triggerExtensions('buildWasm', 'beforeBuild', [emccFlags]);
 
@@ -105,6 +147,7 @@ export default async function buildWasm(target, options = {}) {
         }),
         data: getData('data', target),
         runtime: getFilesFingerprint(runtimeAssets),
+        rustSources: getFilesFingerprint(rustSources),
     }));
     const linkChanged = !fs.existsSync(linkFingerprintFile)
         || fs.readFileSync(linkFingerprintFile, { encoding: 'utf8' }) !== linkFingerprint;
@@ -127,7 +170,7 @@ export default async function buildWasm(target, options = {}) {
             // '-lwebsocket.js', '-sPROXY_POSIX_SOCKETS', '-sWEBSOCKET_DEBUG=1', '-sJSPI', '-g', '-sWASMFS',
             '-sWASM_BIGINT=1', '-s', 'FORCE_FILESYSTEM=1',
             '-sEXPORT_NAME=Module2', // '-pthread', '-sPTHREAD_POOL_SIZE=5',
-            ...linkLibs, `${state.config.paths.cli}/assets/cpp-runtime/browser.cpp`,
+            ...linkLibs, ...rustSources, `${state.config.paths.cli}/assets/cpp-runtime/browser.cpp`,
             ...(isProd ? ['-O3'] : []),
             '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
             '-s', 'RESERVED_FUNCTION_POINTERS=200', // '-s', 'FORCE_FILESYSTEM=1',
@@ -222,7 +265,7 @@ export default async function buildWasm(target, options = {}) {
             ...emccFlags,
             // '-s', 'FETCH', '-sJSPI', '-sWASM_BIGINT=1', '-pthread', '-sPTHREAD_POOL_SIZE=5',
             '-sWASM_BIGINT=1', '-s', 'FORCE_FILESYSTEM=1',
-            ...linkLibs, `${state.config.paths.cli}/assets/cpp-runtime/node.cpp`,
+            ...linkLibs, ...rustSources, `${state.config.paths.cli}/assets/cpp-runtime/node.cpp`,
             ...(isProd ? ['-O3'] : []),
             '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
             '-s', 'RESERVED_FUNCTION_POINTERS=200', // '-s', 'DISABLE_EXCEPTION_CATCHING=0', '-s', 'FORCE_FILESYSTEM=1',

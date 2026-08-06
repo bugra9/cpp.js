@@ -1,4 +1,6 @@
 import matrix from '@cpp.js/sample-lib-prebuilt-matrix/cppjs.config.js';
+// embind-rust demo: a Rust producer built via buildType 'cargo', consumed as a prebuilt dep.
+import embindRustDemo from '@cpp.js/embind-rust-demo/cppjs.config.mjs';
 import curlAndroid from '@cpp.js/package-curl-android/cppjs.config.js';
 import curlIos from '@cpp.js/package-curl-ios/cppjs.config.js';
 import expatAndroid from '@cpp.js/package-expat-android/cppjs.config.js';
@@ -27,8 +29,19 @@ import zlibAndroid from '@cpp.js/package-zlib-android/cppjs.config.js';
 import zlibIos from '@cpp.js/package-zlib-ios/cppjs.config.js';
 
 export default {
+    // Upstream crates available to app-local .rs surfaces (src/native/*.rs) - the Rust
+    // analog of linking a C library and using it from your own native.h classes.
+    cargoDependencies: {
+        geo: '0.29',
+        wkt: '0.11',
+        // Direct crate imports (`import { Uuid } from 'cargo:uuid'`): bridged from crate sources.
+        uuid: '{ version = "1", features = ["v4"] }',
+        semver: '1',
+        regex: '1',
+    },
     dependencies: [
         matrix,
+        embindRustDemo,
         curlAndroid,
         curlIos,
         expatAndroid,

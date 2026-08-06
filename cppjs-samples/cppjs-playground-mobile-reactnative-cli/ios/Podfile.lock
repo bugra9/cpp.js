@@ -1,19 +1,20 @@
 PODS:
-  - cppjs-package-curl (8.20.0)
-  - cppjs-package-expat (2.8.1)
-  - cppjs-package-gdal (3.13.0)
+  - cppjs-package-curl (8.21.0)
+  - cppjs-package-expat (2.8.2)
+  - cppjs-package-gdal (3.13.2)
   - cppjs-package-geos (3.14.1)
   - cppjs-package-geotiff (1.7.4)
   - cppjs-package-iconv (1.19)
-  - cppjs-package-openssl (4.0.0)
+  - cppjs-package-openssl (4.0.1)
   - cppjs-package-proj (9.8.1)
   - cppjs-package-spatialite (5.1.0)
-  - cppjs-package-sqlite3 (3.53.1):
+  - cppjs-package-sqlite3 (3.53.3):
     - cppjs-package-zlib
-  - cppjs-package-tiff (4.7.1)
+  - cppjs-package-tiff (4.7.2)
   - cppjs-package-webp (1.6.0)
   - cppjs-package-zlib (1.3.2)
-  - cppjs-sample-lib-prebuilt-matrix (2.0.0-beta.21)
+  - cppjs-sample-lib-prebuilt-matrix (2.0.0-beta.29)
+  - demo (0.1.0)
   - FBLazyVector (0.85.3)
   - hermes-engine (250829098.0.10):
     - hermes-engine/Pre-built (= 250829098.0.10)
@@ -1417,8 +1418,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-cppjs (2.0.0-beta.21)
-  - react-native-cppjs-ios-helper (2.0.0-beta.21):
+  - react-native-cppjs (2.0.0-beta.31)
+  - react-native-cppjs-ios-helper (2.0.0-beta.29):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1911,6 +1912,7 @@ DEPENDENCIES:
   - "cppjs-package-webp (from `../node_modules/@cpp.js/package-webp-ios`)"
   - "cppjs-package-zlib (from `../node_modules/@cpp.js/package-zlib-ios`)"
   - "cppjs-sample-lib-prebuilt-matrix (from `../node_modules/@cpp.js/sample-lib-prebuilt-matrix`)"
+  - "demo (from `../node_modules/@cpp.js/embind-rust-demo`)"
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -2019,6 +2021,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@cpp.js/package-zlib-ios"
   cppjs-sample-lib-prebuilt-matrix:
     :path: "../node_modules/@cpp.js/sample-lib-prebuilt-matrix"
+  demo:
+    :path: "../node_modules/@cpp.js/embind-rust-demo"
   FBLazyVector:
     :path: "../node_modules/react-native/Libraries/FBLazyVector"
   hermes-engine:
@@ -2176,20 +2180,21 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  cppjs-package-curl: 67a8fde337fa7f26084c97eb79e42c9c618c09bb
-  cppjs-package-expat: 6bbc09ab9c55bda8682ca1068ef12ec16f86c947
-  cppjs-package-gdal: d27251b3373775ca86ad5c8362e8ad760987c993
+  cppjs-package-curl: 65609b1ff0377f4a21c8d309cef654e0ce093066
+  cppjs-package-expat: 3283aa1b0c441346e7439acd10463bdd0962f53b
+  cppjs-package-gdal: 2d3a15d97995fb62d837a0eaa317baf771fa98d2
   cppjs-package-geos: 1c362baabe149fcba92ce0f7adae5452728e8d5b
   cppjs-package-geotiff: 06100cacc05d32cbbce94e0cfc72879ef9dc20c1
   cppjs-package-iconv: 5f2c0c69edb8eee74550b4f95b86e223d7379742
-  cppjs-package-openssl: 9bb65358eaea7bfda08e22e76fc5a0233e182fcd
+  cppjs-package-openssl: ceb3d81edaae1f345c3f0e48221aa71e3729c816
   cppjs-package-proj: 3c76e2cb2ec81ae40aa970c3496a251f0f760e0d
   cppjs-package-spatialite: 877539372047316b1b3d5864da994e6057217868
-  cppjs-package-sqlite3: 6525d8171e21e5ccd372353a27c9acf99ef5b992
-  cppjs-package-tiff: 0269508169e9fc41b0d34fad610171b98f078e51
+  cppjs-package-sqlite3: 8ca09d07bdb5d5b1ef66e955a0864247287a3449
+  cppjs-package-tiff: e892fca48e39a2b5d117e2cfaa71c35a1107eed3
   cppjs-package-webp: b0020577c1c8573bd3eab803b2593543cf9c8646
   cppjs-package-zlib: c22b0e34ccf05c65371f7f2bd4a156d51e6c8619
-  cppjs-sample-lib-prebuilt-matrix: 62ba6e745986f6eb9a5e268efc159085e0ed73d2
+  cppjs-sample-lib-prebuilt-matrix: 02142fbc3b03cf16f8de6e8a1419fc748b4ef185
+  demo: b40d015103dbface0bcd385452863743172e4940
   FBLazyVector: 24e62c765683b8d89006a88a2c8f5cf019f0074d
   hermes-engine: b6cef8f1f6c726240e275520fd5cfdb6b2ff6826
   RCTDeprecation: a4c521821fab57cbb125b36effe84d897d0dfa12
@@ -2229,8 +2234,8 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 1aa9126122d4247ffc24bf9d28d50ce923499a71
   React-microtasksnativemodule: d86581169e9bb5bb6f5fc3c5052f890016c1bf21
   React-mutationobservernativemodule: 9a0c4e866f1ef2a57acebc902ebacbdf469ae741
-  react-native-cppjs: f61f19d988efe83bc7ba538357b10e0efd96bd04
-  react-native-cppjs-ios-helper: 0a61ec434000b6191bff5d1cc3763a7510447ff2
+  react-native-cppjs: 1a4daa7f066e34b30dab44e932f7ddc1dc8115b5
+  react-native-cppjs-ios-helper: 84e6ec4f146446766d738ccc9843330c79b96224
   react-native-safe-area-context: c1eb308f4b36372a4de4b3bdaa8ed695ec3dd461
   React-NativeModulesApple: cc6ec4767844d610e92cc358bd3ea34937438d56
   React-networking: a8ce15641ed7775d5b54a9d0d32defc367c2216e

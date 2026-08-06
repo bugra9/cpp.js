@@ -11,9 +11,9 @@
     },
     "dependencies": {
         "cpp.js": "workspace:^",
-        "@babel/runtime": "^7.29.7",
-        "@react-native/metro-babel-transformer": "^0.85.3",
-        "upath": "^3.0.7"
+        "@babel/runtime": "^8.0.0",
+        "@react-native/metro-babel-transformer": "^0.86.2",
+        "upath": "^3.0.8"
     },
     "keywords": [
         "cpp.js-plugin",

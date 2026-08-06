@@ -1,0 +1,895 @@
+//! embind-rs: a Rust producer for the emscripten embind registration protocol (spike).
+//! Consumers are untouched: libembind.js on web, jsi-embind on mobile read the same calls.
+use std::any::TypeId;
+use std::collections::HashMap;
+use std::ffi::{c_char, c_void, CString};
+use std::sync::{Mutex, OnceLock};
+
+extern "C" {
+    fn cppjs_embind_register_class(
+        cls: *const c_void, ptr_ty: *const c_void, const_ptr_ty: *const c_void, base: *const c_void,
+        gat_sig: *const c_char, get_actual_type: usize,
+        upcast_sig: *const c_char, upcast: usize,
+        downcast_sig: *const c_char, downcast: usize,
+        name: *const c_char, dtor_sig: *const c_char, dtor: usize,
+    );
+    fn cppjs_embind_register_class_constructor(
+        cls: *const c_void, argc: u32, arg_types: *const *const c_void,
+        sig: *const c_char, invoker: usize, ctor: usize,
+    );
+    fn cppjs_embind_register_class_function(
+        cls: *const c_void, name: *const c_char, argc: u32, arg_types: *const *const c_void,
+        sig: *const c_char, invoker: usize, ctx: usize,
+        is_pure_virtual: u32, is_async: bool, is_nonnull_return: bool,
+    );
+    fn cppjs_embind_register_class_class_function(
+        cls: *const c_void, name: *const c_char, argc: u32, arg_types: *const *const c_void,
+        sig: *const c_char, invoker: usize, method: usize,
+        is_async: bool, is_nonnull_return: bool,
+    );
+    fn cppjs_embind_register_smart_ptr(
+        ptr_ty: *const c_void, pointee_ty: *const c_void, name: *const c_char, sharing_policy: i32,
+        gp_sig: *const c_char, get_pointee: usize,
+        ctor_sig: *const c_char, constructor: usize,
+        share_sig: *const c_char, share: usize,
+        dtor_sig: *const c_char, destructor: usize,
+    );
+    fn cppjs_embind_register_enum(enum_ty: *const c_void, name: *const c_char, size: usize, is_signed: bool, policy: i32);
+    fn cppjs_embind_register_enum_value(enum_ty: *const c_void, name: *const c_char, value: i32);
+    fn cppjs_embind_register_value_object(
+        struct_ty: *const c_void, name: *const c_char,
+        ctor_sig: *const c_char, ctor: usize, dtor_sig: *const c_char, dtor: usize,
+    );
+    fn cppjs_embind_register_value_object_field(
+        struct_ty: *const c_void, name: *const c_char,
+        getter_ret: *const c_void, getter_sig: *const c_char, getter: usize, getter_ctx: usize,
+        setter_arg: *const c_void, setter_sig: *const c_char, setter: usize, setter_ctx: usize,
+    );
+    fn cppjs_embind_finalize_value_object(struct_ty: *const c_void);
+    // Registers an init function with the host's binding-init list. The host runs it at the
+    // right time: immediately on web, after the JSI runtime is installed on mobile.
+    fn cppjs_embind_register_bindings(init: extern "C" fn());
+    fn cppjs_embind_register_function(
+        name: *const c_char, argc: u32, arg_types: *const *const c_void,
+        sig: *const c_char, invoker: usize, function: usize,
+        is_async: bool, is_nonnull_return: bool,
+    );
+    fn cppjs_tid_int() -> *const c_void;
+    fn cppjs_tid_double() -> *const c_void;
+    fn cppjs_tid_bool() -> *const c_void;
+    fn cppjs_tid_void() -> *const c_void;
+    fn cppjs_tid_std_string() -> *const c_void;
+    fn free(ptr: *mut u8);
+    fn cppjs_tid_int64() -> *const c_void;
+    fn cppjs_tid_uint64() -> *const c_void;
+    fn cppjs_embind_register_optional(optional_ty: *const c_void, inner_ty: *const c_void);
+    fn cppjs_tid_optional_int() -> *const c_void;
+    fn cppjs_tid_optional_double() -> *const c_void;
+    fn cppjs_tid_optional_bool() -> *const c_void;
+    fn cppjs_tid_optional_string() -> *const c_void;
+    fn malloc(size: usize) -> *mut u8;
+    // Adapter-owned error escape ([u32 len][bytes] wire): web throws a JS Error immediately,
+    // native stores the message and throws after the invoker returns.
+    fn cppjs_embind_raise_error(wire_msg: *mut u8);
+}
+
+// Optional wire helpers exist only on wasm (native optionals are nullable heap cells the jsi
+// adapter converts itself). The opt_* readers consume the incoming handle's reference.
+#[cfg(target_family = "wasm")]
+extern "C" {
+    fn cppjs_emval_take_value(inner_ty: *const c_void, argv: *const c_void) -> usize;
+    fn cppjs_emval_undefined() -> usize;
+    fn cppjs_emval_opt_i32(handle: usize, out: *mut i32) -> i32;
+    fn cppjs_emval_opt_f64(handle: usize, out: *mut f64) -> i32;
+    fn cppjs_emval_opt_bool(handle: usize, out: *mut u8) -> i32;
+    fn cppjs_emval_opt_string(handle: usize, out: *mut *mut u8) -> i32;
+}
+
+// embind holds pointers to the registration data (typeids, argType arrays, signature strings)
+// for the lifetime of the program, so they must be 'static. Instead of scattering `Box::leak`,
+// one arena owns them: the containers move on growth but the heap buffers they point at stay
+// put, so the pointers handed out remain valid for as long as the arena (i.e. the process).
+struct Registry {
+    cstrings: Vec<CString>,
+    tids: Vec<Box<u8>>,
+    argtypes: Vec<Box<[*const c_void]>>,
+    class_tid: HashMap<TypeId, *const c_void>,
+}
+// Raw pointers are not Send/Sync; the arena is only ever touched under its Mutex.
+unsafe impl Send for Registry {}
+
+fn registry() -> &'static Mutex<Registry> {
+    static REG: OnceLock<Mutex<Registry>> = OnceLock::new();
+    REG.get_or_init(|| Mutex::new(Registry {
+        cstrings: Vec::new(), tids: Vec::new(), argtypes: Vec::new(), class_tid: HashMap::new(),
+    }))
+}
+
+impl Registry {
+    fn cstr(&mut self, s: &str) -> *const c_char {
+        let c = CString::new(s).expect("no interior NUL in binding name");
+        let ptr = c.as_ptr();
+        self.cstrings.push(c);
+        ptr
+    }
+    fn tid(&mut self) -> *const c_void {
+        let b = Box::new(0u8);
+        let ptr = &*b as *const u8 as *const c_void;
+        self.tids.push(b);
+        ptr
+    }
+    fn argtypes(&mut self, v: Vec<*const c_void>) -> *const *const c_void {
+        let boxed = v.into_boxed_slice();
+        let ptr = boxed.as_ptr();
+        self.argtypes.push(boxed);
+        ptr
+    }
+}
+
+#[doc(hidden)]
+pub fn __register_bindings(init: extern "C" fn()) {
+    unsafe { cppjs_embind_register_bindings(init); }
+}
+
+/// Registers the bindings with the host - the Rust equivalent of C++'s `EMSCRIPTEN_BINDINGS`.
+/// A platform init-array constructor hands the binding function to the host's init list, which
+/// runs it at the right time (immediately on web; after the JSI runtime is installed on mobile).
+/// No C++ trigger is needed. The consumer staticlib must be whole-archived so the constructor is
+/// pulled into the link.
+#[macro_export]
+macro_rules! bindings {
+    ($($body:tt)*) => {
+        const _: () = {
+            extern "C" fn __cppjs_embind_init() {
+                // Run at most once: the init-array constructor can be pulled in more than once
+                // (force_load + a normal link of the same archive), which would otherwise register
+                // every public name twice and abort in embind.
+                use ::core::sync::atomic::{AtomicBool, Ordering};
+                static DONE: AtomicBool = AtomicBool::new(false);
+                if DONE.swap(true, Ordering::SeqCst) { return; }
+                $($body)*
+            }
+            extern "C" fn __cppjs_embind_ctor() {
+                $crate::__register_bindings(__cppjs_embind_init);
+            }
+            #[used]
+            #[cfg_attr(target_vendor = "apple", link_section = "__DATA,__mod_init_func")]
+            #[cfg_attr(not(target_vendor = "apple"), link_section = ".init_array")]
+            static __CPPJS_EMBIND_CTOR: extern "C" fn() = __cppjs_embind_ctor;
+        };
+    };
+}
+
+/// Types that cross the bridge: wire representation + signature letter + embind typeid.
+pub trait WireType: 'static {
+    type Wire;
+    const SIG: char;
+    fn tid() -> *const c_void;
+    fn from_wire(w: Self::Wire) -> Self;
+    fn to_wire(self) -> Self::Wire;
+}
+
+impl WireType for i32 {
+    type Wire = i32;
+    const SIG: char = 'i';
+    fn tid() -> *const c_void { unsafe { cppjs_tid_int() } }
+    fn from_wire(w: i32) -> i32 { w }
+    fn to_wire(self) -> i32 { self }
+}
+
+// On wasm the invoker is dyncalled by embind-js, so its C signature must carry a real f64.
+#[cfg(target_family = "wasm")]
+impl WireType for f64 {
+    type Wire = f64;
+    const SIG: char = 'd';
+    fn tid() -> *const c_void { unsafe { cppjs_tid_double() } }
+    fn from_wire(w: f64) -> f64 { w }
+    fn to_wire(self) -> f64 { self }
+}
+
+// On native the invoker is called only by the host adapter, whose bounded dispatch is
+// integer-slot based: a real f64 parameter would land in FP registers and read garbage.
+// Carry the double as its bit pattern in a u64 instead - the adapter converts number<->bits,
+// so the invoker's C signature stays fully integer-class and every ABI dispatches correctly.
+#[cfg(not(target_family = "wasm"))]
+impl WireType for f64 {
+    type Wire = u64;
+    const SIG: char = 'd';
+    fn tid() -> *const c_void { unsafe { cppjs_tid_double() } }
+    fn from_wire(w: u64) -> f64 { f64::from_bits(w) }
+    fn to_wire(self) -> u64 { self.to_bits() }
+}
+
+// i64/u64 cross as JS BigInt: 'j'/'u' slots are 64-bit integer-class in the invoker's C
+// signature, so the native bounded dispatch stays valid; on wasm the dynCall char is 'j'
+// for both (the web adapter maps 'u' -> 'j', signedness lives in the registered typeid).
+impl WireType for i64 {
+    type Wire = i64;
+    const SIG: char = 'j';
+    fn tid() -> *const c_void { unsafe { cppjs_tid_int64() } }
+    fn from_wire(w: i64) -> i64 { w }
+    fn to_wire(self) -> i64 { self }
+}
+
+impl WireType for u64 {
+    type Wire = u64;
+    const SIG: char = 'u';
+    fn tid() -> *const c_void { unsafe { cppjs_tid_uint64() } }
+    fn from_wire(w: u64) -> u64 { w }
+    fn to_wire(self) -> u64 { self }
+}
+
+// bool crosses as an int-sized wire (0/1), the way emscripten's ABI passes it.
+impl WireType for bool {
+    type Wire = i32;
+    const SIG: char = 'i';
+    fn tid() -> *const c_void { unsafe { cppjs_tid_bool() } }
+    fn from_wire(w: i32) -> bool { w != 0 }
+    fn to_wire(self) -> i32 { self as i32 }
+}
+
+// The void return type: methods that mutate without producing a value.
+impl WireType for () {
+    type Wire = ();
+    const SIG: char = 'v';
+    fn tid() -> *const c_void { unsafe { cppjs_tid_void() } }
+    fn from_wire(_: ()) {}
+    fn to_wire(self) {}
+}
+
+/// std::string wire: [u32 len][bytes] (malloc'd). The consumer frees on return, and also
+/// frees an incoming argument after the call - Rust only COPIES, never owns the wire buffer.
+impl WireType for String {
+    type Wire = *mut u8;
+    // 's' (not 'p'): embind-jsi passes std::string as a jsi::String, not a raw pointer, so the host
+    // adapter must marshal it - the Rust side still sees the `[u32 len][bytes]` wire below.
+    const SIG: char = 's';
+    fn tid() -> *const c_void { unsafe { cppjs_tid_std_string() } }
+    fn from_wire(w: *mut u8) -> String {
+        unsafe {
+            let len = *(w as *const u32) as usize;
+            let bytes = std::slice::from_raw_parts(w.add(4), len);
+            String::from_utf8_lossy(bytes).into_owned()
+        }
+    }
+    fn to_wire(self) -> *mut u8 {
+        unsafe {
+            let bytes = self.as_bytes();
+            let base = malloc(4 + bytes.len());
+            *(base as *mut u32) = bytes.len() as u32;
+            std::ptr::copy_nonoverlapping(bytes.as_ptr(), base.add(4), bytes.len());
+            base
+        }
+    }
+}
+
+/// Option<T> both ways: on wasm the wire is an EM_VAL handle (None = undefined; incoming
+/// undefined/null both read as None); on native it is a nullable heap cell (0 = None) the jsi
+/// adapter converts, tagged 'I'/'D'/'B'/'S'. Incoming cells stay adapter-owned (read, no free).
+macro_rules! option_wire {
+    ($( $inner:ty, $opt_tid:ident, $native_sig:literal ; )*) => {
+        $(
+            #[cfg(target_family = "wasm")]
+            impl WireType for Option<$inner> {
+                type Wire = usize;
+                const SIG: char = 'i';
+                fn tid() -> *const c_void { unsafe { $opt_tid() } }
+                fn from_wire(w: usize) -> Self { <$inner as EmvalOptRead>::emval_opt_read(w) }
+                fn to_wire(self) -> usize {
+                    match self {
+                        None => unsafe { cppjs_emval_undefined() },
+                        Some(v) => v.emval_take(),
+                    }
+                }
+            }
+            #[cfg(not(target_family = "wasm"))]
+            impl WireType for Option<$inner> {
+                type Wire = *mut u8;
+                const SIG: char = $native_sig;
+                fn tid() -> *const c_void { unsafe { $opt_tid() } }
+                fn from_wire(w: *mut u8) -> Self {
+                    if w.is_null() { None } else { Some(<$inner as OptionCellRead>::option_cell_read(w)) }
+                }
+                fn to_wire(self) -> *mut u8 {
+                    match self {
+                        None => std::ptr::null_mut(),
+                        Some(v) => v.option_cell(),
+                    }
+                }
+            }
+        )*
+    };
+}
+option_wire! {
+    i32, cppjs_tid_optional_int, 'I';
+    f64, cppjs_tid_optional_double, 'D';
+    bool, cppjs_tid_optional_bool, 'B';
+    String, cppjs_tid_optional_string, 'S';
+}
+
+// wasm Some-path: hand the inner's in-memory repr to _emval_take_value. JS copies the value
+// synchronously, so stack temporaries suffice; the string wire is freed by embind itself.
+#[cfg(target_family = "wasm")]
+trait EmvalTake { fn emval_take(self) -> usize; }
+#[cfg(target_family = "wasm")]
+impl EmvalTake for i32 {
+    fn emval_take(self) -> usize { unsafe { cppjs_emval_take_value(cppjs_tid_int(), &self as *const i32 as *const c_void) } }
+}
+#[cfg(target_family = "wasm")]
+impl EmvalTake for f64 {
+    fn emval_take(self) -> usize { unsafe { cppjs_emval_take_value(cppjs_tid_double(), &self as *const f64 as *const c_void) } }
+}
+#[cfg(target_family = "wasm")]
+impl EmvalTake for bool {
+    fn emval_take(self) -> usize {
+        let b: u8 = self as u8;
+        unsafe { cppjs_emval_take_value(cppjs_tid_bool(), &b as *const u8 as *const c_void) }
+    }
+}
+#[cfg(target_family = "wasm")]
+impl EmvalTake for String {
+    fn emval_take(self) -> usize {
+        let w = self.to_wire();
+        unsafe { cppjs_emval_take_value(cppjs_tid_std_string(), &w as *const *mut u8 as *const c_void) }
+    }
+}
+
+// wasm incoming: the opt_* reader consumes the handle and yields the native repr (1) or
+// nothing (0, for undefined/null). The string reader hands over a producer-owned wire buffer.
+#[cfg(target_family = "wasm")]
+trait EmvalOptRead: Sized { fn emval_opt_read(handle: usize) -> Option<Self>; }
+#[cfg(target_family = "wasm")]
+impl EmvalOptRead for i32 {
+    fn emval_opt_read(h: usize) -> Option<i32> {
+        let mut v: i32 = 0;
+        if unsafe { cppjs_emval_opt_i32(h, &mut v) } != 0 { Some(v) } else { None }
+    }
+}
+#[cfg(target_family = "wasm")]
+impl EmvalOptRead for f64 {
+    fn emval_opt_read(h: usize) -> Option<f64> {
+        let mut v: f64 = 0.0;
+        if unsafe { cppjs_emval_opt_f64(h, &mut v) } != 0 { Some(v) } else { None }
+    }
+}
+#[cfg(target_family = "wasm")]
+impl EmvalOptRead for bool {
+    fn emval_opt_read(h: usize) -> Option<bool> {
+        let mut v: u8 = 0;
+        if unsafe { cppjs_emval_opt_bool(h, &mut v) } != 0 { Some(v != 0) } else { None }
+    }
+}
+#[cfg(target_family = "wasm")]
+impl EmvalOptRead for String {
+    fn emval_opt_read(h: usize) -> Option<String> {
+        let mut w: *mut u8 = std::ptr::null_mut();
+        if unsafe { cppjs_emval_opt_string(h, &mut w) } == 0 { return None; }
+        let s = String::from_wire(w);
+        unsafe { free(w); }
+        Some(s)
+    }
+}
+
+// Native incoming: read the adapter-owned cell (the adapter frees it after the call).
+#[cfg(not(target_family = "wasm"))]
+trait OptionCellRead: Sized { fn option_cell_read(cell: *mut u8) -> Self; }
+#[cfg(not(target_family = "wasm"))]
+impl OptionCellRead for i32 {
+    fn option_cell_read(cell: *mut u8) -> i32 { unsafe { *(cell as *const i32) } }
+}
+#[cfg(not(target_family = "wasm"))]
+impl OptionCellRead for f64 {
+    fn option_cell_read(cell: *mut u8) -> f64 { unsafe { *(cell as *const f64) } }
+}
+#[cfg(not(target_family = "wasm"))]
+impl OptionCellRead for bool {
+    fn option_cell_read(cell: *mut u8) -> bool { unsafe { *cell != 0 } }
+}
+#[cfg(not(target_family = "wasm"))]
+impl OptionCellRead for String {
+    fn option_cell_read(cell: *mut u8) -> String { String::from_wire(cell) }
+}
+
+// Native Some-path: one malloc'd cell per kind; the jsi adapter reads and frees it.
+#[cfg(not(target_family = "wasm"))]
+trait OptionCell { fn option_cell(self) -> *mut u8; }
+#[cfg(not(target_family = "wasm"))]
+impl OptionCell for i32 {
+    fn option_cell(self) -> *mut u8 { unsafe { let p = malloc(4); *(p as *mut i32) = self; p } }
+}
+#[cfg(not(target_family = "wasm"))]
+impl OptionCell for f64 {
+    fn option_cell(self) -> *mut u8 { unsafe { let p = malloc(8); *(p as *mut f64) = self; p } }
+}
+#[cfg(not(target_family = "wasm"))]
+impl OptionCell for bool {
+    fn option_cell(self) -> *mut u8 { unsafe { let p = malloc(1); *p = self as u8; p } }
+}
+#[cfg(not(target_family = "wasm"))]
+impl OptionCell for String {
+    fn option_cell(self) -> *mut u8 { self.to_wire() }
+}
+
+/// Registers std::optional<T> for the inners a bridge actually returns (adapter-idempotent).
+pub fn register_optional_i32() { unsafe { cppjs_embind_register_optional(cppjs_tid_optional_int(), cppjs_tid_int()); } }
+pub fn register_optional_f64() { unsafe { cppjs_embind_register_optional(cppjs_tid_optional_double(), cppjs_tid_double()); } }
+pub fn register_optional_bool() { unsafe { cppjs_embind_register_optional(cppjs_tid_optional_bool(), cppjs_tid_bool()); } }
+pub fn register_optional_string() { unsafe { cppjs_embind_register_optional(cppjs_tid_optional_string(), cppjs_tid_std_string()); } }
+
+/// Post-raise sentinel returns: only native ever observes them (the adapter throws right after
+/// the invoker returns); on web `cppjs_embind_raise_error` throws into JS and never comes back.
+pub trait ErrSentinel {
+    fn err_sentinel() -> Self;
+}
+impl ErrSentinel for i32 { fn err_sentinel() -> Self { 0 } }
+impl ErrSentinel for i64 { fn err_sentinel() -> Self { 0 } }
+impl ErrSentinel for u64 { fn err_sentinel() -> Self { 0 } }
+impl ErrSentinel for f64 { fn err_sentinel() -> Self { 0.0 } }
+impl ErrSentinel for bool { fn err_sentinel() -> Self { false } }
+impl ErrSentinel for () { fn err_sentinel() -> Self {} }
+impl ErrSentinel for String { fn err_sentinel() -> Self { String::new() } }
+impl<T> ErrSentinel for *mut T { fn err_sentinel() -> Self { std::ptr::null_mut() } }
+
+/// Routes a shim's `Err` to JS as an exception, then returns a dead sentinel value.
+pub fn raise_err<W: ErrSentinel>(msg: String) -> W {
+    unsafe { cppjs_embind_raise_error(msg.to_wire()); }
+    W::err_sentinel()
+}
+
+extern "C" fn dtor_thunk<T>(p: *mut T) {
+    if !p.is_null() {
+        drop(unsafe { Box::from_raw(p) });
+    }
+}
+
+extern "C" fn get_actual_type_thunk<T: 'static>(_p: *const c_void) -> *const c_void {
+    registry().lock().unwrap().class_tid[&TypeId::of::<T>()]
+}
+
+/// The registered typeid of an enum, for a user `WireType` impl's `tid()`. The enum must be
+/// registered with `enum_::<E>(..)` before any binding that uses it.
+pub fn enum_tid<E: 'static>() -> *const c_void {
+    registry().lock().unwrap().class_tid[&TypeId::of::<E>()]
+}
+
+/// The registered typeid of a class, for reference-parameter wrappers (`&OtherClass` params).
+/// The class must be registered before any binding that takes it - declare the struct earlier.
+pub fn class_tid<T: 'static>() -> *const c_void {
+    registry().lock().unwrap().class_tid.get(&TypeId::of::<T>()).copied()
+        .expect("class parameter type must be registered before the binding that uses it")
+}
+
+pub struct EnumBuilder<E: 'static> {
+    ty: *const c_void,
+    _e: std::marker::PhantomData<E>,
+}
+
+/// Registers a C-like enum (i32 discriminants). Follow with `.value(name, discriminant)`.
+pub fn enum_<E: 'static>(name: &str) -> EnumBuilder<E> {
+    let (ty, name_ptr);
+    {
+        let mut r = registry().lock().unwrap();
+        ty = r.tid();
+        name_ptr = r.cstr(name);
+        r.class_tid.insert(TypeId::of::<E>(), ty);
+    }
+    unsafe { cppjs_embind_register_enum(ty, name_ptr, 4, true, 0); }
+    EnumBuilder { ty, _e: std::marker::PhantomData }
+}
+
+impl<E: 'static> EnumBuilder<E> {
+    pub fn value(self, name: &str, discriminant: i32) -> Self {
+        let name_ptr = registry().lock().unwrap().cstr(name);
+        unsafe { cppjs_embind_register_enum_value(self.ty, name_ptr, discriminant); }
+        self
+    }
+}
+
+/// The registered typeid of a value object, for a user `WireType` impl's `tid()`.
+pub fn value_object_tid<T: 'static>() -> *const c_void {
+    registry().lock().unwrap().class_tid[&TypeId::of::<T>()]
+}
+
+extern "C" fn value_ctor<T: Default>() -> *mut T {
+    Box::into_raw(Box::new(T::default()))
+}
+extern "C" fn field_getter<F: WireType + Copy>(offset: usize, s: *const u8) -> <F as WireType>::Wire {
+    unsafe { (*(s.add(offset) as *const F)).to_wire() }
+}
+extern "C" fn field_setter<F: WireType>(offset: usize, s: *mut u8, v: <F as WireType>::Wire) {
+    unsafe { *(s.add(offset) as *mut F) = F::from_wire(v); }
+}
+
+pub struct ValueObjectBuilder<T: 'static> {
+    ty: *const c_void,
+    _t: std::marker::PhantomData<T>,
+}
+
+/// Registers a by-value data struct (a plain `{field: ...}` object in JS). Add fields with
+/// `.field::<F>(name, offset_of!(T, field))`, then call `.finalize()`. `T` must be `Default`.
+pub fn value_object_<T: Default + 'static>(name: &str) -> ValueObjectBuilder<T> {
+    let (ty, name_ptr, ctor_sig, dtor_sig);
+    {
+        let mut r = registry().lock().unwrap();
+        ty = r.tid();
+        name_ptr = r.cstr(name);
+        ctor_sig = r.cstr("p");
+        dtor_sig = r.cstr("vp");
+        r.class_tid.insert(TypeId::of::<T>(), ty);
+    }
+    unsafe {
+        cppjs_embind_register_value_object(
+            ty, name_ptr, ctor_sig, value_ctor::<T> as *const () as usize, dtor_sig, dtor_thunk::<T> as *const () as usize,
+        );
+    }
+    ValueObjectBuilder { ty, _t: std::marker::PhantomData }
+}
+
+impl<T: 'static> ValueObjectBuilder<T> {
+    pub fn field<F: WireType + Copy>(self, name: &str, offset: usize) -> Self {
+        let (name_ptr, getter_sig, setter_sig);
+        {
+            let mut r = registry().lock().unwrap();
+            name_ptr = r.cstr(name);
+            getter_sig = r.cstr(&format!("{}pp", F::SIG));
+            setter_sig = r.cstr(&format!("vpp{}", F::SIG));
+        }
+        unsafe {
+            cppjs_embind_register_value_object_field(
+                self.ty, name_ptr,
+                F::tid(), getter_sig, field_getter::<F> as *const () as usize, offset,
+                F::tid(), setter_sig, field_setter::<F> as *const () as usize, offset,
+            );
+        }
+        self
+    }
+
+    pub fn finalize(self) {
+        unsafe { cppjs_embind_finalize_value_object(self.ty); }
+    }
+}
+
+pub struct ClassBuilder<T: 'static> {
+    cls: *const c_void,
+    ptr_ty: *const c_void,
+    smart_ptr_ty: Option<*const c_void>,
+    _t: std::marker::PhantomData<T>,
+}
+
+// Identity thunks for the smart pointer: our "smart pointer value" IS the raw Box'd pointee,
+// so getPointee/construct/share are identity and the destructor drops the Box. Registered with
+// sharing_policy NONE, so share is never actually called and the pointee stays uniquely owned
+// (making `&mut *this` in method invokers sound).
+extern "C" fn smart_identity(p: *mut c_void) -> *mut c_void { p }
+
+pub fn class_<T: 'static>(name: &str) -> ClassBuilder<T> {
+    let (cls, ptr_ty, const_ptr_ty, gat, name_ptr, dtor_sig);
+    {
+        let mut r = registry().lock().unwrap();
+        cls = r.tid();
+        ptr_ty = r.tid();
+        const_ptr_ty = r.tid();
+        gat = r.cstr("pp");
+        name_ptr = r.cstr(name);
+        dtor_sig = r.cstr("vp");
+        r.class_tid.insert(TypeId::of::<T>(), cls);
+    }
+    unsafe {
+        cppjs_embind_register_class(
+            cls, ptr_ty, const_ptr_ty, std::ptr::null(),
+            gat, get_actual_type_thunk::<T> as *const () as usize,
+            std::ptr::null(), 0,
+            std::ptr::null(), 0,
+            name_ptr, dtor_sig, dtor_thunk::<T> as *const () as usize,
+        );
+    }
+    ClassBuilder { cls, ptr_ty, smart_ptr_ty: None, _t: std::marker::PhantomData }
+}
+
+impl<T: 'static> ClassBuilder<T> {
+    /// Registers a smart-pointer type for this class so factory functions can return an
+    /// object that JS owns and frees on delete(). Call before `.createN`.
+    pub fn smart_ptr(mut self, name: &str) -> Self {
+        let (ptr_ty, name_ptr, gp_sig, ctor_sig, share_sig, dtor_sig);
+        {
+            let mut r = registry().lock().unwrap();
+            ptr_ty = r.tid();
+            name_ptr = r.cstr(name);
+            gp_sig = r.cstr("pp");
+            ctor_sig = r.cstr("pp");
+            share_sig = r.cstr("pp");
+            dtor_sig = r.cstr("vp");
+        }
+        unsafe {
+            cppjs_embind_register_smart_ptr(
+                ptr_ty, self.cls, name_ptr, 0, // sharing_policy::NONE
+                gp_sig, smart_identity as *const () as usize,
+                ctor_sig, smart_identity as *const () as usize,
+                share_sig, smart_identity as *const () as usize,
+                dtor_sig, dtor_thunk::<T> as *const () as usize,
+            );
+        }
+        self.smart_ptr_ty = Some(ptr_ty);
+        self
+    }
+}
+
+// embind models a vector as a class with size/get/push_back methods, so this is pure
+// composition over class_/constructor0/function1 - no new registration ABI.
+fn vec_new<T: 'static>() -> Vec<T> { Vec::new() }
+fn vec_size<T: 'static>(v: &mut Vec<T>) -> i32 { v.len() as i32 }
+fn vec_get<T: Copy + 'static>(v: &mut Vec<T>, i: i32) -> T { v[i as usize] }
+fn vec_push<T: 'static>(v: &mut Vec<T>, x: T) { v.push(x); }   // void return
+
+/// Registers `Vec<T>` as a JS class named `name` with `size()`, `get(i)`, `push_back(v)`.
+pub fn register_vector<T: WireType + Copy>(name: &str) {
+    class_::<Vec<T>>(name)
+        .constructor0(vec_new::<T>)
+        .function0("size", vec_size::<T>)
+        .function1("get", vec_get::<T>)
+        .function1("push_back", vec_push::<T>);
+}
+
+// N-arity static factories: a class function that returns the smart-pointer-owned object.
+macro_rules! factories {
+    ($( $method:ident / $invoker:ident : $($arg:ident),* ; )*) => {
+        $(
+            extern "C" fn $invoker<T: 'static $(, $arg: WireType)*>(
+                method: usize $(, $arg: <$arg as WireType>::Wire)*
+            ) -> *mut T {
+                let f: fn($($arg),*) -> T = unsafe { core::mem::transmute(method) };
+                Box::into_raw(Box::new(f($(<$arg as WireType>::from_wire($arg)),*)))
+            }
+        )*
+        impl<T: 'static> ClassBuilder<T> {
+            $(
+                pub fn $method<$($arg: WireType),*>(self, name: &str, f: fn($($arg),*) -> T) -> Self {
+                    let ret = self.smart_ptr_ty.expect("call .smart_ptr(name) before a factory");
+                    let mut sig = String::from("pp");
+                    let mut args = vec![ret];
+                    $( sig.push(<$arg as WireType>::SIG); args.push(<$arg as WireType>::tid()); )*
+                    let (argc, arg_ptr, name_ptr, sig_ptr);
+                    {
+                        let mut r = registry().lock().unwrap();
+                        argc = args.len() as u32;
+                        arg_ptr = r.argtypes(args);
+                        name_ptr = r.cstr(name);
+                        sig_ptr = r.cstr(&sig);
+                    }
+                    unsafe {
+                        cppjs_embind_register_class_class_function(
+                            self.cls, name_ptr, argc, arg_ptr, sig_ptr,
+                            $invoker::<T $(, $arg)*> as *const () as usize, f as *const () as usize, false, false,
+                        );
+                    }
+                    self
+                }
+            )*
+        }
+    };
+}
+factories! {
+    create0 / factory_invoker0 : ;
+    create1 / factory_invoker1 : A0;
+    create2 / factory_invoker2 : A0, A1;
+}
+
+// N-arity constructors: one monomorphized invoker + builder method per argument count.
+macro_rules! constructors {
+    ($( $method:ident / $invoker:ident : $($arg:ident),* ; )*) => {
+        $(
+            extern "C" fn $invoker<T: 'static $(, $arg: WireType)*>(
+                ctor: usize $(, $arg: <$arg as WireType>::Wire)*
+            ) -> *mut T {
+                let f: fn($($arg),*) -> T = unsafe { core::mem::transmute(ctor) };
+                Box::into_raw(Box::new(f($(<$arg as WireType>::from_wire($arg)),*)))
+            }
+        )*
+        impl<T: 'static> ClassBuilder<T> {
+            $(
+                pub fn $method<$($arg: WireType),*>(self, f: fn($($arg),*) -> T) -> Self {
+                    let mut sig = String::from("pp");
+                    let mut args = vec![self.ptr_ty];
+                    $( sig.push(<$arg as WireType>::SIG); args.push(<$arg as WireType>::tid()); )*
+                    let (argc, arg_ptr, sig_ptr);
+                    {
+                        let mut r = registry().lock().unwrap();
+                        argc = args.len() as u32;
+                        arg_ptr = r.argtypes(args);
+                        sig_ptr = r.cstr(&sig);
+                    }
+                    unsafe {
+                        cppjs_embind_register_class_constructor(
+                            self.cls, argc, arg_ptr, sig_ptr,
+                            $invoker::<T $(, $arg)*> as *const () as usize, f as *const () as usize,
+                        );
+                    }
+                    self
+                }
+            )*
+        }
+    };
+}
+constructors! {
+    constructor0 / ctor_invoker0 : ;
+    constructor1 / ctor_invoker1 : A0;
+    constructor2 / ctor_invoker2 : A0, A1;
+    constructor3 / ctor_invoker3 : A0, A1, A2;
+}
+
+// Raw-pointer ctor variants for fallible `new`: the shim boxes the value itself (or raises and
+// returns null), so `Result<Self, E>` rides the same registration ABI as a plain constructor.
+macro_rules! constructors_ptr {
+    ($( $method:ident / $invoker:ident : $($arg:ident),* ; )*) => {
+        $(
+            extern "C" fn $invoker<T: 'static $(, $arg: WireType)*>(
+                ctor: usize $(, $arg: <$arg as WireType>::Wire)*
+            ) -> *mut T {
+                let f: fn($($arg),*) -> *mut T = unsafe { core::mem::transmute(ctor) };
+                f($(<$arg as WireType>::from_wire($arg)),*)
+            }
+        )*
+        impl<T: 'static> ClassBuilder<T> {
+            $(
+                pub fn $method<$($arg: WireType),*>(self, f: fn($($arg),*) -> *mut T) -> Self {
+                    let mut sig = String::from("pp");
+                    let mut args = vec![self.ptr_ty];
+                    $( sig.push(<$arg as WireType>::SIG); args.push(<$arg as WireType>::tid()); )*
+                    let (argc, arg_ptr, sig_ptr);
+                    {
+                        let mut r = registry().lock().unwrap();
+                        argc = args.len() as u32;
+                        arg_ptr = r.argtypes(args);
+                        sig_ptr = r.cstr(&sig);
+                    }
+                    unsafe {
+                        cppjs_embind_register_class_constructor(
+                            self.cls, argc, arg_ptr, sig_ptr,
+                            $invoker::<T $(, $arg)*> as *const () as usize, f as *const () as usize,
+                        );
+                    }
+                    self
+                }
+            )*
+        }
+    };
+}
+constructors_ptr! {
+    constructor_ptr0 / ctor_ptr_invoker0 : ;
+    constructor_ptr1 / ctor_ptr_invoker1 : A0;
+    constructor_ptr2 / ctor_ptr_invoker2 : A0, A1;
+    constructor_ptr3 / ctor_ptr_invoker3 : A0, A1, A2;
+}
+
+// Raw-pointer factory variants: `Result<Self, E>` raises on Err, `Option<Self>` returns null
+// (the consumer maps a null smart pointer to JS null).
+macro_rules! factories_ptr {
+    ($( $method:ident / $invoker:ident : $($arg:ident),* ; )*) => {
+        $(
+            extern "C" fn $invoker<T: 'static $(, $arg: WireType)*>(
+                method: usize $(, $arg: <$arg as WireType>::Wire)*
+            ) -> *mut T {
+                let f: fn($($arg),*) -> *mut T = unsafe { core::mem::transmute(method) };
+                f($(<$arg as WireType>::from_wire($arg)),*)
+            }
+        )*
+        impl<T: 'static> ClassBuilder<T> {
+            $(
+                pub fn $method<$($arg: WireType),*>(self, name: &str, f: fn($($arg),*) -> *mut T) -> Self {
+                    let ret = self.smart_ptr_ty.expect("call .smart_ptr(name) before a factory");
+                    let mut sig = String::from("pp");
+                    let mut args = vec![ret];
+                    $( sig.push(<$arg as WireType>::SIG); args.push(<$arg as WireType>::tid()); )*
+                    let (argc, arg_ptr, name_ptr, sig_ptr);
+                    {
+                        let mut r = registry().lock().unwrap();
+                        argc = args.len() as u32;
+                        arg_ptr = r.argtypes(args);
+                        name_ptr = r.cstr(name);
+                        sig_ptr = r.cstr(&sig);
+                    }
+                    unsafe {
+                        cppjs_embind_register_class_class_function(
+                            self.cls, name_ptr, argc, arg_ptr, sig_ptr,
+                            $invoker::<T $(, $arg)*> as *const () as usize, f as *const () as usize, false, false,
+                        );
+                    }
+                    self
+                }
+            )*
+        }
+    };
+}
+factories_ptr! {
+    create_ptr0 / factory_ptr_invoker0 : ;
+    create_ptr1 / factory_ptr_invoker1 : A0;
+    create_ptr2 / factory_ptr_invoker2 : A0, A1;
+}
+
+// N-arity instance methods.
+macro_rules! functions {
+    ($( $method:ident / $invoker:ident : $($arg:ident),* ; )*) => {
+        $(
+            extern "C" fn $invoker<T: 'static $(, $arg: WireType)*, R: WireType>(
+                ctx: usize, this: *mut T $(, $arg: <$arg as WireType>::Wire)*
+            ) -> <R as WireType>::Wire {
+                let f: fn(&mut T $(, $arg)*) -> R = unsafe { core::mem::transmute(ctx) };
+                f(unsafe { &mut *this } $(, <$arg as WireType>::from_wire($arg))*).to_wire()
+            }
+        )*
+        impl<T: 'static> ClassBuilder<T> {
+            $(
+                pub fn $method<$($arg: WireType,)* R: WireType>(self, name: &str, f: fn(&mut T $(, $arg)*) -> R) -> Self {
+                    let mut sig = String::new();
+                    sig.push(R::SIG); sig.push('p'); sig.push('p');
+                    let mut args = vec![R::tid(), self.ptr_ty];
+                    $( sig.push(<$arg as WireType>::SIG); args.push(<$arg as WireType>::tid()); )*
+                    let (argc, arg_ptr, name_ptr, sig_ptr);
+                    {
+                        let mut r = registry().lock().unwrap();
+                        argc = args.len() as u32;
+                        arg_ptr = r.argtypes(args);
+                        name_ptr = r.cstr(name);
+                        sig_ptr = r.cstr(&sig);
+                    }
+                    unsafe {
+                        cppjs_embind_register_class_function(
+                            self.cls, name_ptr, argc, arg_ptr, sig_ptr,
+                            $invoker::<T $(, $arg)*, R> as *const () as usize, f as *const () as usize, 0, false, false,
+                        );
+                    }
+                    self
+                }
+            )*
+        }
+    };
+}
+functions! {
+    function0 / method_invoker0 : ;
+    function1 / method_invoker1 : A0;
+    function2 / method_invoker2 : A0, A1;
+    function3 / method_invoker3 : A0, A1, A2;
+    function4 / method_invoker4 : A0, A1, A2, A3;
+}
+
+// N-arity FREE functions (`Module.name(..)` in JS, no class). embind slices the target off
+// exactly like methods, so the adapter bakes + prepends the fn pointer; argTypes = [ret, args..].
+macro_rules! free_functions {
+    ($( $fname:ident / $invoker:ident : $($arg:ident),* ; )*) => {
+        $(
+            extern "C" fn $invoker<$($arg: WireType,)* R: WireType>(
+                ctx: usize $(, $arg: <$arg as WireType>::Wire)*
+            ) -> <R as WireType>::Wire {
+                let f: fn($($arg),*) -> R = unsafe { core::mem::transmute(ctx) };
+                f($(<$arg as WireType>::from_wire($arg)),*).to_wire()
+            }
+            pub fn $fname<$($arg: WireType,)* R: WireType>(name: &str, f: fn($($arg),*) -> R) {
+                let mut sig = String::new();
+                sig.push(R::SIG); sig.push('p');
+                let mut args = vec![R::tid()];
+                $( sig.push(<$arg as WireType>::SIG); args.push(<$arg as WireType>::tid()); )*
+                let (argc, arg_ptr, name_ptr, sig_ptr);
+                {
+                    let mut r = registry().lock().unwrap();
+                    argc = args.len() as u32;
+                    arg_ptr = r.argtypes(args);
+                    name_ptr = r.cstr(name);
+                    sig_ptr = r.cstr(&sig);
+                }
+                unsafe {
+                    cppjs_embind_register_function(
+                        name_ptr, argc, arg_ptr, sig_ptr,
+                        $invoker::<$($arg,)* R> as *const () as usize, f as *const () as usize, false, false,
+                    );
+                }
+            }
+        )*
+    };
+}
+free_functions! {
+    fn0 / free_invoker0 : ;
+    fn1 / free_invoker1 : A0;
+    fn2 / free_invoker2 : A0, A1;
+    fn3 / free_invoker3 : A0, A1, A2;
+    fn4 / free_invoker4 : A0, A1, A2, A3;
+}
