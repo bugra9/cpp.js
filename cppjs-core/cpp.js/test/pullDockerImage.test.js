@@ -21,6 +21,12 @@ describe('getDockerImage', () => {
         const { mod } = await importFresh();
         expect(mod.getDockerImage()).toMatch(/^bugra9\/cpp\.js@sha256:[0-9a-f]{64}$/);
     });
+
+    test('returns a distinct digest-pinned amd64 leaf for linux/amd64', async () => {
+        const { mod } = await importFresh();
+        expect(mod.getDockerImage('linux/amd64')).toMatch(/^bugra9\/cpp\.js@sha256:[0-9a-f]{64}$/);
+        expect(mod.getDockerImage('linux/amd64')).not.toBe(mod.getDockerImage());
+    });
 });
 
 describe('getDockerContainerName', () => {
@@ -84,5 +90,24 @@ describe('pullDockerImage', () => {
         mod.default();
 
         expect(execFileSync.mock.calls.length).toBe(callsAfterFirst);
+    });
+
+    test('tracks each platform ref separately', async () => {
+        const { mod, execFileSync } = await importFresh();
+        execFileSync.mockReturnValue('');
+
+        mod.default();
+        const callsAfterDefault = execFileSync.mock.calls.length;
+        mod.default('linux/amd64');
+        expect(execFileSync).toHaveBeenCalledWith(
+            'docker',
+            ['image', 'inspect', mod.getDockerImage('linux/amd64')],
+            expect.objectContaining({ stdio: 'ignore' }),
+        );
+        expect(execFileSync.mock.calls.length).toBeGreaterThan(callsAfterDefault);
+
+        const callsAfterAmd64 = execFileSync.mock.calls.length;
+        mod.default('linux/amd64');
+        expect(execFileSync.mock.calls.length).toBe(callsAfterAmd64);
     });
 });

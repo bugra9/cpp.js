@@ -37,10 +37,24 @@ if (!/^[^@]+@sha256:[0-9a-f]{64}$/.test(repoDigest)) {
     process.exit(1);
 }
 
-const next = text.replace(/const IMAGE = '[^']*';/, `const IMAGE = '${repoDigest}';`);
+// The amd64 leaf digest backs android runs on arm64 hosts (classic store holds one platform per digest ref).
+let amd64Digest = repoDigest;
+try {
+    const raw = execFileSync('docker', ['buildx', 'imagetools', 'inspect', repoDigest, '--raw'], { encoding: 'utf8' });
+    const repo = repoDigest.split('@')[0];
+    const leaf = JSON.parse(raw).manifests?.find((m) => m.platform?.os === 'linux' && m.platform?.architecture === 'amd64');
+    if (leaf?.digest) amd64Digest = `${repo}@${leaf.digest}`;
+    else console.warn('pin-docker-image: no linux/amd64 leaf in the index; pinning IMAGE_AMD64 to the index digest');
+} catch {
+    console.warn('pin-docker-image: imagetools inspect failed; pinning IMAGE_AMD64 to the index digest');
+}
+
+const next = text
+    .replace(/const IMAGE = '[^']*';/, `const IMAGE = '${repoDigest}';`)
+    .replace(/const IMAGE_AMD64 = '[^']*';/, `const IMAGE_AMD64 = '${amd64Digest}';`);
 if (next === text) {
-    console.log(`pin-docker-image: already pinned to ${repoDigest}`);
+    console.log(`pin-docker-image: already pinned to ${repoDigest} (amd64 ${amd64Digest})`);
     process.exit(0);
 }
 fs.writeFileSync(FILE, next);
-console.log(`pin-docker-image: pinned ${tag} -> ${repoDigest}`);
+console.log(`pin-docker-image: pinned ${tag} -> ${repoDigest} (amd64 ${amd64Digest})`);
