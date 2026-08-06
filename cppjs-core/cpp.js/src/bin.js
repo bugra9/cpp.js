@@ -10,6 +10,7 @@ import createLib from './actions/createLib.js';
 import buildWasm from './actions/buildWasm.js';
 import buildWasiCommand from './actions/buildWasiCommand.js';
 import buildExternal from './actions/buildExternal.js';
+import buildPackageTypes from './actions/buildTypes.js';
 import buildLib from './actions/buildLib.js';
 import buildDependencies from './actions/buildDependencies.js';
 import runCppjsApp from './actions/run.js';
@@ -22,7 +23,7 @@ import logger from './utils/logger.js';
 import { getDockerImage, getDockerContainerName } from './utils/pullDockerImage.js';
 import { cleanDepsCache } from './utils/dependencyRebuild.js';
 import collectLicenseRows from './actions/licenses.js';
-import { formatNoticesMarkdown, validateSpdx } from './utils/licenseReport.js';
+import { formatNoticesMarkdown, formatCycloneDxSbom, validateSpdx } from './utils/licenseReport.js';
 import findFiles from './utils/findFiles.js';
 
 const packageJSON = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url)));
@@ -91,9 +92,11 @@ program.command('build')
 program.command('licenses')
     .description('list bundled native dependencies with SPDX license, versions and source URL')
     .option('--notices [file]', 'write a THIRD-PARTY-NOTICES markdown file (default: THIRD-PARTY-NOTICES.md)')
+    .option('--sbom [file]', 'write a CycloneDX SBOM json file (default: sbom.cdx.json)')
     .option('--check', 'exit non-zero when a license field is missing or not valid SPDX')
+    .option('--platform <platform>', "also list what this platform's artifact statically links beyond the package graph (vendored copies, toolchain runtime)")
     .action(async (options) => {
-        const rows = await collectLicenseRows();
+        const rows = await collectLicenseRows(options.platform || null);
         rows.forEach((row) => {
             console.log(`${row.isCopyleft ? '! ' : '  '}${(row.name || '').padEnd(14)} ${String(row.license || '(missing)').padEnd(48)} native ${String(row.nativeVersion || '-').padEnd(10)} ${row.sourceUrl || ''}`);
         });
@@ -104,6 +107,12 @@ program.command('licenses')
         if (options.notices) {
             const file = typeof options.notices === 'string' ? options.notices : `${state.config.paths.project}/THIRD-PARTY-NOTICES.md`;
             fs.writeFileSync(file, formatNoticesMarkdown(rows));
+            logger.info(`cppjs: wrote ${file}`);
+        }
+        if (options.sbom) {
+            const file = typeof options.sbom === 'string' ? options.sbom : `${state.config.paths.project}/sbom.cdx.json`;
+            const target = { name: state.config.package?.name, version: state.config.package?.version };
+            fs.writeFileSync(file, formatCycloneDxSbom(rows, target));
             logger.info(`cppjs: wrote ${file}`);
         }
         if (options.check) {
@@ -284,6 +293,7 @@ async function build(targetParams, rebuildOption) {
     buildLib(targetParams);
     createWasmJs(targetParams);
     await createWasiCommands(targetParams);
+    buildPackageTypes();
 }
 
 async function createWasiCommands(targetParams) {

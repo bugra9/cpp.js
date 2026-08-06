@@ -4,6 +4,7 @@ import downloadAndExtractFile from '../utils/downloadAndExtractFile.js';
 import { getBuildTargets } from './target.js';
 import state from '../state/index.js';
 import buildLib from './buildLib.js';
+import buildBinTools from './buildBinTools.js';
 
 export default async function buildExternal(targetParams, options = {}) {
     const version = state.config.package.nativeVersion;
@@ -29,6 +30,10 @@ export default async function buildExternal(targetParams, options = {}) {
     }
 
     buildLib(targetParams, options);
+
+    if (state.config.build.bin) {
+        await buildBinTools(targetParams);
+    }
 
     if (copyToDist) {
         const targets = getBuildTargets(targetParams);
