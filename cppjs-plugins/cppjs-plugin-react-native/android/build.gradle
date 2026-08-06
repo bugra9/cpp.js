@@ -22,6 +22,9 @@ def cppjsBridges = tasks.register('cppjsBridges', Exec) {
     commandLine 'node', new File(__cppjsScriptDir, 'build_js.js').absolutePath, 'android'
 }
 def cppjsDeps = tasks.register('cppjsDeps', Exec) {
+    // After the bridge bundle: a first-time import writes its Rust bridge crate during
+    // bundling, and the deps stamp below must see that fresh set to bust the CMake configure.
+    mustRunAfter cppjsBridges
     workingDir __cppjsAppRoot
     // Pinned to Release: dependency prebuilts ship Release-only, debug app builds link the same deps.
     commandLine 'node', new File(__cppjsScriptDir, 'build_android_deps.js').absolutePath, 'Release', cppjsAbis.join(',')
@@ -46,6 +49,20 @@ tasks.named('preBuild').configure { dependsOn(cppjsBridges, cppjsDeps, cppjsAsse
 // CMake configure can also be triggered without preBuild (IDE sync, direct invocation).
 tasks.matching { it.name.startsWith('configureCMake') }.configureEach {
     dependsOn(cppjsBridges, cppjsDeps, cppjsCodegen)
+}
+
+// The APP's autolinking cmake add_subdirectory()s this library's generated codegen/jni, but
+// RNGP only orders codegen ahead of THIS project's build - so a freshly installed plugin
+// fails the app's CMake configure ("codegen/jni ... is not an existing directory"). Wire every
+// other project's CMake configure to this library's codegen once all projects exist.
+gradle.projectsEvaluated {
+    rootProject.allprojects { p ->
+        if (p != project) {
+            p.tasks.matching { it.name.startsWith('configureCMake') }.configureEach {
+                dependsOn(cppjsCodegen)
+            }
+        }
+    }
 }
 
 android {

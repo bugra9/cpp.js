@@ -29,8 +29,9 @@
         "cpp.js": "workspace:^",
         "@cpp.js/plugin-metro": "workspace:^",
         "@cpp.js/core-embind-jsi": "workspace:^",
-        "@babel/runtime": "^7.29.7",
-        "upath": "^3.0.7"
+        "@babel/runtime": "^8.0.0",
+        "upath": "^3.0.8",
+        "@cpp.js/core-embind-rust": "workspace:^"
     },
     "keywords": [
         "cpp.js-plugin",

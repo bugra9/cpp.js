@@ -82,4 +82,11 @@ if(ANDROID)
         ReactAndroid::jsi
         ReactAndroid::reactnative
         fbjni::fbjni)
+
+    # App-local Rust staticlibs (build_android.js): whole-archive so their init-array
+    # registration constructors survive dead-strip (nothing references them by symbol).
+    if(DEFINED CPPJS_RUST_APP_LIBS AND NOT "${CPPJS_RUST_APP_LIBS}" STREQUAL "")
+        string(REPLACE ";" "," CPPJS_RUST_APP_LIBS_COMMA "${CPPJS_RUST_APP_LIBS}")
+        target_link_libraries("${PROJECT_NAME}" "$<LINK_LIBRARY:WHOLE_ARCHIVE,${CPPJS_RUST_APP_LIBS_COMMA}>")
+    endif()
 endif()

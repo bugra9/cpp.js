@@ -1,6 +1,11 @@
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
 import {
     state, createLib, getParentPath, buildDependencies,
-    createXCFramework, getAllBridges, getTargetParams, getFilteredBuildTargets
+    createXCFramework, getAllBridges, getTargetParams, getFilteredBuildTargets,
+    buildAppRustCrates,
 } from 'cpp.js';
 import RNEmbind from '@cpp.js/core-embind-jsi/cppjs.config.mjs';
 import RNCppjsPluginReactNative from '../cppjs.config.mjs';
@@ -36,6 +41,13 @@ const buildTargetIPhoneSimulator = buildType === 'Release' ? buildTargetReleaseI
 
 const projectPath = getParentPath(RNCppjsPluginReactNative.paths.config);
 const RNEmbindProjectPath = getParentPath(RNEmbind.paths.config);
+// embind-rust is the Rust producer's mobile adapter, a sibling of embind-jsi in cppjs-core; its
+// jsi adapter compiles alongside bind.cpp so Rust-registered classes reach JS on mobile too.
+// This plugin declares @cpp.js/core-embind-rust, so its own require resolves it in every
+// layout (workspace link or a consumer install) - same direction rule as core-embind-jsi.
+const RNEmbindRustPath = path.dirname(fs.realpathSync(
+    createRequire(import.meta.url).resolve('@cpp.js/core-embind-rust/package.json'),
+));
 
 const bridges = getAllBridges();
 const options = {
@@ -45,6 +57,7 @@ const options = {
         `${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`,
         ...bridges,
         `${RNEmbindProjectPath}/cpp/src/emscripten/bind.cpp`,
+        `${RNEmbindRustPath}/adapters/jsi.cpp`,
         `${state.config.paths.project}/node_modules/react-native/ReactCommon/jsi/jsi/jsi.cpp`,
     ],
     headerGlob: [
@@ -52,6 +65,7 @@ const options = {
     ],
     headerDirs: [
         `${RNEmbindProjectPath}/cpp/src`,
+        `${RNEmbindRustPath}/include`,
         `${state.config.paths.project}/node_modules/react-native/ReactCommon/jsi`,
     ],
 };
@@ -65,7 +79,7 @@ const iosTargetParams = {
 
 await buildDependencies({ targetParams: iosTargetParams });
 
-const cacheKeyArgs = [buildType, projectPath, [projectPath, RNEmbindProjectPath]];
+const cacheKeyArgs = [buildType, projectPath, [projectPath, RNEmbindProjectPath, RNEmbindRustPath]];
 if (isIosLibsFresh(...cacheKeyArgs)) {
     console.log(`cppjs: iOS libs (${buildType}) up to date — skipping native build.`);
 } else {
@@ -74,6 +88,19 @@ if (isIosLibsFresh(...cacheKeyArgs)) {
     // output lib dir already exists, which would repackage the xcframework from stale objects.
     createLib(buildTargetIPhoneOS, 'Full', { ...options, force: true });
     createLib(buildTargetIPhoneSimulator, 'Full', { ...options, force: true });
+
+    // App-local Rust surfaces (imported .rs files): cargo-build their synthesized crates and
+    // merge the staticlibs into react-native-cppjs.a - that archive is already force_loaded by
+    // the podspec, so the crates' init-array registrations survive the app link.
+    for (const target of [buildTargetIPhoneOS, buildTargetIPhoneSimulator]) {
+        const rustLibs = buildAppRustCrates(target, state.config.paths.cache);
+        if (rustLibs.length === 0) continue;
+        const libFile = `${state.config.paths.build}/Full-${buildType}/prebuilt/${target.path}/lib/libreact-native-cppjs.a`;
+        const merged = `${libFile}.merged`;
+        const libtool = spawnSync('libtool', ['-static', '-o', merged, libFile, ...rustLibs], { stdio: 'inherit' });
+        if (libtool.status !== 0) throw new Error(`cppjs: libtool merge failed for ${libFile}`);
+        fs.renameSync(merged, libFile);
+    }
 
     const overrideConfig = {
         paths: {

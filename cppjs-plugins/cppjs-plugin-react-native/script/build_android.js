@@ -1,6 +1,8 @@
 import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
 import {
-    state, getCmakeParameters, getParentPath, getAllBridges,
+    state, getCmakeParameters, getParentPath, getAllBridges, buildAppRustCrates,
 } from 'cpp.js';
 import RNEmbind from '@cpp.js/core-embind-jsi/cppjs.config.mjs';
 import RNCppjsPluginReactNative from '../cppjs.config.mjs';
@@ -18,6 +20,11 @@ const buildTarget = resolveBuildTarget(arch, buildType);
 
 const projectPath = getParentPath(RNCppjsPluginReactNative.paths.config);
 const RNEmbindProjectPath = getParentPath(RNEmbind.paths.config);
+// This plugin declares @cpp.js/core-embind-rust, so its own require resolves it in every
+// layout (workspace link or a consumer install) - same direction rule as core-embind-jsi.
+const RNEmbindRustPath = path.dirname(fs.realpathSync(
+    createRequire(import.meta.url).resolve('@cpp.js/core-embind-rust/package.json'),
+));
 
 const bridges = getAllBridges();
 const options = {
@@ -28,13 +35,20 @@ const options = {
         ...bridges,
         `${projectPath}/cpp/src/JSI_module.cpp`,
         `${RNEmbindProjectPath}/cpp/src/emscripten/bind.cpp`,
+        `${RNEmbindRustPath}/adapters/jsi.cpp`,
     ],
     headerDirs: [
         `${projectPath}/cpp/src`,
         `${RNEmbindProjectPath}/cpp/src`,
+        `${RNEmbindRustPath}/include`,
     ],
 };
 const params = getCmakeParameters(buildTarget, options);
+
+// App-local Rust surfaces (imported .rs files): cargo-build their synthesized crates for this
+// ABI and hand the staticlibs to CMake, which links them whole-archive (init-array survival).
+const rustLibs = buildAppRustCrates(buildTarget, state.config.paths.cache);
+if (rustLibs.length > 0) params.push(`-DCPPJS_RUST_APP_LIBS=${rustLibs.join(';')}`);
 
 // Written to a file (one parameter per line), not stdout: cpp.js logging shares
 // stdout, so CMake parsing the process output would break on any log line.
