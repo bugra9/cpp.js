@@ -426,8 +426,9 @@ function walkPackageJsons(dir) {
 
 function deriveLibraryKey(pkgPath) {
     // .../cppjs-packages/cppjs-package-X/cppjs-package-X[-platform]/package.json
+    // bin-wasi must strip before wasi so gdal-bin-wasi resolves to gdal, not gdal-bin.
     const parent = path.basename(path.dirname(pkgPath));
-    return parent.replace(/^cppjs-package-/, '').replace(/-(wasm|ios|android)$/, '');
+    return parent.replace(/^cppjs-package-/, '').replace(/-(bin-wasi|wasi|wasm|ios|android)$/, '');
 }
 
 // Rewrite the `"nativeVersion": "X"` line in-place, preserving all other

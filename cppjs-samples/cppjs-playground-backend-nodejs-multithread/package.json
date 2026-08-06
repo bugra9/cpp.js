@@ -26,7 +26,7 @@
         "@cpp.js/package-tiff-wasm": "workspace:^",
         "@cpp.js/package-webp-wasm": "workspace:^",
         "@cpp.js/package-zlib-wasm": "workspace:^",
-        "ws": "8.21.0",
+        "ws": "8.21.2",
         "xhr2": "^0.2.1"
     },
     "keywords": [

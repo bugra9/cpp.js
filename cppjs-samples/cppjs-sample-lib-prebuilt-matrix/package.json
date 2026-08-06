@@ -24,5 +24,13 @@
         "cpp.js-sample",
         "webassembly",
         "react-native"
-    ]
+    ],
+    "types": "./dist/types/index.d.ts",
+    "typesVersions": {
+        "*": {
+            "*.h": [
+                "./dist/types/index.d.ts"
+            ]
+        }
+    }
 }

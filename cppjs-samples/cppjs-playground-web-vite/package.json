@@ -16,7 +16,7 @@
         "e2e:prod": "playwright test --config playwright.prod.config.cjs"
     },
     "dependencies": {
-        "vue": "^3.5.34",
+        "vue": "^3.5.41",
         "@cpp.js/plugin-vite": "workspace:^",
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^",
         "@cpp.js/package-expat-wasm": "workspace:^",
@@ -30,12 +30,14 @@
         "@cpp.js/package-sqlite3-wasm": "workspace:^",
         "@cpp.js/package-tiff-wasm": "workspace:^",
         "@cpp.js/package-webp-wasm": "workspace:^",
-        "@cpp.js/package-zlib-wasm": "workspace:^"
+        "@cpp.js/package-zlib-wasm": "workspace:^",
+        "@cpp.js/embind-rust-demo": "workspace:^"
     },
     "devDependencies": {
-        "@vitejs/plugin-vue": "^6.0.7",
-        "vite": "^8.0.14",
-        "@playwright/test": "^1.60.0"
+        "@cpp.js/typescript-config": "workspace:^",
+        "@playwright/test": "^1.62.1",
+        "@vitejs/plugin-vue": "^6.0.8",
+        "vite": "^8.2.1"
     },
     "keywords": [
         "cpp.js-sample",

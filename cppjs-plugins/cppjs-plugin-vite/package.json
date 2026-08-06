@@ -9,10 +9,11 @@
     "main": "index.js",
     "dependencies": {
         "cpp.js": "workspace:^",
-        "@cpp.js/plugin-rollup": "workspace:^"
+        "@cpp.js/plugin-rollup": "workspace:^",
+        "@cpp.js/core-embind-rust": "workspace:^"
     },
     "peerDependencies": {
-        "vite": ">=5"
+        "vite": ">=8.2.1"
     },
     "keywords": [
         "cpp.js-plugin",

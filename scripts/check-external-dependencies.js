@@ -139,7 +139,7 @@ function parseRange(spec) {
     }
 
     if (trimmed === '*' || trimmed === 'x' || trimmed.toLowerCase() === 'latest') {
-        return { prefix: '', version: null, raw: spec, resolvable: false };
+        return { prefix: '', version: null, raw: spec, resolvable: false, wildcard: true };
     }
 
     // Capture the leading prefix so we can preserve it when rewriting. We only
@@ -329,22 +329,21 @@ async function main() {
         const { latest, error } = latestByName.get(name) || {};
         const uniqueRanges = [...new Set(usages.map((u) => u.spec))].sort();
         // A dep is "outdated" if the highest in-use version is older than the
-        // latest npm version. Unresolvable specs ('*', git, etc.) yield
+        // latest npm version. Unresolvable specs (git, file, etc.) yield
         // status 'unknown'.
         let highestInUse = null;
-        let hasUnresolvable = false;
         for (const u of usages) {
-            if (!u.parsed.resolvable || !u.parsed.version) {
-                hasUnresolvable = true;
-                continue;
-            }
+            if (!u.parsed.resolvable || !u.parsed.version) continue;
             if (!highestInUse || compareVersions(u.parsed.version, highestInUse) > 0) {
                 highestInUse = u.parsed.version;
             }
         }
+        // Every range being '*'/'x'/'latest' means the host app dictates the version - never a strict failure.
+        const isHostProvided = usages.length > 0 && usages.every((u) => u.parsed.wildcard);
         let status;
-        if (error || !latest) status = 'unknown';
-        else if (!highestInUse) status = hasUnresolvable ? 'unknown' : 'unknown';
+        if (isHostProvided) status = 'host-provided';
+        else if (error || !latest) status = 'unknown';
+        else if (!highestInUse) status = 'unknown';
         else status = compareVersions(highestInUse, latest) >= 0 ? 'up-to-date' : 'outdated';
         return {
             name,
@@ -395,6 +394,7 @@ async function main() {
     const outdated = rows.filter((r) => r.status === 'outdated');
     const upToDate = rows.filter((r) => r.status === 'up-to-date');
     const unknown = rows.filter((r) => r.status === 'unknown');
+    const hostProvided = rows.filter((r) => r.status === 'host-provided');
     const updated = rows.filter((r) => r.status === 'updated');
 
     // ---------------------------------------------------------------------
@@ -454,6 +454,11 @@ async function main() {
         printTable(cols, unknown.map(toRow));
         process.stdout.write('\n');
     }
+    if (hostProvided.length > 0) {
+        process.stdout.write(`Host-provided (${hostProvided.length}) — '*' ranges, the host app dictates the version\n`);
+        printTable(cols, hostProvided.map(toRow));
+        process.stdout.write('\n');
+    }
     process.stdout.write(`Up to date (${upToDate.length})\n`);
     printTable(cols, upToDate.map(toRow));
 
@@ -464,7 +469,8 @@ async function main() {
         md += `- Up to date: ${upToDate.length}\n`;
         md += `- Outdated: ${outdated.length}\n`;
         if (updated.length > 0) md += `- Updated: ${updated.length}\n`;
-        md += `- Unknown: ${unknown.length}\n\n`;
+        md += `- Unknown: ${unknown.length}\n`;
+        md += `- Host-provided ('*'): ${hostProvided.length}\n\n`;
         if (updated.length > 0) {
             md += `## Updated (${updated.length})\n\n` + renderTable(updated) + '\n';
         }
@@ -484,12 +490,18 @@ async function main() {
         if (unknown.length > 0) {
             md += `## Unknown (${unknown.length})\n\n` + renderTable(unknown) + '\n';
         }
+        if (hostProvided.length > 0) {
+            md += `## Host-provided (${hostProvided.length})\n\n`;
+            md += 'Every range in use is `*`/`x`/`latest` — the host app dictates the version, so there is nothing to compare.\n\n';
+            md += renderTable(hostProvided) + '\n';
+        }
         md += `## Up to date (${upToDate.length})\n\n` + renderTable(upToDate) + '\n';
         fs.writeFileSync(REPORT_PATH, md);
         process.stderr.write(`\nReport written to ${REPORT_PATH}\n`);
     }
     process.stderr.write(
         `\nSummary: ${upToDate.length} up-to-date, ${outdated.length} outdated, ${unknown.length} unknown` +
+            (hostProvided.length ? `, ${hostProvided.length} host-provided` : '') +
             (updated.length ? `, ${updated.length} updated` : '') +
             '\n',
     );
@@ -508,6 +520,9 @@ async function main() {
                 console.error(`  - ${r.name}: ${r.error || 'no resolvable version in use'}`);
             }
             process.exit(2);
+        }
+        if (hostProvided.length > 0) {
+            console.error(`\n${hostProvided.length} host-provided name(s) skipped ('*' range): ${hostProvided.map((r) => r.name).join(', ')}`);
         }
         console.error('\nAll external dependencies are up to date.');
     }
