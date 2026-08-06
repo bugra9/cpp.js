@@ -18,8 +18,10 @@ Cross-cutting topics:
 C++ binding & build authoring:
 
 - [`cpp-binding-rules.md`](./cpp-binding-rules.md) — Rules for writing C++ that cpp.js can auto-bind (no raw pointers, C++11+, wrapper pattern, JSPI advanced).
+- [`rust.md`](./rust.md) — Rust bindings: `cargo:` crate imports, app-local `.rs` sources, `export.type: 'cargo'` packages; idiom table.
+- [`wasi.md`](./wasi.md) — `platform: 'wasi'` single-module command builds, `-wasi` prebuilts, `-bin-wasi` npm CLI tool packages.
 - [`swig-escape.md`](./swig-escape.md) — Manual SWIG `.i` files when auto-generation isn't enough.
-- [`build-state.md`](./build-state.md) — `state` and `target` object shapes passed to `cppjs.build.js` hooks; full inventory of 20 built-in build targets.
+- [`build-state.md`](./build-state.md) — `state` and `target` object shapes passed to `cppjs.build.js` hooks; full inventory of 30 built-in build targets.
 - [`overrides.md`](./overrides.md) — Catalog of 20 override mechanisms ordered least → most invasive.
 - [`troubleshooting.md`](./troubleshooting.md) — Common errors mapped to the right override; tribal-knowledge gotchas from real packages.
 - [`performance.md`](./performance.md) — Default Emscripten + CMake flags reference; what's safe to override and what to leave alone.
@@ -38,7 +40,8 @@ C++ binding & build authoring:
 │  └────────────────────┘         └────────────────────┘     │
 │            │                              │                 │
 │            ▼                              ▼                 │
-│       Emcc / NDK / Xcode produces .wasm / .a / .xcframework │
+│  Emcc / wasi-sdk / cargo / NDK / Xcode produces             │
+│  .wasm / .a / .xcframework                                  │
 └─────────────────────────────────────────────────────────────┘
                            │
                            ▼

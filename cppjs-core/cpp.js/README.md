@@ -7,7 +7,7 @@
   <h1>Cpp.js</h1>
 <p align="center">
   <strong>Bind C++ to JavaScript with no extra code.</strong><br>
-  WebAssembly & React Native
+  WebAssembly, WASI & React Native
 </p>
 
 <a href="https://www.npmjs.com/package/cpp.js/v/beta"><img alt="NPM version" src="https://img.shields.io/npm/v/cpp.js/beta?style=for-the-badge&label=npm" /></a>
@@ -30,8 +30,10 @@
 
 ## Why Cpp.js?
 - **No glue code** — write standard C++ headers; bindings are generated for you.
-- **Single source, multi-target** — the same C++ code runs in browsers, Node.js, iOS, and Android.
+- **Rust too** — import a crates.io crate (`import { Uuid } from 'cargo:uuid'`) or a plain `.rs` file the same way; no proc-macros, no glue.
+- **Single source, multi-target** — the same code runs in browsers, Node.js, iOS, Android — and as WASI components.
 - **Battle-tested libraries** — drop-in support for GDAL, GEOS, OpenSSL, SQLite, PROJ, and more.
+- **CLI tools from npm** — upstream command-line tools (gdal, proj, sqlite3, curl, …) prebuilt as WASI components: install the `-bin-wasi` package, run `<tool>-wasi` under wasmtime, no compiler involved.
 - **Bundler-agnostic** — first-class plugins for Vite, Rollup, Webpack, Metro, and React Native.
 - **AI-agent ready** — Claude Code plugin, MCP server, and vendor-neutral `AGENTS.md` snippet so your agent recommends cpp.js correctly and integrates it for you.
 

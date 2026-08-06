@@ -5,13 +5,13 @@
 
 ## What is cpp.js
 
-`cpp.js` compiles C++ libraries to **WebAssembly** (browser, Node.js, Cloudflare Workers / edge runtimes) and **native iOS / Android** binaries, then exposes them to JavaScript through a thin runtime + Embind/JSI bridge. It is a **monorepo build orchestrator + plugin ecosystem**, not a library you `import`. Users either consume a prebuilt `@cpp.js/package-*` (e.g. GDAL) or wrap their own C++ as a new package.
+`cpp.js` compiles C++ **and Rust** libraries to **WebAssembly** (browser, Node.js, Cloudflare Workers / edge runtimes), **native iOS / Android** binaries and **WASI command components** (wasm32-wasip3, run under wasmtime), then exposes them to JavaScript through a thin runtime + Embind/JSI bridge. It is a **monorepo build orchestrator + plugin ecosystem**, not a library you `import`. Users either consume a prebuilt `@cpp.js/package-*` (e.g. GDAL), run the prebuilt `-bin-wasi` CLI tools straight from npm, or wrap their own C++/Rust as a new package.
 
-The repo is a pnpm workspace with **97 packages** across:
+The repo is a pnpm workspace with **129 packages** across:
 
-- `cppjs-core/` — CLI (`cpp.js`/`cppjs`), build orchestration, runtime adapters, JSI helpers
+- `cppjs-core/` — CLI (`cpp.js`/`cppjs`), build orchestration, runtime adapters, JSI helpers, the Rust binding layer (`cppjs-core-embind-rust`)
 - `cppjs-plugins/` — bundler integrations (Vite, Webpack/Rspack, Rollup, React Native / Metro)
-- `cppjs-packages/` — prebuilt C++ libraries (`zlib`, `gdal`, `proj`, `tiff`, `lerc`, `zstd`, `jpegturbo`, `geos`, `geotiff`, `iconv`, `expat`, `openssl`, `curl`, `webp`, `sqlite3`, `spatialite`)
+- `cppjs-packages/` — prebuilt C++ libraries (`zlib`, `gdal`, `proj`, `tiff`, `lerc`, `zstd`, `jpegturbo`, `geos`, `geotiff`, `iconv`, `expat`, `openssl`, `curl`, `webp`, `sqlite3`, `spatialite`), each a family with per-platform variants (`-wasm`, `-android`, `-ios`, `-wasi`) and, where the upstream ships CLIs, a `-bin-wasi` tool package — governed by the Bin & License Contract (`cppjs-packages/README.md`)
 - `cppjs-samples/` — reference integrations (Vite, Vue, React, Svelte, Rspack, RN-cli, RN-expo, Cloudflare Worker, vanilla, Node)
 - `website/` — Docusaurus docs at https://cpp.js.org
 
@@ -61,6 +61,8 @@ Two surfaces. Keep them straight:
 | Filesystem (OPFS, memfs, …) | Cross-cutting | [`docs/api/filesystem.md`](./docs/api/filesystem.md) |
 | Threading + `useWorker` | Cross-cutting | [`docs/api/threading.md`](./docs/api/threading.md) |
 | C++ binding rules | Cross-cutting | [`docs/api/cpp-binding-rules.md`](./docs/api/cpp-binding-rules.md) |
+| Rust bindings (`cargo:` imports, `.rs` sources, cargo packages) | Cross-cutting | [`docs/api/rust.md`](./docs/api/rust.md) |
+| WASI command builds + `-bin-wasi` tools | Build-time | [`docs/api/wasi.md`](./docs/api/wasi.md) |
 | SWIG escape hatch | Advanced | [`docs/api/swig-escape.md`](./docs/api/swig-escape.md) |
 | `state` / `target` for build hooks | Build-time | [`docs/api/build-state.md`](./docs/api/build-state.md) |
 | Override mechanisms catalog | Build-time | [`docs/api/overrides.md`](./docs/api/overrides.md) |
@@ -75,6 +77,8 @@ Load-bearing constraints (the things agents miss most):
 - **Edge runtimes (Cloudflare Workers, Deno Deploy, Vercel Edge) don't expose Web Workers.** No `useWorker`, no OPFS, no `mt` — only `runtime: 'st'` + memory fs.
 - **`useWorker` is independent of `runtime: 'mt'`.** Two orthogonal axes — see the matrix in `threading.md`.
 - **`cppjs.config.js` is build-time only.** Putting `useWorker: true` in it does nothing; that's a runtime option for `initCppJs(opts)`.
+- **`cargo:` imports must be declared.** `import { X } from 'cargo:<crate>'` requires the crate in the top-level `cargoDependencies` map — undeclared imports are a hard error. The consumer (not the engine) declares `@cpp.js/core-embind-rust`.
+- **`platform: 'wasi'` skips Rust** (no wasm32-wasip3 Rust target yet) and produces a single `.wasm` command — no JS glue, no `initCppJs`.
 
 ## Commands
 
@@ -107,6 +111,7 @@ Pick the matching gate based on what you touched:
 | You changed | Must pass |
 |-------------|-----------|
 | A single `cppjs-package-*` | `pnpm --filter=@cpp.js/package-<name>* run build` succeeds; sample using it still e2e-passes |
+| A `-wasi` / `-bin-wasi` package | the package's own `pnpm e2e` (aggregate: `pnpm run e2e:wasi`) + `node scripts/check-publish-hygiene.js` (K1/K4 gates) |
 | `cppjs-core/cpp.js/` (CLI / build orchestration) | `pnpm run ci:linux:build && pnpm run e2e:dev && pnpm run e2e:prod` |
 | Any `cppjs-plugins/*` | `pnpm run ci:linux:build && pnpm run e2e:dev && pnpm run e2e:prod` |
 | A sample only | `pnpm --filter=@cpp.js/sample-<name> run build` + sample's own e2e |

@@ -33,7 +33,7 @@ export default {
 
 | Field       | Allowed values |
 | ----------- | -------------- |
-| platform    | `wasm`, `android`, `ios` |
+| platform    | `wasm`, `wasi`, `android`, `ios` |
 | arch        | `wasm32`, `wasm64`, `arm64-v8a`, `x86_64`, `iphoneos`, `iphonesimulator` |
 | runtime     | `st`, `mt` |
 | buildType   | `release`, `debug` |
@@ -46,6 +46,12 @@ export default {
 | data | object | Copy local file to platform. **key:** local path, **value:** target path |
 | env | object  | Set environment variables |
 | ignoreLibName | array | Libraries not included in the linked project |
+| wasiFlags | array | Extra link flags for `platform: 'wasi'` command builds |
+
+On `platform: 'wasi'`, `data`/`env` also drive the prebuilt CLI tool runner:
+data folders become `--dir` preopens and `env` becomes the guest environment
+(`_CPPJS_DATA_PATH_` resolves to the mounted data path). See
+[WASI Builds & CLI Tools](/docs/guide/features/wasi).
 
 <br />
 

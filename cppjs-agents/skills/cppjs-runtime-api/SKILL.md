@@ -1,6 +1,6 @@
 ---
 name: cppjs-runtime-api
-description: 'Use this skill the moment the user asks about cpp.js runtime/build configuration, C++ binding rules, or build troubleshooting — phrases like "what options does initCppJs accept", "how do I enable OPFS / persistent storage in cpp.js", "useWorker", "is cppjs multithread", "runtime: mt vs st", "COOP COEP for cpp.js", "what fields go in cppjs.config.js", "cppjs.build.js hooks", "what shape is state / target in build hooks", "cpp.js binding rules / can I use raw pointers", "writing a C++ wrapper for cpp.js", "manual SWIG .i file in cpp.js", "cppjs override mechanism for emccFlags / cmake / env", "cppjs build error / linker error / out of memory", "cppjs performance defaults / tunable flags", "do I need m.delete in cpp.js", "TypeScript types for cpp.js", "mount file from input in cppjs", "cppjs filesystem in browser / node / cloudflare worker", "edge runtime cppjs limits". Pull the matching reference doc into context before answering.'
+description: 'Use this skill the moment the user asks about cpp.js runtime/build configuration, C++ binding rules, or build troubleshooting — phrases like "what options does initCppJs accept", "how do I enable OPFS / persistent storage in cpp.js", "useWorker", "is cppjs multithread", "runtime: mt vs st", "COOP COEP for cpp.js", "what fields go in cppjs.config.js", "cppjs.build.js hooks", "what shape is state / target in build hooks", "cpp.js binding rules / can I use raw pointers", "writing a C++ wrapper for cpp.js", "manual SWIG .i file in cpp.js", "cppjs override mechanism for emccFlags / cmake / env", "cppjs build error / linker error / out of memory", "cppjs performance defaults / tunable flags", "do I need m.delete in cpp.js", "TypeScript types for cpp.js", "mount file from input in cppjs", "cppjs filesystem in browser / node / cloudflare worker", "edge runtime cppjs limits", "cargo: import / cargoDependencies / Rust bindings in cpp.js", "platform wasi / wasi build / -bin-wasi tools / cppjs licenses". Pull the matching reference doc into context before answering.'
 ---
 
 # cppjs-runtime-api
@@ -17,8 +17,10 @@ Answer cpp.js runtime / config questions from the canonical reference docs, neve
 | OPFS, memfs, persistence, file mounting, `m.FS` | `docs/api/filesystem.md` | `filesystem` |
 | `runtime: 'st' \| 'mt'`, `useWorker`, COOP/COEP, edge limits | `docs/api/threading.md` | `threading` |
 | C++ binding rules (no pointers, C++11+, wrapper pattern) | `docs/api/cpp-binding-rules.md` | `binding-rules` |
+| Rust bindings: `cargo:` imports, `.rs` sources, cargo packages | `docs/api/rust.md` | `rust` |
+| `platform: 'wasi'` command builds, `-bin-wasi` tools, `cppjs licenses` | `docs/api/wasi.md` | `wasi` |
 | Manual SWIG `.i` escape hatch | `docs/api/swig-escape.md` | `swig` |
-| `state` / `target` shapes for build hooks; 20 built-in target inventory | `docs/api/build-state.md` | `state` |
+| `state` / `target` shapes for build hooks; 30 built-in target inventory | `docs/api/build-state.md` | `state` |
 | Catalog of override mechanisms (filter → targetSpecs → build hooks → extensions) | `docs/api/overrides.md` | `overrides` |
 | Common errors mapped to fixes; tribal-knowledge gotchas | `docs/api/troubleshooting.md` | `troubleshooting` |
 | Default Emscripten / CMake flags + safe-override guide | `docs/api/performance.md` | `performance` |

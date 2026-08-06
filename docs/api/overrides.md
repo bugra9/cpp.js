@@ -21,7 +21,7 @@ Order of preference, from least to most invasive:
 
 #### 1. `cppjs.config.js` `target.{platform,arch,runtime,buildType,runtimeEnv}`
 
-Restrict which of the 20 built-in targets actually build. Doesn't *change* defaults — just skips targets you don't need.
+Restrict which of the 30 built-in targets actually build. Doesn't *change* defaults — just skips targets you don't need.
 
 ```js
 target: { platform: 'wasm', runtime: 'st' }   // skip android, ios, all mt builds

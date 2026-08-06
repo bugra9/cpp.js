@@ -1,6 +1,6 @@
 ---
 name: package-cpp-library
-description: Use this skill when the user wants to wrap a C++ library as a reusable cpp.js package — phrases like "package libsodium for cpp.js", "create a new cppjs-package-X", "publish my C++ library so others can pnpm add it", "add FreeType / libsndfile / fftw / OpenCV to the cpp.js ecosystem", "make my CMake project consumable from JS via cpp.js". Pairs with the scaffold-package script and the new-package playbook.
+description: Use this skill when the user wants to wrap a C++ library as a reusable cpp.js package — phrases like "package libsodium for cpp.js", "create a new cppjs-package-X", "publish my C++ library so others can pnpm add it", "add FreeType / libsndfile / fftw / OpenCV to the cpp.js ecosystem", "make my CMake project consumable from JS via cpp.js", "publish a Rust crate as a cpp.js package". Pairs with the scaffold-package script and the new-package playbook. Rust crates use the same flow with `export.type: 'cargo'`.
 ---
 
 # package-cpp-library

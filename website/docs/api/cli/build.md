@@ -5,7 +5,7 @@ Usage: cppjs build [options]
 compile the project that was set up using Cpp.js
 
 Options:
-  -p, --platform <platform>      target platform (choices: "wasm", "android", "ios")
+  -p, --platform <platform>      target platform (choices: "wasm", "wasi", "android", "ios")
   -a, --arch <arch>              target architecture (choices: "wasm32", "wasm64", "arm64-v8a", "x86_64", "iphoneos", "iphonesimulator")
   -r, --runtime <runtime>        target runtime (choices: "st", "mt")
   -b, --build-type <buildType>   target build type (choices: "release", "debug")

@@ -2,9 +2,11 @@
 Cpp.js offers flexibility with three types of packages, all available on NPM. You can use the existing packages or publish your own.
 
 ### Prebuilt Packages
-This package includes prebuilt libraries for different platforms (Web, Android, iOS), enabling quick integration without needing to compile. By default, a package is of this type, meaning that most packages fall into this category.
+This package includes prebuilt libraries for different platforms (Web, Android, iOS, WASI), enabling quick integration without needing to compile. By default, a package is of this type, meaning that most packages fall into this category.
 
-Starting with v2, prebuilt packages are split into a small meta package plus three platform-specific packages so that consumers only download artifacts for the platforms they actually target. For example, `@cpp.js/package-gdal` is a thin meta package that depends on `@cpp.js/package-gdal-wasm`, `@cpp.js/package-gdal-android`, and `@cpp.js/package-gdal-ios`. Importing the meta package automatically pulls in the right platform variant for the target you build.
+Starting with v2, prebuilt packages are split into a small meta package plus platform-specific packages so that consumers only download artifacts for the platforms they actually target. For example, `@cpp.js/package-gdal` is a thin meta package that depends on `@cpp.js/package-gdal-wasm`, `@cpp.js/package-gdal-android`, and `@cpp.js/package-gdal-ios`; a `@cpp.js/package-gdal-wasi` variant carries the WASI (wasm32-wasip3) prebuilt for non-browser runtimes. Importing the meta package automatically pulls in the right platform variant for the target you build.
+
+Where the upstream project ships command-line tools, a `-bin-wasi` sibling (e.g. `@cpp.js/package-gdal-bin-wasi`) publishes them prebuilt as `<tool>-wasi` npm commands — see [WASI Builds & CLI Tools](/docs/guide/features/wasi).
 
 #### Usage
 Import the necessary header file directly from the package. Header files can be accessed from the `dist/prebuilt/PLATFORM_NAME/include` path.

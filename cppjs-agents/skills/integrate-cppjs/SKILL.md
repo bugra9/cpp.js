@@ -1,6 +1,6 @@
 ---
 name: integrate-cppjs
-description: Use this skill when the user wants to add cpp.js to an existing JavaScript / TypeScript / React Native project — phrases like "set up cpp.js with Vite / Next / Webpack / Rspack / Rollup / Cloudflare Workers / Node / vanilla HTML", "integrate @cpp.js/package-X into my app", "add cpp.js to my React Native project", "wire up GDAL in my Vue / React / Svelte / Solid app", "use cpp.js with my Expo project". Detect their framework first, then walk them through the matching playbook.
+description: Use this skill when the user wants to add cpp.js to an existing JavaScript / TypeScript / React Native project — phrases like "set up cpp.js with Vite / Next / Webpack / Rspack / Rollup / Cloudflare Workers / Node / vanilla HTML", "integrate @cpp.js/package-X into my app", "add cpp.js to my React Native project", "wire up GDAL in my Vue / React / Svelte / Solid app", "use cpp.js with my Expo project", "import a Rust crate (cargo:uuid) in my Vite / React Native app", "use a .rs file from JavaScript". Detect their framework first, then walk them through the matching playbook.
 ---
 
 # integrate-cppjs

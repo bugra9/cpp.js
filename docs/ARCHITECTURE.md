@@ -12,8 +12,10 @@ flowchart TD
     BuildLib["actions/createLib.js<br/>(per-target static lib)"]
     XCFwk["actions/createXCFramework.js<br/>(combine iOS slices, darwin only)"]
     BuildWasm["actions/buildWasm.js<br/>(emcc link → .wasm + .js)"]
+    BuildWasi["actions/buildWasiCommand.js<br/>(wasi-sdk link → single .wasm component)"]
+    BuildCargo["actions/buildCargo.js<br/>(cargo build → staged .a, export.type 'cargo')"]
     BuildJs["actions/buildJs.js<br/>(rollup, runtime adapter selection)"]
-    Run["actions/run.js<br/>(Docker shell-out per target)"]
+    Run["actions/run.js<br/>(Docker or host shell-out per target)"]
     Cmake["cmake / configure"]
     Emcc["emcc (Emscripten)"]
     Xcode["xcodebuild"]
@@ -25,6 +27,8 @@ flowchart TD
     BuildLib --> Run
     BuildLib --> XCFwk
     BuildLib --> BuildWasm
+    BuildLib --> BuildWasi
+    BuildLib --> BuildCargo
     BuildWasm --> BuildJs
     Run --> Cmake
     Run --> Emcc
@@ -34,13 +38,15 @@ flowchart TD
     Xcode --> Dist
     XCFwk --> Dist
     BuildJs --> Dist
+    BuildWasi --> Dist
+    BuildCargo --> Dist
 ```
 
 ## Key abstractions
 
 ### Targets (the unit of build work)
 
-A **target** is a `{platform, arch, runtime, runtimeEnv, buildType}` tuple — e.g. `wasm-wasm32-mt-release-browser` or `ios-iphoneos-mt-release`. The full matrix lives in `cppjs-core/cpp.js/src/state/index.js`. CLI flags (`-p`, `-a`, `-r`, `-e`, `-b`) filter which targets actually build; defaults try the full matrix that the host can support.
+A **target** is a `{platform, arch, runtime, runtimeEnv, buildType}` tuple — e.g. `wasm-wasm32-mt-release-browser`, `wasi-wasm32-st-release` or `ios-iphoneos-mt-release`. The inventory's single source is `cppjs-core/cpp.js/src/utils/targets.js` (state and the wasi command runner both read it). CLI flags (`-p`, `-a`, `-r`, `-e`, `-b`) filter which targets actually build; defaults try the full matrix that the host can support.
 
 ### Runtime adapters (JS layer)
 
@@ -82,13 +88,14 @@ A `cppjs-package-X` family is a meta package + per-arch sub-packages:
 
 ```
 cppjs-packages/cppjs-package-zlib/
-├── cppjs-package-zlib/             ← meta package, depends on the three sub-packages
-├── cppjs-package-zlib-wasm/        ← wasm prebuilt + cppjs.config.js + cppjs.build.js
+├── cppjs-package-zlib/             ← family package: recipe body (build.mjs) + upstream license truth
+├── cppjs-package-zlib-wasm/        ← per-platform prebuilt + cppjs.config.js + cppjs.build.js
 ├── cppjs-package-zlib-android/
-└── cppjs-package-zlib-ios/
+├── cppjs-package-zlib-ios/
+└── cppjs-package-zlib-wasi/        ← wasi (wasm32-wasip3) prebuilt
 ```
 
-Sub-packages declare workspace deps to other `@cpp.js/package-*-<arch>` they need (e.g. `gdal-wasm` lists `proj-wasm`, `tiff-wasm`, …); pnpm derives topological build order from this.
+Sub-packages declare workspace deps to other `@cpp.js/package-*-<arch>` they need (e.g. `gdal-wasm` lists `proj-wasm`, `tiff-wasm`, …); pnpm derives topological build order from this. Where the upstream ships CLI tools, a `-bin-wasi` sibling publishes them as npm commands; everything those packages ship (tool map, NOTICE/SBOM, provenance, license field) is derived under the Bin & License Contract — `cppjs-packages/README.md`.
 
 ### Samples (canonical integrations)
 
@@ -107,7 +114,7 @@ Force semantics: `actions/isSourceNewer.js` compares native source mtimes agains
 
 ## Execution boundaries (Docker, Xcode, Emscripten)
 
-`actions/run.js` shells out to host tools. WASM and Android targets run inside a Docker image (`getDockerImage()`); iOS targets need a darwin host with Xcode installed. The wasm/android branches are CI-friendly on Linux runners; iOS branches early-return on non-darwin (`createLib.js:18`, `createXCFramework.js:13`).
+`actions/run.js` shells out to host tools. WASM and Android targets run inside a digest-pinned Docker image (`getDockerImage()`); iOS targets need a darwin host with Xcode installed. WASI is dual-mode: host-run when a local wasi-sdk is configured (`WASI_SDK_PATH` in `~/.cppjs.json` or `CPPJS_WASI_SDK_PATH`), otherwise the docker image carries the sdk at `/opt/wasi-sdk`. Cargo builds (`export.type: 'cargo'`) run on the host toolchain. The wasm/android/wasi branches are CI-friendly on Linux runners; iOS branches early-return on non-darwin (`createLib.js:18`, `createXCFramework.js:13`).
 
 ## Logger + diagnostics
 

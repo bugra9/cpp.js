@@ -1,16 +1,18 @@
 # WASI — `platform: 'wasi'` command builds
 
-> Compiles the project into a single **WASI command module** (`<name>-wasi-wasm32-st-<buildType>.wasm`): no JS glue, no embind bridge, runnable under any WASI runtime with Wasm 3.0 exception support (wasmtime 37+, run with `-W exceptions=y`).
+> Compiles the project into a single **WASI command component** (`<name>-wasi-wasm32-st-<buildType>.wasm`, target `wasm32-wasip3`): no JS glue, no embind bridge, runnable under any WASI 0.3 runtime with Wasm 3.0 exception support (wasmtime 47+).
 
 ## Quick start
 
 ```bash
-# one-time: point cpp.js at an extracted wasi-sdk (>= 25)
+# fastest: point cpp.js at a local wasi-sdk (>= 34 - the wasm32-wasip3 sysroot is required)
 #   ~/.cppjs.json →  { "WASI_SDK_PATH": "/opt/wasi-sdk" }
 #   or per-run:      CPPJS_WASI_SDK_PATH=/opt/wasi-sdk cppjs build -p wasi
+# zero-config otherwise: with no WASI_SDK_PATH set, the build runs inside the
+# cpp.js docker image (>= 0.3.4), which ships the sdk at /opt/wasi-sdk
 
 cppjs build -p wasi -b release
-wasmtime run -W exceptions=y --dir=. dist/<name>-wasi-wasm32-st-release.wasm arg1
+wasmtime run --dir=. dist/<name>-wasi-wasm32-st-release.wasm arg1
 ```
 
 Your `src/native` must provide `main(int, char**)` — it is the entry point.
@@ -26,25 +28,27 @@ archives are dead-code-eliminated down to what `main` reaches, and the
 | Bindings | embind bridge (swig) | none — `main()` only |
 | Filesystem | WASMFS / OPFS / preload | host dirs via `--dir` preopens |
 | Data files | `.data.txt` preload | real `dist/data/` folder to preopen |
-| Threads | `runtime: 'mt'` (workers) | not yet (wasip1-threads later) |
-| Network | FETCH / websocket bridges | none (wasi-sockets later) |
+| Threads | `runtime: 'mt'` (workers) | not yet (the wasi threads ABI is still in flux) |
+| Network | FETCH / websocket bridges | `wasi:sockets` — grant with `-S inherit-network=y -S allow-ip-name-lookup=y -S tcp=y` |
 | Prebuilt ABI | emscripten sysroot | **incompatible** — packages need `wasi-wasm32-*` prebuilt variants |
 
 ## Toolchain contract (what cpp.js injects)
 
-- Compile (C and C++): `-D_WASI_EMULATED_SIGNAL -D_WASI_EMULATED_PROCESS_CLOCKS -D_WASI_EMULATED_MMAN -D_WASI_EMULATED_GETPID -mexception-handling -mllvm -wasm-enable-sjlj -mllvm -wasm-use-legacy-eh=false` (+ `-fwasm-exceptions` for C++). The `-mexception-handling` target feature is what unlocks wasi-libc's `setjmp.h`; engines only run the standard EH format, hence the legacy toggle.
+- Compile (C and C++): `--target=wasm32-wasip3 -D_WASI_EMULATED_SIGNAL -D_WASI_EMULATED_PROCESS_CLOCKS -D_WASI_EMULATED_MMAN -D_WASI_EMULATED_GETPID -mexception-handling -mllvm -wasm-enable-sjlj -mllvm -wasm-use-legacy-eh=false` (+ `-fwasm-exceptions` for C++). The explicit `--target` matters: the sdk's clang still defaults to wasip1. The `-mexception-handling` target feature is what unlocks wasi-libc's `setjmp.h`; engines only run the standard EH format, hence the legacy toggle.
 - Link (after every archive — order matters): `-lunwind -lsetjmp -lwasi-emulated-*`, plus `assets/wasi-runtime/stubs.c` (clean-failing `dlopen` family, no-op `pthread_atfork`).
 - Extra flags per target: `targetSpecs.specs.wasiFlags`.
 
 ## Prebuilt packages
 
-Every library package except curl and openssl has a dedicated wasi platform
-package — `@cpp.js/package-<name>-wasi`, next to its `-wasm`/`-android`/
-`-ios` siblings — carrying the `wasi-wasm32-st-release` prebuilt: zlib,
-sqlite3, tiff, geotiff, proj, gdal, jpegturbo, zstd, lerc, webp, expat,
-geos, iconv and spatialite. curl needs sockets (none on WASI) and openssl
-only makes sense as a crypto-only custom build - both are deliberately out
-for now.
+Every library package has a dedicated wasi platform package —
+`@cpp.js/package-<name>-wasi`, next to its `-wasm`/`-android`/`-ios`
+siblings — carrying the `wasi-wasm32-st-release` prebuilt: zlib, sqlite3,
+tiff, geotiff, proj, gdal, jpegturbo, zstd, lerc, webp, expat, geos, iconv,
+spatialite, openssl and curl. openssl builds against a custom `wasi-p3`
+Configure target (static, thread-less, `OPENSSL_NO_UNIX_SOCK`); curl is
+HTTP(S)-only over `wasi:sockets`, with TLS from `-wasi` openssl and no CA
+path baked in (pass `CURLOPT_CAINFO`; the openssl prebuilt ships
+`ssl/certs/cacert.pem`).
 
 Depend on the `-wasi` variant when targeting wasi; `pnpm build` inside such
 a package refreshes its prebuilt under the same wasi-sdk requirement as app
@@ -57,10 +61,44 @@ or `pnpm e2e:wasi` at the repo root): a small C program is compiled against
 the shipped archives and run under wasmtime - zlib/zstd roundtrips, a
 sqlite file database, a deflate tif, geokeys, an EPSG:4326→3857 transform
 through proj.db, jpeg/webp encodes, an expat parse, a geos intersection, an
-iconv conversion and a spatialite `MakePoint`. The scripts SKIP politely
-when the wasi-sdk, wasmtime or the prebuilt is absent.
+iconv conversion, a spatialite `MakePoint`, an openssl sha256 digest and a
+curl fetch against a local HTTP server (hermetic - the only e2e that needs
+the wasmtime socket grants). The scripts SKIP politely when the wasi-sdk
+(>= 34, wasm32-wasip3), wasmtime or the prebuilt is absent.
+
+## Prebuilt CLI tools (`-bin-wasi` packages)
+
+Where the upstream ships command-line tools, a separate
+`@cpp.js/package-<name>-bin-wasi` package carries them prebuilt — install
+from npm and run, no compiler involved:
+
+```bash
+npm i -g @cpp.js/package-gdal-bin-wasi   # or npx/pnpm dlx
+gdalinfo-wasi --version                  # wasmtime must be on PATH
+```
+
+Every tool is exposed as a `<tool>-wasi` npm command (the suffix keeps a
+native install unshadowed). The launcher is not hand-written per package:
+each shim imports the runner from cpp.js itself
+(`cpp.js/src/runtime/wasiRun.mjs`), which resolves the target path, the
+`--dir` mounts and the guest env at call time from the package's
+`cppjs.config.js` graph (the same `targetSpecs` `data`/`env` declarations
+used for builds — e.g. the proj family declares `PROJ_DATA`, the gdal
+family `GDAL_DATA`, openssl `CURL_CA_BUNDLE`). Tool surfaces are declared
+once, as data, in the recipe's `bin` map; the engine derives the npm
+commands, `.npmignore`, a pure-data `cppjs-bin.json` and — when the map
+marks multicall entries — a single multitool binary that carries every
+tool (gdal packs 29 tools into one `bin/gdal` for +240 KB).
+
+The rules, schemas and enforcement behind these packages (bin map,
+derived NOTICE/SBOM, `cppjs.provenance`, the derived compound `license`
+field) live in the Bin & License Contract:
+[`cppjs-packages/README.md`](../../cppjs-packages/README.md).
+`cppjs licenses --notices --sbom --platform wasi` regenerates the
+third-party notices and the CycloneDX SBOM next to each prebuilt.
 
 ## Limits
 
-No processes, no dynamic loading, no sockets, single-threaded. Anything the
-stubs cover fails cleanly at runtime instead of trapping at instantiation.
+No processes, no dynamic loading, single-threaded; sockets exist through
+`wasi:sockets` when the runtime grants them. Anything the stubs cover fails
+cleanly at runtime instead of trapping at instantiation.

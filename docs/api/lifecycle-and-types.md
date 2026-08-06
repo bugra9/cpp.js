@@ -50,60 +50,55 @@ If you need deterministic close (don't wait for GC), expose an explicit `close()
 
 Standard JS rules apply. If a JS proxy of a C++ shared_ptr captures a closure that holds the same proxy, you have a cycle that GC won't break. Solution: same as in regular JS — don't capture self-references in long-lived closures, or break the cycle explicitly when done.
 
-## TypeScript: `.d.ts` is not auto-generated (yet)
+## TypeScript: `.d.ts` is generated for your imports
 
-cpp.js does not currently emit `.d.ts` files for your bindings. If you import from a generated `.h` JS module in a TypeScript project, the imported symbols will be `any`.
+cpp.js emits declaration files for the native modules you import — C++ headers
+(`./native/native.h`), app-local Rust files (`./native/x.rs`) and `cargo:`
+crate imports — under `.cppjs/types/` and `.cppjs/rust-crates/types/`, never
+next to your sources. Wire them once by extending the shared config
+(`npm i -D @cpp.js/typescript-config`, TS 5.5+):
 
-### What you can do
+```jsonc
+// tsconfig.json
+{ "extends": "@cpp.js/typescript-config" }
+```
 
-1. **Hand-write a `.d.ts`** — the most precise option. Mirror your binding API in TypeScript:
+What you get per import: classes with constructor/method signatures for the
+supported binding surface (primitives, `std::string`, `shared_ptr<Class>` on
+the C++ side; the full idiom table on the Rust side — see
+[`rust.md`](./rust.md)). Anything the surface parser does not understand is
+skipped with a log line and the exported symbol falls back to `any` — the
+export list itself always comes from the bridge, so names are never missing.
 
-   ```ts
-   // src/native/native.d.ts
-   export interface Module {
-       FS: any
-       Matrix: new (rows: number, cols: number) => Matrix
-       processData(input: number[]): number[]
-       toArray<T>(vec: T): T[]
-       toVector<T>(cls: string | (new () => T), arr: T[]): T
-   }
-   export interface Matrix {
-       rows: number
-       cols: number
-       get(i: number, j: number): number
-   }
-   export function initCppJs(opts?: { useWorker?: boolean; fs?: { opfs?: boolean } }): Promise<Module>
+### Caveats
+
+1. **Worker mode wraps calls in Promises — set `dts: 'promise'`.** By default
+   generated signatures describe the direct (sync) surface; with
+   `useWorker: true` every call returns a Promise at runtime. Declare it in
+   `cppjs.config.js`:
+
+   ```js
+   export default { dts: 'promise', /* ... */ }
    ```
 
-2. **Use JSDoc on the import line** — minimal but lossy:
+   Every generated method/function return becomes `Promise<...>`; write
+   `await` per call, and `await new X(...)` for construction (TS cannot
+   express async constructors — the await is a no-op on sync runtimes and
+   required under a worker). A hand-written facade remains useful only when
+   you want richer domain types than the generated surface.
 
-   ```ts
-   // @ts-expect-error — cpp.js generated module has no types
-   import { initCppJs } from './native/native.h'
-   ```
+2. **Package headers are not mirrored on the consumer side** — the package
+   itself publishes them: set `types: true` in the package's
+   `cppjs.config.js` and its build emits one combined declaration over every
+   public header into `dist/types/index.d.ts`, wiring `types` +
+   `typesVersions` in package.json automatically (worker-first packages
+   combine it with `dts: 'promise'`). Only the runtime module surface
+   (`m.FS` helpers, custom module interfaces) still warrants hand-written
+   typings.
 
-3. **Wrap the bound module in a typed facade** — gives you compile-time safety on the surface you care about:
-
-   ```ts
-   import { initCppJs as _init } from './native/native.h'
-
-   interface MyApp {
-       sqrt(x: number): number
-       process(data: number[]): number[]
-   }
-
-   export async function init(): Promise<MyApp> {
-       return await _init() as MyApp
-   }
-   ```
-
-### Why no auto-gen yet?
-
-The generator emits SWIG-compatible C++ → JS bindings; the SWIG → TS step isn't wired. It's on the roadmap but not shipped — track it via GitHub issues.
-
-### Heads-up for agents
-
-When integrating cpp.js into a TypeScript project, **don't promise `.d.ts` autocomplete**. Tell the user up front: "cpp.js bindings come without types; you'll either get `any` or you write a small `.d.ts` for the surface you care about". The wrapped-facade pattern is usually the cleanest.
+3. **`any` fallback is deliberate.** Vector classes and unparsed members
+   degrade to `any` rather than blocking — tighten them with a facade where
+   it matters.
 
 ## See also
 

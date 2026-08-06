@@ -11,7 +11,10 @@ cpp.js's default architecture already implements the most defensible LGPL patter
 ```bash
 cppjs licenses                 # what is bundled, under which SPDX license, from which source
 cppjs licenses --notices       # generate THIRD-PARTY-NOTICES.md for your app
+cppjs licenses --sbom          # CycloneDX SBOM (component list with source hashes)
 cppjs licenses --check         # CI guard: every license field must be valid SPDX
+# --platform wasi additionally rows up vendored copies + the statically linked
+# toolchain runtime (what the artifact contains beyond the package graph)
 ```
 
 ## Why the pattern works
@@ -46,3 +49,4 @@ The package recipes make the "corresponding source + build scripts" obligation c
 
 - [`override-dependencies.md`](./override-dependencies.md) — how a user rebuilds a dependency with modified version/flags.
 - `cppjs licenses --check` in CI keeps SPDX metadata trustworthy (package policy: the npm package's `license` field mirrors the wrapped native library's license).
+- `-bin-wasi` tool packages are a different distribution shape: the published binary statically links every component, so their `license` field is DERIVED as the AND of all effective component licenses (e.g. `@cpp.js/package-geos-bin-wasi` declares `… AND LGPL-2.1-only`), the NOTICE/SBOM ship in the tarball, `cppjs.provenance` records the reproducible recipe, and the from-source path (`pnpm --dir <pkg> build`) is a first-class mode. Rules: `cppjs-packages/README.md` (the Bin & License Contract).

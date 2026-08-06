@@ -1,6 +1,6 @@
 # `cppjs.build.js` — Package-author Build Hooks
 
-> **Package authors only.** Apps and libraries consuming `@cpp.js/package-*` do NOT write this file. It lives only inside `cppjs-packages/cppjs-package-<name>/cppjs-package-<name>-{wasm,android,ios}/`.
+> **Package authors only.** Apps and libraries consuming `@cpp.js/package-*` do NOT write this file. It lives inside the platform sub-packages (`cppjs-package-<name>-{wasm,wasi,android,ios,bin-wasi}/`); in this repo the recipe body itself lives once in the family package (`cppjs-package-<name>/build.mjs`) and each variant's `cppjs.build.js` imports and spreads it.
 
 `cppjs.build.js` describes how to fetch and build the upstream C++ library that this package wraps. The CLI auto-merges its exports into `config.build` of the sibling `cppjs.config.js` at build time.
 
@@ -15,6 +15,11 @@ export default {
     // Simplest path: return a tarball URL. The CLI fetches + extracts
     // into state.config.paths.build automatically.
     // `version` is the nativeVersion field from package.json.
+
+  sha256: '1051c33d…',
+    // Checksum of the tarball getURL returns. Verified on download, and the
+    // single source for license/SBOM rows and the -bin provenance block
+    // (contract K4) — required for packages that publish binaries.
 
   // OR
 
@@ -32,6 +37,25 @@ export default {
     // 'cmake'     — default; the CLI runs cmake configure + build.
     // 'configure' — runs `./configure && make` for autotools projects.
     //               See cppjs-package-openssl-* for the canonical example.
+
+  makePhases: ['all', 'install'],
+    // 'configure' only: split the make step into explicit phases when a
+    // single `make` is not enough (openssl needs `make all` + `make install`).
+
+  // ─────────────────────────────────────────────────────────────
+  // Published tool surface + vendored copies (contract-governed)
+  // ─────────────────────────────────────────────────────────────
+  bin: { /* tools map */ },
+    // -bin packages only: the single-source tool map. The engine derives the
+    // npm command shims, .npmignore, cppjs-bin.json and the multicall
+    // multitool from it, and stamps cppjs.provenance + the compound license
+    // field into package.json. Full schema and rules ("Bin & License
+    // Contract"): cppjs-packages/README.md.
+
+  bundled: { wasi: [{ name: 'libpng', version: '1.6.43', license: 'libpng-2.0', files: ['frmts/png/libpng/LICENSE'] }] },
+    // Third-party copies the upstream compiles INTO the artifact, per
+    // platform (e.g. GDAL's internal codecs). `cppjs licenses` turns these
+    // into notice/SBOM rows with texts pulled from the source tree.
 
   // ─────────────────────────────────────────────────────────────
   // Configure-step parameters

@@ -1,289 +1,298 @@
 {
-    "guide": [
+  "guide": [
+    {
+      "type": "category",
+      "label": "Getting Started",
+      "items": [
+        "guide/getting-started/introduction",
+        "guide/getting-started/prerequisites",
+        "guide/getting-started/create-a-project"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Integrate Into Existing Project",
+      "items": [
+        "guide/integrate-into-existing-project/overview",
+        "guide/integrate-into-existing-project/standalone",
+        "guide/integrate-into-existing-project/webpack",
+        "guide/integrate-into-existing-project/rollup",
+        "guide/integrate-into-existing-project/vite",
+        "guide/integrate-into-existing-project/rspack",
+        "guide/integrate-into-existing-project/nodejs",
+        "guide/integrate-into-existing-project/cloudflare-worker",
+        "guide/integrate-into-existing-project/react-native",
+        "guide/integrate-into-existing-project/expo"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Feature",
+      "items": [
+        "guide/features/calling-cpp-from-javascript",
+        "guide/features/assets",
+        "guide/features/monorepo",
+        "guide/features/packages",
+        "guide/features/plugins",
+        "guide/features/rust",
+        "guide/features/wasi"
+      ]
+    },
+    "guide/troubleshooting"
+  ],
+  "API": [
+    {
+      "type": "category",
+      "label": "C++ Bindings",
+      "items": [
+        "api/cpp-bindings/overview",
+        "api/cpp-bindings/data-types",
+        "api/cpp-bindings/functions",
+        "api/cpp-bindings/classes",
+        "api/cpp-bindings/swig-escape"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "JavaScript",
+      "items": [
+        "api/javascript/overview",
+        "api/javascript/filesystem",
+        "api/javascript/utility-functions"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Configuration",
+      "items": [
+        "api/configuration/overview",
+        "api/configuration/general",
+        "api/configuration/dependencies",
+        "api/configuration/paths",
+        "api/configuration/extensions",
+        "api/configuration/export",
+        "api/configuration/platform",
+        "api/configuration/threading",
+        "api/configuration/overrides",
+        "api/configuration/performance",
+        "api/configuration/build-hooks"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "CLI",
+      "items": [
+        "api/cli/overview",
+        "api/cli/build",
+        "api/cli/docker",
+        "api/cli/config",
+        "api/cli/licenses"
+      ]
+    }
+  ],
+  "Contribute": [
+    {
+      "type": "category",
+      "label": "Contribute",
+      "items": [
+        "contribute/contribute/overview",
+        "contribute/contribute/ask-a-question",
+        "contribute/contribute/report-a-issue",
+        "contribute/contribute/create-a-pr"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Architecture",
+      "items": [
+        "contribute/architecture/overview"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Plugin",
+      "items": [
+        "contribute/plugin/overview",
+        "contribute/plugin/writing-a-plugin",
+        "contribute/plugin/maintaining-a-plugin"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Package",
+      "items": [
+        "contribute/package/overview",
+        "contribute/package/writing-a-package",
+        "contribute/package/maintaining-a-package"
+      ]
+    }
+  ],
+  "agent": [
+    "agent/overview",
+    {
+      "type": "category",
+      "label": "Install",
+      "items": [
+        "agent/install/overview",
+        "agent/install/claude-code",
+        "agent/install/cursor",
+        "agent/install/codex",
+        "agent/install/copilot",
+        "agent/install/gemini",
+        "agent/install/opencode",
+        "agent/install/mcp",
+        "agent/install/skills-cli",
+        "agent/install/snippet"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Runtime / Config API",
+      "items": [
+        "agent/runtime-api/overview",
+        "agent/runtime-api/init",
+        "agent/runtime-api/cppjs-config",
+        "agent/runtime-api/cppjs-build",
+        "agent/runtime-api/filesystem",
+        "agent/runtime-api/threading",
+        "agent/runtime-api/cpp-binding-rules",
+        "agent/runtime-api/rust",
+        "agent/runtime-api/wasi",
+        "agent/runtime-api/swig-escape",
+        "agent/runtime-api/build-state",
+        "agent/runtime-api/overrides",
+        "agent/runtime-api/troubleshooting",
+        "agent/runtime-api/performance",
+        "agent/runtime-api/lifecycle-and-types"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Playbooks",
+      "items": [
+        "agent/playbooks/recommend",
+        "agent/playbooks/integrate",
+        "agent/playbooks/new-package",
+        "agent/playbooks/bug-fix",
+        "agent/playbooks/code-review",
+        "agent/playbooks/verify-install"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Decisions (ADR)",
+      "items": [
+        "agent/decisions/overview",
+        "agent/decisions/0001-agent-first-class-support",
+        "agent/decisions/0002-pnpm-topological-build-order",
+        "agent/decisions/0003-function-typed-env-values",
+        "agent/decisions/0004-three-layer-agent-distribution",
+        "agent/decisions/0005-wasi-platform",
+        "agent/decisions/0006-rust-bindings",
+        "agent/decisions/0007-cargo-import-scheme",
+        "agent/decisions/0008-bin-license-contract"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Reference",
+      "items": [
+        "agent/reference/agents-md",
+        "agent/reference/llms",
         {
-            "type": "category",
-            "label": "Getting Started",
-            "items": [
-                "guide/getting-started/introduction",
-                "guide/getting-started/prerequisites",
-                "guide/getting-started/create-a-project"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "Integrate Into Existing Project",
-            "items": [
-                "guide/integrate-into-existing-project/overview",
-                "guide/integrate-into-existing-project/standalone",
-                "guide/integrate-into-existing-project/webpack",
-                "guide/integrate-into-existing-project/rollup",
-                "guide/integrate-into-existing-project/vite",
-                "guide/integrate-into-existing-project/rspack",
-                "guide/integrate-into-existing-project/nodejs",
-                "guide/integrate-into-existing-project/cloudflare-worker",
-                "guide/integrate-into-existing-project/react-native",
-                "guide/integrate-into-existing-project/expo"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "Feature",
-            "items": [
-                "guide/features/calling-cpp-from-javascript",
-                "guide/features/assets",
-                "guide/features/monorepo",
-                "guide/features/packages",
-                "guide/features/plugins"
-            ]
-        },
-        "guide/troubleshooting"
-    ],
-    "API": [
-        {
-            "type": "category",
-            "label": "C++ Bindings",
-            "items": [
-                "api/cpp-bindings/overview",
-                "api/cpp-bindings/data-types",
-                "api/cpp-bindings/functions",
-                "api/cpp-bindings/classes",
-                "api/cpp-bindings/swig-escape"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "JavaScript",
-            "items": [
-                "api/javascript/overview",
-                "api/javascript/filesystem",
-                "api/javascript/utility-functions"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "Configuration",
-            "items": [
-                "api/configuration/overview",
-                "api/configuration/general",
-                "api/configuration/dependencies",
-                "api/configuration/paths",
-                "api/configuration/extensions",
-                "api/configuration/export",
-                "api/configuration/platform",
-                "api/configuration/threading",
-                "api/configuration/overrides",
-                "api/configuration/performance",
-                "api/configuration/build-hooks"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "CLI",
-            "items": [
-                "api/cli/overview",
-                "api/cli/build",
-                "api/cli/docker",
-                "api/cli/config"
-            ]
+          "type": "link",
+          "label": "llms-full.txt",
+          "href": "pathname:///llms-full.txt"
         }
-    ],
-    "Contribute": [
-        {
-            "type": "category",
-            "label": "Contribute",
-            "items": [
-                "contribute/contribute/overview",
-                "contribute/contribute/ask-a-question",
-                "contribute/contribute/report-a-issue",
-                "contribute/contribute/create-a-pr"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "Architecture",
-            "items": [
-                "contribute/architecture/overview"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "Plugin",
-            "items": [
-                "contribute/plugin/overview",
-                "contribute/plugin/writing-a-plugin",
-                "contribute/plugin/maintaining-a-plugin"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "Package",
-            "items": [
-                "contribute/package/overview",
-                "contribute/package/writing-a-package",
-                "contribute/package/maintaining-a-package"
-            ]
-        }
-    ],
-    "agent": [
-        "agent/overview",
-        {
-            "type": "category",
-            "label": "Install",
-            "items": [
-                "agent/install/overview",
-                "agent/install/claude-code",
-                "agent/install/cursor",
-                "agent/install/codex",
-                "agent/install/copilot",
-                "agent/install/gemini",
-                "agent/install/opencode",
-                "agent/install/mcp",
-                "agent/install/skills-cli",
-                "agent/install/snippet"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "Runtime / Config API",
-            "items": [
-                "agent/runtime-api/overview",
-                "agent/runtime-api/init",
-                "agent/runtime-api/cppjs-config",
-                "agent/runtime-api/cppjs-build",
-                "agent/runtime-api/filesystem",
-                "agent/runtime-api/threading",
-                "agent/runtime-api/cpp-binding-rules",
-                "agent/runtime-api/swig-escape",
-                "agent/runtime-api/build-state",
-                "agent/runtime-api/overrides",
-                "agent/runtime-api/troubleshooting",
-                "agent/runtime-api/performance",
-                "agent/runtime-api/lifecycle-and-types"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "Playbooks",
-            "items": [
-                "agent/playbooks/recommend",
-                "agent/playbooks/integrate",
-                "agent/playbooks/new-package",
-                "agent/playbooks/bug-fix",
-                "agent/playbooks/code-review",
-                "agent/playbooks/verify-install"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "Decisions (ADR)",
-            "items": [
-                "agent/decisions/overview",
-                "agent/decisions/0001-agent-first-class-support",
-                "agent/decisions/0002-pnpm-topological-build-order",
-                "agent/decisions/0003-function-typed-env-values",
-                "agent/decisions/0004-three-layer-agent-distribution"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "Reference",
-            "items": [
-                "agent/reference/agents-md",
-                "agent/reference/llms",
-                {
-                    "type": "link",
-                    "label": "llms-full.txt",
-                    "href": "pathname:///llms-full.txt"
-                }
-            ]
-        }
-    ],
-    "package": [
-        {
-            "type": "category",
-            "label": "Package",
-            "items": [
-                "package/package/showcase",
-                "package/package/cppjs-package-gdal",
-                "package/package/cppjs-package-proj",
-                "package/package/cppjs-package-spatialite",
-                "package/package/cppjs-package-geos",
-                "package/package/cppjs-package-sqlite3",
-                "package/package/cppjs-package-openssl",
-                "package/package/cppjs-package-curl",
-                "package/package/cppjs-package-iconv",
-                "package/package/cppjs-package-zlib",
-                "package/package/cppjs-package-zstd",
-                "package/package/cppjs-package-geotiff",
-                "package/package/cppjs-package-tiff",
-                "package/package/cppjs-package-jpegturbo",
-                "package/package/cppjs-package-lerc",
-                "package/package/cppjs-package-webp",
-                "package/package/cppjs-package-expat"
-            ]
-        }
-    ],
-    "changelog": [
-        {
-            "type": "category",
-            "label": "Core",
-            "items": [
-                "changelog/core/cppjs",
-                "changelog/core/cppjs-core-create-app",
-                "changelog/core/cppjs-core-embind-jsi"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "Plugins",
-            "items": [
-                "changelog/plugins/cppjs-plugin-metro",
-                "changelog/plugins/cppjs-plugin-react-native-ios-helper",
-                "changelog/plugins/cppjs-plugin-react-native",
-                "changelog/plugins/cppjs-plugin-rollup",
-                "changelog/plugins/cppjs-plugin-vite",
-                "changelog/plugins/cppjs-plugin-webpack-loader",
-                "changelog/plugins/cppjs-plugin-webpack"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "Packages",
-            "items": [
-                "changelog/packages/cppjs-package-curl",
-                "changelog/packages/cppjs-package-expat",
-                "changelog/packages/cppjs-package-gdal",
-                "changelog/packages/cppjs-package-geos",
-                "changelog/packages/cppjs-package-geotiff",
-                "changelog/packages/cppjs-package-iconv",
-                "changelog/packages/cppjs-package-jpegturbo",
-                "changelog/packages/cppjs-package-lerc",
-                "changelog/packages/cppjs-package-openssl",
-                "changelog/packages/cppjs-package-proj",
-                "changelog/packages/cppjs-package-spatialite",
-                "changelog/packages/cppjs-package-sqlite3",
-                "changelog/packages/cppjs-package-tiff",
-                "changelog/packages/cppjs-package-webp",
-                "changelog/packages/cppjs-package-zlib",
-                "changelog/packages/cppjs-package-zstd"
-            ]
-        },
-        {
-            "type": "category",
-            "label": "Samples",
-            "items": [
-                "changelog/samples/cppjs-sample-backend-nodejs-wasm",
-                "changelog/samples/cppjs-sample-cloud-cloudflare-worker",
-                "changelog/samples/cppjs-sample-lib-cmake",
-                "changelog/samples/cppjs-sample-lib-prebuilt-matrix",
-                "changelog/samples/cppjs-sample-lib-source",
-                "changelog/samples/cppjs-sample-mobile-reactnative-cli",
-                "changelog/samples/cppjs-sample-web-react-rspack",
-                "changelog/samples/cppjs-sample-web-react-vite",
-                "changelog/samples/cppjs-sample-web-svelte-vite",
-                "changelog/samples/cppjs-sample-web-vanilla",
-                "changelog/samples/cppjs-sample-web-vue-vite"
-            ]
-        }
-    ]
+      ]
+    }
+  ],
+  "package": [
+    {
+      "type": "category",
+      "label": "Package",
+      "items": [
+        "package/package/showcase",
+        "package/package/cppjs-package-gdal",
+        "package/package/cppjs-package-proj",
+        "package/package/cppjs-package-spatialite",
+        "package/package/cppjs-package-geos",
+        "package/package/cppjs-package-sqlite3",
+        "package/package/cppjs-package-openssl",
+        "package/package/cppjs-package-curl",
+        "package/package/cppjs-package-iconv",
+        "package/package/cppjs-package-zlib",
+        "package/package/cppjs-package-zstd",
+        "package/package/cppjs-package-geotiff",
+        "package/package/cppjs-package-tiff",
+        "package/package/cppjs-package-jpegturbo",
+        "package/package/cppjs-package-lerc",
+        "package/package/cppjs-package-webp",
+        "package/package/cppjs-package-expat"
+      ]
+    }
+  ],
+  "changelog": [
+    {
+      "type": "category",
+      "label": "Core",
+      "items": [
+        "changelog/core/cppjs",
+        "changelog/core/cppjs-core-create-app",
+        "changelog/core/cppjs-core-embind-jsi"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Plugins",
+      "items": [
+        "changelog/plugins/cppjs-plugin-metro",
+        "changelog/plugins/cppjs-plugin-react-native-ios-helper",
+        "changelog/plugins/cppjs-plugin-react-native",
+        "changelog/plugins/cppjs-plugin-rollup",
+        "changelog/plugins/cppjs-plugin-vite",
+        "changelog/plugins/cppjs-plugin-webpack-loader",
+        "changelog/plugins/cppjs-plugin-webpack"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Packages",
+      "items": [
+        "changelog/packages/cppjs-package-curl",
+        "changelog/packages/cppjs-package-expat",
+        "changelog/packages/cppjs-package-gdal",
+        "changelog/packages/cppjs-package-geos",
+        "changelog/packages/cppjs-package-geotiff",
+        "changelog/packages/cppjs-package-iconv",
+        "changelog/packages/cppjs-package-jpegturbo",
+        "changelog/packages/cppjs-package-lerc",
+        "changelog/packages/cppjs-package-openssl",
+        "changelog/packages/cppjs-package-proj",
+        "changelog/packages/cppjs-package-spatialite",
+        "changelog/packages/cppjs-package-sqlite3",
+        "changelog/packages/cppjs-package-tiff",
+        "changelog/packages/cppjs-package-webp",
+        "changelog/packages/cppjs-package-zlib",
+        "changelog/packages/cppjs-package-zstd"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Samples",
+      "items": [
+        "changelog/samples/cppjs-sample-backend-nodejs-wasm",
+        "changelog/samples/cppjs-sample-cloud-cloudflare-worker",
+        "changelog/samples/cppjs-sample-lib-cmake",
+        "changelog/samples/cppjs-sample-lib-prebuilt-matrix",
+        "changelog/samples/cppjs-sample-lib-source",
+        "changelog/samples/cppjs-sample-mobile-reactnative-cli",
+        "changelog/samples/cppjs-sample-web-react-rspack",
+        "changelog/samples/cppjs-sample-web-react-vite",
+        "changelog/samples/cppjs-sample-web-svelte-vite",
+        "changelog/samples/cppjs-sample-web-vanilla",
+        "changelog/samples/cppjs-sample-web-vue-vite"
+      ]
+    }
+  ]
 }

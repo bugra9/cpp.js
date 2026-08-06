@@ -9,6 +9,8 @@ To begin building your project with Cpp.js, you’ll first need to install a few
 - **CMake** version 3.28 or higher (only required for Mobile development)
 - **Xcode** (only required for iOS development)
 - **Cocoapods** (only required for iOS development)
+- **Rust toolchain** — `cargo` plus the platform targets (only required when binding Rust; see [Using Rust](/docs/guide/features/rust))
+- **wasmtime** (only required to run `platform: 'wasi'` outputs and the prebuilt `-bin-wasi` CLI tools)
 
 ### Docker
 The Docker image includes all the necessary requirements for both Web and Android applications.

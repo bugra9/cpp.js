@@ -6,9 +6,10 @@
 
 Produce a `cppjs-package-<name>` family that:
 
-- Builds for **wasm**, **android**, **ios** with one command.
+- Builds for **wasm**, **android**, **ios** (and, where it makes sense, **wasi**) with one command.
 - Exposes the library to JavaScript through Embind / SWIG bridges.
 - Ships with `README.md`, `LICENSE`, `.npmignore`, and a `nativeVersion`-pinned `package.json`.
+- Declares its upstream license truth in the family manifest (`cppjs.upstream.license` — contract D in `cppjs-packages/README.md`) so `cppjs licenses` can derive NOTICE/SBOM instead of anyone hand-writing them.
 
 ## When to use
 
@@ -56,8 +57,16 @@ cppjs-package-<name>/
 │   ├── LICENSE
 │   └── .npmignore
 ├── cppjs-package-<name>-android/         ← same shape as -wasm
-└── cppjs-package-<name>-ios/             ← same shape + cppjs-package-<name>.podspec
+├── cppjs-package-<name>-ios/             ← same shape + cppjs-package-<name>.podspec
+├── cppjs-package-<name>-wasi/            ← optional: wasi (wasm32-wasip3) prebuilt, same shape
+└── cppjs-package-<name>-bin-wasi/        ← optional: upstream CLI as npm commands (bin map in
+                                             the recipe; governed by cppjs-packages/README.md)
 ```
+
+In this repo the recipe body lives once in the family package (`build.mjs`
+with `getURL`, `sha256`, `replaceList`, …) and each variant's
+`cppjs.build.js` imports and spreads it — platform differences stay in the
+variant file.
 
 ### Required content per file
 
@@ -91,10 +100,11 @@ Existing helper: `scripts/check-native-versions.js` already implements this reso
 ## Commands
 
 ```bash
-# 1. Scaffold (Sprint 4 will add scripts/scaffold-package.js to automate this).
-#    For now: copy cppjs-packages/cppjs-package-zlib/ as a starting point.
-cp -r cppjs-packages/cppjs-package-zlib cppjs-packages/cppjs-package-<name>
-# Then rename every "zlib" reference inside.
+# 1. Scaffold: scripts/scaffold-package.js generates the skeleton, or copy
+#    cppjs-packages/cppjs-package-zlib/ as a starting point.
+node scripts/scaffold-package.js <name>
+# (manual route: cp -r cppjs-packages/cppjs-package-zlib cppjs-packages/cppjs-package-<name>
+#  then rename every "zlib" reference inside.)
 
 # 2. Resolve and write nativeVersion
 pnpm run check:native -- --update
@@ -116,8 +126,11 @@ Required:
 - [ ] `pnpm --filter='@cpp.js/package-<name>*' run build` succeeds for wasm, android (Linux/macOS), iOS (macOS only).
 - [ ] `pnpm run check:dist` shows the new package as built.
 - [ ] Each sub-arch has README + LICENSE + .npmignore + correct podspec (iOS).
-- [ ] `nativeVersion` matches latest upstream stable.
+- [ ] `nativeVersion` matches latest upstream stable; the recipe carries the tarball `sha256`.
 - [ ] All transitive C++ deps appear in each sub-arch's `package.json` `dependencies`.
+- [ ] The family manifest declares `cppjs.upstream.license` (declared/selected/files) and `cppjs licenses --check` passes.
+- [ ] Consider `types: true` (+ `dts: 'promise'` for worker-first packages) so consumers get generated TypeScript for `'<pkg>/<header>.h'` imports.
+- [ ] `node scripts/check-publish-hygiene.js` passes (K1: no executable leaks; K4 gates apply if a `-bin` package exists).
 
 When integrating into this repo (not a community fork):
 

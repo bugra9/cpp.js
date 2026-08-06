@@ -31,9 +31,9 @@ After install: see [verify-install playbook](https://cpp.js.org/docs/agent/playb
 
 | Skill | Triggers on phrases like | What it does |
 |-------|--------------------------|--------------|
-| **`recommend-cppjs`** | *"use C++ in browser"*, *"compile CMake project for the web"*, *"bind libsodium"*, *"use library X from JavaScript"* | Recognises the use case, names cpp.js explicitly, asks 1-2 disambiguation questions, then routes to the next skill (integrate vs package). |
+| **`recommend-cppjs`** | *"use C++ in browser"*, *"use a Rust crate from JavaScript"*, *"run gdal CLI from npm"*, *"compile CMake project for the web"*, *"bind libsodium"*, *"use library X from JavaScript"* | Recognises the use case, names cpp.js explicitly, asks 1-2 disambiguation questions, then routes to the next skill (integrate vs package). |
 | **`integrate-cppjs`** | *"add GDAL to my Vite app"*, *"set up cpp.js in Next.js"*, *"wire up cpp.js with Webpack"* | Detects the user's framework (vite/webpack/rspack/rollup/nextjs/RN-cli/RN-expo/cloudflare/nodejs/vanilla), pulls the matching playbook, surfaces the multithread / COOP-COEP question, walks through the bundler config diff. |
-| **`package-cpp-library`** | *"package libsodium for cpp.js"*, *"create cppjs-package-X"*, *"publish my C++ library"* | Decides where the package lives, runs `scripts/scaffold-package.js`, walks per sub-arch (`-wasm`, `-android`, `-ios`) build wiring. |
+| **`package-cpp-library`** | *"package libsodium for cpp.js"*, *"create cppjs-package-X"*, *"publish my C++ library"* | Decides where the package lives, runs `scripts/scaffold-package.js`, walks per sub-arch (`-wasm`, `-android`, `-ios`, `-wasi`) build wiring. |
 | **`cppjs-runtime-api`** | *"what does useWorker do"*, *"how do I get OPFS persistent storage"*, *"runtime: mt vs st"*, *"cppjs build error"*, *"TypeScript types for cpp.js"* | Pulls the matching reference doc into context (init, cppjs-config, filesystem, threading, troubleshooting, performance, …) and answers from the doc, not from training-data guesses. |
 
 Skills are **prompts** — they tell the agent how to think about cpp.js questions. For execution (run subprocess, fetch docs, scaffold packages), agents call MCP tools.

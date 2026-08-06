@@ -8,7 +8,7 @@ const navbar = require('./navbar.json');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
     title: 'Cpp.js',
-    tagline: 'Bind c++ libraries to js on web and mobile.',
+    tagline: 'Bind C++ and Rust to JavaScript on web, mobile and WASI.',
     favicon: 'img/favicon.ico',
 
     // Set the production url of your site here

@@ -6,7 +6,7 @@
 
 ```ts
 state = {
-    targets:               Target[],            // 20 built-in build targets (see § Target inventory)
+    targets:               Target[],            // 30 built-in build targets (see § Target inventory)
     config:                ResolvedConfig,      // merged cppjs.config.js + cppjs.build.js + system
     cache:                 BuildCache,          // persisted to .cppjs/cache.json
     system:                SystemConfig,        // ~/.cppjs.json + defaults from systemKeys
@@ -168,9 +168,9 @@ target = {
 }
 ```
 
-## Target inventory — 20 built-in targets
+## Target inventory — 30 built-in targets
 
-From `cppjs-core/cpp.js/src/state/index.js` lines 8–197:
+From `cppjs-core/cpp.js/src/utils/targets.js` (the single source; state and the wasi bin runner both read it):
 
 ### Wasm32
 
@@ -192,6 +192,15 @@ From `cppjs-core/cpp.js/src/state/index.js` lines 8–197:
 ### Wasm64 (memory-64; same axes)
 
 Same shape as wasm32 above, but `arch: 'wasm64'`. Used when you need >4GB linear memory. Browser support is partial (Chrome 119+).
+
+### WASI
+
+| platform | arch | runtime | buildType |
+|----------|------|---------|-----------|
+| wasi | wasm32 | st | release |
+| wasi | wasm32 | st | debug |
+
+> **Single-module command builds** (`wasm32-wasip3`, no runtimeEnv axis — the artifact runs under a WASI runtime like wasmtime, not a JS host). See `wasi.md`.
 
 ### Android
 
@@ -222,7 +231,7 @@ When you want to override defaults for a specific subset of targets, push entrie
 ```ts
 type TargetSpec = {
     // Filter (any combination — entries match if all set fields match)
-    platform?:   'wasm' | 'android' | 'ios',
+    platform?:   'wasm' | 'wasi' | 'android' | 'ios',
     arch?:       string,
     runtime?:    'st' | 'mt',
     buildType?:  'release' | 'debug',
@@ -235,6 +244,7 @@ type TargetSpec = {
         env?:           Record<string, string>,  // env vars passed to Wasm process at runtime (or via CFLAGS/LDFLAGS at build)
         data?:          Record<string, string>,  // bundle data files: { 'src-dir': 'dest-dir' }
         ignoreLibName?: string[],                // suppress specific .a names from being linked
+        wasiFlags?:     string[],                // extra link flags for wasi command builds (see wasi.md)
     },
 }
 ```

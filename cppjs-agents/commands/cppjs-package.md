@@ -1,5 +1,5 @@
 ---
-description: Wrap a C++ library as a reusable cppjs-package-* family (web/Wasm + iOS + Android) that other projects can pnpm add.
+description: Wrap a C++ library or Rust crate as a reusable cppjs-package-* family (web/Wasm + iOS + Android + WASI) that other projects can pnpm add.
 ---
 
 The user wants to package a C++ library so others can install and use it via cpp.js. Walk them through it.

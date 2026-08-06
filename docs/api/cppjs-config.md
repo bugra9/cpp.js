@@ -33,6 +33,36 @@ export default {
     // to 'mt' too.
 
   // ─────────────────────────────────────────────────────────────
+  // Rust crates this project consumes (the cargo store axis)
+  // ─────────────────────────────────────────────────────────────
+  cargoDependencies: {
+    uuid: '{ version = "1", features = ["v4"] }',
+    semver: '1',
+  },
+    // Crates importable via the `cargo:` scheme (`import { Uuid } from 'cargo:uuid'`)
+    // or used by app-local .rs sources. Keys are crate names, values are
+    // Cargo.toml dependency specs as strings. Undeclared `cargo:` imports are
+    // a hard error. See rust.md.
+
+  // ─────────────────────────────────────────────────────────────
+  // Generated .d.ts flavor
+  // ─────────────────────────────────────────────────────────────
+  dts: 'sync',
+    // 'sync' (default) types the direct binding surface. 'promise' wraps every
+    // generated method/function return in Promise<...> - use it when your app
+    // runs with initCppJs({ useWorker: true }) (or any async bridge), where
+    // every call resolves asynchronously at runtime. Constructors stay
+    // sync-typed either way; write `await new X(...)` (a no-op on sync
+    // runtimes, required under a worker). See lifecycle-and-types.md.
+
+  types: false,
+    // Package type publishing (opt-in): emit one combined .d.ts over every
+    // public header into <output>/types/index.d.ts and wire package.json
+    // (`types` + a greedy `typesVersions` "*.h" map), so consumers importing
+    // '<pkg>/<any>.h' get full types. Combine with dts: 'promise' for
+    // worker-first packages.
+
+  // ─────────────────────────────────────────────────────────────
   // Paths (all relative to paths.project; see resolution rules below)
   // ─────────────────────────────────────────────────────────────
   paths: {
@@ -73,12 +103,25 @@ export default {
   // ─────────────────────────────────────────────────────────────
   export: {
     type: 'cmake',
-      // Currently 'cmake' is the only fully-supported value.
+      // 'cmake' — default; the C/C++ pipeline.
+      // 'cargo' — the project is a Rust crate: cpp.js runs `cargo build
+      //           --release --target <triple>` per platform (wasm/android/ios;
+      //           wasi has no wasip3 Rust target yet and is skipped) and
+      //           stages the .a like any prebuilt. See rust.md.
+
+    crate: '.',
+      // 'cargo' type only: directory holding Cargo.toml, relative to project.
 
     header:  'include',          // include dir name in dist
     libPath: 'lib',              // .a output dir
     libName: ['<general.name>'], // .a basenames; one per item
     binHeaders: [],              // headers to ship as raw binary blobs
+
+    bindings: {
+      // Rust binding-surface additions (see rust.md).
+      vectors: [{ of: 'i32', name: 'RustIntVector' }],
+        // Standalone Vec<T> classes to expose without touching Rust source.
+    },
 
     wholeArchive: false,
       // By default only the generated Bridge archive is linked with
@@ -116,6 +159,9 @@ export default {
         emccFlags:     ['-sINITIAL_MEMORY=64MB'],  // -s/-O flags appended to emcc (wasm only)
         env:           { GDAL_NUM_THREADS: '0' },  // env vars passed to running Wasm + build env
         data:          { 'share/myapp': 'myapp/data' },  // bundle data files into .data preload
+          // On platform 'wasi', env/data double as the runtime contract for the
+          // -bin command runner: data dirs become --dir preopens, env becomes
+          // guest env (`_CPPJS_DATA_PATH_` placeholder → the mounted /data).
         ignoreLibName: ['libtiff_legacy'],         // suppress these .a names from link line
     wasiFlags:     ['-Wl,--stack-first'],      // flags appended to the wasi command link (platform 'wasi' only; see wasi.md)
       },
@@ -244,6 +290,8 @@ export default {
 
 - [`init.md`](./init.md) — runtime API. `cppjs.config.js` produces the artifacts that `initCppJs(opts)` loads.
 - [`cppjs-build.md`](./cppjs-build.md) — sibling file used by package authors only.
+- [`rust.md`](./rust.md) — Rust bindings: `cargo:` imports, app-local `.rs`, `export.type: 'cargo'` packages.
+- [`wasi.md`](./wasi.md) — `platform: 'wasi'` command builds + `-bin-wasi` tool packages.
 - [`threading.md`](./threading.md) — `target.runtime: 'mt'` requirements.
 - ADR-0002 — pnpm topological build order via `dependencies`.
 - ADR-0003 — function-typed env values.

@@ -190,6 +190,8 @@ const FILES = [
     runtimeApi('filesystem.md', 'filesystem', 'Filesystem — OPFS, memfs, node-fs, edge', 'Filesystem'),
     runtimeApi('threading.md', 'threading', 'Threading — st vs mt, useWorker, COOP/COEP', 'Threading'),
     runtimeApi('cpp-binding-rules.md', 'cpp-binding-rules', 'C++ Binding Rules', 'C++ Binding Rules'),
+    runtimeApi('rust.md', 'rust', 'Rust — cargo: imports, .rs sources, cargo packages', 'Rust'),
+    runtimeApi('wasi.md', 'wasi', "WASI — platform 'wasi' command builds + -bin tools", 'WASI'),
     runtimeApi('swig-escape.md', 'swig-escape', 'SWIG escape hatch — manual .i files', 'SWIG escape'),
     runtimeApi('build-state.md', 'build-state', 'state and target shapes', 'state / target'),
     runtimeApi('overrides.md', 'overrides', 'Override mechanisms catalog', 'Overrides'),
@@ -220,6 +222,10 @@ const FILES = [
     adr('0002-pnpm-topological-build-order.md', 'pnpm workspace deps drive C++ link order'),
     adr('0003-function-typed-env-values.md', 'Function-typed env values'),
     adr('0004-three-layer-agent-distribution.md', 'Three-layer agent distribution'),
+    adr('0005-wasi-platform.md', "platform: 'wasi' as a first-class build platform"),
+    adr('0006-rust-bindings.md', 'Rust via a flat C ABI; engine never depends on the binding layer'),
+    adr('0007-cargo-import-scheme.md', 'cargo: prefix for direct crate imports'),
+    adr('0008-bin-license-contract.md', 'Derived Bin & License Contract (K1-K4)'),
 ];
 
 function runtimeApi(srcFile, idSlug, title, label) {
