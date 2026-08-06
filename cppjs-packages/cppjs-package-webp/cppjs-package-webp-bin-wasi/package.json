@@ -1,0 +1,63 @@
+{
+    "name": "@cpp.js/package-webp-bin-wasi",
+    "version": "2.0.0-beta.33",
+    "nativeVersion": "1.6.0",
+    "description": "cwebp/dwebp/webpinfo prebuilt as WASI (wasm32-wasip3) command components.",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/cppjs-packages/cppjs-package-webp#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "type": "module",
+    "license": "(Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception) AND BSD-3-Clause",
+    "keywords": [
+        "webp",
+        "cli",
+        "cpp.js",
+        "cpp.js-package",
+        "webassembly",
+        "wasi",
+        "wasmtime"
+    ],
+    "scripts": {
+        "build": "cppjs build -p wasi -b release",
+        "e2e": "node e2e/run.mjs",
+        "clear": "rm -rf .cppjs dist",
+        "prepublishOnly": "cppjs build -p wasi -b release"
+    },
+    "dependencies": {
+        "@cpp.js/package-webp": "workspace:^",
+        "@cpp.js/package-webp-wasi": "workspace:^",
+        "cpp.js": "workspace:^"
+    },
+    "bin": {
+        "cwebp-wasi": "bin/cwebp-wasi.mjs",
+        "dwebp-wasi": "bin/dwebp-wasi.mjs",
+        "webpinfo-wasi": "bin/webpinfo-wasi.mjs"
+    },
+    "cppjs": {
+        "provenance": {
+            "recipe": {
+                "name": "@cpp.js/package-webp",
+                "version": "2.0.0-beta.29",
+                "nativeVersion": "1.6.0"
+            },
+            "source": {
+                "url": "https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.6.0.tar.gz",
+                "sha256": "e4ab7009bf0629fd11982d4c2aa83964cf244cffba7347ecd39019a9e38c4564"
+            },
+            "environment": {
+                "builder": "host",
+                "dockerImage": "bugra9/cpp.js@sha256:044eee6f4dd55e1f3e88a92f075cba40d3eaa8447f18a30d6408156282fee8f1",
+                "hostPlatform": "darwin-arm64",
+                "toolchain": {
+                    "name": "wasi-sdk",
+                    "version": "34.0-rc.2+m",
+                    "wasi-libc": "fb2edcef3339",
+                    "llvm": "278c31bfb8ce",
+                    "llvm-version": "23.1.0",
+                    "config": "f992bcc08219",
+                    "clangSha256": "82a4a3fa013d14978f98452bb76213a3212ee4f5d7937e493ab40724061be570"
+                }
+            },
+            "sbom": "dist/prebuilt/wasi-wasm32-st-release/sbom.cdx.json"
+        }
+    }
+}

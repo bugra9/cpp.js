@@ -1,0 +1,101 @@
+{
+    "name": "@cpp.js/package-gdal-bin-wasi",
+    "version": "2.0.0-beta.33",
+    "nativeVersion": "3.13.2",
+    "description": "The upstream `gdal` command-line interface prebuilt as a single WASI (wasm32-wasip3) command component. Install, point wasmtime at the shipped .wasm and data folder, and run - no compiler involved.",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-gdal#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "type": "module",
+    "license": "(Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception) AND Apache-2.0 AND blessing AND curl AND IJG AND libpng-2.0 AND libtiff AND MIT AND Zlib",
+    "keywords": [
+        "gdal",
+        "gdal-cli",
+        "gis",
+        "geospatial",
+        "raster",
+        "vector",
+        "cpp.js",
+        "cpp.js-package",
+        "webassembly",
+        "wasi",
+        "wasmtime"
+    ],
+    "scripts": {
+        "build": "cppjs build -p wasi -b release",
+        "e2e": "node e2e/run.mjs",
+        "clear": "rm -rf .cppjs dist",
+        "prepublishOnly": "cppjs build -p wasi -b release"
+    },
+    "dependencies": {
+        "@cpp.js/package-gdal": "workspace:^",
+        "@cpp.js/package-geotiff-wasi": "workspace:^",
+        "@cpp.js/package-proj-wasi": "workspace:^",
+        "@cpp.js/package-tiff-wasi": "workspace:^",
+        "@cpp.js/package-sqlite3-wasi": "workspace:^",
+        "@cpp.js/package-zlib-wasi": "workspace:^",
+        "@cpp.js/package-curl-wasi": "workspace:^",
+        "@cpp.js/package-openssl-wasi": "workspace:^"
+    },
+    "devDependencies": {
+        "cpp.js": "workspace:^"
+    },
+    "bin": {
+        "gdal-wasi": "bin/gdal-wasi.mjs",
+        "gdal_contour-wasi": "bin/gdal_contour-wasi.mjs",
+        "gdal_create-wasi": "bin/gdal_create-wasi.mjs",
+        "gdal_footprint-wasi": "bin/gdal_footprint-wasi.mjs",
+        "gdal_grid-wasi": "bin/gdal_grid-wasi.mjs",
+        "gdal_rasterize-wasi": "bin/gdal_rasterize-wasi.mjs",
+        "gdal_translate-wasi": "bin/gdal_translate-wasi.mjs",
+        "gdal_viewshed-wasi": "bin/gdal_viewshed-wasi.mjs",
+        "gdaladdo-wasi": "bin/gdaladdo-wasi.mjs",
+        "gdalbuildvrt-wasi": "bin/gdalbuildvrt-wasi.mjs",
+        "gdaldem-wasi": "bin/gdaldem-wasi.mjs",
+        "gdalenhance-wasi": "bin/gdalenhance-wasi.mjs",
+        "gdalinfo-wasi": "bin/gdalinfo-wasi.mjs",
+        "gdallocationinfo-wasi": "bin/gdallocationinfo-wasi.mjs",
+        "gdalmanage-wasi": "bin/gdalmanage-wasi.mjs",
+        "gdalmdiminfo-wasi": "bin/gdalmdiminfo-wasi.mjs",
+        "gdalmdimtranslate-wasi": "bin/gdalmdimtranslate-wasi.mjs",
+        "gdalsrsinfo-wasi": "bin/gdalsrsinfo-wasi.mjs",
+        "gdaltindex-wasi": "bin/gdaltindex-wasi.mjs",
+        "gdaltransform-wasi": "bin/gdaltransform-wasi.mjs",
+        "gdalwarp-wasi": "bin/gdalwarp-wasi.mjs",
+        "gnmanalyse-wasi": "bin/gnmanalyse-wasi.mjs",
+        "gnmmanage-wasi": "bin/gnmmanage-wasi.mjs",
+        "nearblack-wasi": "bin/nearblack-wasi.mjs",
+        "ogr2ogr-wasi": "bin/ogr2ogr-wasi.mjs",
+        "ogrinfo-wasi": "bin/ogrinfo-wasi.mjs",
+        "ogrlineref-wasi": "bin/ogrlineref-wasi.mjs",
+        "ogrtindex-wasi": "bin/ogrtindex-wasi.mjs",
+        "sozip-wasi": "bin/sozip-wasi.mjs"
+    },
+    "cppjs": {
+        "provenance": {
+            "recipe": {
+                "name": "@cpp.js/package-gdal",
+                "version": "2.0.0-beta.33",
+                "nativeVersion": "3.13.2"
+            },
+            "source": {
+                "url": "https://github.com/OSGeo/gdal/releases/download/v3.13.2/gdal-3.13.2.tar.gz",
+                "sha256": "1051c33db1d9e6a05907ac07cd06f5ce8ac0658f317c3229774cc2198a6c1252"
+            },
+            "environment": {
+                "builder": "host",
+                "dockerImage": "bugra9/cpp.js@sha256:044eee6f4dd55e1f3e88a92f075cba40d3eaa8447f18a30d6408156282fee8f1",
+                "hostPlatform": "darwin-arm64",
+                "toolchain": {
+                    "name": "wasi-sdk",
+                    "version": "34.0-rc.2+m",
+                    "wasi-libc": "fb2edcef3339",
+                    "llvm": "278c31bfb8ce",
+                    "llvm-version": "23.1.0",
+                    "config": "f992bcc08219",
+                    "clangSha256": "82a4a3fa013d14978f98452bb76213a3212ee4f5d7937e493ab40724061be570"
+                }
+            },
+            "sbom": "dist/prebuilt/wasi-wasm32-st-release/sbom.cdx.json"
+        }
+    }
+}

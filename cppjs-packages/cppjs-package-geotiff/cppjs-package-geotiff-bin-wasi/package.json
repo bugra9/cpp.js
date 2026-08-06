@@ -1,0 +1,63 @@
+{
+    "name": "@cpp.js/package-geotiff-bin-wasi",
+    "version": "2.0.0-beta.33",
+    "nativeVersion": "1.7.4",
+    "description": "listgeo/geotifcp/applygeo prebuilt as WASI (wasm32-wasip3) command components.",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-geotiff#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "type": "module",
+    "license": "(Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception) AND blessing AND libtiff AND MIT AND Zlib",
+    "keywords": [
+        "geotiff",
+        "cli",
+        "cpp.js",
+        "cpp.js-package",
+        "webassembly",
+        "wasi",
+        "wasmtime"
+    ],
+    "scripts": {
+        "build": "cppjs build -p wasi -b release",
+        "e2e": "node e2e/run.mjs",
+        "clear": "rm -rf .cppjs dist",
+        "prepublishOnly": "cppjs build -p wasi -b release"
+    },
+    "dependencies": {
+        "@cpp.js/package-geotiff": "workspace:^",
+        "@cpp.js/package-geotiff-wasi": "workspace:^",
+        "cpp.js": "workspace:^"
+    },
+    "bin": {
+        "listgeo-wasi": "bin/listgeo-wasi.mjs",
+        "geotifcp-wasi": "bin/geotifcp-wasi.mjs",
+        "applygeo-wasi": "bin/applygeo-wasi.mjs"
+    },
+    "cppjs": {
+        "provenance": {
+            "recipe": {
+                "name": "@cpp.js/package-geotiff",
+                "version": "2.0.0-beta.33",
+                "nativeVersion": "1.7.4"
+            },
+            "source": {
+                "url": "https://download.osgeo.org/geotiff/libgeotiff/libgeotiff-1.7.4.tar.gz",
+                "sha256": "c598d04fdf2ba25c4352844dafa81dde3f7fd968daa7ad131228cd91e9d3dc47"
+            },
+            "environment": {
+                "builder": "host",
+                "dockerImage": "bugra9/cpp.js@sha256:044eee6f4dd55e1f3e88a92f075cba40d3eaa8447f18a30d6408156282fee8f1",
+                "hostPlatform": "darwin-arm64",
+                "toolchain": {
+                    "name": "wasi-sdk",
+                    "version": "34.0-rc.2+m",
+                    "wasi-libc": "fb2edcef3339",
+                    "llvm": "278c31bfb8ce",
+                    "llvm-version": "23.1.0",
+                    "config": "f992bcc08219",
+                    "clangSha256": "82a4a3fa013d14978f98452bb76213a3212ee4f5d7937e493ab40724061be570"
+                }
+            },
+            "sbom": "dist/prebuilt/wasi-wasm32-st-release/sbom.cdx.json"
+        }
+    }
+}

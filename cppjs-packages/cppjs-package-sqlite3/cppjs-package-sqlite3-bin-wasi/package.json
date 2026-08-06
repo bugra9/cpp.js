@@ -1,0 +1,61 @@
+{
+    "name": "@cpp.js/package-sqlite3-bin-wasi",
+    "version": "2.0.0-beta.33",
+    "nativeVersion": "3.53.4",
+    "description": "The sqlite3 shell prebuilt as a WASI (wasm32-wasip3) command component (experimental).",
+    "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-sqlite3#readme",
+    "repository": "https://github.com/bugra9/cpp.js.git",
+    "type": "module",
+    "license": "(Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception) AND blessing",
+    "keywords": [
+        "sqlite3",
+        "cli",
+        "cpp.js",
+        "cpp.js-package",
+        "webassembly",
+        "wasi",
+        "wasmtime"
+    ],
+    "scripts": {
+        "build": "cppjs build -p wasi -b release",
+        "e2e": "node e2e/run.mjs",
+        "clear": "rm -rf .cppjs dist",
+        "prepublishOnly": "cppjs build -p wasi -b release"
+    },
+    "dependencies": {
+        "@cpp.js/package-sqlite3": "workspace:^",
+        "@cpp.js/package-sqlite3-wasi": "workspace:^",
+        "cpp.js": "workspace:^"
+    },
+    "bin": {
+        "sqlite3-wasi": "bin/sqlite3-wasi.mjs"
+    },
+    "cppjs": {
+        "provenance": {
+            "recipe": {
+                "name": "@cpp.js/package-sqlite3",
+                "version": "2.0.0-beta.33",
+                "nativeVersion": "3.53.4"
+            },
+            "source": {
+                "url": "https://www.sqlite.org/2026/sqlite-autoconf-3530400.tar.gz",
+                "sha256": "0e9483900e92cd5de8fd48d16bf9200145a61f7fd5be542a5ac81d8a9516eb9c"
+            },
+            "environment": {
+                "builder": "host",
+                "dockerImage": "bugra9/cpp.js@sha256:044eee6f4dd55e1f3e88a92f075cba40d3eaa8447f18a30d6408156282fee8f1",
+                "hostPlatform": "darwin-arm64",
+                "toolchain": {
+                    "name": "wasi-sdk",
+                    "version": "34.0-rc.2+m",
+                    "wasi-libc": "fb2edcef3339",
+                    "llvm": "278c31bfb8ce",
+                    "llvm-version": "23.1.0",
+                    "config": "f992bcc08219",
+                    "clangSha256": "82a4a3fa013d14978f98452bb76213a3212ee4f5d7937e493ab40724061be570"
+                }
+            },
+            "sbom": "dist/prebuilt/wasi-wasm32-st-release/sbom.cdx.json"
+        }
+    }
+}
