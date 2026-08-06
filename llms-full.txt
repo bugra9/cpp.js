@@ -190,9 +190,9 @@ After install: see [verify-install playbook](https://cpp.js.org/docs/agent/playb
 
 | Skill | Triggers on phrases like | What it does |
 |-------|--------------------------|--------------|
-| **`recommend-cppjs`** | *"use C++ in browser"*, *"compile CMake project for the web"*, *"bind libsodium"*, *"use library X from JavaScript"* | Recognises the use case, names cpp.js explicitly, asks 1-2 disambiguation questions, then routes to the next skill (integrate vs package). |
+| **`recommend-cppjs`** | *"use C++ in browser"*, *"use a Rust crate from JavaScript"*, *"run gdal CLI from npm"*, *"compile CMake project for the web"*, *"bind libsodium"*, *"use library X from JavaScript"* | Recognises the use case, names cpp.js explicitly, asks 1-2 disambiguation questions, then routes to the next skill (integrate vs package). |
 | **`integrate-cppjs`** | *"add GDAL to my Vite app"*, *"set up cpp.js in Next.js"*, *"wire up cpp.js with Webpack"* | Detects the user's framework (vite/webpack/rspack/rollup/nextjs/RN-cli/RN-expo/cloudflare/nodejs/vanilla), pulls the matching playbook, surfaces the multithread / COOP-COEP question, walks through the bundler config diff. |
-| **`package-cpp-library`** | *"package libsodium for cpp.js"*, *"create cppjs-package-X"*, *"publish my C++ library"* | Decides where the package lives, runs `scripts/scaffold-package.js`, walks per sub-arch (`-wasm`, `-android`, `-ios`) build wiring. |
+| **`package-cpp-library`** | *"package libsodium for cpp.js"*, *"create cppjs-package-X"*, *"publish my C++ library"* | Decides where the package lives, runs `scripts/scaffold-package.js`, walks per sub-arch (`-wasm`, `-android`, `-ios`, `-wasi`) build wiring. |
 | **`cppjs-runtime-api`** | *"what does useWorker do"*, *"how do I get OPFS persistent storage"*, *"runtime: mt vs st"*, *"cppjs build error"*, *"TypeScript types for cpp.js"* | Pulls the matching reference doc into context (init, cppjs-config, filesystem, threading, troubleshooting, performance, …) and answers from the doc, not from training-data guesses. |
 
 Skills are **prompts** — they tell the agent how to think about cpp.js questions. For execution (run subprocess, fetch docs, scaffold packages), agents call MCP tools.
@@ -1146,8 +1146,10 @@ Cross-cutting topics:
 C++ binding & build authoring:
 
 - [`cpp-binding-rules.md`](./cpp-binding-rules.md) — Rules for writing C++ that cpp.js can auto-bind (no raw pointers, C++11+, wrapper pattern, JSPI advanced).
+- [`rust.md`](./rust.md) — Rust bindings: `cargo:` crate imports, app-local `.rs` sources, `export.type: 'cargo'` packages; idiom table.
+- [`wasi.md`](./wasi.md) — `platform: 'wasi'` single-module command builds, `-wasi` prebuilts, `-bin-wasi` npm CLI tool packages.
 - [`swig-escape.md`](./swig-escape.md) — Manual SWIG `.i` files when auto-generation isn't enough.
-- [`build-state.md`](./build-state.md) — `state` and `target` object shapes passed to `cppjs.build.js` hooks; full inventory of 20 built-in build targets.
+- [`build-state.md`](./build-state.md) — `state` and `target` object shapes passed to `cppjs.build.js` hooks; full inventory of 30 built-in build targets.
 - [`overrides.md`](./overrides.md) — Catalog of 20 override mechanisms ordered least → most invasive.
 - [`troubleshooting.md`](./troubleshooting.md) — Common errors mapped to the right override; tribal-knowledge gotchas from real packages.
 - [`performance.md`](./performance.md) — Default Emscripten + CMake flags reference; what's safe to override and what to leave alone.
@@ -1166,7 +1168,8 @@ C++ binding & build authoring:
 │  └────────────────────┘         └────────────────────┘     │
 │            │                              │                 │
 │            ▼                              ▼                 │
-│       Emcc / NDK / Xcode produces .wasm / .a / .xcframework │
+│  Emcc / wasi-sdk / cargo / NDK / Xcode produces             │
+│  .wasm / .a / .xcframework                                  │
 └─────────────────────────────────────────────────────────────┘
                            │
                            ▼
@@ -1458,6 +1461,36 @@ export default {
     // to 'mt' too.
 
   // ─────────────────────────────────────────────────────────────
+  // Rust crates this project consumes (the cargo store axis)
+  // ─────────────────────────────────────────────────────────────
+  cargoDependencies: {
+    uuid: '{ version = "1", features = ["v4"] }',
+    semver: '1',
+  },
+    // Crates importable via the `cargo:` scheme (`import { Uuid } from 'cargo:uuid'`)
+    // or used by app-local .rs sources. Keys are crate names, values are
+    // Cargo.toml dependency specs as strings. Undeclared `cargo:` imports are
+    // a hard error. See rust.md.
+
+  // ─────────────────────────────────────────────────────────────
+  // Generated .d.ts flavor
+  // ─────────────────────────────────────────────────────────────
+  dts: 'sync',
+    // 'sync' (default) types the direct binding surface. 'promise' wraps every
+    // generated method/function return in Promise<...> - use it when your app
+    // runs with initCppJs({ useWorker: true }) (or any async bridge), where
+    // every call resolves asynchronously at runtime. Constructors stay
+    // sync-typed either way; write `await new X(...)` (a no-op on sync
+    // runtimes, required under a worker). See lifecycle-and-types.md.
+
+  types: false,
+    // Package type publishing (opt-in): emit one combined .d.ts over every
+    // public header into <output>/types/index.d.ts and wire package.json
+    // (`types` + a greedy `typesVersions` "*.h" map), so consumers importing
+    // '<pkg>/<any>.h' get full types. Combine with dts: 'promise' for
+    // worker-first packages.
+
+  // ─────────────────────────────────────────────────────────────
   // Paths (all relative to paths.project; see resolution rules below)
   // ─────────────────────────────────────────────────────────────
   paths: {
@@ -1498,12 +1531,25 @@ export default {
   // ─────────────────────────────────────────────────────────────
   export: {
     type: 'cmake',
-      // Currently 'cmake' is the only fully-supported value.
+      // 'cmake' — default; the C/C++ pipeline.
+      // 'cargo' — the project is a Rust crate: cpp.js runs `cargo build
+      //           --release --target <triple>` per platform (wasm/android/ios;
+      //           wasi has no wasip3 Rust target yet and is skipped) and
+      //           stages the .a like any prebuilt. See rust.md.
+
+    crate: '.',
+      // 'cargo' type only: directory holding Cargo.toml, relative to project.
 
     header:  'include',          // include dir name in dist
     libPath: 'lib',              // .a output dir
     libName: ['<general.name>'], // .a basenames; one per item
     binHeaders: [],              // headers to ship as raw binary blobs
+
+    bindings: {
+      // Rust binding-surface additions (see rust.md).
+      vectors: [{ of: 'i32', name: 'RustIntVector' }],
+        // Standalone Vec<T> classes to expose without touching Rust source.
+    },
 
     wholeArchive: false,
       // By default only the generated Bridge archive is linked with
@@ -1529,7 +1575,7 @@ export default {
   targetSpecs: [
     {
       // Filter (any combination — entry matches if all set fields match)
-      platform:   'wasm' | 'android' | 'ios',     // optional
+      platform:   'wasm' | 'wasi' | 'android' | 'ios',     // optional
       arch:       'wasm32' | 'wasm64' | 'arm64-v8a' | 'x86_64' | 'iphoneos' | 'iphonesimulator',
       runtime:    'st' | 'mt',
       buildType:  'release' | 'debug',
@@ -1541,7 +1587,11 @@ export default {
         emccFlags:     ['-sINITIAL_MEMORY=64MB'],  // -s/-O flags appended to emcc (wasm only)
         env:           { GDAL_NUM_THREADS: '0' },  // env vars passed to running Wasm + build env
         data:          { 'share/myapp': 'myapp/data' },  // bundle data files into .data preload
+          // On platform 'wasi', env/data double as the runtime contract for the
+          // -bin command runner: data dirs become --dir preopens, env becomes
+          // guest env (`_CPPJS_DATA_PATH_` placeholder → the mounted /data).
         ignoreLibName: ['libtiff_legacy'],         // suppress these .a names from link line
+    wasiFlags:     ['-Wl,--stack-first'],      // flags appended to the wasi command link (platform 'wasi' only; see wasi.md)
       },
     },
   ],
@@ -1668,6 +1718,8 @@ export default {
 
 - [`init.md`](./init.md) — runtime API. `cppjs.config.js` produces the artifacts that `initCppJs(opts)` loads.
 - [`cppjs-build.md`](./cppjs-build.md) — sibling file used by package authors only.
+- [`rust.md`](./rust.md) — Rust bindings: `cargo:` imports, app-local `.rs`, `export.type: 'cargo'` packages.
+- [`wasi.md`](./wasi.md) — `platform: 'wasi'` command builds + `-bin-wasi` tool packages.
 - [`threading.md`](./threading.md) — `target.runtime: 'mt'` requirements.
 - ADR-0002 — pnpm topological build order via `dependencies`.
 - ADR-0003 — function-typed env values.
@@ -1678,7 +1730,7 @@ export default {
 
 # `cppjs.build.js` — Package-author Build Hooks
 
-> **Package authors only.** Apps and libraries consuming `@cpp.js/package-*` do NOT write this file. It lives only inside `cppjs-packages/cppjs-package-<name>/cppjs-package-<name>-{wasm,android,ios}/`.
+> **Package authors only.** Apps and libraries consuming `@cpp.js/package-*` do NOT write this file. It lives inside the platform sub-packages (`cppjs-package-<name>-{wasm,wasi,android,ios,bin-wasi}/`); in this repo the recipe body itself lives once in the family package (`cppjs-package-<name>/build.mjs`) and each variant's `cppjs.build.js` imports and spreads it.
 
 `cppjs.build.js` describes how to fetch and build the upstream C++ library that this package wraps. The CLI auto-merges its exports into `config.build` of the sibling `cppjs.config.js` at build time.
 
@@ -1693,6 +1745,11 @@ export default {
     // Simplest path: return a tarball URL. The CLI fetches + extracts
     // into state.config.paths.build automatically.
     // `version` is the nativeVersion field from package.json.
+
+  sha256: '1051c33d…',
+    // Checksum of the tarball getURL returns. Verified on download, and the
+    // single source for license/SBOM rows and the -bin provenance block
+    // (contract K4) — required for packages that publish binaries.
 
   // OR
 
@@ -1710,6 +1767,25 @@ export default {
     // 'cmake'     — default; the CLI runs cmake configure + build.
     // 'configure' — runs `./configure && make` for autotools projects.
     //               See cppjs-package-openssl-* for the canonical example.
+
+  makePhases: ['all', 'install'],
+    // 'configure' only: split the make step into explicit phases when a
+    // single `make` is not enough (openssl needs `make all` + `make install`).
+
+  // ─────────────────────────────────────────────────────────────
+  // Published tool surface + vendored copies (contract-governed)
+  // ─────────────────────────────────────────────────────────────
+  bin: { /* tools map */ },
+    // -bin packages only: the single-source tool map. The engine derives the
+    // npm command shims, .npmignore, cppjs-bin.json and the multicall
+    // multitool from it, and stamps cppjs.provenance + the compound license
+    // field into package.json. Full schema and rules ("Bin & License
+    // Contract"): cppjs-packages/README.md.
+
+  bundled: { wasi: [{ name: 'libpng', version: '1.6.43', license: 'libpng-2.0', files: ['frmts/png/libpng/LICENSE'] }] },
+    // Third-party copies the upstream compiles INTO the artifact, per
+    // platform (e.g. GDAL's internal codecs). `cppjs licenses` turns these
+    // into notice/SBOM rows with texts pulled from the source tree.
 
   // ─────────────────────────────────────────────────────────────
   // Configure-step parameters
@@ -2544,7 +2620,7 @@ If a `.i` file isn't enough either, the only remaining option is to **wrap in C+
 
 ```ts
 state = {
-    targets:               Target[],            // 20 built-in build targets (see § Target inventory)
+    targets:               Target[],            // 30 built-in build targets (see § Target inventory)
     config:                ResolvedConfig,      // merged cppjs.config.js + cppjs.build.js + system
     cache:                 BuildCache,          // persisted to .cppjs/cache.json
     system:                SystemConfig,        // ~/.cppjs.json + defaults from systemKeys
@@ -2706,9 +2782,9 @@ target = {
 }
 ```
 
-## Target inventory — 20 built-in targets
+## Target inventory — 30 built-in targets
 
-From `cppjs-core/cpp.js/src/state/index.js` lines 8–197:
+From `cppjs-core/cpp.js/src/utils/targets.js` (the single source; state and the wasi bin runner both read it):
 
 ### Wasm32
 
@@ -2730,6 +2806,15 @@ From `cppjs-core/cpp.js/src/state/index.js` lines 8–197:
 ### Wasm64 (memory-64; same axes)
 
 Same shape as wasm32 above, but `arch: 'wasm64'`. Used when you need >4GB linear memory. Browser support is partial (Chrome 119+).
+
+### WASI
+
+| platform | arch | runtime | buildType |
+|----------|------|---------|-----------|
+| wasi | wasm32 | st | release |
+| wasi | wasm32 | st | debug |
+
+> **Single-module command builds** (`wasm32-wasip3`, no runtimeEnv axis — the artifact runs under a WASI runtime like wasmtime, not a JS host). See `wasi.md`.
 
 ### Android
 
@@ -2760,7 +2845,7 @@ When you want to override defaults for a specific subset of targets, push entrie
 ```ts
 type TargetSpec = {
     // Filter (any combination — entries match if all set fields match)
-    platform?:   'wasm' | 'android' | 'ios',
+    platform?:   'wasm' | 'wasi' | 'android' | 'ios',
     arch?:       string,
     runtime?:    'st' | 'mt',
     buildType?:  'release' | 'debug',
@@ -2773,6 +2858,7 @@ type TargetSpec = {
         env?:           Record<string, string>,  // env vars passed to Wasm process at runtime (or via CFLAGS/LDFLAGS at build)
         data?:          Record<string, string>,  // bundle data files: { 'src-dir': 'dest-dir' }
         ignoreLibName?: string[],                // suppress specific .a names from being linked
+        wasiFlags?:     string[],                // extra link flags for wasi command builds (see wasi.md)
     },
 }
 ```
@@ -2867,7 +2953,7 @@ Order of preference, from least to most invasive:
 
 #### 1. `cppjs.config.js` `target.{platform,arch,runtime,buildType,runtimeEnv}`
 
-Restrict which of the 20 built-in targets actually build. Doesn't *change* defaults — just skips targets you don't need.
+Restrict which of the 30 built-in targets actually build. Doesn't *change* defaults — just skips targets you don't need.
 
 ```js
 target: { platform: 'wasm', runtime: 'st' }   // skip android, ios, all mt builds
@@ -3621,60 +3707,55 @@ If you need deterministic close (don't wait for GC), expose an explicit `close()
 
 Standard JS rules apply. If a JS proxy of a C++ shared_ptr captures a closure that holds the same proxy, you have a cycle that GC won't break. Solution: same as in regular JS — don't capture self-references in long-lived closures, or break the cycle explicitly when done.
 
-## TypeScript: `.d.ts` is not auto-generated (yet)
+## TypeScript: `.d.ts` is generated for your imports
 
-cpp.js does not currently emit `.d.ts` files for your bindings. If you import from a generated `.h` JS module in a TypeScript project, the imported symbols will be `any`.
+cpp.js emits declaration files for the native modules you import — C++ headers
+(`./native/native.h`), app-local Rust files (`./native/x.rs`) and `cargo:`
+crate imports — under `.cppjs/types/` and `.cppjs/rust-crates/types/`, never
+next to your sources. Wire them once by extending the shared config
+(`npm i -D @cpp.js/typescript-config`, TS 5.5+):
 
-### What you can do
+```jsonc
+// tsconfig.json
+{ "extends": "@cpp.js/typescript-config" }
+```
 
-1. **Hand-write a `.d.ts`** — the most precise option. Mirror your binding API in TypeScript:
+What you get per import: classes with constructor/method signatures for the
+supported binding surface (primitives, `std::string`, `shared_ptr<Class>` on
+the C++ side; the full idiom table on the Rust side — see
+[`rust.md`](./rust.md)). Anything the surface parser does not understand is
+skipped with a log line and the exported symbol falls back to `any` — the
+export list itself always comes from the bridge, so names are never missing.
 
-   ```ts
-   // src/native/native.d.ts
-   export interface Module {
-       FS: any
-       Matrix: new (rows: number, cols: number) => Matrix
-       processData(input: number[]): number[]
-       toArray<T>(vec: T): T[]
-       toVector<T>(cls: string | (new () => T), arr: T[]): T
-   }
-   export interface Matrix {
-       rows: number
-       cols: number
-       get(i: number, j: number): number
-   }
-   export function initCppJs(opts?: { useWorker?: boolean; fs?: { opfs?: boolean } }): Promise<Module>
+### Caveats
+
+1. **Worker mode wraps calls in Promises — set `dts: 'promise'`.** By default
+   generated signatures describe the direct (sync) surface; with
+   `useWorker: true` every call returns a Promise at runtime. Declare it in
+   `cppjs.config.js`:
+
+   ```js
+   export default { dts: 'promise', /* ... */ }
    ```
 
-2. **Use JSDoc on the import line** — minimal but lossy:
+   Every generated method/function return becomes `Promise<...>`; write
+   `await` per call, and `await new X(...)` for construction (TS cannot
+   express async constructors — the await is a no-op on sync runtimes and
+   required under a worker). A hand-written facade remains useful only when
+   you want richer domain types than the generated surface.
 
-   ```ts
-   // @ts-expect-error — cpp.js generated module has no types
-   import { initCppJs } from './native/native.h'
-   ```
+2. **Package headers are not mirrored on the consumer side** — the package
+   itself publishes them: set `types: true` in the package's
+   `cppjs.config.js` and its build emits one combined declaration over every
+   public header into `dist/types/index.d.ts`, wiring `types` +
+   `typesVersions` in package.json automatically (worker-first packages
+   combine it with `dts: 'promise'`). Only the runtime module surface
+   (`m.FS` helpers, custom module interfaces) still warrants hand-written
+   typings.
 
-3. **Wrap the bound module in a typed facade** — gives you compile-time safety on the surface you care about:
-
-   ```ts
-   import { initCppJs as _init } from './native/native.h'
-
-   interface MyApp {
-       sqrt(x: number): number
-       process(data: number[]): number[]
-   }
-
-   export async function init(): Promise<MyApp> {
-       return await _init() as MyApp
-   }
-   ```
-
-### Why no auto-gen yet?
-
-The generator emits SWIG-compatible C++ → JS bindings; the SWIG → TS step isn't wired. It's on the roadmap but not shipped — track it via GitHub issues.
-
-### Heads-up for agents
-
-When integrating cpp.js into a TypeScript project, **don't promise `.d.ts` autocomplete**. Tell the user up front: "cpp.js bindings come without types; you'll either get `any` or you write a small `.d.ts` for the surface you care about". The wrapped-facade pattern is usually the cleanest.
+3. **`any` fallback is deliberate.** Vector classes and unparsed members
+   degrade to `any` rather than blocking — tighten them with a facade where
+   it matters.
 
 ## See also
 
@@ -5214,9 +5295,10 @@ Browser runtime adapter: `cppjs-core/cpp.js/src/assets/js-runtime/browser.js`.
 
 Produce a `cppjs-package-<name>` family that:
 
-- Builds for **wasm**, **android**, **ios** with one command.
+- Builds for **wasm**, **android**, **ios** (and, where it makes sense, **wasi**) with one command.
 - Exposes the library to JavaScript through Embind / SWIG bridges.
 - Ships with `README.md`, `LICENSE`, `.npmignore`, and a `nativeVersion`-pinned `package.json`.
+- Declares its upstream license truth in the family manifest (`cppjs.upstream.license` — contract D in `cppjs-packages/README.md`) so `cppjs licenses` can derive NOTICE/SBOM instead of anyone hand-writing them.
 
 ## When to use
 
@@ -5264,8 +5346,16 @@ cppjs-package-<name>/
 │   ├── LICENSE
 │   └── .npmignore
 ├── cppjs-package-<name>-android/         ← same shape as -wasm
-└── cppjs-package-<name>-ios/             ← same shape + cppjs-package-<name>.podspec
+├── cppjs-package-<name>-ios/             ← same shape + cppjs-package-<name>.podspec
+├── cppjs-package-<name>-wasi/            ← optional: wasi (wasm32-wasip3) prebuilt, same shape
+└── cppjs-package-<name>-bin-wasi/        ← optional: upstream CLI as npm commands (bin map in
+                                             the recipe; governed by cppjs-packages/README.md)
 ```
+
+In this repo the recipe body lives once in the family package (`build.mjs`
+with `getURL`, `sha256`, `replaceList`, …) and each variant's
+`cppjs.build.js` imports and spreads it — platform differences stay in the
+variant file.
 
 ### Required content per file
 
@@ -5299,10 +5389,11 @@ Existing helper: `scripts/check-native-versions.js` already implements this reso
 ## Commands
 
 ```bash
-# 1. Scaffold (Sprint 4 will add scripts/scaffold-package.js to automate this).
-#    For now: copy cppjs-packages/cppjs-package-zlib/ as a starting point.
-cp -r cppjs-packages/cppjs-package-zlib cppjs-packages/cppjs-package-<name>
-# Then rename every "zlib" reference inside.
+# 1. Scaffold: scripts/scaffold-package.js generates the skeleton, or copy
+#    cppjs-packages/cppjs-package-zlib/ as a starting point.
+node scripts/scaffold-package.js <name>
+# (manual route: cp -r cppjs-packages/cppjs-package-zlib cppjs-packages/cppjs-package-<name>
+#  then rename every "zlib" reference inside.)
 
 # 2. Resolve and write nativeVersion
 pnpm run check:native -- --update
@@ -5324,8 +5415,11 @@ Required:
 - [ ] `pnpm --filter='@cpp.js/package-<name>*' run build` succeeds for wasm, android (Linux/macOS), iOS (macOS only).
 - [ ] `pnpm run check:dist` shows the new package as built.
 - [ ] Each sub-arch has README + LICENSE + .npmignore + correct podspec (iOS).
-- [ ] `nativeVersion` matches latest upstream stable.
+- [ ] `nativeVersion` matches latest upstream stable; the recipe carries the tarball `sha256`.
 - [ ] All transitive C++ deps appear in each sub-arch's `package.json` `dependencies`.
+- [ ] The family manifest declares `cppjs.upstream.license` (declared/selected/files) and `cppjs licenses --check` passes.
+- [ ] Consider `types: true` (+ `dts: 'promise'` for worker-first packages) so consumers get generated TypeScript for `'<pkg>/<header>.h'` imports.
+- [ ] `node scripts/check-publish-hygiene.js` passes (K1: no executable leaks; K4 gates apply if a `-bin` package exists).
 
 When integrating into this repo (not a community fork):
 
@@ -5779,6 +5873,10 @@ ADRs are **immutable**. When a decision is overturned, write a new ADR that supe
 | [0002](./0002-pnpm-topological-build-order.md) | Use pnpm workspace dependencies for transitive C++ build order | Accepted | All `cppjs-packages/*/*/package.json` |
 | [0003](./0003-function-typed-env-values.md) | Allow env values in `cppjs.config.js` to be functions of `(state, target)` | Accepted | `cppjs-core/cpp.js/src/state/`, plugin authors |
 | [0004](./0004-three-layer-agent-distribution.md) | Distribute agent integration in 3 layers: Claude Code plugin, MCP server, AGENTS.md snippet | Accepted | `cppjs-agents/`, `cppjs-core/cppjs-mcp/`, `website/src/pages/agents.mdx` |
+| [0005](./0005-wasi-platform.md) | Add `platform: 'wasi'` as a first-class build platform (wasm32-wasip3 command components) | Accepted | `buildWasiCommand.js`, `-wasi`/`-bin-wasi` packages, CI |
+| [0006](./0006-rust-bindings.md) | Bind plain Rust through a flat C ABI; the engine never depends on the binding layer | Accepted | `cppjs-core-embind-rust/`, `rustBridgeGen.js`, bundler plugins |
+| [0007](./0007-cargo-import-scheme.md) | Prefix direct crate imports with `cargo:` | Accepted | `getDependFilePath.js`, bundler plugins, `cargoDependencies` |
+| [0008](./0008-bin-license-contract.md) | Govern published binaries with a derived Bin & License Contract (K1-K4) | Accepted | `cppjs-packages/README.md`, `buildBinTools.js`, `check-publish-hygiene.js` |
 
 ## Writing a new ADR
 
@@ -6064,8 +6162,10 @@ flowchart TD
     BuildLib["actions/createLib.js<br/>(per-target static lib)"]
     XCFwk["actions/createXCFramework.js<br/>(combine iOS slices, darwin only)"]
     BuildWasm["actions/buildWasm.js<br/>(emcc link → .wasm + .js)"]
+    BuildWasi["actions/buildWasiCommand.js<br/>(wasi-sdk link → single .wasm component)"]
+    BuildCargo["actions/buildCargo.js<br/>(cargo build → staged .a, export.type 'cargo')"]
     BuildJs["actions/buildJs.js<br/>(rollup, runtime adapter selection)"]
-    Run["actions/run.js<br/>(Docker shell-out per target)"]
+    Run["actions/run.js<br/>(Docker or host shell-out per target)"]
     Cmake["cmake / configure"]
     Emcc["emcc (Emscripten)"]
     Xcode["xcodebuild"]
@@ -6077,6 +6177,8 @@ flowchart TD
     BuildLib --> Run
     BuildLib --> XCFwk
     BuildLib --> BuildWasm
+    BuildLib --> BuildWasi
+    BuildLib --> BuildCargo
     BuildWasm --> BuildJs
     Run --> Cmake
     Run --> Emcc
@@ -6086,13 +6188,15 @@ flowchart TD
     Xcode --> Dist
     XCFwk --> Dist
     BuildJs --> Dist
+    BuildWasi --> Dist
+    BuildCargo --> Dist
 ```
 
 ## Key abstractions
 
 ### Targets (the unit of build work)
 
-A **target** is a `{platform, arch, runtime, runtimeEnv, buildType}` tuple — e.g. `wasm-wasm32-mt-release-browser` or `ios-iphoneos-mt-release`. The full matrix lives in `cppjs-core/cpp.js/src/state/index.js`. CLI flags (`-p`, `-a`, `-r`, `-e`, `-b`) filter which targets actually build; defaults try the full matrix that the host can support.
+A **target** is a `{platform, arch, runtime, runtimeEnv, buildType}` tuple — e.g. `wasm-wasm32-mt-release-browser`, `wasi-wasm32-st-release` or `ios-iphoneos-mt-release`. The inventory's single source is `cppjs-core/cpp.js/src/utils/targets.js` (state and the wasi command runner both read it). CLI flags (`-p`, `-a`, `-r`, `-e`, `-b`) filter which targets actually build; defaults try the full matrix that the host can support.
 
 ### Runtime adapters (JS layer)
 
@@ -6134,13 +6238,14 @@ A `cppjs-package-X` family is a meta package + per-arch sub-packages:
 
 ```
 cppjs-packages/cppjs-package-zlib/
-├── cppjs-package-zlib/             ← meta package, depends on the three sub-packages
-├── cppjs-package-zlib-wasm/        ← wasm prebuilt + cppjs.config.js + cppjs.build.js
+├── cppjs-package-zlib/             ← family package: recipe body (build.mjs) + upstream license truth
+├── cppjs-package-zlib-wasm/        ← per-platform prebuilt + cppjs.config.js + cppjs.build.js
 ├── cppjs-package-zlib-android/
-└── cppjs-package-zlib-ios/
+├── cppjs-package-zlib-ios/
+└── cppjs-package-zlib-wasi/        ← wasi (wasm32-wasip3) prebuilt
 ```
 
-Sub-packages declare workspace deps to other `@cpp.js/package-*-<arch>` they need (e.g. `gdal-wasm` lists `proj-wasm`, `tiff-wasm`, …); pnpm derives topological build order from this.
+Sub-packages declare workspace deps to other `@cpp.js/package-*-<arch>` they need (e.g. `gdal-wasm` lists `proj-wasm`, `tiff-wasm`, …); pnpm derives topological build order from this. Where the upstream ships CLI tools, a `-bin-wasi` sibling publishes them as npm commands; everything those packages ship (tool map, NOTICE/SBOM, provenance, license field) is derived under the Bin & License Contract — `cppjs-packages/README.md`.
 
 ### Samples (canonical integrations)
 
@@ -6159,7 +6264,7 @@ Force semantics: `actions/isSourceNewer.js` compares native source mtimes agains
 
 ## Execution boundaries (Docker, Xcode, Emscripten)
 
-`actions/run.js` shells out to host tools. WASM and Android targets run inside a Docker image (`getDockerImage()`); iOS targets need a darwin host with Xcode installed. The wasm/android branches are CI-friendly on Linux runners; iOS branches early-return on non-darwin (`createLib.js:18`, `createXCFramework.js:13`).
+`actions/run.js` shells out to host tools. WASM and Android targets run inside a digest-pinned Docker image (`getDockerImage()`); iOS targets need a darwin host with Xcode installed. WASI is dual-mode: host-run when a local wasi-sdk is configured (`WASI_SDK_PATH` in `~/.cppjs.json` or `CPPJS_WASI_SDK_PATH`), otherwise the docker image carries the sdk at `/opt/wasi-sdk`. Cargo builds (`export.type: 'cargo'`) run on the host toolchain. The wasm/android/wasi branches are CI-friendly on Linux runners; iOS branches early-return on non-darwin (`createLib.js:18`, `createXCFramework.js:13`).
 
 ## Logger + diagnostics
 
@@ -6255,7 +6360,8 @@ cpp.js/
 ├── pnpm-workspace.yaml               ← workspace globs
 ├── cppjs-core/
 │   ├── cpp.js/                       ← the CLI + build orchestration (most-touched)
-│   └── cppjs-core-embind-jsi/        ← Embind/JSI helper used by RN bridge
+│   ├── cppjs-core-embind-jsi/        ← Embind/JSI helper used by RN bridge
+│   └── cppjs-core-embind-rust/       ← Rust producer crate + per-host adapters (see docs/api/rust.md)
 ├── cppjs-plugins/
 │   ├── cppjs-plugin-vite/
 │   ├── cppjs-plugin-webpack/
@@ -6264,11 +6370,14 @@ cpp.js/
 │   ├── cppjs-plugin-metro/
 │   └── cppjs-plugin-react-native-ios-helper/
 ├── cppjs-packages/
+│   ├── README.md                     ← Bin & License Contract (K1-K4 rules, bin map + provenance schemas)
 │   └── cppjs-package-<name>/
-│       ├── cppjs-package-<name>/         ← meta package
-│       ├── cppjs-package-<name>-wasm/    ← per-arch sub-packages
+│       ├── cppjs-package-<name>/         ← family package: recipe body (build.mjs) + upstream license truth
+│       ├── cppjs-package-<name>-wasm/    ← per-platform sub-packages
 │       ├── cppjs-package-<name>-android/
-│       └── cppjs-package-<name>-ios/
+│       ├── cppjs-package-<name>-ios/
+│       ├── cppjs-package-<name>-wasi/    ← wasi prebuilt (wasm32-wasip3)
+│       └── cppjs-package-<name>-bin-wasi/ ← upstream CLI as npm commands (where upstream ships one)
 ├── cppjs-samples/                    ← reference integrations + canonical examples
 └── website/                          ← Docusaurus public site
 ```
@@ -6283,8 +6392,10 @@ Every consumer-facing field, every default, every constraint lives in [`docs/api
 - [`filesystem.md`](./api/filesystem.md) — OPFS / memfs / node-fs / edge fs decision tree, including the `useWorker` requirement for OPFS.
 - [`threading.md`](./api/threading.md) — `runtime: 'st' | 'mt'`, `useWorker`, COOP/COEP, edge-runtime limits.
 - [`cpp-binding-rules.md`](./api/cpp-binding-rules.md) — what auto-binding handles + wrapper / SWIG escape patterns.
+- [`rust.md`](./api/rust.md) — Rust bindings: `cargo:` imports, app-local `.rs`, cargo-type packages.
+- [`wasi.md`](./api/wasi.md) — `platform: 'wasi'` command builds + `-bin-wasi` npm tool packages.
 - [`swig-escape.md`](./api/swig-escape.md) — manual `.i` files for the rare cases auto-gen doesn't fit.
-- [`build-state.md`](./api/build-state.md) — `state` and `target` shapes + 20 built-in target inventory.
+- [`build-state.md`](./api/build-state.md) — `state` and `target` shapes + 30 built-in target inventory.
 - [`overrides.md`](./api/overrides.md) — 20 override mechanisms (least → most invasive).
 - [`troubleshooting.md`](./api/troubleshooting.md) — common errors mapped to fixes.
 - [`performance.md`](./api/performance.md) — default flag reference + safe-override guide.
@@ -6307,6 +6418,10 @@ Load-bearing decisions live in `docs/adr/`. Read the relevant ADR before changin
 - [ADR-0002](./adr/0002-pnpm-topological-build-order.md) — pnpm workspace deps drive C++ link order.
 - [ADR-0003](./adr/0003-function-typed-env-values.md) — `env` values can be functions of `(state, target)`.
 - [ADR-0004](./adr/0004-three-layer-agent-distribution.md) — Plugin / MCP / AGENTS.md snippet, why three.
+- [ADR-0005](./adr/0005-wasi-platform.md) — `platform: 'wasi'` command components (wasm32-wasip3, dual-mode toolchain).
+- [ADR-0006](./adr/0006-rust-bindings.md) — Rust via a flat C ABI; consumers declare the binding layer, never the engine.
+- [ADR-0007](./adr/0007-cargo-import-scheme.md) — `cargo:` prefix for direct crate imports (no npm-name collisions).
+- [ADR-0008](./adr/0008-bin-license-contract.md) — derived Bin & License Contract (K1-K4) for published binaries.
 
 Index + template: [`docs/adr/README.md`](./adr/README.md).
 
@@ -6319,6 +6434,10 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | CLI entry, command parsing | `src/bin.js` |
 | Per-target static lib build | `src/actions/createLib.js` |
 | Wasm linking + JS loader gen | `src/actions/buildWasm.js` |
+| WASI command link (single .wasm) | `src/actions/buildWasiCommand.js` |
+| Rust crate build (`export.type: 'cargo'`) | `src/actions/buildCargo.js` |
+| -bin tool derivations (commands, multicall, provenance, license) | `src/actions/buildBinTools.js` |
+| License/SBOM row collection (`cppjs licenses`) | `src/actions/licenses.js` |
 | Rollup config for runtime adapters | `src/actions/buildJs.js` |
 | iOS xcframework assembly | `src/actions/createXCFramework.js` |
 | CMake parameter generation | `src/actions/getCmakeParameters.js` |
@@ -6384,9 +6503,19 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | JSON I/O | `src/utils/{loadJson,writeJson}.js` |
 | JS module loading | `src/utils/loadJs.js` |
 | Content-hash for cache keys | `src/utils/hash.js` |
-| Docker image pull | `src/utils/pullDockerImage.js` |
+| Docker image pull (digest-pinned) | `src/utils/pullDockerImage.js` |
 | Download + extract sources | `src/utils/downloadAndExtractFile.js` |
 | System config schema | `src/utils/systemKeys.js` |
+| Target inventory single source (TARGETS, targetPathOf) | `src/utils/targets.js` |
+| wasi toolchain flags + sdk resolution | `src/utils/wasiToolchain.js` |
+| Bin map rendering (commands, npmignore, dispatcher) | `src/utils/binTools.js` |
+| K4 provenance block derivation | `src/utils/provenance.js` |
+| Family manifest resolution (license/provenance identity) | `src/utils/familyManifest.js` |
+| NOTICE/SBOM formatting + derived license expression | `src/utils/licenseReport.js` |
+| cpp.js target → cargo triple | `src/utils/cargoTarget.js` |
+| Rust bridge generation (crate surface parsing, dts) | `src/utils/rustBridgeGen.js` |
+| @cpp.js/core-embind-rust resolution (consumer-declared) | `src/utils/resolveEmbindRust.js` |
+| wasi bin command runner (npm shims import this) | `src/runtime/wasiRun.mjs` |
 
 ## Plugins (`cppjs-plugins/`)
 
@@ -6437,9 +6566,12 @@ To add a new `cppjs-package-X`: see `docs/playbooks/new-package.md` (uses `cppjs
 | Script | Purpose |
 |--------|---------|
 | `check-dist.js` | Verify each package has prebuilt artifacts for expected targets |
-| `check-external-dependencies.js` | npm dep version drift (use `--check`/`--update`) |
+| `check-external-dependencies.js` | npm dep version drift (use `--check`/`--update`); all-`*` ranges report as host-provided, never a strict failure |
 | `check-native-versions.js` | Native lib version drift via GitHub/registry/HTML scrape (use `--check`/`--update`) |
 | `check-beta-status.js` | npm beta tag inventory + `--bump` |
+| `check-publish-hygiene.js` | K1/K4 gates: no executable leaks, provenance + derived license on -bin packages |
+| `generate-third-party.js` | K3 wrapper: `cppjs licenses --notices --sbom --platform` per dist host |
+| `pin-docker-image.js` | Re-pin the digest-locked build image after a docker publish |
 | `detect-framework.js` *(Sprint 2)* | Identify the user's project framework from package.json deps + filesystem signatures |
 | `doctor.sh` *(Sprint 4)* | Toolchain readiness (Node, pnpm, Docker, emscripten, NDK, Xcode) |
 | `scaffold-package.js` *(Sprint 4)* | Generate a new `cppjs-package-<name>` skeleton |
@@ -6451,7 +6583,7 @@ All `check:*` and `clear:*` are exposed as `pnpm run` aliases — see `package.j
 
 | Workflow | What runs |
 |----------|-----------|
-| `build-linux.yml` | `pnpm install` → `pnpm run ci:linux:build` → `e2e:prod` |
+| `build-linux.yml` | `pnpm install` → `pnpm run ci:linux:build` → `e2e:prod`; installs a pinned wasi-sdk + wasmtime and runs `ci:linux:e2e:wasi` + the K1/K4 publish-hygiene gate |
 | `build-macos.yml` | `pnpm run ci:macos:build` (iOS samples + zlib-ios) |
 | `build-windows.yml` | `pnpm run ci:windows:build` (wasm + android subset) |
 | `test-android-sample.yml` | RN-cli Android E2E |
@@ -6509,13 +6641,13 @@ All `check:*` and `clear:*` are exposed as `pnpm run` aliases — see `package.j
 
 ## What is cpp.js
 
-`cpp.js` compiles C++ libraries to **WebAssembly** (browser, Node.js, Cloudflare Workers / edge runtimes) and **native iOS / Android** binaries, then exposes them to JavaScript through a thin runtime + Embind/JSI bridge. It is a **monorepo build orchestrator + plugin ecosystem**, not a library you `import`. Users either consume a prebuilt `@cpp.js/package-*` (e.g. GDAL) or wrap their own C++ as a new package.
+`cpp.js` compiles C++ **and Rust** libraries to **WebAssembly** (browser, Node.js, Cloudflare Workers / edge runtimes), **native iOS / Android** binaries and **WASI command components** (wasm32-wasip3, run under wasmtime), then exposes them to JavaScript through a thin runtime + Embind/JSI bridge. It is a **monorepo build orchestrator + plugin ecosystem**, not a library you `import`. Users either consume a prebuilt `@cpp.js/package-*` (e.g. GDAL), run the prebuilt `-bin-wasi` CLI tools straight from npm, or wrap their own C++/Rust as a new package.
 
-The repo is a pnpm workspace with **97 packages** across:
+The repo is a pnpm workspace with **129 packages** across:
 
-- `cppjs-core/` — CLI (`cpp.js`/`cppjs`), build orchestration, runtime adapters, JSI helpers
+- `cppjs-core/` — CLI (`cpp.js`/`cppjs`), build orchestration, runtime adapters, JSI helpers, the Rust binding layer (`cppjs-core-embind-rust`)
 - `cppjs-plugins/` — bundler integrations (Vite, Webpack/Rspack, Rollup, React Native / Metro)
-- `cppjs-packages/` — prebuilt C++ libraries (`zlib`, `gdal`, `proj`, `tiff`, `lerc`, `zstd`, `jpegturbo`, `geos`, `geotiff`, `iconv`, `expat`, `openssl`, `curl`, `webp`, `sqlite3`, `spatialite`)
+- `cppjs-packages/` — prebuilt C++ libraries (`zlib`, `gdal`, `proj`, `tiff`, `lerc`, `zstd`, `jpegturbo`, `geos`, `geotiff`, `iconv`, `expat`, `openssl`, `curl`, `webp`, `sqlite3`, `spatialite`), each a family with per-platform variants (`-wasm`, `-android`, `-ios`, `-wasi`) and, where the upstream ships CLIs, a `-bin-wasi` tool package — governed by the Bin & License Contract (`cppjs-packages/README.md`)
 - `cppjs-samples/` — reference integrations (Vite, Vue, React, Svelte, Rspack, RN-cli, RN-expo, Cloudflare Worker, vanilla, Node)
 - `website/` — Docusaurus docs at https://cpp.js.org
 
@@ -6565,6 +6697,8 @@ Two surfaces. Keep them straight:
 | Filesystem (OPFS, memfs, …) | Cross-cutting | [`docs/api/filesystem.md`](./docs/api/filesystem.md) |
 | Threading + `useWorker` | Cross-cutting | [`docs/api/threading.md`](./docs/api/threading.md) |
 | C++ binding rules | Cross-cutting | [`docs/api/cpp-binding-rules.md`](./docs/api/cpp-binding-rules.md) |
+| Rust bindings (`cargo:` imports, `.rs` sources, cargo packages) | Cross-cutting | [`docs/api/rust.md`](./docs/api/rust.md) |
+| WASI command builds + `-bin-wasi` tools | Build-time | [`docs/api/wasi.md`](./docs/api/wasi.md) |
 | SWIG escape hatch | Advanced | [`docs/api/swig-escape.md`](./docs/api/swig-escape.md) |
 | `state` / `target` for build hooks | Build-time | [`docs/api/build-state.md`](./docs/api/build-state.md) |
 | Override mechanisms catalog | Build-time | [`docs/api/overrides.md`](./docs/api/overrides.md) |
@@ -6579,6 +6713,8 @@ Load-bearing constraints (the things agents miss most):
 - **Edge runtimes (Cloudflare Workers, Deno Deploy, Vercel Edge) don't expose Web Workers.** No `useWorker`, no OPFS, no `mt` — only `runtime: 'st'` + memory fs.
 - **`useWorker` is independent of `runtime: 'mt'`.** Two orthogonal axes — see the matrix in `threading.md`.
 - **`cppjs.config.js` is build-time only.** Putting `useWorker: true` in it does nothing; that's a runtime option for `initCppJs(opts)`.
+- **`cargo:` imports must be declared.** `import { X } from 'cargo:<crate>'` requires the crate in the top-level `cargoDependencies` map — undeclared imports are a hard error. The consumer (not the engine) declares `@cpp.js/core-embind-rust`.
+- **`platform: 'wasi'` skips Rust** (no wasm32-wasip3 Rust target yet) and produces a single `.wasm` command — no JS glue, no `initCppJs`.
 
 ## Commands
 
@@ -6611,6 +6747,7 @@ Pick the matching gate based on what you touched:
 | You changed | Must pass |
 |-------------|-----------|
 | A single `cppjs-package-*` | `pnpm --filter=@cpp.js/package-<name>* run build` succeeds; sample using it still e2e-passes |
+| A `-wasi` / `-bin-wasi` package | the package's own `pnpm e2e` (aggregate: `pnpm run e2e:wasi`) + `node scripts/check-publish-hygiene.js` (K1/K4 gates) |
 | `cppjs-core/cpp.js/` (CLI / build orchestration) | `pnpm run ci:linux:build && pnpm run e2e:dev && pnpm run e2e:prod` |
 | Any `cppjs-plugins/*` | `pnpm run ci:linux:build && pnpm run e2e:dev && pnpm run e2e:prod` |
 | A sample only | `pnpm --filter=@cpp.js/sample-<name> run build` + sample's own e2e |
