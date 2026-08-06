@@ -9,7 +9,7 @@ const systemKeys = {
         default: 'DOCKER_RUN',
     },
     WASI_SDK_PATH: {
-        description: 'Path to an extracted wasi-sdk (>= 25) used by platform:\'wasi\' builds. The CPPJS_WASI_SDK_PATH environment variable overrides it.',
+        description: 'Path to an extracted wasi-sdk (>= 34, wasm32-wasip3 sysroot) used by platform:\'wasi\' builds. The CPPJS_WASI_SDK_PATH environment variable overrides it.',
         default: '',
     },
 };

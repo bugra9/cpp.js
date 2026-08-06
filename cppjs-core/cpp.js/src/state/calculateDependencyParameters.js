@@ -22,7 +22,9 @@ export default function calculateDependencyParameters(config) {
         });
     });
 
-    const cmakeFilter = (d) => d !== config && d.export.type === 'cmake' && d.paths.cmake !== config.paths.cliCMakeListsTxt;
+    // Cargo packages expose the same generated dist/prebuilt CMakeLists as cmake packages, so
+    // they join the cmake depends graph (this is how their .a reaches the android link).
+    const cmakeFilter = (d) => d !== config && (d.export.type === 'cmake' || d.export.type === 'cargo') && d.paths.cmake !== config.paths.cliCMakeListsTxt;
     let cmakeDepends = [];
     setPath(cmakeDepends, config, 'this', cmakeFilter);
     cmakeDepends = [...new Set(cmakeDepends)];

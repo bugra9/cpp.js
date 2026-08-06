@@ -17,6 +17,11 @@ describe('wasi flag composition', () => {
         expect(wasiCxxFlags()).toContain('-fwasm-exceptions');
     });
 
+    test('both flag sets lead with the wasip3 target triple', () => {
+        expect(wasiCFlags()[0]).toBe('--target=wasm32-wasip3');
+        expect(wasiCxxFlags()[0]).toBe('--target=wasm32-wasip3');
+    });
+
     test('link libs end with the emulation archives and start with unwind', () => {
         expect(WASI_LINK_LIBS[0]).toBe('-lunwind');
         expect(WASI_LINK_LIBS).toContain('-lsetjmp');

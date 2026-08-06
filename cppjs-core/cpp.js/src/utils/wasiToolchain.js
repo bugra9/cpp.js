@@ -1,11 +1,8 @@
-// Toolchain surface for platform:'wasi' (wasm32-wasip1 via wasi-sdk).
-// Verified against wasi-sdk 33 + wasmtime 46 (run with `-W exceptions=y`):
-// - wasi-libc gates setjmp.h behind the __wasm_exception_handling__ macro,
-//   which only -mexception-handling defines (an -mllvm flag is invisible to
-//   the preprocessor); the sjlj lowering itself needs -wasm-enable-sjlj.
-// - Engines only run the standard (Wasm 3.0) exception format, while LLVM
-//   still defaults to the legacy one - hence -wasm-use-legacy-eh=false.
-// - The emulation defines unlock signal.h / mman.h / getpid users.
+// Toolchain surface for platform:'wasi' (wasm32-wasip3, wasi-sdk >= 34; run under `wasmtime`).
+
+export const WASI_TARGET_TRIPLE = 'wasm32-wasip3';
+// The sdk's clang still defaults to wasip1, so every compile/link carries --target explicitly.
+export const WASI_TARGET_FLAGS = [`--target=${WASI_TARGET_TRIPLE}`];
 
 export const WASI_COMPILE_DEFINES = [
     '-D_WASI_EMULATED_SIGNAL',
@@ -14,15 +11,14 @@ export const WASI_COMPILE_DEFINES = [
     '-D_WASI_EMULATED_GETPID',
 ];
 
+// -mexception-handling unlocks wasi-libc's setjmp.h (-mllvm flags are invisible to the preprocessor); engines only run standard Wasm 3.0 EH, hence legacy-eh=false.
 export const WASI_EH_CFLAGS = [
     '-mexception-handling',
     '-mllvm', '-wasm-enable-sjlj',
     '-mllvm', '-wasm-use-legacy-eh=false',
 ];
 
-// The emulation archives back the _WASI_EMULATED_* defines (getrusage,
-// mmap, signals, getpid). They live in the default sysroot lib dir, so
-// they are safe in configure-probe LIBS too.
+// Back the _WASI_EMULATED_* defines; safe in configure-probe LIBS.
 export const WASI_EMULATION_LIBS = [
     '-lwasi-emulated-signal',
     '-lwasi-emulated-process-clocks',
@@ -30,10 +26,7 @@ export const WASI_EMULATION_LIBS = [
     '-lwasi-emulated-getpid',
 ];
 
-// Full set for the final command link. Order matters (wasm-ld resolves left
-// to right, so these trail every archive), and -lunwind/-lsetjmp resolve
-// only when -fwasm-exceptions selects the eh/ sysroot variant - which is
-// why they must NOT leak into C-mode configure probes.
+// Must trail every archive; -lunwind/-lsetjmp resolve only under -fwasm-exceptions' eh/ sysroot, so keep them out of C-mode probes.
 export const WASI_LINK_LIBS = [
     '-lunwind',
     '-lsetjmp',
@@ -41,15 +34,14 @@ export const WASI_LINK_LIBS = [
 ];
 
 export function wasiCFlags() {
-    return [...WASI_COMPILE_DEFINES, ...WASI_EH_CFLAGS];
+    return [...WASI_TARGET_FLAGS, ...WASI_COMPILE_DEFINES, ...WASI_EH_CFLAGS];
 }
 
 export function wasiCxxFlags() {
-    return [...WASI_COMPILE_DEFINES, '-fwasm-exceptions', ...WASI_EH_CFLAGS];
+    return [...WASI_TARGET_FLAGS, ...WASI_COMPILE_DEFINES, '-fwasm-exceptions', ...WASI_EH_CFLAGS];
 }
 
-// system config first (persistent, ~/.cppjs.json), env as an override for
-// one-off runs and CI. Returns null when neither is set.
+// Env override first, then persistent ~/.cppjs.json; null when unset.
 export function resolveWasiSdkPath(system, env = process.env) {
     return env.CPPJS_WASI_SDK_PATH || system?.WASI_SDK_PATH || null;
 }

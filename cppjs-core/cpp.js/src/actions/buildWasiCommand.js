@@ -8,17 +8,17 @@ import { getContentHash, getFilesFingerprint } from '../utils/hash.js';
 import { buildLinkLibArgs } from '../utils/linkLayout.js';
 import { wasiCxxFlags, WASI_LINK_LIBS } from '../utils/wasiToolchain.js';
 
-// Links a platform:'wasi' target into a single WASI command module. There is
-// no Bridge and no JS glue: the user's source archive is linked whole (its
-// main() is the entry point), wasm-ld's dead code elimination trims the
-// dependency archives down to what that code reaches, and data files are
-// materialized as a real directory for --dir preopens instead of a preload.
+// Links a platform:'wasi' target into one command module: main() is the entry, deps are DCE'd, data lands as a real dir for --dir preopens.
 export default async function buildWasiCommand(target, options = {}) {
     const isProd = target.buildType === 'release';
     const buildType = isProd ? 'Release' : 'Debug';
 
     if (state.config.export.bundle === false) {
         logger.info(`[${target.path}] wasi command skipped (export.bundle = false)`);
+        return false;
+    }
+    if (state.config.export?.type === 'cargo') {
+        logger.info(`[${target.path}] wasi command skipped (cargo packages have no cargo wasi triple)`);
         return false;
     }
 
@@ -41,9 +41,7 @@ export default async function buildWasiCommand(target, options = {}) {
             (dep.export.libName || []).forEach((name) => wholeArchiveNames.add(name));
         }
     });
-    // The source archive (last entry) is force-included: crt1 references
-    // main only weakly, so plain archive linking would drop it - and the
-    // app's own code is the root set anyway. Dependencies stay DCE'd.
+    // crt1 references main only weakly: the source archive must be force-included.
     const linkLibs = buildLinkLibArgs(libs, { wholeArchiveAll, wholeArchiveNames });
 
     const stubs = `${state.config.paths.cli}/assets/wasi-runtime/stubs.c`;
@@ -70,9 +68,13 @@ export default async function buildWasiCommand(target, options = {}) {
 
     logger.startStep(target, 'wasi command');
     const t0 = performance.now();
+    // stubs.c lives outside the docker mount (paths.cli); stage it next to the artifact.
+    const stagedStubs = `${state.config.paths.build}/cppjs-wasi-stubs.c`;
+    fs.mkdirSync(state.config.paths.build, { recursive: true });
+    fs.copyFileSync(stubs, stagedStubs);
     run(null, [
         'wasi-clang++',
-        stubs,
+        stagedStubs,
         ...wasiCxxFlags(),
         ...(isProd ? ['-O3'] : ['-O0']),
         ...wasiFlags,
@@ -83,8 +85,7 @@ export default async function buildWasiCommand(target, options = {}) {
     const ms = Math.round(performance.now() - t0);
     logger.doneStep(target, 'wasi command', ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`);
 
-    // Dependency data (proj.db, gdal share dirs, ...) lands as a real folder
-    // next to the artifact; the runtime consumes it via --dir preopens.
+    // Dep data lands as a real folder next to the artifact for --dir preopens.
     Object.entries(getData('data', target)).forEach(([key, value]) => {
         if (fs.existsSync(key)) {
             const dataPath = `${state.config.paths.build}/data/${value}`;

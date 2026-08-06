@@ -1,4 +1,5 @@
 import state from '../state/index.js';
+import { filterTargetSpecs } from '../utils/targets.js';
 
 const platforms = [...new Set(state.targets.map(target => target.platform).filter(t => t))];
 const archs = [...new Set(state.targets.map(target => target.arch).filter(t => t))];
@@ -49,11 +50,5 @@ export function getFilteredBuildTargets(targetParams, targetFilter) {
 }
 
 export function getFilteredTargetSpec(targetSpecs, target) {
-    return targetSpecs?.filter(t => (
-        (!t.platform || t.platform === target.platform)
-        && (!t.arch || t.arch === target.arch)
-        && (!t.runtime || t.runtime === target.runtime)
-        && (!t.buildType || t.buildType === target.buildType)
-        && (!t.runtimeEnv || t.runtimeEnv === target.runtimeEnv)
-    ))?.map(t => t?.specs)?.filter(t => t) || [];
+    return filterTargetSpecs(targetSpecs, target);
 }

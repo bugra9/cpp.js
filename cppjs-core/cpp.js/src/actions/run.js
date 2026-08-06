@@ -4,10 +4,9 @@ import pullDockerImage, { getDockerImage, getDockerContainerName } from '../util
 import getOsUserAndGroupId from '../utils/getOsUserAndGroupId.js';
 import replaceBasePathForDockerUtil from '../utils/replaceBasePathForDocker.js';
 import state from '../state/index.js';
-import { wasiCFlags, wasiCxxFlags, resolveWasiSdkPath } from '../utils/wasiToolchain.js';
+import { wasiCFlags, wasiCxxFlags, resolveWasiSdkPath, WASI_TARGET_TRIPLE } from '../utils/wasiToolchain.js';
 
-// Native builds (make -jN, emcc) can emit far more than Node's 1 MiB default
-// pipe buffer; without a raised cap a large but successful build dies with ENOBUFS.
+// Native builds can outrun Node's 1 MiB default pipe buffer; without a raised cap a successful build dies with ENOBUFS.
 const EXEC_MAX_BUFFER = 512 * 1024 * 1024;
 const CROSSCOMPILER_ARM64 = 'aarch64-linux-android33';
 const CROSSCOMPILER_x86_64 = 'x86_64-linux-android33';
@@ -89,7 +88,9 @@ export default function run(program, params = [], platformPrefix = null, target 
         fs.mkdirSync(buildPath, { recursive: true });
     }
 
-    if ((target?.platform !== 'ios' && target?.platform !== 'wasi') || program !== null) {
+    // wasi is host-run only with a locally configured wasi-sdk; otherwise docker carries it.
+    const wasiHostSdk = target?.platform === 'wasi' ? resolveWasiSdkPath(state.config.system) : null;
+    if ((target?.platform !== 'ios' && !(target?.platform === 'wasi' && wasiHostSdk)) || program !== null) {
         pullDockerImage();
     }
 
@@ -106,11 +107,9 @@ export default function run(program, params = [], platformPrefix = null, target 
                 else if (params[0] === 'cc') dProgram = 'emcc';
                 break;
             case 'wasi': {
-                // Host-run toolchain like ios: wasi-sdk needs no emsdk env, so
-                // builds execute natively wherever WASI_SDK_PATH points.
-                const wasiSdk = resolveWasiSdkPath(state.config.system);
-                if (!wasiSdk) {
-                    throw new Error('cppjs: platform:\'wasi\' builds need a wasi-sdk. Set WASI_SDK_PATH in ~/.cppjs.json (or the CPPJS_WASI_SDK_PATH env var) to an extracted wasi-sdk >= 25.');
+                const wasiSdk = wasiHostSdk || '/opt/wasi-sdk';
+                if (wasiHostSdk && !fs.existsSync(`${wasiHostSdk}/share/wasi-sysroot/lib/${WASI_TARGET_TRIPLE}`)) {
+                    throw new Error(`cppjs: the wasi-sdk at ${wasiHostSdk} has no ${WASI_TARGET_TRIPLE} sysroot. platform:'wasi' targets WASI 0.3 (p3) - upgrade to wasi-sdk >= 34.`);
                 }
                 [dProgram, ...dParams] = params;
                 platformParams = [
@@ -125,7 +124,7 @@ export default function run(program, params = [], platformPrefix = null, target 
                 if (dProgram === 'cmake' && dParams[0] !== '--build' && dParams[0] !== '--install') {
                     dParams = [
                         ...dParams,
-                        `-DCMAKE_TOOLCHAIN_FILE=${wasiSdk}/share/cmake/wasi-sdk-p1.cmake`,
+                        `-DCMAKE_TOOLCHAIN_FILE=${wasiSdk}/share/cmake/wasi-sdk-p3.cmake`,
                     ];
                 } else if (dProgram === 'wasi-clang++') {
                     dProgram = `${wasiSdk}/bin/clang++`;
@@ -206,7 +205,7 @@ export default function run(program, params = [], platformPrefix = null, target 
 
     const env = {};
     let runner = 'DOCKER';
-    if (((target?.platform === 'ios' || target?.platform === 'wasi') && program === null) || state.config.system.RUNNER === 'LOCAL') {
+    if (((target?.platform === 'ios' || (target?.platform === 'wasi' && wasiHostSdk)) && program === null) || state.config.system.RUNNER === 'LOCAL') {
         runner = 'LOCAL';
     }
 
@@ -263,6 +262,12 @@ export default function run(program, params = [], platformPrefix = null, target 
         if (state.config.system.RUNNER === 'DOCKER_RUN') {
             imageOrContainer = getDockerImage();
             runnerParams = ['run', '--rm', '-v', `${state.config.paths.base}:/tmp/cppjs/live`];
+            if (target?.platform === 'android') {
+                // Google ships the linux NDK for x86_64 only; use the amd64 leaf ref (classic store holds one platform per digest).
+                pullDockerImage('linux/amd64');
+                imageOrContainer = getDockerImage('linux/amd64');
+                runnerParams.push('--platform', 'linux/amd64');
+            }
         } else if (state.config.system.RUNNER === 'DOCKER_EXEC') {
             imageOrContainer = getDockerContainerName(state.config.paths.base);
             runnerParams = ['exec'];

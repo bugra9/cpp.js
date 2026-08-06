@@ -33,7 +33,23 @@ if(NOT PACKAGE_HOST_INDEX EQUAL -1)
     endforeach()
 
     add_library("${PROJECT_NAME}" INTERFACE)
-    target_link_libraries("${PROJECT_NAME}" INTERFACE "${PROJECT_LIBS_DIR}")
+    # Cargo producers register through an init-array constructor nothing references. KEEP pins the
+    # generated keep symbol (--undefined) so only the registration object is pulled - never the
+    # whole archive, because each Rust staticlib bundles libstd and fully loading two of them
+    # duplicates thousands of std symbols. FORCE (manual-bindings crates, no keep symbol) falls
+    # back to whole-archive - safe only as the app's single loaded Rust archive. (Apple consumers
+    # get the equivalent flags from the generated podspec instead.)
+    set(PROJECT_RUST_LINK "___PROJECT_WHOLE_ARCHIVE___")
+    if(PROJECT_RUST_LINK STREQUAL "KEEP" AND NOT APPLE)
+        target_link_libraries("${PROJECT_NAME}" INTERFACE "${PROJECT_LIBS_DIR}")
+        foreach(L IN LISTS PROJECT_LIBS)
+            target_link_options("${PROJECT_NAME}" INTERFACE "-Wl,--undefined=cppjs_keep_${L}")
+        endforeach()
+    elseif(PROJECT_RUST_LINK STREQUAL "FORCE" AND NOT APPLE)
+        target_link_libraries("${PROJECT_NAME}" INTERFACE "$<LINK_LIBRARY:WHOLE_ARCHIVE,${PROJECT_LIBS_DIR}>")
+    else()
+        target_link_libraries("${PROJECT_NAME}" INTERFACE "${PROJECT_LIBS_DIR}")
+    endif()
 
     if(NOT APPLE)
         target_include_directories("${PROJECT_NAME}" INTERFACE "${PROJECT_SOURCE_DIR}/${PROJECT_TARGET_HOST}/include")
