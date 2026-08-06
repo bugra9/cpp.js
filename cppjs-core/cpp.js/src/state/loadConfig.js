@@ -100,6 +100,13 @@ export function getFilledConfig(config, options = { isDepend: false }) {
     const newConfig = {
         general: config.general || {},
         dependencies,
+        cargoDependencies: config.cargoDependencies || {},
+        // 'sync' types the direct surface; 'promise' wraps every generated method return
+        // for useWorker-style runtimes (constructors stay sync-typed: await new X()).
+        dts: config.dts || 'sync',
+        // Opt-in package type publishing: emit <output>/types/index.d.ts over the public
+        // headers and wire package.json types/typesVersions (see actions/buildTypes.js).
+        types: config.types || false,
         // Cloned: raw cppjs.config modules are import singletons; later path mutations
         // (e.g. rebuild-marker consumption) must not leak into them across loadConfig calls.
         paths: { ...(config.paths || {}) },
@@ -112,6 +119,13 @@ export function getFilledConfig(config, options = { isDepend: false }) {
         package: null,
         functions: config.functions || {},
     };
+
+    if (!['sync', 'promise'].includes(newConfig.dts)) {
+        throw new Error(`cppjs: "dts" must be 'sync' or 'promise' (got '${newConfig.dts}').`);
+    }
+    if (typeof newConfig.types !== 'boolean') {
+        throw new Error(`cppjs: "types" must be true or false (got '${newConfig.types}').`);
+    }
 
     if (newConfig.paths.config && !newConfig.paths.project) {
         newConfig.paths.project = getParentPath(newConfig.paths.config);

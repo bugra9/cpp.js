@@ -1,0 +1,11 @@
+// @cpp.js/typescript-config - wires the editor types cpp.js generates under .cppjs/.
+// Extend from your tsconfig (TS 5.5+; array form when you already extend another config):
+//   { "extends": "@cpp.js/typescript-config" }
+// ${configDir} resolves against YOUR config's directory, not this package.
+// Note: a project-defined "include" overrides the one below - keep the glob in yours then.
+{
+    "compilerOptions": {
+        "rootDirs": ["${configDir}", "${configDir}/.cppjs/types"]
+    },
+    "include": ["${configDir}/.cppjs/rust-crates/types/**/*.d.ts"]
+}

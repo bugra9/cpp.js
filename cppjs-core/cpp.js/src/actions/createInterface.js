@@ -4,6 +4,7 @@ import upath from 'upath';
 import state, { saveCache } from '../state/index.js';
 import { getFileHash } from '../utils/hash.js';
 import guardAsyncBindings from '../utils/bridgeAsyncGuard.js';
+import { writeHeaderDts } from '../utils/cppDts.js';
 import run from './run.js';
 
 export default function createBridgeFile(headerOrModuleFilePath, target = state.targets.find((t) => t.platform === 'wasm')) {
@@ -15,7 +16,17 @@ export default function createBridgeFile(headerOrModuleFilePath, target = state.
         fs.mkdirSync(`${state.config.paths.build}/bridge`, { recursive: true });
     }
     const interfaceFile = createInterfaceFile(interfaceFilePath, target);
-    return createBridgeFileFromInterfaceFile(interfaceFile, target);
+    const bridgeFile = createBridgeFileFromInterfaceFile(interfaceFile, target);
+    if (bridgeFile) {
+        writeHeaderDts({
+            headerFile: interfaceFilePath,
+            exportsFile: `${bridgeFile}.exports.json`,
+            projectPath: state.config.paths.project,
+            cacheDir: state.config.paths.cache,
+            dtsMode: state.config.dts,
+        });
+    }
+    return bridgeFile;
 }
 
 function createInterfaceFile(headerOrModuleFilePath, target) {

@@ -1,5 +1,8 @@
 {
-  "extends": "@react-native/typescript-config",
+  "extends": [
+    "@react-native/typescript-config",
+    "@cpp.js/typescript-config"
+  ],
   "compilerOptions": {
     "types": [
       "jest"
@@ -7,7 +10,8 @@
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    ".cppjs/rust-crates/types/**/*.d.ts"
   ],
   "exclude": [
     "**/node_modules",

@@ -1,0 +1,11 @@
+{
+  "extends": "@cpp.js/typescript-config",
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "module": "esnext"
+  },
+  "include": [
+    "src",
+    ".cppjs/rust-crates/types"
+  ]
+}
