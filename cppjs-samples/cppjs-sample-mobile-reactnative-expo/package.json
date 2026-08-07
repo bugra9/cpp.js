@@ -59,7 +59,8 @@
     "replace": {
       "minimatch": "3.1.4"
     },
-    "brace-expansion@5.0.5": "5.0.6"
+    "brace-expansion@5.0.5": "5.0.6",
+    "shell-quote": "1.8.4"
   },
   "keywords": [
     "cpp.js-sample",
