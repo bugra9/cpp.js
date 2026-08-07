@@ -75,7 +75,9 @@ describe('buildAppRustCrates', () => {
         expect(manifest).toContain('geo-surface-cppjs-app = { path = ');
         expect(lib).toContain('use counter_cppjs_app as _;');
         expect(lib).toContain('use geo_surface_cppjs_app as _;');
-        expect(libs).toEqual([path.join(superDir, 'target', TRIPLE, 'release/libcppjs_app_super.a')]);
+        // The engine composes paths with forward slashes on every platform; assert that shape,
+        // not path.join's (backslash-separated on windows).
+        expect(libs).toEqual([`${cacheDir}/rust-bridges/_app_super/target/${TRIPLE}/release/libcppjs_app_super.a`]);
 
         const [command, args] = spawnSync.mock.calls[0];
         expect(command).toBe('cargo');
