@@ -85,10 +85,42 @@ function runSteps(entry, scripts, pm) {
     return [];
 }
 
+// Every prompt can be preselected positionally, so CI and docs can scaffold without a TTY.
+function usage() {
+    const rows = MANIFEST.map((m) => `  ${[m.group, m.framework ?? m.label, m.framework ? m.label : ''].filter(Boolean).join(' ')}`);
+    return [
+        `create-cpp.js v${version}`,
+        '',
+        'Usage:',
+        '  npm create cpp.js@beta                                                  interactive',
+        '  npm create cpp.js@beta -- <dir> <group> <framework|variant> [<variant>]  preselected',
+        '',
+        'Examples:',
+        '  npm create cpp.js@beta -- my-app Web Vanilla',
+        '  npm create cpp.js@beta -- my-app Web React Vite',
+        '  npm create cpp.js@beta -- my-lib Library Prebuilt',
+        '',
+        'Templates:',
+        ...rows,
+        '',
+    ].join('\n');
+}
+
 async function main() {
+    const args = process.argv.slice(2);
+    if (args.includes('--help') || args.includes('-h')) {
+        process.stdout.write(usage());
+        process.exit(0);
+    }
+    const flag = args.find((a) => a.startsWith('-'));
+    if (flag) {
+        process.stderr.write(`create-cpp.js: unknown option '${flag}' - arguments are positional.\n\n${usage()}`);
+        process.exit(1);
+    }
+
     p.intro(styleText(['cyan', 'bold'], `create-cpp.js v${version}`));
 
-    const [, , argName, argGroup, argFirst, argSecond] = process.argv;
+    const [argName, argGroup, argFirst, argSecond] = args;
 
     const name = argName || exitOnCancel(await p.text({
         message: 'Project name',

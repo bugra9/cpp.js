@@ -16,9 +16,10 @@
     "lint": "expo lint",
     "run:ios": "expo run:ios --no-bundler --configuration Release",
     "run:android": "expo run:android --no-bundler --variant release",
-    "maestro": "maestro test ./maestro.yaml",
-    "e2e:ios": "npm run run:ios && npm run maestro",
-    "e2e:android": "npm run run:android && npm run maestro"
+    "maestro:ios": "maestro --device \"$(xcrun simctl list devices booted | sed -n 's/.*(\\([0-9A-F-]\\{36\\}\\)) (Booted).*/\\1/p' | head -1)\" test ./maestro.yaml",
+    "maestro:android": "maestro --device \"$(adb devices | sed -n '2p' | cut -f1)\" test ./maestro.yaml",
+    "e2e:ios": "npm run run:ios && npm run maestro:ios",
+    "e2e:android": "npm run run:android && npm run maestro:android"
   },
   "dependencies": {
     "@cpp.js/core-embind-jsi": "2.0.0-beta.24",

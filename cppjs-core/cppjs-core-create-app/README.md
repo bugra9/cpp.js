@@ -16,7 +16,7 @@
 >**Note**: Make sure you have completed the [Cpp.js - Prerequisites](https://cpp.js.org/docs/guide/getting-started/prerequisites) instructions.
 
 ```bash
-npm init cpp.js@latest
+npm create cpp.js@beta
 ```
 
 This command will install and execute create-cpp.js, the official Cpp.js project scaffolding tool. You will be presented with prompts for several optional features such as React.
@@ -43,6 +43,16 @@ npm run dev
 ```
 
 You should now have your first Cpp.js project running!
+
+## Without the prompts
+
+Every prompt can be preselected positionally, which is what CI and scripted setups use.
+`npm create cpp.js@beta -- --help` prints the list of templates.
+
+```bash
+npm create cpp.js@beta -- my-app Web React Vite
+npm create cpp.js@beta -- my-lib Library Prebuilt
+```
 
 When you are ready to ship your app to production, run the following:
 

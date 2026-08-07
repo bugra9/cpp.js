@@ -34,6 +34,16 @@ npm run dev
 
 You should now have your first Cpp.js project running!
 
+## Scaffolding without the prompts
+
+Every prompt can be preselected positionally — the directory, then the choices you would
+have picked — which is how CI and scripted setups create a project. Run
+`npm create cpp.js@beta -- --help` to list the templates.
+
+```shell npm2yarn
+npm create cpp.js@beta -- my-app Web React Vite
+```
+
 When you are ready to ship your app to production, run the following:
 
 ```shell npm2yarn
