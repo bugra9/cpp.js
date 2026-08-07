@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import { cargoTripleFor } from './cargoTarget.js';
+import writeIfChanged from './writeIfChanged.js';
 
 const SUPER = '_app_super';
 
@@ -58,10 +59,4 @@ export default function buildAppRustCrates(target, cacheDir) {
     const libFile = `${superDir}/target/${triple}/release/libcppjs_app_super.a`;
     if (!fs.existsSync(libFile)) throw new Error(`cppjs: expected cargo output ${libFile} not found`);
     return [libFile];
-}
-
-function writeIfChanged(file, content) {
-    if (fs.existsSync(file) && fs.readFileSync(file, 'utf8') === content) return;
-    fs.mkdirSync(file.substring(0, file.lastIndexOf('/')), { recursive: true });
-    fs.writeFileSync(file, content);
 }

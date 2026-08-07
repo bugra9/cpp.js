@@ -54,9 +54,9 @@
         "hermes-compiler": "*"
     },
     "devDependencies": {
-        "@babel/core": "^8.0.1",
-        "@babel/preset-env": "^8.0.2",
-        "@babel/runtime": "^8.0.0",
+        "@babel/core": "^7.29.7",
+        "@babel/preset-env": "^7.29.7",
+        "@babel/runtime": "^7.29.7",
         "@cpp.js/typescript-config": "workspace:^",
         "@react-native-community/cli": "20.1.3",
         "@react-native-community/cli-platform-android": "20.1.3",

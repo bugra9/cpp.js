@@ -56,17 +56,24 @@ const DEP_FIELDS = ['dependencies', 'devDependencies', 'peerDependencies', 'opti
 
 // Dependencies intentionally pinned for specific packages — never reported as
 // outdated nor auto-bumped to npm "latest". The React Native CLI sample +
-// playground + Expo sample must track the React Native 0.85 / Expo SDK 56
-// toolchain (react 19.2.3, react-native 0.85.3, eslint 8, jest 29, typescript
-// 5.8, the @react-native/* + react-native-* + expo-* families); those versions
-// are dictated by react-native / the Expo SDK, not by npm latest. Bumping them
-// breaks the native build or the React renderer (react and react-native-renderer
-// must be the exact same version).
+// playground + Expo sample and the two plugins they load must track the React Native
+// 0.85 / Expo SDK 56 toolchain (react 19.2.3, react-native 0.85.3, eslint 8, jest 29,
+// typescript 5.8, the @babel/* + @react-native/* + react-native-* + expo-* families);
+// those versions are dictated by react-native / the Expo SDK, not by npm latest.
+// Bumping them breaks the native build or the React renderer (react and
+// react-native-renderer must be the exact same version); @react-native/babel-preset
+// asserts Babel ^7, so @babel/core 8 fails every Metro transform.
 const PINNED = [
     {
-        packages: ['@cpp.js/sample-mobile-reactnative-cli', '@cpp.js/playground-mobile-reactnative-cli', '@cpp.js/sample-mobile-reactnative-expo'],
+        packages: [
+            '@cpp.js/sample-mobile-reactnative-cli',
+            '@cpp.js/playground-mobile-reactnative-cli',
+            '@cpp.js/sample-mobile-reactnative-expo',
+            '@cpp.js/plugin-metro',
+            '@cpp.js/plugin-react-native',
+        ],
         deps: ['react', 'react-dom', 'react-test-renderer', 'react-native', 'eslint', 'jest', '@types/jest', 'typescript'],
-        scopes: ['@react-native/', '@react-native-community/', 'react-native-', 'expo'],
+        scopes: ['@babel/', '@react-native/', '@react-native-community/', 'react-native-', 'expo'],
         reason: 'React Native 0.85 / Expo SDK 56 toolchain',
     },
 ];

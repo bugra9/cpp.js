@@ -19,10 +19,10 @@ export default defineConfig({
             all: true,
             // Floors just under current coverage: green today, red on regression.
             thresholds: {
-                statements: 75,
-                branches: 74,
-                functions: 76,
-                lines: 72,
+                statements: 84,
+                branches: 76,
+                functions: 86,
+                lines: 85,
             },
         },
     },
