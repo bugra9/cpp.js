@@ -2,6 +2,8 @@
 // K1 gate: library packages must not publish executables - fail if any npm tarball
 // would carry dist/prebuilt/**/bin/ files beyond *-config scripts. -bin packages are
 // exempt for entries their bin map declares publish:true (package.json "cppjs.bin").
+// K2 gate: a package shipping bin commands must depend on cpp.js - the shims import
+// the runner from it, and a devDependency passes in the workspace but not from npm.
 // K4 gate: packages that publish bin tools must carry a derived cppjs.provenance
 // block (recipe, source hash, build environment) and ship the SBOM it points to.
 // K4 needs a built dist; where there is none (fresh checkout, CI) it is reported as
@@ -58,6 +60,13 @@ for (const pkgDir of packageDirs) {
         console.error(`check-publish-hygiene: npm pack failed in ${pkgDir}: ${e.message}`);
         failures += 1;
         continue;
+    }
+
+    // K2: a bin shim imports the runner from cpp.js at runtime, so the engine must be a real
+    // dependency - a devDependency builds fine in the workspace and breaks every npm install.
+    if (manifest.bin && !manifest.dependencies?.['cpp.js']) {
+        failures += 1;
+        console.error(`K2 violation in ${manifest.name}: ships bin commands but does not depend on cpp.js (the shims import its runner)`);
     }
 
     const leaks = files.filter((f) => {

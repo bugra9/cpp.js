@@ -336,7 +336,6 @@ importers:
       '@cpp.js/package-zlib-wasi':
         specifier: workspace:^
         version: link:../../cppjs-package-zlib/cppjs-package-zlib-wasi
-    devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../../cppjs-core/cpp.js
