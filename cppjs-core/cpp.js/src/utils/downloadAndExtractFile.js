@@ -2,7 +2,8 @@ import path from 'node:path';
 import fs, { mkdirSync } from 'node:fs';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import fr from 'follow-redirects';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 
 export default async function downloadAndExtractFile(url, output, sha256) {
     if (fs.existsSync(`${output}/source`)) {
@@ -60,49 +61,28 @@ export function verifyIntegrity(filePath, url, sha256) {
     }
 }
 
-function downloadFile(url, folder) {
+// fetch follows redirects itself, which release downloads rely on (github and the osgeo
+// mirrors both bounce), so the download needs no redirect library of its own.
+async function downloadFile(url, folder) {
     mkdirSync(folder, { recursive: true });
-    return new Promise((resolve, reject) => {
-        const filename = path.basename(url);
-        const dest = `${folder}/${filename}`;
-        if (fs.existsSync(dest)) {
-            resolve(dest);
-            return;
-        }
+    const dest = `${folder}/${path.basename(url)}`;
+    if (fs.existsSync(dest)) return dest;
 
-        const parsedUrl = new URL(url);
-        const options = {
-            hostname: parsedUrl.hostname,
-            path: parsedUrl.pathname + parsedUrl.search,
-            headers: {
-                'User-Agent': 'curl/8.7.1',
-            },
-        };
-
-        const request = fr.https.get(options, (res) => {
-            const { statusCode } = res;
-            if (!statusCode || statusCode < 200 || statusCode >= 300) {
-                res.resume();
-                reject(new Error(`cppjs: download failed for ${url} — HTTP ${statusCode ?? 'unknown'}.`));
-                return;
-            }
-
-            const fileStream = fs.createWriteStream(dest);
-            const fail = (err) => {
-                fileStream.destroy();
-                fs.rmSync(dest, { force: true });
-                reject(new Error(`cppjs: download failed for ${url}: ${err.message}`, { cause: err }));
-            };
-            res.on('error', fail);
-            fileStream.on('error', fail);
-            fileStream.on('finish', () => {
-                fileStream.close();
-                resolve(dest);
-            });
-            res.pipe(fileStream);
-        });
-        request.on('error', (err) => {
-            reject(new Error(`cppjs: cannot reach ${url}: ${err.message}`, { cause: err }));
-        });
-    });
+    let response;
+    try {
+        response = await fetch(url, { headers: { 'User-Agent': 'curl/8.7.1' }, redirect: 'follow' });
+    } catch (err) {
+        throw new Error(`cppjs: cannot reach ${url}: ${err.message}`, { cause: err });
+    }
+    if (!response.ok) {
+        throw new Error(`cppjs: download failed for ${url} — HTTP ${response.status}.`);
+    }
+    try {
+        await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(dest));
+    } catch (err) {
+        // A half-written archive would fail its hash check later with a confusing message.
+        fs.rmSync(dest, { force: true });
+        throw new Error(`cppjs: download failed for ${url}: ${err.message}`, { cause: err });
+    }
+    return dest;
 }

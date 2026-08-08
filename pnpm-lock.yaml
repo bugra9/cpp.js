@@ -62,9 +62,6 @@ importers:
       commander:
         specifier: ^15.0.0
         version: 15.0.0
-      follow-redirects:
-        specifier: ^1.16.0
-        version: 1.16.0
       glob:
         specifier: ^13.0.6
         version: 13.0.6
