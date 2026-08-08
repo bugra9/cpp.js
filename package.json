@@ -70,7 +70,7 @@
         "cpp.js": "workspace:^",
         "prettier": "^3.9.6",
         "@eslint/js": "^10.0.1",
-        "eslint": "^10.8.0",
+        "eslint": "^10.8.1",
         "globals": "^17.9.0",
         "@playwright/test": "^1.62.1",
         "@changesets/cli": "^2.31.1",

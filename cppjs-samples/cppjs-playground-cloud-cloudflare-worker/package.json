@@ -36,7 +36,7 @@
         "@cpp.js/package-zlib-wasm": "workspace:^"
     },
     "devDependencies": {
-        "wrangler": "^4.119.0",
+        "wrangler": "^4.120.0",
         "@playwright/test": "^1.62.1"
     },
     "keywords": [

@@ -7,8 +7,10 @@
  * Usage:
  *   node check-external-dependencies.js            # Write external-dependencies.md
  *   node check-external-dependencies.js --check    # Also exit non-zero if any
- *                                                  # dependency is outdated (1)
- *                                                  # or could not be resolved (2)
+ *                                                  # dependency is outdated (1),
+ *                                                  # could not be resolved (2), or
+ *                                                  # pins a workspace package to a
+ *                                                  # version the tree has moved past (3)
  *   node check-external-dependencies.js --update   # Rewrite outdated dependency
  *                                                  # ranges in every package.json
  *                                                  # to the latest version
@@ -49,6 +51,10 @@ const SCAN_ROOTS = [
 ];
 
 const SKIP_DIRS = new Set(['node_modules', '.cppjs', 'dist', '.git', 'test-results', 'playwright-report']);
+
+// create-cpp.js templates are generated copies of the samples (build-templates.js); scanning
+// them would double every finding and flag build output that the next build regenerates.
+const SKIP_PATHS = [path.join('cppjs-core', 'cppjs-core-create-app', 'templates')];
 
 const REGISTRY = 'https://registry.npmjs.org';
 
@@ -175,6 +181,7 @@ function walkPackageJsons(dir) {
         if (SKIP_DIRS.has(entry.name) || entry.name.startsWith('.')) continue;
         const full = path.join(dir, entry.name);
         if (entry.isDirectory()) {
+            if (SKIP_PATHS.some((s) => path.relative(ROOT, full) === s)) continue;
             out.push(...walkPackageJsons(full));
         } else if (entry.name === 'package.json') {
             out.push(full);
@@ -252,11 +259,13 @@ async function main() {
     // First pass: discover workspace package names so we can exclude them
     // even when they're declared without the "workspace:" specifier.
     const workspaceNames = new Set();
+    const workspaceVersions = new Map();
     const parsed = [];
     for (const p of pkgPaths) {
         try {
             const json = JSON.parse(fs.readFileSync(p, 'utf8'));
             if (json.name) workspaceNames.add(json.name);
+            if (json.name && json.version) workspaceVersions.set(json.name, json.version);
             parsed.push({ path: p, json });
         } catch (e) {
             console.error(`Failed to parse ${p}: ${e.message}`);
@@ -269,12 +278,28 @@ async function main() {
     //   }
     const depsByName = new Map();
     const pinnedUsages = [];
+    const internalDrift = [];
     for (const { path: pkgPath, json } of parsed) {
         for (const field of DEP_FIELDS) {
             const block = json[field];
             if (!block || typeof block !== 'object') continue;
             for (const [name, spec] of Object.entries(block)) {
-                if (workspaceNames.has(name)) continue;
+                if (workspaceNames.has(name)) {
+                    // A workspace package pinned to a registry version (the expo sample is excluded
+                    // from the workspace, so it installs published tarballs) must track the release
+                    // train - otherwise it silently ships releases-old packages to its consumers.
+                    const local = workspaceVersions.get(name);
+                    const used = parseRange(spec);
+                    if (local && used.resolvable && used.version !== local) {
+                        internalDrift.push({
+                            pkgName: json.name || path.relative(ROOT, pkgPath),
+                            dep: name,
+                            spec,
+                            expected: local,
+                        });
+                    }
+                    continue;
+                }
                 const pinned = pinnedReason(json.name, name);
                 if (pinned) {
                     pinnedUsages.push({ dep: name, pkgName: json.name, reason: pinned });
@@ -513,7 +538,15 @@ async function main() {
             '\n',
     );
 
+    if (internalDrift.length > 0) {
+        console.error(`\n${internalDrift.length} workspace package(s) pinned to a stale version:`);
+        for (const d of internalDrift) {
+            console.error(`  - ${d.pkgName}: ${d.dep}@${d.spec} (workspace has ${d.expected})`);
+        }
+    }
+
     if (checkMode) {
+        if (internalDrift.length > 0) process.exit(3);
         if (outdated.length > 0) {
             console.error(`\n${outdated.length} dependency name(s) are outdated:`);
             for (const r of outdated) {

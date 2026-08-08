@@ -22,11 +22,11 @@
     "e2e:android": "npm run run:android && npm run maestro:android"
   },
   "dependencies": {
-    "@cpp.js/core-embind-jsi": "2.0.0-beta.24",
-    "@cpp.js/plugin-metro": "2.0.0-beta.24",
-    "@cpp.js/plugin-react-native": "2.0.0-beta.24",
-    "@cpp.js/plugin-react-native-ios-helper": "2.0.0-beta.24",
-    "@cpp.js/sample-lib-prebuilt-matrix": "2.0.0-beta.24",
+    "@cpp.js/core-embind-jsi": "2.0.0-beta.33",
+    "@cpp.js/plugin-metro": "2.0.0-beta.33",
+    "@cpp.js/plugin-react-native": "2.0.0-beta.33",
+    "@cpp.js/plugin-react-native-ios-helper": "2.0.0-beta.33",
+    "@cpp.js/sample-lib-prebuilt-matrix": "2.0.0-beta.33",
     "hermes-compiler": "*",
     "expo": "^56.0.5",
     "expo-constants": "~56.0.16",
