@@ -30,7 +30,6 @@
         "@rollup/plugin-virtual": "^3.0.2",
         "comlink": "^4.4.2",
         "commander": "^15.0.0",
-        "decompress": "^4.2.1",
         "follow-redirects": "^1.16.0",
         "glob": "^13.0.6",
         "log-update": "^8.0.0",

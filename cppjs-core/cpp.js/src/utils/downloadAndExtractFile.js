@@ -1,8 +1,8 @@
 import path from 'node:path';
 import fs, { mkdirSync } from 'node:fs';
 import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import fr from 'follow-redirects';
-import decompress from 'decompress';
 
 export default async function downloadAndExtractFile(url, output, sha256) {
     if (fs.existsSync(`${output}/source`)) {
@@ -10,13 +10,36 @@ export default async function downloadAndExtractFile(url, output, sha256) {
     }
     const filePath = await downloadFile(url, output);
     verifyIntegrity(filePath, url, sha256);
-    const a = await decompress(filePath, output);
-    if (!a.length) {
-        throw new Error(`cppjs: downloaded archive ${filePath} is empty or not a supported archive (from ${url}).`);
-    }
-    const oldFolder = a[0].path.split('/')[0];
-    fs.renameSync(`${output}/${oldFolder}`, `${output}/source`);
+    extractArchive(filePath, url, output);
     return true;
+}
+
+// Extraction runs through the system tar (GNU tar and bsdtar both detect gzip/bzip2/xz, and
+// every platform the engine builds on ships one). Extracting into a scratch directory keeps
+// the archive from choosing where its files land, and gives the upstream root folder - which
+// recipes address as build/source - one place to be renamed from.
+function extractArchive(filePath, url, output) {
+    const work = `${output}/.extract`;
+    fs.rmSync(work, { recursive: true, force: true });
+    mkdirSync(work, { recursive: true });
+    try {
+        const tar = spawnSync('tar', ['-xf', filePath, '-C', work], { encoding: 'utf8' });
+        if (tar.error) {
+            throw new Error(`cppjs: cannot run tar to extract ${filePath}: ${tar.error.message}`);
+        }
+        if (tar.status !== 0) {
+            throw new Error(`cppjs: extracting ${filePath} (from ${url}) failed: ${(tar.stderr || '').trim() || `tar exited ${tar.status}`}`);
+        }
+        const entries = fs.readdirSync(work, { withFileTypes: true });
+        if (entries.length === 0) {
+            throw new Error(`cppjs: downloaded archive ${filePath} is empty or not a supported archive (from ${url}).`);
+        }
+        // Release tarballs carry one root folder; anything else is treated as the root itself.
+        const root = entries.length === 1 && entries[0].isDirectory() ? `${work}/${entries[0].name}` : work;
+        fs.renameSync(root, `${output}/source`);
+    } finally {
+        fs.rmSync(work, { recursive: true, force: true });
+    }
 }
 
 // Verifies the downloaded archive against the sha256 pinned in the build recipe. A missing pin
