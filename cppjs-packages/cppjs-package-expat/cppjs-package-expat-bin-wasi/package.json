@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-expat-bin-wasi",
-    "version": "2.0.0-beta.33",
+    "version": "2.0.0-beta.36",
     "nativeVersion": "2.8.2",
     "description": "The xmlwf well-formedness checker prebuilt as a WASI command component.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-expat#readme",
@@ -34,7 +34,7 @@
         "provenance": {
             "recipe": {
                 "name": "@cpp.js/package-expat",
-                "version": "2.0.0-beta.33",
+                "version": "2.0.0-beta.36",
                 "nativeVersion": "2.8.2"
             },
             "source": {

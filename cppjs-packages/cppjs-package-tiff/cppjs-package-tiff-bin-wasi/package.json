@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-tiff-bin-wasi",
-    "version": "2.0.0-beta.33",
+    "version": "2.0.0-beta.36",
     "nativeVersion": "4.7.2",
     "description": "libtiff command-line tools prebuilt as WASI (wasm32-wasip3) command components.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/cppjs-packages/cppjs-package-tiff#readme",

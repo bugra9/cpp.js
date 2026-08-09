@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-openssl-bin-wasi",
-    "version": "2.0.0-beta.33",
+    "version": "2.0.0-beta.36",
     "nativeVersion": "4.0.1",
     "description": "The openssl CLI prebuilt as a WASI (wasm32-wasip3) command component.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/cppjs-packages/cppjs-package-openssl#readme",

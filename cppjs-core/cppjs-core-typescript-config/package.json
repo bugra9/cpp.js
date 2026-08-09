@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/typescript-config",
-    "version": "2.0.0-beta.33",
+    "version": "2.0.0-beta.36",
     "description": "Shared TypeScript configuration wiring the editor types cpp.js generates under .cppjs/ (C++ .h and Rust .rs imports, cargo: crates) - extend it once and never manage the wiring by hand.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/cppjs-core/cppjs-core-typescript-config#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
