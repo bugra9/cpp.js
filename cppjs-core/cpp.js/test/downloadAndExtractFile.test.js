@@ -7,7 +7,7 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import downloadAndExtractFile from '../src/utils/downloadAndExtractFile.js';
+import downloadAndExtractFile, { assertHttps } from '../src/utils/downloadAndExtractFile.js';
 
 const sha256Of = (content) => crypto.createHash('sha256').update(content).digest('hex');
 
@@ -151,5 +151,27 @@ describe('downloadAndExtractFile', () => {
     test('rejects when the host cannot be reached', async () => {
         await expect(downloadAndExtractFile('http://127.0.0.1:1/pkg-1.0.tar.gz', output))
             .rejects.toThrow(/cannot reach/);
+    });
+
+    test('refuses a remote source served over plain http, before any request goes out', async () => {
+        await expect(downloadAndExtractFile('http://mirror.example.invalid/pkg-1.0.tar.gz', output))
+            .rejects.toThrow(/must come over https/);
+        expect(fs.existsSync(path.join(output, 'pkg-1.0.tar.gz'))).toBe(false);
+    });
+});
+
+describe('assertHttps', () => {
+    test('accepts https', () => {
+        expect(() => assertHttps('https://download.osgeo.org/proj/proj-9.8.1.tar.gz')).not.toThrow();
+    });
+
+    test('accepts loopback, which is how fixtures are served', () => {
+        expect(() => assertHttps('http://127.0.0.1:8080/pkg.tar.gz')).not.toThrow();
+        expect(() => assertHttps('http://localhost:8080/pkg.tar.gz')).not.toThrow();
+    });
+
+    test('refuses a redirect that downgrades the transport', () => {
+        expect(() => assertHttps('http://mirror.example.invalid/pkg.tar.gz', 'https://upstream.example (redirected)'))
+            .toThrow(/https:\/\/upstream.example \(redirected\) over http:\/\//);
     });
 });

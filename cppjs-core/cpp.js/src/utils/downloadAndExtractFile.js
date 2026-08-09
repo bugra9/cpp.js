@@ -61,6 +61,17 @@ export function verifyIntegrity(filePath, url, sha256) {
     }
 }
 
+const LOOPBACK = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+
+// What lands here is compiled, so it may not arrive over a connection anyone can rewrite.
+// Loopback is exempt so tests can serve fixtures without a certificate.
+export function assertHttps(target, context = target) {
+    const { protocol, hostname } = new URL(target);
+    if (protocol !== 'https:' && !LOOPBACK.has(hostname)) {
+        throw new Error(`cppjs: refusing to download ${context} over ${protocol}// - upstream sources must come over https.`);
+    }
+}
+
 // fetch follows redirects itself, which release downloads rely on (github and the osgeo
 // mirrors both bounce), so the download needs no redirect library of its own.
 async function downloadFile(url, folder) {
@@ -68,12 +79,15 @@ async function downloadFile(url, folder) {
     const dest = `${folder}/${path.basename(url)}`;
     if (fs.existsSync(dest)) return dest;
 
+    assertHttps(url);
     let response;
     try {
         response = await fetch(url, { headers: { 'User-Agent': 'curl/8.7.1' }, redirect: 'follow' });
     } catch (err) {
         throw new Error(`cppjs: cannot reach ${url}: ${err.message}`, { cause: err });
     }
+    // A redirect chain must not be able to downgrade the transport on its last hop.
+    if (response.url) assertHttps(response.url, `${url} (redirected to ${response.url})`);
     if (!response.ok) {
         throw new Error(`cppjs: download failed for ${url} — HTTP ${response.status}.`);
     }
