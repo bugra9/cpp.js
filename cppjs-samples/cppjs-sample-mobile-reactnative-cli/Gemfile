@@ -7,7 +7,10 @@ ruby ">= 2.6.10"
 gem 'cocoapods', '>= 1.13', '!= 1.15.0', '!= 1.15.1'
 gem 'activesupport', '>= 7.2.3.1'
 gem 'xcodeproj', '< 1.26.0'
-gem 'concurrent-ruby', '< 1.3.4'
+# The upstream template caps this below 1.3.4, where concurrent-ruby stopped requiring logger
+# and broke activesupport < 7.1. This Gemfile pins activesupport 7.2 and requires logger
+# itself, so the cap only kept a fixed CVE (1.3.7) out.
+gem 'concurrent-ruby', '>= 1.3.7'
 
 # Ruby 3.4.0 has removed some libraries from the standard library.
 gem 'bigdecimal'
