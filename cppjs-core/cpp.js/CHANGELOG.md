@@ -1,5 +1,26 @@
 # cpp.js
 
+## 2.0.0-beta.35
+
+### Patch Changes
+
+- **wasi runner: a platform's env no longer replaces the shared one** — a recipe declares its
+  environment once for every platform and adds per-platform knobs on top, but the runner merged
+  the blocks with a shallow `Object.assign`, so the wasi block's `env` dropped the shared one.
+  Every `gdal*-wasi` command therefore ran without `GDAL_DATA` (and said so) even though the
+  data directory was mounted. `data` and `env` now merge key by key.
+
+## 2.0.0-beta.34
+
+### Patch Changes
+
+- **`decompress` and `follow-redirects` are gone** — upstream archives are extracted with the
+  system `tar` and downloaded with `fetch`, which follows redirects itself. That drops an
+  unfixable critical advisory (CVE-2026-53486, zip-slip; upstream unmaintained since 2020) and
+  a package with five advisories in its history from every consumer's tree.
+- **Source downloads require https** — the scheme is asserted before the request and again on
+  the final URL, so a redirect cannot downgrade the transport. Loopback stays exempt for tests.
+
 ## 2.0.0-beta.33
 
 ### Minor Changes

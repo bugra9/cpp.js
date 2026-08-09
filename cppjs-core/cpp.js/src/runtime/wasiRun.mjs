@@ -28,6 +28,17 @@ function prebuiltOf(node, targetPath) {
     return join(nodeDir, node.paths?.output ?? 'dist', 'prebuilt', targetPath);
 }
 
+// Blocks layer onto each other: a wasi-only env block adds to the platform-agnostic one
+// instead of replacing it, which a plain Object.assign of the blocks would do.
+export function mergeSpecs(targetSpecs, target) {
+    const matched = filterTargetSpecs(targetSpecs, target);
+    return {
+        ...Object.assign({}, ...matched),
+        data: Object.assign({}, ...matched.map((s) => s.data ?? {})),
+        env: Object.assign({}, ...matched.map((s) => s.env ?? {})),
+    };
+}
+
 export async function run(stubUrl, tool) {
     const pkgDir = join(dirname(fileURLToPath(stubUrl)), '..');
 
@@ -74,7 +85,7 @@ export async function run(stubUrl, tool) {
     const guestEnv = {};
     for (const node of walkConfigGraph(config)) {
         const prebuilt = prebuiltOf(node, targetPath);
-        const specs = Object.assign({}, ...filterTargetSpecs(node.targetSpecs, target));
+        const specs = mergeSpecs(node.targetSpecs, target);
         for (const [source, name] of Object.entries(specs.data ?? {})) {
             const hostDir = join(prebuilt, source);
             if (mounted.has(name) || !existsSync(hostDir)) continue;
