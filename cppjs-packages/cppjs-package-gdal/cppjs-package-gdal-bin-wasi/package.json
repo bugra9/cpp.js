@@ -72,7 +72,7 @@
         "provenance": {
             "recipe": {
                 "name": "@cpp.js/package-gdal",
-                "version": "2.0.0-beta.33",
+                "version": "2.0.0-beta.36",
                 "nativeVersion": "3.13.2"
             },
             "source": {

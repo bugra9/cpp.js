@@ -34,7 +34,7 @@
         "provenance": {
             "recipe": {
                 "name": "@cpp.js/package-zstd",
-                "version": "2.0.0-beta.33",
+                "version": "2.0.0-beta.36",
                 "nativeVersion": "1.5.7"
             },
             "source": {
