@@ -11,9 +11,17 @@ import { initCppJs as initRegex, Regex } from 'cargo:regex'
 import { initCppJs as initUuidCrate, Uuid } from 'cargo:uuid'
 // App-local surface over upstream crates (geo + wkt): the same file the RN playground uses.
 import { initCppJs as initHull, Hull } from './native/geo_surface.rs'
+// Conformance kit: every documented C++/Rust feature as one shared data-driven list.
+import { runConformance } from '@cpp.js/conformance/spec/run.mjs'
+import { ConfBox, ConfCircle, ConfOps } from '@cpp.js/conformance/native/conformance.h'
+import {
+    Widget, Mode, RustIntVector, checkedParse,
+    jsonEcho, jsonTally, jsonPick, SharedDoc, dupDoc, sharedDropCount,
+} from '@cpp.js/embind-rust-demo'
 
 const message = ref("compiling ...")
 const rust = ref("rust: compiling ...")
+const conf = ref("conformance: running ...")
 
 initCppJs().then(async () => {
     // await keeps this correct in both modes: with a worker every binding (including `new`,
@@ -98,10 +106,34 @@ initCppJs().then(async () => {
     } catch (e) {
         rust.value = `rust ERR: ${e?.message ?? e}`;
     }
+
+    // Shared conformance list. This playground's runtime is worker-backed, so every check
+    // resolves through the proxy (the list awaits every call) and the live-JS section stays
+    // a documented SKIP: functions cannot cross the worker boundary.
+    try {
+        const result = await runConformance({
+            cpp: { ConfBox, ConfCircle, ConfOps },
+            rustPkg: {
+                RustyCounter, Widget, Gauge, Mode, RustIntVector,
+                doubleIt, greet, checkedParse, parseEven, tag,
+                jsonEcho, jsonTally, jsonPick, SharedDoc, dupDoc, sharedDropCount,
+            },
+            rustAppLocal: { Hull },
+            rustCrates: { Uuid, Version, VersionReq, Regex },
+            jsLive: null,
+            caps: { worker: true },
+        });
+        const firstBad = result.lines.find((l) => l.startsWith('NO'));
+        if (firstBad) console.log(`CONF LINES:\n${result.lines.join('\n')}`);
+        conf.value = firstBad ? `${result.summary} | ${firstBad}` : result.summary;
+    } catch (e) {
+        conf.value = `CONFORMANCE ERR: ${e?.message ?? e}`;
+    }
 });
 </script>
 
 <template>
   <p>Matrix multiplier with c++ &nbsp;&nbsp;=&gt;&nbsp;&nbsp;  {{message}}</p>
   <p id="rust">{{rust}}</p>
+  <p id="conf">{{conf}}</p>
 </template>

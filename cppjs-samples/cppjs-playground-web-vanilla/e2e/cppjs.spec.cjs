@@ -9,3 +9,9 @@ test('check string receiving from c++', async ({ page }) => {
     // The real mt signal: a std::thread ran and reported back.
     await expect(page.getByText('hello from thread')).toBeVisible()
 });
+
+test('conformance: every documented C++/Rust feature on this leg', async ({ page }) => {
+    await page.goto('/')
+    // pass === run (backreference), optionally with a skipped tail; NO lines break the match.
+    await expect(page.locator('#conf')).toHaveText(/^CONFORMANCE (\d+)\/\1( \(skipped: \d+\))?$/, { timeout: 20000 })
+});

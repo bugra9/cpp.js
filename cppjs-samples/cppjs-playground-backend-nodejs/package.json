@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/playground-backend-nodejs",
-    "version": "2.0.0-beta.23",
+    "version": "2.0.0-beta.37",
     "private": true,
     "description": "Cpp.js - Node.js webassembly sample",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-backend-nodejs-wasm#readme",
@@ -14,6 +14,8 @@
     "dependencies": {
         "cpp.js": "workspace:^",
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^",
+        "@cpp.js/embind-rust-demo": "workspace:^",
+        "@cpp.js/conformance": "workspace:^",
         "@cpp.js/package-curl-wasm": "workspace:^",
         "@cpp.js/package-expat-wasm": "workspace:^",
         "@cpp.js/package-gdal-wasm": "workspace:^",

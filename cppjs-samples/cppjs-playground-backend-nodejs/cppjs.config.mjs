@@ -1,4 +1,5 @@
 import matrix from '@cpp.js/sample-lib-prebuilt-matrix/cppjs.config.js';
+import embindRustDemo from '@cpp.js/embind-rust-demo/cppjs.config.mjs';
 import curl from '@cpp.js/package-curl-wasm/cppjs.config.js';
 import expat from '@cpp.js/package-expat-wasm/cppjs.config.js';
 import gdal from '@cpp.js/package-gdal-wasm/cppjs.config.js';
@@ -19,6 +20,7 @@ export default {
     },
     dependencies: [
         matrix,
+        embindRustDemo,
         curl,
         expat,
         gdal,
@@ -36,6 +38,9 @@ export default {
     paths: {
         config: import.meta.url,
         base: '../..', /* Delete this line for create-cpp.js */
+        // Standalone builds bridge every header on this list; the conformance kit's C++
+        // surface rides along from its own workspace package.
+        header: ['src/native', '../cppjs-conformance/native'],
         output: 'dist',
     },
     targetSpecs: [

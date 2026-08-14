@@ -12,6 +12,7 @@ import sqlite3 from '@cpp.js/package-sqlite3-wasm/cppjs.config.js';
 import tiff from '@cpp.js/package-tiff-wasm/cppjs.config.js';
 import webp from '@cpp.js/package-webp-wasm/cppjs.config.js';
 import zlib from '@cpp.js/package-zlib-wasm/cppjs.config.js';
+import embindRustDemo from '@cpp.js/embind-rust-demo/cppjs.config.mjs';
 
 export default {
     general: {
@@ -32,11 +33,15 @@ export default {
         tiff,
         webp,
         zlib,
+        embindRustDemo,
     ],
     paths: {
         config: import.meta.url,
         base: '../..', /* Delete this line for create-cpp.js */
         output: 'dist',
+        // The conformance kit's header lives in its own workspace package; the standalone
+        // build bridges every .h found on this list.
+        header: ['src/native', '../cppjs-conformance/native'],
     },
     // No -sJSPI here: this playground builds the mt (pthreads) browser runtime,
     // and JSPI cannot ride along (pthread-mailbox suspends throw SuspendError in

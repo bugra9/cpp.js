@@ -1,0 +1,8 @@
+{
+    "name": "@cpp.js/conformance",
+    "version": "2.0.0-beta.33",
+    "private": true,
+    "description": "Cross-runtime conformance kit: every documented C++ and Rust binding feature as one data-driven check list, shared by the node, browser and React Native legs.",
+    "type": "module",
+    "main": "spec/run.mjs"
+}

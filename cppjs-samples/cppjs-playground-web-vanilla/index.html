@@ -18,6 +18,47 @@
             document.querySelector('#threadResult').innerHTML = await Native.getThreadResult();
         });
     </script>
+    <script type="module">
+        // Shared conformance list, no bundler: the build copies the spec next to the glue
+        // (dist/conformance.run.mjs). The browser runtime defaults to useWorker, so worker
+        // contracts apply and live-JS stays a documented skip. initCppJs reuses the boot
+        // started by the classic script above (single-boot promise).
+        import { runConformance } from './dist/conformance.run.mjs';
+
+        const m = await initCppJs({ path: './dist' });
+        try {
+            const result = await runConformance({
+                cpp: { ConfBox: m.ConfBox, ConfCircle: m.ConfCircle, ConfOps: m.ConfOps },
+                rustPkg: {
+                    RustyCounter: m.RustyCounter,
+                    Widget: m.Widget,
+                    Gauge: m.Gauge,
+                    Mode: m.Mode,
+                    RustIntVector: m.RustIntVector,
+                    doubleIt: m.doubleIt,
+                    greet: m.greet,
+                    checkedParse: m.checkedParse,
+                    parseEven: m.parseEven,
+                    tag: m.tag,
+                    jsonEcho: m.jsonEcho,
+                    jsonTally: m.jsonTally,
+                    jsonPick: m.jsonPick,
+                    SharedDoc: m.SharedDoc,
+                    dupDoc: m.dupDoc,
+                    sharedDropCount: m.sharedDropCount,
+                },
+                rustAppLocal: null,
+                rustCrates: null,
+                jsLive: null,
+                caps: { worker: true },
+            });
+            const firstBad = result.lines.find((l) => l.startsWith('NO'));
+            if (firstBad) console.log(`CONF LINES:\n${result.lines.join('\n')}`);
+            document.querySelector('#conf').innerHTML = firstBad ? `${result.summary} | ${firstBad}` : result.summary;
+        } catch (e) {
+            document.querySelector('#conf').innerHTML = `CONFORMANCE ERR: ${e?.message ?? e}`;
+        }
+    </script>
     <style>
         body {
             padding: 50px;
@@ -40,6 +81,7 @@
 <body>
     <p>Matrix multiplier with c++ &nbsp;&nbsp;=&gt;&nbsp;&nbsp; <span id="cppMessage">compiling ...</span></p>
     <p>Thread result &nbsp;&nbsp;:&nbsp;&nbsp; <span id="threadResult">...</span></p>
+    <p><span id="conf">conformance: running ...</span></p>
 </body>
 
 </html>

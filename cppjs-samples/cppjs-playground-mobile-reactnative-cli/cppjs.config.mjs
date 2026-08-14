@@ -72,5 +72,8 @@ export default {
     paths: {
         config: import.meta.url,
         base: '../..', /* Delete this line for create-cpp.js */
+        // The conformance kit's header lives in its own workspace package; listing its dir
+        // here feeds swig and the native bridge compile include path.
+        header: ['src/native', '../cppjs-conformance/native'],
     }
 }

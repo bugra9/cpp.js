@@ -11,6 +11,7 @@ import sqlite3 from '@cpp.js/package-sqlite3-wasm/cppjs.config.js';
 import tiff from '@cpp.js/package-tiff-wasm/cppjs.config.js';
 import webp from '@cpp.js/package-webp-wasm/cppjs.config.js';
 import zlib from '@cpp.js/package-zlib-wasm/cppjs.config.js';
+import embindRustDemo from '@cpp.js/embind-rust-demo/cppjs.config.mjs';
 
 export default {
     general: {
@@ -18,6 +19,7 @@ export default {
     },
     dependencies: [
         curl,
+        embindRustDemo,
         // expat,
         // gdal,
         // geos,
@@ -34,6 +36,9 @@ export default {
     paths: {
         config: import.meta.url,
         base: '../..', /* Delete this line for create-cpp.js */
+        // The conformance kit's header lives in its own workspace package; listing its dir
+        // here feeds both SWIG's -I and the CMake HEADER_DIR pipe.
+        header: ['src/native', '../cppjs-conformance/native'],
     },
     target: {
         runtime: 'mt',

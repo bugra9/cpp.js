@@ -1,8 +1,9 @@
 <script>
-    import { initCppJs, Native } from './native/native.h';
+    import { init } from 'cpp.js';
+    import { Native } from './native/native.h';
 
     let message = 'compiling ...';
-    initCppJs().then(async () => {
+    init().then(async () => {
         message = await Native.sample();
     });
 </script>

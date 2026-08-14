@@ -1,13 +1,13 @@
 {
     "name": "@cpp.js/playground-web-vanilla",
-    "version": "2.0.0-beta.23",
+    "version": "2.0.0-beta.37",
     "private": true,
     "description": "Cpp.js Web Vanilla playground",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-playground-web-vanilla#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",
     "license": "MIT",
     "scripts": {
-        "build": "cppjs build -p wasm -a wasm32 -r mt -e browser",
+        "build": "cppjs build -p wasm -a wasm32 -r mt -e browser && cp node_modules/@cpp.js/conformance/spec/run.mjs dist/conformance.run.mjs",
         "preview": "serve -c ./serve.json",
         "e2e:prod": "playwright test --config playwright.prod.config.cjs"
     },
@@ -26,7 +26,9 @@
         "@cpp.js/package-sqlite3-wasm": "workspace:^",
         "@cpp.js/package-tiff-wasm": "workspace:^",
         "@cpp.js/package-webp-wasm": "workspace:^",
-        "@cpp.js/package-zlib-wasm": "workspace:^"
+        "@cpp.js/package-zlib-wasm": "workspace:^",
+        "@cpp.js/embind-rust-demo": "workspace:^",
+        "@cpp.js/conformance": "workspace:^"
     },
     "devDependencies": {
         "serve": "^14.2.6",

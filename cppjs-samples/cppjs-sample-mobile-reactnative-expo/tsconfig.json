@@ -1,5 +1,5 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": ["expo/tsconfig.base", "@cpp.js/typescript-config"],
   "compilerOptions": {
     "strict": true,
     "paths": {
@@ -8,6 +8,9 @@
       ],
       "@/assets/*": [
         "./assets/*"
+      ],
+      "cpp.js": [
+        "./node_modules/@cpp.js/typescript-config/cppjs-runtime.d.ts"
       ]
     }
   },

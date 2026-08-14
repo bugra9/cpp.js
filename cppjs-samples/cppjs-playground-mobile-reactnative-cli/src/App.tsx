@@ -7,11 +7,12 @@
 import { useEffect, useState } from 'react';
 import { StatusBar, StyleSheet, useColorScheme, View, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { initCppJs, Native } from './native/native.h';
+// One init for every native import below: each proxy module registers its bindings on import.
+import { init } from 'cpp.js';
+import { Native } from './native/native.h';
 // Rust package import: the metro resolver maps the bare package name to the crate's lib.rs and
 // the transformer emits the same proxy-module shape as a .h import (exports bind on init).
 import {
-    initCppJs as initRustDemo,
     RustyCounter,
     Widget,
     Gauge,
@@ -22,17 +23,31 @@ import {
     checkedParse,
     parseEven,
     tag,
+    jsonEcho,
+    jsonTally,
+    jsonPick,
+    SharedDoc,
+    dupDoc,
+    sharedDropCount,
+    jsPass,
+    jsProbe,
+    jsCall,
+    jsStore,
+    jsFire,
 } from '@cpp.js/embind-rust-demo';
 // App-local Rust file, imported like a .h: the toolchain synthesizes and links its bridge crate.
-import { initCppJs as initCounter, Counter } from './native/counter.rs';
+import { Counter } from './native/counter.rs';
 // App-local surface over an UPSTREAM crate: geo comes from the app config's
 // export.bindings.cargoDependencies declaration - no cpp.js package involved.
-import { initCppJs as initHull, Hull } from './native/geo_surface.rs';
+import { Hull } from './native/geo_surface.rs';
 // DIRECT crate imports: no surface files - bridges are generated from the crates' own sources
 // (declared in cargoDependencies); types come from .cppjs/rust-crates/types.
-import { initCppJs as initUuid, Uuid } from 'cargo:uuid';
-import { initCppJs as initSemver, Version, VersionReq } from 'cargo:semver';
-import { initCppJs as initRegex, Regex } from 'cargo:regex';
+import { Uuid } from 'cargo:uuid';
+import { Version, VersionReq } from 'cargo:semver';
+import { Regex } from 'cargo:regex';
+// Conformance kit: every documented C++/Rust feature as one shared data-driven list.
+import { runConformance } from '@cpp.js/conformance/spec/run.mjs';
+import { ConfBox, ConfCircle, ConfOps } from '@cpp.js/conformance/native/conformance.h';
 
 function App() {
     const isDarkMode = useColorScheme() === 'dark';
@@ -49,9 +64,7 @@ function AppContent() {
     const [message, setMessage] = useState('compiling ...');
 
     useEffect(() => {
-        initCppJs().then(async () => {
-            // Binds this proxy module's exports (RustyCounter, Mode, ...); boot already happened.
-            await initRustDemo();
+        init().then(async () => {
             // Every type kind of the embind-rust demo, each checked in isolation so one failure
             // never hides the rest. Rust class -> flat C-ABI -> jsi adapter -> embind-jsi.
             const out: string[] = [];
@@ -232,8 +245,95 @@ function AppContent() {
                 },
                 true,
             );
-
-            await initCounter();
+            check('jsonEcho', () => jsonEcho({ a: 1, list: [1, 2.5, 'x', null, true], nested: { k: 'v' } }), {
+                a: 1,
+                list: [1, 2.5, 'x', null, true],
+                nested: { k: 'v' },
+            });
+            check('jsonTally', () => jsonTally({ items: [1, 2, 3] }), { hasItems: true, total: 6 });
+            check(
+                'jsonPickErr',
+                () => {
+                    try {
+                        jsonPick({}, 'zz');
+                        return false;
+                    } catch (e: any) {
+                        return String(e?.message ?? e).includes('missing key zz');
+                    }
+                },
+                true,
+            );
+            check(
+                'jsonSnapshot',
+                () => {
+                    const b = new RustyCounter(42);
+                    const s = b.snapshot({ tag: 'rn' });
+                    b.delete();
+                    return [s.value, s.extra.tag];
+                },
+                [42, 'rn'],
+            );
+            const arcBase = sharedDropCount();
+            const doc1 = SharedDoc.create('rn');
+            const doc2 = dupDoc(doc1);
+            check('arcLabel', () => doc2.label(), 'rn');
+            check('arcSame', () => doc1.sameAs(doc2), true);
+            check(
+                'arcHalfFree',
+                () => {
+                    doc1.delete();
+                    return sharedDropCount() - arcBase;
+                },
+                0,
+            );
+            check(
+                'arcFullFree',
+                () => {
+                    doc2.delete();
+                    return sharedDropCount() - arcBase;
+                },
+                1,
+            );
+            check(
+                'jsIdentity',
+                () => {
+                    const o: any = { a: 1 };
+                    return jsPass(o) === o;
+                },
+                true,
+            );
+            check(
+                'jsGetSet',
+                () => {
+                    const o: any = { a: 21 };
+                    const r = jsProbe(o);
+                    return [r === o, o.b, o.note];
+                },
+                [true, 42, 'set-by-rust'],
+            );
+            check('cbCall', () => jsCall((x: number) => ({ doubled: x * 2 }), 3.5), { doubled: 7 });
+            check(
+                'cbThrow',
+                () => {
+                    try {
+                        jsCall(() => {
+                            throw new Error('cb boom');
+                        }, 1);
+                        return 'no-throw';
+                    } catch (e: any) {
+                        return String(e?.message ?? e).includes('cb boom');
+                    }
+                },
+                true,
+            );
+            check(
+                'cbStored',
+                () => {
+                    jsStore((x: number) => x + 100);
+                    return jsFire(7);
+                },
+                107,
+            );
             check(
                 'appLocalRs',
                 () => {
@@ -245,8 +345,6 @@ function AppContent() {
                 },
                 42,
             );
-
-            await initUuid();
             check(
                 'uuidV4',
                 () => {
@@ -282,8 +380,6 @@ function AppContent() {
                 },
                 true,
             );
-
-            await initSemver();
             check(
                 'semver',
                 () => {
@@ -303,8 +399,6 @@ function AppContent() {
                 },
                 true,
             );
-
-            await initRegex();
             check(
                 'regex',
                 () => {
@@ -321,8 +415,6 @@ function AppContent() {
                 },
                 true,
             );
-
-            await initHull();
             check(
                 'hullRs',
                 () => {
@@ -334,8 +426,43 @@ function AppContent() {
                 [true, 16, true],
             );
 
+            // Shared conformance list: the native jsi runtime is fully synchronous, so every
+            // section runs (including live JS values and the C++ exception message probe).
+            let confSummary = 'CONFORMANCE ERR';
+            try {
+                const conf = await runConformance({
+                    cpp: { ConfBox, ConfCircle, ConfOps },
+                    rustPkg: {
+                        RustyCounter,
+                        Widget,
+                        Gauge,
+                        Mode,
+                        RustIntVector,
+                        doubleIt,
+                        greet,
+                        checkedParse,
+                        parseEven,
+                        tag,
+                        jsonEcho,
+                        jsonTally,
+                        jsonPick,
+                        SharedDoc,
+                        dupDoc,
+                        sharedDropCount,
+                    },
+                    rustAppLocal: { Counter, Hull },
+                    rustCrates: { Uuid, Version, VersionReq, Regex },
+                    jsLive: { jsPass, jsProbe, jsCall, jsStore, jsFire },
+                    caps: { jsiNative: true },
+                });
+                confSummary = conf.summary;
+                conf.lines.filter(l => l.startsWith('NO')).forEach(l => out.push(l));
+            } catch (e: any) {
+                confSummary = `CONFORMANCE ERR: ${e?.message ?? e}`;
+            }
+
             const pass = out.filter(l => l.startsWith('OK')).length;
-            const summary = `rust ${pass}/${out.length}\n${out.join('\n')}`;
+            const summary = `rust ${pass}/${out.length}\n${confSummary}\n${out.join('\n')}`;
             console.log(`SMOKE_RESULT ${summary}`);
             setMessage(`${Native.sample()}\n${summary}`);
         });

@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/playground-backend-nodejs-multithread",
-    "version": "2.0.0-beta.23",
+    "version": "2.0.0-beta.37",
     "private": true,
     "description": "Cpp.js - Node.js webassembly sample",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-sample-backend-nodejs-wasm#readme",
@@ -26,6 +26,8 @@
         "@cpp.js/package-tiff-wasm": "workspace:^",
         "@cpp.js/package-webp-wasm": "workspace:^",
         "@cpp.js/package-zlib-wasm": "workspace:^",
+        "@cpp.js/embind-rust-demo": "workspace:^",
+        "@cpp.js/conformance": "workspace:^",
         "ws": "8.21.3",
         "xhr2": "^0.2.1"
     },

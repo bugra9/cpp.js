@@ -10,7 +10,8 @@ import { ThemedView } from '@/components/themed-view';
 import { WebBadge } from '@/components/web-badge';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
-import { initCppJs, Native } from '../native/native.h';
+import { init } from 'cpp.js';
+import { Native } from '../native/native.h';
 
 function getDevMenuHint() {
   if (Platform.OS === 'web') {
@@ -35,7 +36,7 @@ export default function HomeScreen() {
   const [message, setMessage] = useState('compiling ...');
 
   useEffect(() => {
-    initCppJs().then((a) => {
+    init().then((a) => {
       console.log(a, a.CppJS);
       setMessage(Native.sample());
     });

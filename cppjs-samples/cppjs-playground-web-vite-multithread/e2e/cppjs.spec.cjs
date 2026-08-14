@@ -15,3 +15,9 @@ test('boots the module in a worker and runs a std::thread', async ({ page }) => 
     // identity): factories cannot catch construct regressions, this line can.
     await expect(page.getByText('ctor:21')).toBeVisible()
 });
+
+test('conformance: every documented C++/Rust feature on this leg', async ({ page }) => {
+    await page.goto('/')
+    // pass === run (backreference), optionally with a skipped tail; NO lines break the match.
+    await expect(page.locator('#conf')).toHaveText(/^CONFORMANCE (\d+)\/\1( \(skipped: \d+\))?$/, { timeout: 20000 })
+});

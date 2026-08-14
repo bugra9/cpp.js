@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/playground-web-vite",
-    "version": "2.0.0-beta.23",
+    "version": "2.0.0-beta.37",
     "private": true,
     "description": "Cpp.js Vite Playground",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-playground-web-vite#readme",
@@ -31,7 +31,8 @@
         "@cpp.js/package-tiff-wasm": "workspace:^",
         "@cpp.js/package-webp-wasm": "workspace:^",
         "@cpp.js/package-zlib-wasm": "workspace:^",
-        "@cpp.js/embind-rust-demo": "workspace:^"
+        "@cpp.js/embind-rust-demo": "workspace:^",
+        "@cpp.js/conformance": "workspace:^"
     },
     "devDependencies": {
         "@cpp.js/typescript-config": "workspace:^",

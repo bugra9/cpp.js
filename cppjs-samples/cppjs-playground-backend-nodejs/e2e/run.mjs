@@ -4,6 +4,8 @@
 import { execFile } from 'node:child_process';
 
 const expected = /^(response:|error:)/m;
+// Shared conformance list: pass must equal run (backreference); skips are explicit lines.
+const conformance = /^CONFORMANCE (\d+)\/\1\b.*$/m;
 
 execFile('node', ['--experimental-wasm-jspi', 'src/index.mjs'], { timeout: 120000 }, (err, stdout, stderr) => {
     const out = `${stdout}\n${stderr}`;
@@ -16,5 +18,10 @@ execFile('node', ['--experimental-wasm-jspi', 'src/index.mjs'], { timeout: 12000
         console.error(`unexpected output:\n${out}`);
         process.exit(1);
     }
+    if (!conformance.test(out)) {
+        console.error(`conformance failed:\n${out}`);
+        process.exit(1);
+    }
     console.log('ok:', stdout.trim().split('\n')[0]);
+    console.log('ok:', out.match(conformance)[0]);
 });

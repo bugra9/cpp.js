@@ -12,10 +12,20 @@ import sqlite3 from '@cpp.js/package-sqlite3-wasm/cppjs.config.js';
 import tiff from '@cpp.js/package-tiff-wasm/cppjs.config.js';
 import webp from '@cpp.js/package-webp-wasm/cppjs.config.js';
 import zlib from '@cpp.js/package-zlib-wasm/cppjs.config.js';
+import embindRustDemo from '@cpp.js/embind-rust-demo/cppjs.config.mjs';
 
 export default {
     general: {
         name: 'cppjs-playground-web-rspack',
+    },
+    // Direct crate imports (`import { Uuid } from 'cargo:uuid'`) + upstream crates for
+    // the app-local geo_surface.rs - both bridged from crate sources, no packages.
+    cargoDependencies: {
+        uuid: '{ version = "1", features = ["v4"] }',
+        geo: '0.29',
+        wkt: '0.11',
+        semver: '1',
+        regex: '1',
     },
     dependencies: [
         matrix,
@@ -32,10 +42,14 @@ export default {
         tiff,
         webp,
         zlib,
+        embindRustDemo,
     ],
     paths: {
         config: import.meta.url,
         base: '../..', /* Delete this line for create-cpp.js */
+        // The conformance kit's header lives in its own workspace package; listing its dir
+        // here feeds both SWIG's -I and the CMake HEADER_DIR pipe.
+        header: ['src/native', '../cppjs-conformance/native'],
     },
     // No -sJSPI here: this playground builds the mt (pthreads) browser runtime,
     // and JSPI cannot ride along (pthread-mailbox suspends throw SuspendError in

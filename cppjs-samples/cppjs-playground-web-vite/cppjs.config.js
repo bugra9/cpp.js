@@ -45,6 +45,9 @@ export default {
     paths: {
         config: import.meta.url,
         base: '../..', /* Delete this line for create-cpp.js */
+        // The conformance kit's header lives in its own workspace package; listing its dir
+        // here feeds both swig and the bridge compile include path.
+        header: ['src/native', '../cppjs-conformance/native'],
     },
     // No -sJSPI here: this native declares no _JSPI binding, and a JSPI-linked
     // glue refuses to boot on browsers without the API (Playwright's Firefox

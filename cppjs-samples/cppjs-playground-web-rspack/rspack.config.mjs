@@ -24,11 +24,7 @@ export default defineConfig({
     },
     module: {
         rules: [
-            {
-                test: /\.h$/,
-                loader: '@cpp.js/plugin-webpack-loader',
-                options: { ...cppjsLoaderOptions },
-            },
+            cppjsWebpackPlugin.getRule(),
             {
                 test: /\.svg$/,
                 type: 'asset',

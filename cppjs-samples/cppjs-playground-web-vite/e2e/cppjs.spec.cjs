@@ -25,3 +25,10 @@ test('check rust class through the package import', async ({ page }) => {
     )
 });
 
+test('conformance: every documented C++/Rust feature on this leg', async ({ page }) => {
+    await page.goto('/')
+    // pass == run from the shared @cpp.js/conformance list, with no NO line appended. The
+    // live-JS section is a documented SKIP on this worker-backed leg, hence the suffix.
+    await expect(page.locator('#conf')).toHaveText(/^CONFORMANCE (\d+)\/\1( \(skipped: \d+\))?$/, { timeout: 20000 })
+});
+
