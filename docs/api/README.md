@@ -6,7 +6,7 @@ cpp.js has **two API surfaces** that get confused often. Keep them straight:
 
 | Surface | When | Authored by | Documented in |
 |---------|------|-------------|---------------|
-| `initCppJs(opts)` | **Runtime** — at the moment your app calls into Wasm | Every consumer | [`init.md`](./init.md) |
+| `init(opts)` | **Runtime** — at the moment your app calls into Wasm | Every consumer | [`init.md`](./init.md) |
 | `cppjs.config.js` | **Build-time** — read by the `cppjs build` CLI | Every consumer | [`cppjs-config.md`](./cppjs-config.md) |
 | `cppjs.build.js` | **Build-time** — only inside `cppjs-package-*` source folders | Package authors only | [`cppjs-build.md`](./cppjs-build.md) |
 
@@ -48,7 +48,7 @@ C++ binding & build authoring:
 ┌─────────────────────────────────────────────────────────────┐
 │  Runtime:  your app                                         │
 │  ┌────────────────────────────────────────────────────────┐│
-│  │ const m = await initCppJs({                            ││
+│  │ const m = await init({                            ││
 │  │   useWorker: true,    // for OPFS persistent storage   ││
 │  │   fs: { opfs: true }, // browser default               ││
 │  │   env: { ... },                                        ││
@@ -61,7 +61,7 @@ C++ binding & build authoring:
 
 ## Common pitfalls (read these even if you skip the rest)
 
-1. **`cppjs.config.js` is NOT runtime config.** It's read once by the `cppjs build` CLI. Putting `useWorker: true` here does nothing — that's a runtime option for `initCppJs(opts)`.
+1. **`cppjs.config.js` is NOT runtime config.** It's read once by the `cppjs build` CLI. Putting `useWorker: true` here does nothing — that's a runtime option for `init(opts)`.
 2. **OPFS persistent storage in browser requires `useWorker: true`.** OPFS API is only exposed in Worker scope. Mounting `/opfs/...` from the main thread throws.
 3. **`runtime: 'mt'` in production silently fails without COOP/COEP headers.** Dev plugins inject them; prod hosts (Vercel, Netlify, nginx, Cloudflare Pages, …) need explicit configuration.
 4. **Edge runtimes (Cloudflare Workers, Deno Deploy, Vercel Edge) don't support Web Workers.** That means no `useWorker`, no OPFS, no multithread — only single-thread + in-memory fs.

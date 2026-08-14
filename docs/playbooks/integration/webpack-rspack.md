@@ -6,7 +6,7 @@
 
 ## Goal
 
-Wire `@cpp.js/plugin-webpack` into the bundler config so dev-server serves wasm with COOP/COEP, the loader handles `.h` files, and prod build emits `cpp.js` + `cpp.wasm` artifacts.
+Wire `@cpp.js/plugin-webpack` into the bundler config so dev-server serves wasm with COOP/COEP, the loader handles `.h` and `.rs` files (plus `cargo:` crate imports and bare Rust package imports), and prod build emits `cpp.js` + `cpp.wasm` artifacts.
 
 ## When to use
 
@@ -111,7 +111,7 @@ Same as the Vite playbook — devServer is handled by the plugin, production dep
 - [ ] Browser console: `crossOriginIsolated` returns `true` (only required if multithread).
 - [ ] Saving a `.cpp`/`.h` file under `src/native/` triggers a rebuild + page refresh.
 - [ ] `pnpm build` produces `dist/` with `cpp.js`, `cpp.wasm` (and `cpp.data.txt` if data preloaded).
-- [ ] User-side: `await initCppJs(); Module.someFn(...)` returns expected result.
+- [ ] User-side: `await init(); Module.someFn(...)` returns expected result.
 
 ## Common pitfalls
 

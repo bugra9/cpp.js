@@ -1,6 +1,6 @@
 # File System
 
-cpp.js gives your C++ code a virtual file system. Where the files actually live depends on the runtime (browser / Node / edge) and your `initCppJs` options. This page maps every combination, then walks through the helper API.
+cpp.js gives your C++ code a virtual file system. Where the files actually live depends on the runtime (browser / Node / edge) and your `init` options. This page maps every combination, then walks through the helper API.
 
 ## The decision tree
 
@@ -152,7 +152,7 @@ Writing to `/opfs/...` without `useWorker: true` throws. If OPFS isn't supported
 1. **Mounting `/opfs` from main thread without `useWorker: true`** → throws synchronously inside `Module.getFinalPath()`. The error message tells you to enable `useWorker` or mount under `/memfs/` instead.
 2. **Forgetting the `<app>` prefix** → cpp.js auto-creates `/memfs/<app>/automounted` at startup. If you write to `/memfs/foo` (no `<app>`) it works but won't be cleaned up on `terminate`.
 3. **Assuming OPFS persists across origins** — it doesn't. Files written from `app.example.com` are invisible to `other.example.com`. Standard origin isolation.
-4. **Using `Module.FS` before init completes** — `Module.FS` is undefined until `await initCppJs(...)` resolves. Use the `onRuntimeInitialized: (m) => { … }` hook or await the promise first.
+4. **Using `Module.FS` before init completes** — `Module.FS` is undefined until `await init(...)` resolves. Use the `onRuntimeInitialized: (m) => { … }` hook or await the promise first.
 5. **Calling `fs: { opfs: false }` and then mounting `/opfs/...`** → throws: "OPFS is disabled. Enable fs.opfs in config to mount under /opfs/."
 
 ## See also

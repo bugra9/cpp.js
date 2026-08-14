@@ -1,6 +1,6 @@
 ---
 name: cppjs-runtime-api
-description: 'Use this skill the moment the user asks about cpp.js runtime/build configuration, C++ binding rules, or build troubleshooting — phrases like "what options does initCppJs accept", "how do I enable OPFS / persistent storage in cpp.js", "useWorker", "is cppjs multithread", "runtime: mt vs st", "COOP COEP for cpp.js", "what fields go in cppjs.config.js", "cppjs.build.js hooks", "what shape is state / target in build hooks", "cpp.js binding rules / can I use raw pointers", "writing a C++ wrapper for cpp.js", "manual SWIG .i file in cpp.js", "cppjs override mechanism for emccFlags / cmake / env", "cppjs build error / linker error / out of memory", "cppjs performance defaults / tunable flags", "do I need m.delete in cpp.js", "TypeScript types for cpp.js", "mount file from input in cppjs", "cppjs filesystem in browser / node / cloudflare worker", "edge runtime cppjs limits", "cargo: import / cargoDependencies / Rust bindings in cpp.js", "platform wasi / wasi build / -bin-wasi tools / cppjs licenses". Pull the matching reference doc into context before answering.'
+description: 'Use this skill the moment the user asks about cpp.js runtime/build configuration, C++ binding rules, or build troubleshooting — phrases like "what options does init accept", "how do I enable OPFS / persistent storage in cpp.js", "useWorker", "is cppjs multithread", "runtime: mt vs st", "COOP COEP for cpp.js", "what fields go in cppjs.config.js", "cppjs.build.js hooks", "what shape is state / target in build hooks", "cpp.js binding rules / can I use raw pointers", "writing a C++ wrapper for cpp.js", "manual SWIG .i file in cpp.js", "cppjs override mechanism for emccFlags / cmake / env", "cppjs build error / linker error / out of memory", "cppjs performance defaults / tunable flags", "do I need m.delete in cpp.js", "TypeScript types for cpp.js", "mount file from input in cppjs", "cppjs filesystem in browser / node / cloudflare worker", "edge runtime cppjs limits", "cargo: import / cargoDependencies / Rust bindings in cpp.js", "platform wasi / wasi build / -bin-wasi tools / cppjs licenses". Pull the matching reference doc into context before answering.'
 ---
 
 # cppjs-runtime-api
@@ -11,7 +11,7 @@ Answer cpp.js runtime / config questions from the canonical reference docs, neve
 
 | User asks about | Load this doc | MCP topic |
 |-----------------|---------------|-----------|
-| `initCppJs(opts)` parameters, return shape, Module helpers | `docs/api/init.md` | `init` |
+| `init(opts)` parameters, return shape, Module helpers | `docs/api/init.md` | `init` |
 | `cppjs.config.js` fields (consumer, build-time) | `docs/api/cppjs-config.md` | `config` |
 | `cppjs.build.js` hooks (package author, build-time) | `docs/api/cppjs-build.md` | `build` |
 | OPFS, memfs, persistence, file mounting, `m.FS` | `docs/api/filesystem.md` | `filesystem` |
@@ -46,7 +46,7 @@ GitHub mirrors of all docs:
    - `paths.native` is an array, not a string
    - C++ side: no raw pointers, C++11+ minimum, write a wrapper if upstream lib uses unbindable types
    - Defaults: `-O3`, `-msimd128`, `-sALLOW_MEMORY_GROWTH=1`, etc. — don't override speculatively
-5. **`cppjs.config.js` is build-time only.** Putting `useWorker: true` in it does nothing — that's a runtime option for `initCppJs(opts)`. Catch this confusion early.
+5. **`cppjs.config.js` is build-time only.** Putting `useWorker: true` in it does nothing — that's a runtime option for `init(opts)`. Catch this confusion early.
 6. **Reach for the least invasive override.** When a default doesn't fit, the order is: target filter → `targetSpecs[].specs.*` → `cppjs.config.js env / functions` → `cppjs.build.js` hooks → `extensions[]` → `~/.cppjs.json`. See `overrides.md`.
 
 ## The 5 most-asked questions (and the 1-line answer for each)
@@ -71,7 +71,7 @@ GitHub mirrors of all docs:
 ## Don't
 
 - Don't answer cpp.js API questions from training-data assumptions. The API has evolved; load the current doc.
-- Don't conflate `cppjs.config.js` (build-time) with `initCppJs(opts)` (runtime). Different surfaces, different fields.
+- Don't conflate `cppjs.config.js` (build-time) with `init(opts)` (runtime). Different surfaces, different fields.
 - Don't conflate `useWorker: true` with `runtime: 'mt'`. They're orthogonal axes (see the matrix in `threading.md`).
 - Don't suggest writing `cppjs.build.js` to a consumer — that file is package-author-only.
 - Don't omit the COOP/COEP heads-up when the user is shipping a `mt` build to production. It's the #1 reason `mt` "works in dev, fails in prod".

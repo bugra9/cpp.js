@@ -60,13 +60,14 @@ Modify the React file to call the c++ function from your React page. For example
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, Text, StyleSheet, View} from 'react-native';
 
-+import { initCppJs, MySampleClass } from './native/MySampleClass.h';
++import { init } from 'cpp.js';
++import { MySampleClass } from './native/MySampleClass.h';
 
 function App(): React.JSX.Element {
 +  const [message, setMessage] = useState('compiling ...');
 
 +  useEffect(() => {
-+    initCppJs().then(() => {
++    init().then(() => {
 +        setMessage(MySampleClass.sample());
 +    });
 +  }, []);

@@ -77,7 +77,7 @@ If the user picks `runtime: 'mt'` in `cppjs.config.js`, the resulting library st
 - [ ] `pnpm rollup -c` runs without errors.
 - [ ] `dist/` contains the user's bundle plus `cpp.js`, `cpp.wasm`.
 - [ ] Watch mode picks up native source changes (`pnpm rollup -c -w`, edit a `.cpp`, see rebuild log).
-- [ ] Library consumer can `import { initCppJs } from '<the lib>'; await initCppJs(); Module.fn(...)`.
+- [ ] Library consumer can `import { init } from '<the lib>'; await init(); Module.fn(...)`.
 
 ## Common pitfalls
 

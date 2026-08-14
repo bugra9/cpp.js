@@ -1,6 +1,6 @@
 # Filesystem — OPFS, memfs, node-fs, edge
 
-> Where do files live in cpp.js? Depends on the runtime and your `initCppJs` options. This doc maps every combination.
+> Where do files live in cpp.js? Depends on the runtime and your `init` options. This doc maps every combination.
 
 ## The decision tree
 
@@ -111,7 +111,7 @@ imgEl.src = url
 1. **Mounting `/opfs` from main thread without `useWorker: true`** → throws synchronously inside `m.getFinalPath()`. The error message tells you to enable `useWorker` or mount under `/memfs/` instead.
 2. **Forgetting the `<app>` prefix** → cpp.js auto-creates `/memfs/<app>/automounted` at startup. If you write to `/memfs/foo` (no `<app>`) it works but won't be cleaned up on `terminate`.
 3. **Assuming OPFS persists across origins** — it doesn't. Files written from `app.example.com` are invisible to `other.example.com`. Standard origin isolation.
-4. **Using `m.FS` from before `onRuntimeInitialized`** — `m.FS` is undefined until init completes. Use the `onRuntimeInitialized: (m) => {…}` hook or await the `initCppJs(...)` promise first.
+4. **Using `m.FS` from before `onRuntimeInitialized`** — `m.FS` is undefined until init completes. Use the `onRuntimeInitialized: (m) => {…}` hook or await the `init(...)` promise first.
 5. **Calling `fs:{ opfs: false }` and then mounting `/opfs/...`** → throws: "OPFS is disabled. Enable fs.opfs in config to mount under /opfs/."
 
 ## Per-runtime cheat sheet

@@ -33,7 +33,7 @@ The cpp.js Gemini extension wires the [`@cpp.js/mcp`](https://www.npmjs.com/pack
 - **OPFS persistent storage in browser → requires `useWorker: true`.** OPFS API is Worker-scope-only.
 - **`runtime: 'mt'` in production → requires COOP/COEP headers** (`Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`). Dev plugins inject; prod hosts (Vercel, Netlify, nginx, Cloudflare Pages) need explicit config.
 - **Edge runtimes (Cloudflare Workers, Deno Deploy, Vercel Edge) don't expose Web Workers.** No `useWorker`, no OPFS, no `mt` — only `runtime: 'st'` + memory fs.
-- **`cppjs.config.js` is build-time only.** Putting `useWorker: true` in it does nothing — that's a runtime option for `initCppJs(opts)`.
+- **`cppjs.config.js` is build-time only.** Putting `useWorker: true` in it does nothing — that's a runtime option for `init(opts)`.
 
 ## Documentation
 

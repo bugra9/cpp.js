@@ -50,7 +50,7 @@ export default {
   dts: 'sync',
     // 'sync' (default) types the direct binding surface. 'promise' wraps every
     // generated method/function return in Promise<...> - use it when your app
-    // runs with initCppJs({ useWorker: true }) (or any async bridge), where
+    // runs with init({ useWorker: true }) (or any async bridge), where
     // every call resolves asynchronously at runtime. Constructors stay
     // sync-typed either way; write `await new X(...)` (a no-op on sync
     // runtimes, required under a worker). See lifecycle-and-types.md.
@@ -288,7 +288,7 @@ export default {
 
 ## See also
 
-- [`init.md`](./init.md) — runtime API. `cppjs.config.js` produces the artifacts that `initCppJs(opts)` loads.
+- [`init.md`](./init.md) — runtime API. `cppjs.config.js` produces the artifacts that `init(opts)` loads.
 - [`cppjs-build.md`](./cppjs-build.md) — sibling file used by package authors only.
 - [`rust.md`](./rust.md) — Rust bindings: `cargo:` imports, app-local `.rs`, `export.type: 'cargo'` packages.
 - [`wasi.md`](./wasi.md) — `platform: 'wasi'` command builds + `-bin-wasi` tool packages.

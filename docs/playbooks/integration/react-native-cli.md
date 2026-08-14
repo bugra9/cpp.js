@@ -120,7 +120,7 @@ Don't name the snapshot dir `.cppjs` — `clear:cache:samples`-style globs may p
 - [ ] `cd ios && pod install` succeeds, `Podfile.lock` updated, `*.xcframework` directories appear under `ios/Pods/` or vendored locations.
 - [ ] `pnpm android` builds the APK and launches; the app calls into C++ without "library not loaded" errors.
 - [ ] `pnpm ios` builds and launches in the iOS simulator (arm64 macOS) or on-device.
-- [ ] JSI bridge: `import { initCppJs } from '@cpp.js/plugin-react-native'; await initCppJs(); Module.fn(...)` returns expected result.
+- [ ] JSI bridge: `import { init } from 'cpp.js'; await init(); Module.fn(...)` returns expected result.
 - [ ] If wrapping own C++: editing `src/native/native.cpp` + restarting Metro picks up the change (or at least re-run `pod install` / `pnpm android` to recompile).
 
 ## Common pitfalls

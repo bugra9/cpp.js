@@ -42,6 +42,18 @@ Two libs define the same function.
 
 - **Fix:** same as "symbol clash" above. `replaceList` rename, or `ignoreLibName` to drop one.
 
+### `wasm-ld: error: --shared-memory is disallowed by ... not compiled with 'atomics' or 'bulk-memory' features`
+
+A multithread (`mt`) wasm link pulled in a Rust archive whose objects (std
+included) were built without the atomics features. Current cpp.js cannot
+produce such an archive — mt Rust builds go through nightly `-Zbuild-std` or
+fail with install instructions — so the usual source is a **stale cargo-type
+package prebuilt** built before mt support.
+
+- **Fix:** rebuild the package's wasm prebuilts (`cppjs build -p wasm` in the
+  package, with `rustup toolchain install nightly --component rust-src` done
+  once) or update to a package version whose mt prebuilt was built that way.
+
 ### `__wasm__` / `CPL_CPUID` / `__asm__` / SIMD intrinsic compile errors
 
 Upstream library uses CPU-specific code that doesn't compile for Wasm.
@@ -108,6 +120,17 @@ Function not in the public binding surface.
 - **Cause A:** function is in an anonymous namespace or `static` at file scope. Move to public surface.
 - **Cause B:** declared in `.h` but defined in `.cpp` with a `static` or `inline` qualifier the binder skips. Match declaration and definition.
 
+### `BindingError: Cannot register public name '<Name>' twice`
+
+Two registrations share one JS-visible name. All languages register into the same embind
+namespace, so a C++ `class Counter` in one header and a Rust `pub struct Counter` in a `.rs`
+import collide — the page aborts during init.
+
+- **Fix:** rename one side; the JS-visible name is the class/struct name, so any distinct
+  identifier resolves it.
+- The colliding registration is often not where you expect: search every imported header,
+  `.rs` file and `cargo:` crate for the name in the message.
+
 ---
 
 ## Runtime errors
@@ -124,9 +147,9 @@ Same root cause as above — COOP/COEP missing.
 
 ### `OPFS is only available inside a Worker scope`
 
-You mounted `/opfs/...` but didn't set `useWorker: true` on `initCppJs(opts)`.
+You mounted `/opfs/...` but didn't set `useWorker: true` on `init(opts)`.
 
-- **Fix:** `initCppJs({ useWorker: true })`. See [`filesystem.md`](./filesystem.md).
+- **Fix:** `init({ useWorker: true })`. See [`filesystem.md`](./filesystem.md).
 
 ### `Path /opfs/... but OPFS is disabled. Enable fs.opfs in config`
 
@@ -148,7 +171,12 @@ Wasm process exhausted its allocated heap.
 The C++ function exists but didn't bind to JS.
 
 - **Cause:** binding rule violation. See "Binding-time errors" above.
-- **Cause:** the JS module finished loading but `initCppJs` hasn't completed. Make sure you're calling `m.someFunc` *after* `await initCppJs(...)`.
+- **Cause:** the JS module finished loading but `init` hasn't completed. Make sure you're calling `m.someFunc` *after* `await init(...)`.
+- **Cause (worker runtime, e.g. `instance.method is not a function`):** the module
+  runs in a worker — the wasm `mt` runtime defaults to one, as does
+  `init({ useWorker: true })` — so construction returns a promise and sync-style
+  code holds a `Promise`, not the instance. Write `const c = await new X(...);
+  await c.method(...)` and set `dts: 'promise'` so the generated types match.
 
 ### Calls hang forever when `useWorker: true`
 

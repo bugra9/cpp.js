@@ -3,7 +3,9 @@
 Cpp.js binds plain Rust the same way it binds C++ headers: one import line, no
 proc-macros, no hand-written glue. The same JavaScript works on web, iOS and
 Android. (`platform: 'wasi'` skips Rust — there is no wasm32-wasip3 Rust
-target yet.)
+target yet. The wasm `mt` runtime works but needs nightly Rust: cpp.js
+rebuilds std with the atomics features via `-Zbuild-std`, so run
+`rustup toolchain install nightly --component rust-src` once.)
 
 Add the binding layer once (bundler plugins already depend on it, so most
 projects get it transitively):
@@ -32,10 +34,11 @@ export default {
 ```
 
 ```js title="JavaScript"
-import { initCppJs, Uuid } from 'cargo:uuid';
+import { init } from 'cpp.js';
+import { Uuid } from 'cargo:uuid';
 import { Version, VersionReq } from 'cargo:semver';
 
-await initCppJs();
+await init();
 const id = Uuid.newV4().toString();
 const ok = new VersionReq('^1.2').matches(new Version('1.4.0'));
 ```
@@ -62,7 +65,8 @@ impl Hull {
 ```
 
 ```js title="JavaScript"
-import { initCppJs, Hull } from './native/geo_surface.rs';
+import { init } from 'cpp.js';
+import { Hull } from './native/geo_surface.rs';
 ```
 
 ## Publish a Rust package
@@ -71,7 +75,8 @@ A whole crate can ship as a Cpp.js package: set `export.type: 'cargo'` (see
 [Export](/docs/api/configuration/export)). Cpp.js runs
 `cargo build --release --target <triple>` per platform and stages the static
 library like any prebuilt — consumers import the package name exactly like a
-C++ package.
+C++ package. The wasm `mt` prebuilt builds through the same nightly
+`-Zbuild-std` path described above.
 
 ## What plain Rust maps to
 
@@ -86,6 +91,14 @@ C++ package.
 | `impl Display` | `toString()` |
 | free `pub fn` | plain exported function |
 | `&OtherClass` parameters | pass the other class's instance |
+| `serde_json::Value` parameters and returns | real JS values (objects/arrays/primitives), deep-copied at the boundary |
+| `Arc<Class>` factories, parameters and returns | shared ownership: several JS handles co-own one instance, the last `delete()` frees it |
+| `embind_rs::JsValue` / `JsFunction` parameters and returns | live JS values by identity (no copy) and callbacks into JS; a JS throw surfaces as `Err` |
+
+`JsValue`/`JsFunction` need a synchronous runtime (native JSI, wasm `st` on
+the main thread): on worker-backed runtimes (the wasm `mt` default, or
+`init({ useWorker: true })`) functions cannot cross the worker boundary and
+identity does not survive structured cloning — use `serde_json::Value` there.
 
 ## TypeScript
 
@@ -105,6 +118,6 @@ already extend another config):
 One caveat: `include` is overridden (not merged) when your tsconfig defines
 its own — keep `.cppjs/rust-crates/types/**/*.d.ts` in yours in that case.
 
-Running with `initCppJs({ useWorker: true })`? Set `dts: 'promise'` in
+Running with `init({ useWorker: true })`? Set `dts: 'promise'` in
 `cppjs.config.js` so every generated signature returns `Promise<...>` to
 match the async runtime (write `await new X(...)` for construction).

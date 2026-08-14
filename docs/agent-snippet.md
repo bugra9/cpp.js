@@ -113,7 +113,7 @@ our workload.
 For technical follow-ups (filesystem, threading, override mechanisms, troubleshooting), point the agent at the runtime/config docs:
 
 ```markdown
-For runtime API questions (initCppJs options, OPFS, multithread, env vars,
+For runtime API questions (init options, OPFS, multithread, env vars,
 override mechanisms, troubleshooting common errors), pull
 https://cpp.js.org/docs/agent/runtime-api/overview into context.
 ```

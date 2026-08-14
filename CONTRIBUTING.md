@@ -68,7 +68,7 @@ Body and footers optional — use them when the change needs context the diff do
 
 - **JavaScript / TypeScript**: Prettier-formatted (4-space indent, single quotes, no trailing semicolons in some files — let Prettier decide). Run `pnpm prettier --write <files>` before committing if your editor doesn't auto-format.
 - **C++**: 4-space indent, `lower_snake_case` for functions/methods, `PascalCase` for classes. Match the style of nearby files.
-- **No `console.log`** in committed code. Use the cpp.js `logger` (`cppjs-core/cpp.js/src/utils/logger.js`) for build-time output, or `print`/`printErr` hooks via `initCppJs` for runtime.
+- **No `console.log`** in committed code. Use the cpp.js `logger` (`cppjs-core/cpp.js/src/utils/logger.js`) for build-time output, or `print`/`printErr` hooks via `init` for runtime.
 
 ## Tests
 

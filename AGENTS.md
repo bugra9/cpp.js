@@ -55,7 +55,7 @@ Two surfaces. Keep them straight:
 
 | Surface | When | Doc |
 |---------|------|-----|
-| `initCppJs(opts)` | Runtime | [`docs/api/init.md`](./docs/api/init.md) |
+| `init(opts)` | Runtime | [`docs/api/init.md`](./docs/api/init.md) |
 | `cppjs.config.js` | Build-time, every consumer | [`docs/api/cppjs-config.md`](./docs/api/cppjs-config.md) |
 | `cppjs.build.js` | Build-time, package authors only | [`docs/api/cppjs-build.md`](./docs/api/cppjs-build.md) |
 | Filesystem (OPFS, memfs, …) | Cross-cutting | [`docs/api/filesystem.md`](./docs/api/filesystem.md) |
@@ -76,9 +76,9 @@ Load-bearing constraints (the things agents miss most):
 - **`runtime: 'mt'` in production → requires `Cross-Origin-Opener-Policy: same-origin` + `Cross-Origin-Embedder-Policy: require-corp` headers.** Dev plugins inject; prod hosts (Vercel, Netlify, nginx, Cloudflare Pages) need explicit config.
 - **Edge runtimes (Cloudflare Workers, Deno Deploy, Vercel Edge) don't expose Web Workers.** No `useWorker`, no OPFS, no `mt` — only `runtime: 'st'` + memory fs.
 - **`useWorker` is independent of `runtime: 'mt'`.** Two orthogonal axes — see the matrix in `threading.md`.
-- **`cppjs.config.js` is build-time only.** Putting `useWorker: true` in it does nothing; that's a runtime option for `initCppJs(opts)`.
+- **`cppjs.config.js` is build-time only.** Putting `useWorker: true` in it does nothing; that's a runtime option for `init(opts)`.
 - **`cargo:` imports must be declared.** `import { X } from 'cargo:<crate>'` requires the crate in the top-level `cargoDependencies` map — undeclared imports are a hard error. The consumer (not the engine) declares `@cpp.js/core-embind-rust`.
-- **`platform: 'wasi'` skips Rust** (no wasm32-wasip3 Rust target yet) and produces a single `.wasm` command — no JS glue, no `initCppJs`.
+- **`platform: 'wasi'` skips Rust** (no wasm32-wasip3 Rust target yet) and produces a single `.wasm` command — no JS glue, no `init`.
 
 ## Commands
 

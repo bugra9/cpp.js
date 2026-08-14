@@ -1,15 +1,29 @@
-# `initCppJs(opts)` — Runtime API
+# `init(opts)` — Runtime API
 
 The single entry point for calling into your Wasm module from JavaScript. Produced by the cpp.js build pipeline; consumed by your application code.
 
 > The same function is exported by browser, Node, and Edge runtime entries. The `opts` shape is identical; only the available *defaults* differ per runtime.
 
+## Where it comes from
+
+With a bundler plugin (Vite, Rollup, Webpack, Rspack, Metro), import it from `cpp.js` and everything else from the header, `.rs` file or `cargo:` crate:
+
+```js
+import { init } from 'cpp.js';
+import { Matrix } from './native/Matrix.h';
+import { Uuid } from 'cargo:uuid';
+
+await init();
+```
+
+One call binds every imported module: each proxy module registers its bindings when it is imported, and `init()` boots the runtime once and then resolves all of them. Proxy modules still export `initCppJs` — the same function under its old name — so existing code keeps working. Node, Edge and standalone builds have no bundler plugin: there you import the built artifact directly and call its default export.
+
 ## Signature
 
 ```ts
-initCppJs(opts?: InitOptions): Promise<Module>
+init(opts?: InitOptions): Promise<Module>
 
-initCppJs.terminate(): void   // browser-only when useWorker:true
+init.terminate(): void   // browser-only when useWorker:true
 ```
 
 `Module` is the Emscripten runtime module enriched with cpp.js helpers (see [§ Module helpers](#module-helpers) below).
@@ -145,23 +159,23 @@ When `useWorker: true`, `Module` is a Comlink-wrapped proxy. Behavior is identic
 - Calls are async by nature even when the underlying C++ is synchronous.
 - Returned `vector`s arrive as proxies; treat them the same — `m.toArray(vec)` still works.
 
-Call `initCppJs.terminate()` to kill the worker and release resources.
+Call `init.terminate()` to kill the worker and release resources.
 
 ## Examples
 
 ### Minimal browser
 
 ```js
-import { initCppJs } from './native/native.h'
+import { init } from 'cpp.js'
 
-const m = await initCppJs()
+const m = await init()
 console.log(m.add(2, 3))  // an embind-exported function
 ```
 
 ### Browser + persistent storage
 
 ```js
-const m = await initCppJs({
+const m = await init({
   useWorker: true,           // mandatory for OPFS
   fs: { opfs: true },        // default, shown for clarity
 })
@@ -173,7 +187,7 @@ m.FS.writeFile('/opfs/myapp/data.bin', new Uint8Array([1, 2, 3]))
 ### Browser + multithread
 
 ```js
-const m = await initCppJs({
+const m = await init({
   // Nothing extra here — `runtime: 'mt'` was set in cppjs.config.js
   // at build time, so this Wasm IS multithreaded.
   // Just make sure your prod host sends COOP/COEP headers.
@@ -183,9 +197,9 @@ const m = await initCppJs({
 ### Node.js
 
 ```js
-import { initCppJs } from './native/native.js'
+import { init } from 'cpp.js'
 
-const m = await initCppJs({
+const m = await init({
   env: { TMPDIR: '_CPPJS_DATA_PATH_/scratch' },
 })
 ```
@@ -193,9 +207,9 @@ const m = await initCppJs({
 ### Cloudflare Worker
 
 ```js
-import { initCppJs } from './native/native.js'
+import { init } from 'cpp.js'
 
-const m = await initCppJs()
+const m = await init()
 // useWorker, OPFS, multithread all unavailable on edge.
 // Run in single-thread + memory-fs only.
 ```
@@ -203,7 +217,7 @@ const m = await initCppJs()
 ### Custom logging
 
 ```js
-const m = await initCppJs({
+const m = await init({
   logHandler:   (text) => myLogger.info(`[wasm] ${text}`),
   errorHandler: (text) => myLogger.error(`[wasm] ${text}`),
 })
@@ -213,4 +227,4 @@ const m = await initCppJs({
 
 - [`filesystem.md`](./filesystem.md) — full OPFS / memfs / node-fs decision tree.
 - [`threading.md`](./threading.md) — `runtime: 'mt'` requirements, COOP/COEP, edge limits.
-- [`cppjs-config.md`](./cppjs-config.md) — build-time config that produces what `initCppJs` consumes.
+- [`cppjs-config.md`](./cppjs-config.md) — build-time config that produces what `init` consumes.

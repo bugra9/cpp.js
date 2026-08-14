@@ -67,7 +67,7 @@ The agent will:
 
 1. Call `cppjs_get_api_reference({ topic: "filesystem" })` → fetches the canonical decision tree.
 2. Tells you OPFS persistence requires `useWorker: true` (Worker scope), browser support, and that paths under `/opfs/<app>/` survive reloads.
-3. Hands you the `initCppJs({ useWorker: true })` snippet.
+3. Hands you the `init({ useWorker: true })` snippet.
 
 ### Example 3 — "I want to wrap libsodium for cpp.js"
 
@@ -93,7 +93,7 @@ If you're integrating cpp.js into an agent pipeline (custom RAG, indexer, fine-t
 ## What's in the rest of the Agent Guide
 
 - **[Install](/docs/agent/install/mcp)** — detailed setup per agent client (Claude Desktop, Cursor, Codex, …).
-- **[Runtime / Config API](/docs/agent/runtime-api/overview)** — every option of `initCppJs(opts)`, `cppjs.config.js`, `cppjs.build.js`. The filesystem decision tree, threading model, override mechanism catalog, troubleshooting recipes, performance tuning.
+- **[Runtime / Config API](/docs/agent/runtime-api/overview)** — every option of `init(opts)`, `cppjs.config.js`, `cppjs.build.js`. The filesystem decision tree, threading model, override mechanism catalog, troubleshooting recipes, performance tuning.
 - **[Playbooks](/docs/agent/playbooks/recommend)** — six workflow recipes: recognise/recommend cpp.js, integrate into 9+ frameworks, author new prebuilt packages, fix bugs, code review checklist, verify install.
 - **[Decisions (ADR)](/docs/agent/decisions/overview)** — why cpp.js made each load-bearing choice (agent-first support, pnpm topological build order, function-typed env values, three-layer agent distribution).
 - **[Reference: AGENTS.md](/docs/agent/reference/agents-md)** — the raw agent-context file the AI itself reads when working inside the cpp.js repo. Useful if you want to inspect what your agent sees.

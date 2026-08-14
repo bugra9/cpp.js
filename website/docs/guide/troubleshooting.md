@@ -39,6 +39,18 @@ Two libs define the same function.
 
 - **Fix**: same as the symbol-clash case above. `replaceList` rename, or `ignoreLibName` to drop one.
 
+### `wasm-ld: error: --shared-memory is disallowed by ... not compiled with 'atomics' or 'bulk-memory' features`
+
+A multithread (`mt`) wasm link pulled in a Rust archive built without the
+atomics features. Current Cpp.js cannot produce such an archive — mt Rust
+builds go through nightly `-Zbuild-std` or fail with install instructions —
+so the usual source is a stale cargo-type package prebuilt built before mt
+support.
+
+- **Fix**: rebuild the package's wasm prebuilts (`cppjs build -p wasm` in the
+  package, with `rustup toolchain install nightly --component rust-src` done
+  once) or update to a package version whose mt prebuilt was built that way.
+
 ### `__wasm__` / `CPL_CPUID` / `__asm__` / SIMD intrinsic compile errors
 
 Upstream library uses CPU-specific code that doesn't compile for Wasm.
@@ -118,9 +130,9 @@ Same root cause as above — COOP/COEP missing.
 
 ### `OPFS is only available inside a Worker scope`
 
-You mounted `/opfs/...` but didn't set `useWorker: true` on `initCppJs(opts)`.
+You mounted `/opfs/...` but didn't set `useWorker: true` on `init(opts)`.
 
-- **Fix**: `initCppJs({ useWorker: true })`. See the [filesystem guide](/docs/api/javascript/filesystem).
+- **Fix**: `init({ useWorker: true })`. See the [filesystem guide](/docs/api/javascript/filesystem).
 
 ### `Path /opfs/... but OPFS is disabled. Enable fs.opfs in config`
 
@@ -142,7 +154,13 @@ The Wasm process exhausted its allocated heap.
 The C++ function exists but didn't bind to JS.
 
 - **Cause A**: binding rule violation. See "Binding-time errors" above.
-- **Cause B**: the JS module finished loading but `initCppJs` hasn't completed. Make sure you call `m.someFunc` *after* `await initCppJs(...)`.
+- **Cause B**: the JS module finished loading but `init` hasn't completed. Make sure you call `m.someFunc` *after* `await init(...)`.
+- **Cause C** (worker runtime, e.g. `instance.method is not a function`): the
+  module runs in a worker — the wasm `mt` runtime defaults to one, as does
+  `init({ useWorker: true })` — so construction returns a promise and
+  sync-style code holds a `Promise`, not the instance. Write
+  `const c = await new X(...); await c.method(...)` and set `dts: 'promise'`
+  so the generated types match.
 
 ### Calls hang forever when `useWorker: true`
 

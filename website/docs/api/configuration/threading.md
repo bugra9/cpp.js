@@ -106,7 +106,7 @@ add_header Cross-Origin-Embedder-Policy require-corp;
 Wasm runs in a single dedicated Web Worker; the main thread receives a Comlink-bridged proxy.
 
 ```js
-const m = await initCppJs({ useWorker: true });
+const m = await init({ useWorker: true });
 // `m` looks identical, but every call is async.
 const result = await m.add(2, 3);
 ```
@@ -130,7 +130,7 @@ You don't need it when:
 | `m.FS.writeFile(...)` returns | `undefined` | `Promise<undefined>` |
 | Synchronous callbacks from C++ to JS | Work | Don't work — design as a promise round-trip |
 | OPFS storage | Throws | Works (if browser supports) |
-| Termination | n/a | `initCppJs.terminate()` kills the worker |
+| Termination | n/a | `init.terminate()` kills the worker |
 
 Embind objects (vectors, structs) are auto-proxied via cpp.js's custom Comlink transfer handlers. `m.toArray(vec)` and `m.toVector(cls, arr)` work transparently across the boundary.
 

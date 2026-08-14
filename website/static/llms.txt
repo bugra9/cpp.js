@@ -24,7 +24,7 @@ Single source of truth at [`cppjs-agents/`](https://github.com/bugra9/cpp.js/tre
 
 ## Runtime / Config API reference
 
-- [initCppJs(opts)](https://cpp.js.org/docs/agent/runtime-api/init): Runtime API — useWorker, fs.opfs, env, lifecycle hooks, Module helpers (m.FS, m.toVector, m.autoMountFiles)
+- [init(opts)](https://cpp.js.org/docs/agent/runtime-api/init): Runtime API — useWorker, fs.opfs, env, lifecycle hooks, Module helpers (m.FS, m.toVector, m.autoMountFiles)
 - [cppjs.config.js](https://cpp.js.org/docs/agent/runtime-api/cppjs-config): Build-time consumer config — general.name, dependencies, paths, target.runtime, targetSpecs, extensions
 - [cppjs.build.js](https://cpp.js.org/docs/agent/runtime-api/cppjs-build): Package author hooks — getURL/getSource, getBuildParams, prepare, build, replaceList, copyToSource/copyToDist
 - [Filesystem (OPFS / memfs / node-fs / edge)](https://cpp.js.org/docs/agent/runtime-api/filesystem): Decision tree — when persistence requires useWorker:true

@@ -89,7 +89,7 @@ rejects with `UnknownError: The operation failed for an unknown transient reason
 Threads themselves are fine there — pthreads, SharedArrayBuffer, wasm exceptions and
 SIMD all work (verified 2026-07-12 with per-worker instrumentation; real Safari 26.5
 works fully, OPFS included). Before the runtime preflight existed this broke mt boots:
-the WASMFS OPFS proxy thread swallowed the rejection and `initCppJs` deadlocked with no
+the WASMFS OPFS proxy thread swallowed the rejection and `init` deadlocked with no
 console or page error. The runtime now probes `getDirectory()` before mounting and
 falls back to `/memfs` with a logged error, so mt modules boot on all three Playwright
 engines and the mt playground e2e specs run WebKit again. If you ever see an mt init
@@ -101,7 +101,7 @@ API does not mean it works.
 Wasm runs in a single dedicated Web Worker; main thread receives a Comlink-bridged proxy.
 
 ```js
-const m = await initCppJs({ useWorker: true })
+const m = await init({ useWorker: true })
 // m looks identical, but every call is async.
 const result = await m.add(2, 3)
 ```
@@ -125,7 +125,7 @@ You don't need it when:
 | `m.FS.writeFile(...)` returns | `undefined` | `Promise<undefined>` |
 | Synchronous callbacks | Work | Don't work — use returned promises |
 | OPFS storage | Throws | Works (if browser supports) |
-| Termination | n/a | `initCppJs.terminate()` kills the worker |
+| Termination | n/a | `init.terminate()` kills the worker |
 
 Embind objects (vectors, structs) are auto-proxied via cpp.js's custom Comlink transfer handlers. `m.toArray(vec)` and `m.toVector(cls, arr)` work transparently.
 

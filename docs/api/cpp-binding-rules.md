@@ -39,6 +39,14 @@ Build defaults assume modern C++. Use:
 - `std::optional<T>` (C++17), `std::variant<...>` (C++17) — supported via website type table
 - Range-based for, `auto`, lambdas, `nullptr`
 
+Runtime notes from the cross-runtime conformance suite: vector PARAMETERS take a vector
+instance on direct runtimes (build one from a method returning `std::vector`); plain JS
+arrays are coerced only by the worker proxy. By-value `std::vector` RETURNS are real vector
+proxies on direct runtimes (wasm and jsi) and arrive as plain JS arrays on worker-backed
+runtimes - that array conversion is the worker contract (`Module.toArray` accepts both
+shapes). `std::optional<T>` binds on every leg (the jsi fork registers optionals alongside
+each `register_vector<T>`, mirroring upstream embind).
+
 Avoid:
 
 - `std::unique_ptr` returned by value across the binding (use `shared_ptr` for cross-boundary ownership)
@@ -59,6 +67,12 @@ class Matrix {
 ```
 
 Private members are fine — they just won't appear in JS. Don't try to hide everything `private` and expect JS to call into your class.
+
+> Reality check (cross-runtime conformance suite): public VALUE fields (numbers, `bool`,
+> `std::string`) are bound on every leg — the pipeline injects embind `.property` lines for
+> them, so `m.rows` reads and writes from JS on node, browser (worker runtimes go through
+> the proxy: `await b.rows`) and React Native alike. Fields of vector, `shared_ptr` or
+> class type still need accessor methods.
 
 ### 4. Inheritance + virtual works; multiple inheritance doesn't
 
@@ -101,6 +115,14 @@ try {
     console.error(e.message);  // "sqrt of negative"
 }
 ```
+
+> Reality check (cross-runtime conformance suite): the thrown exception surfaces as a JS
+> `Error` carrying the text on every leg. On wasm legs `.message` is
+> `"<type>: <what()>"` (e.g. `std::invalid_argument: sqrt of negative`), with the parts
+> also available as `e.cppType` / `e.cppMessage` — the runtime decodes the raw
+> `WebAssembly.Exception` via the exported `getExceptionMessage` helper. On the jsi (React
+> Native) path the fork rethrows `std::exception` as a `JSError`, so `.message` is the
+> plain `what()` text.
 
 ## Wrapper pattern
 

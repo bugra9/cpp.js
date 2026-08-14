@@ -184,7 +184,7 @@ const FILES = [
             slug: '/agent/runtime-api/overview',
         },
     },
-    runtimeApi('init.md', 'init', 'initCppJs(opts) — Runtime API', 'initCppJs'),
+    runtimeApi('init.md', 'init', 'init(opts) — Runtime API', 'init'),
     runtimeApi('cppjs-config.md', 'cppjs-config', 'cppjs.config.js (build-time)', 'cppjs.config.js'),
     runtimeApi('cppjs-build.md', 'cppjs-build', 'cppjs.build.js (package authors)', 'cppjs.build.js'),
     runtimeApi('filesystem.md', 'filesystem', 'Filesystem — OPFS, memfs, node-fs, edge', 'Filesystem'),

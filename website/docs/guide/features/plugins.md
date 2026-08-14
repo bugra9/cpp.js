@@ -37,7 +37,7 @@ export default {
 ```
 
 ```js title="src/index.js"
-import { initCppJs } from 'gdal3.js/Gdal.h';
+import { init } from 'cpp.js';
 ```
 
 To resolve packages files correctly, integration via a hook is required.

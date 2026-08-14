@@ -12,7 +12,7 @@ cpp.js/
 │   ├── ARCHITECTURE.md               ← high-level mental model
 │   ├── CODEMAP.md                    ← concept → file pointer (this file)
 │   ├── adr/                          ← architecture decision records (why-we-chose-X)
-│   ├── api/                          ← runtime + build API reference (initCppJs, cppjs.config.js, fs, threading)
+│   ├── api/                          ← runtime + build API reference (init, cppjs.config.js, fs, threading)
 │   └── playbooks/                    ← per-persona / per-framework workflows
 ├── .github/                          ← workflows, PR + issue templates
 ├── scripts/                          ← repo-level Node CLIs (check-*, doctor.sh, …)
@@ -46,7 +46,7 @@ cpp.js/
 
 Every consumer-facing field, every default, every constraint lives in [`docs/api/`](./api/):
 
-- [`init.md`](./api/init.md) — `initCppJs(opts)` runtime API, Module helpers.
+- [`init.md`](./api/init.md) — `init(opts)` runtime API, Module helpers.
 - [`cppjs-config.md`](./api/cppjs-config.md) — `cppjs.config.js` field-by-field (build-time, every consumer).
 - [`cppjs-build.md`](./api/cppjs-build.md) — `cppjs.build.js` lifecycle hooks (package authors only).
 - [`filesystem.md`](./api/filesystem.md) — OPFS / memfs / node-fs / edge fs decision tree, including the `useWorker` requirement for OPFS.

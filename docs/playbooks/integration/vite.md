@@ -8,7 +8,7 @@ Add cpp.js to a Vite project so:
 
 - WASM modules load via `pnpm dev` and `pnpm build` without 404s.
 - `pnpm preview` serves the production build with COOP/COEP headers (multithread works locally).
-- HMR rebuilds wasm when the user edits `.h`/`.cpp` files.
+- HMR rebuilds wasm when the user edits `.h`/`.cpp`/`.rs` files.
 
 ## When to use
 
@@ -64,7 +64,7 @@ export default defineConfig({
 The plugin handles:
 
 - Setting `Cross-Origin-Opener-Policy` + `Cross-Origin-Embedder-Policy` in **dev** AND **preview** server (multithread WASM works without manual server config).
-- Watching native source files (`paths.native`, default `src/native/`) — saving a `.cpp`/`.h` triggers a rebuild + HMR.
+- Watching native source files (`paths.native`, default `src/native/`) — saving a `.cpp`/`.h`/`.rs` triggers a rebuild + HMR.
 - Routing `/cpp.js`, `/cpp.wasm`, `/cpp.data.txt` to the freshly built artifacts.
 
 `cppjs.config.js` at project root (only needed if wrapping own C++):
@@ -103,7 +103,7 @@ If the user picks `runtime: 'st'` (single-thread), none of this applies — no h
 - [ ] `pnpm install` succeeds.
 - [ ] `pnpm dev` starts; opening the page shows no 404s for `/cpp.js`, `/cpp.wasm`, `/cpp.data.txt` in DevTools Network tab.
 - [ ] Console log shows the cpp.js loader initializing (`wasm compiled for browser…` in dev terminal).
-- [ ] User-side: `await initCppJs(); Module.someFn(...)` returns expected result.
+- [ ] User-side: `await init(); Module.someFn(...)` returns expected result.
 - [ ] `pnpm build` produces `dist/` with the wasm + js artifacts.
 - [ ] `pnpm preview` serves the build; multithread features still work (verify `crossOriginIsolated === true` in console).
 - [ ] If multithread, production headers config exists for the target host.

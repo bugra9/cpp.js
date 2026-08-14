@@ -50,7 +50,7 @@ Each playbook tells you:
 
 1. Which plugin to install (`@cpp.js/plugin-vite`, `@cpp.js/plugin-webpack`, `@cpp.js/plugin-react-native`, …).
 2. The exact config diff (with example).
-3. Where to call `initCppJs(...)`.
+3. Where to call `init(...)`.
 4. Headers / build hooks specific to that bundler.
 5. A canonical sample to mirror.
 

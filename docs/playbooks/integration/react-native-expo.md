@@ -110,7 +110,7 @@ If the user also targets `expo-router` web build (RN Web), then they're effectiv
 - [ ] `pnpm expo prebuild` generates `ios/` and `android/` without errors.
 - [ ] `cd ios && pod install` succeeds.
 - [ ] `pnpm expo run:ios` and `pnpm expo run:android` build + launch.
-- [ ] App calls into C++: `import { initCppJs } from '@cpp.js/plugin-react-native'; await initCppJs(); Module.fn(...)` returns expected result.
+- [ ] App calls into C++: `import { init } from 'cpp.js'; await init(); Module.fn(...)` returns expected result.
 - [ ] EAS build (if used) produces a valid binary.
 
 ## Common pitfalls
