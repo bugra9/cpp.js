@@ -42,7 +42,7 @@
         "e2e:templates": "node scripts/e2e-templates.js",
         "publish:samples": "pnpm --filter='@cpp.js/sample-*' publish --no-git-checks",
         "publish:plugins": "pnpm --filter='@cpp.js/plugin-*' publish --no-git-checks",
-        "publish:core": "pnpm --filter=cpp.js publish --no-git-checks",
+        "publish:core": "pnpm --filter=cpp.js publish --no-git-checks --tag beta",
         "publish:mcp": "pnpm --filter=@cpp.js/mcp publish --no-git-checks",
         "publish:all": "pnpm run publish:core && pnpm run publish:mcp && pnpm run publish:plugins && pnpm run publish:samples",
         "publish:changeset": "changeset publish",
