@@ -80,7 +80,7 @@ The agent will:
 
 1. Call `cppjs_get_api_reference({ topic: "filesystem" })` → fetches the canonical decision tree.
 2. Tells you OPFS persistence requires `useWorker: true` (Worker scope), browser support, and that paths under `/opfs/<app>/` survive reloads.
-3. Hands you the `initCppJs({ useWorker: true })` snippet.
+3. Hands you the `init({ useWorker: true })` snippet.
 
 ### Example 3 — "I want to wrap libsodium for cpp.js"
 
@@ -106,7 +106,7 @@ If you're integrating cpp.js into an agent pipeline (custom RAG, indexer, fine-t
 ## What's in the rest of the Agent Guide
 
 - **[Install](/docs/agent/install/mcp)** — detailed setup per agent client (Claude Desktop, Cursor, Codex, …).
-- **[Runtime / Config API](/docs/agent/runtime-api/overview)** — every option of `initCppJs(opts)`, `cppjs.config.js`, `cppjs.build.js`. The filesystem decision tree, threading model, override mechanism catalog, troubleshooting recipes, performance tuning.
+- **[Runtime / Config API](/docs/agent/runtime-api/overview)** — every option of `init(opts)`, `cppjs.config.js`, `cppjs.build.js`. The filesystem decision tree, threading model, override mechanism catalog, troubleshooting recipes, performance tuning.
 - **[Playbooks](/docs/agent/playbooks/recommend)** — six workflow recipes: recognise/recommend cpp.js, integrate into 9+ frameworks, author new prebuilt packages, fix bugs, code review checklist, verify install.
 - **[Decisions (ADR)](/docs/agent/decisions/overview)** — why cpp.js made each load-bearing choice (agent-first support, pnpm topological build order, function-typed env values, three-layer agent distribution).
 - **[Reference: AGENTS.md](/docs/agent/reference/agents-md)** — the raw agent-context file the AI itself reads when working inside the cpp.js repo. Useful if you want to inspect what your agent sees.
@@ -1092,7 +1092,7 @@ our workload.
 For technical follow-ups (filesystem, threading, override mechanisms, troubleshooting), point the agent at the runtime/config docs:
 
 ```markdown
-For runtime API questions (initCppJs options, OPFS, multithread, env vars,
+For runtime API questions (init options, OPFS, multithread, env vars,
 override mechanisms, troubleshooting common errors), pull
 https://cpp.js.org/docs/agent/runtime-api/overview into context.
 ```
@@ -1134,7 +1134,7 @@ cpp.js has **two API surfaces** that get confused often. Keep them straight:
 
 | Surface | When | Authored by | Documented in |
 |---------|------|-------------|---------------|
-| `initCppJs(opts)` | **Runtime** — at the moment your app calls into Wasm | Every consumer | [`init.md`](./init.md) |
+| `init(opts)` | **Runtime** — at the moment your app calls into Wasm | Every consumer | [`init.md`](./init.md) |
 | `cppjs.config.js` | **Build-time** — read by the `cppjs build` CLI | Every consumer | [`cppjs-config.md`](./cppjs-config.md) |
 | `cppjs.build.js` | **Build-time** — only inside `cppjs-package-*` source folders | Package authors only | [`cppjs-build.md`](./cppjs-build.md) |
 
@@ -1176,7 +1176,7 @@ C++ binding & build authoring:
 ┌─────────────────────────────────────────────────────────────┐
 │  Runtime:  your app                                         │
 │  ┌────────────────────────────────────────────────────────┐│
-│  │ const m = await initCppJs({                            ││
+│  │ const m = await init({                            ││
 │  │   useWorker: true,    // for OPFS persistent storage   ││
 │  │   fs: { opfs: true }, // browser default               ││
 │  │   env: { ... },                                        ││
@@ -1189,7 +1189,7 @@ C++ binding & build authoring:
 
 ## Common pitfalls (read these even if you skip the rest)
 
-1. **`cppjs.config.js` is NOT runtime config.** It's read once by the `cppjs build` CLI. Putting `useWorker: true` here does nothing — that's a runtime option for `initCppJs(opts)`.
+1. **`cppjs.config.js` is NOT runtime config.** It's read once by the `cppjs build` CLI. Putting `useWorker: true` here does nothing — that's a runtime option for `init(opts)`.
 2. **OPFS persistent storage in browser requires `useWorker: true`.** OPFS API is only exposed in Worker scope. Mounting `/opfs/...` from the main thread throws.
 3. **`runtime: 'mt'` in production silently fails without COOP/COEP headers.** Dev plugins inject them; prod hosts (Vercel, Netlify, nginx, Cloudflare Pages, …) need explicit configuration.
 4. **Edge runtimes (Cloudflare Workers, Deno Deploy, Vercel Edge) don't support Web Workers.** That means no `useWorker`, no OPFS, no multithread — only single-thread + in-memory fs.
@@ -1205,18 +1205,32 @@ C++ binding & build authoring:
 
 <!-- source: docs/api/init.md -->
 
-# `initCppJs(opts)` — Runtime API
+# `init(opts)` — Runtime API
 
 The single entry point for calling into your Wasm module from JavaScript. Produced by the cpp.js build pipeline; consumed by your application code.
 
 > The same function is exported by browser, Node, and Edge runtime entries. The `opts` shape is identical; only the available *defaults* differ per runtime.
 
+## Where it comes from
+
+With a bundler plugin (Vite, Rollup, Webpack, Rspack, Metro), import it from `cpp.js` and everything else from the header, `.rs` file or `cargo:` crate:
+
+```js
+import { init } from 'cpp.js';
+import { Matrix } from './native/Matrix.h';
+import { Uuid } from 'cargo:uuid';
+
+await init();
+```
+
+One call binds every imported module: each proxy module registers its bindings when it is imported, and `init()` boots the runtime once and then resolves all of them. Proxy modules still export `initCppJs` — the same function under its old name — so existing code keeps working. Node, Edge and standalone builds have no bundler plugin: there you import the built artifact directly and call its default export.
+
 ## Signature
 
 ```ts
-initCppJs(opts?: InitOptions): Promise<Module>
+init(opts?: InitOptions): Promise<Module>
 
-initCppJs.terminate(): void   // browser-only when useWorker:true
+init.terminate(): void   // browser-only when useWorker:true
 ```
 
 `Module` is the Emscripten runtime module enriched with cpp.js helpers (see [§ Module helpers](#module-helpers) below).
@@ -1352,23 +1366,23 @@ When `useWorker: true`, `Module` is a Comlink-wrapped proxy. Behavior is identic
 - Calls are async by nature even when the underlying C++ is synchronous.
 - Returned `vector`s arrive as proxies; treat them the same — `m.toArray(vec)` still works.
 
-Call `initCppJs.terminate()` to kill the worker and release resources.
+Call `init.terminate()` to kill the worker and release resources.
 
 ## Examples
 
 ### Minimal browser
 
 ```js
-import { initCppJs } from './native/native.h'
+import { init } from 'cpp.js'
 
-const m = await initCppJs()
+const m = await init()
 console.log(m.add(2, 3))  // an embind-exported function
 ```
 
 ### Browser + persistent storage
 
 ```js
-const m = await initCppJs({
+const m = await init({
   useWorker: true,           // mandatory for OPFS
   fs: { opfs: true },        // default, shown for clarity
 })
@@ -1380,7 +1394,7 @@ m.FS.writeFile('/opfs/myapp/data.bin', new Uint8Array([1, 2, 3]))
 ### Browser + multithread
 
 ```js
-const m = await initCppJs({
+const m = await init({
   // Nothing extra here — `runtime: 'mt'` was set in cppjs.config.js
   // at build time, so this Wasm IS multithreaded.
   // Just make sure your prod host sends COOP/COEP headers.
@@ -1390,9 +1404,9 @@ const m = await initCppJs({
 ### Node.js
 
 ```js
-import { initCppJs } from './native/native.js'
+import { init } from 'cpp.js'
 
-const m = await initCppJs({
+const m = await init({
   env: { TMPDIR: '_CPPJS_DATA_PATH_/scratch' },
 })
 ```
@@ -1400,9 +1414,9 @@ const m = await initCppJs({
 ### Cloudflare Worker
 
 ```js
-import { initCppJs } from './native/native.js'
+import { init } from 'cpp.js'
 
-const m = await initCppJs()
+const m = await init()
 // useWorker, OPFS, multithread all unavailable on edge.
 // Run in single-thread + memory-fs only.
 ```
@@ -1410,7 +1424,7 @@ const m = await initCppJs()
 ### Custom logging
 
 ```js
-const m = await initCppJs({
+const m = await init({
   logHandler:   (text) => myLogger.info(`[wasm] ${text}`),
   errorHandler: (text) => myLogger.error(`[wasm] ${text}`),
 })
@@ -1420,7 +1434,7 @@ const m = await initCppJs({
 
 - [`filesystem.md`](./filesystem.md) — full OPFS / memfs / node-fs decision tree.
 - [`threading.md`](./threading.md) — `runtime: 'mt'` requirements, COOP/COEP, edge limits.
-- [`cppjs-config.md`](./cppjs-config.md) — build-time config that produces what `initCppJs` consumes.
+- [`cppjs-config.md`](./cppjs-config.md) — build-time config that produces what `init` consumes.
 
 ---
 
@@ -1478,7 +1492,7 @@ export default {
   dts: 'sync',
     // 'sync' (default) types the direct binding surface. 'promise' wraps every
     // generated method/function return in Promise<...> - use it when your app
-    // runs with initCppJs({ useWorker: true }) (or any async bridge), where
+    // runs with init({ useWorker: true }) (or any async bridge), where
     // every call resolves asynchronously at runtime. Constructors stay
     // sync-typed either way; write `await new X(...)` (a no-op on sync
     // runtimes, required under a worker). See lifecycle-and-types.md.
@@ -1716,7 +1730,7 @@ export default {
 
 ## See also
 
-- [`init.md`](./init.md) — runtime API. `cppjs.config.js` produces the artifacts that `initCppJs(opts)` loads.
+- [`init.md`](./init.md) — runtime API. `cppjs.config.js` produces the artifacts that `init(opts)` loads.
 - [`cppjs-build.md`](./cppjs-build.md) — sibling file used by package authors only.
 - [`rust.md`](./rust.md) — Rust bindings: `cargo:` imports, app-local `.rs`, `export.type: 'cargo'` packages.
 - [`wasi.md`](./wasi.md) — `platform: 'wasi'` command builds + `-bin-wasi` tool packages.
@@ -1973,7 +1987,7 @@ Start with the simplest hook that works. Most packages need only `getURL` + `bui
 
 # Filesystem — OPFS, memfs, node-fs, edge
 
-> Where do files live in cpp.js? Depends on the runtime and your `initCppJs` options. This doc maps every combination.
+> Where do files live in cpp.js? Depends on the runtime and your `init` options. This doc maps every combination.
 
 ## The decision tree
 
@@ -2084,7 +2098,7 @@ imgEl.src = url
 1. **Mounting `/opfs` from main thread without `useWorker: true`** → throws synchronously inside `m.getFinalPath()`. The error message tells you to enable `useWorker` or mount under `/memfs/` instead.
 2. **Forgetting the `<app>` prefix** → cpp.js auto-creates `/memfs/<app>/automounted` at startup. If you write to `/memfs/foo` (no `<app>`) it works but won't be cleaned up on `terminate`.
 3. **Assuming OPFS persists across origins** — it doesn't. Files written from `app.example.com` are invisible to `other.example.com`. Standard origin isolation.
-4. **Using `m.FS` from before `onRuntimeInitialized`** — `m.FS` is undefined until init completes. Use the `onRuntimeInitialized: (m) => {…}` hook or await the `initCppJs(...)` promise first.
+4. **Using `m.FS` from before `onRuntimeInitialized`** — `m.FS` is undefined until init completes. Use the `onRuntimeInitialized: (m) => {…}` hook or await the `init(...)` promise first.
 5. **Calling `fs:{ opfs: false }` and then mounting `/opfs/...`** → throws: "OPFS is disabled. Enable fs.opfs in config to mount under /opfs/."
 
 ## Per-runtime cheat sheet
@@ -2198,7 +2212,7 @@ rejects with `UnknownError: The operation failed for an unknown transient reason
 Threads themselves are fine there — pthreads, SharedArrayBuffer, wasm exceptions and
 SIMD all work (verified 2026-07-12 with per-worker instrumentation; real Safari 26.5
 works fully, OPFS included). Before the runtime preflight existed this broke mt boots:
-the WASMFS OPFS proxy thread swallowed the rejection and `initCppJs` deadlocked with no
+the WASMFS OPFS proxy thread swallowed the rejection and `init` deadlocked with no
 console or page error. The runtime now probes `getDirectory()` before mounting and
 falls back to `/memfs` with a logged error, so mt modules boot on all three Playwright
 engines and the mt playground e2e specs run WebKit again. If you ever see an mt init
@@ -2210,7 +2224,7 @@ API does not mean it works.
 Wasm runs in a single dedicated Web Worker; main thread receives a Comlink-bridged proxy.
 
 ```js
-const m = await initCppJs({ useWorker: true })
+const m = await init({ useWorker: true })
 // m looks identical, but every call is async.
 const result = await m.add(2, 3)
 ```
@@ -2234,7 +2248,7 @@ You don't need it when:
 | `m.FS.writeFile(...)` returns | `undefined` | `Promise<undefined>` |
 | Synchronous callbacks | Work | Don't work — use returned promises |
 | OPFS storage | Throws | Works (if browser supports) |
-| Termination | n/a | `initCppJs.terminate()` kills the worker |
+| Termination | n/a | `init.terminate()` kills the worker |
 
 Embind objects (vectors, structs) are auto-proxied via cpp.js's custom Comlink transfer handlers. `m.toArray(vec)` and `m.toVector(cls, arr)` work transparently.
 
@@ -2313,6 +2327,14 @@ Build defaults assume modern C++. Use:
 - `std::optional<T>` (C++17), `std::variant<...>` (C++17) — supported via website type table
 - Range-based for, `auto`, lambdas, `nullptr`
 
+Runtime notes from the cross-runtime conformance suite: vector PARAMETERS take a vector
+instance on direct runtimes (build one from a method returning `std::vector`); plain JS
+arrays are coerced only by the worker proxy. By-value `std::vector` RETURNS are real vector
+proxies on direct runtimes (wasm and jsi) and arrive as plain JS arrays on worker-backed
+runtimes - that array conversion is the worker contract (`Module.toArray` accepts both
+shapes). `std::optional<T>` binds on every leg (the jsi fork registers optionals alongside
+each `register_vector<T>`, mirroring upstream embind).
+
 Avoid:
 
 - `std::unique_ptr` returned by value across the binding (use `shared_ptr` for cross-boundary ownership)
@@ -2333,6 +2355,12 @@ class Matrix {
 ```
 
 Private members are fine — they just won't appear in JS. Don't try to hide everything `private` and expect JS to call into your class.
+
+> Reality check (cross-runtime conformance suite): public VALUE fields (numbers, `bool`,
+> `std::string`) are bound on every leg — the pipeline injects embind `.property` lines for
+> them, so `m.rows` reads and writes from JS on node, browser (worker runtimes go through
+> the proxy: `await b.rows`) and React Native alike. Fields of vector, `shared_ptr` or
+> class type still need accessor methods.
 
 ### 4. Inheritance + virtual works; multiple inheritance doesn't
 
@@ -2375,6 +2403,14 @@ try {
     console.error(e.message);  // "sqrt of negative"
 }
 ```
+
+> Reality check (cross-runtime conformance suite): the thrown exception surfaces as a JS
+> `Error` carrying the text on every leg. On wasm legs `.message` is
+> `"<type>: <what()>"` (e.g. `std::invalid_argument: sqrt of negative`), with the parts
+> also available as `e.cppType` / `e.cppMessage` — the runtime decodes the raw
+> `WebAssembly.Exception` via the exported `getExceptionMessage` helper. On the jsi (React
+> Native) path the fork rethrows `std::exception` as a `JSError`, so `.message` is the
+> plain `what()` text.
 
 ## Wrapper pattern
 
@@ -3226,6 +3262,18 @@ Two libs define the same function.
 
 - **Fix:** same as "symbol clash" above. `replaceList` rename, or `ignoreLibName` to drop one.
 
+### `wasm-ld: error: --shared-memory is disallowed by ... not compiled with 'atomics' or 'bulk-memory' features`
+
+A multithread (`mt`) wasm link pulled in a Rust archive whose objects (std
+included) were built without the atomics features. Current cpp.js cannot
+produce such an archive — mt Rust builds go through nightly `-Zbuild-std` or
+fail with install instructions — so the usual source is a **stale cargo-type
+package prebuilt** built before mt support.
+
+- **Fix:** rebuild the package's wasm prebuilts (`cppjs build -p wasm` in the
+  package, with `rustup toolchain install nightly --component rust-src` done
+  once) or update to a package version whose mt prebuilt was built that way.
+
 ### `__wasm__` / `CPL_CPUID` / `__asm__` / SIMD intrinsic compile errors
 
 Upstream library uses CPU-specific code that doesn't compile for Wasm.
@@ -3292,6 +3340,17 @@ Function not in the public binding surface.
 - **Cause A:** function is in an anonymous namespace or `static` at file scope. Move to public surface.
 - **Cause B:** declared in `.h` but defined in `.cpp` with a `static` or `inline` qualifier the binder skips. Match declaration and definition.
 
+### `BindingError: Cannot register public name '<Name>' twice`
+
+Two registrations share one JS-visible name. All languages register into the same embind
+namespace, so a C++ `class Counter` in one header and a Rust `pub struct Counter` in a `.rs`
+import collide — the page aborts during init.
+
+- **Fix:** rename one side; the JS-visible name is the class/struct name, so any distinct
+  identifier resolves it.
+- The colliding registration is often not where you expect: search every imported header,
+  `.rs` file and `cargo:` crate for the name in the message.
+
 ---
 
 ## Runtime errors
@@ -3308,9 +3367,9 @@ Same root cause as above — COOP/COEP missing.
 
 ### `OPFS is only available inside a Worker scope`
 
-You mounted `/opfs/...` but didn't set `useWorker: true` on `initCppJs(opts)`.
+You mounted `/opfs/...` but didn't set `useWorker: true` on `init(opts)`.
 
-- **Fix:** `initCppJs({ useWorker: true })`. See [`filesystem.md`](./filesystem.md).
+- **Fix:** `init({ useWorker: true })`. See [`filesystem.md`](./filesystem.md).
 
 ### `Path /opfs/... but OPFS is disabled. Enable fs.opfs in config`
 
@@ -3332,7 +3391,12 @@ Wasm process exhausted its allocated heap.
 The C++ function exists but didn't bind to JS.
 
 - **Cause:** binding rule violation. See "Binding-time errors" above.
-- **Cause:** the JS module finished loading but `initCppJs` hasn't completed. Make sure you're calling `m.someFunc` *after* `await initCppJs(...)`.
+- **Cause:** the JS module finished loading but `init` hasn't completed. Make sure you're calling `m.someFunc` *after* `await init(...)`.
+- **Cause (worker runtime, e.g. `instance.method is not a function`):** the module
+  runs in a worker — the wasm `mt` runtime defaults to one, as does
+  `init({ useWorker: true })` — so construction returns a promise and sync-style
+  code holds a `Promise`, not the instance. Write `const c = await new X(...);
+  await c.method(...)` and set `dts: 'promise'` so the generated types match.
 
 ### Calls hang forever when `useWorker: true`
 
@@ -3938,7 +4002,7 @@ Per-framework playbooks contain:
 
 - Which plugin to install (`@cpp.js/plugin-vite`, etc.)
 - The exact config diff
-- Where to call `initCppJs(...)`
+- Where to call `init(...)`
 - Headers / build hooks specific to that bundler
 - A reference sample (`cppjs-samples/cppjs-sample-web-vue-vite/`, etc.) to mirror
 
@@ -4027,7 +4091,7 @@ The framework playbook lists what to look for in the dev/build output (e.g. "you
 - [ ] Multithread decision made; if `mt`, COOP/COEP setup documented for the user's deploy target.
 - [ ] `pnpm dev` succeeds, the bundle loads `cpp.js`/`cpp.wasm` without 404s.
 - [ ] `pnpm build` produces artifacts.
-- [ ] User can call into a cpp.js function from JS (e.g. `await initCppJs(); Module.someFn(...)` returns expected result).
+- [ ] User can call into a cpp.js function from JS (e.g. `await init(); Module.someFn(...)` returns expected result).
 
 ## Common pitfalls
 
@@ -4059,7 +4123,7 @@ Add cpp.js to a Vite project so:
 
 - WASM modules load via `pnpm dev` and `pnpm build` without 404s.
 - `pnpm preview` serves the production build with COOP/COEP headers (multithread works locally).
-- HMR rebuilds wasm when the user edits `.h`/`.cpp` files.
+- HMR rebuilds wasm when the user edits `.h`/`.cpp`/`.rs` files.
 
 ## When to use
 
@@ -4115,7 +4179,7 @@ export default defineConfig({
 The plugin handles:
 
 - Setting `Cross-Origin-Opener-Policy` + `Cross-Origin-Embedder-Policy` in **dev** AND **preview** server (multithread WASM works without manual server config).
-- Watching native source files (`paths.native`, default `src/native/`) — saving a `.cpp`/`.h` triggers a rebuild + HMR.
+- Watching native source files (`paths.native`, default `src/native/`) — saving a `.cpp`/`.h`/`.rs` triggers a rebuild + HMR.
 - Routing `/cpp.js`, `/cpp.wasm`, `/cpp.data.txt` to the freshly built artifacts.
 
 `cppjs.config.js` at project root (only needed if wrapping own C++):
@@ -4154,7 +4218,7 @@ If the user picks `runtime: 'st'` (single-thread), none of this applies — no h
 - [ ] `pnpm install` succeeds.
 - [ ] `pnpm dev` starts; opening the page shows no 404s for `/cpp.js`, `/cpp.wasm`, `/cpp.data.txt` in DevTools Network tab.
 - [ ] Console log shows the cpp.js loader initializing (`wasm compiled for browser…` in dev terminal).
-- [ ] User-side: `await initCppJs(); Module.someFn(...)` returns expected result.
+- [ ] User-side: `await init(); Module.someFn(...)` returns expected result.
 - [ ] `pnpm build` produces `dist/` with the wasm + js artifacts.
 - [ ] `pnpm preview` serves the build; multithread features still work (verify `crossOriginIsolated === true` in console).
 - [ ] If multithread, production headers config exists for the target host.
@@ -4190,7 +4254,7 @@ Plugin source: `cppjs-plugins/cppjs-plugin-vite/index.js`.
 
 ## Goal
 
-Wire `@cpp.js/plugin-webpack` into the bundler config so dev-server serves wasm with COOP/COEP, the loader handles `.h` files, and prod build emits `cpp.js` + `cpp.wasm` artifacts.
+Wire `@cpp.js/plugin-webpack` into the bundler config so dev-server serves wasm with COOP/COEP, the loader handles `.h` and `.rs` files (plus `cargo:` crate imports and bare Rust package imports), and prod build emits `cpp.js` + `cpp.wasm` artifacts.
 
 ## When to use
 
@@ -4295,7 +4359,7 @@ Same as the Vite playbook — devServer is handled by the plugin, production dep
 - [ ] Browser console: `crossOriginIsolated` returns `true` (only required if multithread).
 - [ ] Saving a `.cpp`/`.h` file under `src/native/` triggers a rebuild + page refresh.
 - [ ] `pnpm build` produces `dist/` with `cpp.js`, `cpp.wasm` (and `cpp.data.txt` if data preloaded).
-- [ ] User-side: `await initCppJs(); Module.someFn(...)` returns expected result.
+- [ ] User-side: `await init(); Module.someFn(...)` returns expected result.
 
 ## Common pitfalls
 
@@ -4397,7 +4461,7 @@ If the user picks `runtime: 'mt'` in `cppjs.config.js`, the resulting library st
 - [ ] `pnpm rollup -c` runs without errors.
 - [ ] `dist/` contains the user's bundle plus `cpp.js`, `cpp.wasm`.
 - [ ] Watch mode picks up native source changes (`pnpm rollup -c -w`, edit a `.cpp`, see rebuild log).
-- [ ] Library consumer can `import { initCppJs } from '<the lib>'; await initCppJs(); Module.fn(...)`.
+- [ ] Library consumer can `import { init } from '<the lib>'; await init(); Module.fn(...)`.
 
 ## Common pitfalls
 
@@ -4544,7 +4608,7 @@ If the user wants cpp.js on the server side too (Node SSR with WASM), that's a s
 - [ ] `pnpm dev` starts; client console shows the cpp.js loader running, no 404s on `/cpp.js`/`/cpp.wasm`.
 - [ ] DevTools → Application → Headers shows `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` (for multithread).
 - [ ] `pnpm build && pnpm start` works end-to-end.
-- [ ] App calls into C++: `await initCppJs(); Module.fn(...)` returns expected result.
+- [ ] App calls into C++: `await init(); Module.fn(...)` returns expected result.
 
 ## Common pitfalls
 
@@ -4687,7 +4751,7 @@ Don't name the snapshot dir `.cppjs` — `clear:cache:samples`-style globs may p
 - [ ] `cd ios && pod install` succeeds, `Podfile.lock` updated, `*.xcframework` directories appear under `ios/Pods/` or vendored locations.
 - [ ] `pnpm android` builds the APK and launches; the app calls into C++ without "library not loaded" errors.
 - [ ] `pnpm ios` builds and launches in the iOS simulator (arm64 macOS) or on-device.
-- [ ] JSI bridge: `import { initCppJs } from '@cpp.js/plugin-react-native'; await initCppJs(); Module.fn(...)` returns expected result.
+- [ ] JSI bridge: `import { init } from 'cpp.js'; await init(); Module.fn(...)` returns expected result.
 - [ ] If wrapping own C++: editing `src/native/native.cpp` + restarting Metro picks up the change (or at least re-run `pod install` / `pnpm android` to recompile).
 
 ## Common pitfalls
@@ -4828,7 +4892,7 @@ If the user also targets `expo-router` web build (RN Web), then they're effectiv
 - [ ] `pnpm expo prebuild` generates `ios/` and `android/` without errors.
 - [ ] `cd ios && pod install` succeeds.
 - [ ] `pnpm expo run:ios` and `pnpm expo run:android` build + launch.
-- [ ] App calls into C++: `import { initCppJs } from '@cpp.js/plugin-react-native'; await initCppJs(); Module.fn(...)` returns expected result.
+- [ ] App calls into C++: `import { init } from 'cpp.js'; await init(); Module.fn(...)` returns expected result.
 - [ ] EAS build (if used) produces a valid binary.
 
 ## Common pitfalls
@@ -6352,7 +6416,7 @@ cpp.js/
 │   ├── ARCHITECTURE.md               ← high-level mental model
 │   ├── CODEMAP.md                    ← concept → file pointer (this file)
 │   ├── adr/                          ← architecture decision records (why-we-chose-X)
-│   ├── api/                          ← runtime + build API reference (initCppJs, cppjs.config.js, fs, threading)
+│   ├── api/                          ← runtime + build API reference (init, cppjs.config.js, fs, threading)
 │   └── playbooks/                    ← per-persona / per-framework workflows
 ├── .github/                          ← workflows, PR + issue templates
 ├── scripts/                          ← repo-level Node CLIs (check-*, doctor.sh, …)
@@ -6386,7 +6450,7 @@ cpp.js/
 
 Every consumer-facing field, every default, every constraint lives in [`docs/api/`](./api/):
 
-- [`init.md`](./api/init.md) — `initCppJs(opts)` runtime API, Module helpers.
+- [`init.md`](./api/init.md) — `init(opts)` runtime API, Module helpers.
 - [`cppjs-config.md`](./api/cppjs-config.md) — `cppjs.config.js` field-by-field (build-time, every consumer).
 - [`cppjs-build.md`](./api/cppjs-build.md) — `cppjs.build.js` lifecycle hooks (package authors only).
 - [`filesystem.md`](./api/filesystem.md) — OPFS / memfs / node-fs / edge fs decision tree, including the `useWorker` requirement for OPFS.
@@ -6691,7 +6755,7 @@ Two surfaces. Keep them straight:
 
 | Surface | When | Doc |
 |---------|------|-----|
-| `initCppJs(opts)` | Runtime | [`docs/api/init.md`](./docs/api/init.md) |
+| `init(opts)` | Runtime | [`docs/api/init.md`](./docs/api/init.md) |
 | `cppjs.config.js` | Build-time, every consumer | [`docs/api/cppjs-config.md`](./docs/api/cppjs-config.md) |
 | `cppjs.build.js` | Build-time, package authors only | [`docs/api/cppjs-build.md`](./docs/api/cppjs-build.md) |
 | Filesystem (OPFS, memfs, …) | Cross-cutting | [`docs/api/filesystem.md`](./docs/api/filesystem.md) |
@@ -6712,9 +6776,9 @@ Load-bearing constraints (the things agents miss most):
 - **`runtime: 'mt'` in production → requires `Cross-Origin-Opener-Policy: same-origin` + `Cross-Origin-Embedder-Policy: require-corp` headers.** Dev plugins inject; prod hosts (Vercel, Netlify, nginx, Cloudflare Pages) need explicit config.
 - **Edge runtimes (Cloudflare Workers, Deno Deploy, Vercel Edge) don't expose Web Workers.** No `useWorker`, no OPFS, no `mt` — only `runtime: 'st'` + memory fs.
 - **`useWorker` is independent of `runtime: 'mt'`.** Two orthogonal axes — see the matrix in `threading.md`.
-- **`cppjs.config.js` is build-time only.** Putting `useWorker: true` in it does nothing; that's a runtime option for `initCppJs(opts)`.
+- **`cppjs.config.js` is build-time only.** Putting `useWorker: true` in it does nothing; that's a runtime option for `init(opts)`.
 - **`cargo:` imports must be declared.** `import { X } from 'cargo:<crate>'` requires the crate in the top-level `cargoDependencies` map — undeclared imports are a hard error. The consumer (not the engine) declares `@cpp.js/core-embind-rust`.
-- **`platform: 'wasi'` skips Rust** (no wasm32-wasip3 Rust target yet) and produces a single `.wasm` command — no JS glue, no `initCppJs`.
+- **`platform: 'wasi'` skips Rust** (no wasm32-wasip3 Rust target yet) and produces a single `.wasm` command — no JS glue, no `init`.
 
 ## Commands
 
