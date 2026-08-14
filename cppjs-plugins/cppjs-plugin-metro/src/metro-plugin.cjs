@@ -1,4 +1,5 @@
 const path = require('node:path');
+const getRuntimeFile = require('./runtime-file.cjs');
 
 let getDependFilePathFunc;
 let cppjsState;
@@ -33,6 +34,11 @@ module.exports = function CppjsMetroPlugin(defaultConfig) {
                 // platforms with no matching target) fall back to Metro's default resolution
                 // instead of dereferencing undefined state.
                 if (cppjsState && getDependFilePathFunc) {
+                    // The bare `cpp.js` specifier is the runtime module that owns init(), not the
+                    // Node-side build API that shares the name.
+                    if (moduleName === 'cpp.js') {
+                        return context.resolveRequest(context, getRuntimeFile(cppjsState), platform);
+                    }
                     const target = cppjsState.targets.find((t) => t.platform === platform);
                     const dependFilePath = target && getDependFilePathFunc(moduleName, target);
                     if (dependFilePath) {

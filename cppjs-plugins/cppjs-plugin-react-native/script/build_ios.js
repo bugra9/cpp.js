@@ -93,7 +93,7 @@ if (isIosLibsFresh(...cacheKeyArgs)) {
     // merge the staticlibs into react-native-cppjs.a - that archive is already force_loaded by
     // the podspec, so the crates' init-array registrations survive the app link.
     for (const target of [buildTargetIPhoneOS, buildTargetIPhoneSimulator]) {
-        const rustLibs = buildAppRustCrates(target, state.config.paths.cache);
+        const rustLibs = buildAppRustCrates(target, state.config.paths.cache, state.config.cargoDependencies ?? {});
         if (rustLibs.length === 0) continue;
         const libFile = `${state.config.paths.build}/Full-${buildType}/prebuilt/${target.path}/lib/libreact-native-cppjs.a`;
         const merged = `${libFile}.merged`;

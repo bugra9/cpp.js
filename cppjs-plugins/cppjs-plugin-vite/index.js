@@ -1,8 +1,8 @@
 
 import {
-    state, createLib, createBridgeFile, buildWasm, buildDependencies, getTargetParams, getFilteredBuildTargets, isSourceNewer,
+    state, createLib, createBridgeFile, buildWasm, buildDependencies, getTargetParams, getFilteredBuildTargets, isSourceNewer, getRustJsScript,
 } from 'cpp.js';
-import rollupCppjsPlugin from '@cpp.js/plugin-rollup';
+import rollupCppjsPlugin, { CPPJS_RUNTIME_ID } from '@cpp.js/plugin-rollup';
 
 import fs from 'node:fs';
 
@@ -25,6 +25,16 @@ const viteCppjsPlugin = (options) => {
     const sourceRegex = new RegExp(`\\.(${state.config.ext.source.join('|')})$`);
 
     return [
+        {
+            // Vite core resolves bare specifiers before normal user plugins, so without `pre` the
+            // real cpp.js package (the Node build API) wins and drags node:fs into the browser
+            // bundle. Only the specifier is claimed here; load() stays in the rollup plugin.
+            name: 'vite-plugin-cppjs-runtime',
+            enforce: 'pre',
+            resolveId(source) {
+                return source === 'cpp.js' ? CPPJS_RUNTIME_ID : null;
+            },
+        },
         rollupCppjsPlugin(options, bridges),
         {
             name: 'vite-plugin-cppjs',
@@ -89,6 +99,14 @@ const viteCppjsPlugin = (options) => {
                     server.ws.send({ type: 'full-reload' });
                 } else if (sourceRegex.test(file)) {
                     createLib(buildTargetDebug, 'Source', { force: true, buildSource: true, bypassCmake: true });
+                    await buildWasm(buildTargetDebug, { force: true });
+                    server.ws.send({ type: 'full-reload' });
+                } else if (file.endsWith('.rs') && !file.startsWith(state.config.paths.cache)) {
+                    // Re-parse the surface so the bridge crate and .d.ts follow a changed API;
+                    // cargo itself sees the edit (the bridge embeds the file via #[path]) and
+                    // buildWasm rebuilds the app super-crate before relinking. Generated crates
+                    // under the cache never take this path.
+                    getRustJsScript(buildTargetDebug, file);
                     await buildWasm(buildTargetDebug, { force: true });
                     server.ws.send({ type: 'full-reload' });
                 }

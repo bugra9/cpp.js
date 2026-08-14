@@ -1,7 +1,8 @@
 
 import fs from 'node:fs';
+import path from 'node:path';
 import {
-    state, createLib, buildWasm, createBridgeFile, getData, getCppJsScript, buildDependencies, getTargetParams, getFilteredBuildTargets, isSourceNewer,
+    state, createLib, buildWasm, createBridgeFile, getData, getCppJsScript, getRustJsScript, getDependFilePath, buildDependencies, getTargetParams, getFilteredBuildTargets, isSourceNewer,
 } from 'cpp.js';
 
 const targetParams = getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
@@ -28,6 +29,31 @@ export default class CppjsWebpackPlugin {
 
     apply(compiler) {
         const pluginName = this.constructor.name;
+        // The bare `cpp.js` specifier is the runtime module that owns init(). Webpack resolves to
+        // real files, so it is written once here and aliased; `$` keeps subpath imports out and
+        // the alias wins over the real cpp.js package, which is the Node-side build API.
+        const runtimeFile = `${state.config.paths.cache}/cppjs-runtime.js`;
+        fs.mkdirSync(state.config.paths.cache, { recursive: true });
+        fs.writeFileSync(runtimeFile, getCppJsScript(compiler.options.mode === 'development' ? buildTargetDebug : buildTargetRelease));
+        compiler.options.resolve = compiler.options.resolve || {};
+        compiler.options.resolve.alias = { 'cpp.js$': runtimeFile, ...compiler.options.resolve.alias };
+        // `cargo:` imports use the node:/npm: convention for a non-npm store; webpack's resolver
+        // has no such scheme, so the request is rewritten to the generated marker .rs (which the
+        // loader then turns into the crate-import bridge). Works on rspack via its compat layer.
+        new compiler.webpack.NormalModuleReplacementPlugin(/^cargo:/, (resource) => {
+            const marker = getDependFilePath(resource.request, buildTargetRelease);
+            if (marker) resource.request = marker;
+        }).apply(compiler);
+        // Rust packages ship no JS entry at all (their package.json is just a name), so node
+        // resolution can never find them. Each known cargo-type dependency gets an exact-match
+        // alias onto its crate root; the loader's .rs branch turns that into the proxy module.
+        for (const dep of state.config.allDependencies ?? []) {
+            if (dep.export?.type !== 'cargo' || !dep.package?.name) continue;
+            const libRs = path.resolve(dep.paths.project, dep.export.crate ?? 'crate', 'src/lib.rs');
+            if (fs.existsSync(libRs) && !(`${dep.package.name}$` in compiler.options.resolve.alias)) {
+                compiler.options.resolve.alias[`${dep.package.name}$`] = libRs;
+            }
+        }
         // tapPromise (not tap) so webpack awaits the native C++/wasm build and a build
         // failure surfaces as a compilation error instead of an unhandled rejection.
         compiler.hooks.done.tapPromise(pluginName, this.onDone.bind(this));
@@ -76,6 +102,7 @@ export default class CppjsWebpackPlugin {
             getData,
             state,
             getCppJsScript,
+            getRustJsScript,
             getTargetParams,
             getFilteredBuildTargets
         };
@@ -83,7 +110,8 @@ export default class CppjsWebpackPlugin {
 
     getRule() {
         return {
-            test: new RegExp(`\\.(${state.config.ext.header.join('|')})$`),
+            // `rs` rides the same rule: the loader branches on the extension.
+            test: new RegExp(`\\.(${[...state.config.ext.header, 'rs'].join('|')})$`),
             loader: '@cpp.js/plugin-webpack-loader',
             options: { ...this.getLoaderOptions() },
         };
