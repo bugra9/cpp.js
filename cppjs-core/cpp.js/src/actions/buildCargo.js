@@ -4,6 +4,7 @@ import path from 'node:path';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
 import { cargoTripleFor } from '../utils/cargoTarget.js';
+import { isMtWasm, assertMtRustToolchain, cargoTargetDirFor, cargoBuildInvocation } from '../utils/rustMt.js';
 import generateRustBridge from '../utils/rustBridgeGen.js';
 
 // buildType 'cargo': build a Rust staticlib on the host for the target's triple and stage it
@@ -22,6 +23,8 @@ export default function buildCargo(target, libdir) {
     if (probe.error) {
         throw new Error('cppjs: cargo not found on PATH - install Rust (https://rustup.rs) to build cargo packages.');
     }
+    const isMt = isMtWasm(target);
+    if (isMt) assertMtRustToolchain();
 
     // Auto mode (the default): the user's crate is plain Rust and cpp.js generates a companion
     // bridge crate from its pub surface, then builds THAT (it bundles the user crate as a dep).
@@ -39,16 +42,18 @@ export default function buildCargo(target, libdir) {
         }).bridgeDir;
 
     const t0 = performance.now();
-    const build = spawnSync('cargo', [
-        'build', '--release', '--target', triple, '--manifest-path', `${buildDir}/Cargo.toml`,
-    ], { stdio: 'inherit' });
+    const targetDir = cargoTargetDirFor(buildDir, target);
+    const { args, env } = cargoBuildInvocation({
+        target, triple, targetDir, manifestPath: `${buildDir}/Cargo.toml`,
+    });
+    const build = spawnSync('cargo', args, { stdio: 'inherit', env });
     if (build.status !== 0) {
-        throw new Error(`cppjs: cargo build failed for ${triple} (is the target installed? rustup target add ${triple})`);
+        throw new Error(`cppjs: cargo build failed for ${triple}${isMt ? ' (mt/build-std)' : ` (is the target installed? rustup target add ${triple})`}`);
     }
 
     // Rust staticlib output is lib<crate>.a; stage it under the export libName the CMakeLists expects.
     const crateName = readCrateName(buildDir).replaceAll('-', '_');
-    const built = `${buildDir}/target/${triple}/release/lib${crateName}.a`;
+    const built = `${targetDir}/${triple}/release/lib${crateName}.a`;
     if (!fs.existsSync(built)) {
         throw new Error(`cppjs: expected cargo output ${built} not found (is crate-type = ["staticlib"]?)`);
     }
@@ -61,7 +66,7 @@ export default function buildCargo(target, libdir) {
     });
 
     const ms = Math.round(performance.now() - t0);
-    logger.doneStep(target, 'Source', `cargo ${ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`}, ${triple}`);
+    logger.doneStep(target, 'Source', `cargo ${ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`}, ${triple}${isMt ? '/build-std' : ''}`);
     return true;
 }
 

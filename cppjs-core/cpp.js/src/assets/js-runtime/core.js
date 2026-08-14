@@ -1,4 +1,5 @@
 import { setCoercionModule, wrapModuleForCoercion } from './adapters/vector-coercion.js';
+import { patchModuleForExceptionDecode } from './adapters/exception-decode.js';
 
 export function isObject(item) {
     return (item && typeof item === 'object' && !Array.isArray(item));
@@ -169,6 +170,9 @@ export function createInitCppJs({
             // own calls, leaving HEAP*/FS/returned objects raw (see wrapModuleForCoercion).
             cppJsPromise = createModule(config).then((m) => {
                 setCoercionModule(m);
+                // Instance/static methods stay raw in direct mode, so the decode has to
+                // land on the class prototypes themselves.
+                patchModuleForExceptionDecode(m);
                 return wrapModuleForCoercion(m);
             });
         }

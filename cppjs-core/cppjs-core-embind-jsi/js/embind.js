@@ -493,7 +493,7 @@ globalThis.__cppjs_register_heap_window = __cppjs_register_heap_window;
 
 const UINT32_MAX_BIGINT = 4294967295n;
 
-function getHeapIndex(ptr) {
+function findHeapIndex(ptr) {
   let bestIdx = -1;
   let bestDelta = UINT32_MAX_BIGINT;
   for (let i = 0; i < HEAP_OFFSET.length; i++) {
@@ -505,6 +505,19 @@ function getHeapIndex(ptr) {
         bestIdx = i;
       }
     }
+  }
+  return bestIdx;
+}
+
+function getHeapIndex(ptr) {
+  let bestIdx = findHeapIndex(ptr);
+
+  // Self-healing: a pointer can land outside every window (fresh heap regions from
+  // by-value returns, allocator arenas, ...). Ask native to register a covering
+  // window and retry once before giving up.
+  if (bestIdx === -1 && typeof globalThis.__cppjs_ensure_heap_window === 'function') {
+    globalThis.__cppjs_ensure_heap_window(ptr);
+    bestIdx = findHeapIndex(ptr);
   }
 
   if (bestIdx === -1) {
@@ -1393,6 +1406,31 @@ function __embind_register_bool(rawType, name, size, trueValue, falseValue) {
 }
 globalThis.__embind_register_bool = __embind_register_bool;
 
+function __embind_register_optional(rawOptionalType, rawInnerType) {
+  whenDependentTypesAreResolved([rawOptionalType], [rawInnerType], function (innerTypes) {
+    var inner = innerTypes[0];
+    return [{
+      name: `std::optional<${inner.name}>`,
+      // No value crosses as undefined (JS may also hand back null); a present value
+      // rides the inner type's own converters unchanged.
+      'fromWireType': function (wt) {
+        if (wt === undefined || wt === null) return undefined;
+        return inner['fromWireType'](wt);
+      },
+      'toWireType': function (destructors, o) {
+        if (o === undefined || o === null) return undefined;
+        return inner['toWireType'](destructors, o);
+      },
+      'argPackAdvance': 8n,
+      'readValueFromPointer': function (pointer) {
+        throw new Error(`std::optional<${inner.name}> cannot be read from raw memory`);
+      },
+      destructorFunction: null,
+    }];
+  });
+}
+globalThis.__embind_register_optional = __embind_register_optional;
+
 function embindRepr(v) {
   if (v === null) {
     return 'null';
@@ -2145,6 +2183,80 @@ function __embind_register_emval(rawType, name) {
 }
 
 globalThis.__embind_register_emval = __embind_register_emval;
+
+// cpp.js JSON-value hooks (embind-rust serde_json::Value): handle-based on purpose - the
+// emval string plumbing reads wasm-heap pointers, which the native runtime has none of.
+function __cppjs_json_to_handle(text) {
+  return Emval.toHandle(JSON.parse(text));
+}
+globalThis.__cppjs_json_to_handle = __cppjs_json_to_handle;
+
+function __cppjs_handle_to_json(handle) {
+  const s = JSON.stringify(Emval.toValue(handle));
+  __emval_decref(handle);
+  return s === undefined ? 'null' : s;
+}
+globalThis.__cppjs_handle_to_json = __cppjs_handle_to_json;
+
+// cpp.js live-value hooks (embind-rust JsValue/JsFunction): handle-based like the JSON pair;
+// strings travel as jsi strings, handles as the table's BigInts.
+function __cppjs_v_get(h, key) {
+  return Emval.toHandle(Emval.toValue(h)[key]);
+}
+globalThis.__cppjs_v_get = __cppjs_v_get;
+
+function __cppjs_v_set(h, key, v) {
+  Emval.toValue(h)[key] = Emval.toValue(v);
+}
+globalThis.__cppjs_v_set = __cppjs_v_set;
+
+function __cppjs_v_from_num(v) {
+  return Emval.toHandle(v);
+}
+globalThis.__cppjs_v_from_num = __cppjs_v_from_num;
+
+function __cppjs_v_from_bool(v) {
+  return Emval.toHandle(!!v);
+}
+globalThis.__cppjs_v_from_bool = __cppjs_v_from_bool;
+
+function __cppjs_v_from_str(s) {
+  return Emval.toHandle(s);
+}
+globalThis.__cppjs_v_from_str = __cppjs_v_from_str;
+
+function __cppjs_v_kind(h) {
+  const v = Emval.toValue(h);
+  if (v === null || v === undefined) return 0;
+  const t = typeof v;
+  if (t === 'boolean') return 1;
+  if (t === 'number') return 2;
+  if (t === 'string') return 3;
+  if (t === 'function') return 4;
+  return 5;
+}
+globalThis.__cppjs_v_kind = __cppjs_v_kind;
+
+function __cppjs_v_as_num(h) {
+  return Number(Emval.toValue(h));
+}
+globalThis.__cppjs_v_as_num = __cppjs_v_as_num;
+
+function __cppjs_v_as_bool(h) {
+  return Emval.toValue(h) ? 1 : 0;
+}
+globalThis.__cppjs_v_as_bool = __cppjs_v_as_bool;
+
+function __cppjs_v_as_str(h) {
+  return String(Emval.toValue(h));
+}
+globalThis.__cppjs_v_as_str = __cppjs_v_as_str;
+
+function __cppjs_v_call(f, args) {
+  const fn = Emval.toValue(f);
+  return Emval.toHandle(fn(...args.map((a) => Emval.toValue(a))));
+}
+globalThis.__cppjs_v_call = __cppjs_v_call;
 
 function __embind_register_memory_view(rawType, dataTypeIndex, name) {
   var typeMapping = [

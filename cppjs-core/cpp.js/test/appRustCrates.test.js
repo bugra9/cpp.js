@@ -21,15 +21,17 @@ async function importFresh() {
     return { buildAppRustCrates, spawnSync };
 }
 
-function addCrate(name) {
+function addCrate(name, userFile = null) {
     const dir = path.join(cacheDir, 'rust-bridges', name);
     fs.mkdirSync(path.join(dir, 'src'), { recursive: true });
     fs.writeFileSync(path.join(dir, 'Cargo.toml'), `[package]\nname = "${name}-cppjs-app"\n`);
-    fs.writeFileSync(path.join(dir, 'src/lib.rs'), '');
+    // An app-local bridge embeds its user file via #[path]; crate_ bridges have no user mod.
+    const lib = userFile ? `#[path = "${userFile}"]\nmod user;\n` : '';
+    fs.writeFileSync(path.join(dir, 'src/lib.rs'), lib);
 }
 
-function fakeCargoOutput() {
-    const lib = path.join(cacheDir, 'rust-bridges/_app_super/target', TRIPLE, 'release/libcppjs_app_super.a');
+function fakeCargoOutput(targetDirName = 'target') {
+    const lib = path.join(cacheDir, 'rust-bridges/_app_super', targetDirName, TRIPLE, 'release/libcppjs_app_super.a');
     fs.mkdirSync(path.dirname(lib), { recursive: true });
     fs.writeFileSync(lib, '');
     return lib;
@@ -104,5 +106,86 @@ describe('buildAppRustCrates', () => {
         const { buildAppRustCrates, spawnSync } = await importFresh();
         spawnSync.mockReturnValue({ status: 0 });
         expect(() => buildAppRustCrates(WASM, cacheDir)).toThrow(/not found/);
+    });
+
+    test('prunes an app-local bridge whose .rs file is gone', async () => {
+        const live = path.join(work, 'live.rs');
+        fs.writeFileSync(live, 'pub struct A {}\n');
+        addCrate('live_surface', live);
+        addCrate('deleted_surface', path.join(work, 'deleted.rs'));
+        const { buildAppRustCrates, spawnSync } = await importFresh();
+        spawnSync.mockImplementation(() => { fakeCargoOutput(); return { status: 0 }; });
+        const log = vi.fn();
+
+        buildAppRustCrates(WASM, cacheDir, null, log);
+
+        expect(fs.existsSync(path.join(cacheDir, 'rust-bridges/deleted_surface'))).toBe(false);
+        expect(fs.existsSync(path.join(cacheDir, 'rust-bridges/live_surface'))).toBe(true);
+        const manifest = fs.readFileSync(path.join(cacheDir, 'rust-bridges/_app_super/Cargo.toml'), 'utf8');
+        expect(manifest).toContain('live-surface-cppjs-app');
+        expect(manifest).not.toContain('deleted-surface-cppjs-app');
+        expect(log).toHaveBeenCalledWith(expect.stringContaining('deleted_surface'));
+    });
+
+    test('prunes a crate_ bridge dropped from cargoDependencies, keeps declared ones', async () => {
+        addCrate('crate_uuid');
+        addCrate('crate_old_dep');
+        const { buildAppRustCrates, spawnSync } = await importFresh();
+        spawnSync.mockImplementation(() => { fakeCargoOutput(); return { status: 0 }; });
+
+        buildAppRustCrates(WASM, cacheDir, { uuid: '1' });
+
+        expect(fs.existsSync(path.join(cacheDir, 'rust-bridges/crate_uuid'))).toBe(true);
+        expect(fs.existsSync(path.join(cacheDir, 'rust-bridges/crate_old_dep'))).toBe(false);
+    });
+
+    test('leaves crate_ bridges alone when no cargoDependencies are passed', async () => {
+        addCrate('crate_uuid');
+        const { buildAppRustCrates, spawnSync } = await importFresh();
+        spawnSync.mockImplementation(() => { fakeCargoOutput(); return { status: 0 }; });
+
+        buildAppRustCrates(WASM, cacheDir);
+
+        expect(fs.existsSync(path.join(cacheDir, 'rust-bridges/crate_uuid'))).toBe(true);
+    });
+
+    test("mt without nightly/rust-src fails actionably before any cargo build", async () => {
+        addCrate('counter');
+        const { buildAppRustCrates, spawnSync } = await importFresh();
+        spawnSync.mockClear();
+        spawnSync.mockReturnValue({ status: 1 });
+        expect(() => buildAppRustCrates({ ...WASM, runtime: 'mt' }, cacheDir))
+            .toThrow(/rustup toolchain install nightly/);
+        expect(spawnSync).toHaveBeenCalledTimes(1);
+        expect(spawnSync.mock.calls[0][0]).toBe('rustup');
+    });
+
+    test('mt with nightly builds through -Zbuild-std with atomics into its own target dir', async () => {
+        addCrate('counter');
+        const { buildAppRustCrates, spawnSync } = await importFresh();
+        spawnSync.mockClear();
+        spawnSync.mockImplementation((cmd) => {
+            if (cmd === 'rustup') return { status: 0, stdout: 'rust-src (installed)\n' };
+            fakeCargoOutput('target-mt');
+            return { status: 0 };
+        });
+
+        const libs = buildAppRustCrates({ ...WASM, runtime: 'mt' }, cacheDir);
+
+        const [, args, opts] = spawnSync.mock.calls[1];
+        expect(spawnSync.mock.calls[1][0]).toBe('cargo');
+        expect(args).toContain('+nightly');
+        expect(args).toContain('-Zbuild-std=std,panic_abort');
+        expect(args.join(' ')).toContain('target-mt');
+        expect(opts.env.RUSTFLAGS).toContain('+atomics,+bulk-memory');
+        expect(libs).toEqual([`${cacheDir}/rust-bridges/_app_super/target-mt/${TRIPLE}/release/libcppjs_app_super.a`]);
+    });
+
+    test('does not trip the mt guard when pruning empties the set', async () => {
+        addCrate('deleted_surface', path.join(work, 'deleted.rs'));
+        const { buildAppRustCrates, spawnSync } = await importFresh();
+        spawnSync.mockClear();
+        expect(buildAppRustCrates({ ...WASM, runtime: 'mt' }, cacheDir, null, () => {})).toEqual([]);
+        expect(spawnSync).not.toHaveBeenCalled();
     });
 });

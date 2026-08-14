@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import replace from 'replace';
 import run from './run.js';
 import getDependLibs from './getDependLibs.js';
@@ -36,7 +37,7 @@ export default async function buildWasm(target, options = {}) {
     ];
     // App-local Rust surfaces (imported .rs files) arrive as ONE super staticlib; it is the
     // single fully-loaded Rust archive of the link (see the libstd rule below).
-    const appRustLibs = buildAppRustCrates(target, state.config.paths.cache);
+    const appRustLibs = buildAppRustCrates(target, state.config.paths.cache, state.config.cargoDependencies ?? {});
     const libs = [
         ...getDependLibs(target),
         ...appRustLibs,
@@ -138,6 +139,10 @@ export default async function buildWasm(target, options = {}) {
         // layout cannot satisfy the new one. The effective whole-archive
         // set is part of the layout: flipping a config flag must relink.
         linkLayout: 'v2-bridge-only-whole-archive',
+        // The emcc arg tail is hardcoded per environment in this file, invisible to the
+        // emccFlags entry below - hashing the builder itself makes any inline-arg edit
+        // (a new -s flag, an EXPORTED_RUNTIME_METHODS change) a guaranteed cache miss.
+        builder: getFilesFingerprint([fileURLToPath(import.meta.url)]),
         wholeArchiveAll,
         wholeArchiveNames: [...wholeArchiveNames].sort(),
         emccFlags,
@@ -180,8 +185,13 @@ export default async function buildWasm(target, options = {}) {
             '-s', 'GROWABLE_ARRAYBUFFERS=0',
             '-s', 'WASMFS',
             '-s', 'ENVIRONMENT=web,webview,worker',
-            '-s', 'EXPORTED_RUNTIME_METHODS=["FS", "ENV"]',
+            // getExceptionMessage must be listed here too: the helpers flag alone defines it
+            // in the glue but does not attach it to the MODULARIZE instance.
+            '-s', 'EXPORTED_RUNTIME_METHODS=["FS", "ENV", "getExceptionMessage"]',
             '-fwasm-exceptions',
+            // Exports getExceptionMessage so the runtime can decode raw WebAssembly.Exception
+            // values back into JS Errors carrying the C++ what() text.
+            '-sEXPORT_EXCEPTION_HANDLING_HELPERS',
             '-o', `${state.config.paths.build}/${target.rawJsName}`,
             ...data,
         ], null, target);
@@ -235,7 +245,9 @@ export default async function buildWasm(target, options = {}) {
             ...emccFlags,
             '-sWASM_BIGINT=1',
             '-sEXPORT_NAME=Module2',
-            ...linkLibs,
+            // rustSources carries the embind-rust adapter TU (emval/json/tid hooks); without
+            // it any linked Rust package archive fails with undefined cppjs_* symbols.
+            ...linkLibs, ...rustSources,
             ...(isProd ? ['-O3'] : []),
             '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
             '-s', 'RESERVED_FUNCTION_POINTERS=200', // '-s', 'FORCE_FILESYSTEM=1',
@@ -243,8 +255,9 @@ export default async function buildWasm(target, options = {}) {
             // See the GROWABLE_ARRAYBUFFERS note in the browser block (Firefox/WebKit TextDecoder).
             '-s', 'GROWABLE_ARRAYBUFFERS=0',
             '-s', 'ENVIRONMENT=web',
-            '-s', 'EXPORTED_RUNTIME_METHODS=["ENV"]',
+            '-s', 'EXPORTED_RUNTIME_METHODS=["ENV", "getExceptionMessage"]',
             '-fwasm-exceptions',
+            '-sEXPORT_EXCEPTION_HANDLING_HELPERS',
             '-o', `${state.config.paths.build}/${target.rawJsName}`,
             ...data,
         ], null, target);
@@ -275,8 +288,9 @@ export default async function buildWasm(target, options = {}) {
             '-s', 'WASMFS',
             '-s', 'NODE_HOST_ENV=1',
             '-s', 'ENVIRONMENT=node',
-            '-s', 'EXPORTED_RUNTIME_METHODS=["FS", "ENV"]',
+            '-s', 'EXPORTED_RUNTIME_METHODS=["FS", "ENV", "getExceptionMessage"]',
             '-fwasm-exceptions',
+            '-sEXPORT_EXCEPTION_HANDLING_HELPERS',
             '-o', `${state.config.paths.build}/${target.rawJsName}`,
         ], null, target);
         logger.doneStep(target, 'wasm');

@@ -85,4 +85,37 @@ console.log('diff:', da.diff(db));
 da.delete();
 db.delete();
 
+const jsObj = { a: 21 };
+console.log('jsIdentity:', m.jsPass(jsObj) === jsObj);
+const probed = m.jsProbe(jsObj);
+console.log('jsGetSet:', probed === jsObj, jsObj.b, jsObj.note);
+console.log('cbCall:', JSON.stringify(m.jsCall((x) => ({ doubled: x * 2 }), 3.5)));
+try {
+    m.jsCall(() => { throw new Error('cb boom'); }, 1);
+    console.log('cbThrow: NO-THROW');
+} catch (e) {
+    console.log('cbThrow:', String(e.message).includes('cb boom'));
+}
+m.jsStore((x) => x + 100);
+console.log('cbStored:', m.jsFire(7));
+
+const d1 = m.SharedDoc.create('arc');
+const d2 = m.dupDoc(d1);
+console.log('arcLabel:', d2.label());
+console.log('arcSame:', d1.sameAs(d2));
+d1.delete();
+console.log('arcHalfFree:', m.sharedDropCount());
+d2.delete();
+console.log('arcFullFree:', m.sharedDropCount());
+
+console.log('jsonEcho:', JSON.stringify(m.jsonEcho({ a: 1, list: [1, 2.5, 'x', null, true], nested: { k: 'v' } })));
+const tally = m.jsonTally({ items: [1, 2, 3] });
+console.log('jsonTally:', tally.total, tally.hasItems);
+console.log('jsonPick:', JSON.stringify(m.jsonPick({ k: [7] }, 'k')));
+try { m.jsonPick({}, 'zz'); } catch (e) { console.log('jsonPick threw:', e.message); }
+const snapC = new m.RustyCounter(42);
+const snap = snapC.snapshot({ tag: 'e2e' });
+console.log('jsonSnapshot:', snap.value, snap.extra.tag);
+snapC.delete();
+
 console.log('EMBIND-RS: PASS');

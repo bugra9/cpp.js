@@ -355,3 +355,159 @@ describe('createRustBridgeCrate', () => {
         expect(created.model.enums.map((e) => e.name)).toContain('Mode');
     });
 });
+
+describe('JSON values (serde_json::Value)', () => {
+    const JSON_RS = `
+use serde_json::Value;
+
+pub struct Probe { n: i64 }
+
+impl Probe {
+    pub fn new() -> Self { Probe { n: 1 } }
+    pub fn echo(&self, v: serde_json::Value) -> serde_json::Value { v }
+}
+
+pub fn pick(v: Value, key: &str) -> Result<serde_json::Value, String> {
+    v.get(key).cloned().ok_or_else(|| String::from("missing"))
+}
+`;
+
+    test('parses both spellings into the canonical Json token and flags the model', () => {
+        const model = parseSurface(JSON_RS, () => {});
+
+        expect(model.usesJson).toBe(true);
+        const echo = model.classes[0].methods.find((m) => m.name === 'echo');
+        expect(echo.args[0].ty).toBe('Json');
+        expect(echo.ret).toBe('Json');
+        const pick = model.freeFns.find((f) => f.name === 'pick');
+        expect(pick.args[0].ty).toBe('Json');
+        expect(pick.ret).toBe('Json');
+        expect(pick.throws).toBe(true);
+    });
+
+    test('bare Value without a serde_json import is refused with a reason', () => {
+        const logs = [];
+
+        const model = parseSurface('pub fn f(v: Value) -> i32 { 1 }\n', (l) => logs.push(l));
+
+        expect(model.usesJson).toBe(false);
+        expect(model.freeFns).toHaveLength(0);
+        expect(logs.join('\n')).toContain('unsupported parameter');
+    });
+
+    test('shared ownership (Arc): parses factories/params, guards &mut self, emits the shared wire', () => {
+        const ARC_RS = `
+use std::sync::Arc;
+
+pub struct Doc { label: String }
+
+impl Doc {
+    pub fn create(label: &str) -> Arc<Self> { Arc::new(Doc { label: label.to_string() }) }
+    pub fn label(&self) -> String { self.label.clone() }
+    pub fn same_as(&self, other: Arc<Doc>) -> bool { std::ptr::eq(self, Arc::as_ptr(&other)) }
+}
+
+pub fn dup_doc(d: Arc<Doc>) -> Arc<Doc> { d }
+`;
+        const model = parseSurface(ARC_RS, () => {});
+        expect(model.sharedOf).toEqual(['Doc']);
+        const doc = model.classes.find((c) => c.name === 'Doc');
+        expect(doc.shared).toBe(true);
+        expect(doc.factories[0].shared).toBe(true);
+        expect(doc.methods.find((m) => m.name === 'same_as').args[0].ty).toBe('Arc<Doc>');
+        expect(model.freeFns.find((f) => f.name === 'dup_doc').ret).toBe('Arc<Doc>');
+
+        expect(() => parseSurface(`
+use std::sync::Arc;
+pub struct Doc { n: i32 }
+impl Doc {
+    pub fn create() -> Arc<Self> { Arc::new(Doc { n: 0 }) }
+    pub fn bump(&mut self) -> i32 { self.n += 1; self.n }
+}
+`, () => {})).toThrow(/must take &self/);
+
+        const work = fs.mkdtempSync(path.join(os.tmpdir(), 'cppjs-arc-rs-'));
+        try {
+            const rsFile = path.join(work, 'doc.rs');
+            fs.writeFileSync(rsFile, ARC_RS);
+            const { bridgeDir } = createRustBridgeCrate({
+                rsFile, cacheDir: path.join(work, '.cppjs'), projectPath: work, log: () => {},
+            });
+            const bridge = fs.readFileSync(path.join(bridgeDir, 'src/lib.rs'), 'utf8');
+            expect(bridge).toContain('.smart_ptr_shared("DocShared")');
+            expect(bridge).toContain('.create_arc1("create"');
+            expect(bridge).toContain('pub struct DocShared(pub std::sync::Arc<user::Doc>);');
+            expect(bridge).toContain('increment_strong_count');
+            const dts = fs.readFileSync(path.join(work, '.cppjs/types/doc.rs.d.ts'), 'utf8');
+            expect(dts).toContain('static create(label: string): Doc;');
+            expect(dts).toContain('dupDoc(d: Doc): Doc;');
+        } finally {
+            fs.rmSync(work, { recursive: true, force: true });
+        }
+    });
+
+    test('live JS values: parses JsValue/JsFunction tokens, refuses them without the import', () => {
+        const JS_RS = `
+use embind_rs::{JsFunction, JsValue};
+
+pub fn pass(v: JsValue) -> JsValue { v }
+pub fn apply(f: JsFunction, x: f64) -> Result<JsValue, String> { f.call1(&JsValue::from_f64(x)) }
+`;
+        const model = parseSurface(JS_RS, () => {});
+        const pass = model.freeFns.find((f) => f.name === 'pass');
+        expect(pass.args[0].ty).toBe('JsValue');
+        expect(pass.ret).toBe('JsValue');
+        const apply = model.freeFns.find((f) => f.name === 'apply');
+        expect(apply.args[0].ty).toBe('JsFunction');
+        expect(apply.throws).toBe(true);
+
+        const logs = [];
+        const bare = parseSurface('pub fn f(v: JsValue) -> i32 { 1 }\n', (l) => logs.push(l));
+        expect(bare.freeFns).toHaveLength(0);
+        expect(logs.join('\n')).toContain('unsupported parameter');
+
+        const work = fs.mkdtempSync(path.join(os.tmpdir(), 'cppjs-jsval-rs-'));
+        try {
+            const rsFile = path.join(work, 'live.rs');
+            fs.writeFileSync(rsFile, JS_RS);
+            const { bridgeDir } = createRustBridgeCrate({
+                rsFile, cacheDir: path.join(work, '.cppjs'), projectPath: work, log: () => {},
+            });
+            const bridge = fs.readFileSync(path.join(bridgeDir, 'src/lib.rs'), 'utf8');
+            expect(bridge).toContain('a0: embind_rs::JsValue');
+            const dts = fs.readFileSync(path.join(work, '.cppjs/types/live.rs.d.ts'), 'utf8');
+            expect(dts).toContain('pass(v: unknown): unknown;');
+            expect(dts).toContain('apply(f: (...args: unknown[]) => unknown, x: number): unknown;');
+        } finally {
+            fs.rmSync(work, { recursive: true, force: true });
+        }
+    });
+
+    test('generated crate carries the wire impl, one serde dep and the JsonValue dts', () => {
+        const work = fs.mkdtempSync(path.join(os.tmpdir(), 'cppjs-json-rs-'));
+        try {
+            const rsFile = path.join(work, 'probe.rs');
+            fs.writeFileSync(rsFile, JSON_RS);
+
+            const { bridgeDir } = createRustBridgeCrate({
+                rsFile,
+                cacheDir: path.join(work, '.cppjs'),
+                projectPath: work,
+                cargoDependencies: { serde_json: '1' },
+                log: () => {},
+            });
+
+            const bridge = fs.readFileSync(path.join(bridgeDir, 'src/lib.rs'), 'utf8');
+            expect(bridge).toContain('pub struct __CppjsJson(pub serde_json::Value);');
+            expect(bridge).toContain("const SIG: char = 'i';");
+            expect(bridge).toContain('cppjs_emval_handle_to_json');
+            const manifest = fs.readFileSync(path.join(bridgeDir, 'Cargo.toml'), 'utf8');
+            expect(manifest.match(/serde_json/g)).toHaveLength(1);
+            const dts = fs.readFileSync(path.join(work, '.cppjs/types/probe.rs.d.ts'), 'utf8');
+            expect(dts).toContain('export type JsonValue');
+            expect(dts).toContain('echo(v: JsonValue): JsonValue;');
+        } finally {
+            fs.rmSync(work, { recursive: true, force: true });
+        }
+    });
+});

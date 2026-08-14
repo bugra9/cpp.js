@@ -45,7 +45,14 @@ for (const m of ['current: 50', 'scale: 125', 'positive: true', 'mode: true', 'p
     'half: 21', 'ratio: 21', 'ratio0: undefined', 'maybeLabel: v42', 'half7: undefined',
     'parseEven: 8', 'parseEvenOdd: undefined',
     'bump5: 15', 'bumpU: 16', 'bumpN: 17', 'tag: [x]', 'tagU: [none]', 'tagN: [none]',
-    'diff: 32', 'EMBIND-RS: PASS']) {
+    'diff: 32',
+    'jsonEcho: {"a":1,"list":[1,2.5,"x",null,true],"nested":{"k":"v"}}',
+    'jsonTally: 6 true', 'jsonPick: [7]', 'jsonPick threw: missing key zz',
+    'jsonSnapshot: 42 e2e',
+    'arcLabel: arc', 'arcSame: true', 'arcHalfFree: 0', 'arcFullFree: 1',
+    'jsIdentity: true', 'jsGetSet: true 42 set-by-rust', 'cbCall: {"doubled":7}',
+    'cbThrow: true', 'cbStored: 107',
+    'EMBIND-RS: PASS']) {
     if (!web.includes(m)) { console.error(`FAIL web: missing "${m}"\n${web}`); process.exit(1); }
 }
 console.log('ok web: rust producer -> flat ABI -> web adapter -> embind-js class');

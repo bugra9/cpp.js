@@ -68,6 +68,124 @@ void cppjs_embind_register_optional(const void* opt, const void* /*inner: adapte
     if (!registered.insert(opt).second) return;
     _embind_register_jsiValue(opt, "std::optional");
 }
+
+// JSON-value bridge (serde_json::Value): raw JSI into two handle-based fork helpers - the
+// fork's emval STRING plumbing reads wasm-heap pointers (none exist natively), so val::global
+// style calls die with "Property 'WebAssembly' doesn't exist" on device. Handle refcounts:
+// to_handle returns an owned +1; handle_to_json consumes its argument (the JS helper decrefs).
+const void* cppjs_tid_emval() { return &typeid(emscripten::val); }
+
+void* cppjs_emval_json_to_handle(uint8_t* w) {
+    uint32_t len;
+    std::memcpy(&len, w, 4);
+    std::string s((const char*)(w + 4), len);
+    std::free(w);
+    auto r = jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__cppjs_json_to_handle")
+        .call(*jsRuntime, jsi::String::createFromUtf8(*jsRuntime, s));
+    // Fork emval handles are BigInt end-to-end (Emval.toHandle returns 1n/2n/allocator BigInts).
+    return (void*)(uintptr_t)r.asBigInt(*jsRuntime).asUint64(*jsRuntime);
+}
+
+uint8_t* cppjs_emval_handle_to_json(void* h) {
+    auto r = jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__cppjs_handle_to_json")
+        .call(*jsRuntime, jsi::Value(jsi::BigInt::fromUint64(*jsRuntime, (uint64_t)(uintptr_t)h)));
+    std::string s = r.asString(*jsRuntime).utf8(*jsRuntime);
+    uint8_t* w = (uint8_t*)std::malloc(4 + s.size());
+    uint32_t len = (uint32_t)s.size();
+    std::memcpy(w, &len, 4);
+    std::memcpy(w + 4, s.data(), s.size());
+    return w;
+}
+}
+
+// ---- live JS value hooks (JsValue / JsFunction) ----
+// Fork helpers over the emval handle table (BigInt handles end-to-end); strings cross as jsi
+// strings, never through the fork's wasm-heap emval string plumbing. Called directly from the
+// Rust crate (not through bounded dispatch), so real f64 parameters are fine here.
+static jsi::Value cppjsVHandle(uint64_t h) {
+    return jsi::Value(jsi::BigInt::fromUint64(*jsRuntime, h));
+}
+static uint64_t cppjsHandleOf(const jsi::Value& v) {
+    return v.asBigInt(*jsRuntime).asUint64(*jsRuntime);
+}
+static jsi::String cppjsKeyFromWire(uint8_t* w) {
+    uint32_t len;
+    std::memcpy(&len, w, 4);
+    std::string k((const char*)(w + 4), len);
+    std::free(w);
+    return jsi::String::createFromUtf8(*jsRuntime, k);
+}
+static uint8_t* cppjsWireFromString(const std::string& s) {
+    uint8_t* w = (uint8_t*)std::malloc(4 + s.size());
+    uint32_t len = (uint32_t)s.size();
+    std::memcpy(w, &len, 4);
+    std::memcpy(w + 4, s.data(), s.size());
+    return w;
+}
+static jsi::Function cppjsHelper(const char* name) {
+    return jsRuntime->global().getPropertyAsFunction(*jsRuntime, name);
+}
+static thread_local std::string g_cbError;
+static thread_local bool g_hasCbError = false;
+
+extern "C" {
+void cppjs_v_ref(size_t h) {
+    cppjsHelper("__emval_incref").call(*jsRuntime, cppjsVHandle(h));
+}
+void cppjs_v_unref(size_t h) {
+    cppjsHelper("__emval_decref").call(*jsRuntime, cppjsVHandle(h));
+}
+// Fork emval constants: undefined = 1n (init_emval seeds 1..4, reserved = 5).
+size_t cppjs_v_undef() { return 1; }
+size_t cppjs_v_from_f64(double v) {
+    return (size_t)cppjsHandleOf(cppjsHelper("__cppjs_v_from_num").call(*jsRuntime, jsi::Value(v)));
+}
+size_t cppjs_v_from_bool(int v) {
+    return (size_t)cppjsHandleOf(cppjsHelper("__cppjs_v_from_bool").call(*jsRuntime, jsi::Value(v)));
+}
+size_t cppjs_v_from_str(uint8_t* w) {
+    return (size_t)cppjsHandleOf(cppjsHelper("__cppjs_v_from_str").call(*jsRuntime, cppjsKeyFromWire(w)));
+}
+size_t cppjs_v_get_prop(size_t h, uint8_t* w) {
+    return (size_t)cppjsHandleOf(cppjsHelper("__cppjs_v_get").call(*jsRuntime, cppjsVHandle(h), cppjsKeyFromWire(w)));
+}
+void cppjs_v_set_prop(size_t h, uint8_t* w, size_t v) {
+    cppjsHelper("__cppjs_v_set").call(*jsRuntime, cppjsVHandle(h), cppjsKeyFromWire(w), cppjsVHandle(v));
+}
+int cppjs_v_kind(size_t h) {
+    return (int)cppjsHelper("__cppjs_v_kind").call(*jsRuntime, cppjsVHandle(h)).getNumber();
+}
+double cppjs_v_as_f64(size_t h) {
+    return cppjsHelper("__cppjs_v_as_num").call(*jsRuntime, cppjsVHandle(h)).getNumber();
+}
+int cppjs_v_as_bool(size_t h) {
+    return (int)cppjsHelper("__cppjs_v_as_bool").call(*jsRuntime, cppjsVHandle(h)).getNumber();
+}
+uint8_t* cppjs_v_as_str(size_t h) {
+    auto r = cppjsHelper("__cppjs_v_as_str").call(*jsRuntime, cppjsVHandle(h));
+    return cppjsWireFromString(r.asString(*jsRuntime).utf8(*jsRuntime));
+}
+size_t cppjs_v_call(size_t f, unsigned argc, const size_t* argv) {
+    try {
+        jsi::Array args(*jsRuntime, argc);
+        for (unsigned i = 0; i < argc; i += 1) args.setValueAtIndex(*jsRuntime, i, cppjsVHandle(argv[i]));
+        auto r = cppjsHelper("__cppjs_v_call").call(*jsRuntime, cppjsVHandle(f), args);
+        return (size_t)cppjsHandleOf(r);
+    } catch (const jsi::JSError& e) {
+        g_cbError = e.getMessage();
+        g_hasCbError = true;
+        return 0;
+    } catch (const std::exception& e) {
+        g_cbError = e.what();
+        g_hasCbError = true;
+        return 0;
+    }
+}
+uint8_t* cppjs_v_cb_err_take() {
+    if (!g_hasCbError) return nullptr;
+    g_hasCbError = false;
+    return cppjsWireFromString(g_cbError);
+}
 }
 
 // Error raised by the producer (embind_rs::raise_err): Rust cannot unwind across the C-ABI, so

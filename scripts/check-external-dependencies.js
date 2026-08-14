@@ -47,6 +47,7 @@ const SCAN_ROOTS = [
     'cppjs-packages',
     'cppjs-extensions',
     'website',
+    'landing',
     '.', // top-level package.json
 ];
 

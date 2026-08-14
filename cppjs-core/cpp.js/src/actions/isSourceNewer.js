@@ -18,12 +18,18 @@ function newestMtimeInDir(dir) {
     return newest;
 }
 
-export default function isSourceNewer(target) {
-    const artifactPath = `${state.config.paths.build}/${target.jsName}`;
+// "Did any native source change after this artifact was produced?" - artifact is a file
+// (bundler plugins: the built js) or a directory (CLI lib cache: the staged prebuilt dir).
+export function isNativeSourceNewerThan(artifactPath) {
     if (!fs.existsSync(artifactPath)) return false;
-    const artifactMtime = fs.statSync(artifactPath).mtimeMs;
+    const stat = fs.statSync(artifactPath);
+    const artifactMtime = stat.isDirectory() ? newestMtimeInDir(artifactPath) : stat.mtimeMs;
     for (const dir of state.config.paths.native) {
         if (newestMtimeInDir(dir) > artifactMtime) return true;
     }
     return false;
+}
+
+export default function isSourceNewer(target) {
+    return isNativeSourceNewerThan(`${state.config.paths.build}/${target.jsName}`);
 }

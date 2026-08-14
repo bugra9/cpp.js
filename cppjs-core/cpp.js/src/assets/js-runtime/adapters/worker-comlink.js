@@ -4,6 +4,7 @@ import { mergeDeep } from '../core.js';
 import {
     callWithVectorCoercion, wrapWithVectorCoercion, setCoercionModule, unwrapCoercionProxy,
 } from './vector-coercion.js';
+import { patchModuleForExceptionDecode } from './exception-decode.js';
 
 const isWorkerScope = typeof WorkerGlobalScope !== 'undefined'
     && typeof self !== 'undefined'
@@ -119,6 +120,68 @@ Comlink.transferHandlers.set('embindVector', {
     },
 });
 
+// 4b. embindEnum: embind enum VALUES are class instances (not structured-cloneable) with
+// singleton identity per enumerator. Worker side registers each instance under an id; the
+// main thread gets a frozen, identity-stable token per id, and a token passed back as an
+// argument resolves to the original instance - so `===` survives both directions.
+const enumValueSet = new WeakSet();
+const enumInstanceIds = new WeakMap();
+const enumInstancesById = new Map();
+const enumTokensById = new Map();
+let nextEnumId = 1;
+
+// Worker side, at module-ready: collect enum value instances. embind hangs enumerators off
+// the enum TYPE, which is a FUNCTION (plus a `values` meta map), so both function and
+// object holders are walked; a value qualifies when it is an instance (non-Object
+// constructor) carrying a numeric .value and no lifecycle methods - which excludes HEAP
+// views, FS, class statics and config bags.
+export function registerModuleEnums(m) {
+    for (const key of Object.keys(m)) {
+        const holder = m[key];
+        if (holder == null || (typeof holder !== 'object' && typeof holder !== 'function')
+            || ArrayBuffer.isView(holder)) continue;
+        for (const v of Object.values(holder)) {
+            if (v != null && typeof v === 'object'
+                && typeof v.value === 'number'
+                && typeof v.delete !== 'function'
+                && v.constructor && v.constructor !== Object) {
+                enumValueSet.add(v);
+            }
+        }
+    }
+}
+
+Comlink.transferHandlers.set('embindEnum', {
+    canHandle(obj) {
+        if (obj == null || typeof obj !== 'object') return false;
+        return enumValueSet.has(unwrapCoercionProxy(obj)) || '__embindEnumRef' in obj;
+    },
+    serialize(obj) {
+        const raw = unwrapCoercionProxy(obj);
+        if (enumValueSet.has(raw)) {
+            let id = enumInstanceIds.get(raw);
+            if (!id) {
+                id = nextEnumId;
+                nextEnumId += 1;
+                enumInstanceIds.set(raw, id);
+                enumInstancesById.set(id, raw);
+            }
+            return [{ __embindEnumRef: id, value: raw.value }, []];
+        }
+        return [{ __embindEnumRef: raw.__embindEnumRef, value: raw.value }, []];
+    },
+    deserialize(data) {
+        const real = enumInstancesById.get(data.__embindEnumRef);
+        if (real) return real;
+        let token = enumTokensById.get(data.__embindEnumRef);
+        if (!token) {
+            token = Object.freeze({ __embindEnumRef: data.__embindEnumRef, value: data.value });
+            enumTokensById.set(data.__embindEnumRef, token);
+        }
+        return token;
+    },
+});
+
 // 5. embindObject: proxy other embind objects (Dataset, etc.)
 Comlink.transferHandlers.set('embindObject', {
     canHandle(obj) {
@@ -183,6 +246,10 @@ function exposeWorker(systemConfig, createModule) {
             const config = mergeDeep(systemConfig, userConfig);
             const m = await createModule(config);
             setCoercionModule(m);
+            // Decode on the worker side: a real Error (with the C++ message) survives the
+            // comlink throw handler, a raw WebAssembly.Exception does not.
+            patchModuleForExceptionDecode(m);
+            registerModuleEnums(m);
             return Comlink.proxy(wrapWithVectorCoercion(m));
         },
     };

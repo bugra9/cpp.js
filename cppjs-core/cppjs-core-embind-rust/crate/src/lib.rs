@@ -94,6 +94,7 @@ struct Registry {
     tids: Vec<Box<u8>>,
     argtypes: Vec<Box<[*const c_void]>>,
     class_tid: HashMap<TypeId, *const c_void>,
+    shared_ptr_tid: HashMap<TypeId, *const c_void>,
 }
 // Raw pointers are not Send/Sync; the arena is only ever touched under its Mutex.
 unsafe impl Send for Registry {}
@@ -102,6 +103,7 @@ fn registry() -> &'static Mutex<Registry> {
     static REG: OnceLock<Mutex<Registry>> = OnceLock::new();
     REG.get_or_init(|| Mutex::new(Registry {
         cstrings: Vec::new(), tids: Vec::new(), argtypes: Vec::new(), class_tid: HashMap::new(),
+        shared_ptr_tid: HashMap::new(),
     }))
 }
 
@@ -459,6 +461,221 @@ pub fn class_tid<T: 'static>() -> *const c_void {
         .expect("class parameter type must be registered before the binding that uses it")
 }
 
+/// The registered smart-pointer typeid of a SHARED class (`.smart_ptr_shared(..)`), for the
+/// generated `Arc<T>` return/parameter wrappers.
+pub fn shared_tid<T: 'static>() -> *const c_void {
+    registry().lock().unwrap().shared_ptr_tid.get(&TypeId::of::<T>()).copied()
+        .expect("Arc<T> bindings need the class registered with .smart_ptr_shared(..) first")
+}
+
+// Arc-as-intrusive smart pointer: the wire IS the Arc::into_raw pointer, every JS handle owns
+// one strong count. share bumps the count (embind's INTRUSIVE path), the destructor drops one.
+extern "C" fn arc_share_thunk<T>(p: *mut T) -> *mut T {
+    if !p.is_null() {
+        unsafe { std::sync::Arc::increment_strong_count(p as *const T) };
+    }
+    p
+}
+
+extern "C" fn arc_dtor_thunk<T>(p: *mut T) {
+    if !p.is_null() {
+        drop(unsafe { std::sync::Arc::from_raw(p as *const T) });
+    }
+}
+
+// ---- live JS values (JsValue / JsFunction) ----
+// An owned emval handle: the host keeps the real value in its handle table and this side only
+// refcounts. Params arrive owned (Drop releases), returns hand the count to JS. Handles are
+// thread-affine: use them only on the JS thread that produced them.
+extern "C" {
+    fn cppjs_tid_emval() -> *const c_void;
+    fn cppjs_v_ref(h: usize);
+    fn cppjs_v_unref(h: usize);
+    fn cppjs_v_undef() -> usize;
+    fn cppjs_v_from_f64(v: f64) -> usize;
+    fn cppjs_v_from_bool(v: i32) -> usize;
+    fn cppjs_v_from_str(w: *mut u8) -> usize;
+    fn cppjs_v_get_prop(h: usize, key: *mut u8) -> usize;
+    fn cppjs_v_set_prop(h: usize, key: *mut u8, v: usize);
+    fn cppjs_v_kind(h: usize) -> i32;
+    fn cppjs_v_as_f64(h: usize) -> f64;
+    fn cppjs_v_as_bool(h: usize) -> i32;
+    fn cppjs_v_as_str(h: usize) -> *mut u8;
+    fn cppjs_v_call(f: usize, argc: u32, argv: *const usize) -> usize;
+    fn cppjs_v_cb_err_take() -> *mut u8;
+}
+
+fn str_wire(s: &str) -> *mut u8 {
+    unsafe {
+        let bytes = s.as_bytes();
+        let base = malloc(4 + bytes.len());
+        *(base as *mut u32) = bytes.len() as u32;
+        std::ptr::copy_nonoverlapping(bytes.as_ptr(), base.add(4), bytes.len());
+        base
+    }
+}
+
+fn wire_string(w: *mut u8) -> String {
+    unsafe {
+        let len = *(w as *const u32) as usize;
+        let bytes = std::slice::from_raw_parts(w.add(4), len);
+        let s = String::from_utf8_lossy(bytes).into_owned();
+        free(w);
+        s
+    }
+}
+
+pub struct JsValue {
+    handle: usize,
+}
+
+impl JsValue {
+    fn own(handle: usize) -> Self {
+        JsValue { handle }
+    }
+    fn release(self) -> usize {
+        let h = self.handle;
+        core::mem::forget(self);
+        h
+    }
+    pub fn undefined() -> Self {
+        JsValue::own(unsafe { cppjs_v_undef() })
+    }
+    pub fn from_f64(v: f64) -> Self {
+        JsValue::own(unsafe { cppjs_v_from_f64(v) })
+    }
+    pub fn from_bool(v: bool) -> Self {
+        JsValue::own(unsafe { cppjs_v_from_bool(v as i32) })
+    }
+    pub fn from_str(v: &str) -> Self {
+        JsValue::own(unsafe { cppjs_v_from_str(str_wire(v)) })
+    }
+    pub fn get(&self, key: &str) -> JsValue {
+        JsValue::own(unsafe { cppjs_v_get_prop(self.handle, str_wire(key)) })
+    }
+    pub fn set(&self, key: &str, value: &JsValue) {
+        unsafe { cppjs_v_set_prop(self.handle, str_wire(key), value.handle) };
+    }
+    // 0 nullish, 1 bool, 2 number, 3 string, 4 function, 5 anything else.
+    fn kind(&self) -> i32 {
+        unsafe { cppjs_v_kind(self.handle) }
+    }
+    pub fn is_nullish(&self) -> bool {
+        self.kind() == 0
+    }
+    pub fn as_f64(&self) -> Option<f64> {
+        if self.kind() == 2 { Some(unsafe { cppjs_v_as_f64(self.handle) }) } else { None }
+    }
+    pub fn as_bool(&self) -> Option<bool> {
+        if self.kind() == 1 { Some(unsafe { cppjs_v_as_bool(self.handle) } != 0) } else { None }
+    }
+    pub fn as_string(&self) -> Option<String> {
+        if self.kind() == 3 { Some(wire_string(unsafe { cppjs_v_as_str(self.handle) })) } else { None }
+    }
+}
+
+impl Clone for JsValue {
+    fn clone(&self) -> Self {
+        unsafe { cppjs_v_ref(self.handle) };
+        JsValue { handle: self.handle }
+    }
+}
+
+impl Drop for JsValue {
+    fn drop(&mut self) {
+        unsafe { cppjs_v_unref(self.handle) };
+    }
+}
+
+/// A callable JS value; a JS throw inside the callback surfaces as `Err(message)`.
+pub struct JsFunction {
+    value: JsValue,
+}
+
+impl JsFunction {
+    fn call_n(&self, args: &[usize]) -> Result<JsValue, String> {
+        let h = unsafe { cppjs_v_call(self.value.handle, args.len() as u32, args.as_ptr()) };
+        if h == 0 {
+            let w = unsafe { cppjs_v_cb_err_take() };
+            return Err(if w.is_null() { String::from("callback failed") } else { wire_string(w) });
+        }
+        Ok(JsValue::own(h))
+    }
+    pub fn call0(&self) -> Result<JsValue, String> {
+        self.call_n(&[])
+    }
+    pub fn call1(&self, a0: &JsValue) -> Result<JsValue, String> {
+        self.call_n(&[a0.handle])
+    }
+    pub fn call2(&self, a0: &JsValue, a1: &JsValue) -> Result<JsValue, String> {
+        self.call_n(&[a0.handle, a1.handle])
+    }
+}
+
+// The emval handle slot: i32 table index on wasm dynCall, BigInt-marshalled pointer slot on
+// the native bounded dispatch (same split as the generated JSON wire).
+impl WireType for JsValue {
+    type Wire = usize;
+    #[cfg(target_family = "wasm")]
+    const SIG: char = 'i';
+    #[cfg(not(target_family = "wasm"))]
+    const SIG: char = 'p';
+    fn tid() -> *const c_void {
+        unsafe { cppjs_tid_emval() }
+    }
+    fn from_wire(w: usize) -> Self {
+        JsValue::own(w)
+    }
+    fn to_wire(self) -> usize {
+        self.release()
+    }
+}
+
+impl WireType for JsFunction {
+    type Wire = usize;
+    #[cfg(target_family = "wasm")]
+    const SIG: char = 'i';
+    #[cfg(not(target_family = "wasm"))]
+    const SIG: char = 'p';
+    fn tid() -> *const c_void {
+        unsafe { cppjs_tid_emval() }
+    }
+    fn from_wire(w: usize) -> Self {
+        JsFunction { value: JsValue::own(w) }
+    }
+    fn to_wire(self) -> usize {
+        self.value.release()
+    }
+}
+
+impl ErrSentinel for JsValue {
+    fn err_sentinel() -> Self {
+        JsValue::undefined()
+    }
+}
+
+// Host test builds (plain `cargo test` on a package that depends on embind-rs) have no adapter
+// to satisfy the emval hooks; this dev-only feature links panicking stand-ins instead. Never
+// enable it for a real bridge build - the adapter provides the genuine symbols there.
+#[cfg(all(feature = "host-stubs", not(target_family = "wasm")))]
+mod host_stubs {
+    #[no_mangle] extern "C" fn cppjs_v_ref(_h: usize) {}
+    #[no_mangle] extern "C" fn cppjs_v_unref(_h: usize) {}
+    #[no_mangle] extern "C" fn cppjs_v_undef() -> usize { panic!("emval hooks need a cpp.js host") }
+    #[no_mangle] extern "C" fn cppjs_v_from_f64(_v: f64) -> usize { panic!("emval hooks need a cpp.js host") }
+    #[no_mangle] extern "C" fn cppjs_v_from_bool(_v: i32) -> usize { panic!("emval hooks need a cpp.js host") }
+    #[no_mangle] extern "C" fn cppjs_v_from_str(_w: *mut u8) -> usize { panic!("emval hooks need a cpp.js host") }
+    #[no_mangle] extern "C" fn cppjs_v_get_prop(_h: usize, _k: *mut u8) -> usize { panic!("emval hooks need a cpp.js host") }
+    #[no_mangle] extern "C" fn cppjs_v_set_prop(_h: usize, _k: *mut u8, _v: usize) {}
+    #[no_mangle] extern "C" fn cppjs_v_kind(_h: usize) -> i32 { 0 }
+    #[no_mangle] extern "C" fn cppjs_v_as_f64(_h: usize) -> f64 { 0.0 }
+    #[no_mangle] extern "C" fn cppjs_v_as_bool(_h: usize) -> i32 { 0 }
+    #[no_mangle] extern "C" fn cppjs_v_as_str(_h: usize) -> *mut u8 { core::ptr::null_mut() }
+    #[no_mangle] extern "C" fn cppjs_v_call(_f: usize, _c: u32, _a: *const usize) -> usize { 0 }
+    #[no_mangle] extern "C" fn cppjs_v_cb_err_take() -> *mut u8 { core::ptr::null_mut() }
+    #[no_mangle] extern "C" fn cppjs_tid_emval() -> *const core::ffi::c_void { core::ptr::null() }
+}
+
 pub struct EnumBuilder<E: 'static> {
     ty: *const c_void,
     _e: std::marker::PhantomData<E>,
@@ -612,6 +829,35 @@ impl<T: 'static> ClassBuilder<T> {
         self.smart_ptr_ty = Some(ptr_ty);
         self
     }
+
+    /// Shared-ownership variant (`Arc<T>` surfaces): same identity wire, but registered with
+    /// embind's INTRUSIVE sharing - share bumps the Arc strong count and delete() drops one,
+    /// so several JS handles may co-own one Rust object. Every producing path of such a class
+    /// must allocate via Arc (constructor_arcN / create_arcN / Arc-allocating _ptr shims).
+    pub fn smart_ptr_shared(mut self, name: &str) -> Self {
+        let (ptr_ty, name_ptr, gp_sig, ctor_sig, share_sig, dtor_sig);
+        {
+            let mut r = registry().lock().unwrap();
+            ptr_ty = r.tid();
+            name_ptr = r.cstr(name);
+            gp_sig = r.cstr("pp");
+            ctor_sig = r.cstr("pp");
+            share_sig = r.cstr("pp");
+            dtor_sig = r.cstr("vp");
+            r.shared_ptr_tid.insert(TypeId::of::<T>(), ptr_ty);
+        }
+        unsafe {
+            cppjs_embind_register_smart_ptr(
+                ptr_ty, self.cls, name_ptr, 1, // sharing_policy::INTRUSIVE
+                gp_sig, smart_identity as *const () as usize,
+                ctor_sig, smart_identity as *const () as usize,
+                share_sig, arc_share_thunk::<T> as *const () as usize,
+                dtor_sig, arc_dtor_thunk::<T> as *const () as usize,
+            );
+        }
+        self.smart_ptr_ty = Some(ptr_ty);
+        self
+    }
 }
 
 // embind models a vector as a class with size/get/push_back methods, so this is pure
@@ -672,6 +918,51 @@ factories! {
     create0 / factory_invoker0 : ;
     create1 / factory_invoker1 : A0;
     create2 / factory_invoker2 : A0, A1;
+}
+
+// Arc-allocating factories for shared classes: identical registration shape, but the object
+// is stored as an Arc::into_raw pointer so delete()/share stay strong-count based.
+macro_rules! arc_factories {
+    ($( $method:ident / $invoker:ident : $($arg:ident),* ; )*) => {
+        $(
+            extern "C" fn $invoker<T: 'static $(, $arg: WireType)*>(
+                method: usize $(, $arg: <$arg as WireType>::Wire)*
+            ) -> *mut T {
+                let f: fn($($arg),*) -> std::sync::Arc<T> = unsafe { core::mem::transmute(method) };
+                std::sync::Arc::into_raw(f($(<$arg as WireType>::from_wire($arg)),*)) as *mut T
+            }
+        )*
+        impl<T: 'static> ClassBuilder<T> {
+            $(
+                pub fn $method<$($arg: WireType),*>(self, name: &str, f: fn($($arg),*) -> std::sync::Arc<T>) -> Self {
+                    let ret = self.smart_ptr_ty.expect("call .smart_ptr_shared(name) before an arc factory");
+                    let mut sig = String::from("pp");
+                    let mut args = vec![ret];
+                    $( sig.push(<$arg as WireType>::SIG); args.push(<$arg as WireType>::tid()); )*
+                    let (argc, arg_ptr, name_ptr, sig_ptr);
+                    {
+                        let mut r = registry().lock().unwrap();
+                        argc = args.len() as u32;
+                        arg_ptr = r.argtypes(args);
+                        name_ptr = r.cstr(name);
+                        sig_ptr = r.cstr(&sig);
+                    }
+                    unsafe {
+                        cppjs_embind_register_class_class_function(
+                            self.cls, name_ptr, argc, arg_ptr, sig_ptr,
+                            $invoker::<T $(, $arg)*> as *const () as usize, f as *const () as usize, false, false,
+                        );
+                    }
+                    self
+                }
+            )*
+        }
+    };
+}
+arc_factories! {
+    create_arc0 / arc_factory_invoker0 : ;
+    create_arc1 / arc_factory_invoker1 : A0;
+    create_arc2 / arc_factory_invoker2 : A0, A1;
 }
 
 // N-arity constructors: one monomorphized invoker + builder method per argument count.

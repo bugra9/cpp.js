@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import { cargoTripleFor } from './cargoTarget.js';
+import { isMtWasm, assertMtRustToolchain, cargoTargetDirFor, cargoBuildInvocation } from './rustMt.js';
 import writeIfChanged from './writeIfChanged.js';
 
 const SUPER = '_app_super';
@@ -9,13 +10,39 @@ const SUPER = '_app_super';
 // <project>/.cppjs/rust-bridges/ (written by the bundler transformer on import). They are
 // bundled into ONE super staticlib here - a single libstd, so the consumer may safely
 // force_load/whole-archive exactly this archive next to keep-symbol-linked Rust packages.
-export default function buildAppRustCrates(target, cacheDir) {
+export default function buildAppRustCrates(target, cacheDir, cargoDependencies = null, log = console.log) {
     const root = `${cacheDir}/rust-bridges`;
     if (!fs.existsSync(root)) return [];
-    const crates = fs.readdirSync(root, { withFileTypes: true })
+    let crates = fs.readdirSync(root, { withFileTypes: true })
         .filter((e) => e.isDirectory() && e.name !== SUPER && fs.existsSync(`${root}/${e.name}/Cargo.toml`))
         .map((e) => e.name);
+
+    // Prune bridges whose source of truth is gone. An app-local surface whose .rs was deleted
+    // breaks cargo on the missing #[path] target; a crate_ bridge whose cargoDependencies entry
+    // was removed silently keeps dead registrations in every later binary. crate_ pruning only
+    // runs when the caller passes the current cargoDependencies - null means "don't judge".
+    crates = crates.filter((name) => {
+        const dir = `${root}/${name}`;
+        const libRs = `${dir}/src/lib.rs`;
+        const src = fs.existsSync(libRs) ? fs.readFileSync(libRs, 'utf8') : '';
+        const pathMod = src.match(/#\[path = "(.+?)"\]\s*\r?\nmod user;/);
+        let stale = false;
+        if (pathMod) {
+            stale = !fs.existsSync(pathMod[1]);
+        } else if (cargoDependencies && name.startsWith('crate_')) {
+            stale = !Object.keys(cargoDependencies)
+                .some((c) => `crate_${c.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase()}` === name);
+        }
+        if (stale) {
+            fs.rmSync(dir, { recursive: true, force: true });
+            log(`cppjs: pruned stale rust bridge '${name}' - its source is gone`);
+        }
+        return !stale;
+    });
     if (crates.length === 0) return [];
+
+    const isMt = isMtWasm(target);
+    if (isMt) assertMtRustToolchain();
 
     const superDir = `${root}/${SUPER}`;
     const manifest = [
@@ -50,13 +77,15 @@ export default function buildAppRustCrates(target, cacheDir) {
     const triple = cargoTripleFor(target);
     if (!triple) throw new Error(`cppjs: app rust crates do not support platform '${target.platform}/${target.arch}'.`);
 
-    const build = spawnSync('cargo', [
-        'build', '--release', '--target', triple, '--manifest-path', `${superDir}/Cargo.toml`,
-    ], { stdio: 'inherit' });
+    const targetDir = cargoTargetDirFor(superDir, target);
+    const { args, env } = cargoBuildInvocation({
+        target, triple, targetDir, manifestPath: `${superDir}/Cargo.toml`,
+    });
+    const build = spawnSync('cargo', args, { stdio: 'inherit', env });
     if (build.status !== 0) {
-        throw new Error(`cppjs: cargo build failed for the app rust super-crate (${triple})`);
+        throw new Error(`cppjs: cargo build failed for the app rust super-crate (${triple}${isMt ? ', mt/build-std' : ''})`);
     }
-    const libFile = `${superDir}/target/${triple}/release/libcppjs_app_super.a`;
+    const libFile = `${targetDir}/${triple}/release/libcppjs_app_super.a`;
     if (!fs.existsSync(libFile)) throw new Error(`cppjs: expected cargo output ${libFile} not found`);
     return [libFile];
 }

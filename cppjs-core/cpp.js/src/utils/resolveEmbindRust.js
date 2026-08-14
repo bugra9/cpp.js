@@ -14,6 +14,7 @@ const PLUGIN_ANCHORS = [
     '@cpp.js/plugin-vite',
     '@cpp.js/plugin-rollup',
     '@cpp.js/plugin-metro',
+    '@cpp.js/plugin-webpack',
 ];
 
 let cached = null;

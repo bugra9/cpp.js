@@ -4,7 +4,9 @@ import upath from 'upath';
 import state, { saveCache } from '../state/index.js';
 import { getFileHash } from '../utils/hash.js';
 import guardAsyncBindings from '../utils/bridgeAsyncGuard.js';
-import { writeHeaderDts } from '../utils/cppDts.js';
+import { writeHeaderDts, parseCppSurface } from '../utils/cppDts.js';
+import { injectFieldBindings } from '../utils/cppFieldBindings.js';
+import writeIfChanged from '../utils/writeIfChanged.js';
 import run from './run.js';
 
 export default function createBridgeFile(headerOrModuleFilePath, target = state.targets.find((t) => t.platform === 'wasm')) {
@@ -16,8 +18,21 @@ export default function createBridgeFile(headerOrModuleFilePath, target = state.
         fs.mkdirSync(`${state.config.paths.build}/bridge`, { recursive: true });
     }
     const interfaceFile = createInterfaceFile(interfaceFilePath, target);
-    const bridgeFile = createBridgeFileFromInterfaceFile(interfaceFile, target);
+    // The header may live outside paths.native (e.g. a package-subpath import like
+    // '@scope/pkg/native/x.h'), so its own directory must reach swig's include list.
+    const bridgeFile = createBridgeFileFromInterfaceFile(interfaceFile, target, upath.dirname(interfaceFilePath));
+    const moduleRegex = new RegExp(`.(${state.config.ext.module.join('|')})$`);
+    if (bridgeFile && !moduleRegex.test(interfaceFilePath)) {
+        // SWIG's -embind backend emits no member variables; inject .property lines for the
+        // header's public value fields. Idempotent, so the cached-bridge path is safe too.
+        const bridgeContent = fs.readFileSync(bridgeFile, 'utf8');
+        const injected = injectFieldBindings(bridgeContent, parseCppSurface(fs.readFileSync(interfaceFilePath, 'utf8'), () => {}));
+        if (injected !== bridgeContent) fs.writeFileSync(bridgeFile, injected);
+    }
     if (bridgeFile) {
+        // Records which header this bridge came from, so directory-driven consumers
+        // (getAllBridges) can prune bridges whose header no longer exists.
+        writeIfChanged(`${bridgeFile}.source`, `${interfaceFilePath}\n`);
         writeHeaderDts({
             headerFile: interfaceFilePath,
             exportsFile: `${bridgeFile}.exports.json`,
@@ -117,7 +132,7 @@ function applyAsyncGuard(bridgeFilePath) {
     }
 }
 
-function createBridgeFileFromInterfaceFile(interfaceFilePath, target) {
+function createBridgeFileFromInterfaceFile(interfaceFilePath, target, sourceDir = null) {
     if (!interfaceFilePath) {
         return null;
     }
@@ -136,6 +151,7 @@ function createBridgeFileFromInterfaceFile(interfaceFilePath, target) {
         ...state.config.allDependencies.map((d) => `${d.paths.output}/prebuilt/${target.path}/swig`),
         ...state.config.paths.header,
         ...allHeaders,
+        ...(sourceDir ? [sourceDir] : []),
     ].filter((path) => !!path.toString()).map((path) => `-I${path}`);
     includePath = [...new Set(includePath)];
 

@@ -11,6 +11,8 @@
 // only learn that an argument should have been a vector from the failed call. See
 // EXPECTED_VECTOR_RE below - the coercion silently disengages (rethrows) if embind ever
 // changes that message, which the canary test in vectorCoercion.test.js guards against.
+import { decodeCppException } from './exception-decode.js';
+
 let coercionModule = null;
 
 // Matches embind's "Cannot pass <value> as a VectorX" BindingError message.
@@ -49,7 +51,8 @@ function retryWithCoercion(invoke, args) {
         let result;
         try {
             result = invoke(current);
-        } catch (e) {
+        } catch (rawError) {
+            const e = decodeCppException(rawError);
             const match = EXPECTED_VECTOR_RE.exec(String((e && e.message) || e));
             const VectorClass = match && coercionModule ? coercionModule[match[1]] : undefined;
             const index = current.findIndex((a) => Array.isArray(a));
@@ -78,7 +81,7 @@ function retryWithCoercion(invoke, args) {
                 },
                 (err) => {
                     cleanup();
-                    throw err;
+                    throw decodeCppException(err);
                 },
             );
         }
@@ -138,6 +141,11 @@ export function wrapWithVectorCoercion(value, thisArg) {
                 return wrapWithVectorCoercion(member, target);
             }
             return member;
+        },
+        set(target, prop, value) {
+            // 3-arg Reflect.set keeps the RAW object as receiver: embind property setters
+            // identity-check `this`, and the default (proxy receiver) fails that check.
+            return Reflect.set(target, prop, unwrapCoercionProxy(value));
         },
         apply(target, applyThis, args) {
             const boundThis = thisArg !== undefined ? thisArg : unwrapCoercionProxy(applyThis);

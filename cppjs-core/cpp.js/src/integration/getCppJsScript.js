@@ -11,7 +11,8 @@ export default function getCppJsScript(target, bridgePath = null) {
     if (bridgePath) {
         symbols = loadJson(bridgeExportFile);
     }
-    return buildScript(target, symbols);
+    // No bridge means the bare `cpp.js` specifier: the runtime module, which owns init().
+    return buildScript(target, symbols, bridgePath === null);
 }
 
 // The Rust analog of a .h import: parse the crate surface and emit the same proxy module
@@ -71,7 +72,7 @@ export function getRustJsScript(target, rsFile) {
     return buildScript(target, symbols);
 }
 
-function buildScript(target, symbols) {
+function buildScript(target, symbols, isRuntimeModule = false) {
     if (!target) {
         throw new Error('The target is not available!');
     }
@@ -85,19 +86,53 @@ function buildScript(target, symbols) {
         symbolExportAssignString = symbols.map((s) => `${s} = m.${s};`).join('\n');
     }
 
-    const scriptContent = `
-        AllSymbols = m;
-        ${symbolExportAssignString}
-    `;
-
     return `
+        ${getPlatformScript(env)}
+
         export let AllSymbols = {};
         ${symbolExportDefineString}
-        ${getPlatformScript(env, scriptContent)}
+
+        // Each proxy module registers how to bind its own exports, so one init() - from 'cpp.js'
+        // or from any single module - resolves every imported module. Binding only inside the
+        // owning module's init is what leaves the others' exports null.
+        function __cppjsBind(m) {
+            AllSymbols = m;
+            ${symbolExportAssignString}
+        }
+
+        if (!globalThis.__cppjsBinders) globalThis.__cppjsBinders = new Set();
+        globalThis.__cppjsBinders.add(__cppjsBind);
+        // Imported after the runtime booted: this registration missed the run, so bind now.
+        if (globalThis.__cppjsModule) __cppjsBind(globalThis.__cppjsModule);
+
+        function __cppjsInit(config = {}) {
+            // Boot once per app: the wasm module (or the JSI lib) must only start once.
+            if (!globalThis.__cppjsBootPromise) {
+                globalThis.__cppjsBootPromise = __cppjsBoot(config);
+            }
+            return globalThis.__cppjsBootPromise.then((m) => {
+                globalThis.__cppjsModule = m;
+                globalThis.__cppjsBinders.forEach((bind) => bind(m));
+                return m;
+            });
+        }
+
+        // Dropping the boot promise here is what lets a later init() start a fresh runtime;
+        // the bound exports stay pointed at the dead module until it does.
+        __cppjsInit.terminate = function terminate() {
+            globalThis.__cppjsBootPromise = null;
+            globalThis.__cppjsModule = null;
+            if (globalThis.CppJs && globalThis.CppJs.initCppJs.terminate) {
+                globalThis.CppJs.initCppJs.terminate();
+            }
+        };
+
+        export { __cppjsInit as initCppJs };
+        ${isRuntimeModule ? 'export { __cppjsInit as init };' : ''}
     `;
 }
 
-function getReactNativeScript(env, modulePrefix) {
+function getReactNativeScript(env) {
     return `
         import { NativeModules } from 'react-native';
         import Module from '@cpp.js/core-embind-jsi';
@@ -113,31 +148,20 @@ function getReactNativeScript(env, modulePrefix) {
             });
         }
 
-        export function initCppJs(config = {}) {
-            return new Promise(async (resolve, reject) => {
-                if (RNJsiLib && RNJsiLib.start) {
-                    // Boot once per app: every imported proxy module calls initCppJs to bind its
-                    // own exports, but starting the JSI lib twice would re-run every embind
-                    // registration and abort with "Cannot register public name ... twice".
-                    if (!globalThis.__cppjsBootPromise) {
-                        globalThis.__cppjsBootPromise = (async () => {
-                            await RNJsiLib.start();
-                            setEnv();
-                        })();
-                    }
-                    await globalThis.__cppjsBootPromise;
-                    const m = Module;
-                    ${modulePrefix}
-                    resolve(Module);
-                } else {
-                    reject('Module failed to initialise.');
-                }
-            });
+        // Starting the JSI lib twice re-runs every embind registration and aborts with
+        // "Cannot register public name ... twice", so __cppjsInit keeps this to one call.
+        async function __cppjsBoot() {
+            if (!RNJsiLib || !RNJsiLib.start) {
+                throw new Error('Module failed to initialise.');
+            }
+            await RNJsiLib.start();
+            setEnv();
+            return Module;
         }
     `;
 }
 
-function getWebScript(env, modulePrefix) {
+function getWebScript(env) {
     const params = `{
         ...config,
         env: {...${env}, ...config.env},
@@ -150,19 +174,9 @@ function getWebScript(env, modulePrefix) {
     }`;
 
     return `
-        export function initCppJs(config = {}) {
-            return new Promise((resolve, reject) => {
-                // Boot once per app: every imported proxy module calls initCppJs to bind its own
-                // exports; the wasm module itself must only be instantiated once.
-                if (!globalThis.__cppjsBootPromise) {
-                    globalThis.__cppjsBootPromise = import(/* webpackIgnore: true */ '/cpp.js')
-                        .then(n => window.CppJs.initCppJs(${params}));
-                }
-                globalThis.__cppjsBootPromise.then(m => {
-                    ${modulePrefix}
-                    resolve(m);
-                });
-            });
+        function __cppjsBoot(config) {
+            return import(/* webpackIgnore: true */ '/cpp.js')
+                .then(n => window.CppJs.initCppJs(${params}));
         }
     `;
 }

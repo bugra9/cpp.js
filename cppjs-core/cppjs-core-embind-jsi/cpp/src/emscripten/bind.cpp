@@ -557,6 +557,14 @@ namespace emscripten {
                     );
         }
 
+        void _embind_register_optional(TYPEID optionalType, TYPEID type) {
+            jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_optional").call(
+                    *jsRuntime,
+                    Bugra<TYPEID>::toValue(optionalType),
+                    Bugra<TYPEID>::toValue(type)
+                    );
+        }
+
         void _embind_register_value_array(
                 TYPEID tupleType,
                 const char *name,
@@ -982,6 +990,22 @@ namespace emscripten {
             registerHeapWindow(offsetHeapLow);
             registerHeapWindow(offsetRodataLowest);
             registerHeapWindow(offsetRodataHigh);
+
+            // Self-healing fallback: when a JS-side heap read misses every window, JS calls
+            // this to open one centered on the pointer. Unconditional on purpose - JS is the
+            // source of truth about its own windows, so no native covered-check here.
+            auto ensureFn = facebook::jsi::Function::createFromHostFunction(
+                    rt,
+                    facebook::jsi::PropNameID::forAscii(rt, "__cppjs_ensure_heap_window"),
+                    1,
+                    [](facebook::jsi::Runtime& rt2, const facebook::jsi::Value&,
+                       const facebook::jsi::Value* args, size_t) -> facebook::jsi::Value {
+                        uint64_t p = args[0].asBigInt(rt2).asUint64(rt2);
+                        uint64_t newOffset = (p > UINT32_MAX / 2) ? (p - UINT32_MAX / 2) : 0;
+                        registerHeapWindow(newOffset);
+                        return facebook::jsi::Value::undefined();
+                    });
+            rt.global().setProperty(rt, "__cppjs_ensure_heap_window", ensureFn);
 
             for (auto *f = init_funcs; f; f = f->next) {
                 f->init_func();

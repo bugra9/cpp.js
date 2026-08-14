@@ -60,9 +60,10 @@ impl Widget {
 
 ```ts
 // Typed package import - the exact .h experience, for Rust (React Native / metro):
-import { initCppJs, RustyCounter, Widget, Mode, RustIntVector } from '@cpp.js/embind-rust-demo';
+import { init } from 'cpp.js';
+import { RustyCounter, Widget, Mode, RustIntVector } from '@cpp.js/embind-rust-demo';
 
-await initCppJs();      // boots once app-wide, then binds this module's exports
+await init();      // boots once app-wide, then binds this module's exports
 const c = new RustyCounter(10);
 c.increment(5); c.increment(27);
 c.addSpan(2, 10);       // +8 - JS names are camelCased automatically
@@ -74,18 +75,19 @@ const w = Widget.create(6); w.area(); // 36 ; w.delete() frees the Rust Box
 
 How the import works (mirrors the C++ `.h` flow): the metro resolver maps the bare package
 name to the crate's `src/lib.rs`; the transformer parses that surface and emits the same
-proxy-module shape as a `.h` import (`export let` per symbol, bound inside this module's
-`initCppJs`). The package build also emits `dist/js/index.d.ts` (wired via package.json
-`types`), so the import is fully typed in the editor. Booting is guarded app-wide: any number
-of proxy modules may call `initCppJs`; the JSI lib starts once and each module just binds its
-own exports.
+proxy-module shape as a `.h` import (`export let` per symbol, bound when an `init()` resolves).
+The package build also emits `dist/js/index.d.ts` (wired via package.json `types`), so the
+import is fully typed in the editor. Booting is guarded app-wide: every proxy module registers
+its bindings on import, so one `init()` from `cpp.js` starts the JSI lib once and binds all of
+them. Calling a module's own `initCppJs` still works and is a no-op after the first call.
 
 ### App-local .rs files (no package needed)
 
 An app can also import its own Rust file, exactly like its own header:
 
 ```ts
-import { initCppJs, Counter } from './native/counter.rs';
+import { init } from 'cpp.js';
+import { Counter } from './native/counter.rs';
 ```
 
 On import the toolchain synthesizes a self-contained bridge crate under
@@ -134,8 +136,9 @@ export default {
 ```
 
 ```js
-import { initCppJs, Uuid } from 'cargo:uuid';   // the crates.io crate, untouched
-await initCppJs();
+import { init } from 'cpp.js';
+import { Uuid } from 'cargo:uuid';   // the crates.io crate, untouched
+await init();
 const u = Uuid.newV4();                         // v4.rs (feature-gated module)
 `${u}`;                                         // impl Display -> toString()
 Uuid.parseStr('nope');                          // Result::Err -> throws
@@ -256,6 +259,27 @@ scattered `Box::leak`.
   adapter converts BigInt ↔ raw 64 bits (signed read for 'j', unsigned for 'u' — sign lives in
   the sig char, the registered typeid carries it for embind itself). emscripten's dynCall alphabet
   only has 'j', so `sigForWasm` maps 'u' → 'j' on web.
+- JSON values (`serde_json::Value`): the registered arg/ret type is emval (`typeid(val)` on both
+  consumers), so the host marshals a real JS value to a handle; the bridge's `__CppjsJson` wire
+  turns the handle into `[u32 len][bytes]` JSON text through the adapter's host-JSON codec
+  (`cppjs_emval_json_to_handle` / `cppjs_emval_handle_to_json`) and serde maps text ↔ `Value`.
+  A deep copy by design (JSON semantics: `undefined`/functions cross as null); the handle slot is
+  integer-class (`'i'`), so wasm dynCall and native bounded dispatch both hold unchanged.
+- Shared ownership (`Arc<T>`): Arc-as-intrusive - the smart-pointer wire IS the `Arc::into_raw`
+  pointer, one strong count per JS handle. `.smart_ptr_shared` registers sharing INTRUSIVE with
+  share = `Arc::increment_strong_count` and destructor = `Arc::from_raw` drop; `Arc<T>`
+  params/returns cross through per-class `TShared` wrappers (give a count on to_wire, add one
+  on from_wire). Shared classes allocate only via Arc factories and keep `&self` methods - the
+  generator hard-errors on Box-allocating shapes that would corrupt the shared delete().
+- Live JS values (`embind_rs::JsValue`/`JsFunction`): the registered type is emval, the wire is
+  an OWNED handle (params arrive owned - Drop decrefs; returns transfer the count). The crate
+  talks to the host through `cppjs_v_*` hooks: EM_JS over `Emval` on web, fork-JS helpers with
+  BigInt handles on native (never the fork's wasm-heap emval string plumbing). `JsFunction`
+  calls catch the JS throw host-side and surface it as `Err(message)`; handles are
+  thread-affine, so retained callbacks stay on the JS thread (`thread_local!` storage).
+  Worker-backed runtimes (wasm `mt` default / `useWorker: true`) are out: functions cannot
+  cross the worker boundary and identity does not survive structured cloning - the JSON
+  value surface is the worker-safe alternative.
 - Free functions ride `_embind_register_function` (argTypes = `[ret, args..]`, no `this`); both
   consumers slice the target like methods, so the jsi adapter bakes + prepends there too.
 - Public names are a single embind namespace shared with every linked C++ package — demos must not
@@ -278,10 +302,16 @@ scattered `Box::leak`.
    ~~scalar/String `Option` returns~~ ✅ (wasm: emval handle into embind's own optional type;
    native: nullable heap cell + the fork's identity jsiValue type - no fork JS changes),
    ~~`Option` parameters~~ ✅ (wasm: `val::take_ownership` readers; native: adapter-owned
-   cells), ~~class-typed parameters~~ ✅ (per-class Ref wrappers over the class pointer wire).
-   Still open: real shared_ptr sharing (BY_EMVAL) - out of scope by design while the producer
-   model is Box-unique ownership (a future Arc<T> wave); proc-macro ergonomics superseded by
-   toolchain generation.
+   cells), ~~class-typed parameters~~ ✅ (per-class Ref wrappers over the class pointer wire),
+   ~~`serde_json::Value` params/returns~~ ✅ (deep JSON copy through the host JSON codec; web
+   e2e + iOS/Android device smoke 36/36 each).
+   ~~shared ownership (`Arc<T>`)~~ ✅ (Arc-as-intrusive: `.smart_ptr_shared` registers embind's
+   INTRUSIVE policy, share bumps the strong count and delete() drops one; factories return
+   `Arc<Self>`, methods stay `&self`; web e2e + iOS/Android device smoke 40/40 each),
+   ~~live JS values~~ ✅ (`embind_rs::JsValue`/`JsFunction`: identity-preserving emval handles,
+   get/set/prims, callbacks with JS-throw -> `Err` and retained callbacks; web e2e +
+   iOS/Android device smoke 45/45 each - the one deliberate embind-rs import in user code).
+   Still open: proc-macro ergonomics superseded by toolchain generation.
 4. ~~Trigger: move registration into an `.init_array` ctor; shrink the C++ shim.~~ ✅
    `embind_rs::bindings! { .. }` registers from a platform init-array constructor (no C++
    trigger); the shim is now just typeid getters + passthroughs. The consumer staticlib is

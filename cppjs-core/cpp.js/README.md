@@ -65,9 +65,10 @@ npm create cpp.js@beta
 ## Basic Usage
 **src/index.js**
 ```js
-import { initCppJs, Factorial } from './native/Factorial.h';
+import { init } from 'cpp.js';
+import { Factorial } from './native/Factorial.h';
 
-await initCppJs();
+await init();
 const factorial = new Factorial(99999);
 const result = factorial.calculate();
 console.log(result);

@@ -1,6 +1,11 @@
 // Plain Rust - no cpp.js coupling. The toolchain parses this pub surface and generates the
 // embind bridge as a companion crate (.cppjs/bridge-crate), the Rust analog of C++ .i.cpp files.
 
+use serde_json::Value;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicI32, Ordering};
+use embind_rs::{JsFunction, JsValue};
+
 // A by-value data struct: crosses as a plain `{x, y}` object in JS.
 #[repr(C)]
 #[derive(Clone, Copy, Default)]
@@ -111,6 +116,10 @@ impl RustyCounter {
     pub fn diff(&self, other: &RustyCounter) -> i32 {
         (self.value - other.value) as i32
     }
+    // JSON parameter + return on a method: arbitrary structured data both ways.
+    pub fn snapshot(&self, extra: serde_json::Value) -> serde_json::Value {
+        serde_json::json!({ "value": self.value, "extra": extra })
+    }
 }
 
 // Static-factory pattern: JS gets the object from `Widget.create(n)` and the runtime frees it
@@ -171,6 +180,89 @@ pub fn parse_even(text: &str) -> Option<i32> {
 
 pub fn tag(word: Option<String>) -> String {
     format!("[{}]", word.unwrap_or_else(|| "none".to_string()))
+}
+
+static SHARED_DROPS: AtomicI32 = AtomicI32::new(0);
+
+// Shared ownership (Arc<T>): created only through Arc factories, &self methods only; several
+// JS handles may co-own one instance, and the last delete() drops it.
+pub struct SharedDoc {
+    label: String,
+}
+
+impl SharedDoc {
+    pub fn create(label: &str) -> Arc<Self> {
+        Arc::new(SharedDoc { label: label.to_string() })
+    }
+    pub fn label(&self) -> String {
+        self.label.clone()
+    }
+    // Arc parameter: instance identity is observable from Rust.
+    pub fn same_as(&self, other: Arc<SharedDoc>) -> bool {
+        std::ptr::eq(self, Arc::as_ptr(&other))
+    }
+}
+
+impl Drop for SharedDoc {
+    fn drop(&mut self) {
+        SHARED_DROPS.fetch_add(1, Ordering::SeqCst);
+    }
+}
+
+// Same instance out (one more strong count on the wire): JS gets a second co-owning handle.
+pub fn dup_doc(doc: Arc<SharedDoc>) -> Arc<SharedDoc> {
+    doc
+}
+
+pub fn shared_drop_count() -> i32 {
+    SHARED_DROPS.load(Ordering::SeqCst)
+}
+
+// Live JS values (JsValue/JsFunction): identity-preserving handles and callbacks into JS.
+pub fn js_pass(v: JsValue) -> JsValue {
+    v
+}
+
+pub fn js_probe(v: JsValue) -> JsValue {
+    let a = v.get("a").as_f64().unwrap_or(-1.0);
+    v.set("b", &JsValue::from_f64(a * 2.0));
+    v.set("note", &JsValue::from_str("set-by-rust"));
+    v
+}
+
+pub fn js_call(f: JsFunction, x: f64) -> Result<JsValue, String> {
+    f.call1(&JsValue::from_f64(x))
+}
+
+thread_local! {
+    static STORED_CB: std::cell::RefCell<Option<JsFunction>> = const { std::cell::RefCell::new(None) };
+}
+
+pub fn js_store(f: JsFunction) {
+    STORED_CB.with(|c| *c.borrow_mut() = Some(f));
+}
+
+pub fn js_fire(x: f64) -> Result<JsValue, String> {
+    STORED_CB.with(|c| match &*c.borrow() {
+        Some(f) => f.call1(&JsValue::from_f64(x)),
+        None => Err(String::from("no stored callback")),
+    })
+}
+
+// JSON values (serde_json::Value): cross as real JS values, deep-copied at the boundary.
+pub fn json_echo(v: serde_json::Value) -> serde_json::Value {
+    v
+}
+
+// Bare `Value` spelling works because of the `use serde_json::Value` import above.
+pub fn json_tally(v: Value) -> Value {
+    let total: i64 = v.get("items").and_then(|i| i.as_array())
+        .map(|a| a.iter().filter_map(|x| x.as_i64()).sum()).unwrap_or(0);
+    serde_json::json!({ "hasItems": v.get("items").is_some(), "total": total })
+}
+
+pub fn json_pick(v: serde_json::Value, key: &str) -> Result<serde_json::Value, String> {
+    v.get(key).cloned().ok_or_else(|| format!("missing key {key}"))
 }
 
 #[cfg(test)]
@@ -252,5 +344,29 @@ mod tests {
     #[test]
     fn class_ref_param() {
         assert_eq!(RustyCounter::new(42).diff(&RustyCounter::new(10)), 32);
+    }
+
+    #[test]
+    fn shared_doc_arc_semantics() {
+        let before = shared_drop_count();
+        let a = SharedDoc::create("x");
+        let b = dup_doc(a.clone());
+        assert!(a.same_as(b.clone()));
+        assert_eq!(b.label(), "x");
+        drop(a);
+        assert_eq!(shared_drop_count(), before);
+        drop(b);
+        assert_eq!(shared_drop_count(), before + 1);
+    }
+
+    #[test]
+    fn json_helpers_work() {
+        let v = serde_json::json!({ "items": [1, 2, 3] });
+        assert_eq!(json_echo(v.clone()), v);
+        assert_eq!(json_tally(v.clone())["total"], serde_json::json!(6));
+        assert!(json_tally(v.clone())["hasItems"].as_bool().unwrap());
+        assert_eq!(json_pick(v, "items").unwrap(), serde_json::json!([1, 2, 3]));
+        assert!(json_pick(serde_json::json!({}), "zz").is_err());
+        assert_eq!(RustyCounter::new(42).snapshot(serde_json::json!({ "t": 1 }))["value"], serde_json::json!(42));
     }
 }

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import createLib from './createLib.js';
+import { isNativeSourceNewerThan } from './isSourceNewer.js';
 import createXCFramework from './createXCFramework.js';
 import { getBuildTargets, getFilteredTargetSpec } from './target.js';
 import state from '../state/index.js';
@@ -35,6 +36,10 @@ export default function buildLib(targetParams, options = {}) {
             });
             isChanged = true;
         } else {
+            // The skip is existence-only; without this warning a source edit is served stale silently.
+            if (isNativeSourceNewerThan(`${state.config.paths.output}/prebuilt/${target.path}/lib`)) {
+                logger.info(`[${target.path}] lib cached but native sources are newer - delete the prebuilt output (rm -rf dist .cppjs) and rebuild to pick them up`);
+            }
             logger.cachedStep(target, 'lib');
         }
     });

@@ -112,6 +112,10 @@ namespace emscripten {
                 GenericFunction function,
                 bool isAsync);
 
+        void _embind_register_optional(
+                TYPEID optionalType,
+                TYPEID type);
+
         void _embind_register_value_array(
                 TYPEID tupleType,
                 const char* name,
@@ -398,6 +402,19 @@ struct allow_raw_pointer {
 
     namespace internal {
 
+        // C++ exceptions escaping a host function reach JS engine-dependently (often with
+        // the what() text dropped); rethrowing as JSError guarantees e.message everywhere.
+        template<typename F>
+        inline decltype(auto) rethrowAsJsError(facebook::jsi::Runtime& rt, F&& call) {
+            try {
+                return std::forward<F>(call)();
+            } catch (const facebook::jsi::JSError&) {
+                throw;
+            } catch (const std::exception& e) {
+                throw facebook::jsi::JSError(rt, std::string(e.what()));
+            }
+        }
+
         template<typename ReturnType, typename... Args>
         struct Invoker {
             static typename internal::BindingType<ReturnType>::WireType invoke(
@@ -416,11 +433,13 @@ struct allow_raw_pointer {
                     ReturnType (*fn)(Args...),
                     typename internal::BindingType<Args>::WireType2&... args
             ) {
-                return internal::BindingType<ReturnType>::toWireType2(rt,
-                                                                      fn(
-                                                                              internal::BindingType<Args>::fromWireType2(rt, args)...
-                                                                      )
-                );
+                return rethrowAsJsError(rt, [&]() -> typename internal::BindingType<ReturnType>::WireType2 {
+                    return internal::BindingType<ReturnType>::toWireType2(rt,
+                                                                          fn(
+                                                                                  internal::BindingType<Args>::fromWireType2(rt, args)...
+                                                                          )
+                    );
+                });
             }
         };
 
@@ -440,9 +459,11 @@ struct allow_raw_pointer {
                     void (*fn)(Args...),
                     typename internal::BindingType<Args>::WireType2&... args
             ) {
-                return fn(
-                        internal::BindingType<Args>::fromWireType2(rt, args)...
-                );
+                return rethrowAsJsError(rt, [&]() -> void {
+                    fn(
+                            internal::BindingType<Args>::fromWireType2(rt, args)...
+                    );
+                });
             }
         };
 
@@ -482,11 +503,13 @@ struct allow_raw_pointer {
                     FunctorType& function,
                     typename internal::BindingType<Args>::WireType2&... args
             ) {
-                return internal::BindingType<ReturnType>::toWireType2(
-                        rt,
-                        function(
-                                internal::BindingType<Args>::fromWireType2(rt, args)...)
-                );
+                return rethrowAsJsError(rt, [&]() -> typename internal::BindingType<ReturnType>::WireType2 {
+                    return internal::BindingType<ReturnType>::toWireType2(
+                            rt,
+                            function(
+                                    internal::BindingType<Args>::fromWireType2(rt, args)...)
+                    );
+                });
             }
         };
 
@@ -505,8 +528,10 @@ struct allow_raw_pointer {
                     FunctorType& function,
                     typename internal::BindingType<Args>::WireType2&... args
             ) {
-                function(
-                        internal::BindingType<Args>::fromWireType2(rt, args)...);
+                rethrowAsJsError(rt, [&]() -> void {
+                    function(
+                            internal::BindingType<Args>::fromWireType2(rt, args)...);
+                });
             }
         };
 
@@ -717,12 +742,14 @@ struct SignatureTranslator<ReturnType (*)(Args...)> { using type = void*; };
                     typename internal::BindingType<ThisType>::WireType2& wireThis,
                     typename internal::BindingType<Args>::WireType2&... args
             ) {
-                return internal::BindingType<ReturnType>::toWireType2(
-                        rt,
-                        (*function)(
-                                internal::BindingType<ThisType>::fromWireType2(rt, wireThis),
-                                internal::BindingType<Args>::fromWireType2(rt, args)...)
-                );
+                return rethrowAsJsError(rt, [&]() -> typename internal::BindingType<ReturnType>::WireType2 {
+                    return internal::BindingType<ReturnType>::toWireType2(
+                            rt,
+                            (*function)(
+                                    internal::BindingType<ThisType>::fromWireType2(rt, wireThis),
+                                    internal::BindingType<Args>::fromWireType2(rt, args)...)
+                    );
+                });
             }
         };
 
@@ -744,9 +771,11 @@ struct SignatureTranslator<ReturnType (*)(Args...)> { using type = void*; };
                     typename internal::BindingType<ThisType>::WireType2& wireThis,
                     typename internal::BindingType<Args>::WireType2&... args
             ) {
-                (*function)(
-                        internal::BindingType<ThisType>::fromWireType2(rt, wireThis),
-                        internal::BindingType<Args>::fromWireType2(rt, args)...);
+                rethrowAsJsError(rt, [&]() -> void {
+                    (*function)(
+                            internal::BindingType<ThisType>::fromWireType2(rt, wireThis),
+                            internal::BindingType<Args>::fromWireType2(rt, args)...);
+                });
             }
         };
 
@@ -773,11 +802,13 @@ struct SignatureTranslator<ReturnType (*)(Args...)> { using type = void*; };
                     typename internal::BindingType<ThisType>::WireType2& wireThis,
                     typename internal::BindingType<Args>::WireType2&... args
             ) {
-                return internal::BindingType<ReturnType>::toWireType2(rt,
-                                                                      (internal::BindingType<ThisType>::fromWireType2(rt, wireThis)->*method)(
-                                                                              internal::BindingType<Args>::fromWireType2(rt, args)...
-                                                                      )
-                );
+                return rethrowAsJsError(rt, [&]() -> typename internal::BindingType<ReturnType>::WireType2 {
+                    return internal::BindingType<ReturnType>::toWireType2(rt,
+                                                                          (internal::BindingType<ThisType>::fromWireType2(rt, wireThis)->*method)(
+                                                                                  internal::BindingType<Args>::fromWireType2(rt, args)...
+                                                                          )
+                    );
+                });
             }
         };
 
@@ -801,9 +832,11 @@ struct SignatureTranslator<ReturnType (*)(Args...)> { using type = void*; };
                     typename internal::BindingType<ThisType>::WireType2& wireThis,
                     typename internal::BindingType<Args>::WireType2&... args
             ) {
-                return (internal::BindingType<ThisType>::fromWireType2(rt, wireThis)->*method)(
-                        internal::BindingType<Args>::fromWireType2(rt, args)...
-                );
+                rethrowAsJsError(rt, [&]() -> void {
+                    (internal::BindingType<ThisType>::fromWireType2(rt, wireThis)->*method)(
+                            internal::BindingType<Args>::fromWireType2(rt, args)...
+                    );
+                });
             }
         };
 
@@ -2677,8 +2710,20 @@ namespace internal {
 } // end namespace internal
 
 template<typename T>
+void register_optional() {
+    // Mirrors upstream embind: the optional<T> TYPEID resolves to a JS converter that
+    // delegates to T's converter, with no-value crossing as undefined.
+    internal::_embind_register_optional(
+            internal::TypeID<std::optional<T>>::get(),
+            internal::TypeID<T>::get());
+}
+
+template<typename T>
 class_<std::vector<T>> register_vector(const char* name) {
     typedef std::vector<T> VecType;
+    // Upstream registers the element's optional alongside the vector; matching it keeps
+    // optional<T> usable wherever a vector of T is registered (the common bridge case).
+    register_optional<T>();
 
     void (VecType::*push_back)(const T&) = &VecType::push_back;
     void (VecType::*resize)(const size_t, const T&) = &VecType::resize;

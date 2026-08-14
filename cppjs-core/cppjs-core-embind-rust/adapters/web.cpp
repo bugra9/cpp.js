@@ -109,6 +109,33 @@ int cppjs_emval_opt_string(void* h, uint8_t** out) {
     return 1;
 }
 
+// JSON-value bridge (serde_json::Value): deep copy through the host's canonical JSON codec.
+// Wire is the usual [u32 len][bytes]; handles cross owned (incref on give, take_ownership on
+// receive), matching the Option emval discipline above.
+const void* cppjs_tid_emval() { return &typeid(emscripten::val); }
+
+void* cppjs_emval_json_to_handle(uint8_t* w) {
+    const uint32_t len = *(const uint32_t*)w;
+    std::string s((const char*)(w + 4), len);
+    free(w);
+    emscripten::val v = emscripten::val::global("JSON").call<emscripten::val>("parse", emscripten::val::u8string(s.c_str()));
+    emscripten::EM_VAL h = v.as_handle();
+    emscripten::internal::_emval_incref(h);
+    return (void*)h;
+}
+
+uint8_t* cppjs_emval_handle_to_json(void* h) {
+    emscripten::val v = emscripten::val::take_ownership((emscripten::EM_VAL)h);
+    emscripten::val j = emscripten::val::global("JSON").call<emscripten::val>("stringify", v);
+    // JSON.stringify(undefined / a bare function) yields undefined: cross as null.
+    std::string s = j.isUndefined() ? "null" : j.as<std::string>();
+    uint8_t* w = (uint8_t*)malloc(4 + s.size());
+    uint32_t len = (uint32_t)s.size();
+    std::memcpy(w, &len, 4);
+    std::memcpy(w + 4, s.data(), s.size());
+    return w;
+}
+
 // emscripten's real registration functions (extern "C" in bind.h).
 void _embind_register_class(CppjsTid, CppjsTid, CppjsTid, CppjsTid, const char*, CppjsFn, const char*, CppjsFn, const char*, CppjsFn, const char*, const char*, CppjsFn);
 void _embind_register_class_constructor(CppjsTid, unsigned, const CppjsTid*, const char*, CppjsFn, CppjsFn);
@@ -170,3 +197,72 @@ void cppjs_embind_register_bindings(void (*init)()) {
 }
 
 }
+
+// ---- live JS value hooks (JsValue / JsFunction) ----
+// EM_JS bodies over embind's own Emval handle table (visible in EM_JS scope, like the Option
+// helpers above). Handles are i32 table indexes on wasm32, so argv reads via HEAPU32.
+EM_JS(void, cppjs_v_ref, (void* h), { __emval_incref(h); });
+EM_JS(void, cppjs_v_unref, (void* h), { __emval_decref(h); });
+EM_JS(void*, cppjs_v_from_f64, (double v), { return Emval.toHandle(v); });
+EM_JS(void*, cppjs_v_from_bool, (int v), { return Emval.toHandle(!!v); });
+EM_JS(void*, cppjs_v_from_str, (uint8_t* w), {
+    const len = HEAPU32[w >> 2];
+    const s = UTF8ToString(w + 4, len);
+    _free(w);
+    return Emval.toHandle(s);
+});
+EM_JS(void*, cppjs_v_get_prop, (void* h, uint8_t* w), {
+    const len = HEAPU32[w >> 2];
+    const k = UTF8ToString(w + 4, len);
+    _free(w);
+    return Emval.toHandle(Emval.toValue(h)[k]);
+});
+EM_JS(void, cppjs_v_set_prop, (void* h, uint8_t* w, void* v), {
+    const len = HEAPU32[w >> 2];
+    const k = UTF8ToString(w + 4, len);
+    _free(w);
+    Emval.toValue(h)[k] = Emval.toValue(v);
+});
+EM_JS(int, cppjs_v_kind, (void* h), {
+    const v = Emval.toValue(h);
+    if (v === null || v === undefined) return 0;
+    const t = typeof v;
+    if (t === 'boolean') return 1;
+    if (t === 'number') return 2;
+    if (t === 'string') return 3;
+    if (t === 'function') return 4;
+    return 5;
+});
+EM_JS(double, cppjs_v_as_f64, (void* h), { return Number(Emval.toValue(h)); });
+EM_JS(int, cppjs_v_as_bool, (void* h), { return Emval.toValue(h) ? 1 : 0; });
+EM_JS(uint8_t*, cppjs_v_as_str, (void* h), {
+    const s = String(Emval.toValue(h));
+    const len = lengthBytesUTF8(s);
+    const w = _malloc(4 + len);
+    HEAPU32[w >> 2] = len;
+    stringToUTF8(s, w + 4, len + 1);
+    return w;
+});
+EM_JS(void*, cppjs_v_call, (void* f, unsigned argc, void* argv), {
+    try {
+        const fn = Emval.toValue(f);
+        const args = [];
+        for (let i = 0; i < argc; i += 1) args.push(Emval.toValue(HEAPU32[(argv >> 2) + i]));
+        return Emval.toHandle(fn(...args));
+    } catch (e) {
+        globalThis.__cppjs_cb_err = String((e && e.message) || e);
+        return 0;
+    }
+});
+EM_JS(uint8_t*, cppjs_v_cb_err_take, (), {
+    const s = globalThis.__cppjs_cb_err;
+    if (s === undefined) return 0;
+    delete globalThis.__cppjs_cb_err;
+    const len = lengthBytesUTF8(s);
+    const w = _malloc(4 + len);
+    HEAPU32[w >> 2] = len;
+    stringToUTF8(s, w + 4, len + 1);
+    return w;
+});
+
+extern "C" void* cppjs_v_undef() { return (void*)emscripten::internal::_EMVAL_UNDEFINED; }

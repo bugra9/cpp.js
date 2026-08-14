@@ -250,6 +250,43 @@ void cppjs_embind_finalize_value_object(CppjsTid) {
 static void (*g_pending_init)() = nullptr;
 void cppjs_embind_register_bindings(void (*init)()) { g_pending_init = init; }
 
+// JSON-value hooks (serde_json::Value surfaces): the mock's "handles" are 1-based indexes
+// into a JSON-text pool - enough to shape-check the wire without a real JS engine.
+static std::vector<std::string>& jsonPool() { static std::vector<std::string> p; return p; }
+const void* cppjs_tid_emval() { static const char t = 0; return &t; }
+void* cppjs_emval_json_to_handle(uint8_t* w) {
+    uint32_t len;
+    std::memcpy(&len, w, 4);
+    jsonPool().emplace_back((const char*)(w + 4), len);
+    std::free(w);
+    return (void*)jsonPool().size();
+}
+uint8_t* cppjs_emval_handle_to_json(void* h) {
+    const std::string& s = jsonPool().at((size_t)h - 1);
+    uint8_t* w = (uint8_t*)std::malloc(4 + s.size());
+    uint32_t len = (uint32_t)s.size();
+    std::memcpy(w, &len, 4);
+    std::memcpy(w + 4, s.data(), s.size());
+    return w;
+}
+
+// Live JS value hooks (JsValue/JsFunction): link-only stubs - the shape leg never drives the
+// E2 markers, it just force_loads the bridge that references these symbols.
+void cppjs_v_ref(size_t) {}
+void cppjs_v_unref(size_t) {}
+size_t cppjs_v_undef() { return 1; }
+size_t cppjs_v_from_f64(double) { return 1; }
+size_t cppjs_v_from_bool(int) { return 1; }
+size_t cppjs_v_from_str(uint8_t* w) { std::free(w); return 1; }
+size_t cppjs_v_get_prop(size_t, uint8_t* w) { std::free(w); return 1; }
+void cppjs_v_set_prop(size_t, uint8_t* w, size_t) { std::free(w); }
+int cppjs_v_kind(size_t) { return 0; }
+double cppjs_v_as_f64(size_t) { return 0; }
+int cppjs_v_as_bool(size_t) { return 0; }
+uint8_t* cppjs_v_as_str(size_t) { return nullptr; }
+size_t cppjs_v_call(size_t, unsigned, const size_t*) { return 0; }
+uint8_t* cppjs_v_cb_err_take() { return nullptr; }
+
 } // extern "C"
 
 // Find a class entry by name (test-side convenience).

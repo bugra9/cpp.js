@@ -21,6 +21,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include <jsi/jsi.h>
@@ -45,6 +46,10 @@ constexpr bool has_unbound_type_names = false;
 namespace internal {
 
 typedef const void* TYPEID;
+
+// Defined in bind.cpp: registers a JS-side ArrayBuffer window covering `ptr` so
+// heap reads on values we hand out by pointer cannot miss every window.
+void ensureWindowFor(uint64_t ptr);
 
 // We don't need the full std::type_info implementation.  We
 // just need a unique identifier per type and polymorphic type
@@ -392,6 +397,21 @@ struct BindingType<std::basic_string<T>> {
 };
 
 template<typename T>
+struct BindingType<std::optional<T>> {
+    typedef std::optional<T> WireType;
+    typedef const facebook::jsi::Value WireType2;
+
+    static WireType2 toWireType2(facebook::jsi::Runtime& rt, const std::optional<T>& v) {
+        if (!v.has_value()) return facebook::jsi::Value::undefined();
+        return WireType2(rt, BindingType<T>::toWireType2(rt, *v));
+    }
+    static std::optional<T> fromWireType2(facebook::jsi::Runtime& rt, WireType2& wt) {
+        if (wt.isUndefined() || wt.isNull()) return std::nullopt;
+        return BindingType<T>::fromWireType2(rt, wt);
+    }
+};
+
+template<typename T>
 struct BindingType<const T> : public BindingType<T> {
 };
 
@@ -462,13 +482,16 @@ struct GenericBindingType {
     }
 
     static WireType2 toWireType2(facebook::jsi::Runtime& rt, const T& v) {
-        return facebook::jsi::BigInt::fromUint64(rt, reinterpret_cast<uint64_t>(new T(v)));
+        // By-value returns allocate fresh heap blocks; without a covering window JS-side
+        // memory reads on the new object die with "Heap error ... no covering window".
+        uint64_t ptr = reinterpret_cast<uint64_t>(new T(v));
+        ensureWindowFor(ptr);
+        return facebook::jsi::BigInt::fromUint64(rt, ptr);
     }
     static WireType2 toWireType2(facebook::jsi::Runtime& rt, T&& v) {
-        WireType wireType = new T(std::forward<T>(v));
-        auto b = reinterpret_cast<uint64_t>(wireType);
-        auto a = facebook::jsi::BigInt::fromUint64(rt, b);
-        return a;
+        uint64_t ptr = reinterpret_cast<uint64_t>(new T(std::forward<T>(v)));
+        ensureWindowFor(ptr);
+        return facebook::jsi::BigInt::fromUint64(rt, ptr);
     }
 
     static ActualT& fromWireType2(facebook::jsi::Runtime& rt, WireType2& wt) {

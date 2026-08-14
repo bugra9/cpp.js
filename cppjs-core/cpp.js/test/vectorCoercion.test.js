@@ -177,6 +177,30 @@ describe('wrapModuleForCoercion (direct / non-worker mode)', () => {
     });
 });
 
+describe('wrapWithVectorCoercion property writes', () => {
+    test('accessor setters run with the raw object as receiver', () => {
+        const raw = {};
+        let observed = null;
+        Object.defineProperty(raw, 'width', {
+            configurable: true,
+            get() { return 6; },
+            set(v) { observed = { value: v, thisIsRaw: this === raw }; },
+        });
+        const wrapped = wrapWithVectorCoercion(raw);
+        wrapped.width = 9;
+        expect(observed).toEqual({ value: 9, thisIsRaw: true });
+    });
+
+    test('wrapped values are unwrapped before assignment', () => {
+        const inner = { tag: 'inner' };
+        const wrappedInner = wrapWithVectorCoercion(inner);
+        const raw = {};
+        const target = wrapWithVectorCoercion(raw);
+        target.child = wrappedInner;
+        expect(raw.child).toBe(inner);
+    });
+});
+
 describe('wrapWithVectorCoercion (worker deep wrapper)', () => {
     // embind generates classes as PLAIN functions (createNamedFunction), whose
     // .prototype is writable - unlike `class` syntax. A writable prototype means

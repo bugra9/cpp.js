@@ -33,6 +33,34 @@ const OPTION_INNERS = new Set(['i32', 'f64', 'bool', 'String']);
 const OPTION_PARAM_RE = /^Option<(i32|f64|bool|String)>$/;
 const OPTIONAL_REG = { i32: 'register_optional_i32', f64: 'register_optional_f64', bool: 'register_optional_bool', String: 'register_optional_string' };
 const VECTOR_ITEM_TYPES = new Set(['i32', 'f64', 'bool']);
+// serde_json::Value params/returns cross as a deep JSON copy (adapter-side codec, canonical
+// token 'Json'); the bare `Value` spelling counts only when the file imports serde_json.
+const JSON_TY = 'Json';
+const isJsonSpelling = (ty, ctx) => Boolean(ctx?.allowJson)
+    && (ty === 'serde_json::Value' || (Boolean(ctx.hasSerdeUse) && ty === 'Value'));
+// Arc<Class> params/returns (shared ownership): canonical token 'Arc<X>'; the bare `Arc`
+// spelling counts only when the file imports std::sync::Arc. Same app-surface gate as Json.
+const ARC_RE = /^Arc<(\w+)>$/;
+const normalizeArc = (ty, ctx) => {
+    if (!ctx?.allowJson) return ty;
+    const m = ty.match(/^(?:std::sync::)?Arc<(\w+)>$/);
+    if (!m) return ty;
+    if (!ty.startsWith('std::sync::') && !ctx.hasArcUse) return ty;
+    return `Arc<${m[1]}>`;
+};
+// Live JS handles (embind_rs::JsValue / JsFunction): bare spellings count only when the file
+// imports from embind_rs - the one deliberate coupling of the E2 surface.
+const JS_TOKS = new Set(['JsValue', 'JsFunction']);
+// Returns the canonical token only when the spelling is ELIGIBLE (qualified, or bare with the
+// embind_rs import present) - the token equals the bare name, so acceptance must key on this
+// result, never on the raw string.
+const matchJsTok = (ty, ctx) => {
+    if (!ctx?.allowJson) return null;
+    const m = String(ty).match(/^(?:embind_rs::)?(JsValue|JsFunction)$/);
+    if (!m) return null;
+    if (!String(ty).startsWith('embind_rs::') && !ctx.hasEmbindUse) return null;
+    return m[1];
+};
 const FN_SIG_RE = /^pub (?:const )?fn (\w+)\s*\(([^)]*)\)\s*(?:->\s*([\w:<>(),& ]+?))?\s*\{/;
 
 export default function generateRustBridge({ crateDir, vectors = [], dtsFile = null, keepName = null, dtsMode = 'sync', log = console.log }) {
@@ -68,6 +96,7 @@ export default function generateRustBridge({ crateDir, vectors = [], dtsFile = n
         '[dependencies]',
         `${userCrate} = { package = "${rawCrateName}", path = "${crateDir}" }`,
         `embind-rs = { path = "${embindRsDir}" }`,
+        ...(model.usesJson ? ['serde_json = "1"'] : []),
         '',
         '[profile.release]',
         'panic = "abort"',
@@ -120,6 +149,7 @@ export function createRustBridgeCrate({ rsFile, cacheDir, projectPath, vectors =
         ...Object.entries(cargoDependencies).map(([name, spec]) => (
             String(spec).trim().startsWith('{') ? `${name} = ${spec}` : `${name} = "${spec}"`
         )),
+        ...(model.usesJson && !cargoDependencies.serde_json ? ['serde_json = "1"'] : []),
         '',
         '[profile.release]',
         'panic = "abort"',
@@ -293,6 +323,9 @@ function cfgEnabled(cfg, enabled) {
 // contribute impls (methods, factories, Display) for already-known types.
 function scanSource(src, acc, { collectTypes, log }) {
     const { enums, valueObjects, classes, freeFns, displayNames, wantedTypes } = acc;
+    acc.hasSerdeUse ||= /\buse\s+serde_json\b/.test(src);
+    acc.hasArcUse ||= /\buse\s+std::sync::(?:Arc\b|\{[^}]*\bArc\b)/.test(src);
+    acc.hasEmbindUse ||= /\buse\s+embind_rs::/.test(src);
     const mods = [];
     // Strip line comments; join multi-line `pub fn` signatures (to their brace) and multi-line
     // `pub use` re-export lists (to their semicolon).
@@ -400,7 +433,7 @@ function scanSource(src, acc, { collectTypes, log }) {
             for (i += 1; i < lines.length && depth > 0; i += 1) {
                 const s = lines[i];
                 const sig = s.trim().match(FN_SIG_RE);
-                if (sig && depth === 1) parseFn(cls, sig, { enums, valueObjects, classes }, log);
+                if (sig && depth === 1) parseFn(cls, sig, { enums, valueObjects, classes, allowJson: collectTypes, hasSerdeUse: acc.hasSerdeUse, hasArcUse: acc.hasArcUse, hasEmbindUse: acc.hasEmbindUse }, log);
                 depth += (s.match(/\{/g) ?? []).length - (s.match(/\}/g) ?? []).length;
             }
             i -= 1;
@@ -408,7 +441,7 @@ function scanSource(src, acc, { collectTypes, log }) {
             // Consume unknown-impl bodies so their fns are never misread as free functions.
             i = skipBlock(lines, i);
         } else if (freeFnM) {
-            parseFreeFn(freeFns, freeFnM, { enums, valueObjects, classes }, log);
+            parseFreeFn(freeFns, freeFnM, { enums, valueObjects, classes, allowJson: collectTypes, hasSerdeUse: acc.hasSerdeUse, hasArcUse: acc.hasArcUse, hasEmbindUse: acc.hasEmbindUse }, log);
         }
         attrs = [];
     }
@@ -429,7 +462,40 @@ function finalizeModel(acc, log) {
         if (displayNames.has(cls.name) && collides) log(`cppjs: rust bridge: ${cls.name} Display->toString skipped (a toString method already exists)`);
         cls.hasDisplay = displayNames.has(cls.name) && !collides;
     }
-    return { enums, valueObjects, classes: [...classes.values()], freeFns };
+    const anyJson = (args, ret) => args.some((p) => p.ty === JSON_TY) || ret === JSON_TY;
+    const usesJson = freeFns.some((f) => anyJson(f.args, f.ret))
+        || [...classes.values()].some((c) => (c.ctor && anyJson(c.ctor.args, '()'))
+            || c.factories.some((f) => anyJson(f.args, '()'))
+            || c.methods.some((m) => anyJson(m.args, m.ret)));
+
+    // Shared (Arc) classes: collect every class named by an Arc<...> surface anywhere, then
+    // enforce the shapes whose Box paths would corrupt the Arc-based delete()/share machinery.
+    const sharedOf = new Set();
+    const noteArc = (ty) => { const m = String(ty).match(ARC_RE); if (m) sharedOf.add(m[1]); };
+    const noteAll = (args, ret) => { args.forEach((p) => noteArc(p.ty)); noteArc(ret); };
+    freeFns.forEach((f) => noteAll(f.args, f.ret));
+    for (const c of classes.values()) {
+        if (c.factories.some((f) => f.shared)) sharedOf.add(c.name);
+        if (c.ctor) noteAll(c.ctor.args, '()');
+        c.factories.forEach((f) => noteAll(f.args, '()'));
+        c.methods.forEach((m) => noteAll(m.args, m.ret));
+    }
+    for (const c of classes.values()) {
+        if (!sharedOf.has(c.name)) continue;
+        c.shared = true;
+        if (c.ctor) {
+            throw new Error(`cppjs: rust bridge: ${c.name} has Arc<...> surfaces, so a plain 'new' constructor cannot exist (its Box allocation would corrupt the shared delete()) - use a named factory returning Arc<Self>`);
+        }
+        const mut = c.methods.find((m) => !m.byRef);
+        if (mut) {
+            throw new Error(`cppjs: rust bridge: ${c.name} is shared via Arc<...>, so its methods must take &self ('${mut.name}' takes &mut self) - use interior mutability or drop the Arc surface`);
+        }
+        const boxed = c.factories.find((f) => !f.shared);
+        if (boxed) {
+            throw new Error(`cppjs: rust bridge: ${c.name} is shared via Arc<...>, so every factory must return Arc<Self> ('${boxed.name}' returns Self)`);
+        }
+    }
+    return { enums, valueObjects, classes: [...classes.values()], freeFns, usesJson, sharedOf: [...sharedOf].sort() };
 }
 
 // Consumes a brace-delimited block starting at line i; returns the closing line's index.
@@ -456,7 +522,8 @@ function analyzeReturn(raw) {
     return { inner: r, throws: false, optional: false };
 }
 
-function parseFn(cls, sig, { enums, valueObjects, classes }, log) {
+function parseFn(cls, sig, ctx, log) {
+    const { enums, valueObjects, classes } = ctx;
     const [, name, rawParams, rawRet] = sig;
     const known = (ty) => PRIMITIVES.has(ty)
         || enums.some((e) => e.name === ty) || valueObjects.some((v) => v.name === ty);
@@ -473,36 +540,67 @@ function parseFn(cls, sig, { enums, valueObjects, classes }, log) {
 
     const args = [];
     for (const p of params) {
-        const m = p.match(/^(\w+)\s*:\s*(&\s*(?:str|String)|Option\s*<\s*(?:i32|f64|bool|String)\s*>|&\s*\w+|[\w()]+)$/);
-        const ty = m?.[2].replace(/\s+/g, '');
-        if (!m || !(known(ty) || PARAM_ONLY.has(ty) || OPTION_PARAM_RE.test(ty) || isClassRef(ty))) {
+        const m = p.match(/^(\w+)\s*:\s*(&\s*(?:str|String)|Option\s*<\s*(?:i32|f64|bool|String)\s*>|serde_json\s*::\s*Value|(?:std\s*::\s*sync\s*::\s*)?Arc\s*<\s*\w+\s*>|embind_rs\s*::\s*Js(?:Value|Function)|&\s*\w+|[\w()]+)$/);
+        let ty = m?.[2].replace(/\s+/g, '');
+        if (ty && !known(ty) && isJsonSpelling(ty, ctx)) ty = JSON_TY;
+        if (ty) ty = normalizeArc(ty, ctx);
+        const jsTokP = ty ? matchJsTok(ty, ctx) : null;
+        if (jsTokP) ty = jsTokP;
+        const arcParam = ty?.match(ARC_RE)?.[1];
+        if (!m || !(known(ty) || ty === JSON_TY || jsTokP || (arcParam && classes.has(arcParam)) || PARAM_ONLY.has(ty) || OPTION_PARAM_RE.test(ty) || isClassRef(ty))) {
             log(`cppjs: rust bridge: ${cls.name}::${name} skipped (unsupported parameter '${p}')`);
             return;
         }
         args.push({ name: m[1], ty });
     }
-    const { inner: ret, throws, optional } = analyzeReturn(rawRet ?? '()');
+    let { inner: ret, throws, optional } = analyzeReturn(rawRet ?? '()');
+    if (!known(ret) && isJsonSpelling(ret, ctx)) ret = JSON_TY;
+    ret = normalizeArc(ret.replace(/\s+/g, ''), ctx);
+    const jsTokR = matchJsTok(ret, ctx);
+    if (jsTokR) ret = jsTokR;
+    if (jsTokR && optional) {
+        log(`cppjs: rust bridge: ${cls.name}::${name} skipped (Option<${ret}> returns are not supported - return JsValue::undefined() instead)`);
+        return;
+    }
 
     if (!selfKind) {
-        if (ret !== 'Self' && ret !== cls.name) {
+        const arcSelf = ret === 'Arc<Self>' || ret === `Arc<${cls.name}>`;
+        if (!arcSelf && ret !== 'Self' && ret !== cls.name) {
             log(`cppjs: rust bridge: ${cls.name}::${name} skipped (associated fns must return Self, Result<Self, E> or Option<Self>)`);
             return;
         }
         if (name === 'new') {
+            if (arcSelf) { log(`cppjs: rust bridge: ${cls.name}::new skipped (Arc<Self> has no ctor shape - use a named factory like 'create')`); return; }
             if (optional) { log(`cppjs: rust bridge: ${cls.name}::new skipped (Option<Self> has no ctor shape - use a named factory or Result<Self, E>)`); return; }
             if (args.length > 3) { log(`cppjs: rust bridge: ${cls.name}::new skipped (max 3 args)`); return; }
             cls.ctor = { args, throws };
         } else {
+            if (arcSelf && optional) { log(`cppjs: rust bridge: ${cls.name}::${name} skipped (Option<Arc<Self>> is not supported in this wave)`); return; }
             if (args.length > 2) { log(`cppjs: rust bridge: ${cls.name}::${name} skipped (factories take max 2 args)`); return; }
-            cls.factories.push({ name, args, throws, optional });
+            cls.factories.push({ name, args, throws, optional, shared: arcSelf });
         }
+        return;
+    }
+    const retArcInner = ret.match(ARC_RE)?.[1];
+    if (retArcInner) {
+        const target = retArcInner === 'Self' ? cls.name : retArcInner;
+        if (!classes.has(target)) {
+            log(`cppjs: rust bridge: ${cls.name}::${name} skipped (unsupported return '${ret}')`);
+            return;
+        }
+        if (optional || throws) {
+            log(`cppjs: rust bridge: ${cls.name}::${name} skipped (Arc returns on methods support neither Option nor Result in this wave)`);
+            return;
+        }
+        if (args.length > 4) { log(`cppjs: rust bridge: ${cls.name}::${name} skipped (max 4 args)`); return; }
+        cls.methods.push({ name, args, ret: `Arc<${target}>`, byRef: selfKind === '&self', throws: false, optionalRet: false });
         return;
     }
     if (optional && !OPTION_INNERS.has(ret)) {
         log(`cppjs: rust bridge: ${cls.name}::${name} skipped (Option<${ret}> return is not representable - inners: i32, f64, bool, String; or an Option<Self> factory)`);
         return;
     }
-    if (!known(ret)) {
+    if (!known(ret) && ret !== JSON_TY && !jsTokR) {
         log(`cppjs: rust bridge: ${cls.name}::${name} skipped (unsupported return '${ret}')`);
         return;
     }
@@ -510,7 +608,8 @@ function parseFn(cls, sig, { enums, valueObjects, classes }, log) {
     cls.methods.push({ name, args, ret, byRef: selfKind === '&self', throws, optionalRet: optional });
 }
 
-function parseFreeFn(freeFns, sig, { enums, valueObjects, classes }, log) {
+function parseFreeFn(freeFns, sig, ctx, log) {
+    const { enums, valueObjects, classes } = ctx;
     const [, name, rawParams, rawRet] = sig;
     const known = (ty) => PRIMITIVES.has(ty)
         || enums.some((e) => e.name === ty) || valueObjects.some((v) => v.name === ty);
@@ -518,17 +617,32 @@ function parseFreeFn(freeFns, sig, { enums, valueObjects, classes }, log) {
 
     const args = [];
     for (const p of rawParams.split(',').map((s) => s.trim()).filter(Boolean)) {
-        const m = p.match(/^(\w+)\s*:\s*(&\s*(?:str|String)|Option\s*<\s*(?:i32|f64|bool|String)\s*>|&\s*\w+|[\w()]+)$/);
-        const ty = m?.[2].replace(/\s+/g, '');
-        if (!m || !(known(ty) || PARAM_ONLY.has(ty) || OPTION_PARAM_RE.test(ty) || isClassRef(ty))) {
+        const m = p.match(/^(\w+)\s*:\s*(&\s*(?:str|String)|Option\s*<\s*(?:i32|f64|bool|String)\s*>|serde_json\s*::\s*Value|(?:std\s*::\s*sync\s*::\s*)?Arc\s*<\s*\w+\s*>|embind_rs\s*::\s*Js(?:Value|Function)|&\s*\w+|[\w()]+)$/);
+        let ty = m?.[2].replace(/\s+/g, '');
+        if (ty && !known(ty) && isJsonSpelling(ty, ctx)) ty = JSON_TY;
+        if (ty) ty = normalizeArc(ty, ctx);
+        const jsTokP = ty ? matchJsTok(ty, ctx) : null;
+        if (jsTokP) ty = jsTokP;
+        const arcParam = ty?.match(ARC_RE)?.[1];
+        if (!m || !(known(ty) || ty === JSON_TY || jsTokP || (arcParam && classes.has(arcParam)) || PARAM_ONLY.has(ty) || OPTION_PARAM_RE.test(ty) || isClassRef(ty))) {
             log(`cppjs: rust bridge: fn ${name} skipped (unsupported parameter '${p}')`);
             return;
         }
         args.push({ name: m[1], ty });
     }
-    const { inner: ret, throws, optional } = analyzeReturn(rawRet ?? '()');
+    let { inner: ret, throws, optional } = analyzeReturn(rawRet ?? '()');
+    if (!known(ret) && isJsonSpelling(ret, ctx)) ret = JSON_TY;
+    ret = normalizeArc(ret.replace(/\s+/g, ''), ctx);
+    const jsTokR = matchJsTok(ret, ctx);
+    if (jsTokR) ret = jsTokR;
+    const retArc = ret.match(ARC_RE)?.[1];
+    if (retArc) {
+        if (!classes.has(retArc)) { log(`cppjs: rust bridge: fn ${name} skipped (unsupported return '${ret}')`); return; }
+        if (optional || throws) { log(`cppjs: rust bridge: fn ${name} skipped (Arc returns support neither Option nor Result in this wave)`); return; }
+    }
+    if (jsTokR && optional) { log(`cppjs: rust bridge: fn ${name} skipped (Option<${ret}> returns are not supported - return JsValue::undefined() instead)`); return; }
     if (optional && !OPTION_INNERS.has(ret)) { log(`cppjs: rust bridge: fn ${name} skipped (Option<${ret}> return is not representable - inners: i32, f64, bool, String)`); return; }
-    if (!known(ret)) { log(`cppjs: rust bridge: fn ${name} skipped (unsupported return '${ret}')`); return; }
+    if (!known(ret) && ret !== JSON_TY && !retArc && !jsTokR) { log(`cppjs: rust bridge: fn ${name} skipped (unsupported return '${ret}')`); return; }
     if (args.length > 4) { log(`cppjs: rust bridge: fn ${name} skipped (max 4 args)`); return; }
     freeFns.push({ name, jsName: camel(name), args, ret, throws, optionalRet: optional });
 }
@@ -545,13 +659,19 @@ function emitBridge(model, { userCrate, vectors, log, prelude = '' }) {
     // &str/&String params cross as String (borrowed at the call site); &OtherClass params cross
     // as the class pointer via a bridge-local Ref wrapper (borrowed unsafely at the call site).
     const isRef = (ty) => ty.startsWith('&') && !PARAM_ONLY.has(ty);
+    const arcInner = (ty) => String(ty).match(ARC_RE)?.[1];
     const wireTy = (ty) => (PARAM_ONLY.has(ty) ? 'String'
         : isRef(ty) ? `${ty.slice(1)}Ref`
-            : isEnum(ty) || isVo(ty) ? `${ty}W` : ty);
+            : ty === JSON_TY ? '__CppjsJson'
+                : JS_TOKS.has(ty) ? `embind_rs::${ty}`
+                    : arcInner(ty) ? `${arcInner(ty)}Shared`
+                        : isEnum(ty) || isVo(ty) ? `${ty}W` : ty);
     const unwrap = (ty, expr) => (PARAM_ONLY.has(ty) ? `&${expr}`
         : isRef(ty) ? `unsafe { &*${expr}.0 }`
-            : isEnum(ty) || isVo(ty) ? `${expr}.0` : expr);
-    const wrap = (ty, expr) => (isEnum(ty) || isVo(ty) ? `${ty}W(${expr})` : expr);
+            : ty === JSON_TY || arcInner(ty) || isEnum(ty) || isVo(ty) ? `${expr}.0` : expr);
+    const wrap = (ty, expr) => (ty === JSON_TY ? `__CppjsJson(${expr})`
+        : arcInner(ty) ? `${arcInner(ty)}Shared(${expr})`
+            : isEnum(ty) || isVo(ty) ? `${ty}W(${expr})` : expr);
 
     const out = [];
     out.push('// Generated by cpp.js rustBridgeGen - do not edit. The user crate stays plain Rust;');
@@ -626,6 +746,72 @@ function emitBridge(model, { userCrate, vectors, log, prelude = '' }) {
         out.push('');
     }
 
+    if (model.usesJson) {
+        out.push('// serde_json::Value crosses as a deep JSON copy: the adapter converts handle <->');
+        out.push('// [u32 len][bytes] JSON text through the host JSON codec; serde maps text <-> Value here.');
+        out.push('#[repr(transparent)]');
+        out.push('pub struct __CppjsJson(pub serde_json::Value);');
+        out.push('extern "C" {');
+        out.push('    fn cppjs_tid_emval() -> *const c_void;');
+        out.push('    fn cppjs_emval_json_to_handle(w: *mut u8) -> usize;');
+        out.push('    fn cppjs_emval_handle_to_json(h: usize) -> *mut u8;');
+        out.push('    fn malloc(n: usize) -> *mut u8;');
+        out.push('    fn free(p: *mut u8);');
+        out.push('}');
+        out.push('impl WireType for __CppjsJson {');
+        out.push('    type Wire = usize;');
+        out.push('    // Handles are i32 table indexes on wasm but BigInt-marshalled 64-bit values on');
+        out.push("    // native (the jsi adapter's pointer slots), so the sig letter is per-family.");
+        out.push('    #[cfg(target_family = "wasm")]');
+        out.push("    const SIG: char = 'i';");
+        out.push('    #[cfg(not(target_family = "wasm"))]');
+        out.push("    const SIG: char = 'p';");
+        out.push('    fn tid() -> *const c_void { unsafe { cppjs_tid_emval() } }');
+        out.push('    fn from_wire(w: usize) -> Self {');
+        out.push('        unsafe {');
+        out.push('            let p = cppjs_emval_handle_to_json(w);');
+        out.push('            let len = *(p as *const u32) as usize;');
+        out.push('            let bytes = std::slice::from_raw_parts(p.add(4), len);');
+        out.push('            let v = serde_json::from_slice(bytes).unwrap_or(serde_json::Value::Null);');
+        out.push('            free(p);');
+        out.push('            __CppjsJson(v)');
+        out.push('        }');
+        out.push('    }');
+        out.push('    fn to_wire(self) -> usize {');
+        out.push('        let s = self.0.to_string();');
+        out.push('        unsafe {');
+        out.push('            let bytes = s.as_bytes();');
+        out.push('            let base = malloc(4 + bytes.len());');
+        out.push('            *(base as *mut u32) = bytes.len() as u32;');
+        out.push('            std::ptr::copy_nonoverlapping(bytes.as_ptr(), base.add(4), bytes.len());');
+        out.push('            cppjs_emval_json_to_handle(base)');
+        out.push('        }');
+        out.push('    }');
+        out.push('}');
+        out.push('impl embind_rs::ErrSentinel for __CppjsJson { fn err_sentinel() -> Self { __CppjsJson(serde_json::Value::Null) } }');
+        out.push('');
+    }
+
+    // Arc<X> surfaces cross as the class's shared smart-pointer wire: the raw Arc::into_raw
+    // pointer, one strong count per JS handle (given on to_wire, added on from_wire).
+    for (const inner of model.sharedOf ?? []) {
+        out.push('#[repr(transparent)]');
+        out.push(`pub struct ${inner}Shared(pub std::sync::Arc<${U}::${inner}>);`);
+        out.push(`impl WireType for ${inner}Shared {`);
+        out.push('    type Wire = *mut c_void;');
+        out.push("    const SIG: char = 'p';");
+        out.push(`    fn tid() -> *const c_void { embind_rs::shared_tid::<${U}::${inner}>() }`);
+        out.push('    fn from_wire(w: *mut c_void) -> Self {');
+        out.push('        unsafe {');
+        out.push(`            std::sync::Arc::increment_strong_count(w as *const ${U}::${inner});`);
+        out.push(`            ${inner}Shared(std::sync::Arc::from_raw(w as *const ${U}::${inner}))`);
+        out.push('        }');
+        out.push('    }');
+        out.push(`    fn to_wire(self) -> *mut c_void { std::sync::Arc::into_raw(self.0) as *mut c_void }`);
+        out.push('}');
+        out.push('');
+    }
+
     const registrations = [];
     const usedOptionals = new Set();
     const noteOptionArgs = (args) => args.forEach((p) => {
@@ -649,7 +835,8 @@ function emitBridge(model, { userCrate, vectors, log, prelude = '' }) {
         const shim = (fnName) => `__${cls.name.toLowerCase()}_${fnName}`;
         const chain = [`    class_::<${C}>("${cls.name}")`];
 
-        if (cls.factories.length) chain.push(`        .smart_ptr("${cls.name}Ptr")`);
+        if (cls.shared) chain.push(`        .smart_ptr_shared("${cls.name}Shared")`);
+        else if (cls.factories.length) chain.push(`        .smart_ptr("${cls.name}Ptr")`);
         if (cls.ctor) {
             const a = cls.ctor.args;
             noteOptionArgs(a);
@@ -667,6 +854,16 @@ function emitBridge(model, { userCrate, vectors, log, prelude = '' }) {
             noteOptionArgs(f.args);
             const ps = f.args.map((p, i) => `a${i}: ${wireTy(p.ty)}`).join(', ');
             const call = `${C}::${f.name}(${f.args.map((p, i) => unwrap(p.ty, `a${i}`)).join(', ')})`;
+            if (f.shared) {
+                if (f.throws) {
+                    out.push(`fn ${shim(f.name)}(${ps}) -> *mut ${C} { match ${call} { Ok(v) => std::sync::Arc::into_raw(v) as *mut ${C}, Err(e) => embind_rs::raise_err(e.to_string()) } }`);
+                    chain.push(`        .create_ptr${f.args.length}("${camel(f.name)}", ${shim(f.name)})`);
+                } else {
+                    out.push(`fn ${shim(f.name)}(${ps}) -> std::sync::Arc<${C}> { ${call} }`);
+                    chain.push(`        .create_arc${f.args.length}("${camel(f.name)}", ${shim(f.name)})`);
+                }
+                continue;
+            }
             if (f.throws) {
                 out.push(`fn ${shim(f.name)}(${ps}) -> *mut ${C} { match ${call} { Ok(v) => Box::into_raw(Box::new(v)), Err(e) => embind_rs::raise_err(e.to_string()) } }`);
                 chain.push(`        .create_ptr${f.args.length}("${camel(f.name)}", ${shim(f.name)})`);
@@ -734,16 +931,22 @@ const TS_TYPES = {
 
 // Editor-facing types for the package import (`import { X } from '<pkg>'`): the metro/vite
 // resolver serves the runtime proxy, this file serves TypeScript. Exports are typed post-init
-// (they are null until this module's initCppJs resolves - same contract as the C++ .h flow).
+// (null until any init() resolves, which binds every imported module - same as the C++ .h flow).
 export function emitDts(model, vectors, mode = 'sync') {
     const wrap = (t) => (mode === 'promise' ? `Promise<${t}>` : t);
     const ts = (ty) => {
         const opt = ty.match(OPTION_PARAM_RE);
         if (opt) return `${TS_TYPES[opt[1]] ?? opt[1]} | null | undefined`;
+        if (ty === JSON_TY) return 'JsonValue';
+        const arc = ty.match(ARC_RE);
+        if (arc) return arc[1];  // Arc<X> is transparent in JS: the shared instance itself
+        if (ty === 'JsValue') return 'unknown';
+        if (ty === 'JsFunction') return '(...args: unknown[]) => unknown';
         if (ty.startsWith('&')) return TS_TYPES[ty] ?? ty.slice(1);  // &OtherClass param
         return TS_TYPES[ty] ?? ty;
     };
-    const out = ['// Generated by cpp.js rustBridgeGen - do not edit. Values are usable after initCppJs().', ''];
+    const out = ['// Generated by cpp.js rustBridgeGen - do not edit. Values are usable after init().', ''];
+    if (model.usesJson) out.push('export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };', '');
 
     for (const v of model.valueObjects) {
         out.push(`export interface ${v.name} { ${v.fields.map((f) => `${f.name}: ${ts(f.type)};`).join(' ')} }`);
