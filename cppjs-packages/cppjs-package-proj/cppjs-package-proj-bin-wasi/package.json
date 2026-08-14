@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-proj-bin-wasi",
-    "version": "2.0.0-beta.36",
+    "version": "2.0.0-beta.37",
     "nativeVersion": "9.8.1",
     "description": "The PROJ CLIs (proj + cs2cs/cct/geod/gie/projinfo via multicall) as a WASI command component.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-proj#readme",
@@ -39,7 +39,7 @@
         "provenance": {
             "recipe": {
                 "name": "@cpp.js/package-proj",
-                "version": "2.0.0-beta.36",
+                "version": "2.0.0-beta.37",
                 "nativeVersion": "9.8.1"
             },
             "source": {

@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-geotiff-bin-wasi",
-    "version": "2.0.0-beta.36",
+    "version": "2.0.0-beta.37",
     "nativeVersion": "1.7.4",
     "description": "listgeo/geotifcp/applygeo prebuilt as WASI (wasm32-wasip3) command components.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-geotiff#readme",
@@ -36,7 +36,7 @@
         "provenance": {
             "recipe": {
                 "name": "@cpp.js/package-geotiff",
-                "version": "2.0.0-beta.36",
+                "version": "2.0.0-beta.37",
                 "nativeVersion": "1.7.4"
             },
             "source": {

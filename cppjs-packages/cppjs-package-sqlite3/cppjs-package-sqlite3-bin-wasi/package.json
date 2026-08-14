@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-sqlite3-bin-wasi",
-    "version": "2.0.0-beta.36",
+    "version": "2.0.0-beta.37",
     "nativeVersion": "3.53.4",
     "description": "The sqlite3 shell prebuilt as a WASI (wasm32-wasip3) command component (experimental).",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-sqlite3#readme",
@@ -34,7 +34,7 @@
         "provenance": {
             "recipe": {
                 "name": "@cpp.js/package-sqlite3",
-                "version": "2.0.0-beta.36",
+                "version": "2.0.0-beta.37",
                 "nativeVersion": "3.53.4"
             },
             "source": {

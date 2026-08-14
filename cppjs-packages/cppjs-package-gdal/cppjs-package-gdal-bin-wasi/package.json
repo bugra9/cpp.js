@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/package-gdal-bin-wasi",
-    "version": "2.0.0-beta.36",
+    "version": "2.0.0-beta.37",
     "nativeVersion": "3.13.2",
     "description": "The upstream `gdal` command-line interface prebuilt as a single WASI (wasm32-wasip3) command component. Install, point wasmtime at the shipped .wasm and data folder, and run - no compiler involved.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/packages/cppjs-package-gdal#readme",
@@ -72,7 +72,7 @@
         "provenance": {
             "recipe": {
                 "name": "@cpp.js/package-gdal",
-                "version": "2.0.0-beta.36",
+                "version": "2.0.0-beta.37",
                 "nativeVersion": "3.13.2"
             },
             "source": {
