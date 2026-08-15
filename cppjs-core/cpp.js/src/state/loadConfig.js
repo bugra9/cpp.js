@@ -192,8 +192,17 @@ export function getFilledConfig(config, options = { isDepend: false }) {
     }
 
     newConfig.functions.isEnabled = newConfig.functions.isEnabled || ((target) => {
+        // Source-cmake packages ship no prebuilt at all: their own CMakeLists (at the
+        // package root, not a generated dist/prebuilt one) is compiled into the consuming
+        // build via add_subdirectory, so they serve every target.
+        const isSourceCmakePackage = newConfig.export?.type === 'cmake'
+            && newConfig.paths.cmake !== newConfig.paths.cliCMakeListsTxt
+            && !newConfig.paths.cmakeDir.endsWith('/prebuilt')
+            && fs.existsSync(newConfig.paths.cmake);
+
         return (
-            fs.existsSync(`${newConfig.paths.cmakeDir}/${target.path}`)
+            isSourceCmakePackage
+            || fs.existsSync(`${newConfig.paths.cmakeDir}/${target.path}`)
             || fs.existsSync(`${newConfig.paths.cmakeDir}/${target.releasePath}`)
             || (target.platform === 'ios' && fs.existsSync(`${newConfig.paths.cmakeDir}/../../${newConfig.general.name}-${target.runtime}.xcframework`))
         );

@@ -6,6 +6,9 @@ option(BUILD_BRIDGE "Build Bridge" OFF)
 option(BUILD_SOURCE "Build Source" OFF)
 
 foreach(depend IN ZIP_LISTS DEPENDS_CMAKE_PATHS DEPENDS_CMAKE_NAMES)
+    # Source-cmake packages are linked (and their PUBLIC includes propagated) by this exact
+    # name below, so their CMakeLists must create the target as CPPJS_LIB_NAME.
+    set(CPPJS_LIB_NAME "${depend_1}")
     add_subdirectory("${depend_0}" "${CMAKE_CURRENT_BINARY_DIR}/dependencies/${depend_1}")
 endforeach()
 
