@@ -32,7 +32,7 @@ Add cpp.js to a Next.js app so:
 ## Commands
 
 ```bash
-pnpm add cpp.js @cpp.js/plugin-webpack @cpp.js/plugin-webpack-loader
+pnpm add -D cpp.js @cpp.js/plugin-webpack @cpp.js/plugin-webpack-loader
 pnpm add @cpp.js/package-<name>     # optional
 
 # Dev

@@ -21,7 +21,6 @@
         "src"
     ],
     "dependencies": {
-        "cpp.js": "workspace:^",
         "@cpp.js/package-expat-wasm": "workspace:^",
         "@cpp.js/package-gdal-wasm": "workspace:^",
         "@cpp.js/package-geos-wasm": "workspace:^",
@@ -38,6 +37,7 @@
         "@cpp.js/conformance": "workspace:^"
     },
     "devDependencies": {
+        "cpp.js": "workspace:^",
         "wrangler": "^4.120.0",
         "@playwright/test": "^1.62.1"
     },

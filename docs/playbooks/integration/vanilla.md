@@ -26,7 +26,7 @@ Build cpp.js artifacts for the browser, ship them as static files, and load via 
 ## Commands
 
 ```bash
-pnpm add cpp.js
+pnpm add -D cpp.js
 pnpm add @cpp.js/package-<name>     # optional
 pnpm add -D serve                   # optional, for local preview
 
@@ -49,10 +49,8 @@ Mirror `cppjs-samples/cppjs-sample-web-vanilla/`.
     "build": "cppjs build -p wasm -a wasm32 -r st -e browser -b release",
     "preview": "serve -c ./serve.json"
   },
-  "dependencies": {
-    "cpp.js": "^2.0.0"
-  },
   "devDependencies": {
+    "cpp.js": "^2.0.0",
     "serve": "^14.0.0"
   }
 }

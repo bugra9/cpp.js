@@ -15,14 +15,14 @@
         "e2e:prod": "playwright test --config playwright.prod.config.cjs"
     },
     "dependencies": {
-        "@cpp.js/plugin-vite": "workspace:^",
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^"
     },
     "devDependencies": {
         "@sveltejs/vite-plugin-svelte": "^7.3.0",
         "svelte": "^5.56.8",
         "vite": "^8.2.1",
-        "@playwright/test": "^1.62.1"
+        "@playwright/test": "^1.62.1",
+        "@cpp.js/plugin-vite": "workspace:^"
     },
     "keywords": [
         "cpp.js-sample",

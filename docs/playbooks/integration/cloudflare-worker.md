@@ -25,7 +25,7 @@ Compile cpp.js for the **edge** runtime so it loads inside a Worker (limited Nod
 ## Commands
 
 ```bash
-pnpm add cpp.js
+pnpm add -D cpp.js
 pnpm add @cpp.js/package-<name>     # optional
 
 # Build (target: edge)

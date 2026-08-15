@@ -20,7 +20,7 @@ Add cpp.js to a Vite project so:
 
 | File | Role |
 |------|------|
-| `package.json` | + `cpp.js`, `@cpp.js/plugin-vite`, optional `@cpp.js/package-<name>` |
+| `package.json` | + `@cpp.js/plugin-vite` (devDependency), optional `@cpp.js/package-<name>` |
 | `vite.config.{js,ts}` | Add `viteCppjsPlugin()` to the `plugins` array |
 | `cppjs.config.js` *(new at project root)* | Project-level cpp.js config: deps to consume, build target |
 | `src/native/` *(only if user wraps own C++)* | `.h` + `.cpp` source files (default location) |
@@ -30,7 +30,7 @@ Add cpp.js to a Vite project so:
 
 ```bash
 # Install
-pnpm add cpp.js @cpp.js/plugin-vite
+pnpm add -D @cpp.js/plugin-vite
 # Plus any prebuilt package the user wants to consume:
 pnpm add @cpp.js/package-<name>
 

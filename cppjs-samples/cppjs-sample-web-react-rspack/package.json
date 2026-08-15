@@ -16,8 +16,6 @@
     "dependencies": {
         "react": "^19.2.8",
         "react-dom": "^19.2.8",
-        "@cpp.js/plugin-webpack": "workspace:^",
-        "@cpp.js/plugin-webpack-loader": "workspace:^",
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^"
     },
     "devDependencies": {
@@ -30,7 +28,9 @@
         "cross-env": "^10.1.0",
         "react-refresh": "^0.18.0",
         "@playwright/test": "^1.62.1",
-        "serve": "^14.2.6"
+        "serve": "^14.2.6",
+        "@cpp.js/plugin-webpack": "workspace:^",
+        "@cpp.js/plugin-webpack-loader": "workspace:^"
     },
     "keywords": [
         "cpp.js-sample",

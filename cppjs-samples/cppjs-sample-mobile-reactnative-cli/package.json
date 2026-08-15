@@ -21,7 +21,6 @@
     },
     "dependencies": {
         "@cpp.js/core-embind-jsi": "workspace:^",
-        "@cpp.js/plugin-metro": "workspace:^",
         "@cpp.js/plugin-react-native": "workspace:^",
         "@cpp.js/plugin-react-native-ios-helper": "workspace:^",
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^",
@@ -51,7 +50,8 @@
         "jest": "^29.6.3",
         "prettier": "3.9.6",
         "react-test-renderer": "19.2.3",
-        "typescript": "^5.8.3"
+        "typescript": "^5.8.3",
+        "@cpp.js/plugin-metro": "workspace:^"
     },
     "engines": {
         "node": ">= 22.11.0"

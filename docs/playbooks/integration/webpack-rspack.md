@@ -18,7 +18,7 @@ Wire `@cpp.js/plugin-webpack` into the bundler config so dev-server serves wasm 
 
 | File | Role |
 |------|------|
-| `package.json` | + `cpp.js`, `@cpp.js/plugin-webpack`, `@cpp.js/plugin-webpack-loader`, optional `@cpp.js/package-<name>` |
+| `package.json` | + `@cpp.js/plugin-webpack`, `@cpp.js/plugin-webpack-loader` (devDependencies), optional `@cpp.js/package-<name>` |
 | `webpack.config.*` / `rspack.config.*` | Construct plugin, register loader rule, plug `devServer` config |
 | `cppjs.config.js` *(new at root)* | Project-level cpp.js config |
 | `src/native/` *(only if user wraps own C++)* | `.h` + `.cpp` source files |
@@ -27,7 +27,7 @@ Wire `@cpp.js/plugin-webpack` into the bundler config so dev-server serves wasm 
 ## Commands
 
 ```bash
-pnpm add cpp.js @cpp.js/plugin-webpack @cpp.js/plugin-webpack-loader
+pnpm add -D @cpp.js/plugin-webpack @cpp.js/plugin-webpack-loader
 pnpm add @cpp.js/package-<name>     # optional, for prebuilt libraries
 
 # Dev (Rspack)

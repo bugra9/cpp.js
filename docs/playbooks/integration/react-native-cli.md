@@ -21,7 +21,7 @@ Add cpp.js to a React Native CLI app so:
 
 | File | Role |
 |------|------|
-| `package.json` | + `cpp.js`, `@cpp.js/plugin-react-native`, `@cpp.js/plugin-react-native-ios-helper`, `@cpp.js/plugin-metro`, optional `@cpp.js/package-<name>` |
+| `package.json` | + `@cpp.js/plugin-react-native`, `@cpp.js/plugin-react-native-ios-helper` (dependencies, autolinked), `@cpp.js/plugin-metro` (devDependency), optional `@cpp.js/package-<name>` |
 | `metro.config.js` | Wrap `getDefaultConfig` output with `CppjsMetroPlugin(...)` |
 | `cppjs.config.{js,mjs}` *(new at project root)* | Project-level cpp.js config: deps to consume, paths |
 | `src/native/` *(if user wraps own C++)* | `.h` + `.cpp` source files |
@@ -32,7 +32,8 @@ Add cpp.js to a React Native CLI app so:
 ## Commands
 
 ```bash
-pnpm add cpp.js @cpp.js/plugin-react-native @cpp.js/plugin-react-native-ios-helper @cpp.js/plugin-metro
+pnpm add @cpp.js/plugin-react-native @cpp.js/plugin-react-native-ios-helper
+pnpm add -D @cpp.js/plugin-metro     # bundling only; the RN plugin brings the toolchain
 pnpm add @cpp.js/package-<name>     # optional
 
 # iOS — install pods (regenerates Podfile.lock + xcframeworks)

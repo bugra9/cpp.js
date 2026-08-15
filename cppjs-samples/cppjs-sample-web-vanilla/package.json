@@ -12,10 +12,10 @@
         "e2e:prod": "playwright test --config playwright.prod.config.cjs"
     },
     "dependencies": {
-        "cpp.js": "workspace:^",
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^"
     },
     "devDependencies": {
+        "cpp.js": "workspace:^",
         "serve": "^14.2.6",
         "@playwright/test": "^1.62.1"
     },

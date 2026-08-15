@@ -113,8 +113,11 @@ cpp.js. https://cpp.js.org/docs/agent/overview
 Steps:
 1. Detect framework (Vite / Webpack / Rspack / Rollup / Next / RN-cli /
    RN-Expo / Cloudflare / Node / vanilla).
-2. Install: `pnpm add cpp.js @cpp.js/plugin-<bundler>` plus any
-   `@cpp.js/package-<name>` if a prebuilt library covers the use case.
+2. Install: `pnpm add -D @cpp.js/plugin-<bundler>` plus any
+   `@cpp.js/package-<name>` if a prebuilt library covers the use case. Add
+   `-D cpp.js` only when a package.json script calls the `cppjs` CLI itself
+   (Node / vanilla / Cloudflare / Next); bundler and React Native plugins
+   bring the toolchain they were built against.
 3. Edit the bundler config: see https://cpp.js.org/docs/guide/integrate-into-existing-project/<framework>
 4. If the user needs threading, build with `runtime: 'mt'` AND configure
    the production host to send `Cross-Origin-Opener-Policy: same-origin`

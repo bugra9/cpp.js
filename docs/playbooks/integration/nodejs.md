@@ -25,7 +25,7 @@ Build cpp.js artifacts for the Node runtime (`-e node`) and `require`/`import` t
 ## Commands
 
 ```bash
-pnpm add cpp.js
+pnpm add -D cpp.js
 pnpm add @cpp.js/package-<name>     # optional
 
 # Single-thread build
@@ -51,8 +51,10 @@ Mirror `cppjs-samples/cppjs-sample-backend-nodejs-wasm/` (single-thread) or `cpp
     "start": "node src/index.js"
   },
   "dependencies": {
-    "cpp.js": "^2.0.0",
     "@cpp.js/package-<name>": "^x.y.z"
+  },
+  "devDependencies": {
+    "cpp.js": "^2.0.0"
   }
 }
 ```

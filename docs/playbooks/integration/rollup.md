@@ -22,7 +22,7 @@ Add `@cpp.js/plugin-rollup` to a Rollup config so:
 
 | File | Role |
 |------|------|
-| `package.json` | + `cpp.js`, `@cpp.js/plugin-rollup`, optional `@cpp.js/package-<name>` |
+| `package.json` | + `@cpp.js/plugin-rollup` (devDependency), optional `@cpp.js/package-<name>` |
 | `rollup.config.{js,mjs,ts}` | Add `rollupCppjsPlugin()` to `plugins` |
 | `cppjs.config.js` *(new at root)* | Project-level cpp.js config |
 | `src/native/` *(only if user wraps own C++)* | `.h` + `.cpp` source |
@@ -30,7 +30,7 @@ Add `@cpp.js/plugin-rollup` to a Rollup config so:
 ## Commands
 
 ```bash
-pnpm add cpp.js @cpp.js/plugin-rollup
+pnpm add -D @cpp.js/plugin-rollup
 pnpm add @cpp.js/package-<name>     # optional
 
 # Build

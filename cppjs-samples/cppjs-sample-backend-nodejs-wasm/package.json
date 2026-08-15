@@ -10,8 +10,10 @@
         "build": "cppjs build -p wasm -a wasm32 -r st -e node -b release"
     },
     "dependencies": {
-        "cpp.js": "workspace:^",
         "@cpp.js/sample-lib-prebuilt-matrix": "workspace:^"
+    },
+    "devDependencies": {
+        "cpp.js": "workspace:^"
     },
     "keywords": [
         "cpp.js-sample",

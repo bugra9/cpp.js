@@ -1465,15 +1465,16 @@ importers:
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../cppjs-core/cpp.js
       ws:
         specifier: 8.21.3
         version: 8.21.3
       xhr2:
         specifier: ^0.2.1
         version: 0.2.1
+    devDependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../cppjs-core/cpp.js
 
   cppjs-samples/cppjs-playground-backend-nodejs-multithread:
     dependencies:
@@ -1522,15 +1523,16 @@ importers:
       '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../cppjs-core/cpp.js
       ws:
         specifier: 8.21.3
         version: 8.21.3
       xhr2:
         specifier: ^0.2.1
         version: 0.2.1
+    devDependencies:
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../cppjs-core/cpp.js
 
   cppjs-samples/cppjs-playground-cli-wasi:
     devDependencies:
@@ -1582,13 +1584,13 @@ importers:
       '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../cppjs-core/cpp.js
     devDependencies:
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../cppjs-core/cpp.js
       wrangler:
         specifier: ^4.120.0
         version: 4.120.0
@@ -1682,9 +1684,6 @@ importers:
       '@cpp.js/package-zlib-ios':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-ios
-      '@cpp.js/plugin-metro':
-        specifier: workspace:^
-        version: link:../../cppjs-plugins/cppjs-plugin-metro
       '@cpp.js/plugin-react-native':
         specifier: workspace:^
         version: link:../../cppjs-plugins/cppjs-plugin-react-native
@@ -1716,6 +1715,9 @@ importers:
       '@babel/runtime':
         specifier: ^7.29.7
         version: 7.29.7
+      '@cpp.js/plugin-metro':
+        specifier: workspace:^
+        version: link:../../cppjs-plugins/cppjs-plugin-metro
       '@cpp.js/typescript-config':
         specifier: workspace:^
         version: link:../../cppjs-core/cppjs-core-typescript-config
@@ -1821,12 +1823,6 @@ importers:
       '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
-      '@cpp.js/plugin-webpack':
-        specifier: workspace:^
-        version: link:../../cppjs-plugins/cppjs-plugin-webpack
-      '@cpp.js/plugin-webpack-loader':
-        specifier: workspace:^
-        version: link:../../cppjs-plugins/cppjs-plugin-webpack-loader
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
@@ -1837,6 +1833,12 @@ importers:
         specifier: ^19.2.8
         version: 19.2.8(react@19.2.8)
     devDependencies:
+      '@cpp.js/plugin-webpack':
+        specifier: workspace:^
+        version: link:../../cppjs-plugins/cppjs-plugin-webpack
+      '@cpp.js/plugin-webpack-loader':
+        specifier: workspace:^
+        version: link:../../cppjs-plugins/cppjs-plugin-webpack-loader
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
@@ -1918,13 +1920,13 @@ importers:
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../cppjs-core/cpp.js
     devDependencies:
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../cppjs-core/cpp.js
       serve:
         specifier: ^14.2.6
         version: 14.2.6
@@ -1973,9 +1975,6 @@ importers:
       '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
-      '@cpp.js/plugin-vite':
-        specifier: workspace:^
-        version: link:../../cppjs-plugins/cppjs-plugin-vite
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
@@ -1983,6 +1982,9 @@ importers:
         specifier: ^3.5.41
         version: 3.5.41(typescript@7.0.2)
     devDependencies:
+      '@cpp.js/plugin-vite':
+        specifier: workspace:^
+        version: link:../../cppjs-plugins/cppjs-plugin-vite
       '@cpp.js/typescript-config':
         specifier: workspace:^
         version: link:../../cppjs-core/cppjs-core-typescript-config
@@ -2043,13 +2045,13 @@ importers:
       '@cpp.js/package-zlib-wasm':
         specifier: workspace:^
         version: link:../../cppjs-packages/cppjs-package-zlib/cppjs-package-zlib-wasm
-      '@cpp.js/plugin-vite':
-        specifier: workspace:^
-        version: link:../../cppjs-plugins/cppjs-plugin-vite
       vue:
         specifier: ^3.5.41
         version: 3.5.41(typescript@7.0.2)
     devDependencies:
+      '@cpp.js/plugin-vite':
+        specifier: workspace:^
+        version: link:../../cppjs-plugins/cppjs-plugin-vite
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
@@ -2065,19 +2067,19 @@ importers:
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
+    devDependencies:
       cpp.js:
         specifier: workspace:^
         version: link:../../cppjs-core/cpp.js
 
   cppjs-samples/cppjs-sample-cloud-cloudflare-worker:
-    dependencies:
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../cppjs-core/cpp.js
     devDependencies:
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../cppjs-core/cpp.js
       wrangler:
         specifier: ^4.120.0
         version: 4.120.0
@@ -2099,9 +2101,6 @@ importers:
       '@cpp.js/core-embind-jsi':
         specifier: workspace:^
         version: link:../../cppjs-core/cppjs-core-embind-jsi
-      '@cpp.js/plugin-metro':
-        specifier: workspace:^
-        version: link:../../cppjs-plugins/cppjs-plugin-metro
       '@cpp.js/plugin-react-native':
         specifier: workspace:^
         version: link:../../cppjs-plugins/cppjs-plugin-react-native
@@ -2133,6 +2132,9 @@ importers:
       '@babel/runtime':
         specifier: ^7.29.7
         version: 7.29.7
+      '@cpp.js/plugin-metro':
+        specifier: workspace:^
+        version: link:../../cppjs-plugins/cppjs-plugin-metro
       '@react-native-community/cli':
         specifier: 20.1.3
         version: 20.1.3(typescript@5.9.3)
@@ -2190,12 +2192,6 @@ importers:
 
   cppjs-samples/cppjs-sample-web-react-rspack:
     dependencies:
-      '@cpp.js/plugin-webpack':
-        specifier: workspace:^
-        version: link:../../cppjs-plugins/cppjs-plugin-webpack
-      '@cpp.js/plugin-webpack-loader':
-        specifier: workspace:^
-        version: link:../../cppjs-plugins/cppjs-plugin-webpack-loader
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
@@ -2206,6 +2202,12 @@ importers:
         specifier: ^19.2.8
         version: 19.2.8(react@19.2.8)
     devDependencies:
+      '@cpp.js/plugin-webpack':
+        specifier: workspace:^
+        version: link:../../cppjs-plugins/cppjs-plugin-webpack
+      '@cpp.js/plugin-webpack-loader':
+        specifier: workspace:^
+        version: link:../../cppjs-plugins/cppjs-plugin-webpack-loader
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
@@ -2239,9 +2241,6 @@ importers:
 
   cppjs-samples/cppjs-sample-web-react-vite:
     dependencies:
-      '@cpp.js/plugin-vite':
-        specifier: workspace:^
-        version: link:../../cppjs-plugins/cppjs-plugin-vite
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
@@ -2252,6 +2251,9 @@ importers:
         specifier: ^19.2.8
         version: 19.2.8(react@19.2.8)
     devDependencies:
+      '@cpp.js/plugin-vite':
+        specifier: workspace:^
+        version: link:../../cppjs-plugins/cppjs-plugin-vite
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.8.1(jiti@2.7.0))
@@ -2285,13 +2287,13 @@ importers:
 
   cppjs-samples/cppjs-sample-web-svelte-vite:
     dependencies:
-      '@cpp.js/plugin-vite':
-        specifier: workspace:^
-        version: link:../../cppjs-plugins/cppjs-plugin-vite
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
     devDependencies:
+      '@cpp.js/plugin-vite':
+        specifier: workspace:^
+        version: link:../../cppjs-plugins/cppjs-plugin-vite
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
@@ -2310,22 +2312,19 @@ importers:
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
-      cpp.js:
-        specifier: workspace:^
-        version: link:../../cppjs-core/cpp.js
     devDependencies:
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
+      cpp.js:
+        specifier: workspace:^
+        version: link:../../cppjs-core/cpp.js
       serve:
         specifier: ^14.2.6
         version: 14.2.6
 
   cppjs-samples/cppjs-sample-web-vue-vite:
     dependencies:
-      '@cpp.js/plugin-vite':
-        specifier: workspace:^
-        version: link:../../cppjs-plugins/cppjs-plugin-vite
       '@cpp.js/sample-lib-prebuilt-matrix':
         specifier: workspace:^
         version: link:../cppjs-sample-lib-prebuilt-matrix
@@ -2333,6 +2332,9 @@ importers:
         specifier: ^3.5.41
         version: 3.5.41(typescript@7.0.2)
     devDependencies:
+      '@cpp.js/plugin-vite':
+        specifier: workspace:^
+        version: link:../../cppjs-plugins/cppjs-plugin-vite
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1

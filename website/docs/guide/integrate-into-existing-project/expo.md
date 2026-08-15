@@ -13,7 +13,10 @@ To integrate cpp.js into your project using React Native, you can utilize the @c
 
 ```shell npm2yarn
 npm install @cpp.js/plugin-react-native @cpp.js/plugin-react-native-ios-helper
+npm install -D @cpp.js/plugin-metro
 ```
+
+`@cpp.js/plugin-react-native` stays in `dependencies` — Expo resolves it as a config plugin from `app.json`. The metro plugin only runs while bundling, so it belongs in `devDependencies`. Do not add `cpp.js` itself — the react native plugin brings the toolchain it was built against, and a second pin can drift from it.
 
 To enable the plugin, modify the `metro.config.js` file as shown below.
 
@@ -32,6 +35,19 @@ const config = getDefaultConfig(__dirname);
 
 -module.exports = config;
 +module.exports = mergeConfig(config, newConfig);
+```
+
+`@cpp.js/plugin-react-native` also ships an Expo config plugin that wires the native build during `expo prebuild`. Add it to `plugins` in `app.json`.
+
+```diff title="app.json"
+ {
+   "expo": {
+     "plugins": [
+       "expo-router",
++      "@cpp.js/plugin-react-native"
+     ]
+   }
+ }
 ```
 
 Cpp.js requires a configuration file to work. For a minimal setup, create a `cppjs.config.mjs` file and add the following content.
