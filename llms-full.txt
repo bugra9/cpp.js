@@ -80,7 +80,7 @@ The agent will:
 
 1. Call `cppjs_get_api_reference({ topic: "filesystem" })` → fetches the canonical decision tree.
 2. Tells you OPFS persistence requires `useWorker: true` (Worker scope), browser support, and that paths under `/opfs/<app>/` survive reloads.
-3. Hands you the `init({ useWorker: true })` snippet.
+3. Hands you the `initNative({ useWorker: true })` snippet.
 
 ### Example 3 — "I want to wrap libsodium for cpp.js"
 
@@ -1176,7 +1176,7 @@ C++ binding & build authoring:
 ┌─────────────────────────────────────────────────────────────┐
 │  Runtime:  your app                                         │
 │  ┌────────────────────────────────────────────────────────┐│
-│  │ const m = await init({                            ││
+│  │ const m = await initNative({                            ││
 │  │   useWorker: true,    // for OPFS persistent storage   ││
 │  │   fs: { opfs: true }, // browser default               ││
 │  │   env: { ... },                                        ││
@@ -1216,14 +1216,14 @@ The single entry point for calling into your Wasm module from JavaScript. Produc
 With a bundler plugin (Vite, Rollup, Webpack, Rspack, Metro), import it from `cpp.js` and everything else from the header, `.rs` file or `cargo:` crate:
 
 ```js
-import { init } from 'cpp.js';
-import { Matrix } from './native/Matrix.h';
+import { initNative } from './native/native.h';
+import { initNative, Matrix } from './native/Matrix.h';
 import { Uuid } from 'cargo:uuid';
 
-await init();
+await initNative();
 ```
 
-One call binds every imported module: each proxy module registers its bindings when it is imported, and `init()` boots the runtime once and then resolves all of them. Proxy modules still export `initCppJs` — the same function under its old name — so existing code keeps working. Node, Edge and standalone builds have no bundler plugin: there you import the built artifact directly and call its default export.
+One call binds every imported module: each proxy module registers its bindings when it is imported, and `init()` boots the runtime once and then resolves all of them. Proxy modules still export `initNative` — the same function under its old name — so existing code keeps working. Node, Edge and standalone builds have no bundler plugin: there you import the built artifact directly and call its default export.
 
 ## Signature
 
@@ -1373,16 +1373,16 @@ Call `init.terminate()` to kill the worker and release resources.
 ### Minimal browser
 
 ```js
-import { init } from 'cpp.js'
+import { initNative } from './native/native.h';
 
-const m = await init()
+const m = await initNative()
 console.log(m.add(2, 3))  // an embind-exported function
 ```
 
 ### Browser + persistent storage
 
 ```js
-const m = await init({
+const m = await initNative({
   useWorker: true,           // mandatory for OPFS
   fs: { opfs: true },        // default, shown for clarity
 })
@@ -1394,7 +1394,7 @@ m.FS.writeFile('/opfs/myapp/data.bin', new Uint8Array([1, 2, 3]))
 ### Browser + multithread
 
 ```js
-const m = await init({
+const m = await initNative({
   // Nothing extra here — `runtime: 'mt'` was set in cppjs.config.js
   // at build time, so this Wasm IS multithreaded.
   // Just make sure your prod host sends COOP/COEP headers.
@@ -1404,9 +1404,9 @@ const m = await init({
 ### Node.js
 
 ```js
-import { init } from 'cpp.js'
+import { initNative } from './native/native.h';
 
-const m = await init({
+const m = await initNative({
   env: { TMPDIR: '_CPPJS_DATA_PATH_/scratch' },
 })
 ```
@@ -1414,9 +1414,9 @@ const m = await init({
 ### Cloudflare Worker
 
 ```js
-import { init } from 'cpp.js'
+import { initNative } from './native/native.h';
 
-const m = await init()
+const m = await initNative()
 // useWorker, OPFS, multithread all unavailable on edge.
 // Run in single-thread + memory-fs only.
 ```
@@ -1424,7 +1424,7 @@ const m = await init()
 ### Custom logging
 
 ```js
-const m = await init({
+const m = await initNative({
   logHandler:   (text) => myLogger.info(`[wasm] ${text}`),
   errorHandler: (text) => myLogger.error(`[wasm] ${text}`),
 })
@@ -1492,7 +1492,7 @@ export default {
   dts: 'sync',
     // 'sync' (default) types the direct binding surface. 'promise' wraps every
     // generated method/function return in Promise<...> - use it when your app
-    // runs with init({ useWorker: true }) (or any async bridge), where
+    // runs with initNative({ useWorker: true }) (or any async bridge), where
     // every call resolves asynchronously at runtime. Constructors stay
     // sync-typed either way; write `await new X(...)` (a no-op on sync
     // runtimes, required under a worker). See lifecycle-and-types.md.
@@ -2224,7 +2224,7 @@ API does not mean it works.
 Wasm runs in a single dedicated Web Worker; main thread receives a Comlink-bridged proxy.
 
 ```js
-const m = await init({ useWorker: true })
+const m = await initNative({ useWorker: true })
 // m looks identical, but every call is async.
 const result = await m.add(2, 3)
 ```
@@ -3369,7 +3369,7 @@ Same root cause as above — COOP/COEP missing.
 
 You mounted `/opfs/...` but didn't set `useWorker: true` on `init(opts)`.
 
-- **Fix:** `init({ useWorker: true })`. See [`filesystem.md`](./filesystem.md).
+- **Fix:** `initNative({ useWorker: true })`. See [`filesystem.md`](./filesystem.md).
 
 ### `Path /opfs/... but OPFS is disabled. Enable fs.opfs in config`
 
@@ -3391,10 +3391,10 @@ Wasm process exhausted its allocated heap.
 The C++ function exists but didn't bind to JS.
 
 - **Cause:** binding rule violation. See "Binding-time errors" above.
-- **Cause:** the JS module finished loading but `init` hasn't completed. Make sure you're calling `m.someFunc` *after* `await init(...)`.
+- **Cause:** the JS module finished loading but `init` hasn't completed. Make sure you're calling `m.someFunc` *after* `await initNative(...)`.
 - **Cause (worker runtime, e.g. `instance.method is not a function`):** the module
   runs in a worker — the wasm `mt` runtime defaults to one, as does
-  `init({ useWorker: true })` — so construction returns a promise and sync-style
+  `initNative({ useWorker: true })` — so construction returns a promise and sync-style
   code holds a `Promise`, not the instance. Write `const c = await new X(...);
   await c.method(...)` and set `dts: 'promise'` so the generated types match.
 
@@ -4091,7 +4091,7 @@ The framework playbook lists what to look for in the dev/build output (e.g. "you
 - [ ] Multithread decision made; if `mt`, COOP/COEP setup documented for the user's deploy target.
 - [ ] `pnpm dev` succeeds, the bundle loads `cpp.js`/`cpp.wasm` without 404s.
 - [ ] `pnpm build` produces artifacts.
-- [ ] User can call into a cpp.js function from JS (e.g. `await init(); Module.someFn(...)` returns expected result).
+- [ ] User can call into a cpp.js function from JS (e.g. `await initNative(); Module.someFn(...)` returns expected result).
 
 ## Common pitfalls
 
@@ -4218,7 +4218,7 @@ If the user picks `runtime: 'st'` (single-thread), none of this applies — no h
 - [ ] `pnpm install` succeeds.
 - [ ] `pnpm dev` starts; opening the page shows no 404s for `/cpp.js`, `/cpp.wasm`, `/cpp.data.txt` in DevTools Network tab.
 - [ ] Console log shows the cpp.js loader initializing (`wasm compiled for browser…` in dev terminal).
-- [ ] User-side: `await init(); Module.someFn(...)` returns expected result.
+- [ ] User-side: `await initNative(); Module.someFn(...)` returns expected result.
 - [ ] `pnpm build` produces `dist/` with the wasm + js artifacts.
 - [ ] `pnpm preview` serves the build; multithread features still work (verify `crossOriginIsolated === true` in console).
 - [ ] If multithread, production headers config exists for the target host.
@@ -4359,7 +4359,7 @@ Same as the Vite playbook — devServer is handled by the plugin, production dep
 - [ ] Browser console: `crossOriginIsolated` returns `true` (only required if multithread).
 - [ ] Saving a `.cpp`/`.h` file under `src/native/` triggers a rebuild + page refresh.
 - [ ] `pnpm build` produces `dist/` with `cpp.js`, `cpp.wasm` (and `cpp.data.txt` if data preloaded).
-- [ ] User-side: `await init(); Module.someFn(...)` returns expected result.
+- [ ] User-side: `await initNative(); Module.someFn(...)` returns expected result.
 
 ## Common pitfalls
 
@@ -4461,7 +4461,7 @@ If the user picks `runtime: 'mt'` in `cppjs.config.js`, the resulting library st
 - [ ] `pnpm rollup -c` runs without errors.
 - [ ] `dist/` contains the user's bundle plus `cpp.js`, `cpp.wasm`.
 - [ ] Watch mode picks up native source changes (`pnpm rollup -c -w`, edit a `.cpp`, see rebuild log).
-- [ ] Library consumer can `import { init } from '<the lib>'; await init(); Module.fn(...)`.
+- [ ] Library consumer can `import { initNative } from '<the lib>'; await initNative(); Module.fn(...)`.
 
 ## Common pitfalls
 
@@ -4608,7 +4608,7 @@ If the user wants cpp.js on the server side too (Node SSR with WASM), that's a s
 - [ ] `pnpm dev` starts; client console shows the cpp.js loader running, no 404s on `/cpp.js`/`/cpp.wasm`.
 - [ ] DevTools → Application → Headers shows `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` (for multithread).
 - [ ] `pnpm build && pnpm start` works end-to-end.
-- [ ] App calls into C++: `await init(); Module.fn(...)` returns expected result.
+- [ ] App calls into C++: `await initNative(); Module.fn(...)` returns expected result.
 
 ## Common pitfalls
 
@@ -4751,7 +4751,7 @@ Don't name the snapshot dir `.cppjs` — `clear:cache:samples`-style globs may p
 - [ ] `cd ios && pod install` succeeds, `Podfile.lock` updated, `*.xcframework` directories appear under `ios/Pods/` or vendored locations.
 - [ ] `pnpm android` builds the APK and launches; the app calls into C++ without "library not loaded" errors.
 - [ ] `pnpm ios` builds and launches in the iOS simulator (arm64 macOS) or on-device.
-- [ ] JSI bridge: `import { init } from 'cpp.js'; await init(); Module.fn(...)` returns expected result.
+- [ ] JSI bridge: `import { initNative } from './native/native.h'; await initNative(); Module.fn(...)` returns expected result.
 - [ ] If wrapping own C++: editing `src/native/native.cpp` + restarting Metro picks up the change (or at least re-run `pod install` / `pnpm android` to recompile).
 
 ## Common pitfalls
@@ -4892,7 +4892,7 @@ If the user also targets `expo-router` web build (RN Web), then they're effectiv
 - [ ] `pnpm expo prebuild` generates `ios/` and `android/` without errors.
 - [ ] `cd ios && pod install` succeeds.
 - [ ] `pnpm expo run:ios` and `pnpm expo run:android` build + launch.
-- [ ] App calls into C++: `import { init } from 'cpp.js'; await init(); Module.fn(...)` returns expected result.
+- [ ] App calls into C++: `import { initNative } from './native/native.h'; await initNative(); Module.fn(...)` returns expected result.
 - [ ] EAS build (if used) produces a valid binary.
 
 ## Common pitfalls
@@ -4995,13 +4995,13 @@ export default {
 Worker entry `index.js`:
 
 ```js
-import initCppJs from './dist/my-worker.edge.js';
+import initNative from './dist/my-worker.edge.js';
 
 let cppJsPromise;
 
 export default {
     async fetch(request) {
-        cppJsPromise ??= initCppJs();
+        cppJsPromise ??= initNative();
         const Module = await cppJsPromise;
         const result = Module.someFn();
         return new Response(JSON.stringify({ result }), {
@@ -5134,9 +5134,9 @@ export default {
 Entry script `src/index.js` (CommonJS):
 
 ```js
-const initCppJs = require('../dist/my-node-service-wasm-wasm32-st-release.node.js');
+const initNative = require('../dist/my-node-service-wasm-wasm32-st-release.node.js');
 
-initCppJs().then(({ Native }) => {
+initNative().then(({ Native }) => {
     console.log(`Result: ${Native.sample()}`);
 });
 ```
@@ -5144,9 +5144,9 @@ initCppJs().then(({ Native }) => {
 ESM equivalent:
 
 ```js
-import initCppJs from './dist/my-node-service-wasm-wasm32-st-release.node.js';
+import initNative from './dist/my-node-service-wasm-wasm32-st-release.node.js';
 
-const { Native } = await initCppJs();
+const { Native } = await initNative();
 console.log(`Result: ${Native.sample()}`);
 ```
 
@@ -5211,7 +5211,7 @@ Build cpp.js artifacts for the browser, ship them as static files, and load via 
 |------|------|
 | `package.json` | + `cpp.js`, optional `@cpp.js/package-<name>`, optional `serve` for local preview. Declare a `build` script that runs `cppjs build -e browser` |
 | `cppjs.config.{js,mjs}` *(new at root)* | Project-level cpp.js config |
-| `index.html` | Loads `<script src="./dist/<name>...browser.js"></script>` and calls `initCppJs({ path: './dist' })` |
+| `index.html` | Loads `<script src="./dist/<name>...browser.js"></script>` and calls `initNative({ path: './dist' })` |
 | `src/native/` *(if user wraps own C++)* | `.h` + `.cpp` source |
 | `serve.json` *(local preview, optional)* | COOP/COEP headers for `serve` |
 | `dist/<name>-<target>.browser.{js,wasm}` | Build output |
@@ -5273,7 +5273,7 @@ export default {
   <title>My static site</title>
   <script src="./dist/my-static-site-wasm-wasm32-st-release.browser.js"></script>
   <script>
-    initCppJs({ path: './dist' }).then(async ({ Native }) => {
+    initNative({ path: './dist' }).then(async ({ Native }) => {
       document.querySelector('#out').innerHTML = await Native.sample();
     });
   </script>
@@ -5333,11 +5333,11 @@ For `runtime: 'st'`, no headers needed — works on any static host including GH
 
 ## Common pitfalls
 
-- **Loading `<script type="module">`** when the `cppjs build` output is UMD (which it is by default). Drop `type="module"`; `initCppJs` becomes a global.
-- **Wrong `path` in `initCppJs(...)`**. The loader resolves wasm relative to this. If your HTML lives at `/index.html` and dist at `/dist/`, use `path: './dist'`. If served from a CDN at `/assets/dist/`, use that.
+- **Loading `<script type="module">`** when the `cppjs build` output is UMD (which it is by default). Drop `type="module"`; `initNative` becomes a global.
+- **Wrong `path` in `initNative(...)`**. The loader resolves wasm relative to this. If your HTML lives at `/index.html` and dist at `/dist/`, use `path: './dist'`. If served from a CDN at `/assets/dist/`, use that.
 - **Forgetting to copy `dist/` to your deploy.** A static host needs the actual files; nothing magical happens.
 - **GH Pages + multithread.** Doesn't work — no custom headers. Drop to single-thread or move to a host that allows headers.
-- **Trying `import` from the loader script** — the build emits UMD with a global `initCppJs`. For ES modules, you'd need a different output target (currently not exposed for vanilla).
+- **Trying `import` from the loader script** — the build emits UMD with a global `initNative`. For ES modules, you'd need a different output target (currently not exposed for vanilla).
 - **`serve.json` ignored.** `serve` reads `serve.json` from the current working directory. Run `serve` from the same directory the JSON lives in (or pass `-c <path>`).
 
 ## Reference samples
