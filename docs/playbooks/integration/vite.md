@@ -103,7 +103,7 @@ If the user picks `runtime: 'st'` (single-thread), none of this applies — no h
 - [ ] `pnpm install` succeeds.
 - [ ] `pnpm dev` starts; opening the page shows no 404s for `/cpp.js`, `/cpp.wasm`, `/cpp.data.txt` in DevTools Network tab.
 - [ ] Console log shows the cpp.js loader initializing (`wasm compiled for browser…` in dev terminal).
-- [ ] User-side: `await init(); Module.someFn(...)` returns expected result.
+- [ ] User-side: `await initNative(); Module.someFn(...)` returns expected result.
 - [ ] `pnpm build` produces `dist/` with the wasm + js artifacts.
 - [ ] `pnpm preview` serves the build; multithread features still work (verify `crossOriginIsolated === true` in console).
 - [ ] If multithread, production headers config exists for the target host.

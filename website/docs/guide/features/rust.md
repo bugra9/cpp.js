@@ -34,11 +34,11 @@ export default {
 ```
 
 ```js title="JavaScript"
-import { init } from 'cpp.js';
+import { initNative } from './native/native.h';
 import { Uuid } from 'cargo:uuid';
 import { Version, VersionReq } from 'cargo:semver';
 
-await init();
+await initNative();
 const id = Uuid.newV4().toString();
 const ok = new VersionReq('^1.2').matches(new Version('1.4.0'));
 ```
@@ -65,7 +65,7 @@ impl Hull {
 ```
 
 ```js title="JavaScript"
-import { init } from 'cpp.js';
+import { initNative } from './native/native.h';
 import { Hull } from './native/geo_surface.rs';
 ```
 
@@ -97,7 +97,7 @@ C++ package. The wasm `mt` prebuilt builds through the same nightly
 
 `JsValue`/`JsFunction` need a synchronous runtime (native JSI, wasm `st` on
 the main thread): on worker-backed runtimes (the wasm `mt` default, or
-`init({ useWorker: true })`) functions cannot cross the worker boundary and
+`initNative({ useWorker: true })`) functions cannot cross the worker boundary and
 identity does not survive structured cloning — use `serde_json::Value` there.
 
 ## TypeScript
@@ -118,6 +118,6 @@ already extend another config):
 One caveat: `include` is overridden (not merged) when your tsconfig defines
 its own — keep `.cppjs/rust-crates/types/**/*.d.ts` in yours in that case.
 
-Running with `init({ useWorker: true })`? Set `dts: 'promise'` in
+Running with `initNative({ useWorker: true })`? Set `dts: 'promise'` in
 `cppjs.config.js` so every generated signature returns `Promise<...>` to
 match the async runtime (write `await new X(...)` for construction).

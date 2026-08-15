@@ -8,9 +8,6 @@
       ],
       "@/assets/*": [
         "./assets/*"
-      ],
-      "cpp.js": [
-        "./node_modules/@cpp.js/typescript-config/cppjs-runtime.d.ts"
       ]
     }
   },

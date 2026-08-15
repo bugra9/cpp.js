@@ -78,13 +78,13 @@ export default {
 Worker entry `index.js`:
 
 ```js
-import initCppJs from './dist/my-worker.edge.js';
+import initNative from './dist/my-worker.edge.js';
 
 let cppJsPromise;
 
 export default {
     async fetch(request) {
-        cppJsPromise ??= initCppJs();
+        cppJsPromise ??= initNative();
         const Module = await cppJsPromise;
         const result = Module.someFn();
         return new Response(JSON.stringify({ result }), {

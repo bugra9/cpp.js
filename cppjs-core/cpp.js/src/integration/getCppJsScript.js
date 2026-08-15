@@ -5,18 +5,15 @@ import loadJson from '../utils/loadJson.js';
 import state from '../state/index.js';
 import { parseSurface, createRustBridgeCrate, createCrateImportBridge } from '../utils/rustBridgeGen.js';
 
-export default function getCppJsScript(target, bridgePath = null) {
-    const bridgeExportFile = `${bridgePath}.exports.json`;
-    let symbols = null;
-    if (bridgePath) {
-        symbols = loadJson(bridgeExportFile);
+export default function getCppJsScript(target, bridgePath) {
+    if (!bridgePath) {
+        throw new Error('getCppJsScript needs the bridge file of the imported header');
     }
-    // No bridge means the bare `cpp.js` specifier: the runtime module, which owns init().
-    return buildScript(target, symbols, bridgePath === null);
+    return buildScript(target, loadJson(`${bridgePath}.exports.json`));
 }
 
 // The Rust analog of a .h import: parse the crate surface and emit the same proxy module
-// (per-symbol lets assigned inside this module's initCppJs). Vectors come from the owning
+// (per-symbol lets assigned inside this module's initNative). Vectors come from the owning
 // cargo package's config; classes/enums come from the parsed source.
 export function getRustJsScript(target, rsFile) {
     // Compare real paths: dependency paths go through node_modules symlinks (pnpm workspaces)
@@ -72,7 +69,7 @@ export function getRustJsScript(target, rsFile) {
     return buildScript(target, symbols);
 }
 
-function buildScript(target, symbols, isRuntimeModule = false) {
+function buildScript(target, symbols) {
     if (!target) {
         throw new Error('The target is not available!');
     }
@@ -122,13 +119,14 @@ function buildScript(target, symbols, isRuntimeModule = false) {
         __cppjsInit.terminate = function terminate() {
             globalThis.__cppjsBootPromise = null;
             globalThis.__cppjsModule = null;
-            if (globalThis.CppJs && globalThis.CppJs.initCppJs.terminate) {
-                globalThis.CppJs.initCppJs.terminate();
+            if (globalThis.CppJs && globalThis.CppJs.initNative.terminate) {
+                globalThis.CppJs.initNative.terminate();
             }
         };
 
-        export { __cppjsInit as initCppJs };
-        ${isRuntimeModule ? 'export { __cppjsInit as init };' : ''}
+        // Every generated module owns initNative(): one call boots the runtime and binds
+        // every imported module, so the app calls it from whichever import it already has.
+        export { __cppjsInit as initNative };
     `;
 }
 
@@ -176,7 +174,7 @@ function getWebScript(env) {
     return `
         function __cppjsBoot(config) {
             return import(/* webpackIgnore: true */ '/cpp.js')
-                .then(n => window.CppJs.initCppJs(${params}));
+                .then(n => window.CppJs.initNative(${params}));
         }
     `;
 }

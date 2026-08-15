@@ -125,7 +125,7 @@ If the user wants cpp.js on the server side too (Node SSR with WASM), that's a s
 - [ ] `pnpm dev` starts; client console shows the cpp.js loader running, no 404s on `/cpp.js`/`/cpp.wasm`.
 - [ ] DevTools → Application → Headers shows `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` (for multithread).
 - [ ] `pnpm build && pnpm start` works end-to-end.
-- [ ] App calls into C++: `await init(); Module.fn(...)` returns expected result.
+- [ ] App calls into C++: `await initNative(); Module.fn(...)` returns expected result.
 
 ## Common pitfalls
 

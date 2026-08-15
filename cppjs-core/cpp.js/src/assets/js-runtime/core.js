@@ -157,7 +157,7 @@ export function createInitCppJs({
         worker.exposeWorker(systemConfig, createModule);
     }
 
-    function initCppJs(userConfig = {}) {
+    function initNative(userConfig = {}) {
         if (cppJsPromise) return cppJsPromise;
 
         const config = mergeDeep(systemConfig, userConfig);
@@ -180,14 +180,14 @@ export function createInitCppJs({
         return cppJsPromise;
     }
 
-    initCppJs.terminate = function terminate() {
+    initNative.terminate = function terminate() {
         if (worker && worker.terminate) worker.terminate();
         cppJsPromise = null;
     };
 
     if (typeof globalThis === 'object') {
-        globalThis.CppJs = { initCppJs };
+        globalThis.CppJs = { initNative };
     }
 
-    return initCppJs;
+    return initNative;
 }

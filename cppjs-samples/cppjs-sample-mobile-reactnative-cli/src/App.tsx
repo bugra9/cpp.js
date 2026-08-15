@@ -7,8 +7,7 @@
 import { useEffect, useState } from 'react';
 import { StatusBar, StyleSheet, useColorScheme, View, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { init } from 'cpp.js';
-import { Native } from './native/native.h';
+import { initNative, Native } from './native/native.h';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -25,7 +24,7 @@ function AppContent() {
   const [message, setMessage] = useState('compiling ...');
 
   useEffect(() => {
-    init().then(() => {
+    initNative().then(() => {
       setMessage(Native.sample());
     });
   }, []);

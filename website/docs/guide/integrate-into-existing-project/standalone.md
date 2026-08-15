@@ -79,7 +79,7 @@ You can now access your native code by importing **dist/myapp-wasm-wasm32-st-rel
       <title>Cpp.js Vanilla sample</title>
       <script src="./dist/myapp-wasm-wasm32-st-release.browser.js"></script>
       <script>
-        initCppJs({ path: './dist' }).then(({ MySampleClass }) => {
+        initNative({ path: './dist' }).then(({ MySampleClass }) => {
             document.querySelector('#cppMessage').innerHTML = MySampleClass.sample();
         });
       </script>

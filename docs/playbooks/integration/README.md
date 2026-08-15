@@ -140,7 +140,7 @@ The framework playbook lists what to look for in the dev/build output (e.g. "you
 - [ ] Multithread decision made; if `mt`, COOP/COEP setup documented for the user's deploy target.
 - [ ] `pnpm dev` succeeds, the bundle loads `cpp.js`/`cpp.wasm` without 404s.
 - [ ] `pnpm build` produces artifacts.
-- [ ] User can call into a cpp.js function from JS (e.g. `await init(); Module.someFn(...)` returns expected result).
+- [ ] User can call into a cpp.js function from JS (e.g. `await initNative(); Module.someFn(...)` returns expected result).
 
 ## Common pitfalls
 

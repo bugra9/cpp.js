@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { init } from 'cpp.js';
-import { Native } from './native/native.h';
+import { initNative, Native } from './native/native.h';
 import './App.css';
 
 function App() {
   const [message, setMessage] = useState("compiling ...");
 
-  init().then(async () => {
+  initNative().then(async () => {
     setMessage(await Native.sample());
   });
 

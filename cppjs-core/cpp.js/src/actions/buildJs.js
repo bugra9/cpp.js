@@ -38,14 +38,14 @@ const options = {
         plugins: [virtual(nodeLibs), nodeResolve(), commonjs({ transformMixedEsModules: true, ignoreTryCatch: 'remove' })],
         output: {
             format: 'umd',
-            name: 'initCppJs',
+            name: 'initNative',
         },
     },
     node: {
         plugins: [nodeResolve(), commonjs()],
         output: {
             format: 'umd',
-            name: 'initCppJs',
+            name: 'initNative',
         },
     },
 };

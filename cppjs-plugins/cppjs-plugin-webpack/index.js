@@ -29,14 +29,8 @@ export default class CppjsWebpackPlugin {
 
     apply(compiler) {
         const pluginName = this.constructor.name;
-        // The bare `cpp.js` specifier is the runtime module that owns init(). Webpack resolves to
-        // real files, so it is written once here and aliased; `$` keeps subpath imports out and
-        // the alias wins over the real cpp.js package, which is the Node-side build API.
-        const runtimeFile = `${state.config.paths.cache}/cppjs-runtime.js`;
-        fs.mkdirSync(state.config.paths.cache, { recursive: true });
-        fs.writeFileSync(runtimeFile, getCppJsScript(compiler.options.mode === 'development' ? buildTargetDebug : buildTargetRelease));
         compiler.options.resolve = compiler.options.resolve || {};
-        compiler.options.resolve.alias = { 'cpp.js$': runtimeFile, ...compiler.options.resolve.alias };
+        compiler.options.resolve.alias = compiler.options.resolve.alias || {};
         // `cargo:` imports use the node:/npm: convention for a non-npm store; webpack's resolver
         // has no such scheme, so the request is rewritten to the generated marker .rs (which the
         // loader then turns into the crate-import bridge). Works on rspack via its compat layer.

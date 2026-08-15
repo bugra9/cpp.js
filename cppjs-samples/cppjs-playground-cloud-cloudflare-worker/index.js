@@ -1,4 +1,4 @@
-import initCppJs from './dist/cppjs-playground-cloud-cloudflare-worker-wasm-wasm32-st-release.edge.js';
+import initNative from './dist/cppjs-playground-cloud-cloudflare-worker-wasm-wasm32-st-release.edge.js';
 import wasmContent from './dist/cppjs-playground-cloud-cloudflare-worker-wasm-wasm32-st-release.edge.wasm';
 import { runConformance } from '@cpp.js/conformance/spec/run.mjs';
 
@@ -15,7 +15,7 @@ function boot() {
 }
 
 async function bootNow() {
-    const m = await initCppJs({ getWasmFunction: () => wasmContent });
+    const m = await initNative({ getWasmFunction: () => wasmContent });
 
     // Shared conformance list. The edge runtime is the direct module (no worker layer), so
     // the full direct surface runs, live-JS included; bundler-only Rust models stay skips.

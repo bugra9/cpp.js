@@ -1,4 +1,4 @@
-import initCppJs from '../dist/cppjs-sample-backend-nodejs-wasm-wasm-wasm32-mt-release.node.js';
+import initNative from '../dist/cppjs-sample-backend-nodejs-wasm-wasm-wasm32-mt-release.node.js';
 import { runConformance } from '@cpp.js/conformance/spec/run.mjs';
 
 function wait(ms, fn) {
@@ -9,7 +9,7 @@ function wait(ms, fn) {
     });
 }
 
-initCppJs().then(async (m) => {
+initNative().then(async (m) => {
     const { Native } = m;
     try {
         Native.runOnThread();

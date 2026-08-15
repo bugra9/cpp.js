@@ -18,7 +18,7 @@ Build cpp.js artifacts for the browser, ship them as static files, and load via 
 |------|------|
 | `package.json` | + `cpp.js`, optional `@cpp.js/package-<name>`, optional `serve` for local preview. Declare a `build` script that runs `cppjs build -e browser` |
 | `cppjs.config.{js,mjs}` *(new at root)* | Project-level cpp.js config |
-| `index.html` | Loads `<script src="./dist/<name>...browser.js"></script>` and calls `initCppJs({ path: './dist' })` |
+| `index.html` | Loads `<script src="./dist/<name>...browser.js"></script>` and calls `initNative({ path: './dist' })` |
 | `src/native/` *(if user wraps own C++)* | `.h` + `.cpp` source |
 | `serve.json` *(local preview, optional)* | COOP/COEP headers for `serve` |
 | `dist/<name>-<target>.browser.{js,wasm}` | Build output |
@@ -80,7 +80,7 @@ export default {
   <title>My static site</title>
   <script src="./dist/my-static-site-wasm-wasm32-st-release.browser.js"></script>
   <script>
-    initCppJs({ path: './dist' }).then(async ({ Native }) => {
+    initNative({ path: './dist' }).then(async ({ Native }) => {
       document.querySelector('#out').innerHTML = await Native.sample();
     });
   </script>
@@ -140,11 +140,11 @@ For `runtime: 'st'`, no headers needed — works on any static host including GH
 
 ## Common pitfalls
 
-- **Loading `<script type="module">`** when the `cppjs build` output is UMD (which it is by default). Drop `type="module"`; `initCppJs` becomes a global.
-- **Wrong `path` in `initCppJs(...)`**. The loader resolves wasm relative to this. If your HTML lives at `/index.html` and dist at `/dist/`, use `path: './dist'`. If served from a CDN at `/assets/dist/`, use that.
+- **Loading `<script type="module">`** when the `cppjs build` output is UMD (which it is by default). Drop `type="module"`; `initNative` becomes a global.
+- **Wrong `path` in `initNative(...)`**. The loader resolves wasm relative to this. If your HTML lives at `/index.html` and dist at `/dist/`, use `path: './dist'`. If served from a CDN at `/assets/dist/`, use that.
 - **Forgetting to copy `dist/` to your deploy.** A static host needs the actual files; nothing magical happens.
 - **GH Pages + multithread.** Doesn't work — no custom headers. Drop to single-thread or move to a host that allows headers.
-- **Trying `import` from the loader script** — the build emits UMD with a global `initCppJs`. For ES modules, you'd need a different output target (currently not exposed for vanilla).
+- **Trying `import` from the loader script** — the build emits UMD with a global `initNative`. For ES modules, you'd need a different output target (currently not exposed for vanilla).
 - **`serve.json` ignored.** `serve` reads `serve.json` from the current working directory. Run `serve` from the same directory the JSON lives in (or pass `-c <path>`).
 
 ## Reference samples

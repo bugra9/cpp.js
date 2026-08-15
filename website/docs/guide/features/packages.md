@@ -13,10 +13,9 @@ Import the necessary header file directly from the package. Header files can be 
 
 Here is a minimal example:
 ```js title="JavaScript"
-import { init } from 'cpp.js';
-import { GDALVersionInfo } from '@cpp.js/package-gdal/gdal.h';
+import { initNative, GDALVersionInfo } from '@cpp.js/package-gdal/gdal.h';
 
-await init();
+await initNative();
 console.log(GDALVersionInfo('RELEASE_NAME'));
 ```
 
@@ -115,10 +114,9 @@ Import the necessary header file directly from the package. Header files can be 
 
 Here is a minimal example:
 ```js title="JavaScript"
-import { init } from 'cpp.js';
-import { SampleBasic } from '@cppjs/sample-lib-source/samplebasic.h';
+import { initNative, SampleBasic } from '@cppjs/sample-lib-source/samplebasic.h';
 
-await init();
+await initNative();
 ```
 
 #### Package Structure
@@ -153,10 +151,9 @@ Import the necessary header file directly from the package. Header files can be 
 
 Here is a minimal example:
 ```js title="JavaScript"
-import { init } from 'cpp.js';
-import { SampleBasicCmake } from '@cpp.js/sample-lib-cmake/samplebasiccmake.h';
+import { initNative, SampleBasicCmake } from '@cpp.js/sample-lib-cmake/samplebasiccmake.h';
 
-await init();
+await initNative();
 ```
 
 #### Package Structure

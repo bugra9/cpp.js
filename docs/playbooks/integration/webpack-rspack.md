@@ -111,7 +111,7 @@ Same as the Vite playbook — devServer is handled by the plugin, production dep
 - [ ] Browser console: `crossOriginIsolated` returns `true` (only required if multithread).
 - [ ] Saving a `.cpp`/`.h` file under `src/native/` triggers a rebuild + page refresh.
 - [ ] `pnpm build` produces `dist/` with `cpp.js`, `cpp.wasm` (and `cpp.data.txt` if data preloaded).
-- [ ] User-side: `await init(); Module.someFn(...)` returns expected result.
+- [ ] User-side: `await initNative(); Module.someFn(...)` returns expected result.
 
 ## Common pitfalls
 

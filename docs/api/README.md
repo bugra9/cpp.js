@@ -48,7 +48,7 @@ C++ binding & build authoring:
 ┌─────────────────────────────────────────────────────────────┐
 │  Runtime:  your app                                         │
 │  ┌────────────────────────────────────────────────────────┐│
-│  │ const m = await init({                            ││
+│  │ const m = await initNative({                            ││
 │  │   useWorker: true,    // for OPFS persistent storage   ││
 │  │   fs: { opfs: true }, // browser default               ││
 │  │   env: { ... },                                        ││

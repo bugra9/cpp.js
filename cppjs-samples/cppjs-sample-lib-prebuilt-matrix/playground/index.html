@@ -8,12 +8,12 @@
       <script type="module">
         import '../dist/cppjs-sample-lib-prebuilt-matrix.browser.js';
         let wasmModule;
-        init();
+        initNative();
         const SIZE = Math.pow(1100, 2);
 
 
         async function init () {
-            wasmModule = await initCppJs({ path: '../dist' });
+            wasmModule = await initNative({ path: '../dist' });
             new wasmModule.Matrix(10, 0);
             toggleVisible(true);
         }

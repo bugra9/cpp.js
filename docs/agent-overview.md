@@ -67,7 +67,7 @@ The agent will:
 
 1. Call `cppjs_get_api_reference({ topic: "filesystem" })` → fetches the canonical decision tree.
 2. Tells you OPFS persistence requires `useWorker: true` (Worker scope), browser support, and that paths under `/opfs/<app>/` survive reloads.
-3. Hands you the `init({ useWorker: true })` snippet.
+3. Hands you the `initNative({ useWorker: true })` snippet.
 
 ### Example 3 — "I want to wrap libsodium for cpp.js"
 

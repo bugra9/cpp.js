@@ -29,22 +29,15 @@ npm install -D @cpp.js/typescript-config
   (`import { Native } from './native/native.h'`) and app-local Rust files
   (`import { Hull } from './native/geo_surface.rs'`) alike. Relative imports
   are typed by path resolution, so this overlay is what keeps generated
-  `.d.ts` files out of your source folders.
+  `.d.ts` files out of your source folders. Each of those declarations also
+  types `initNative()`, the boot call every generated module exports.
 - `include` pulls in `.cppjs/rust-crates/types/`, the ambient
   `declare module 'cargo:<name>'` declarations for direct crate imports.
-- `paths` maps the bare `cpp.js` specifier — the runtime module your bundler
-  plugin serves, which exports `init()` — to its declaration. Without the
-  mapping TypeScript resolves the name to the cpp.js package on disk, which is
-  the Node-side build API and has no `init`.
 
 ## Caveats
 
 - `include` is overridden (not merged) when your tsconfig defines its own —
   keep `.cppjs/rust-crates/types/**/*.d.ts` in your list in that case.
-- `paths` is overridden the same way. If your tsconfig defines any path alias
-  (`@/*` and friends), add
-  `"cpp.js": ["./node_modules/@cpp.js/typescript-config/cppjs-runtime.d.ts"]`
-  to it, or `import { init } from 'cpp.js'` loses its types.
 - Paths assume the default cache directory (`.cppjs`). If you override
   `paths.cache` in `cppjs.config.js`, copy the two settings into your own
   tsconfig with the custom path instead.

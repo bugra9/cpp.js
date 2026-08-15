@@ -1,22 +1,21 @@
 import React from "react";
 import { useEffect, useState } from "react";
-import { init } from 'cpp.js';
-import { Native } from './native/native.h';
+import { initNative, Native } from './native/native.h';
 // Conformance kit: every documented C++/Rust feature as one shared data-driven list.
 import { runConformance } from '@cpp.js/conformance/spec/run.mjs';
 import { ConfBox, ConfCircle, ConfOps } from '@cpp.js/conformance/native/conformance.h';
 import {
-	initCppJs as initRustDemo,
+	initNative as initRustDemo,
 	RustyCounter, Widget, Gauge, Mode, RustIntVector,
 	doubleIt, greet, checkedParse, parseEven, tag,
 	jsonEcho, jsonTally, jsonPick, SharedDoc, dupDoc, sharedDropCount,
 } from '@cpp.js/embind-rust-demo';
 // App-local surface over upstream crates (geo + wkt): same file as the vite/RN legs.
-import { initCppJs as initHull, Hull } from './native/geo_surface.rs';
+import { initNative as initHull, Hull } from './native/geo_surface.rs';
 // Direct crate imports: bridged from the crates' own sources, no surface file.
-import { initCppJs as initUuidCrate, Uuid } from 'cargo:uuid';
-import { initCppJs as initSemver, Version, VersionReq } from 'cargo:semver';
-import { initCppJs as initRegex, Regex } from 'cargo:regex';
+import { initNative as initUuidCrate, Uuid } from 'cargo:uuid';
+import { initNative as initSemver, Version, VersionReq } from 'cargo:semver';
+import { initNative as initRegex, Regex } from 'cargo:regex';
 import "./App.css";
 
 function App() {
@@ -30,7 +29,7 @@ function App() {
     // useEffect, not render-body: re-renders must not start concurrent init chains
     // (two interleaved conformance runs race the shared drop counter).
     useEffect(() => {
-    init().then(async () => {
+    initNative().then(async () => {
         await Native.runOnThread();
         setMessage("ready (pthreads)");
         // Await before setState: rendering a pending thenable child suspends the whole

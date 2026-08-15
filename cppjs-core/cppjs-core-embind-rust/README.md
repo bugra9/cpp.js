@@ -60,10 +60,9 @@ impl Widget {
 
 ```ts
 // Typed package import - the exact .h experience, for Rust (React Native / metro):
-import { init } from 'cpp.js';
-import { RustyCounter, Widget, Mode, RustIntVector } from '@cpp.js/embind-rust-demo';
+import { initNative, RustyCounter, Widget, Mode, RustIntVector } from '@cpp.js/embind-rust-demo';
 
-await init();      // boots once app-wide, then binds this module's exports
+await initNative();      // boots once app-wide, then binds this module's exports
 const c = new RustyCounter(10);
 c.increment(5); c.increment(27);
 c.addSpan(2, 10);       // +8 - JS names are camelCased automatically
@@ -79,15 +78,14 @@ proxy-module shape as a `.h` import (`export let` per symbol, bound when an `ini
 The package build also emits `dist/js/index.d.ts` (wired via package.json `types`), so the
 import is fully typed in the editor. Booting is guarded app-wide: every proxy module registers
 its bindings on import, so one `init()` from `cpp.js` starts the JSI lib once and binds all of
-them. Calling a module's own `initCppJs` still works and is a no-op after the first call.
+them. Calling another module's `initNative` is a no-op after the first call.
 
 ### App-local .rs files (no package needed)
 
 An app can also import its own Rust file, exactly like its own header:
 
 ```ts
-import { init } from 'cpp.js';
-import { Counter } from './native/counter.rs';
+import { initNative, Counter } from './native/counter.rs';
 ```
 
 On import the toolchain synthesizes a self-contained bridge crate under
@@ -136,9 +134,8 @@ export default {
 ```
 
 ```js
-import { init } from 'cpp.js';
-import { Uuid } from 'cargo:uuid';   // the crates.io crate, untouched
-await init();
+import { initNative, Uuid } from 'cargo:uuid';   // the crates.io crate, untouched
+await initNative();
 const u = Uuid.newV4();                         // v4.rs (feature-gated module)
 `${u}`;                                         // impl Display -> toString()
 Uuid.parseStr('nope');                          // Result::Err -> throws

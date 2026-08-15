@@ -1,6 +1,6 @@
 {
     "name": "@cpp.js/core-embind-rust",
-    "version": "2.0.0-beta.37",
+    "version": "2.0.0-beta.38",
     "description": "Rust producer for the cpp.js embind registration protocol - bind Rust structs as classes reachable from JS on web (embind) and mobile (embind-jsi). Research/spike stage.",
     "homepage": "https://github.com/bugra9/cpp.js/tree/main/cppjs-core/cppjs-core-embind-rust#readme",
     "repository": "https://github.com/bugra9/cpp.js.git",

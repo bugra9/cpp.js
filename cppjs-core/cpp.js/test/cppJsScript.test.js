@@ -23,17 +23,17 @@ async function loadModule(name, source) {
 afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
 
 describe('generated proxy modules', () => {
-    test('only the runtime module (no bridge) exports init', async () => {
-        const runtime = await loadModule('runtime-a', getCppJsScript(TARGET));
+    test('every module exports initNative alongside its symbols', async () => {
         const proxy = await loadModule('proxy-a', getCppJsScript(TARGET, '/nonexistent/bridge'));
 
-        expect(typeof runtime.init).toBe('function');
-        expect(typeof runtime.initCppJs).toBe('function');
-        // Two names for one function keeps old code working without offering two ways to do it.
-        expect(runtime.init).toBe(runtime.initCppJs);
-
+        expect(typeof proxy.initNative).toBe('function');
+        // One name only: the old init / initCppJs aliases are gone.
         expect(proxy.init).toBeUndefined();
-        expect(typeof proxy.initCppJs).toBe('function');
+        expect(proxy.initCppJs).toBeUndefined();
+    });
+
+    test('a bridge file is required - there is no bare runtime module any more', () => {
+        expect(() => getCppJsScript(TARGET)).toThrow(/bridge file/);
     });
 
     test('a single init binds the exports of every imported module', async () => {
@@ -43,13 +43,13 @@ describe('generated proxy modules', () => {
         globalThis.__cppjsModule = undefined;
         globalThis.__cppjsBootPromise = Promise.resolve(module);
 
-        const runtime = await loadModule('runtime-b', getCppJsScript(TARGET));
-        const proxy = await loadModule('proxy-b', getCppJsScript(TARGET, '/nonexistent/bridge'));
+        const one = await loadModule('proxy-b1', getCppJsScript(TARGET, '/nonexistent/bridge'));
+        const proxy = await loadModule('proxy-b2', getCppJsScript(TARGET, '/nonexistent/bridge'));
 
         expect(proxy.Matrix).toBeNull();
 
-        // init() comes from the runtime module, which owns no symbols of its own.
-        const resolved = await runtime.init();
+        // init() comes from whichever module the app already imports.
+        const resolved = await one.initNative();
 
         expect(resolved).toBe(module);
         expect(proxy.Matrix).toBe('MATRIX');
@@ -57,8 +57,8 @@ describe('generated proxy modules', () => {
         expect(proxy.AllSymbols).toBe(module);
     });
 
-    test('the legacy per-module initCppJs still binds every module', async () => {
-        // No sample uses this shape any more, so this is the only thing keeping it honest.
+    test('calling initNative on one module binds the others too', async () => {
+        // Apps import several generated modules; whichever one they boot binds all of them.
         const module = { Matrix: 'LEGACY', VectorMatrix: 'LEGACY_VEC' };
         globalThis.__cppjsBinders = undefined;
         globalThis.__cppjsModule = undefined;
@@ -67,14 +67,14 @@ describe('generated proxy modules', () => {
         const one = await loadModule('proxy-legacy-1', getCppJsScript(TARGET, '/nonexistent/bridge'));
         const two = await loadModule('proxy-legacy-2', getCppJsScript(TARGET, '/nonexistent/bridge'));
 
-        // Old code called each module's own init; one call now resolves both.
-        await one.initCppJs();
+        // One call resolves both modules.
+        await one.initNative();
 
         expect(one.Matrix).toBe('LEGACY');
         expect(two.Matrix).toBe('LEGACY');
 
-        // Calling the others as well stays a harmless no-op, which is what keeps old apps working.
-        await expect(two.initCppJs()).resolves.toBe(module);
+        // A second call on another module is a harmless no-op.
+        await expect(two.initNative()).resolves.toBe(module);
     });
 
     test('a module imported after init binds immediately', async () => {
@@ -83,8 +83,8 @@ describe('generated proxy modules', () => {
         globalThis.__cppjsModule = undefined;
         globalThis.__cppjsBootPromise = Promise.resolve(module);
 
-        const runtime = await loadModule('runtime-c', getCppJsScript(TARGET));
-        await runtime.init();
+        const early = await loadModule('proxy-c1', getCppJsScript(TARGET, '/nonexistent/bridge'));
+        await early.initNative();
 
         const late = await loadModule('proxy-c', getCppJsScript(TARGET, '/nonexistent/bridge'));
         expect(late.Matrix).toBe('LATE');
@@ -95,11 +95,11 @@ describe('generated proxy modules', () => {
         globalThis.__cppjsModule = undefined;
         globalThis.__cppjsBootPromise = Promise.resolve({ Matrix: 'FIRST', VectorMatrix: 'V' });
 
-        const runtime = await loadModule('runtime-d', getCppJsScript(TARGET));
-        await runtime.init();
+        const proxy = await loadModule('proxy-d', getCppJsScript(TARGET, '/nonexistent/bridge'));
+        await proxy.initNative();
         expect(globalThis.__cppjsModule).toBeTruthy();
 
-        runtime.init.terminate();
+        proxy.initNative.terminate();
         expect(globalThis.__cppjsBootPromise).toBeNull();
         expect(globalThis.__cppjsModule).toBeNull();
     });

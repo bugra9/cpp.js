@@ -37,7 +37,7 @@ export default {
 ```
 
 ```js title="src/index.js"
-import { init } from 'cpp.js';
+import { initNative } from './native/native.h';
 ```
 
 To resolve packages files correctly, integration via a hook is required.

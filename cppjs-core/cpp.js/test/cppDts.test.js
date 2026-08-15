@@ -102,7 +102,7 @@ describe('emitCppDts', () => {
         expect(dts).toContain('row(i: number): CppVector<number>;');
         expect(dts).toContain('static describe(name: string, verbose: boolean): string;');
         expect(dts).toContain('export declare const VectorMatrix: any;');
-        expect(dts).toContain('export declare function initCppJs');
+        expect(dts).toContain('export declare function initNative');
         expect(dts).not.toContain('rawPointer');
         const matrixBlock = dts.slice(dts.indexOf('export declare class Matrix'));
         expect(matrixBlock).not.toContain('delete()');

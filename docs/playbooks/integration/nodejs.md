@@ -78,9 +78,9 @@ export default {
 Entry script `src/index.js` (CommonJS):
 
 ```js
-const initCppJs = require('../dist/my-node-service-wasm-wasm32-st-release.node.js');
+const initNative = require('../dist/my-node-service-wasm-wasm32-st-release.node.js');
 
-initCppJs().then(({ Native }) => {
+initNative().then(({ Native }) => {
     console.log(`Result: ${Native.sample()}`);
 });
 ```
@@ -88,9 +88,9 @@ initCppJs().then(({ Native }) => {
 ESM equivalent:
 
 ```js
-import initCppJs from './dist/my-node-service-wasm-wasm32-st-release.node.js';
+import initNative from './dist/my-node-service-wasm-wasm32-st-release.node.js';
 
-const { Native } = await initCppJs();
+const { Native } = await initNative();
 console.log(`Result: ${Native.sample()}`);
 ```
 

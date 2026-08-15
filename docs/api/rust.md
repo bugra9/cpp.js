@@ -39,11 +39,11 @@ cargoDependencies: {
 ```
 
 ```js
-import { init } from 'cpp.js'
+import { initNative } from './native/native.h';
 import { Uuid } from 'cargo:uuid'
 import { Version, VersionReq } from 'cargo:semver'
 
-await init()
+await initNative()
 const id = Uuid.newV4().toString()
 const ok = new VersionReq('^1.2').matches(new Version('1.4.0'))
 ```
@@ -72,7 +72,7 @@ impl Hull {
 ```
 
 ```js
-import { init } from 'cpp.js'
+import { initNative } from './native/native.h';
 import { Hull } from './native/geo_surface.rs'
 ```
 
@@ -105,7 +105,7 @@ dirs — they share a triple but not their std features).
 
 `JsValue`/`JsFunction` need a synchronous runtime (native JSI, wasm `st` on the
 main thread): on worker-backed runtimes (the wasm `mt` default, or
-`init({ useWorker: true })`) functions cannot cross the worker boundary and
+`initNative({ useWorker: true })`) functions cannot cross the worker boundary and
 identity does not survive structured cloning — use `serde_json::Value` there.
 
 The full grammar, wire contract and builder API live in
@@ -123,7 +123,7 @@ Install it as a direct devDependency and extend it once:
 { "extends": ["@react-native/typescript-config", "@cpp.js/typescript-config"] }
 ```
 
-Running with `init({ useWorker: true })`? Set `dts: 'promise'` in
+Running with `initNative({ useWorker: true })`? Set `dts: 'promise'` in
 `cppjs.config.js` so generated signatures match the async runtime — see
 [`lifecycle-and-types.md`](./lifecycle-and-types.md).
 

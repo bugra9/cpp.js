@@ -20,10 +20,6 @@ if (!buildTargetRelease) {
     buildTargetRelease = buildTargetDebug;
 }
 
-// The runtime module behind the bare `cpp.js` specifier - it owns init(). A \0 id keeps it
-// distinct from the real cpp.js package, which is the Node-side build API.
-export const CPPJS_RUNTIME_ID = '\0cppjs-runtime';
-
 const rollupCppjsPlugin = (options, bridges = []) => {
     const headerRegex = new RegExp(`\\.(${state.config.ext.header.join('|')})$`);
     const moduleRegex = new RegExp(`\\.(${state.config.ext.module.join('|')})$`);
@@ -34,21 +30,11 @@ const rollupCppjsPlugin = (options, bridges = []) => {
             if (source === '/cpp.js') {
                 return { id: source, external: true };
             }
-            if (source === 'cpp.js' || source === CPPJS_RUNTIME_ID) {
-                return { id: CPPJS_RUNTIME_ID, external: false };
-            }
-
             const dependFilePath = getDependFilePath(source, buildTargetRelease);
             if (dependFilePath) {
                 return dependFilePath;
             }
 
-            return null;
-        },
-        load(id) {
-            if (id === CPPJS_RUNTIME_ID) {
-                return getCppJsScript(buildTargetRelease);
-            }
             return null;
         },
         async transform(code, path) {

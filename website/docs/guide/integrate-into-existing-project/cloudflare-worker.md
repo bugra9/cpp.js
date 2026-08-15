@@ -72,10 +72,10 @@ This command will generate myapp.wasm, myapp.browser.js, and myapp.node.js files
 You can now access your native code by importing **dist/myapp-wasm-wasm32-st-release.edge.js** into your JavaScript file. For a minimal setup, create a index.js and add the following content.
 
 ```js title="index.js"
-import initCppJs from './dist/myapp-wasm-wasm32-st-release.edge.js';
+import initNative from './dist/myapp-wasm-wasm32-st-release.edge.js';
 import wasmContent from './dist/myapp-wasm-wasm32-st-release.edge.wasm';
 
-const { MySampleClass } = await initCppJs({ getWasmFunction: () => wasmContent });
+const { MySampleClass } = await initNative({ getWasmFunction: () => wasmContent });
 
 export default {
     async fetch(request, env, ctx) {

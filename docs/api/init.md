@@ -9,14 +9,14 @@ The single entry point for calling into your Wasm module from JavaScript. Produc
 With a bundler plugin (Vite, Rollup, Webpack, Rspack, Metro), import it from `cpp.js` and everything else from the header, `.rs` file or `cargo:` crate:
 
 ```js
-import { init } from 'cpp.js';
-import { Matrix } from './native/Matrix.h';
+import { initNative } from './native/native.h';
+import { initNative, Matrix } from './native/Matrix.h';
 import { Uuid } from 'cargo:uuid';
 
-await init();
+await initNative();
 ```
 
-One call binds every imported module: each proxy module registers its bindings when it is imported, and `init()` boots the runtime once and then resolves all of them. Proxy modules still export `initCppJs` — the same function under its old name — so existing code keeps working. Node, Edge and standalone builds have no bundler plugin: there you import the built artifact directly and call its default export.
+One call binds every imported module: each proxy module registers its bindings when it is imported, and `init()` boots the runtime once and then resolves all of them. Proxy modules still export `initNative` — the same function under its old name — so existing code keeps working. Node, Edge and standalone builds have no bundler plugin: there you import the built artifact directly and call its default export.
 
 ## Signature
 
@@ -166,16 +166,16 @@ Call `init.terminate()` to kill the worker and release resources.
 ### Minimal browser
 
 ```js
-import { init } from 'cpp.js'
+import { initNative } from './native/native.h';
 
-const m = await init()
+const m = await initNative()
 console.log(m.add(2, 3))  // an embind-exported function
 ```
 
 ### Browser + persistent storage
 
 ```js
-const m = await init({
+const m = await initNative({
   useWorker: true,           // mandatory for OPFS
   fs: { opfs: true },        // default, shown for clarity
 })
@@ -187,7 +187,7 @@ m.FS.writeFile('/opfs/myapp/data.bin', new Uint8Array([1, 2, 3]))
 ### Browser + multithread
 
 ```js
-const m = await init({
+const m = await initNative({
   // Nothing extra here — `runtime: 'mt'` was set in cppjs.config.js
   // at build time, so this Wasm IS multithreaded.
   // Just make sure your prod host sends COOP/COEP headers.
@@ -197,9 +197,9 @@ const m = await init({
 ### Node.js
 
 ```js
-import { init } from 'cpp.js'
+import { initNative } from './native/native.h';
 
-const m = await init({
+const m = await initNative({
   env: { TMPDIR: '_CPPJS_DATA_PATH_/scratch' },
 })
 ```
@@ -207,9 +207,9 @@ const m = await init({
 ### Cloudflare Worker
 
 ```js
-import { init } from 'cpp.js'
+import { initNative } from './native/native.h';
 
-const m = await init()
+const m = await initNative()
 // useWorker, OPFS, multithread all unavailable on edge.
 // Run in single-thread + memory-fs only.
 ```
@@ -217,7 +217,7 @@ const m = await init()
 ### Custom logging
 
 ```js
-const m = await init({
+const m = await initNative({
   logHandler:   (text) => myLogger.info(`[wasm] ${text}`),
   errorHandler: (text) => myLogger.error(`[wasm] ${text}`),
 })

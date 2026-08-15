@@ -50,7 +50,7 @@ export default {
   dts: 'sync',
     // 'sync' (default) types the direct binding surface. 'promise' wraps every
     // generated method/function return in Promise<...> - use it when your app
-    // runs with init({ useWorker: true }) (or any async bridge), where
+    // runs with initNative({ useWorker: true }) (or any async bridge), where
     // every call resolves asynchronously at runtime. Constructors stay
     // sync-typed either way; write `await new X(...)` (a no-op on sync
     // runtimes, required under a worker). See lifecycle-and-types.md.

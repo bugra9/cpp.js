@@ -3,13 +3,9 @@
 //   { "extends": "@cpp.js/typescript-config" }
 // ${configDir} resolves against YOUR config's directory, not this package.
 // Note: a project-defined "include" overrides the one below - keep the glob in yours then.
-// Same for "paths": if your tsconfig defines any, copy the "cpp.js" entry into it as
-//   "cpp.js": ["./node_modules/@cpp.js/typescript-config/cppjs-runtime.d.ts"]
-// or `import { init } from 'cpp.js'` resolves to the build API instead of the runtime module.
 {
     "compilerOptions": {
-        "rootDirs": ["${configDir}", "${configDir}/.cppjs/types"],
-        "paths": { "cpp.js": ["./cppjs-runtime.d.ts"] }
+        "rootDirs": ["${configDir}", "${configDir}/.cppjs/types"]
     },
     "include": ["${configDir}/.cppjs/rust-crates/types/**/*.d.ts"]
 }

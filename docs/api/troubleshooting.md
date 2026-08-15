@@ -149,7 +149,7 @@ Same root cause as above — COOP/COEP missing.
 
 You mounted `/opfs/...` but didn't set `useWorker: true` on `init(opts)`.
 
-- **Fix:** `init({ useWorker: true })`. See [`filesystem.md`](./filesystem.md).
+- **Fix:** `initNative({ useWorker: true })`. See [`filesystem.md`](./filesystem.md).
 
 ### `Path /opfs/... but OPFS is disabled. Enable fs.opfs in config`
 
@@ -171,10 +171,10 @@ Wasm process exhausted its allocated heap.
 The C++ function exists but didn't bind to JS.
 
 - **Cause:** binding rule violation. See "Binding-time errors" above.
-- **Cause:** the JS module finished loading but `init` hasn't completed. Make sure you're calling `m.someFunc` *after* `await init(...)`.
+- **Cause:** the JS module finished loading but `init` hasn't completed. Make sure you're calling `m.someFunc` *after* `await initNative(...)`.
 - **Cause (worker runtime, e.g. `instance.method is not a function`):** the module
   runs in a worker — the wasm `mt` runtime defaults to one, as does
-  `init({ useWorker: true })` — so construction returns a promise and sync-style
+  `initNative({ useWorker: true })` — so construction returns a promise and sync-style
   code holds a `Promise`, not the instance. Write `const c = await new X(...);
   await c.method(...)` and set `dts: 'promise'` so the generated types match.
 

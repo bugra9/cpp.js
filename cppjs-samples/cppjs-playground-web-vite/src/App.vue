@@ -1,16 +1,16 @@
 <script setup>
 import { ref } from 'vue'
-import { initCppJs, Native } from './native/native.h'
+import { initNative, Native } from './native/native.h'
 // Rust package import: same proxy-module shape as the .h flow, served by the vite plugin.
-import { initCppJs as initRustDemo, RustyCounter, Gauge, doubleIt, greet, parseEven, tag } from '@cpp.js/embind-rust-demo'
+import { initNative as initRustDemo, RustyCounter, Gauge, doubleIt, greet, parseEven, tag } from '@cpp.js/embind-rust-demo'
 // Two more DIRECT crate imports: semver (class-typed param via matches) and regex (throwing ctor).
-import { initCppJs as initSemver, Version, VersionReq } from 'cargo:semver'
-import { initCppJs as initRegex, Regex } from 'cargo:regex'
+import { initNative as initSemver, Version, VersionReq } from 'cargo:semver'
+import { initNative as initRegex, Regex } from 'cargo:regex'
 // DIRECT crate import: no surface file - bridged from the uuid crate's own source
 // (declared in cppjs.config.js export.bindings.cargoDependencies).
-import { initCppJs as initUuidCrate, Uuid } from 'cargo:uuid'
+import { initNative as initUuidCrate, Uuid } from 'cargo:uuid'
 // App-local surface over upstream crates (geo + wkt): the same file the RN playground uses.
-import { initCppJs as initHull, Hull } from './native/geo_surface.rs'
+import { initNative as initHull, Hull } from './native/geo_surface.rs'
 // Conformance kit: every documented C++/Rust feature as one shared data-driven list.
 import { runConformance } from '@cpp.js/conformance/spec/run.mjs'
 import { ConfBox, ConfCircle, ConfOps } from '@cpp.js/conformance/native/conformance.h'
@@ -23,7 +23,7 @@ const message = ref("compiling ...")
 const rust = ref("rust: compiling ...")
 const conf = ref("conformance: running ...")
 
-initCppJs().then(async () => {
+initNative().then(async () => {
     // await keeps this correct in both modes: with a worker every binding (including `new`,
     // via comlink's construct support) returns a Promise.
     message.value = await Native.sample();

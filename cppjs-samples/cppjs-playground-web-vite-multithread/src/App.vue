@@ -1,12 +1,11 @@
 <script setup>
 import { ref } from 'vue'
-import { init } from 'cpp.js'
-import { Native } from './native/native.h'
+import { initNative, Native } from './native/native.h'
 // Conformance kit: every documented C++/Rust feature as one shared data-driven list.
 import { runConformance } from '@cpp.js/conformance/spec/run.mjs'
 import { ConfBox, ConfCircle, ConfOps } from '@cpp.js/conformance/native/conformance.h'
 import {
-    initCppJs as initRustDemo,
+    initNative as initRustDemo,
     RustyCounter, Widget, Gauge, Mode, RustIntVector,
     doubleIt, greet, checkedParse, parseEven, tag,
     jsonEcho, jsonTally, jsonPick, SharedDoc, dupDoc, sharedDropCount,
@@ -18,7 +17,7 @@ const instanceResult = ref("...")
 const constructResult = ref("...")
 const conf = ref("conformance: running ...")
 
-init({ useWorker: true }).then(async (A) => {
+initNative({ useWorker: true }).then(async (A) => {
     message.value = "ready (worker + pthreads)";
     await Native.runOnThread();
     threadResult.value = await Native.getThreadResult();

@@ -68,9 +68,9 @@ This command will generate myapp.wasm, myapp.browser.js, and myapp.node.js files
 You can now access your native code by importing **dist/myapp-wasm-wasm32-st-release.node.js** into your JavaScript file. For a minimal setup, create a src/index.js and add the following content.
 
 ```js title="src/index.js"
-const initCppJs = require('../dist/myapp-wasm-wasm32-st-release.node.js');
+const initNative = require('../dist/myapp-wasm-wasm32-st-release.node.js');
 
-initCppJs().then(({ MySampleClass }) => {
+initNative().then(({ MySampleClass }) => {
     console.log(`Response from c++ : ${MySampleClass.sample()}`);
 });
 ```
@@ -85,9 +85,9 @@ node ./src/index.js
 For module (ES) usage, create a src/index.mjs and add the following content.
 
 ```js title="src/index.mjs"
-import initCppJs from '../dist/myapp-wasm-wasm32-st-release.node.js';
+import initNative from '../dist/myapp-wasm-wasm32-st-release.node.js';
 
-initCppJs().then(({ MySampleClass }) => {
+initNative().then(({ MySampleClass }) => {
     console.log(`Matrix multiplier with c++ => ${MySampleClass.sample()}`);
 });
 ```

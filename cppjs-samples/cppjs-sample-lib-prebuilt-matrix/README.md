@@ -47,10 +47,9 @@ std::string Native::sample() {
 
 ### Usage in JavaScript Code (web, with plugin)
 ```js
-import { init } from 'cpp.js';
-import { Matrix } from '@cpp.js/sample-lib-prebuilt-matrix/Matrix.h';
+import { initNative, Matrix } from '@cpp.js/sample-lib-prebuilt-matrix/Matrix.h';
 
-await init();
+await initNative();
 const a = new Matrix(1210000, 1);
 const b = new Matrix(1210000, 2);
 const result = a.multiple(b);
@@ -61,7 +60,7 @@ console.log(result.get(0));
 ```js
 import 'node_modules/@cpp.js/sample-lib-prebuilt-matrix/dist/cppjs-sample-lib-prebuilt-matrix.browser.js';
 
-init({ path: 'node_modules/@cpp.js/sample-lib-prebuilt-matrix/dist' }).then(({ Matrix }) => {
+initNative({ path: 'node_modules/@cpp.js/sample-lib-prebuilt-matrix/dist' }).then(({ Matrix }) => {
     const a = new Matrix(1210000, 1);
     const b = new Matrix(1210000, 2);
     const result = a.multiple(b);
@@ -73,7 +72,7 @@ init({ path: 'node_modules/@cpp.js/sample-lib-prebuilt-matrix/dist' }).then(({ M
 ```js
 import 'node_modules/@cpp.js/sample-lib-prebuilt-matrix/dist/cppjs-sample-lib-prebuilt-matrix.node.js';
 
-init().then(({ Matrix }) => {
+initNative().then(({ Matrix }) => {
     const a = new Matrix(1210000, 1);
     const b = new Matrix(1210000, 2);
     const result = a.multiple(b);

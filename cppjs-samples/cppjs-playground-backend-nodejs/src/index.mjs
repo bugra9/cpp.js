@@ -1,4 +1,4 @@
-import initCppJs from '../dist/cppjs-sample-backend-nodejs-wasm-wasm-wasm32-st-release.node.js';
+import initNative from '../dist/cppjs-sample-backend-nodejs-wasm-wasm-wasm32-st-release.node.js';
 
 function wait(ms, fn) {
     return new Promise((resolve) => {
@@ -10,7 +10,7 @@ function wait(ms, fn) {
 
 import { runConformance } from '@cpp.js/conformance/spec/run.mjs';
 
-initCppJs().then(async (m) => {
+initNative().then(async (m) => {
     const { Native } = m;
     try {
         await Native.ops_JSPI();

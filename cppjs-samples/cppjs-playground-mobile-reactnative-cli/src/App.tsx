@@ -8,8 +8,7 @@ import { useEffect, useState } from 'react';
 import { StatusBar, StyleSheet, useColorScheme, View, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 // One init for every native import below: each proxy module registers its bindings on import.
-import { init } from 'cpp.js';
-import { Native } from './native/native.h';
+import { initNative, Native } from './native/native.h';
 // Rust package import: the metro resolver maps the bare package name to the crate's lib.rs and
 // the transformer emits the same proxy-module shape as a .h import (exports bind on init).
 import {
@@ -64,7 +63,7 @@ function AppContent() {
     const [message, setMessage] = useState('compiling ...');
 
     useEffect(() => {
-        init().then(async () => {
+        initNative().then(async () => {
             // Every type kind of the embind-rust demo, each checked in isolation so one failure
             // never hides the rest. Rust class -> flat C-ABI -> jsi adapter -> embind-jsi.
             const out: string[] = [];

@@ -983,7 +983,7 @@ export function emitDts(model, vectors, mode = 'sync') {
         out.push('}');
     }
     out.push('export declare let AllSymbols: Record<string, unknown>;');
-    out.push('export declare function initCppJs(config?: Record<string, unknown>): Promise<unknown>;');
+    out.push('export declare function initNative(config?: Record<string, unknown>): Promise<unknown>;');
     out.push('');
     return out.join('\n');
 }

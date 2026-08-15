@@ -1,4 +1,4 @@
-const initCppJs = require('../dist/cppjs-sample-backend-nodejs-wasm-wasm-wasm32-st-release.node.bundle.js');
+const initNative = require('../dist/cppjs-sample-backend-nodejs-wasm-wasm-wasm32-st-release.node.bundle.js');
 
 function wait(ms, fn) {
     return new Promise((resolve) => {
@@ -8,7 +8,7 @@ function wait(ms, fn) {
     });
 }
 
-initCppJs().then(async ({ Native }) => {
+initNative().then(async ({ Native }) => {
     try {
         await Native.ops_JSPI();
         const z = Native.sample();

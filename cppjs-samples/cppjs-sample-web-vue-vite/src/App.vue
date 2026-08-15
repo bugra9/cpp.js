@@ -1,11 +1,10 @@
 <script setup>
 import { ref } from 'vue'
-import { init } from 'cpp.js'
-import { Native } from './native/native.h'
+import { initNative, Native } from './native/native.h'
 
 const message = ref("compiling ...")
 
-init().then(async () => {
+initNative().then(async () => {
   message.value = await Native.sample();
 });
 </script>

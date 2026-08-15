@@ -101,7 +101,7 @@ API does not mean it works.
 Wasm runs in a single dedicated Web Worker; main thread receives a Comlink-bridged proxy.
 
 ```js
-const m = await init({ useWorker: true })
+const m = await initNative({ useWorker: true })
 // m looks identical, but every call is async.
 const result = await m.add(2, 3)
 ```

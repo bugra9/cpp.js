@@ -2,7 +2,7 @@
 import {
     state, createLib, createBridgeFile, buildWasm, buildDependencies, getTargetParams, getFilteredBuildTargets, isSourceNewer, getRustJsScript,
 } from 'cpp.js';
-import rollupCppjsPlugin, { CPPJS_RUNTIME_ID } from '@cpp.js/plugin-rollup';
+import rollupCppjsPlugin from '@cpp.js/plugin-rollup';
 
 import fs from 'node:fs';
 
@@ -25,16 +25,6 @@ const viteCppjsPlugin = (options) => {
     const sourceRegex = new RegExp(`\\.(${state.config.ext.source.join('|')})$`);
 
     return [
-        {
-            // Vite core resolves bare specifiers before normal user plugins, so without `pre` the
-            // real cpp.js package (the Node build API) wins and drags node:fs into the browser
-            // bundle. Only the specifier is claimed here; load() stays in the rollup plugin.
-            name: 'vite-plugin-cppjs-runtime',
-            enforce: 'pre',
-            resolveId(source) {
-                return source === 'cpp.js' ? CPPJS_RUNTIME_ID : null;
-            },
-        },
         rollupCppjsPlugin(options, bridges),
         {
             name: 'vite-plugin-cppjs',

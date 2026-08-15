@@ -12,7 +12,7 @@
         // guarded out of the build. The mt demo is the thread roundtrip below.
         // await keeps the calls correct in both modes: the browser runtime
         // defaults to useWorker, where every binding returns a Promise.
-        initCppJs({ path: './dist' }).then(async ({ Native }) => {
+        initNative({ path: './dist' }).then(async ({ Native }) => {
             await Native.runOnThread();
             document.querySelector('#cppMessage').innerHTML = 'ready (pthreads)';
             document.querySelector('#threadResult').innerHTML = await Native.getThreadResult();
@@ -21,11 +21,11 @@
     <script type="module">
         // Shared conformance list, no bundler: the build copies the spec next to the glue
         // (dist/conformance.run.mjs). The browser runtime defaults to useWorker, so worker
-        // contracts apply and live-JS stays a documented skip. initCppJs reuses the boot
+        // contracts apply and live-JS stays a documented skip. initNative reuses the boot
         // started by the classic script above (single-boot promise).
         import { runConformance } from './dist/conformance.run.mjs';
 
-        const m = await initCppJs({ path: './dist' });
+        const m = await initNative({ path: './dist' });
         try {
             const result = await runConformance({
                 cpp: { ConfBox: m.ConfBox, ConfCircle: m.ConfCircle, ConfOps: m.ConfOps },
