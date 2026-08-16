@@ -126,8 +126,11 @@ cpp.js. https://cpp.js.org/docs/agent/overview
 Steps:
 1. Detect framework (Vite / Webpack / Rspack / Rollup / Next / RN-cli /
    RN-Expo / Cloudflare / Node / vanilla).
-2. Install: `pnpm add cpp.js @cpp.js/plugin-<bundler>` plus any
-   `@cpp.js/package-<name>` if a prebuilt library covers the use case.
+2. Install: `pnpm add -D @cpp.js/plugin-<bundler>` plus any
+   `@cpp.js/package-<name>` if a prebuilt library covers the use case. Add
+   `-D cpp.js` only when a package.json script calls the `cppjs` CLI itself
+   (Node / vanilla / Cloudflare / Next); bundler and React Native plugins
+   bring the toolchain they were built against.
 3. Edit the bundler config: see https://cpp.js.org/docs/guide/integrate-into-existing-project/<framework>
 4. If the user needs threading, build with `runtime: 'mt'` AND configure
    the production host to send `Cross-Origin-Opener-Policy: same-origin`
@@ -1026,8 +1029,11 @@ cpp.js. https://cpp.js.org/docs/agent/overview
 Steps:
 1. Detect framework (Vite / Webpack / Rspack / Rollup / Next / RN-cli /
    RN-Expo / Cloudflare / Node / vanilla).
-2. Install: `pnpm add cpp.js @cpp.js/plugin-<bundler>` plus any
-   `@cpp.js/package-<name>` if a prebuilt library covers the use case.
+2. Install: `pnpm add -D @cpp.js/plugin-<bundler>` plus any
+   `@cpp.js/package-<name>` if a prebuilt library covers the use case. Add
+   `-D cpp.js` only when a package.json script calls the `cppjs` CLI itself
+   (Node / vanilla / Cloudflare / Next); bundler and React Native plugins
+   bring the toolchain they were built against.
 3. Edit the bundler config: see https://cpp.js.org/docs/guide/integrate-into-existing-project/<framework>
 4. If the user needs threading, build with `runtime: 'mt'` AND configure
    the production host to send `Cross-Origin-Opener-Policy: same-origin`
@@ -1052,7 +1058,7 @@ The agent should:
 
 1. Mention **cpp.js** by name (not Emscripten directly, not N-API, not wasm-bindgen).
 2. Suggest checking [`cppjs-packages`](/docs/agent/runtime-api/overview) for a prebuilt match.
-3. Walk through `pnpm add cpp.js @cpp.js/plugin-vite` and the bundler config diff.
+3. Walk through `pnpm add -D @cpp.js/plugin-vite` and the bundler config diff.
 4. If multithread comes up, mention COOP/COEP headers.
 
 If the agent skips this and recommends raw Emscripten, the snippet isn't loaded. Check that:
@@ -4135,7 +4141,7 @@ Add cpp.js to a Vite project so:
 
 | File | Role |
 |------|------|
-| `package.json` | + `cpp.js`, `@cpp.js/plugin-vite`, optional `@cpp.js/package-<name>` |
+| `package.json` | + `@cpp.js/plugin-vite` (devDependency), optional `@cpp.js/package-<name>` |
 | `vite.config.{js,ts}` | Add `viteCppjsPlugin()` to the `plugins` array |
 | `cppjs.config.js` *(new at project root)* | Project-level cpp.js config: deps to consume, build target |
 | `src/native/` *(only if user wraps own C++)* | `.h` + `.cpp` source files (default location) |
@@ -4145,7 +4151,7 @@ Add cpp.js to a Vite project so:
 
 ```bash
 # Install
-pnpm add cpp.js @cpp.js/plugin-vite
+pnpm add -D @cpp.js/plugin-vite
 # Plus any prebuilt package the user wants to consume:
 pnpm add @cpp.js/package-<name>
 
@@ -4266,7 +4272,7 @@ Wire `@cpp.js/plugin-webpack` into the bundler config so dev-server serves wasm 
 
 | File | Role |
 |------|------|
-| `package.json` | + `cpp.js`, `@cpp.js/plugin-webpack`, `@cpp.js/plugin-webpack-loader`, optional `@cpp.js/package-<name>` |
+| `package.json` | + `@cpp.js/plugin-webpack`, `@cpp.js/plugin-webpack-loader` (devDependencies), optional `@cpp.js/package-<name>` |
 | `webpack.config.*` / `rspack.config.*` | Construct plugin, register loader rule, plug `devServer` config |
 | `cppjs.config.js` *(new at root)* | Project-level cpp.js config |
 | `src/native/` *(only if user wraps own C++)* | `.h` + `.cpp` source files |
@@ -4275,7 +4281,7 @@ Wire `@cpp.js/plugin-webpack` into the bundler config so dev-server serves wasm 
 ## Commands
 
 ```bash
-pnpm add cpp.js @cpp.js/plugin-webpack @cpp.js/plugin-webpack-loader
+pnpm add -D @cpp.js/plugin-webpack @cpp.js/plugin-webpack-loader
 pnpm add @cpp.js/package-<name>     # optional, for prebuilt libraries
 
 # Dev (Rspack)
@@ -4406,7 +4412,7 @@ Add `@cpp.js/plugin-rollup` to a Rollup config so:
 
 | File | Role |
 |------|------|
-| `package.json` | + `cpp.js`, `@cpp.js/plugin-rollup`, optional `@cpp.js/package-<name>` |
+| `package.json` | + `@cpp.js/plugin-rollup` (devDependency), optional `@cpp.js/package-<name>` |
 | `rollup.config.{js,mjs,ts}` | Add `rollupCppjsPlugin()` to `plugins` |
 | `cppjs.config.js` *(new at root)* | Project-level cpp.js config |
 | `src/native/` *(only if user wraps own C++)* | `.h` + `.cpp` source |
@@ -4414,7 +4420,7 @@ Add `@cpp.js/plugin-rollup` to a Rollup config so:
 ## Commands
 
 ```bash
-pnpm add cpp.js @cpp.js/plugin-rollup
+pnpm add -D @cpp.js/plugin-rollup
 pnpm add @cpp.js/package-<name>     # optional
 
 # Build
@@ -4515,7 +4521,7 @@ Add cpp.js to a Next.js app so:
 ## Commands
 
 ```bash
-pnpm add cpp.js @cpp.js/plugin-webpack @cpp.js/plugin-webpack-loader
+pnpm add -D cpp.js @cpp.js/plugin-webpack @cpp.js/plugin-webpack-loader
 pnpm add @cpp.js/package-<name>     # optional
 
 # Dev
@@ -4652,7 +4658,7 @@ Add cpp.js to a React Native CLI app so:
 
 | File | Role |
 |------|------|
-| `package.json` | + `cpp.js`, `@cpp.js/plugin-react-native`, `@cpp.js/plugin-react-native-ios-helper`, `@cpp.js/plugin-metro`, optional `@cpp.js/package-<name>` |
+| `package.json` | + `@cpp.js/plugin-react-native`, `@cpp.js/plugin-react-native-ios-helper` (dependencies, autolinked), `@cpp.js/plugin-metro` (devDependency), optional `@cpp.js/package-<name>` |
 | `metro.config.js` | Wrap `getDefaultConfig` output with `CppjsMetroPlugin(...)` |
 | `cppjs.config.{js,mjs}` *(new at project root)* | Project-level cpp.js config: deps to consume, paths |
 | `src/native/` *(if user wraps own C++)* | `.h` + `.cpp` source files |
@@ -4663,7 +4669,8 @@ Add cpp.js to a React Native CLI app so:
 ## Commands
 
 ```bash
-pnpm add cpp.js @cpp.js/plugin-react-native @cpp.js/plugin-react-native-ios-helper @cpp.js/plugin-metro
+pnpm add @cpp.js/plugin-react-native @cpp.js/plugin-react-native-ios-helper
+pnpm add -D @cpp.js/plugin-metro     # bundling only; the RN plugin brings the toolchain
 pnpm add @cpp.js/package-<name>     # optional
 
 # iOS — install pods (regenerates Podfile.lock + xcframeworks)
@@ -4812,18 +4819,21 @@ If the user is on Expo Go, you must walk them through `expo prebuild` first.
 
 | File | Role |
 |------|------|
-| `package.json` | + `cpp.js`, `@cpp.js/plugin-react-native`, `@cpp.js/plugin-react-native-ios-helper`, `@cpp.js/plugin-metro`, optional `@cpp.js/package-<name>` |
+| `package.json` | + `@cpp.js/plugin-react-native`, `@cpp.js/plugin-react-native-ios-helper` (dependencies), `@cpp.js/plugin-metro` (devDependency), optional `@cpp.js/package-<name>` |
 | `metro.config.js` | Wrap Expo's `getDefaultConfig` with `CppjsMetroPlugin(...)` |
 | `cppjs.config.{js,mjs}` *(new at root)* | Project-level cpp.js config |
-| `app.json` / `app.config.{js,ts}` | No direct cppjs change; ensure `prebuild` is configured |
+| `app.json` / `app.config.{js,ts}` | Add `"@cpp.js/plugin-react-native"` to `plugins` (it ships an Expo config plugin); ensure `prebuild` is configured |
 | `ios/`, `android/` | Generated by `expo prebuild`; native link picks up cppjs plugin |
 | `src/native/` *(if user wraps own C++)* | `.h` + `.cpp` source |
 
 ## Commands
 
 ```bash
-pnpm add cpp.js @cpp.js/plugin-react-native @cpp.js/plugin-react-native-ios-helper @cpp.js/plugin-metro
+pnpm add @cpp.js/plugin-react-native @cpp.js/plugin-react-native-ios-helper
+pnpm add -D @cpp.js/plugin-metro     # bundling only; the RN plugin brings the toolchain
 pnpm add @cpp.js/package-<name>     # optional
+
+# Add "@cpp.js/plugin-react-native" to expo.plugins in app.json before prebuilding
 
 # Generate / regenerate native projects from app config
 pnpm expo prebuild      # idempotent; safe to re-run
@@ -4942,7 +4952,7 @@ Compile cpp.js for the **edge** runtime so it loads inside a Worker (limited Nod
 ## Commands
 
 ```bash
-pnpm add cpp.js
+pnpm add -D cpp.js
 pnpm add @cpp.js/package-<name>     # optional
 
 # Build (target: edge)
@@ -5081,7 +5091,7 @@ Build cpp.js artifacts for the Node runtime (`-e node`) and `require`/`import` t
 ## Commands
 
 ```bash
-pnpm add cpp.js
+pnpm add -D cpp.js
 pnpm add @cpp.js/package-<name>     # optional
 
 # Single-thread build
@@ -5107,8 +5117,10 @@ Mirror `cppjs-samples/cppjs-sample-backend-nodejs-wasm/` (single-thread) or `cpp
     "start": "node src/index.js"
   },
   "dependencies": {
-    "cpp.js": "^2.0.0",
     "@cpp.js/package-<name>": "^x.y.z"
+  },
+  "devDependencies": {
+    "cpp.js": "^2.0.0"
   }
 }
 ```
@@ -5219,7 +5231,7 @@ Build cpp.js artifacts for the browser, ship them as static files, and load via 
 ## Commands
 
 ```bash
-pnpm add cpp.js
+pnpm add -D cpp.js
 pnpm add @cpp.js/package-<name>     # optional
 pnpm add -D serve                   # optional, for local preview
 
@@ -5242,10 +5254,8 @@ Mirror `cppjs-samples/cppjs-sample-web-vanilla/`.
     "build": "cppjs build -p wasm -a wasm32 -r st -e browser -b release",
     "preview": "serve -c ./serve.json"
   },
-  "dependencies": {
-    "cpp.js": "^2.0.0"
-  },
   "devDependencies": {
+    "cpp.js": "^2.0.0",
     "serve": "^14.0.0"
   }
 }
