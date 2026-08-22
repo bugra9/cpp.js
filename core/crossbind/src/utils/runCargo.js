@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import state from '../state/index.js';
 import getOsUserAndGroupId from './getOsUserAndGroupId.js';
-import replaceBasePathForDockerUtil from './replaceBasePathForDocker.js';
+import replaceBasePathForDockerUtil, { DOCKER_BASE } from './replaceBasePathForDocker.js';
 import pullDockerImage, { getDockerImage, getDockerContainerName, imageRoleFor } from './pullDockerImage.js';
 
 // Every cargo invocation crossbind makes goes through here.
@@ -53,6 +53,17 @@ const CONTAINER_CWD = '/tmp/crossbind-cargo';
 // project - `pnpm run clear` would otherwise throw away every downloaded crate.
 export function cargoHome() {
     return path.join(os.homedir(), '.crossbind', 'cargo');
+}
+
+// The inverse of the two bind mounts. cargo reports paths as the container sees them, and the
+// mounts are the only way in, so mapping their prefixes back is exact rather than a guess. Bridge
+// generation reads crate sources straight off the host: without this it looks for a path that
+// exists only inside the container, finds no source, and silently emits a bridge binding nothing.
+export function toHostPath(containerPath) {
+    const base = state.config?.paths?.base;
+    const mounts = [[CONTAINER_CARGO_HOME, cargoHome()], ...(base ? [[DOCKER_BASE, base]] : [])];
+    const hit = mounts.find(([from]) => containerPath === from || containerPath.startsWith(`${from}/`));
+    return hit ? path.join(hit[1], containerPath.slice(hit[0].length)) : containerPath;
 }
 
 // Outside the project and outside $HOME, so the upward walk never reaches ~/.cargo or a config
@@ -155,7 +166,7 @@ export default function runCargo(args, {
         pullDockerImage(role, platform);
         runnerArgs = ['run', '--rm',
             ...(platform ? ['--platform', platform] : []),
-            '-v', `${base}:/tmp/crossbind/live`,
+            '-v', `${base}:${DOCKER_BASE}`,
             '-v', `${home}:${CONTAINER_CARGO_HOME}`,
             ...envArgs,
             '--user', getOsUserAndGroupId(),

@@ -1,4 +1,4 @@
-const DOCKER_BASE = '/tmp/crossbind/live';
+export const DOCKER_BASE = '/tmp/crossbind/live';
 
 export default function replaceBasePathForDocker(data, basePath) {
     if (typeof data === 'string' || data instanceof String) {
