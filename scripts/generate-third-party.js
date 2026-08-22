@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// K3 wrapper: run `cppjs licenses --notices --sbom` per package, writing next to each
+// K3 wrapper: run `crossbind licenses --notices --sbom` per package, writing next to each
 // dist/prebuilt/<host>/ (the per-variant key of contract E). All logic lives in the CLI.
 //
 //   node scripts/generate-third-party.js <package-dir> [...more]
@@ -10,7 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CLI = path.join(ROOT, 'cppjs-core', 'cpp.js', 'src', 'bin.js');
+const CLI = path.join(ROOT, 'core', 'crossbind', 'src', 'bin.js');
 
 const args = process.argv.slice(2);
 if (args.length === 0) {

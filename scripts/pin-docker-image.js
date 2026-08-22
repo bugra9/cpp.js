@@ -12,7 +12,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const FILE = path.join(ROOT, 'cppjs-core', 'cpp.js', 'src', 'utils', 'pullDockerImage.js');
+const FILE = path.join(ROOT, 'core', 'crossbind', 'src', 'utils', 'pullDockerImage.js');
 
 const text = fs.readFileSync(FILE, 'utf8');
 const tag = text.match(/const IMAGE_TAG = '([^']+)'/)?.[1];

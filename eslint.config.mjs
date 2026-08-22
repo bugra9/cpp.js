@@ -5,7 +5,7 @@ import { defineConfig } from "eslint/config";
 export default defineConfig([
   pluginJs.configs.recommended,
   {
-    ignores: ["**/node_modules/**", "**/dist/**", "**/build/**", "**/website/**", "**/.cppjs/**", "**/.wrangler/**", "**/cppjs-core-embind-jsi/**"],
+    ignores: ["**/node_modules/**", "**/dist/**", "**/build/**", "**/website/**", "**/.crossbind/**", "**/.wrangler/**", "**/embind-jsi/**"],
   },
   {
     // Define which files this object applies to

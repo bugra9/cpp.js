@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Verifies that every declared dependency of a cppjs-package-* family is actually WIRED into
+// Verifies that every declared dependency of a ports/<family> tree is actually WIRED into
 // its native build (referenced by getBuildParams / env / getExtraLibs on every platform it is
 // declared for). This catches the "declared + fetched + built, but never passed to the
 // compiler" class of bug - e.g. libtiff shipped without zlib (Deflate codec off) through
@@ -15,9 +15,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { listFamilies, portDir, familyOfName } from './lib/ports.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const PKGROOT = path.join(ROOT, 'cppjs-packages');
 const STRICT = process.argv.includes('--check');
 
 const PLATFORMS = [
@@ -44,27 +44,27 @@ async function importDefault(file) {
     return (await import(pathToFileURL(file).href)).default;
 }
 
-// A family's lib-keys: the depPaths keys other packages reference it by. cpp.js keys depPaths
+// A family's lib-keys: the depPaths keys other packages reference it by. crossbind keys depPaths
 // by each entry of export.libName (e.g. openssl -> ["ssl","crypto"]), falling back to
 // general.name (e.g. zlib -> "z"). A dependency counts as wired if ANY of its keys is used.
 async function libKeysOfFamily(family) {
-    const mergeConfig = await importDefault(path.join(PKGROOT, `cppjs-package-${family}`, `cppjs-package-${family}`, 'mergeConfig.mjs'));
+    const mergeConfig = await importDefault(path.join(portDir(ROOT, family), 'mergeConfig.mjs'));
     if (typeof mergeConfig !== 'function') return null;
     const cfg = mergeConfig({});
     const keys = cfg?.export?.libName || (cfg?.general?.name ? [cfg.general.name] : []);
     return keys.length ? keys : null;
 }
 
-const familyOfSubpackage = (dep) => dep.replace(/^@cpp\.js\/package-/, '').replace(/-(wasm|ios|android)$/, '');
+const familyOfSubpackage = familyOfName;
 
 // Declared native dependencies for one platform subpackage (the sibling package families it
 // links against), excluding the family's own brand package.
 function declaredDeps(family, platform) {
-    const pj = path.join(PKGROOT, `cppjs-package-${family}`, `cppjs-package-${family}-${platform}`, 'package.json');
+    const pj = path.join(portDir(ROOT, family, platform), 'package.json');
     if (!fs.existsSync(pj)) return null;
     const deps = JSON.parse(fs.readFileSync(pj, 'utf8')).dependencies || {};
     return Object.keys(deps)
-        .filter((d) => d.startsWith('@cpp.js/package-') && d.endsWith(`-${platform}`))
+        .filter((d) => d.startsWith('@crossbind/port-') && d.endsWith(`-${platform}`))
         .map(familyOfSubpackage)
         .filter((f) => f !== family);
 }
@@ -123,17 +123,13 @@ function referencedLibKeys(recipe, target) {
     return keys;
 }
 
-const families = fs
-    .readdirSync(PKGROOT)
-    .filter((d) => d.startsWith('cppjs-package-'))
-    .map((d) => d.replace('cppjs-package-', ''))
-    .sort();
+const families = listFamilies(ROOT);
 
 const gaps = [];
 let checked = 0;
 
 for (const family of families) {
-    const recipe = await importDefault(path.join(PKGROOT, `cppjs-package-${family}`, `cppjs-package-${family}`, 'build.mjs'));
+    const recipe = await importDefault(path.join(portDir(ROOT, family), 'build.mjs'));
     // No build recipe (prebuilt-only), or a recipe that takes no dependencies to wire.
     if (!recipe || (typeof recipe.getBuildParams !== 'function' && typeof recipe.env !== 'function' && typeof recipe.getExtraLibs !== 'function'))
         continue;
@@ -159,13 +155,13 @@ for (const family of families) {
 }
 
 if (gaps.length === 0) {
-    console.log(`cppjs: dependency wiring OK — every declared dependency is wired on every platform (${checked} package/platform combinations).`);
+    console.log(`crossbind: dependency wiring OK — every declared dependency is wired on every platform (${checked} package/platform combinations).`);
     process.exit(0);
 }
 
-console.error('cppjs: dependency-wiring gaps found (declared + built, but never passed to the build):\n');
+console.error('crossbind: dependency-wiring gaps found (declared + built, but never passed to the build):\n');
 for (const g of gaps) {
-    console.error(`  - @cpp.js/package-${g.family} [${g.platform}] declares ${g.dep} (lib "${g.libKey}") but its build recipe never references it.`);
+    console.error(`  - @crossbind/port-${g.family} [${g.platform}] declares ${g.dep} (lib "${g.libKey}") but its build recipe never references it.`);
 }
 console.error(
     `\n${gaps.length} gap(s). Wire the dependency in build.mjs (getBuildParams/env), or drop it from the platform's dependencies if it is not needed.`,

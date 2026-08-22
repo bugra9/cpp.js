@@ -1,0 +1,17 @@
+{
+    "name": "@crossbind/embind-rust-demo",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "0.1.0",
+    "private": true,
+    "description": "embind-rust demo: a Rust producer built via buildType 'cargo', for the embind-rust device smoke.",
+    "type": "module",
+    "types": "dist/js/index.d.ts",
+    "scripts": {
+        "build:ios": "crossbind build -p ios",
+        "clear": "rm -rf .crossbind dist *.xcframework target"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^",
+        "@crossbind/core-embind-rust": "workspace:^"
+    }
+}

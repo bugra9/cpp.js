@@ -1,0 +1,32 @@
+{
+    "name": "@crossbind/port-zstd-android",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "1.5.7",
+    "description": "Android build of the precompiled Zstandard (zstd) library, built with crossbind. Use it together with the main package @crossbind/port-zstd.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/zstd#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "BSD-3-Clause",
+    "keywords": [
+        "zstd",
+        "zstandard",
+        "libzstd",
+        "compression",
+        "crossbind",
+        "crossbind-package",
+        "android",
+        "react-native"
+    ],
+    "scripts": {
+        "build": "crossbind build -p android",
+        "clear": "rm -rf .crossbind dist *.xcframework",
+        "prepublishOnly": "crossbind build -p android",
+        "build:android": "crossbind build -p android"
+    },
+    "dependencies": {
+        "@crossbind/port-zstd": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

@@ -1,15 +1,15 @@
 # `state` and `target` shapes — what build hooks receive
 
-> When you write a `cppjs.build.js` hook (`prepare(state)`, `build(state)`, `getBuildParams(state, target)`, etc.), or an `extensions[]` plugin, you receive a `state` object and a `target` object. This doc enumerates every key on both. Source: `cppjs-core/cpp.js/src/state/index.js`.
+> When you write a `crossbind.build.js` hook (`prepare(state)`, `build(state)`, `getBuildParams(state, target)`, etc.), or an `extensions[]` plugin, you receive a `state` object and a `target` object. This doc enumerates every key on both. Source: `core/crossbind/src/state/index.js`.
 
 ## `state` — top-level keys
 
 ```ts
 state = {
     targets:               Target[],            // 30 built-in build targets (see § Target inventory)
-    config:                ResolvedConfig,      // merged cppjs.config.js + cppjs.build.js + system
-    cache:                 BuildCache,          // persisted to .cppjs/cache.json
-    system:                SystemConfig,        // ~/.cppjs.json + defaults from systemKeys
+    config:                ResolvedConfig,      // merged crossbind.config.js + crossbind.build.js + system
+    cache:                 BuildCache,          // persisted to .crossbind/cache.json
+    system:                SystemConfig,        // ~/.crossbind.json + defaults from systemKeys
 }
 ```
 
@@ -21,15 +21,15 @@ The output of `loadConfig()` in `src/state/loadConfig.js`. Every key:
 state.config = {
     general: { name: string },                  // package name; OPFS namespace = /opfs/<name>/
 
-    dependencies: ResolvedConfig[],             // immediate cpp.js deps (each is its own resolved config)
+    dependencies: ResolvedConfig[],             // immediate crossbind deps (each is its own resolved config)
     allDependencies: ResolvedConfig[],          // flattened transitive deps, deduped by paths.project
 
     paths: {
-        config:              string,            // import.meta.url of cppjs.config.js
+        config:              string,            // import.meta.url of crossbind.config.js
         project:             string,            // absolute project root
         base:                string,            // = project unless overridden
-        cache:               string,            // .cppjs (build cache root)
-        build:               string,            // .cppjs/build (staging dir for sources)
+        cache:               string,            // .crossbind (build cache root)
+        build:               string,            // .crossbind/build (staging dir for sources)
         output:              string,            // dist artifacts dir
         native:              string[],          // C++ source roots (ARRAY)
         module:              string[],          // SWIG .i source roots
@@ -37,9 +37,9 @@ state.config = {
         bridge:              string[],          // bridge code roots = [...native, build]
         cmake:               string,            // resolved CMakeLists.txt path
         cmakeDir:            string,            // dirname of cmake
-        cli:                 string,            // path to cpp.js CLI install
+        cli:                 string,            // path to crossbind CLI install
         cliCMakeListsTxt:    string,            // bundled fallback CMakeLists.txt
-        systemConfig:        string,            // = ~/.cppjs.json
+        systemConfig:        string,            // = ~/.crossbind.json
     },
 
     ext: {
@@ -66,8 +66,8 @@ state.config = {
 
     targetSpecs: TargetSpec[],                  // per-target overrides (see § targetSpecs)
 
-    build: {                                    // merged from cppjs.build.js (package authors only)
-        withBuildConfig:      boolean,           // true if a cppjs.build.js was loaded
+    build: {                                    // merged from crossbind.build.js (package authors only)
+        withBuildConfig:      boolean,           // true if a crossbind.build.js was loaded
         buildType?:           'cmake' | 'configure',
         setState?:            (state)         => void,
         beforeRun?:           (cmakeDir)      => Array<{program, parameters}>,
@@ -100,7 +100,7 @@ state.config = {
 
 ### `state.cache`
 
-Persisted to `.cppjs/cache.json` between builds:
+Persisted to `.crossbind/cache.json` between builds:
 
 ```ts
 state.cache = {
@@ -115,10 +115,10 @@ state.cache = {
 Alongside `cache.json`, the build writes fingerprint files next to its artifacts and
 treats a mismatch as a cache miss even when the artifact exists:
 
-- `…/prebuilt/<target>/cppjs-nativeglob.fingerprint` — the Bridge lib's bridge-file set
+- `…/prebuilt/<target>/crossbind-nativeglob.fingerprint` — the Bridge lib's bridge-file set
   (names + contents), so a lib built from a smaller bridge set cannot satisfy later builds.
-- `…/prebuilt/<target>/cppjs-emccflags.fingerprint` — the config `emccFlags`, which also
-  feed compile-time state (`CPPJS_JSPI`).
+- `…/prebuilt/<target>/crossbind-emccflags.fingerprint` — the config `emccFlags`, which also
+  feed compile-time state (`CROSSBIND_JSPI`).
 - `<jsName>.fingerprint` — the final link's inputs: resolved `emccFlags`, the lib list with
   each archive's size+mtime, the preloaded data map, the runtime assets bundled into
   the artifact (`assets/js-runtime` + `assets/cpp-runtime`, content-hashed), and the
@@ -126,21 +126,24 @@ treats a mismatch as a cache miss even when the artifact exists:
   relinks automatically).
 
 Practical consequence: changing `emccFlags`, adding/removing a `.h` import, rebuilding a
-dependency package, or editing the cpp.js runtime itself re-links automatically — no manual
-`.cppjs` clear needed for those. The CLI's `cppjs build` also no longer short-circuits on a
+dependency package, or editing the crossbind runtime itself re-links automatically — no manual
+`.crossbind` clear needed for those. The CLI's `crossbind build` also no longer short-circuits on a
 merely existing dist artifact; the link fingerprint decides there too (a wiped dist forces
 a fresh link). A clear is still the answer when the toolchain itself changes (Docker
 image / emsdk).
 
 ### `state.system`
 
-Loaded from `~/.cppjs.json`, merged with defaults from `cppjs-core/cpp.js/src/utils/systemKeys.js`:
+Loaded from `~/.crossbind.json`, merged with defaults from `core/crossbind/src/utils/systemKeys.js`:
 
 ```ts
 state.system = {
     XCODE_DEVELOPMENT_TEAM:  string,            // default ''  (required for iOS device builds)
     RUNNER:                  'DOCKER_RUN' | 'DOCKER_EXEC' | 'LOCAL',  // default 'DOCKER_RUN'
     LOG_LEVEL:               'DEBUG' | 'INFO' | 'WARN' | 'ERROR',     // default 'INFO'
+    DOCKER_REGISTRY_MIRROR:  string,            // default ''  (registry prefix; crossbind appends the release digest)
+    DOCKER_IMAGE_WEB:        string,            // default ''  (image for wasm and wasi builds)
+    DOCKER_IMAGE_ANDROID:    string,            // default ''  (image for android builds)
 }
 ```
 
@@ -170,7 +173,7 @@ target = {
 
 ## Target inventory — 30 built-in targets
 
-From `cppjs-core/cpp.js/src/utils/targets.js` (the single source; state and the wasi bin runner both read it):
+From `core/crossbind/src/utils/targets.js` (the single source; state and the wasi bin runner both read it):
 
 ### Wasm32
 
@@ -226,7 +229,7 @@ Same shape as wasm32 above, but `arch: 'wasm64'`. Used when you need >4GB linear
 
 ## `targetSpecs[]` — per-target override entries
 
-When you want to override defaults for a specific subset of targets, push entries to `cppjs.config.js` `targetSpecs[]`:
+When you want to override defaults for a specific subset of targets, push entries to `crossbind.config.js` `targetSpecs[]`:
 
 ```ts
 type TargetSpec = {
@@ -300,14 +303,14 @@ Used internally by built-in extensions (e.g. for OpenSSL Android cert injection)
 | Find a dep's installed headers/libs | `state.allDependencyPaths[target.path][libName].header` / `.lib` |
 | Add a CMake flag | `targetSpecs[].specs.cmake` (preferred) or `getBuildParams` return value |
 | Add an emcc flag | `targetSpecs[].specs.emccFlags` |
-| Inject env to the running Wasm | `targetSpecs[].specs.env` or `cppjs.config.js` `env: {}` |
-| Patch upstream source | `cppjs.build.js` `replaceList` or `sourceReplaceList(target, depPaths)` hook |
+| Inject env to the running Wasm | `targetSpecs[].specs.env` or `crossbind.config.js` `env: {}` |
+| Patch upstream source | `crossbind.build.js` `replaceList` or `sourceReplaceList(target, depPaths)` hook |
 | Bundle data files into the .data preload | `targetSpecs[].specs.data` or sub-arch `data: {}` |
-| Run something before cmake | `cppjs.build.js` `beforeRun(cmakeDir)` |
+| Run something before cmake | `crossbind.build.js` `beforeRun(cmakeDir)` |
 
 ## See also
 
 - [`overrides.md`](./overrides.md) — full catalog of override mechanisms with priority order.
-- [`cppjs-config.md`](./cppjs-config.md) — consumer-side config field-by-field.
-- [`cppjs-build.md`](./cppjs-build.md) — package-author hooks (setState, beforeRun, getExtraLibs, sourceReplaceList, env, copyToSource, copyToDist, prepare, build).
-- Source: `cppjs-core/cpp.js/src/state/index.js`, `loadConfig.js`, `actions/target.js`.
+- [`crossbind-config.md`](./crossbind-config.md) — consumer-side config field-by-field.
+- [`crossbind-build.md`](./crossbind-build.md) — package-author hooks (setState, beforeRun, getExtraLibs, sourceReplaceList, env, copyToSource, copyToDist, prepare, build).
+- Source: `core/crossbind/src/state/index.js`, `loadConfig.js`, `actions/target.js`.

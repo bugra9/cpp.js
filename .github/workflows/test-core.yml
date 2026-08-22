@@ -5,15 +5,15 @@ on:
     branches:
       - main
     paths:
-      - cppjs-core/cpp.js/**
-      - cppjs-packages/**
+      - core/crossbind/**
+      - ports/**
       - .github/workflows/test-core.yml
   pull_request:
     branches:
       - main
     paths:
-      - cppjs-core/cpp.js/**
-      - cppjs-packages/**
+      - core/crossbind/**
+      - ports/**
       - .github/workflows/test-core.yml
 
 permissions: {}
@@ -37,11 +37,11 @@ jobs:
         run: pnpm install
       - name: Unit tests with coverage thresholds
         if: matrix.os == 'ubuntu-latest'
-        run: pnpm --filter cpp.js test:coverage
+        run: pnpm --filter crossbind test:coverage
       - name: Unit tests
         if: matrix.os == 'windows-latest'
-        run: pnpm --filter cpp.js test
+        run: pnpm --filter crossbind test
       - name: License SPDX check
         if: matrix.os == 'ubuntu-latest'
-        working-directory: cppjs-samples/cppjs-playground-web-vanilla
-        run: node ../../cppjs-core/cpp.js/src/bin.js licenses --check
+        working-directory: e2e/web-vanilla
+        run: node ../../core/crossbind/src/bin.js licenses --check

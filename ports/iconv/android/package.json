@@ -1,0 +1,32 @@
+{
+    "name": "@crossbind/port-iconv-android",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "1.19",
+    "description": "Android build of the precompiled libiconv character-encoding library, built with crossbind. Use it together with the main package @crossbind/port-iconv.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/iconv#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "LGPL-2.1-or-later",
+    "keywords": [
+        "iconv",
+        "libiconv",
+        "charset",
+        "encoding",
+        "crossbind",
+        "crossbind-package",
+        "android",
+        "react-native"
+    ],
+    "scripts": {
+        "build": "crossbind build -p android",
+        "clear": "rm -rf .crossbind dist *.xcframework",
+        "prepublishOnly": "crossbind build -p android",
+        "build:android": "crossbind build -p android"
+    },
+    "dependencies": {
+        "@crossbind/port-iconv": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

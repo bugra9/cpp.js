@@ -1,0 +1,213 @@
+# Publishes the crossbind image family to GHCR, mirrors it to Docker Hub, and emits the digest
+# table the CLI pins against.
+#
+# Manual on purpose: this pushes multi-gigabyte images under a stable tag. Run it with push=false
+# first - that still builds and uploads every image on every architecture, but tags them
+# ci-<run id> instead of the release version, so nothing claims to be the release until you say so.
+# (web and android are FROM base and buildx resolves that from the registry, so a dry run that
+# uploaded nothing could not build them at all. Delete the ci-* tags afterwards.)
+#
+# The order is forced, not stylistic: web and android are FROM base, and buildx resolves that
+# reference from the registry, so base must exist there before they can build. Each stage consumes
+# the previous one by DIGEST, so an image can never be built on top of a tag that moved underneath.
+
+name: Publish images
+
+on:
+  workflow_dispatch:
+    inputs:
+      push:
+        description: Publish to the registries (leave off for a build-only dry run)
+        type: boolean
+        default: false
+      mirror:
+        description: Also mirror to Docker Hub
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-images
+  cancel-in-progress: false
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      tag: ${{ inputs.push && steps.v.outputs.version || format('ci-{0}', github.run_id) }}
+      registry: ghcr.io/${{ github.repository_owner }}
+      both: '[{"platform":"linux/amd64","runner":"ubuntu-latest"},{"platform":"linux/arm64","runner":"ubuntu-24.04-arm"}]'
+      # Google ships the linux NDK host tools for x86_64 only.
+      amd64: '[{"platform":"linux/amd64","runner":"ubuntu-latest"}]'
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        run: echo "version=$(tr -d '[:space:]' < tooling/docker/VERSION)" >> "$GITHUB_OUTPUT"
+
+  sysroot:
+    needs: setup
+    uses: ./.github/workflows/publish-image.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      image: rust-sysroot
+      dockerfile: rust-sysroot.Dockerfile
+      target: sysroot
+      tag: ${{ needs.setup.outputs.tag }}
+      runners: ${{ needs.setup.outputs.both }}
+
+  base:
+    needs: setup
+    uses: ./.github/workflows/publish-image.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      image: base
+      dockerfile: base.Dockerfile
+      target: base
+      tag: ${{ needs.setup.outputs.tag }}
+      runners: ${{ needs.setup.outputs.both }}
+
+  web:
+    needs: [setup, base, sysroot]
+    uses: ./.github/workflows/publish-image.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      image: web
+      dockerfile: web.Dockerfile
+      target: web
+      tag: ${{ needs.setup.outputs.tag }}
+      runners: ${{ needs.setup.outputs.both }}
+      build-args: |
+        BASE_IMAGE=${{ needs.setup.outputs.registry }}/base@${{ needs.base.outputs.digest }}
+        RUST_SYSROOT_IMAGE=${{ needs.setup.outputs.registry }}/rust-sysroot@${{ needs.sysroot.outputs.digest }}
+
+  android:
+    needs: [setup, base]
+    uses: ./.github/workflows/publish-image.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      image: android
+      dockerfile: android.Dockerfile
+      target: android
+      tag: ${{ needs.setup.outputs.tag }}
+      runners: ${{ needs.setup.outputs.amd64 }}
+      build-args: |
+        BASE_IMAGE=${{ needs.setup.outputs.registry }}/base@${{ needs.base.outputs.digest }}
+
+  mirror:
+    needs: [setup, sysroot, base, web, android]
+    if: inputs.push && inputs.mirror
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      # Copied by digest, so the mirror carries the same bytes rather than a rebuild that happens
+      # to look alike. verify-mirror re-reads both registries and fails if they diverge.
+      - name: Copy each index to Docker Hub
+        env:
+          V: ${{ needs.setup.outputs.version }}
+          GHCR: ${{ needs.setup.outputs.registry }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          for image in rust-sysroot base web android; do
+            docker buildx imagetools create \
+              --tag "docker.io/${OWNER}/${image}:${V}" \
+              "${GHCR}/${image}:${V}"
+          done
+
+  digests:
+    needs: [setup, sysroot, base, web, android]
+    if: inputs.push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      # The CLI needs both: the index digest for a native pull, and the platform leaf for the
+      # forced-platform path (android on an arm64 host), because the classic image store holds one
+      # platform per digest reference. Taken from the raw manifest, not from a formatted view.
+      - name: Emit the digest table
+        env:
+          V: ${{ needs.setup.outputs.version }}
+          GHCR: ${{ needs.setup.outputs.registry }}
+        run: |
+          set -euo pipefail
+          echo "{\"version\":\"${V}\",\"registry\":\"${GHCR}\",\"images\":{}}" > digests.json
+          for image in rust-sysroot base web android; do
+            docker buildx imagetools inspect "${GHCR}/${image}:${V}" --raw > "raw-${image}.json"
+            index="sha256:$(sha256sum "raw-${image}.json" | cut -d' ' -f1)"
+            jq --arg i "$image" --arg d "$index" --slurpfile m "raw-${image}.json" \
+              '.images[$i] = {index: $d, platforms: ($m[0].manifests // [] | map(select(.platform.os == "linux"))
+                 | map({key: ("linux/" + .platform.architecture), value: .digest}) | from_entries)}' \
+              digests.json > tmp.json && mv tmp.json digests.json
+          done
+          jq . digests.json
+          { echo '### Digest table'; echo '```json'; jq . digests.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digests
+          path: |
+            digests.json
+            raw-*.json
+
+  verify-mirror:
+    needs: [setup, mirror]
+    if: inputs.push && inputs.mirror
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: The mirror must carry the same index digests
+        env:
+          V: ${{ needs.setup.outputs.version }}
+          GHCR: ${{ needs.setup.outputs.registry }}
+          HUB: docker.io/${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          fail=0
+          for image in rust-sysroot base web android; do
+            a=$(docker buildx imagetools inspect "${GHCR}/${image}:${V}" --raw | sha256sum | cut -d' ' -f1)
+            b=$(docker buildx imagetools inspect "${HUB}/${image}:${V}" --raw | sha256sum | cut -d' ' -f1)
+            if [ "$a" = "$b" ]; then
+              echo "ok   ${image}  sha256:${a}"
+            else
+              echo "FAIL ${image}  ghcr=sha256:${a}  hub=sha256:${b}"
+              fail=1
+            fi
+          done
+          exit $fail

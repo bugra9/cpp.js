@@ -1,0 +1,16 @@
+{
+    "name": "@crossbind/example-lib-cmake",
+    "version": "2.0.0-beta.39",
+    "description": "crossbind sample library: simple cmake library",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/examples/lib-cmake#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "license": "MIT",
+    "type": "module",
+    "keywords": [
+        "crossbind-sample",
+        "cmake",
+        "crossbind-sample",
+        "webassembly",
+        "react-native"
+    ]
+}

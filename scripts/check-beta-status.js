@@ -91,7 +91,7 @@ async function checkPackages() {
             const pkg = JSON.parse(content);
             const name = pkg.name;
 
-            if (name && !name.startsWith('@cpp.js/playground')) {
+            if (name && !name.startsWith('@crossbind/playground')) {
                 try {
                     const { stdout: betaVersion } = await execAsync(`npm view ${name} dist-tags.beta`, { timeout: 10000 });
                     const version = betaVersion.trim();

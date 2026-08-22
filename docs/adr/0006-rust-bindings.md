@@ -2,15 +2,15 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-02 (architecture), 2026-08-05 (dependency direction)
-- **Affects:** `cppjs-core/cppjs-core-embind-rust/`, `cppjs-core/cpp.js/src/utils/{rustBridgeGen,resolveEmbindRust,cargoTarget}.js`, `src/actions/buildCargo.js`, bundler plugins
+- **Affects:** `core/embind-rust/`, `core/crossbind/src/utils/{rustBridgeGen,resolveEmbindRust,cargoTarget}.js`, `src/actions/buildCargo.js`, bundler plugins
 
 ## Context
 
-Users want Rust in the same one-line-import model cpp.js gives C++. Options
-ranged from wasm-bindgen (web-only, no RN) to hand-written glue. cpp.js
+Users want Rust in the same one-line-import model crossbind gives C++. Options
+ranged from wasm-bindgen (web-only, no RN) to hand-written glue. crossbind
 already has two embind consumers — emscripten's embind on web and embind-jsi
 on mobile — and both materialise classes from the same registration calls.
-Separately: `cpp.js` (the engine) must not hard-depend on every binding
+Separately: `crossbind` (the engine) must not hard-depend on every binding
 layer; the existing rule for `core-embind-jsi` is that consumers depend on
 it, never the engine.
 
@@ -19,7 +19,7 @@ it, never the engine.
 Rust support is a producer/adapter architecture over a stable flat C ABI:
 
 - A pure-Rust producer crate (`embind-rs`) emits embind registrations through
-  `include/cppjs_embind.h` (plain function pointers, no C++ types).
+  `include/crossbind_embind.h` (plain function pointers, no C++ types).
 - Per-host adapters translate that ABI: `adapters/web.cpp` → emscripten
   embind, `adapters/jsi.cpp` → embind-jsi. The same Rust archive works on
   web, iOS and Android.
@@ -27,7 +27,7 @@ Rust support is a producer/adapter architecture over a stable flat C ABI:
   the engine parses the crate surface (module trees, `pub use` re-exports,
   feature gates) and emits the bridge.
 - **Dependency direction:** the engine never depends on
-  `@cpp.js/core-embind-rust`. Consumers declare it (apps as devDependency;
+  `@crossbind/core-embind-rust`. Consumers declare it (apps as devDependency;
   the bundler plugins carry it as a dependency), and the engine resolves it
   from the consumer (`resolveEmbindRust.js`) with an actionable error when
   absent.
@@ -52,5 +52,5 @@ Rust support is a producer/adapter architecture over a stable flat C ABI:
 
 ## See also
 
-- Related code: `docs/api/rust.md`, `cppjs-core/cppjs-core-embind-rust/README.md`
+- Related code: `docs/api/rust.md`, `core/embind-rust/README.md`
 - Related ADRs: ADR-0007 (`cargo:` import scheme)

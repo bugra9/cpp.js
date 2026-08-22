@@ -1,6 +1,6 @@
 ---
 name: New C++ library package request
-about: Request that a specific C++ library be packaged for cpp.js
+about: Request that a specific C++ library be packaged for crossbind
 title: 'package: add <library-name>'
 labels: ['package-request', 'needs-triage']
 ---
@@ -15,7 +15,7 @@ labels: ['package-request', 'needs-triage']
 
 ## Why this library
 
-<!-- What problem does it solve? Why is JavaScript-via-cpp.js valuable here? -->
+<!-- What problem does it solve? Why is JavaScript-via-crossbind valuable here? -->
 
 ## Targets needed
 
@@ -26,7 +26,7 @@ labels: ['package-request', 'needs-triage']
 ## Known dependencies
 
 <!-- C++ libraries this depends on (e.g. zlib, openssl). If they're already in
-cpp.js, link the existing @cpp.js/package-* packages. If not, list them so we
+crossbind, link the existing @crossbind/port-* packages. If not, list them so we
 know the full graph. -->
 
 -
@@ -45,7 +45,7 @@ Helps us estimate Embind/SWIG bridge work. -->
 ## Are you willing to package it yourself?
 
 <!-- See docs/playbooks/new-package.md. We strongly encourage you to start in
-your own org or on the cppjs-community org and PR upstream once it works.
+your own org or on the crossbind-community org and PR upstream once it works.
 GDAL-affecting packages can land directly here. -->
 
 - [ ] Yes, I'll author the package and open a PR.

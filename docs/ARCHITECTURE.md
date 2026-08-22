@@ -1,4 +1,4 @@
-# cpp.js — Architecture
+# crossbind — Architecture
 
 > One-page mental model for AI agents and contributors. Pair with `CODEMAP.md` to find concrete files.
 
@@ -6,9 +6,9 @@
 
 ```mermaid
 flowchart TD
-    User["User: pnpm cppjs build"]
+    User["User: pnpm crossbind build"]
     Bin["bin.js<br/>(CLI entry)"]
-    State["state/loadConfig.js<br/>(merge cppjs.config.* + targets)"]
+    State["state/loadConfig.js<br/>(merge crossbind.config.* + targets)"]
     BuildLib["actions/createLib.js<br/>(per-target static lib)"]
     XCFwk["actions/createXCFramework.js<br/>(combine iOS slices, darwin only)"]
     BuildWasm["actions/buildWasm.js<br/>(emcc link → .wasm + .js)"]
@@ -46,15 +46,15 @@ flowchart TD
 
 ### Targets (the unit of build work)
 
-A **target** is a `{platform, arch, runtime, runtimeEnv, buildType}` tuple — e.g. `wasm-wasm32-mt-release-browser`, `wasi-wasm32-st-release` or `ios-iphoneos-mt-release`. The inventory's single source is `cppjs-core/cpp.js/src/utils/targets.js` (state and the wasi command runner both read it). CLI flags (`-p`, `-a`, `-r`, `-e`, `-b`) filter which targets actually build; defaults try the full matrix that the host can support.
+A **target** is a `{platform, arch, runtime, runtimeEnv, buildType}` tuple — e.g. `wasm-wasm32-mt-release-browser`, `wasi-wasm32-st-release` or `ios-iphoneos-mt-release`. The inventory's single source is `core/crossbind/src/utils/targets.js` (state and the wasi command runner both read it). CLI flags (`-p`, `-a`, `-r`, `-e`, `-b`) filter which targets actually build; defaults try the full matrix that the host can support.
 
 ### Runtime adapters (JS layer)
 
-The user-facing JavaScript loader is composed from a shared `core.js` plus thin per-environment shims under `cppjs-core/cpp.js/src/assets/js-runtime/`:
+The user-facing JavaScript loader is composed from a shared `core.js` plus thin per-environment shims under `core/crossbind/src/assets/js-runtime/`:
 
 ```
 js-runtime/
-├── core.js                 ← createInitCppJs, mergeDeep, locateFile, preRun, …
+├── core.js                 ← createInitCrossbind, mergeDeep, locateFile, preRun, …
 ├── browser.js              ← thin shim: pick adapters
 ├── node.js                 ← same shape
 ├── edge.js                 ← same shape
@@ -70,43 +70,43 @@ Adding a new runtime (e.g. Deno) ≈ writing one `<runtime>.js` shim that compos
 
 ### C++ runtime (native bridge)
 
-`cppjs-core/cpp.js/src/assets/cpp-runtime/` holds the C++ side: `browser.cpp`, `node.cpp`, `commonBridges.cpp`, `cppjsEmptySource.cpp`. These get linked by `buildWasm` along with the user's library and any package's `bridge` outputs.
+`core/crossbind/src/assets/cpp-runtime/` holds the C++ side: `browser.cpp`, `node.cpp`, `commonBridges.cpp`, `crossbindEmptySource.cpp`. These get linked by `buildWasm` along with the user's library and any package's `bridge` outputs.
 
 ### Plugins (bundler integrations)
 
-Each `cppjs-plugins/cppjs-plugin-*` adapts cpp.js's outputs to one bundler. They share a small contract:
+Each `plugins/*` adapts crossbind's outputs to one bundler. They share a small contract:
 
 - Watch native source dirs (`paths.native`) so bundler HMR triggers `createLib`/`buildWasm` rebuilds.
-- Pipe `/cpp.js`, `/cpp.wasm`, `/cpp.data.txt` requests to dev-server middleware.
+- Pipe `/crossbind.js`, `/crossbind.wasm`, `/crossbind.data.txt` requests to dev-server middleware.
 - Set COOP/COEP headers when multithread is in use.
 
-`cppjs-plugin-rollup` is the inner kernel; `cppjs-plugin-vite` wraps it; `cppjs-plugin-webpack` is parallel; `cppjs-plugin-react-native` + `cppjs-plugin-metro` handle RN.
+`plugins/rollup` is the inner kernel; `plugins/vite` wraps it; `plugins/webpack` is parallel; `plugins/react-native` + `plugins/metro` handle RN.
 
 ### Packages (prebuilt C++ libs)
 
-A `cppjs-package-X` family is a meta package + per-arch sub-packages:
+A `ports/<X>` family is a base package + per-arch sub-packages:
 
 ```
-cppjs-packages/cppjs-package-zlib/
-├── cppjs-package-zlib/             ← family package: recipe body (build.mjs) + upstream license truth
-├── cppjs-package-zlib-wasm/        ← per-platform prebuilt + cppjs.config.js + cppjs.build.js
-├── cppjs-package-zlib-android/
-├── cppjs-package-zlib-ios/
-└── cppjs-package-zlib-wasi/        ← wasi (wasm32-wasip3) prebuilt
+ports/zlib/
+├── base/       ← brand package: recipe body (build.mjs) + upstream license truth
+├── wasm/       ← per-platform prebuilt + crossbind.config.js + crossbind.build.js
+├── android/
+├── ios/
+└── wasi/       ← wasi (wasm32-wasip3) prebuilt
 ```
 
-Sub-packages declare workspace deps to other `@cpp.js/package-*-<arch>` they need (e.g. `gdal-wasm` lists `proj-wasm`, `tiff-wasm`, …); pnpm derives topological build order from this. Where the upstream ships CLI tools, a `-bin-wasi` sibling publishes them as npm commands; everything those packages ship (tool map, NOTICE/SBOM, provenance, license field) is derived under the Bin & License Contract — `cppjs-packages/README.md`.
+Sub-packages declare workspace deps to other `@crossbind/port-*-<arch>` they need (e.g. `gdal-wasm` lists `proj-wasm`, `tiff-wasm`, …); pnpm derives topological build order from this. Where the upstream ships CLI tools, a `bin-wasi/` sibling publishes them as npm commands; everything those packages ship (tool map, NOTICE/SBOM, provenance, license field) is derived under the Bin & License Contract — `ports/README.md`.
 
 ### Samples (canonical integrations)
 
-`cppjs-samples/` doubles as documentation. When integrating cpp.js into a new framework, agents should diff against the closest matching sample first. Two samples are agent-canonical:
+`examples/` doubles as documentation. When integrating crossbind into a new framework, agents should diff against the closest matching sample first. Two samples are agent-canonical:
 
-- `cppjs-sample-mobile-reactnative-cli/` — RN-cli reference, with CI bridge fixtures under `ci/cppjs-snapshot/`.
-- `cppjs-sample-lib-prebuilt-matrix/` — minimal C++ library packaging reference (no UI).
+- `examples/mobile-reactnative-cli/` — RN-cli reference, with CI bridge fixtures under `ci/crossbind-snapshot/`.
+- `examples/lib-prebuilt-matrix/` — minimal C++ library packaging reference (no UI).
 
 ## Persistence + caching
 
-- **`<project>/.cppjs/`** — per-project build cache (cmake outputs, bridge files). Safe to delete; rebuilt on next `cppjs build`.
+- **`<project>/.crossbind/`** — per-project build cache (cmake outputs, bridge files). Safe to delete; rebuilt on next `crossbind build`.
 - **`<project>/dist/prebuilt/<target>/`** — package output (consumed by other packages). Treated as authoritative once written; `createLib` / `buildWasm` short-circuit when artifacts exist unless `force` is set.
 - **`<project>/dist/<name>.*.{js,wasm,data.txt}`** — final consumer artifacts.
 
@@ -114,11 +114,11 @@ Force semantics: `actions/isSourceNewer.js` compares native source mtimes agains
 
 ## Execution boundaries (Docker, Xcode, Emscripten)
 
-`actions/run.js` shells out to host tools. WASM and Android targets run inside a digest-pinned Docker image (`getDockerImage()`); iOS targets need a darwin host with Xcode installed. WASI is dual-mode: host-run when a local wasi-sdk is configured (`WASI_SDK_PATH` in `~/.cppjs.json` or `CPPJS_WASI_SDK_PATH`), otherwise the docker image carries the sdk at `/opt/wasi-sdk`. Cargo builds (`export.type: 'cargo'`) run on the host toolchain. The wasm/android/wasi branches are CI-friendly on Linux runners; iOS branches early-return on non-darwin (`createLib.js:18`, `createXCFramework.js:13`).
+`actions/run.js` shells out to host tools. WASM and Android targets run inside a digest-pinned Docker image (`getDockerImage()`); iOS targets need a darwin host with Xcode installed. WASI is dual-mode: host-run when a local wasi-sdk is configured (`WASI_SDK_PATH` in `~/.crossbind.json` or `CROSSBIND_WASI_SDK_PATH`), otherwise the docker image carries the sdk at `/opt/wasi-sdk`. Cargo builds (`export.type: 'cargo'`) run on the host toolchain. The wasm/android/wasi branches are CI-friendly on Linux runners; iOS branches early-return on non-darwin (`createLib.js:18`, `createXCFramework.js:13`).
 
 ## Logger + diagnostics
 
-Build output is funneled through `cppjs-core/cpp.js/src/utils/logger.js` (`log-update` + `picocolors`). Step lines update in place when the terminal is a TTY; non-TTY (CI, pipe) falls back to plain newline output. Errors and rollup warnings unrelated to host code (Node builtins) are suppressed in `actions/buildJs.js`.
+Build output is funneled through `core/crossbind/src/utils/logger.js` (`log-update` + `picocolors`). Step lines update in place when the terminal is a TTY; non-TTY (CI, pipe) falls back to plain newline output. Errors and rollup warnings unrelated to host code (Node builtins) are suppressed in `actions/buildJs.js`.
 
 ## Override hierarchy (where do I tweak X?)
 
@@ -128,10 +128,10 @@ flowchart TD
     Filter -->|"Just narrow which targets build"| L1["Layer 1: target.{platform,arch,runtime,buildType}"]
     Filter -->|"Change defaults too"| Spec{"Per-target tweak?"}
     Spec -->|"Yes, declarative"| L2["Layer 2: targetSpecs[].specs.{cmake,emccFlags,env,data,ignoreLibName}"]
-    Spec -->|"Project-wide"| L3a["Layer 3: cppjs.config.js env / functions.isEnabled / dependencies"]
-    Spec -->|"Authoring a package?"| L4["Layer 4: cppjs.build.js hooks (getURL, getBuildParams, replaceList, prepare, build, env, copyToSource, copyToDist, beforeRun, getExtraLibs, setState)"]
+    Spec -->|"Project-wide"| L3a["Layer 3: crossbind.config.js env / functions.isEnabled / dependencies"]
+    Spec -->|"Authoring a package?"| L4["Layer 4: crossbind.build.js hooks (getURL, getBuildParams, replaceList, prepare, build, env, copyToSource, copyToDist, beforeRun, getExtraLibs, setState)"]
     Spec -->|"Cross-package plugin"| L5["Layer 5: extensions[] (loadConfig.after, buildWasm.beforeBuild*, createLib.setFlag*)"]
-    Spec -->|"Machine-wide"| L6["Layer 6: ~/.cppjs.json (RUNNER, XCODE_DEVELOPMENT_TEAM, LOG_LEVEL)"]
+    Spec -->|"Machine-wide"| L6["Layer 6: ~/.crossbind.json (RUNNER, XCODE_DEVELOPMENT_TEAM, LOG_LEVEL)"]
     L1 --> Done[Use this]
     L2 --> Done
     L3a --> Done
@@ -142,17 +142,17 @@ flowchart TD
 
 Reach for the **highest** layer that solves the problem (least invasive). See [`docs/api/overrides.md`](./api/overrides.md) for the full catalog.
 
-## `cppjs.build.js` lifecycle (package authors)
+## `crossbind.build.js` lifecycle (package authors)
 
 ```mermaid
 sequenceDiagram
-    participant CLI as cppjs build
+    participant CLI as crossbind build
     participant State as state (loadConfig)
-    participant Hook as cppjs.build.js
+    participant Hook as crossbind.build.js
     participant Build as Toolchain (cmake / configure / emcc / ndk / xcode)
 
     CLI->>State: loadConfig(configDir)
-    State->>State: merge cppjs.config.js + cppjs.build.js + system
+    State->>State: merge crossbind.config.js + crossbind.build.js + system
     State->>Hook: setState(state)?
     loop For each target in state.targets
         CLI->>Hook: getURL(version) or getSource(state)
@@ -174,12 +174,12 @@ sequenceDiagram
     end
 ```
 
-See [`docs/api/cppjs-build.md`](./api/cppjs-build.md) for hook signatures.
+See [`docs/api/crossbind-build.md`](./api/crossbind-build.md) for hook signatures.
 
 ## Where to look next
 
-- "I want to add a feature to the build pipeline" → `cppjs-core/cpp.js/AGENTS.md`
-- "I want to support a new bundler" → write a new `cppjs-plugins/cppjs-plugin-*`; mirror `plugin-vite` or `plugin-webpack`
+- "I want to add a feature to the build pipeline" → `core/crossbind/AGENTS.md`
+- "I want to support a new bundler" → write a new `plugins/*`; mirror `plugin-vite` or `plugin-webpack`
 - "I want to wrap a new C++ library" → `docs/playbooks/new-package.md`
-- "I want to integrate cpp.js into my own app" → `docs/playbooks/integration/README.md`
+- "I want to integrate crossbind into my own app" → `docs/playbooks/integration/README.md`
 - "I want a concrete pointer to a specific concept" → `docs/CODEMAP.md`

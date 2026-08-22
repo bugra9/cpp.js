@@ -5,22 +5,23 @@ on:
     branches:
       - main
     paths:
-      - cppjs-core/**
-      - cppjs-extensions/**
-      - cppjs-packages/**
-      - cppjs-plugins/**
-      - cppjs-samples/**
+      - core/**
+      - tooling/**
+      - ports/**
+      - plugins/**
+      - examples/**
+      - e2e/**
       - .github/workflows/build-macos.yml
   pull_request:
     branches:
       - main
     paths:
-      - cppjs-core/cpp.js/**
-      - cppjs-plugins/**
-      - cppjs-samples/cppjs-sample-lib-*/**
-      - cppjs-samples/cppjs-sample-web-*/**
-      - cppjs-samples/cppjs-sample-backend-*/**
-      - cppjs-samples/cppjs-sample-cloud-*/**
+      - core/crossbind/**
+      - plugins/**
+      - examples/lib-*/**
+      - examples/web-*/**
+      - examples/backend-*/**
+      - examples/cloud-*/**
       - .github/workflows/build-macos.yml
 
 permissions: {}
@@ -68,6 +69,6 @@ jobs:
       - name: Install dependencies
         run: |
           pnpm install
-          pnpm cppjs config set XCODE_DEVELOPMENT_TEAM 7ZZLDWBUVT
+          pnpm crossbind config set XCODE_DEVELOPMENT_TEAM 7ZZLDWBUVT
       - name: Build for Macos
         run: pnpm run ci:macos:build

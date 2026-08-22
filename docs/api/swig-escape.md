@@ -1,10 +1,10 @@
 # SWIG escape hatch — manual `.i` files
 
-> cpp.js auto-generates SWIG `.i` interface files for every header it sees. You only write a manual `.i` file when the auto-generated one isn't enough. **Default to letting cpp.js generate** — fall back to manual only when forced.
+> crossbind auto-generates SWIG `.i` interface files for every header it sees. You only write a manual `.i` file when the auto-generated one isn't enough. **Default to letting crossbind generate** — fall back to manual only when forced.
 
 ## How auto-generation works
 
-For each header in `paths.header` (defaults to `paths.native`, defaults to `src/native`), cpp.js generates an `.i` file with:
+For each header in `paths.header` (defaults to `paths.native`, defaults to `src/native`), crossbind generates an `.i` file with:
 
 ```swig
 %module FILENAME_UPPER
@@ -30,11 +30,11 @@ For everything else: write a C++ wrapper instead. Wrappers are easier to reason 
 
 ## How to wire a manual `.i` into your project
 
-cpp.js looks for an `.i` file using two mechanisms (in order):
+crossbind looks for an `.i` file using two mechanisms (in order):
 
 ### Option 1 — sibling next to header
 
-If `src/native/foo.h` has a sibling `src/native/foo.i`, cpp.js uses the `.i` instead of auto-generating. Same path + `.i` extension is the trigger.
+If `src/native/foo.h` has a sibling `src/native/foo.i`, crossbind uses the `.i` instead of auto-generating. Same path + `.i` extension is the trigger.
 
 ```
 src/native/
@@ -44,7 +44,7 @@ src/native/
 
 ### Option 2 — `paths.module` override
 
-If your `.i` files live elsewhere, point `cppjs.config.js` at them:
+If your `.i` files live elsewhere, point `crossbind.config.js` at them:
 
 ```js
 export default {
@@ -57,7 +57,7 @@ export default {
 }
 ```
 
-cpp.js reads `paths.module` (defaults to `paths.native`) for `.i` files. The `ext.module` field controls extensions to recognize (defaults to `['i']`).
+crossbind reads `paths.module` (defaults to `paths.native`) for `.i` files. The `ext.module` field controls extensions to recognize (defaults to `['i']`).
 
 ## Minimal `.i` template
 
@@ -87,7 +87,7 @@ Replace `mymodule` with `FILENAME_UPPER` (the convention auto-gen uses). Drop in
 
 1. **Manual `.i` overrides the auto-gen entirely.** You're responsible for `%feature("shared_ptr")` and the rest. Forget them, and `shared_ptr` returns become opaque pointers in JS.
 2. **`%include "myheader.h"` is what tells SWIG about your symbols.** Without it, the `.i` is empty even with the `%{ #include ... %}` block (that one only injects into the generated wrapper, not into SWIG's symbol table).
-3. **Build cache** keys on header hash, not `.i` hash. If you only edit the `.i` and not the header, you may need to clear `.cppjs/cache.json` or touch the header to retrigger the binding regen.
+3. **Build cache** keys on header hash, not `.i` hash. If you only edit the `.i` and not the header, you may need to clear `.crossbind/cache.json` or touch the header to retrigger the binding regen.
 
 ## When you're past `.i`
 
@@ -96,6 +96,6 @@ If a `.i` file isn't enough either, the only remaining option is to **wrap in C+
 ## See also
 
 - [`cpp-binding-rules.md`](./cpp-binding-rules.md) — what auto-generated bindings can and can't handle.
-- [`cppjs-config.md`](./cppjs-config.md) — `paths.module` and `ext.module` fields.
-- Source: `cppjs-core/cpp.js/src/actions/createInterface.js` — auto-generation logic.
-- Website type table: `https://cpp.js.org/docs/api/cpp-bindings/data-types`.
+- [`crossbind-config.md`](./crossbind-config.md) — `paths.module` and `ext.module` fields.
+- Source: `core/crossbind/src/actions/createInterface.js` — auto-generation logic.
+- Website type table: `https://crossbind.dev/docs/api/cpp-bindings/data-types`.

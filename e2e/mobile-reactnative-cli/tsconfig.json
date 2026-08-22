@@ -1,0 +1,20 @@
+{
+  "extends": [
+    "@react-native/typescript-config",
+    "@crossbind/typescript-config"
+  ],
+  "compilerOptions": {
+    "types": [
+      "jest"
+    ]
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".crossbind/rust-crates/types/**/*.d.ts"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/Pods"
+  ]
+}

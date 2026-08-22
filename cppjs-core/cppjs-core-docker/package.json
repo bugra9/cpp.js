@@ -1,9 +1,0 @@
-{
-    "name": "@cpp.js/core-docker",
-    "version": "2.0.0-beta.37",
-    "private": "true",
-    "scripts": {
-        "build": "docker buildx build --platform linux/amd64,linux/arm64 -t bugra9/cpp.js:latest -t bugra9/cpp.js:0.3.5 .",
-        "push": "docker buildx build --platform linux/amd64,linux/arm64 -t bugra9/cpp.js:latest -t bugra9/cpp.js:0.3.5 --push ."
-    }
-}

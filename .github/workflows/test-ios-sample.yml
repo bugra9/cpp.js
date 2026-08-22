@@ -5,22 +5,23 @@ on:
     branches:
       - main
     paths:
-      - cppjs-core/**
-      - cppjs-extensions/**
-      - cppjs-packages/**
-      - cppjs-plugins/**
-      - cppjs-samples/**
+      - core/**
+      - tooling/**
+      - ports/**
+      - plugins/**
+      - examples/**
+      - e2e/**
       - .github/workflows/test-ios-sample.yml
   pull_request:
     branches:
       - main
     paths:
-      - cppjs-core/cpp.js/**
-      - cppjs-plugins/cppjs-plugin-metro/**
-      - cppjs-plugins/cppjs-plugin-react-native/**
-      - cppjs-plugins/cppjs-plugin-react-native-ios-helper/**
-      - cppjs-samples/cppjs-sample-lib-prebuilt-matrix/**
-      - cppjs-samples/cppjs-sample-mobile-reactnative-cli/**
+      - core/crossbind/**
+      - plugins/metro/**
+      - plugins/react-native/**
+      - plugins/react-native-ios-helper/**
+      - examples/lib-prebuilt-matrix/**
+      - examples/mobile-reactnative-cli/**
       - .github/workflows/test-ios-sample.yml
 
 permissions: {}
@@ -68,18 +69,18 @@ jobs:
       - name: Install dependencies
         run: |
           pnpm install
-          pnpm cppjs config set XCODE_DEVELOPMENT_TEAM 7ZZLDWBUVT
+          pnpm crossbind config set XCODE_DEVELOPMENT_TEAM 7ZZLDWBUVT
       - name: Install Maestro
         run: |
           curl -fsSL "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
       - name: Restore cached bridge files
         run: |
-          mkdir -p ./cppjs-samples/cppjs-sample-mobile-reactnative-cli/.cppjs
-          cp -r ./cppjs-samples/cppjs-sample-mobile-reactnative-cli/ci/cppjs-snapshot/. ./cppjs-samples/cppjs-sample-mobile-reactnative-cli/.cppjs/
-      - name: Build cppjs-sample-lib-prebuilt-matrix
-        run: pnpm --filter=@cpp.js/sample-lib-prebuilt-matrix run build:ios
+          mkdir -p ./examples/mobile-reactnative-cli/.crossbind
+          cp -r ./examples/mobile-reactnative-cli/ci/crossbind-snapshot/. ./examples/mobile-reactnative-cli/.crossbind/
+      - name: Build examples/lib-prebuilt-matrix
+        run: pnpm --filter=@crossbind/example-lib-prebuilt-matrix run build:ios
       - name: Pod install
-        run: cd cppjs-samples/cppjs-sample-mobile-reactnative-cli/ios && pod install && cd ../../../
+        run: cd examples/mobile-reactnative-cli/ios && pod install && cd ../../../
       - name: E2E IOS
         run: pnpm run e2e:ios

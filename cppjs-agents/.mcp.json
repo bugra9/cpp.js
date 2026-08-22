@@ -1,8 +1,0 @@
-{
-    "mcpServers": {
-        "cppjs": {
-            "command": "npx",
-            "args": ["-y", "@cpp.js/mcp"]
-        }
-    }
-}

@@ -1,0 +1,43 @@
+{
+    "name": "create-crossbind",
+    "version": "2.0.0-beta.40",
+    "description": "Create crossbind Applications",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/tooling/create-app#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "license": "MIT",
+    "bin": "src/index.js",
+    "main": "src/index.js",
+    "type": "module",
+    "engines": {
+        "node": ">=20"
+    },
+    "files": [
+        "src",
+        "templates"
+    ],
+    "scripts": {
+        "build-templates": "node scripts/build-templates.js",
+        "prepublishOnly": "node scripts/build-templates.js"
+    },
+    "dependencies": {
+        "@clack/prompts": "^1.7.0"
+    },
+    "keywords": [
+        "crossbind",
+        "webassembly",
+        "react-native",
+        "expo",
+        "bind",
+        "c++",
+        "react",
+        "vue",
+        "svelte",
+        "webpack",
+        "vite",
+        "rspack",
+        "create-react-app",
+        "metro",
+        "android",
+        "ios"
+    ]
+}

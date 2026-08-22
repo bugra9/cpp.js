@@ -1,10 +1,10 @@
 # Integration — Node.js (no bundler)
 
-> Persona 2 sub-playbook. The user's project is a plain Node.js application or library — no Vite, Webpack, Rollup, RN, etc. Detection: cppjs build script targets `-e node`, or the project's `package.json` declares `main`/`module`/`bin` without bundler deps.
+> Persona 2 sub-playbook. The user's project is a plain Node.js application or library — no Vite, Webpack, Rollup, RN, etc. Detection: crossbind build script targets `-e node`, or the project's `package.json` declares `main`/`module`/`bin` without bundler deps.
 
 ## Goal
 
-Build cpp.js artifacts for the Node runtime (`-e node`) and `require`/`import` the loader from any Node script. No bundler integration; the build is invoked directly via `cppjs build`.
+Build crossbind artifacts for the Node runtime (`-e node`) and `require`/`import` the loader from any Node script. No bundler integration; the build is invoked directly via `crossbind build`.
 
 ## When to use
 
@@ -16,8 +16,8 @@ Build cpp.js artifacts for the Node runtime (`-e node`) and `require`/`import` t
 
 | File | Role |
 |------|------|
-| `package.json` | + `cpp.js`, optional `@cpp.js/package-<name>`; declare a `build` script that runs `cppjs build -e node` |
-| `cppjs.config.{js,mjs}` *(new at root)* | Project-level cpp.js config (deps to consume, paths) |
+| `package.json` | + `crossbind`, optional `@crossbind/port-<name>`; declare a `build` script that runs `crossbind build -e node` |
+| `crossbind.config.{js,mjs}` *(new at root)* | Project-level crossbind config (deps to consume, paths) |
 | `src/native/` *(if user wraps own C++)* | `.h` + `.cpp` source |
 | `<entry>.js` (e.g. `index.js`) | `require`/`import` the built loader |
 | `dist/<name>-<target>.node.{js,wasm}` | Build output |
@@ -25,14 +25,14 @@ Build cpp.js artifacts for the Node runtime (`-e node`) and `require`/`import` t
 ## Commands
 
 ```bash
-pnpm add -D cpp.js
-pnpm add @cpp.js/package-<name>     # optional
+pnpm add -D crossbind
+pnpm add @crossbind/port-<name>     # optional
 
 # Single-thread build
-pnpm cppjs build -p wasm -a wasm32 -r st -e node -b release
+pnpm crossbind build -p wasm -a wasm32 -r st -e node -b release
 
 # Multithread build (Node worker_threads)
-pnpm cppjs build -p wasm -a wasm32 -r mt -e node -b release
+pnpm crossbind build -p wasm -a wasm32 -r mt -e node -b release
 
 # Run
 node index.js
@@ -40,30 +40,30 @@ node index.js
 
 ## Reference setup
 
-Mirror `cppjs-samples/cppjs-sample-backend-nodejs-wasm/` (single-thread) or `cppjs-samples/cppjs-playground-backend-nodejs-multithread/` (multithread).
+Mirror `examples/backend-nodejs-wasm/` (single-thread) or `e2e/backend-nodejs-multithread/` (multithread).
 
 `package.json`:
 
 ```jsonc
 {
   "scripts": {
-    "build": "cppjs build -p wasm -a wasm32 -r st -e node -b release",
+    "build": "crossbind build -p wasm -a wasm32 -r st -e node -b release",
     "start": "node src/index.js"
   },
   "dependencies": {
-    "@cpp.js/package-<name>": "^x.y.z"
+    "@crossbind/port-<name>": "^x.y.z"
   },
   "devDependencies": {
-    "cpp.js": "^2.0.0"
+    "crossbind": "^2.0.0"
   }
 }
 ```
 
-`cppjs.config.mjs`:
+`crossbind.config.mjs`:
 
 ```js
 // If consuming prebuilt packages:
-import Matrix from '@cpp.js/sample-lib-prebuilt-matrix/cppjs.config.js';
+import Matrix from '@crossbind/example-lib-prebuilt-matrix/crossbind.config.js';
 
 export default {
     general: { name: 'my-node-service' },
@@ -114,21 +114,21 @@ Caveats:
 - [ ] `pnpm build` produces `dist/<name>-<target>.node.{js,wasm}`.
 - [ ] `node <entry>.js` runs and calls into C++ without error.
 - [ ] If multithread: workers spin up, computation finishes (use Node's `--inspect` if you suspect threading issues).
-- [ ] No `Module not found: 'fs'` or `'crypto'` warnings — cpp.js's node bundle imports them legitimately, but if a different bundler later mishandles the script, those warnings appear.
+- [ ] No `Module not found: 'fs'` or `'crypto'` warnings — crossbind's node bundle imports them legitimately, but if a different bundler later mishandles the script, those warnings appear.
 
 ## Common pitfalls
 
 - **Targeting `-e browser` in a Node app.** The browser bundle uses `fetch()` for wasm — fails on Node without polyfill. Use `-e node`.
 - **Targeting `-e edge` in a Node app.** Trims Node-specific helpers (`require('fs')`, etc.); some features won't work.
-- **Hardcoded `dist/cpp.js` path.** The actual filename includes the target tuple (e.g. `<name>-wasm-wasm32-st-release.node.js`). Use the exact path or read from the build output log.
+- **Hardcoded `dist/crossbind.js` path.** The actual filename includes the target tuple (e.g. `<name>-wasm-wasm32-st-release.node.js`). Use the exact path or read from the build output log.
 - **Async at module top-level (CJS).** CommonJS doesn't allow it. Use `.then()` or wrap in an `async` function.
 - **Forgetting to rebuild after editing `.cpp`.** No bundler watcher here. Re-run `pnpm build` (or wire `chokidar`/`nodemon` to do so).
-- **Running on Node < 20.** cpp.js requires Node ≥ 20 (see `engines` in `cppjs-core/cpp.js/package.json`).
+- **Running on Node < 20.** crossbind requires Node ≥ 20 (see `engines` in `core/crossbind/package.json`).
 
 ## Reference samples
 
-- `cppjs-samples/cppjs-sample-backend-nodejs-wasm/` — minimal Node + cpp.js (single-thread), canonical
-- `cppjs-samples/cppjs-playground-backend-nodejs/` — playground with prebuilt packages
-- `cppjs-samples/cppjs-playground-backend-nodejs-multithread/` — multithread reference (`-r mt`)
+- `examples/backend-nodejs-wasm/` — minimal Node + crossbind (single-thread), canonical
+- `e2e/backend-nodejs/` — playground with prebuilt packages
+- `e2e/backend-nodejs-multithread/` — multithread reference (`-r mt`)
 
-Node runtime adapter: `cppjs-core/cpp.js/src/assets/js-runtime/node.js`.
+Node runtime adapter: `core/crossbind/src/assets/js-runtime/node.js`.

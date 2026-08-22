@@ -2,11 +2,11 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-03
-- **Affects:** `cppjs-packages/*/cppjs-package-*/package.json` (the `dependencies` field of every sub-arch package), root `pnpm-workspace.yaml`, CI build scripts.
+- **Affects:** `ports/*/ports/*/package.json` (the `dependencies` field of every sub-arch package), root `pnpm-workspace.yaml`, CI build scripts.
 
 ## Context
 
-Many cpp.js packages link against other cpp.js packages. GDAL needs PROJ, GEOS, libtiff, libgeotiff, OpenSSL, zlib, zstd, libcurl, libexpat, iconv, lerc, jpegturbo, sqlite3, spatialite, webp. PROJ needs libtiff and SQLite. SQLite is leaf. Building these in the wrong order produces "undefined symbol" linker errors that surface much later than the root cause.
+Many crossbind packages link against other crossbind packages. GDAL needs PROJ, GEOS, libtiff, libgeotiff, OpenSSL, zlib, zstd, libcurl, libexpat, iconv, lerc, jpegturbo, sqlite3, spatialite, webp. PROJ needs libtiff and SQLite. SQLite is leaf. Building these in the wrong order produces "undefined symbol" linker errors that surface much later than the root cause.
 
 We had three options for managing build order:
 
@@ -16,7 +16,7 @@ We had three options for managing build order:
 
 ## Decision
 
-Each sub-arch's `package.json` declares its C++ dependencies as `"dependencies": { "@cpp.js/package-X-<arch>": "workspace:^" }`. The build is invoked with `pnpm --filter='@cpp.js/package-*' run build`, which pnpm executes in topological order derived from those dependencies.
+Each sub-arch's `package.json` declares its C++ dependencies as `"dependencies": { "@crossbind/port-X-<arch>": "workspace:^" }`. The build is invoked with `pnpm --filter='@crossbind/port-*' run build`, which pnpm executes in topological order derived from those dependencies.
 
 The dependency edge encodes both:
 
@@ -46,6 +46,6 @@ The dependency edge encodes both:
 
 ## See also
 
-- Root `pnpm-workspace.yaml` — workspace globber declaring `cppjs-packages/*/*` as a workspace.
-- Any `cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm/package.json` — example with 13 transitive deps.
+- Root `pnpm-workspace.yaml` — workspace globber declaring `ports/*/*` as a workspace.
+- Any `ports/gdal/wasm/package.json` — example with 13 transitive deps.
 - `docs/playbooks/new-package.md` — Step 4 ("Wire transitive C++ deps") references this ADR.

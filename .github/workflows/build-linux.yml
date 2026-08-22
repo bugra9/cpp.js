@@ -5,21 +5,23 @@ on:
     branches:
       - main
     paths:
-      - cppjs-core/**
-      - cppjs-extensions/**
-      - cppjs-packages/**
-      - cppjs-plugins/**
-      - cppjs-samples/**
+      - core/**
+      - tooling/**
+      - ports/**
+      - plugins/**
+      - examples/**
+      - e2e/**
       - .github/workflows/build-linux.yml
   pull_request:
     branches:
       - main
     paths:
-      - cppjs-core/**
-      - cppjs-extensions/**
-      - cppjs-packages/**
-      - cppjs-plugins/**
-      - cppjs-samples/**
+      - core/**
+      - tooling/**
+      - ports/**
+      - plugins/**
+      - examples/**
+      - e2e/**
       - .github/workflows/build-linux.yml
 
 permissions: {}
@@ -48,8 +50,8 @@ jobs:
         run: pnpm run ci:linux:e2e
       - name: Install wasi-sdk (wasi e2e toolchain)
         run: |
-          curl -sSfL https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-34-rc.2/wasi-sdk-34.0-rc.2-x86_64-linux.tar.gz -o "$RUNNER_TEMP/wasi-sdk.tar.gz"
-          echo "114ee5fe63cb5f2a6c0febcee446060267298158a409c7ab3ac0e06e6d4bd9ce  $RUNNER_TEMP/wasi-sdk.tar.gz" | sha256sum -c -
+          curl -sSfL https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-34-rc.3/wasi-sdk-34.0-rc.3-x86_64-linux.tar.gz -o "$RUNNER_TEMP/wasi-sdk.tar.gz"
+          echo "12ad05db5cb7e8d949b5383b84f2b7d169e6db33538f97d62a9eb7ac4e985daa  $RUNNER_TEMP/wasi-sdk.tar.gz" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/wasi-sdk.tar.gz" -C "$RUNNER_TEMP"
       - name: Install wasmtime (wasi e2e runtime)
         run: |
@@ -60,5 +62,5 @@ jobs:
       - name: Run wasi e2e
         # The build step already produced the prebuilt via docker (zero-config); this recompiles the probe with the runner sdk and runs it under wasmtime.
         env:
-          CPPJS_WASI_SDK_PATH: ${{ runner.temp }}/wasi-sdk-34.0-rc.2-x86_64-linux
+          CROSSBIND_WASI_SDK_PATH: ${{ runner.temp }}/wasi-sdk-34.0-rc.3-x86_64-linux
         run: pnpm run ci:linux:e2e:wasi

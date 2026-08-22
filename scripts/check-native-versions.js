@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Scans every package.json under cppjs-packages/ for the `nativeVersion` field,
+ * Scans every package.json under ports/ for the `nativeVersion` field,
  * resolves the latest upstream version of each native library, and writes a
  * report file comparing the two.
  *
@@ -20,7 +20,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const PACKAGES_DIR = path.join(ROOT, 'cppjs-packages');
+const PACKAGES_DIR = path.join(ROOT, 'ports');
 const REPORT_PATH = (() => {
     const i = process.argv.indexOf('--report');
     return i !== -1 ? process.argv[i + 1] : null;
@@ -39,7 +39,7 @@ function printTable(headers, rows, stream = process.stdout) {
 }
 
 const BASE_HEADERS = {
-    'User-Agent': 'cppjs-native-version-check',
+    'User-Agent': 'crossbind-native-version-check',
 };
 
 // GitHub-only headers. MUST NOT be sent to any other host: GitLab (and other
@@ -190,12 +190,12 @@ async function scrapeLatestFromDir(url, regex) {
 
 // ---------------------------------------------------------------------------
 // Library sources are derived dynamically from each package's
-// `cppjs.build.js`. Two probe versions are passed to `getURL(version)` and
+// `crossbind.build.js`. Two probe versions are passed to `getURL(version)` and
 // the returned URLs are diffed to determine: source kind (GitHub releases,
 // GitHub archive tag, or HTTP directory listing), repo/dir, and the
 // transform applied to the version (verbatim, dots-to-underscores, etc).
 //
-// Adding a new library? Drop a `cppjs.build.js` with a `getURL(version)`
+// Adding a new library? Drop a `crossbind.build.js` with a `getURL(version)`
 // arrow function (template literal) into the new package — no edits to
 // this file are needed.
 //
@@ -351,22 +351,22 @@ async function fetchLatestFromSource(source) {
     throw new Error(`Unknown source kind: ${source.kind}`);
 }
 
-// Walks cppjs-packages/ and dynamic-imports each library's wasm
-// `cppjs.build.js` (every library has a wasm variant, and getURL is
+// Walks ports/ and dynamic-imports each library's wasm
+// `crossbind.build.js` (every library has a wasm variant, and getURL is
 // platform-agnostic). Returns { libKey -> source } where `source` is
 // consumable by fetchLatestFromSource().
 async function buildLibraryMap() {
-    const groups = fs.readdirSync(PACKAGES_DIR, { withFileTypes: true }).filter((e) => e.isDirectory() && e.name.startsWith('cppjs-package-'));
+    const groups = fs.readdirSync(PACKAGES_DIR, { withFileTypes: true }).filter((e) => e.isDirectory());
 
     const libs = {};
     for (const group of groups) {
-        const libKey = group.name.replace(/^cppjs-package-/, '');
+        const libKey = group.name;
         if (OVERRIDES[libKey]) {
             libs[libKey] = OVERRIDES[libKey];
             continue;
         }
 
-        const buildPath = path.join(PACKAGES_DIR, group.name, `${group.name}-wasm`, 'cppjs.build.js');
+        const buildPath = path.join(PACKAGES_DIR, group.name, 'wasm', 'crossbind.build.js');
         if (!fs.existsSync(buildPath)) continue;
 
         let getURL;
@@ -374,11 +374,11 @@ async function buildLibraryMap() {
             const mod = await import(pathToFileURL(buildPath).href);
             getURL = mod?.default?.getURL;
         } catch (e) {
-            console.error(`  ${libKey}: failed to import cppjs.build.js (${e.message})`);
+            console.error(`  ${libKey}: failed to import crossbind.build.js (${e.message})`);
             continue;
         }
         if (typeof getURL !== 'function') {
-            console.error(`  ${libKey}: cppjs.build.js has no default.getURL function`);
+            console.error(`  ${libKey}: crossbind.build.js has no default.getURL function`);
             continue;
         }
 
@@ -425,10 +425,8 @@ function walkPackageJsons(dir) {
 }
 
 function deriveLibraryKey(pkgPath) {
-    // .../cppjs-packages/cppjs-package-X/cppjs-package-X[-platform]/package.json
-    // bin-wasi must strip before wasi so gdal-bin-wasi resolves to gdal, not gdal-bin.
-    const parent = path.basename(path.dirname(pkgPath));
-    return parent.replace(/^cppjs-package-/, '').replace(/-(bin-wasi|wasi|wasm|ios|android)$/, '');
+    // .../ports/<family>/<target>/package.json - the family dir is the library key.
+    return path.basename(path.dirname(path.dirname(pkgPath)));
 }
 
 // Rewrite the `"nativeVersion": "X"` line in-place, preserving all other
@@ -472,7 +470,7 @@ async function main() {
     }
 
     const libraryKeys = [...new Set(packages.map((p) => p.library))].sort();
-    console.error(`Found ${packages.length} package(s) across ${libraryKeys.length} libraries. Resolving upstream sources from cppjs.build.js...`);
+    console.error(`Found ${packages.length} package(s) across ${libraryKeys.length} libraries. Resolving upstream sources from crossbind.build.js...`);
 
     const sources = await buildLibraryMap();
 
@@ -485,7 +483,7 @@ async function main() {
                 latestByLibrary[key] = {
                     stable: null,
                     any: null,
-                    error: `No upstream source derived for '${key}' (missing or unparseable cppjs.build.js)`,
+                    error: `No upstream source derived for '${key}' (missing or unparseable crossbind.build.js)`,
                     homepage: null,
                 };
                 return;

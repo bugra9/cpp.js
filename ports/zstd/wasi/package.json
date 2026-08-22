@@ -1,0 +1,32 @@
+{
+    "name": "@crossbind/port-zstd-wasi",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "1.5.7",
+    "description": "WASI build of the precompiled Zstandard (zstd) library, built with crossbind. Use it together with the main package @crossbind/port-zstd.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/zstd#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "BSD-3-Clause",
+    "keywords": [
+        "zstd",
+        "zstandard",
+        "libzstd",
+        "compression",
+        "crossbind",
+        "crossbind-package",
+        "webassembly",
+        "wasi"
+    ],
+    "scripts": {
+        "build": "crossbind build -p wasi",
+        "e2e": "node e2e/run.mjs",
+        "clear": "rm -rf .crossbind dist",
+        "prepublishOnly": "crossbind build -p wasi"
+    },
+    "dependencies": {
+        "@crossbind/port-zstd": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

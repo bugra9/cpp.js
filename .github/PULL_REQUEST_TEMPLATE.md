@@ -1,5 +1,5 @@
 <!--
-Thanks for contributing to cpp.js! Fill in each section below — the test plan and
+Thanks for contributing to crossbind! Fill in each section below — the test plan and
 risk fields are not optional. If an AI agent helped draft this PR, mention it
 under "Agent assistance" so reviewers know what to verify.
 -->
@@ -14,11 +14,11 @@ under "Agent assistance" so reviewers know what to verify.
 
 <!-- Tick everything this PR touches. Use this to pick the right validation gate. -->
 
-- [ ] `cppjs-core/cpp.js/` (CLI / build orchestration)
-- [ ] `cppjs-plugins/*` (bundler / RN integration)
-- [ ] `cppjs-packages/*` (a single package family)
-- [ ] `cppjs-samples/*`
-- [ ] `website/` (docs)
+- [ ] `core/crossbind/` (CLI / build orchestration)
+- [ ] `plugins/*` (bundler / RN integration)
+- [ ] `ports/*` (a single package family)
+- [ ] `examples/*`
+- [ ] `landing/` (site + guide)
 - [ ] `scripts/` (repo tooling)
 - [ ] CI (`.github/workflows/`)
 - [ ] Other: ___
@@ -30,7 +30,7 @@ under "Agent assistance" so reviewers know what to verify.
 Validation matrix executed:
 
 - [ ] `pnpm run check` (dist + dep + native version snapshot)
-- [ ] `pnpm --filter=@cpp.js/package-<name>* run build` (touched packages)
+- [ ] `pnpm --filter=@crossbind/port-<name>* run build` (touched packages)
 - [ ] `pnpm run ci:linux:build` (core / plugin changes)
 - [ ] `pnpm run e2e:dev` (core / plugin changes)
 - [ ] `pnpm run e2e:prod` (core / plugin changes)

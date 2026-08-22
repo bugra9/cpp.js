@@ -1,0 +1,61 @@
+{
+    "name": "@crossbind/port-geos-bin-wasi",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "3.14.1",
+    "description": "The geosop CLI prebuilt as a WASI (wasm32-wasip3) command component.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/geos#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "(Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception) AND LGPL-2.1-only",
+    "keywords": [
+        "geos",
+        "cli",
+        "crossbind",
+        "crossbind-package",
+        "webassembly",
+        "wasi",
+        "wasmtime"
+    ],
+    "scripts": {
+        "build": "crossbind build -p wasi -b release",
+        "e2e": "node e2e/run.mjs",
+        "clear": "rm -rf .crossbind dist",
+        "prepublishOnly": "crossbind build -p wasi -b release"
+    },
+    "dependencies": {
+        "@crossbind/port-geos": "workspace:^",
+        "@crossbind/port-geos-wasi": "workspace:^",
+        "crossbind": "workspace:^"
+    },
+    "bin": {
+        "geosop-wasi": "bin/geosop-wasi.mjs"
+    },
+    "crossbind": {
+        "provenance": {
+            "recipe": {
+                "name": "@crossbind/port-geos",
+                "version": "2.0.0-beta.37",
+                "nativeVersion": "3.14.1"
+            },
+            "source": {
+                "url": "https://download.osgeo.org/geos/geos-3.14.1.tar.bz2",
+                "sha256": "3c20919cda9a505db07b5216baa980bacdaa0702da715b43f176fb07eff7e716"
+            },
+            "environment": {
+                "builder": "host",
+                "dockerImage": "bugra9/cpp.js@sha256:044eee6f4dd55e1f3e88a92f075cba40d3eaa8447f18a30d6408156282fee8f1",
+                "hostPlatform": "darwin-arm64",
+                "toolchain": {
+                    "name": "wasi-sdk",
+                    "version": "34.0-rc.3+m",
+                    "wasi-libc": "2e6fb9d8ee0c",
+                    "llvm": "7196f931f212",
+                    "llvm-version": "23.1.0",
+                    "config": "f992bcc08219",
+                    "clangSha256": "82a4a3fa013d14978f98452bb76213a3212ee4f5d7937e493ab40724061be570"
+                }
+            },
+            "sbom": "dist/prebuilt/wasi-wasm32-st-release/sbom.cdx.json"
+        }
+    }
+}

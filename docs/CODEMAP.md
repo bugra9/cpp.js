@@ -1,4 +1,4 @@
-# cpp.js — Codemap
+# crossbind — Codemap
 
 > Concept → file pointers. When you know **what** you want to change, find **where** to change it here.
 > Pair with `ARCHITECTURE.md` for the high-level mental model.
@@ -6,40 +6,47 @@
 ## Top-level layout
 
 ```
-cpp.js/
+crossbind/
 ├── AGENTS.md                         ← agent entrypoint (read first)
 ├── docs/                             ← agent-context docs (this file lives here)
 │   ├── ARCHITECTURE.md               ← high-level mental model
 │   ├── CODEMAP.md                    ← concept → file pointer (this file)
 │   ├── adr/                          ← architecture decision records (why-we-chose-X)
-│   ├── api/                          ← runtime + build API reference (init, cppjs.config.js, fs, threading)
+│   ├── api/                          ← runtime + build API reference (init, crossbind.config.js, fs, threading)
 │   └── playbooks/                    ← per-persona / per-framework workflows
 ├── .github/                          ← workflows, PR + issue templates
 ├── scripts/                          ← repo-level Node CLIs (check-*, doctor.sh, …)
 ├── package.json                      ← root scripts: build, clear, ci:*, e2e, publish, check
 ├── pnpm-workspace.yaml               ← workspace globs
-├── cppjs-core/
-│   ├── cpp.js/                       ← the CLI + build orchestration (most-touched)
-│   ├── cppjs-core-embind-jsi/        ← Embind/JSI helper used by RN bridge
-│   └── cppjs-core-embind-rust/       ← Rust producer crate + per-host adapters (see docs/api/rust.md)
-├── cppjs-plugins/
-│   ├── cppjs-plugin-vite/
-│   ├── cppjs-plugin-webpack/
-│   ├── cppjs-plugin-rollup/
-│   ├── cppjs-plugin-react-native/
-│   ├── cppjs-plugin-metro/
-│   └── cppjs-plugin-react-native-ios-helper/
-├── cppjs-packages/
+├── core/                             ← what ships into a consumer's build
+│   ├── crossbind/                    ← the CLI + build orchestration (most-touched)
+│   ├── embind-jsi/                   ← Embind/JSI helper used by RN bridge
+│   └── embind-rust/                  ← Rust producer crate + per-host adapters (see docs/api/rust.md)
+├── tooling/                          ← dev-time helpers, not part of a consumer build
+│   ├── create-app/                   ← create-crossbind scaffolder (templates built from examples/)
+│   ├── mcp/                          ← MCP server for agents
+│   ├── docker/                       ← pinned build image
+│   └── typescript-config/            ← shared tsconfig
+├── plugins/
+│   ├── vite/
+│   ├── webpack/
+│   ├── rollup/
+│   ├── react-native/
+│   ├── metro/
+│   └── react-native-ios-helper/
+├── ports/                            ← native libraries built for crossbind's targets
 │   ├── README.md                     ← Bin & License Contract (K1-K4 rules, bin map + provenance schemas)
-│   └── cppjs-package-<name>/
-│       ├── cppjs-package-<name>/         ← family package: recipe body (build.mjs) + upstream license truth
-│       ├── cppjs-package-<name>-wasm/    ← per-platform sub-packages
-│       ├── cppjs-package-<name>-android/
-│       ├── cppjs-package-<name>-ios/
-│       ├── cppjs-package-<name>-wasi/    ← wasi prebuilt (wasm32-wasip3)
-│       └── cppjs-package-<name>-bin-wasi/ ← upstream CLI as npm commands (where upstream ships one)
-├── cppjs-samples/                    ← reference integrations + canonical examples
-└── website/                          ← Docusaurus public site
+│   └── <name>/
+│       ├── base/                     ← brand package (@crossbind/port-<name>): recipe body (build.mjs) + upstream license truth
+│       ├── wasm/                     ← per-platform sub-packages
+│       ├── android/
+│       ├── ios/
+│       ├── wasi/                     ← wasi prebuilt (wasm32-wasip3)
+│       └── bin-wasi/                 ← upstream CLI as npm commands (where upstream ships one)
+├── examples/                         ← reference integrations, published as create-crossbind templates
+├── e2e/                              ← internal test benches + conformance kit
+├── agents/                           ← agent skills, commands, install docs
+└── landing/                          ← crossbind.dev site
 ```
 
 ## "What options does the runtime / config accept?" → API reference
@@ -47,8 +54,8 @@ cpp.js/
 Every consumer-facing field, every default, every constraint lives in [`docs/api/`](./api/):
 
 - [`init.md`](./api/init.md) — `init(opts)` runtime API, Module helpers.
-- [`cppjs-config.md`](./api/cppjs-config.md) — `cppjs.config.js` field-by-field (build-time, every consumer).
-- [`cppjs-build.md`](./api/cppjs-build.md) — `cppjs.build.js` lifecycle hooks (package authors only).
+- [`crossbind-config.md`](./api/crossbind-config.md) — `crossbind.config.js` field-by-field (build-time, every consumer).
+- [`crossbind-build.md`](./api/crossbind-build.md) — `crossbind.build.js` lifecycle hooks (package authors only).
 - [`filesystem.md`](./api/filesystem.md) — OPFS / memfs / node-fs / edge fs decision tree, including the `useWorker` requirement for OPFS.
 - [`threading.md`](./api/threading.md) — `runtime: 'st' | 'mt'`, `useWorker`, COOP/COEP, edge-runtime limits.
 - [`cpp-binding-rules.md`](./api/cpp-binding-rules.md) — what auto-binding handles + wrapper / SWIG escape patterns.
@@ -67,8 +74,8 @@ Playbooks added in Sprint 9:
 
 - [`playbooks/code-review.md`](./playbooks/code-review.md) — review checklist for package + fix/feature PRs.
 - [`playbooks/verify-install.md`](./playbooks/verify-install.md) — verify your plugin / MCP / AGENTS.md install actually works.
-- [`playbooks/override-dependencies.md`](./playbooks/override-dependencies.md) — rebuild/override dependencies from source via `cppjs.overrides.js` (all platforms), marker/stamp mechanics, `cppjs clean-deps`.
-- [`playbooks/licensing-lgpl.md`](./playbooks/licensing-lgpl.md) — shipping closed-source apps with LGPL native deps; `cppjs licenses` (SPDX table, `--notices`, `--check`).
+- [`playbooks/override-dependencies.md`](./playbooks/override-dependencies.md) — rebuild/override dependencies from source via `crossbind.overrides.js` (all platforms), marker/stamp mechanics, `crossbind clean-deps`.
+- [`playbooks/licensing-lgpl.md`](./playbooks/licensing-lgpl.md) — shipping closed-source apps with LGPL native deps; `crossbind licenses` (SPDX table, `--notices`, `--check`).
 
 ## "Why was X decided this way?" → architecture decisions
 
@@ -87,7 +94,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 
 ## "I want to change X" → look here
 
-### Build orchestration (`cppjs-core/cpp.js/`)
+### Build orchestration (`core/crossbind/`)
 
 | Concept | File |
 |---------|------|
@@ -97,7 +104,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | WASI command link (single .wasm) | `src/actions/buildWasiCommand.js` |
 | Rust crate build (`export.type: 'cargo'`) | `src/actions/buildCargo.js` |
 | -bin tool derivations (commands, multicall, provenance, license) | `src/actions/buildBinTools.js` |
-| License/SBOM row collection (`cppjs licenses`) | `src/actions/licenses.js` |
+| License/SBOM row collection (`crossbind licenses`) | `src/actions/licenses.js` |
 | Rollup config for runtime adapters | `src/actions/buildJs.js` |
 | iOS xcframework assembly | `src/actions/createXCFramework.js` |
 | CMake parameter generation | `src/actions/getCmakeParameters.js` |
@@ -113,7 +120,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 
 | Concept | File |
 |---------|------|
-| Merge `cppjs.config.*` + defaults | `src/state/loadConfig.js` |
+| Merge `crossbind.config.*` + defaults | `src/state/loadConfig.js` |
 | Runtime config singleton | `src/state/index.js` |
 | Default ext lists, paths.\*, dependency graph | `src/state/loadConfig.js` |
 
@@ -121,7 +128,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 
 | Concept | File |
 |---------|------|
-| Shared core (createInitCppJs, mergeDeep, locateFile, …) | `src/assets/js-runtime/core.js` |
+| Shared core (createInitCrossbind, mergeDeep, locateFile, …) | `src/assets/js-runtime/core.js` |
 | Browser shim (composes URL path + browser FS + worker) | `src/assets/js-runtime/browser.js` |
 | Node shim (composes fs path + node FS) | `src/assets/js-runtime/node.js` |
 | Edge shim (Cloudflare Workers, etc.) | `src/assets/js-runtime/edge.js` |
@@ -138,7 +145,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | Browser entrypoint | `src/assets/cpp-runtime/browser.cpp` |
 | Node entrypoint | `src/assets/cpp-runtime/node.cpp` |
 | Shared bridge code | `src/assets/cpp-runtime/commonBridges.cpp` |
-| Empty-source placeholder (silences ranlib) | `src/assets/cpp-runtime/cppjsEmptySource.cpp` |
+| Empty-source placeholder (silences ranlib) | `src/assets/cpp-runtime/crossbindEmptySource.cpp` |
 
 ### CMake infrastructure
 
@@ -152,7 +159,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 
 | Concept | File |
 |---------|------|
-| iOS package podspec template | `src/assets/packaging/cppjs-package.podspec` |
+| iOS package podspec template | `src/assets/packaging/crossbind-package.podspec` |
 
 ### Utilities
 
@@ -172,54 +179,54 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | K4 provenance block derivation | `src/utils/provenance.js` |
 | Family manifest resolution (license/provenance identity) | `src/utils/familyManifest.js` |
 | NOTICE/SBOM formatting + derived license expression | `src/utils/licenseReport.js` |
-| cpp.js target → cargo triple | `src/utils/cargoTarget.js` |
+| crossbind target → cargo triple | `src/utils/cargoTarget.js` |
 | Rust bridge generation (crate surface parsing, dts) | `src/utils/rustBridgeGen.js` |
-| @cpp.js/core-embind-rust resolution (consumer-declared) | `src/utils/resolveEmbindRust.js` |
+| @crossbind/core-embind-rust resolution (consumer-declared) | `src/utils/resolveEmbindRust.js` |
 | wasi bin command runner (npm shims import this) | `src/runtime/wasiRun.mjs` |
 
-## Plugins (`cppjs-plugins/`)
+## Plugins (`plugins/`)
 
 | Plugin | Entry | What it does |
 |--------|-------|--------------|
-| `cppjs-plugin-rollup` | `index.js` | Inner kernel: rollup transform for `.h`, watch native paths, build on `generateBundle` |
-| `cppjs-plugin-vite` | `index.js` | Wraps `cppjs-plugin-rollup`; dev/preview servers with COOP/COEP, HMR force-rebuild |
-| `cppjs-plugin-webpack` | `index.js` | Webpack/Rspack equivalent; dev-server middleware + COOP/COEP |
-| `cppjs-plugin-react-native` | `index.js`, `script/build_{android,ios,js}.js`, `cpp/CMakeLists.txt` | RN integration: Gradle CMake hook, podspec hook |
-| `cppjs-plugin-react-native-ios-helper` | (small helper) | iOS-side RN glue |
-| `cppjs-plugin-metro` | (small bundler hook) | Metro bundler integration |
+| `plugins/rollup` | `index.js` | Inner kernel: rollup transform for `.h`, watch native paths, build on `generateBundle` |
+| `plugins/vite` | `index.js` | Wraps `plugins/rollup`; dev/preview servers with COOP/COEP, HMR force-rebuild |
+| `plugins/webpack` | `index.js` | Webpack/Rspack equivalent; dev-server middleware + COOP/COEP |
+| `plugins/react-native` | `index.js`, `script/build_{android,ios,js}.js`, `cpp/CMakeLists.txt` | RN integration: Gradle CMake hook, podspec hook |
+| `plugins/react-native-ios-helper` | (small helper) | iOS-side RN glue |
+| `plugins/metro` | (small bundler hook) | Metro bundler integration |
 
-## Packages (`cppjs-packages/`)
+## Packages (`ports/`)
 
-Each `cppjs-package-<name>/<name>-<arch>/` has the same skeleton:
+Each `ports/<name>/<name>-<arch>/` has the same skeleton:
 
 | File | Purpose |
 |------|---------|
-| `package.json` | npm metadata + `nativeVersion` + workspace deps to other `@cpp.js/package-*-<arch>` |
-| `cppjs.config.js` | exported targetSpecs (env, data, libName, build params) |
-| `cppjs.build.js` | source acquisition (URL, copy, patches), CMake/configure invocation |
+| `package.json` | npm metadata + `nativeVersion` + workspace deps to other `@crossbind/port-*-<arch>` |
+| `crossbind.config.js` | exported targetSpecs (env, data, libName, build params) |
+| `crossbind.build.js` | source acquisition (URL, copy, patches), CMake/configure invocation |
 | `assets/CMakeLists.txt` *(if needed)* | per-package CMake override |
-| `cppjs-package-<name>.podspec` *(ios only)* | CocoaPods manifest with `EXCLUDED_ARCHS[sdk=iphonesimulator*] = x86_64` |
+| `crossbind-port-<name>.podspec` *(ios only)* | CocoaPods manifest with `EXCLUDED_ARCHS[sdk=iphonesimulator*] = x86_64` |
 | `README.md` | one-paragraph intent + license note |
 | `LICENSE` | upstream library license |
-| `.npmignore` | exclude `.cppjs/`, `dist/.../source/`, etc. from publish |
+| `.npmignore` | exclude `.crossbind/`, `dist/.../source/`, etc. from publish |
 
-To add a new `cppjs-package-X`: see `docs/playbooks/new-package.md` (uses `cppjs-package-zlib` as the canonical reference).
+To add a new `ports/<X>`: see `docs/playbooks/new-package.md` (uses `ports/zlib` as the canonical reference).
 
-## Samples (`cppjs-samples/`)
+## Samples (`examples/`)
 
 | Sample | Use as reference for |
 |--------|----------------------|
-| `cppjs-sample-web-vue-vite` | Vite + Vue integration |
-| `cppjs-sample-web-react-vite` | Vite + React |
-| `cppjs-sample-web-svelte-vite` | Vite + Svelte |
-| `cppjs-sample-web-react-rspack` | Rspack/Webpack + React |
-| `cppjs-sample-web-vanilla` | Plain HTML + bundler-less |
-| `cppjs-sample-backend-nodejs-wasm` | Node.js consumer |
-| `cppjs-sample-cloud-cloudflare-worker` | Cloudflare Worker / edge |
-| `cppjs-sample-mobile-reactnative-cli` | RN-cli (canonical mobile reference; CI uses `ci/cppjs-snapshot/`) |
-| `cppjs-sample-mobile-reactnative-expo` | RN with Expo |
-| `cppjs-sample-lib-prebuilt-matrix` | Minimal C++ library packaging (no UI) — canonical for Persona 3 |
-| `cppjs-playground-*` | Bigger demos against multiple `@cpp.js/package-*` (curl, gdal, geos, …) |
+| `examples/web-vue-vite` | Vite + Vue integration |
+| `examples/web-react-vite` | Vite + React |
+| `examples/web-svelte-vite` | Vite + Svelte |
+| `examples/web-react-rspack` | Rspack/Webpack + React |
+| `examples/web-vanilla` | Plain HTML + bundler-less |
+| `examples/backend-nodejs-wasm` | Node.js consumer |
+| `examples/cloud-cloudflare-worker` | Cloudflare Worker / edge |
+| `examples/mobile-reactnative-cli` | RN-cli (canonical mobile reference; CI uses `ci/crossbind-snapshot/`) |
+| `examples/mobile-reactnative-expo` | RN with Expo |
+| `examples/lib-prebuilt-matrix` | Minimal C++ library packaging (no UI) — canonical for Persona 3 |
+| `e2e/*` | Internal test benches: bigger demos against multiple `@crossbind/port-*` (curl, gdal, geos, …) + the conformance kit |
 
 ## Repo-level scripts (`scripts/`)
 
@@ -230,11 +237,11 @@ To add a new `cppjs-package-X`: see `docs/playbooks/new-package.md` (uses `cppjs
 | `check-native-versions.js` | Native lib version drift via GitHub/registry/HTML scrape (use `--check`/`--update`) |
 | `check-beta-status.js` | npm beta tag inventory + `--bump` |
 | `check-publish-hygiene.js` | K1/K4 gates: no executable leaks, provenance + derived license on -bin packages |
-| `generate-third-party.js` | K3 wrapper: `cppjs licenses --notices --sbom --platform` per dist host |
+| `generate-third-party.js` | K3 wrapper: `crossbind licenses --notices --sbom --platform` per dist host |
 | `pin-docker-image.js` | Re-pin the digest-locked build image after a docker publish |
 | `detect-framework.js` *(Sprint 2)* | Identify the user's project framework from package.json deps + filesystem signatures |
 | `doctor.sh` *(Sprint 4)* | Toolchain readiness (Node, pnpm, Docker, emscripten, NDK, Xcode) |
-| `scaffold-package.js` *(Sprint 4)* | Generate a new `cppjs-package-<name>` skeleton |
+| `scaffold-package.js` *(Sprint 4)* | Generate a new `ports/<name>` skeleton |
 | `help.js` *(Sprint 2)* | `pnpm run help` — grouped, annotated script listing |
 
 All `check:*` and `clear:*` are exposed as `pnpm run` aliases — see `package.json`.
@@ -247,43 +254,42 @@ All `check:*` and `clear:*` are exposed as `pnpm run` aliases — see `package.j
 | `build-macos.yml` | `pnpm run ci:macos:build` (iOS samples + zlib-ios) |
 | `build-windows.yml` | `pnpm run ci:windows:build` (wasm + android subset) |
 | `test-android-sample.yml` | RN-cli Android E2E |
-| `test-ios-sample.yml` | RN-cli iOS E2E (uses `ci/cppjs-snapshot/` bridge fixtures) |
-| `deploy-website.yml` | Build + deploy Docusaurus site |
+| `test-ios-sample.yml` | RN-cli iOS E2E (uses `ci/crossbind-snapshot/` bridge fixtures) |
 
 ## Common recipes
 
-### "Add a new C++ library as a cppjs-package"
+### "Add a new C++ library as a crossbind-package"
 
 1. Read `docs/playbooks/new-package.md`.
-2. Mirror `cppjs-packages/cppjs-package-zlib/` (smallest, simplest).
+2. Mirror `ports/zlib/` (smallest, simplest).
 3. Add workspace deps in each sub-arch's `package.json` to its native deps.
-4. Run `pnpm --filter=@cpp.js/package-<name>* run build`.
+4. Run `pnpm --filter=@crossbind/port-<name>* run build`.
 
 ### "Support a new bundler"
 
-1. Read `cppjs-plugins/cppjs-plugin-vite/index.js` (most-evolved reference).
-2. Mirror in a new `cppjs-plugins/cppjs-plugin-<bundler>/`.
-3. Provide: dev/preview server middleware (COOP/COEP), watch-rebuild hook, transform for `.h` files (delegate to `cppjs-plugin-rollup`).
+1. Read `plugins/vite/index.js` (most-evolved reference).
+2. Mirror in a new `plugins/<bundler>/`.
+3. Provide: dev/preview server middleware (COOP/COEP), watch-rebuild hook, transform for `.h` files (delegate to `plugins/rollup`).
 
 ### "Add a runtime adapter (Deno, Bun, etc.)"
 
-1. Read `cppjs-core/cpp.js/src/assets/js-runtime/core.js` (the contract).
+1. Read `core/crossbind/src/assets/js-runtime/core.js` (the contract).
 2. Add `<runtime>.js` shim composing the right adapters from `js-runtime/adapters/`.
-3. Add the runtime to `cppjs-core/cpp.js/src/state/index.js` target matrix if a new `runtimeEnv` is needed.
-4. Update `cppjs-core/cpp.js/src/actions/buildJs.js` rollup options if the bundle format differs.
+3. Add the runtime to `core/crossbind/src/state/index.js` target matrix if a new `runtimeEnv` is needed.
+4. Update `core/crossbind/src/actions/buildJs.js` rollup options if the bundle format differs.
 
 ### "Bump a native library's version"
 
 1. `pnpm run check:native` to see drift.
 2. `pnpm run check:native -- --update` to auto-bump `nativeVersion` in every affected `package.json`.
-3. `pnpm --filter=@cpp.js/package-<name>* run build` to verify.
+3. `pnpm --filter=@crossbind/port-<name>* run build` to verify.
 
 ### "Fix a build pipeline bug"
 
-1. Reproduce locally with the smallest sample (often `cppjs-sample-lib-prebuilt-matrix` or `cppjs-sample-backend-nodejs-wasm`).
-2. Adjust `cppjs-core/cpp.js/src/actions/<file>.js` per the codemap above.
+1. Reproduce locally with the smallest sample (often `examples/lib-prebuilt-matrix` or `examples/backend-nodejs-wasm`).
+2. Adjust `core/crossbind/src/actions/<file>.js` per the codemap above.
 3. Validation: `pnpm run ci:linux:build && pnpm run e2e:dev && pnpm run e2e:prod`.
 
-### "Integrate cpp.js into my own project"
+### "Integrate crossbind into my own project"
 
 → `docs/playbooks/integration/README.md` (decision tree + per-framework playbooks).

@@ -1,6 +1,6 @@
 # Filesystem — OPFS, memfs, node-fs, edge
 
-> Where do files live in cpp.js? Depends on the runtime and your `init` options. This doc maps every combination.
+> Where do files live in crossbind? Depends on the runtime and your `init` options. This doc maps every combination.
 
 ## The decision tree
 
@@ -27,7 +27,7 @@ Are you on the browser?
     │             │   │   ├── Yes → real persistence
     │             │   │   └── No  → logs error + falls back to /memfs/<app>/
     │             │   │            (broken/blocked backends, e.g. Playwright WebKit)
-    │             │   └── No  → cpp.js logs error + redirects to /memfs/<app>/
+    │             │   └── No  → crossbind logs error + redirects to /memfs/<app>/
     │             │
     │             └── Mounted from main thread (no useWorker)?
     │                 → throws: "OPFS is only available inside a Worker scope"
@@ -38,14 +38,14 @@ Are you on the browser?
 
 ## The two virtual roots in browser
 
-cpp.js mounts two namespaces under the Wasm filesystem root:
+crossbind mounts two namespaces under the Wasm filesystem root:
 
 | Mount | Backed by | Persistence | Available when |
 |-------|-----------|-------------|----------------|
 | `/opfs/<app>/` | Browser's Origin Private File System | Survives page reloads, browser restarts | `useWorker: true` + `fs.opfs !== false` + browser support |
 | `/memfs/<app>/` | In-memory (Emscripten MEMFS) | Tab session only | Always |
 
-`<app>` is `general.name` from `cppjs.config.js` (the same name the CLI uses for `lib<name>.a`).
+`<app>` is `general.name` from `crossbind.config.js` (the same name the CLI uses for `lib<name>.a`).
 
 ## Helpers on the Module object
 
@@ -109,7 +109,7 @@ imgEl.src = url
 ## Common pitfalls
 
 1. **Mounting `/opfs` from main thread without `useWorker: true`** → throws synchronously inside `m.getFinalPath()`. The error message tells you to enable `useWorker` or mount under `/memfs/` instead.
-2. **Forgetting the `<app>` prefix** → cpp.js auto-creates `/memfs/<app>/automounted` at startup. If you write to `/memfs/foo` (no `<app>`) it works but won't be cleaned up on `terminate`.
+2. **Forgetting the `<app>` prefix** → crossbind auto-creates `/memfs/<app>/automounted` at startup. If you write to `/memfs/foo` (no `<app>`) it works but won't be cleaned up on `terminate`.
 3. **Assuming OPFS persists across origins** — it doesn't. Files written from `app.example.com` are invisible to `other.example.com`. Standard origin isolation.
 4. **Using `m.FS` from before `onRuntimeInitialized`** — `m.FS` is undefined until init completes. Use the `onRuntimeInitialized: (m) => {…}` hook or await the `init(...)` promise first.
 5. **Calling `fs:{ opfs: false }` and then mounting `/opfs/...`** → throws: "OPFS is disabled. Enable fs.opfs in config to mount under /opfs/."
@@ -128,4 +128,4 @@ imgEl.src = url
 
 - [`init.md`](./init.md) — `useWorker`, `fs.opfs` options.
 - [`threading.md`](./threading.md) — `useWorker` is independent of threading.
-- Source: `cppjs-core/cpp.js/src/assets/js-runtime/adapters/fs-browser.js` (the OPFS guards).
+- Source: `core/crossbind/src/assets/js-runtime/adapters/fs-browser.js` (the OPFS guards).

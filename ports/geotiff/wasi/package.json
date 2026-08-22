@@ -1,0 +1,35 @@
+{
+    "name": "@crossbind/port-geotiff-wasi",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "1.7.4",
+    "description": "WASI build of the precompiled libgeotiff (GeoTIFF) library, built with crossbind. Use it together with the main package @crossbind/port-geotiff.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/geotiff#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "MIT",
+    "keywords": [
+        "geotiff",
+        "libgeotiff",
+        "gis",
+        "geospatial",
+        "crossbind",
+        "crossbind-package",
+        "webassembly",
+        "wasi"
+    ],
+    "scripts": {
+        "build": "crossbind build -p wasi",
+        "e2e": "node e2e/run.mjs",
+        "clear": "rm -rf .crossbind dist",
+        "prepublishOnly": "crossbind build -p wasi"
+    },
+    "dependencies": {
+        "@crossbind/port-geotiff": "workspace:^",
+        "@crossbind/port-proj-wasi": "workspace:^",
+        "@crossbind/port-tiff-wasi": "workspace:^",
+        "@crossbind/port-zlib-wasi": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

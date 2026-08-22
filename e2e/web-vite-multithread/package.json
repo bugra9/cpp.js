@@ -1,0 +1,50 @@
+{
+    "name": "@crossbind/e2e-web-vite-multithread",
+    "version": "0.0.0",
+    "private": true,
+    "description": "crossbind Vite Playground",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/e2e/web-vite#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "serve": "serve dist -c ../serve.json",
+        "e2e:dev": "playwright test --config playwright.dev.config.cjs",
+        "e2e:prod": "playwright test --config playwright.prod.config.cjs"
+    },
+    "dependencies": {
+        "vue": "^3.5.41",
+        "@crossbind/port-curl-wasm": "workspace:^",
+        "@crossbind/port-expat-wasm": "workspace:^",
+        "@crossbind/port-gdal-wasm": "workspace:^",
+        "@crossbind/port-geos-wasm": "workspace:^",
+        "@crossbind/port-geotiff-wasm": "workspace:^",
+        "@crossbind/port-iconv-wasm": "workspace:^",
+        "@crossbind/port-openssl-wasm": "workspace:^",
+        "@crossbind/port-proj-wasm": "workspace:^",
+        "@crossbind/port-spatialite-wasm": "workspace:^",
+        "@crossbind/port-sqlite3-wasm": "workspace:^",
+        "@crossbind/port-tiff-wasm": "workspace:^",
+        "@crossbind/port-webp-wasm": "workspace:^",
+        "@crossbind/port-zlib-wasm": "workspace:^",
+        "@crossbind/embind-rust-demo": "workspace:^",
+        "@crossbind/conformance": "workspace:^"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-vue": "^6.0.8",
+        "vite": "^8.2.1",
+        "@playwright/test": "^1.62.1",
+        "@crossbind/plugin-vite": "workspace:^"
+    },
+    "keywords": [
+        "crossbind-sample",
+        "webassembly",
+        "bind",
+        "c++",
+        "vue",
+        "vite"
+    ]
+}

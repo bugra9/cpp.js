@@ -1,0 +1,25 @@
+{
+    "name": "@crossbind/example-backend-nodejs-wasm",
+    "private": true,
+    "version": "0.0.0",
+    "description": "crossbind - Node.js webassembly sample",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/examples/backend-nodejs-wasm#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "license": "MIT",
+    "scripts": {
+        "build": "crossbind build -p wasm -a wasm32 -r st -e node -b release"
+    },
+    "dependencies": {
+        "@crossbind/example-lib-prebuilt-matrix": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    },
+    "keywords": [
+        "crossbind-sample",
+        "node",
+        "webassembly",
+        "bind",
+        "c++"
+    ]
+}

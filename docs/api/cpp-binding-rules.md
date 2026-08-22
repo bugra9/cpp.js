@@ -1,13 +1,13 @@
-# C++ Binding Rules — write C++ that cpp.js can auto-bind
+# C++ Binding Rules — write C++ that crossbind can auto-bind
 
-> cpp.js generates JS bindings automatically. There are no `EMSCRIPTEN_BINDINGS` macros to hand-write. But the generator only handles a constrained subset of C++. Stay inside that subset and you get binding-for-free; step outside and you'll need a wrapper or a SWIG escape (`swig-escape.md`).
+> crossbind generates JS bindings automatically. There are no `EMSCRIPTEN_BINDINGS` macros to hand-write. But the generator only handles a constrained subset of C++. Stay inside that subset and you get binding-for-free; step outside and you'll need a wrapper or a SWIG escape (`swig-escape.md`).
 
 This doc tells you the rules. **For the canonical type table** (which JS type maps to which C++ type, with `toArray`/`toVector` examples), use the website:
 
-- `https://cpp.js.org/docs/api/cpp-bindings/overview`
-- `https://cpp.js.org/docs/api/cpp-bindings/data-types`
+- `https://crossbind.dev/docs/api/cpp-bindings/overview`
+- `https://crossbind.dev/docs/api/cpp-bindings/data-types`
 
-This page covers what the website doesn't: the **rules** an agent must follow when writing C++ that cpp.js will bind.
+This page covers what the website doesn't: the **rules** an agent must follow when writing C++ that crossbind will bind.
 
 ## The hard rules
 
@@ -25,7 +25,7 @@ void process(const std::vector<int>& data);
 std::string getName();
 ```
 
-cpp.js doesn't expose pointer arithmetic, lifetime, or aliasing semantics to JS. If your library uses raw pointers, you have two options:
+crossbind doesn't expose pointer arithmetic, lifetime, or aliasing semantics to JS. If your library uses raw pointers, you have two options:
 
 - **Wrap it** (preferred — see [§ Wrapper pattern](#wrapper-pattern) below).
 - **Hide it behind a SWIG `.i` file** (escape hatch — see `swig-escape.md`).
@@ -93,7 +93,7 @@ The auto-binder needs concrete types. Add `template class Buffer<T>;` declaratio
 
 ### 6. Memory + lifecycle is C++-side
 
-You **don't** call `m.delete()` in JS. cpp.js doesn't expose raw pointers, so JS-side manual cleanup isn't required. C++ destructors and `shared_ptr` reference counting handle it. See `lifecycle-and-types.md`.
+You **don't** call `m.delete()` in JS. crossbind doesn't expose raw pointers, so JS-side manual cleanup isn't required. C++ destructors and `shared_ptr` reference counting handle it. See `lifecycle-and-types.md`.
 
 ### 7. Exceptions: thrown C++ exceptions become JS exceptions
 
@@ -154,15 +154,15 @@ class CleanWrapper {
 };
 ```
 
-cpp.js binds `CleanWrapper`; the raw type stays internal.
+crossbind binds `CleanWrapper`; the raw type stays internal.
 
-### B. Lib-side wrapper (when authoring a `cppjs-package-*`)
+### B. Lib-side wrapper (when authoring a `ports/*`)
 
-If you're writing a reusable `@cpp.js/package-X`, put the wrapper inside the package's source folder so all consumers benefit:
+If you're writing a reusable `@crossbind/port-X`, put the wrapper inside the package's source folder so all consumers benefit:
 
 ```
-cppjs-package-mylib/
-└── cppjs-package-mylib-wasm/
+ports/mylib/
+└── wasm/
     └── src/native/
         └── wrapper.h        # exposed binding API
 ```
@@ -171,9 +171,9 @@ App-side wrapper is the default; lib-side only when you're publishing a package.
 
 ## Advanced: JSPI flag (experimental)
 
-The Emscripten `-sJSPI` flag enables JavaScript Promise Integration — letting C++ code call into JS-promising code synchronously (the C++ stack suspends on `await`). The living demos are `cppjs-playground-backend-nodejs` and `cppjs-playground-backend-nodejs-multithread` (Node, run with `--experimental-wasm-jspi`), where a `_JSPI` method performs a curl request over the network.
+The Emscripten `-sJSPI` flag enables JavaScript Promise Integration — letting C++ code call into JS-promising code synchronously (the C++ stack suspends on `await`). The living demos are `e2e/backend-nodejs` and `e2e/backend-nodejs-multithread` (Node, run with `--experimental-wasm-jspi`), where a `_JSPI` method performs a curl request over the network.
 
-You'd opt in via `targetSpecs[].specs.emccFlags` in `cppjs.config.js`:
+You'd opt in via `targetSpecs[].specs.emccFlags` in `crossbind.config.js`:
 
 ```js
 targetSpecs: [{
@@ -184,7 +184,7 @@ targetSpecs: [{
 
 ### Naming rule: `_JSPI` suffix
 
-Once `-sJSPI` is enabled, **any C++ method or function that should be JSPI-wrapped must end with `_JSPI`**. The cpp.js auto-binder detects the suffix and emits `emscripten::async()` on the binding so the call returns a `Promise` on the JS side and the C++ stack can suspend mid-execution.
+Once `-sJSPI` is enabled, **any C++ method or function that should be JSPI-wrapped must end with `_JSPI`**. The crossbind auto-binder detects the suffix and emits `emscripten::async()` on the binding so the call returns a `Promise` on the JS side and the C++ stack can suspend mid-execution.
 
 ```cpp
 // native.h
@@ -200,15 +200,15 @@ The auto-generated bridge becomes:
 
 ```cpp
 .class_function("sample", &Native::sample)
-#ifdef CPPJS_JSPI
+#ifdef CROSSBIND_JSPI
 .class_function("ops_JSPI", &Native::ops_JSPI, emscripten::async())
 #endif
-#ifdef CPPJS_JSPI
+#ifdef CROSSBIND_JSPI
 .class_function("listVirtualFiles_JSPI", &Native::listVirtualFiles_JSPI, emscripten::async())
 #endif
 ```
 
-Every async registration is guarded behind `CPPJS_JSPI`, which cpp.js defines only for targets whose `emccFlags` include `-sJSPI`. One bridge file serves every target of a package, so on a target **without** the flag a `_JSPI` binding is simply absent on the JS side — the build logs `_JSPI bindings skipped: this target links without -sJSPI` — instead of aborting emsdk DEBUG builds at embind registration time ("Async bindings are only supported with JSPI").
+Every async registration is guarded behind `CROSSBIND_JSPI`, which crossbind defines only for targets whose `emccFlags` include `-sJSPI`. One bridge file serves every target of a package, so on a target **without** the flag a `_JSPI` binding is simply absent on the JS side — the build logs `_JSPI bindings skipped: this target links without -sJSPI` — instead of aborting emsdk DEBUG builds at embind registration time ("Async bindings are only supported with JSPI").
 
 On the JS side, call the function with the suffix preserved and `await` it:
 
@@ -246,6 +246,6 @@ Three escape hatches, in order of preference:
 ## See also
 
 - [`swig-escape.md`](./swig-escape.md) — when and how to write a manual SWIG `.i` file.
-- [`lifecycle-and-types.md`](./lifecycle-and-types.md) — why JS-side `m.delete()` isn't a thing in cpp.js.
-- [`cppjs-config.md`](./cppjs-config.md) — `targetSpecs[]` for emccFlags overrides like `-sJSPI`.
-- Website: [Type table](https://cpp.js.org/docs/api/cpp-bindings/data-types), [Classes & functions](https://cpp.js.org/docs/api/cpp-bindings/overview).
+- [`lifecycle-and-types.md`](./lifecycle-and-types.md) — why JS-side `m.delete()` isn't a thing in crossbind.
+- [`crossbind-config.md`](./crossbind-config.md) — `targetSpecs[]` for emccFlags overrides like `-sJSPI`.
+- Website: [Type table](https://crossbind.dev/docs/api/cpp-bindings/data-types), [Classes & functions](https://crossbind.dev/docs/api/cpp-bindings/overview).

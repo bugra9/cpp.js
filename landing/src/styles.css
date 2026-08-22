@@ -1,0 +1,423 @@
+:root {
+    --page-max: 1280px;
+    /* Every band uses this as its horizontal padding, so growing it past the gutter on wide
+       screens both caps the content at --page-max and centres it. The % resolves against the
+       containing block rather than the viewport, which keeps it scrollbar-safe. */
+    --page-x: max(56px, calc((100% - var(--page-max)) / 2));
+    --card-p: 48px;
+    /* THE column: every band - plain text, card outlines, the hero code block - starts here,
+       so all big blocks share one width. Card text insets a further --card-p inside its box.
+       Derived, so the mobile overrides below carry through. */
+    --content-x: calc(var(--page-x) + 1px + var(--card-p));
+    --nav-gap: 40px;
+    --nav-y: 20px;
+}
+
+/* Shared by landing and guide cards. */
+.feat-card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.feat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+}
+
+.feat-card:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+}
+
+.feat-card:active {
+    transform: translateY(-1px);
+}
+
+.feature-section {
+    padding: 56px var(--content-x) 88px;
+}
+
+.feature-all-link {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.feature-all-link:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 4px;
+}
+
+.feature-matrix {
+    overflow: hidden;
+    border-radius: 18px;
+}
+
+.feature-matrix-header {
+    display: flex;
+    min-height: 72px;
+    padding: 18px 24px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.feature-matrix-label,
+.feature-matrix-title {
+    display: block;
+}
+
+.feature-matrix-label {
+    margin: 0 0 5px;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 1.4px;
+}
+
+.feature-matrix-title {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.feature-matrix-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px;
+    padding: 8px 24px 28px;
+}
+
+.feature-matrix-group-header {
+    display: flex;
+    min-height: 76px;
+    margin-top: 12px;
+    padding: 12px 0 10px;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.feature-matrix-group-title {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.feature-matrix-group-hint {
+    max-width: 42ch;
+    margin: 7px 0 0 25px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.feature-matrix-group-count {
+    padding-top: 2px;
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+.feature-matrix-list {
+    display: grid;
+}
+
+.feature-matrix-item {
+    display: block;
+    padding: 16px 0;
+    border-top: 1px solid;
+}
+
+.feature-matrix-item-heading {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: baseline;
+    font-size: 14px;
+}
+
+.feature-matrix-item:hover .feature-matrix-item-heading strong,
+.feature-matrix-item:focus-visible .feature-matrix-item-heading strong {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.feature-matrix-item:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+}
+
+.feature-matrix-copy,
+.feature-matrix-tags {
+    display: block;
+    margin-left: 38px;
+}
+
+.feature-matrix-copy {
+    margin-top: 8px;
+    font-size: 13.5px;
+    line-height: 1.6;
+}
+
+.feature-matrix-tags {
+    margin-top: 9px;
+    font-size: 11px;
+    line-height: 1.5;
+    letter-spacing: 0.6px;
+}
+
+.feature-matrix-extras {
+    padding: 24px;
+    border-top: 1px solid;
+}
+
+.feature-matrix-extras h3 {
+    margin: 0 0 14px;
+    font-size: 15px;
+}
+
+.feature-matrix-extras ul {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 24px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.feature-matrix-extras li {
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.feature-footer {
+    display: flex;
+    min-height: 72px;
+    padding: 18px 4px 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 36px;
+    border-bottom: 1px solid;
+}
+
+.feature-footer p {
+    max-width: 740px;
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.55;
+}
+
+.feature-all-link {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+}
+
+/* WCAG 2.2 target size (2.5.8) is 24px; the mobile block below raises it to a thumb-sized 44. */
+.tap-target {
+    min-height: 24px;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* The link row needs ~950px before it stops wrapping the header onto a second line. It goes
+   earlier than the rest of the mobile layout because the footer carries the same links. */
+@media (max-width: 950px) {
+    .nav-links {
+        display: none !important;
+    }
+}
+
+/* Both gutters stack into --content-x, so on a narrow screen they have to stay small or the
+   text column pays for them twice. 0 + 12 leaves 12px before every block.
+   The !important rules exist because every component styles itself inline, and an inline
+   style beats a class; this block is the one place allowed to override them. */
+@media (max-width: 860px) {
+    :root {
+        --page-x: 0px;
+        --card-p: 12px;
+        --nav-gap: 0px;
+        /* The header is one row here, so its padding is the only thing making it tall. */
+        --nav-y: 10px;
+        --content-x: calc(var(--page-x) + var(--card-p));
+    }
+
+    /* Touch targets: 44px is the smallest comfortable one on a phone. */
+    .tap-target {
+        min-height: 44px !important;
+        min-width: 44px !important;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .feature-section {
+        padding: 48px var(--content-x) 72px;
+    }
+
+    .feature-matrix-header {
+        padding: 16px 18px;
+    }
+
+    .feature-matrix-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .feature-matrix-grid,
+    .feature-matrix-extras {
+        padding-right: 18px;
+        padding-left: 18px;
+    }
+
+    .feature-matrix-copy {
+        font-size: 16px;
+    }
+
+    .feature-matrix-tags {
+        font-size: 12px;
+    }
+
+    .feature-matrix-extras ul {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .feature-footer {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+        padding-bottom: 18px;
+    }
+}
+
+@media (max-width: 560px) {
+    .feature-matrix-extras ul {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #070b14;
+    color: #e7ebf3;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+button {
+    font-family: inherit;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+/* ::backdrop cannot be reached from an inline style attribute, so it lives here. */
+.prompt-dialog::backdrop {
+    background: rgba(4, 6, 12, 0.72);
+    backdrop-filter: blur(3px);
+}
+
+/* Off-screen until focused, so keyboard users can jump past the nav. */
+.skip-link {
+    position: absolute;
+    left: 12px;
+    top: -60px;
+    z-index: 20;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: #e7ebf3;
+    color: #070b14;
+    font-size: 14px;
+    font-weight: 600;
+    transition: top 0.15s;
+}
+
+.skip-link:focus {
+    top: 12px;
+}
+
+/* Guide (src/guide/): the three-column doc layout. Components style themselves inline from the
+   theme tokens, but columns and breakpoints need media queries, so they live here. The class
+   names mirror gdal3.js's doc pages, which is where this layout comes from. */
+.doc-grid {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr) 200px;
+    /* Kept tight on purpose: the article column has to stay wide enough for a three-up card
+       grid on the hub once both rails are on screen. */
+    gap: clamp(20px, 3vw, 44px);
+    align-items: start;
+}
+
+.doc-side,
+.doc-toc {
+    position: sticky;
+    /* Clears the sticky header; .doc-main headings reserve the same room for anchor jumps. */
+    top: 86px;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+}
+
+.doc-main {
+    max-width: 760px;
+    min-width: 0;
+}
+
+/* Not enough room for a third column: the page toc goes first. */
+@media (max-width: 1100px) {
+    .doc-grid {
+        grid-template-columns: 210px minmax(0, 1fr);
+    }
+
+    .doc-toc {
+        display: none !important;
+    }
+}
+
+/* One column: the sidebar folds into a menu the button opens. */
+@media (max-width: 900px) {
+    .doc-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .doc-side {
+        display: none !important;
+        position: static;
+        max-height: none;
+    }
+
+    .doc-side[data-open='true'] {
+        display: flex !important;
+    }
+
+    /* The mobile .tap-target rule centres a target's content, which is right for a button and
+       wrong for a menu: these links stay flush left, and keep the 44px height. */
+    .doc-side a {
+        justify-content: flex-start !important;
+    }
+
+    .doc-menu-btn {
+        display: inline-flex !important;
+        justify-self: start;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

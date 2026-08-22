@@ -11,22 +11,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { listFamilies, portDir } from './lib/ports.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const PKGROOT = path.join(ROOT, 'cppjs-packages');
 const STRICT = process.argv.includes('--check');
 
-const families = fs
-    .readdirSync(PKGROOT)
-    .filter((d) => d.startsWith('cppjs-package-'))
-    .map((d) => d.replace('cppjs-package-', ''))
-    .sort();
+const families = listFamilies(ROOT);
 
 const missing = [];
 let checked = 0;
 
 for (const family of families) {
-    const buildMjs = path.join(PKGROOT, `cppjs-package-${family}`, `cppjs-package-${family}`, 'build.mjs');
+    const buildMjs = path.join(portDir(ROOT, family), 'build.mjs');
     if (!fs.existsSync(buildMjs)) continue;
     const recipe = (await import(pathToFileURL(buildMjs).href)).default;
     if (typeof recipe?.getURL !== 'function') continue; // prebuilt-only, nothing downloaded
@@ -37,11 +33,11 @@ for (const family of families) {
 }
 
 if (missing.length === 0) {
-    console.log(`cppjs: source hashes OK — every source-building package pins a sha256 (${checked} packages).`);
+    console.log(`crossbind: source hashes OK — every source-building package pins a sha256 (${checked} packages).`);
     process.exit(0);
 }
 
-console.error('cppjs: packages that download their source but do NOT pin a sha256:\n');
-missing.forEach((f) => console.error(`  - @cpp.js/package-${f}`));
+console.error('crossbind: packages that download their source but do NOT pin a sha256:\n');
+missing.forEach((f) => console.error(`  - @crossbind/port-${f}`));
 console.error(`\nRun: node scripts/pin-source-hash.js ${missing.join(' ')}`);
 process.exit(STRICT ? 1 : 0);

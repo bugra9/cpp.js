@@ -1,0 +1,30 @@
+{
+    "name": "@crossbind/port-expat-wasm",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "2.8.3",
+    "description": "WebAssembly build of the precompiled Expat XML parser library, built with crossbind. Use it together with the main package @crossbind/port-expat.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/expat#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "MIT",
+    "keywords": [
+        "expat",
+        "libexpat",
+        "xml",
+        "crossbind",
+        "crossbind-package",
+        "webassembly",
+        "wasm"
+    ],
+    "scripts": {
+        "build": "crossbind build -p wasm",
+        "clear": "rm -rf .crossbind dist *.xcframework",
+        "prepublishOnly": "crossbind build -p wasm"
+    },
+    "dependencies": {
+        "@crossbind/port-expat": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

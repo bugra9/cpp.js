@@ -24,9 +24,9 @@ labels: ['enhancement', 'needs-triage']
 
 ## Scope hints
 
-- [ ] Touches `cppjs-core/cpp.js/` (CLI / build orchestration)
-- [ ] Touches `cppjs-plugins/*`
-- [ ] New / modified `cppjs-package-*`
+- [ ] Touches `core/crossbind/` (CLI / build orchestration)
+- [ ] Touches `plugins/*`
+- [ ] New / modified `ports/*`
 - [ ] New runtime adapter (Deno, Bun, …)
 - [ ] New bundler integration
 - [ ] Docs / playbooks only

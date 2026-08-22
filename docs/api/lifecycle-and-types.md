@@ -4,7 +4,7 @@
 
 ## Memory & object lifecycle: there's nothing to manage in JS
 
-cpp.js doesn't expose raw pointers across the JS↔C++ boundary (see [`cpp-binding-rules.md`](./cpp-binding-rules.md) Rule 1). Because of that, **you don't call `m.delete()` or release any C++ object from JS**. The lifecycle is entirely C++-side:
+crossbind doesn't expose raw pointers across the JS↔C++ boundary (see [`cpp-binding-rules.md`](./cpp-binding-rules.md) Rule 1). Because of that, **you don't call `m.delete()` or release any C++ object from JS**. The lifecycle is entirely C++-side:
 
 - Objects passed by value to JS get copied; the C++ original is destroyed normally.
 - Objects returned as `std::shared_ptr<T>` are reference-counted. JS holds a strong reference; when JS-side reference goes out of scope (garbage collected), the shared_ptr count drops, and C++ destructor runs when the count hits zero.
@@ -16,10 +16,10 @@ cpp.js doesn't expose raw pointers across the JS↔C++ boundary (see [`cpp-bindi
 ```js
 const v = m.someFunc()    // returns a vector
 const arr = m.toArray(v)
-v.delete()                 // ❌ NOT a thing in cpp.js
+v.delete()                 // ❌ NOT a thing in crossbind
 ```
 
-The auto-binder doesn't expose `.delete()` because there's no raw pointer to clean up. If you see `.delete()` patterns in stock embind tutorials, ignore them — those are for raw embind, not cpp.js.
+The auto-binder doesn't expose `.delete()` because there's no raw pointer to clean up. If you see `.delete()` patterns in stock embind tutorials, ignore them — those are for raw embind, not crossbind.
 
 ### When C++ has a long-lived resource
 
@@ -52,15 +52,15 @@ Standard JS rules apply. If a JS proxy of a C++ shared_ptr captures a closure th
 
 ## TypeScript: `.d.ts` is generated for your imports
 
-cpp.js emits declaration files for the native modules you import — C++ headers
+crossbind emits declaration files for the native modules you import — C++ headers
 (`./native/native.h`), app-local Rust files (`./native/x.rs`) and `cargo:`
-crate imports — under `.cppjs/types/` and `.cppjs/rust-crates/types/`, never
+crate imports — under `.crossbind/types/` and `.crossbind/rust-crates/types/`, never
 next to your sources. Wire them once by extending the shared config
-(`npm i -D @cpp.js/typescript-config`, TS 5.5+):
+(`npm i -D @crossbind/typescript-config`, TS 5.5+):
 
 ```jsonc
 // tsconfig.json
-{ "extends": "@cpp.js/typescript-config" }
+{ "extends": "@crossbind/typescript-config" }
 ```
 
 What you get per import: classes with constructor/method signatures for the
@@ -75,7 +75,7 @@ export list itself always comes from the bridge, so names are never missing.
 1. **Worker mode wraps calls in Promises — set `dts: 'promise'`.** By default
    generated signatures describe the direct (sync) surface; with
    `useWorker: true` every call returns a Promise at runtime. Declare it in
-   `cppjs.config.js`:
+   `crossbind.config.js`:
 
    ```js
    export default { dts: 'promise', /* ... */ }
@@ -89,7 +89,7 @@ export list itself always comes from the bridge, so names are never missing.
 
 2. **Package headers are not mirrored on the consumer side** — the package
    itself publishes them: set `types: true` in the package's
-   `cppjs.config.js` and its build emits one combined declaration over every
+   `crossbind.config.js` and its build emits one combined declaration over every
    public header into `dist/types/index.d.ts`, wiring `types` +
    `typesVersions` in package.json automatically (worker-first packages
    combine it with `dts: 'promise'`). Only the runtime module surface

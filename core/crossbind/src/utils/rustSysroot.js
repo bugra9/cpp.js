@@ -1,0 +1,119 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import withDirLock from './dirLock.js';
+import { downloadFile, verifyIntegrity } from './downloadAndExtractFile.js';
+
+// The second consumption channel for the Rust sysroots: containerized builds get them as an image
+// layer, a host build (RUNNER=LOCAL) downloads the same tree as a sha256-pinned artifact. Same
+// pattern as the wasi-sdk/wasmtime pins - verify before unpacking, never let the archive choose
+// where its files land, and key the cache by digest so two versions can coexist.
+
+const SCHEMA = 1;
+
+export function sysrootRoot() {
+    return path.join(os.homedir(), '.crossbind', 'rust-sysroot');
+}
+
+// The rlibs carry the producing compiler's metadata hash: a sysroot is only consumable by the
+// exact rustc that built it, so the manifest is checked against the host before anything links.
+export function hostRustc() {
+    const probe = spawnSync('rustc', ['-vV'], { encoding: 'utf8' });
+    if (probe.status !== 0) {
+        throw new Error('crossbind: rustc not found on PATH - install Rust (https://rustup.rs) to build Rust packages.');
+    }
+    const read = (key) => probe.stdout.match(new RegExp(`^${key}: (.+)$`, 'm'))?.[1]?.trim();
+    return { version: read('release'), commit: read('commit-hash') };
+}
+
+export function assertManifest(manifest, host = hostRustc()) {
+    if (manifest?.schema !== SCHEMA) {
+        throw new Error(`crossbind: rust sysroot manifest schema ${manifest?.schema ?? '(missing)'} is not supported (expected ${SCHEMA}).`);
+    }
+    for (const variant of ['st', 'mt']) {
+        if (!manifest.variants?.[variant]) {
+            throw new Error(`crossbind: rust sysroot artifact is missing the '${variant}' variant.`);
+        }
+    }
+    if (manifest.rustc !== host.version || manifest.rustcCommit !== host.commit) {
+        throw new Error(
+            'crossbind: the rust sysroot artifact was built by a different compiler than the one on PATH.\n'
+            + `  artifact: rustc ${manifest.rustc} (${String(manifest.rustcCommit).slice(0, 12)})\n`
+            + `  host:     rustc ${host.version} (${String(host.commit).slice(0, 12)})\n`
+            + 'Prebuilt rlibs are only consumable by the exact compiler that produced them - install the pinned toolchain.',
+        );
+    }
+    return manifest;
+}
+
+function readManifest(dir) {
+    return JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
+}
+
+// The archive is an image filesystem export, so the tree sits at opt/crossbind/rust/<version>.
+function findSysrootTree(extracted) {
+    const versions = path.join(extracted, 'opt', 'crossbind', 'rust');
+    const entries = fs.existsSync(versions) ? fs.readdirSync(versions) : [];
+    const found = entries
+        .map((version) => path.join(versions, version))
+        .find((dir) => fs.existsSync(path.join(dir, 'manifest.json')));
+    if (!found) {
+        throw new Error('crossbind: the rust sysroot archive contains no opt/crossbind/rust/<version>/manifest.json.');
+    }
+    return found;
+}
+
+function extractTo(archive, work) {
+    fs.mkdirSync(work, { recursive: true });
+    const tar = spawnSync('tar', ['-xf', archive, '-C', work], { encoding: 'utf8' });
+    if (tar.error) throw new Error(`crossbind: cannot run tar to extract ${archive}: ${tar.error.message}`);
+    if (tar.status !== 0) {
+        throw new Error(`crossbind: extracting the rust sysroot archive failed: ${(tar.stderr || '').trim() || `tar exited ${tar.status}`}`);
+    }
+}
+
+// Returns the directory holding {st,mt,manifest.json}, downloading it once per digest.
+export default async function ensureRustSysroot({
+    url, sha256, root = sysrootRoot(), host,
+}) {
+    if (!sha256) throw new Error('crossbind: a rust sysroot artifact must be pinned by sha256.');
+    const check = (manifest) => assertManifest(manifest, host ?? hostRustc());
+    const dest = path.join(root, sha256);
+    if (fs.existsSync(path.join(dest, 'manifest.json'))) {
+        check(readManifest(dest));
+        return dest;
+    }
+
+    fs.mkdirSync(root, { recursive: true });
+    return withDirLock(`${dest}.lock`, async () => {
+        // Another build may have finished it while this one waited for the lock.
+        if (fs.existsSync(path.join(dest, 'manifest.json'))) {
+            check(readManifest(dest));
+            return dest;
+        }
+        const work = fs.mkdtempSync(path.join(root, '.staging-'));
+        try {
+            const archive = await downloadFile(url, path.join(work, 'download'));
+            verifyIntegrity(archive, url, sha256);
+            const extracted = path.join(work, 'extract');
+            extractTo(archive, extracted);
+            const tree = findSysrootTree(extracted);
+            check(readManifest(tree));
+            // Atomic: a reader either sees no directory at all or a complete, verified one.
+            fs.renameSync(tree, dest);
+        } finally {
+            fs.rmSync(work, { recursive: true, force: true });
+        }
+        return dest;
+    });
+}
+
+// The directory rustc's --sysroot is pointed at for a given runtime.
+export function sysrootPath(dir, variant) {
+    const target = path.join(dir, variant);
+    if (!fs.existsSync(target)) {
+        throw new Error(`crossbind: the rust sysroot at ${dir} has no '${variant}' variant.`);
+    }
+    return target;
+}

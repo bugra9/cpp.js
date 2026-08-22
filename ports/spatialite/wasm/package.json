@@ -1,0 +1,37 @@
+{
+    "name": "@crossbind/port-spatialite-wasm",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "5.1.0",
+    "description": "WebAssembly build of the precompiled SpatiaLite (spatial SQLite extension) library, built with crossbind. Use it together with the main package @crossbind/port-spatialite.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/spatialite#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "MPL-1.1 OR GPL-2.0-or-later OR LGPL-2.1-or-later",
+    "keywords": [
+        "spatialite",
+        "libspatialite",
+        "sqlite",
+        "spatial",
+        "gis",
+        "crossbind",
+        "crossbind-package",
+        "webassembly",
+        "wasm"
+    ],
+    "scripts": {
+        "build": "crossbind build -p wasm",
+        "clear": "rm -rf .crossbind dist *.xcframework",
+        "prepublishOnly": "crossbind build -p wasm"
+    },
+    "dependencies": {
+        "@crossbind/port-spatialite": "workspace:^",
+        "@crossbind/port-geos-wasm": "workspace:^",
+        "@crossbind/port-proj-wasm": "workspace:^",
+        "@crossbind/port-sqlite3-wasm": "workspace:^",
+        "@crossbind/port-zlib-wasm": "workspace:^",
+        "@crossbind/port-iconv-wasm": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

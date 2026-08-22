@@ -5,13 +5,13 @@
 ## Quick start
 
 ```bash
-# fastest: point cpp.js at a local wasi-sdk (>= 34 - the wasm32-wasip3 sysroot is required)
-#   ~/.cppjs.json →  { "WASI_SDK_PATH": "/opt/wasi-sdk" }
-#   or per-run:      CPPJS_WASI_SDK_PATH=/opt/wasi-sdk cppjs build -p wasi
+# fastest: point crossbind at a local wasi-sdk (>= 34 - the wasm32-wasip3 sysroot is required)
+#   ~/.crossbind.json →  { "WASI_SDK_PATH": "/opt/wasi-sdk" }
+#   or per-run:      CROSSBIND_WASI_SDK_PATH=/opt/wasi-sdk crossbind build -p wasi
 # zero-config otherwise: with no WASI_SDK_PATH set, the build runs inside the
-# cpp.js docker image (>= 0.3.4), which ships the sdk at /opt/wasi-sdk
+# crossbind docker image (>= 0.3.4), which ships the sdk at /opt/wasi-sdk
 
-cppjs build -p wasi -b release
+crossbind build -p wasi -b release
 wasmtime run --dir=. dist/<name>-wasi-wasm32-st-release.wasm arg1
 ```
 
@@ -32,7 +32,7 @@ archives are dead-code-eliminated down to what `main` reaches, and the
 | Network | FETCH / websocket bridges | `wasi:sockets` — grant with `-S inherit-network=y -S allow-ip-name-lookup=y -S tcp=y` |
 | Prebuilt ABI | emscripten sysroot | **incompatible** — packages need `wasi-wasm32-*` prebuilt variants |
 
-## Toolchain contract (what cpp.js injects)
+## Toolchain contract (what crossbind injects)
 
 - Compile (C and C++): `--target=wasm32-wasip3 -D_WASI_EMULATED_SIGNAL -D_WASI_EMULATED_PROCESS_CLOCKS -D_WASI_EMULATED_MMAN -D_WASI_EMULATED_GETPID -mexception-handling -mllvm -wasm-enable-sjlj -mllvm -wasm-use-legacy-eh=false` (+ `-fwasm-exceptions` for C++). The explicit `--target` matters: the sdk's clang still defaults to wasip1. The `-mexception-handling` target feature is what unlocks wasi-libc's `setjmp.h`; engines only run the standard EH format, hence the legacy toggle.
 - Link (after every archive — order matters): `-lunwind -lsetjmp -lwasi-emulated-*`, plus `assets/wasi-runtime/stubs.c` (clean-failing `dlopen` family, no-op `pthread_atfork`).
@@ -41,7 +41,7 @@ archives are dead-code-eliminated down to what `main` reaches, and the
 ## Prebuilt packages
 
 Every library package has a dedicated wasi platform package —
-`@cpp.js/package-<name>-wasi`, next to its `-wasm`/`-android`/`-ios`
+`@crossbind/port-<name>-wasi`, next to its `-wasm`/`-android`/`-ios`
 siblings — carrying the `wasi-wasm32-st-release` prebuilt: zlib, sqlite3,
 tiff, geotiff, proj, gdal, jpegturbo, zstd, lerc, webp, expat, geos, iconv,
 spatialite, openssl and curl. openssl builds against a custom `wasi-p3`
@@ -53,7 +53,7 @@ path baked in (pass `CURLOPT_CAINFO`; the openssl prebuilt ships
 Depend on the `-wasi` variant when targeting wasi; `pnpm build` inside such
 a package refreshes its prebuilt under the same wasi-sdk requirement as app
 builds. GDAL's `__wasi__` source patches (no processes, no `mkstemp`)
-travel inside its recipe, so a plain `cppjs build -p wasi` is all that is
+travel inside its recipe, so a plain `crossbind build -p wasi` is all that is
 needed.
 
 Each `-wasi` package ships a standalone use case under `e2e/` (`pnpm e2e`,
@@ -69,32 +69,32 @@ the wasmtime socket grants). The scripts SKIP politely when the wasi-sdk
 ## Prebuilt CLI tools (`-bin-wasi` packages)
 
 Where the upstream ships command-line tools, a separate
-`@cpp.js/package-<name>-bin-wasi` package carries them prebuilt — install
+`@crossbind/port-<name>-bin-wasi` package carries them prebuilt — install
 from npm and run, no compiler involved:
 
 ```bash
-npm i -g @cpp.js/package-gdal-bin-wasi   # or npx/pnpm dlx
+npm i -g @crossbind/port-gdal-bin-wasi   # or npx/pnpm dlx
 gdalinfo-wasi --version                  # wasmtime must be on PATH
 ```
 
 Every tool is exposed as a `<tool>-wasi` npm command (the suffix keeps a
 native install unshadowed). The launcher is not hand-written per package:
-each shim imports the runner from cpp.js itself
-(`cpp.js/src/runtime/wasiRun.mjs`), which resolves the target path, the
+each shim imports the runner from crossbind itself
+(`crossbind/src/runtime/wasiRun.mjs`), which resolves the target path, the
 `--dir` mounts and the guest env at call time from the package's
-`cppjs.config.js` graph (the same `targetSpecs` `data`/`env` declarations
+`crossbind.config.js` graph (the same `targetSpecs` `data`/`env` declarations
 used for builds — e.g. the proj family declares `PROJ_DATA`, the gdal
 family `GDAL_DATA`, openssl `CURL_CA_BUNDLE`). Tool surfaces are declared
 once, as data, in the recipe's `bin` map; the engine derives the npm
-commands, `.npmignore`, a pure-data `cppjs-bin.json` and — when the map
+commands, `.npmignore`, a pure-data `crossbind-bin.json` and — when the map
 marks multicall entries — a single multitool binary that carries every
 tool (gdal packs 29 tools into one `bin/gdal` for +240 KB).
 
 The rules, schemas and enforcement behind these packages (bin map,
-derived NOTICE/SBOM, `cppjs.provenance`, the derived compound `license`
+derived NOTICE/SBOM, `crossbind.provenance`, the derived compound `license`
 field) live in the Bin & License Contract:
-[`cppjs-packages/README.md`](../../cppjs-packages/README.md).
-`cppjs licenses --notices --sbom --platform wasi` regenerates the
+[`ports/README.md`](../../ports/README.md).
+`crossbind licenses --notices --sbom --platform wasi` regenerates the
 third-party notices and the CycloneDX SBOM next to each prebuilt.
 
 ## Limits

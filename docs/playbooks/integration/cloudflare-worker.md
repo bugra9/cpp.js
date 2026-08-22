@@ -4,7 +4,7 @@
 
 ## Goal
 
-Compile cpp.js for the **edge** runtime so it loads inside a Worker (limited Node API surface, no DOM, no Workers' own `WebAssembly.compileStreaming` quirks). Wrangler dev + deploy ship the wasm + js loader as Worker assets.
+Compile crossbind for the **edge** runtime so it loads inside a Worker (limited Node API surface, no DOM, no Workers' own `WebAssembly.compileStreaming` quirks). Wrangler dev + deploy ship the wasm + js loader as Worker assets.
 
 ## When to use
 
@@ -16,20 +16,20 @@ Compile cpp.js for the **edge** runtime so it loads inside a Worker (limited Nod
 
 | File | Role |
 |------|------|
-| `package.json` | + `cpp.js`; `wrangler` already present |
-| `cppjs.config.{js,mjs}` *(new at root)* | Project-level cpp.js config |
+| `package.json` | + `crossbind`; `wrangler` already present |
+| `crossbind.config.{js,mjs}` *(new at root)* | Project-level crossbind config |
 | `wrangler.toml` | Already present; ensure `main` points at the user's entry |
-| `<entry>.js` (e.g. `index.js`) | Imports the cpp.js loader, exports a Worker handler |
+| `<entry>.js` (e.g. `index.js`) | Imports the crossbind loader, exports a Worker handler |
 | `dist/<name>.edge.{js,wasm}` | Build output, shipped by Wrangler |
 
 ## Commands
 
 ```bash
-pnpm add -D cpp.js
-pnpm add @cpp.js/package-<name>     # optional
+pnpm add -D crossbind
+pnpm add @crossbind/port-<name>     # optional
 
 # Build (target: edge)
-pnpm cppjs build -p wasm -a wasm32 -r st -e edge -b release
+pnpm crossbind build -p wasm -a wasm32 -r st -e edge -b release
 
 # Dev
 pnpm wrangler dev
@@ -42,14 +42,14 @@ The build produces `dist/<name>.edge.js` + `dist/<name>.edge.wasm`. Wrangler bun
 
 ## Reference setup
 
-Mirror `cppjs-samples/cppjs-sample-cloud-cloudflare-worker/`.
+Mirror `examples/cloud-cloudflare-worker/`.
 
 `package.json` scripts (canonical):
 
 ```jsonc
 {
   "scripts": {
-    "build": "cppjs build -p wasm -a wasm32 -r st -e edge -b release",
+    "build": "crossbind build -p wasm -a wasm32 -r st -e edge -b release",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy"
   }
@@ -64,7 +64,7 @@ main = "index.js"
 compatibility_date = "2024-09-08"
 ```
 
-`cppjs.config.mjs`:
+`crossbind.config.mjs`:
 
 ```js
 export default {
@@ -80,12 +80,12 @@ Worker entry `index.js`:
 ```js
 import initNative from './dist/my-worker.edge.js';
 
-let cppJsPromise;
+let crossbindPromise;
 
 export default {
     async fetch(request) {
-        cppJsPromise ??= initNative();
-        const Module = await cppJsPromise;
+        crossbindPromise ??= initNative();
+        const Module = await crossbindPromise;
         const result = Module.someFn();
         return new Response(JSON.stringify({ result }), {
             headers: { 'content-type': 'application/json' },
@@ -98,9 +98,9 @@ Init lazily (`??=`) so the wasm compiles once per isolate, not per request.
 
 ## Wasm asset wiring
 
-cpp.js's edge build uses `instantiateWasm` with the wasm bytes, **not** `fetch()` — Workers don't have arbitrary `fetch()` for local files. The build embeds the wasm via the bundler's import resolution. If you see "wasm not found", confirm:
+crossbind's edge build uses `instantiateWasm` with the wasm bytes, **not** `fetch()` — Workers don't have arbitrary `fetch()` for local files. The build embeds the wasm via the bundler's import resolution. If you see "wasm not found", confirm:
 
-- Wrangler's compatibility flags include `nodejs_compat` only if the user's code needs it; cpp.js itself does not require it for `-e edge`.
+- Wrangler's compatibility flags include `nodejs_compat` only if the user's code needs it; crossbind itself does not require it for `-e edge`.
 - Wrangler's `rules` (or `[[rules]]` in `.toml`) include a binding for `*.wasm` if you import wasm explicitly elsewhere.
 
 ## Multithread
@@ -122,13 +122,13 @@ If the user insists on multithread, route them to a Node backend (`docs/playbook
 - **Targeting `-e node` or `-e browser` instead of `-e edge`.** Workers reject Node-only APIs (`fs`, `process`, etc.) that the node bundle relies on; the edge bundle is trimmed for Workers compat.
 - **Trying multithread (`-r mt`).** Won't work. Drop to `-r st`.
 - **Loading wasm at module top-level via `await`.** Some Workers configurations do allow top-level await but cold-start blows up. Lazy init in `fetch` handler is safer.
-- **Wrangler `compatibility_date` too old.** Some cpp.js features (BigInt64, async iterators) require recent runtime. Use `2024-09-08` or newer.
+- **Wrangler `compatibility_date` too old.** Some crossbind features (BigInt64, async iterators) require recent runtime. Use `2024-09-08` or newer.
 - **CPU time limits.** Free-tier Workers cap CPU at 10ms — large wasm computations may need paid tier or an alternative (Cloudflare Containers, Durable Objects).
-- **Missing Wrangler `assets` config** when bundling `*.wasm`. cpp.js's loader handles this internally for the standard layout; don't double-declare wasm bindings unless you import wasm elsewhere.
+- **Missing Wrangler `assets` config** when bundling `*.wasm`. crossbind's loader handles this internally for the standard layout; don't double-declare wasm bindings unless you import wasm elsewhere.
 
 ## Reference samples
 
-- `cppjs-samples/cppjs-sample-cloud-cloudflare-worker/` — canonical Worker reference
-- `cppjs-samples/cppjs-playground-cloud-cloudflare-worker/` — bigger demo with more packages
+- `examples/cloud-cloudflare-worker/` — canonical Worker reference
+- `e2e/cloud-cloudflare-worker/` — bigger demo with more packages
 
-Edge runtime adapter: `cppjs-core/cpp.js/src/assets/js-runtime/edge.js`.
+Edge runtime adapter: `core/crossbind/src/assets/js-runtime/edge.js`.

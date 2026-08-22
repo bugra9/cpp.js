@@ -1,6 +1,6 @@
 # Performance — defaults, what's safe to override, what to leave alone
 
-> cpp.js picks production-grade defaults for every Emscripten and CMake flag. **Most apps should change nothing.** This doc lists every default cpp.js sets, marks each as "safe to override" or "don't touch", and shows when to reach for a tweak.
+> crossbind picks production-grade defaults for every Emscripten and CMake flag. **Most apps should change nothing.** This doc lists every default crossbind sets, marks each as "safe to override" or "don't touch", and shows when to reach for a tweak.
 
 The rule: **if your build runs and your app works, the defaults are fine**. Only touch performance flags after measuring. AI agents should resist the urge to "optimize" defaults proactively.
 
@@ -21,13 +21,13 @@ The rule: **if your build runs and your app works, the defaults are fine**. Only
 | `-fwasm-exceptions` | always | C++ exceptions via Wasm EH | 🔒 Required for proper `throw` semantics |
 | `-sWASM_BIGINT=1` | always | BigInt for i64 | 🔒 Required for modern browsers |
 | `-sWASM=1` | always | Output wasm (not asm.js) | 🔒 Don't touch |
-| `-sMODULARIZE=1` | always | ES module wrapper | 🔒 cpp.js bundling depends on this |
+| `-sMODULARIZE=1` | always | ES module wrapper | 🔒 crossbind bundling depends on this |
 | `-sDYNAMIC_EXECUTION=0` | always | Disable eval / new Function | 🔒 Required for CSP-strict environments |
 | `-sRESERVED_FUNCTION_POINTERS=200` | always | Function table size | ⚠️ Increase if "Cannot enlarge function table" error |
 | `-sALLOW_MEMORY_GROWTH=1` | always | Heap can grow at runtime | 🔒 Don't disable |
-| `-sFORCE_FILESYSTEM=1` | browser, node | Always include FS | 🔒 cpp.js fs adapters depend on this |
+| `-sFORCE_FILESYSTEM=1` | browser, node | Always include FS | 🔒 crossbind fs adapters depend on this |
 | `-sWASMFS` | browser, node | New filesystem backend | 🔒 OPFS depends on this |
-| `-sEXPORT_NAME=Module2` | always | JS namespace name | 🔒 cpp.js bundling depends on this |
+| `-sEXPORT_NAME=Module2` | always | JS namespace name | 🔒 crossbind bundling depends on this |
 
 ### Per-runtimeEnv flags
 
@@ -58,7 +58,7 @@ The rule: **if your build runs and your app works, the defaults are fine**. Only
 | Android API | 33 | CMake flag |
 | iOS deployment | 13.0 | CMake flag |
 | Bitcode | embedded (release) / marker (debug) | iOS only |
-| Emscripten cache | `~/.cppjs/emscripten/` | Docker volume |
+| Emscripten cache | `~/.crossbind/emscripten/` | Docker volume |
 
 ## What's safe to override
 
@@ -67,7 +67,7 @@ The rule: **if your build runs and your app works, the defaults are fine**. Only
 If you allocate large objects on startup (loading a model, opening a large geo dataset), the runtime grows memory dynamically — but you'll see growth pauses. Pre-allocating reduces pauses:
 
 ```js
-// cppjs.config.js
+// crossbind.config.js
 targetSpecs: [{
     platform: 'wasm',
     specs: { emccFlags: ['-sINITIAL_MEMORY=64MB'] },
@@ -81,7 +81,7 @@ Sweet spot: pre-allocate ~2× your steady-state usage. Going higher just delays 
 Browser cap is ~4GB on wasm32. If you genuinely need more (large geospatial / scientific datasets), use **wasm64** target instead:
 
 ```js
-// cppjs.config.js
+// crossbind.config.js
 target: { arch: 'wasm64' }
 ```
 
@@ -151,7 +151,7 @@ targetSpecs: [{
 }]
 ```
 
-Don't go below 12.0 — older iOS lacks the C++17 standard library features cpp.js auto-generated code uses.
+Don't go below 12.0 — older iOS lacks the C++17 standard library features crossbind auto-generated code uses.
 
 ### `JSPI` (experimental, Chrome-only)
 
@@ -170,7 +170,7 @@ Cost: larger Wasm binary (~10-20% bigger), slower call boundary. Only enable if 
 
 ### `-O3` (release)
 
-Always use `-O3` in release. Don't switch to `-O2` or `-Os` thinking you'll get a smaller binary — `-O3` produces faster *and* often smaller output for typical C++ workloads. cpp.js's bundler also runs additional dead-code elimination after Emscripten.
+Always use `-O3` in release. Don't switch to `-O2` or `-Os` thinking you'll get a smaller binary — `-O3` produces faster *and* often smaller output for typical C++ workloads. crossbind's bundler also runs additional dead-code elimination after Emscripten.
 
 ### `-fwasm-exceptions`
 
@@ -178,11 +178,11 @@ Required. Without it, C++ exceptions either silently abort or use the slower leg
 
 ### `-sFORCE_FILESYSTEM=1`, `-sWASMFS`
 
-Required. cpp.js's fs adapters (browser-fs, node-fs) depend on these. Disabling breaks `m.FS.*`.
+Required. crossbind's fs adapters (browser-fs, node-fs) depend on these. Disabling breaks `m.FS.*`.
 
 ### `-sMODULARIZE=1`, `-sEXPORT_NAME=Module2`
 
-Required. cpp.js's runtime entry assumes the modular wrapper with this exact export name.
+Required. crossbind's runtime entry assumes the modular wrapper with this exact export name.
 
 ### `-sDYNAMIC_EXECUTION=0`
 
@@ -196,7 +196,7 @@ Already optimal for Wasm. Removing it removes a free 2-4× speedup on supported 
 
 ### "I'll switch to `-Os` for smaller bundle"
 
-`-O3 + bundler-side dead code elimination` already produces smaller binaries than `-Os` for typical apps. Measure before assuming. cpp.js's plugins also strip debug symbols / dwarf data in release.
+`-O3 + bundler-side dead code elimination` already produces smaller binaries than `-Os` for typical apps. Measure before assuming. crossbind's plugins also strip debug symbols / dwarf data in release.
 
 ### "I'll disable `ALLOW_MEMORY_GROWTH` for predictable allocation"
 
@@ -204,7 +204,7 @@ You'll just hit "out of memory" in the first user interaction that needs more th
 
 ### "I'll disable `WASMFS` since I don't need files"
 
-cpp.js's adapter layer assumes `m.FS` exists. Disabling breaks even simple operations like reading a file you bundled into the `.data` preload.
+crossbind's adapter layer assumes `m.FS` exists. Disabling breaks even simple operations like reading a file you bundled into the `.data` preload.
 
 ### "I'll remove `-fwasm-exceptions` since my code doesn't throw"
 
@@ -219,7 +219,7 @@ Each pthread is a Web Worker with its own WASM instance — bumping pool size to
 Before reaching for any override, measure:
 
 1. **Browser DevTools Performance tab** — timing breakdown of JS / Wasm calls.
-2. **Wasm-side `printf`** — quick timestamps with `console.debug` (cpp.js's `print` hook).
+2. **Wasm-side `printf`** — quick timestamps with `console.debug` (crossbind's `print` hook).
 3. **Memory tab** — heap profile to see allocation patterns.
 4. **Lighthouse / PageSpeed** — Wasm bundle download is part of FCP / LCP.
 
@@ -232,4 +232,4 @@ Don't optimize speculatively. The defaults handle 99% of workloads.
 - [`overrides.md`](./overrides.md) — full override mechanism catalog.
 - [`troubleshooting.md`](./troubleshooting.md) — out-of-memory and codegen errors.
 - [`cpp-binding-rules.md`](./cpp-binding-rules.md) — JSPI flag (advanced).
-- Source: `cppjs-core/cpp.js/src/actions/buildWasm.js`, `getCmakeParameters.js`.
+- Source: `core/crossbind/src/actions/buildWasm.js`, `getCmakeParameters.js`.

@@ -1,0 +1,5 @@
+{
+    "name": "@crossbind/example-extension-pthread",
+    "private": true,
+    "main": "index.mjs"
+}

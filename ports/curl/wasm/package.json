@@ -1,0 +1,32 @@
+{
+    "name": "@crossbind/port-curl-wasm",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "8.21.0",
+    "description": "WebAssembly build of the precompiled libcurl (CURL) library, built with crossbind. Use it together with the main package @crossbind/port-curl.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/curl#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "curl",
+    "keywords": [
+        "curl",
+        "libcurl",
+        "http",
+        "networking",
+        "crossbind",
+        "crossbind-package",
+        "webassembly",
+        "wasm"
+    ],
+    "scripts": {
+        "build": "crossbind build -p wasm",
+        "clear": "rm -rf .crossbind dist *.xcframework",
+        "prepublishOnly": "crossbind build -p wasm"
+    },
+    "dependencies": {
+        "@crossbind/port-curl": "workspace:^",
+        "@crossbind/port-openssl-wasm": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

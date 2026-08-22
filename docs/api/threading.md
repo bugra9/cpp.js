@@ -30,7 +30,7 @@ useWorker: true     │ Wasm in 1 Web Worker.│ Wasm in 1 Web Worker;
 
 ## Setting `runtime: 'mt'`
 
-In `cppjs.config.js`:
+In `crossbind.config.js`:
 
 ```js
 export default {
@@ -67,8 +67,8 @@ console.log(typeof SharedArrayBuffer)  // must be 'function'
 
 | Host | Config |
 |------|--------|
-| Vite dev / preview | Auto-injected by `@cpp.js/plugin-vite` |
-| Webpack / Rspack dev server | Auto-injected by `@cpp.js/plugin-webpack` |
+| Vite dev / preview | Auto-injected by `@crossbind/plugin-vite` |
+| Webpack / Rspack dev server | Auto-injected by `@crossbind/plugin-webpack` |
 | Vercel | Add to `vercel.json`: `{ "headers": [{ "source": "/(.*)", "headers": [{ "key": "Cross-Origin-Opener-Policy", "value": "same-origin" }, { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }] }] }` |
 | Netlify | Add to `_headers`: `/*\n  Cross-Origin-Opener-Policy: same-origin\n  Cross-Origin-Embedder-Policy: require-corp` |
 | Cloudflare Pages | `_headers` file (same syntax as Netlify) |
@@ -127,7 +127,7 @@ You don't need it when:
 | OPFS storage | Throws | Works (if browser supports) |
 | Termination | n/a | `init.terminate()` kills the worker |
 
-Embind objects (vectors, structs) are auto-proxied via cpp.js's custom Comlink transfer handlers. `m.toArray(vec)` and `m.toVector(cls, arr)` work transparently.
+Embind objects (vectors, structs) are auto-proxied via crossbind's custom Comlink transfer handlers. `m.toArray(vec)` and `m.toVector(cls, arr)` work transparently.
 
 ## Edge runtime limits (Cloudflare Workers, Deno Deploy, Vercel Edge)
 
@@ -154,7 +154,7 @@ Pthreads are routed through JSI (no `SharedArrayBuffer`, no COOP/COEP). `runtime
 
 ## See also
 
-- [`init.md`](./init.md) — `useWorker`, `runtime` (via `cppjs.config.js`), `getWasmFunction`.
-- [`cppjs-config.md`](./cppjs-config.md) — `target.runtime: 'st' | 'mt'`.
+- [`init.md`](./init.md) — `useWorker`, `runtime` (via `crossbind.config.js`), `getWasmFunction`.
+- [`crossbind-config.md`](./crossbind-config.md) — `target.runtime: 'st' | 'mt'`.
 - [`filesystem.md`](./filesystem.md) — why OPFS depends on `useWorker`.
 - `docs/playbooks/integration/*.md` — per-framework COOP/COEP setup.

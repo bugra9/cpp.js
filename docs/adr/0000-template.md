@@ -33,5 +33,5 @@ If there were no real alternatives, write that. If the decision is reversible, n
 ## See also
 
 - Related ADRs: ADR-NNNN, ADR-NNNN
-- Related code: `path/to/file.js`, `cppjs-packages/cppjs-package-X/`
+- Related code: `path/to/file.js`, `ports/X/`
 - External references: links, issues, PRs

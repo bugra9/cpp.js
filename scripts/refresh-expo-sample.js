@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Refresh the workspace-excluded, registry-pinned Expo sample with the LOCAL
- * @cpp.js/* workspace packages.
+ * @crossbind/* workspace packages.
  *
  * The sample pins published versions, so workspace changes never reach it via
  * `npm install`. This script pnpm-packs every workspace package in the sample's
@@ -17,8 +17,8 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
-const DEFAULT_SAMPLE = 'cppjs-samples/cppjs-sample-mobile-reactnative-expo';
-const GROUP_DIRS = ['cppjs-core', 'cppjs-plugins', 'cppjs-extensions', 'cppjs-samples'];
+const DEFAULT_SAMPLE = 'examples/mobile-reactnative-expo';
+const GROUP_DIRS = ['core', 'tooling', 'plugins', 'examples', 'e2e'];
 
 function addPackage(map, dir) {
     const pkgPath = path.join(dir, 'package.json');
@@ -36,7 +36,7 @@ function workspacePackages() {
             if (entry.isDirectory()) addPackage(map, path.join(groupDir, entry.name));
         }
     }
-    const familiesDir = path.join(REPO_ROOT, 'cppjs-packages');
+    const familiesDir = path.join(REPO_ROOT, 'ports');
     if (fs.existsSync(familiesDir)) {
         for (const family of fs.readdirSync(familiesDir, { withFileTypes: true })) {
             if (!family.isDirectory()) continue;
@@ -80,7 +80,7 @@ function main() {
     console.log(`Workspace closure (${names.length}): ${names.join(', ')}`);
     if (isDryRun) return;
 
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cppjs-refresh-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-refresh-'));
     const tarballs = names.map((name) => {
         const dir = workspace.get(name);
         execFileSync('pnpm', ['pack', '--pack-destination', tmpDir], { cwd: dir, stdio: ['ignore', 'ignore', 'inherit'] });

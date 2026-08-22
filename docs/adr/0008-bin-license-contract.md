@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-27 (K1-K3), completed 2026-08-06 (K4 + placement)
-- **Affects:** `cppjs-packages/README.md` (the contract), `cppjs-core/cpp.js/src/actions/{buildBinTools,licenses}.js`, `src/utils/{binTools,provenance,licenseReport,familyManifest}.js`, `scripts/{check-publish-hygiene,generate-third-party}.js`
+- **Affects:** `ports/README.md` (the contract), `core/crossbind/src/actions/{buildBinTools,licenses}.js`, `src/utils/{binTools,provenance,licenseReport,familyManifest}.js`, `scripts/{check-publish-hygiene,generate-third-party}.js`
 
 ## Context
 
@@ -17,20 +17,20 @@ and how was it built?".
 
 Everything a binary-publishing package ships is **derived from single
 sources and machine-enforced** — the Bin & License Contract
-(`cppjs-packages/README.md`), four rules:
+(`ports/README.md`), four rules:
 
 - **K1** — library packages never publish executables (checker gate over
   `npm pack` output).
 - **K2** — `-bin` packages declare their tool surface as data (the recipe
   `bin` map); the engine derives npm commands, `.npmignore`,
-  `cppjs-bin.json` and the multicall multitool.
+  `crossbind-bin.json` and the multicall multitool.
 - **K3** — NOTICE/SBOM are derived at build time from recipe metadata
-  (`cppjs licenses`), keyed per variant, never hand-written.
-- **K4** — `-bin` packages carry a derived `cppjs.provenance` block and a
+  (`crossbind licenses`), keyed per variant, never hand-written.
+- **K4** — `-bin` packages carry a derived `crossbind.provenance` block and a
   derived compound `license` field (the AND of every statically linked
   component's effective license).
 
-Placement: the distribution's home is cpp.js — users install the `-bin`
+Placement: the distribution's home is crossbind — users install the `-bin`
 package directly; no product-package wrapper. The contract is
 placement-independent: if that ever changes, the rules travel with the
 binaries.
@@ -52,12 +52,12 @@ binaries.
   is exactly what humans get wrong; a correct NOTICE on the wrong variant is
   worse than none.
 - **Post-hoc SBOM scanners (syft-class)** — rejected as the source of truth:
-  they guess from the finished artifact; cpp.js knows the link-time ground
+  they guess from the finished artifact; crossbind knows the link-time ground
   truth.
 - **"Build but don't publish" for library executables** — rejected: don't
   build at all; no licensed artifact should ever exist in dist.
 
 ## See also
 
-- Related code: `cppjs-packages/README.md`, `docs/playbooks/licensing-lgpl.md`
+- Related code: `ports/README.md`, `docs/playbooks/licensing-lgpl.md`
 - Related ADRs: ADR-0005 (wasi platform)

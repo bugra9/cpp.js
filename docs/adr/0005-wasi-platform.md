@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-14 (wasip1), moved to wasm32-wasip3 2026-07-21
-- **Affects:** `cppjs-core/cpp.js/src/actions/buildWasiCommand.js`, `src/utils/{targets,wasiToolchain}.js`, `src/assets/wasi-runtime/stubs.c`, `src/runtime/wasiRun.mjs`, every `cppjs-package-*-wasi` / `-bin-wasi`, CI (`build-linux.yml`)
+- **Affects:** `core/crossbind/src/actions/buildWasiCommand.js`, `src/utils/{targets,wasiToolchain}.js`, `src/assets/wasi-runtime/stubs.c`, `src/runtime/wasiRun.mjs`, every `ports/*/wasi` / `ports/*/bin-wasi`, CI (`build-linux.yml`)
 
 ## Context
 
@@ -16,7 +16,7 @@ exception-handling proposal.
 
 ## Decision
 
-`platform: 'wasi'` is a first-class target: `cppjs build -p wasi` produces a
+`platform: 'wasi'` is a first-class target: `crossbind build -p wasi` produces a
 single WASI command component (`wasm32-wasip3`) with `main()` as the entry —
 no bridge, no JS glue. Concrete rules:
 
@@ -26,7 +26,7 @@ no bridge, no JS glue. Concrete rules:
   (`-fwasm-exceptions -mexception-handling -mllvm -wasm-enable-sjlj
   -mllvm -wasm-use-legacy-eh=false`).
 - Toolchain is dual-mode: host wasi-sdk when `WASI_SDK_PATH` /
-  `CPPJS_WASI_SDK_PATH` is configured, otherwise the digest-pinned docker
+  `CROSSBIND_WASI_SDK_PATH` is configured, otherwise the digest-pinned docker
   image carries the sdk (zero-config).
 - Prebuilts are ABI-separate: every library family ships a dedicated `-wasi`
   platform package; wasm prebuilts are never reused.
@@ -52,9 +52,9 @@ no bridge, no JS glue. Concrete rules:
   (sockets, components) is heading; the full library matrix passed on p3 with
   byte-identical outputs, so the migration cost was already paid.
 - **Separate tool instead of a platform** — rejected: the recipe/dependency
-  graph, patches and data handling are exactly cpp.js's existing machinery.
+  graph, patches and data handling are exactly crossbind's existing machinery.
 
 ## See also
 
-- Related code: `docs/api/wasi.md`, `cppjs-packages/README.md`
+- Related code: `docs/api/wasi.md`, `ports/README.md`
 - Related ADRs: ADR-0008 (bin & license contract)

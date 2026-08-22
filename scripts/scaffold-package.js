@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Generate a new cppjs-package-<name>/ family by copying the cppjs-package-zlib
- * skeleton and rewriting "zlib" references.
+ * Generate a new ports/<name>/ family by copying the ports/zlib skeleton and
+ * rewriting "zlib" references.
  *
  * Usage:
  *   node scripts/scaffold-package.js <name> [options]
@@ -10,12 +10,12 @@
  *   <name>            Package short name. Lowercase, no spaces. (e.g. libsodium)
  *
  * Options:
- *   --scope <scope>   Either "@cpp.js" (in-repo) or "" (unscoped community).
- *                     Default: "@cpp.js" if invoked from inside this repo,
+ *   --scope <scope>   Either "@crossbind" (in-repo) or "" (unscoped community).
+ *                     Default: "@crossbind" if invoked from inside this repo,
  *                     otherwise prompts the user to be explicit.
  *   --license <id>    SPDX license identifier for the wrapper. Default: MIT.
  *   --lib <name>      Linked library short name (the "z" in libz.a). Default: <name>.
- *   --output <dir>    Where to create the package family. Default: cppjs-packages/.
+ *   --output <dir>    Where to create the port family. Default: ports/.
  *   --force           Overwrite an existing target directory.
  *
  * Example:
@@ -27,7 +27,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
-const TEMPLATE_DIR = path.join(ROOT, 'cppjs-packages', 'cppjs-package-zlib');
+const TEMPLATE_DIR = path.join(ROOT, 'ports', 'zlib');
 const TEMPLATE_SHORT = 'zlib';
 const TEMPLATE_LIB = 'z';
 
@@ -45,10 +45,10 @@ if (!NAME || !/^[a-z][a-z0-9-]*$/.test(NAME)) {
     process.exit(1);
 }
 
-const SCOPE = arg('--scope') ?? '@cpp.js';
+const SCOPE = arg('--scope') ?? '@crossbind';
 const LICENSE = arg('--license') ?? 'MIT';
 const LIB = arg('--lib') ?? NAME;
-const OUTPUT_DIR = arg('--output') ?? path.join(ROOT, 'cppjs-packages');
+const OUTPUT_DIR = arg('--output') ?? path.join(ROOT, 'ports');
 const FORCE = args.includes('--force');
 
 if (SCOPE && !/^@[a-z][a-z0-9.\-_]*$/.test(SCOPE)) {
@@ -56,15 +56,16 @@ if (SCOPE && !/^@[a-z][a-z0-9.\-_]*$/.test(SCOPE)) {
     process.exit(1);
 }
 
-const targetFamily = path.join(OUTPUT_DIR, `cppjs-package-${NAME}`);
+const targetFamily = path.join(OUTPUT_DIR, NAME);
 if (fs.existsSync(targetFamily) && !FORCE) {
     process.stderr.write(`error: ${path.relative(ROOT, targetFamily)} already exists. Use --force to overwrite.\n`);
     process.exit(1);
 }
 
 // ---- Filename + content rewrite rules ----
+// Only the iOS podspec carries the family name; the ports/<family>/<target> dirs do not.
 function rewriteName(s) {
-    return s.replaceAll(`cppjs-package-${TEMPLATE_SHORT}`, `cppjs-package-${NAME}`);
+    return s.replaceAll(`port-${TEMPLATE_SHORT}`, `port-${NAME}`);
 }
 
 function rewriteContent(s, relPath) {
@@ -77,11 +78,9 @@ function rewriteContent(s, relPath) {
             return s;
         }
         if (pkg.name) {
-            pkg.name = pkg.name
-                .replace(`cppjs-package-${TEMPLATE_SHORT}`, `cppjs-package-${NAME}`)
-                .replace(`package-${TEMPLATE_SHORT}`, `package-${NAME}`);
-            if (SCOPE === '') pkg.name = pkg.name.replace(/^@cpp\.js\//, '');
-            else if (SCOPE !== '@cpp.js') pkg.name = pkg.name.replace(/^@cpp\.js\//, `${SCOPE}/`);
+            pkg.name = pkg.name.replace(`port-${TEMPLATE_SHORT}`, `port-${NAME}`);
+            if (SCOPE === '') pkg.name = pkg.name.replace(/^@crossbind\//, '');
+            else if (SCOPE !== '@crossbind') pkg.name = pkg.name.replace(/^@crossbind\//, `${SCOPE}/`);
         }
         if ('version' in pkg) pkg.version = '0.1.0';
         if ('nativeVersion' in pkg) pkg.nativeVersion = '';
@@ -95,16 +94,16 @@ function rewriteContent(s, relPath) {
         // strip workspace deps that obviously don't apply yet
         if (pkg.dependencies) {
             for (const dep of Object.keys(pkg.dependencies)) {
-                if (dep.startsWith(`@cpp.js/package-${TEMPLATE_SHORT}`)) delete pkg.dependencies[dep];
+                if (dep.startsWith(`@crossbind/port-${TEMPLATE_SHORT}`)) delete pkg.dependencies[dep];
             }
         }
         return `${JSON.stringify(pkg, null, 4)}\n`;
     }
 
     // Generic text: replace zlib short and z lib token
-    let out = s.replaceAll(`cppjs-package-${TEMPLATE_SHORT}`, `cppjs-package-${NAME}`);
-    if (SCOPE === '') out = out.replaceAll(`@cpp.js/package-${NAME}`, `cppjs-package-${NAME}`);
-    else if (SCOPE !== '@cpp.js') out = out.replaceAll('@cpp.js/package-', `${SCOPE}/package-`);
+    let out = s.replaceAll(`port-${TEMPLATE_SHORT}`, `port-${NAME}`);
+    if (SCOPE === '') out = out.replaceAll('@crossbind/port-', 'crossbind-port-');
+    else if (SCOPE !== '@crossbind') out = out.replaceAll('@crossbind/port-', `${SCOPE}/port-`);
 
     // The lib short name "z" appears in cmake / podspec contexts. Be conservative
     // — replace it only when it sits alongside lib-style spellings.
@@ -121,7 +120,7 @@ function rewriteContent(s, relPath) {
 }
 
 // ---- Walk template, copy with rewrites, skip build artifacts ----
-const SKIP_DIRS = new Set(['node_modules', '.cppjs', 'dist']);
+const SKIP_DIRS = new Set(['node_modules', '.crossbind', 'dist']);
 const SKIP_SUFFIXES = ['.xcframework'];
 
 let copied = 0;
@@ -163,7 +162,7 @@ if (fs.existsSync(targetFamily) && FORCE) {
 
 copyDir(TEMPLATE_DIR, targetFamily);
 
-const finalName = SCOPE ? `${SCOPE}/package-${NAME}` : `cppjs-package-${NAME}`;
+const finalName = SCOPE ? `${SCOPE}/port-${NAME}` : `crossbind-port-${NAME}`;
 
 process.stdout.write(
     [
@@ -172,13 +171,13 @@ process.stdout.write(
         `  → ${path.relative(ROOT, targetFamily)}`,
         '',
         'Next steps:',
-        '  1. Edit cppjs.build.js in each sub-arch to fetch + build your library:',
-        `     ${path.relative(ROOT, path.join(targetFamily, `cppjs-package-${NAME}-wasm/cppjs.build.js`))}`,
+        '  1. Edit crossbind.build.js in each sub-arch to fetch + build your library:',
+        `     ${path.relative(ROOT, path.join(targetFamily, 'wasm/crossbind.build.js'))}`,
         '  2. Set the upstream version:',
         '     pnpm run check:native -- --update',
         `  3. Add C++ deps your library needs to each sub-arch's package.json "dependencies".`,
         '  4. Build:',
-        `     pnpm --filter='${SCOPE || ''}${SCOPE ? '/' : ''}package-${NAME}*' run build`,
+        `     pnpm --filter='${SCOPE || ''}${SCOPE ? '/' : ''}port-${NAME}*' run build`,
         '  5. See docs/playbooks/new-package.md for the full author flow.',
         '',
     ].join('\n'),

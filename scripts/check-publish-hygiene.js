@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // K1 gate: library packages must not publish executables - fail if any npm tarball
 // would carry dist/prebuilt/**/bin/ files beyond *-config scripts. -bin packages are
-// exempt for entries their bin map declares publish:true (package.json "cppjs.bin").
-// K2 gate: a package shipping bin commands must depend on cpp.js - the shims import
+// exempt for entries their bin map declares publish:true (package.json "crossbind.bin").
+// K2 gate: a package shipping bin commands must depend on crossbind - the shims import
 // the runner from it, and a devDependency passes in the workspace but not from npm.
-// K4 gate: packages that publish bin tools must carry a derived cppjs.provenance
+// K4 gate: packages that publish bin tools must carry a derived crossbind.provenance
 // block (recipe, source hash, build environment) and ship the SBOM it points to.
 // K4 needs a built dist; where there is none (fresh checkout, CI) it is reported as
 // not evaluated, so the gate stays honest instead of failing on absent build output.
@@ -15,9 +15,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { portsRoot } from './lib/ports.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const PACKAGES_DIR = path.join(ROOT, 'cppjs-packages');
+const PACKAGES_DIR = portsRoot(ROOT);
 
 const packageDirs = [];
 for (const family of fs.readdirSync(PACKAGES_DIR)) {
@@ -35,9 +36,9 @@ for (const pkgDir of packageDirs) {
     const manifest = JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf8'));
     if (manifest.private) continue;
 
-    // The bin map lives in the recipe (cppjs.build.js), contract C.
+    // The bin map lives in the recipe (crossbind.build.js), contract C.
     let allowed = new Set();
-    const recipeFile = path.join(pkgDir, 'cppjs.build.js');
+    const recipeFile = path.join(pkgDir, 'crossbind.build.js');
     if (fs.existsSync(recipeFile)) {
         const recipe = (await import(pathToFileURL(recipeFile).href)).default;
         allowed = new Set(
@@ -62,11 +63,11 @@ for (const pkgDir of packageDirs) {
         continue;
     }
 
-    // K2: a bin shim imports the runner from cpp.js at runtime, so the engine must be a real
+    // K2: a bin shim imports the runner from crossbind at runtime, so the engine must be a real
     // dependency - a devDependency builds fine in the workspace and breaks every npm install.
-    if (manifest.bin && !manifest.dependencies?.['cpp.js']) {
+    if (manifest.bin && !manifest.dependencies?.['crossbind']) {
         failures += 1;
-        console.error(`K2 violation in ${manifest.name}: ships bin commands but does not depend on cpp.js (the shims import its runner)`);
+        console.error(`K2 violation in ${manifest.name}: ships bin commands but does not depend on crossbind (the shims import its runner)`);
     }
 
     const leaks = files.filter((f) => {
@@ -88,15 +89,15 @@ for (const pkgDir of packageDirs) {
         console.log(`check-publish-hygiene: ${manifest.name}: K4 not evaluated (no dist in tarball - not built here)`);
         notEvaluated += 1;
     } else if (allowed.size > 0) {
-        const provenance = manifest.cppjs?.provenance;
+        const provenance = manifest.crossbind?.provenance;
         const problems = [];
-        if (!provenance) problems.push('missing cppjs.provenance block (run the package build)');
+        if (!provenance) problems.push('missing crossbind.provenance block (run the package build)');
         else {
             if (!provenance.recipe?.name || !provenance.recipe?.version) problems.push('recipe.name/version missing');
             if (!provenance.source?.url || !provenance.source?.sha256) problems.push('source.url/sha256 missing');
             if (!provenance.environment?.dockerImage) problems.push('environment.dockerImage missing');
             if (!provenance.sbom) problems.push('sbom path missing');
-            else if (!files.includes(provenance.sbom)) problems.push(`sbom ${provenance.sbom} not in tarball (run cppjs licenses)`);
+            else if (!files.includes(provenance.sbom)) problems.push(`sbom ${provenance.sbom} not in tarball (run crossbind licenses)`);
             if (manifest.license && !manifest.license.includes(' AND '))
                 problems.push(
                     'license field is a single license for an aggregate binary (expected the derived compound expression - run the package build)',

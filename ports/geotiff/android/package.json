@@ -1,0 +1,36 @@
+{
+    "name": "@crossbind/port-geotiff-android",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "1.7.4",
+    "description": "Android build of the precompiled libgeotiff (GeoTIFF) library, built with crossbind. Use it together with the main package @crossbind/port-geotiff.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/geotiff#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "MIT",
+    "keywords": [
+        "geotiff",
+        "libgeotiff",
+        "gis",
+        "geospatial",
+        "crossbind",
+        "crossbind-package",
+        "android",
+        "react-native"
+    ],
+    "scripts": {
+        "build": "crossbind build -p android",
+        "clear": "rm -rf .crossbind dist *.xcframework",
+        "prepublishOnly": "crossbind build -p android",
+        "build:android": "crossbind build -p android"
+    },
+    "dependencies": {
+        "@crossbind/port-geotiff": "workspace:^",
+        "@crossbind/port-proj-android": "workspace:^",
+        "@crossbind/port-tiff-android": "workspace:^",
+        "@crossbind/port-zlib-android": "workspace:^",
+        "@crossbind/port-jpegturbo-android": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

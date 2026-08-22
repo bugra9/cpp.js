@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * e2e-templates — scaffold every create-cpp.js template and run its real
- * build + e2e suite, the way an end user would after `npm create cpp.js`.
+ * e2e-templates — scaffold every create-crossbind template and run its real
+ * build + e2e suite, the way an end user would after `npm create crossbind`.
  *
  * It pulls the scaffolder either from npm (the published beta) or from a local
  * pack of the working tree, generates each template into tmp/e2e-templates/,
- * installs, builds (Wasm/native via the cpp.js Docker image), and runs the
+ * installs, builds (Wasm/native via the crossbind Docker image), and runs the
  * template's own Playwright / Maestro e2e suite. Anything the host can't do
  * (no Docker, no emulator) is reported as SKIPPED rather than failing the run.
  *
@@ -153,7 +153,7 @@ function printList(plan, caps, flags) {
     const rows = plan.map((i) => [
         i.key,
         i.klass,
-        `cpp.js ${i.scaffoldArgs.slice(1).join(' ')}`,
+        `crossbind ${i.scaffoldArgs.slice(1).join(' ')}`,
         i.buildCaps.join(',') || '—',
         previewAction(i, caps, flags),
     ]);

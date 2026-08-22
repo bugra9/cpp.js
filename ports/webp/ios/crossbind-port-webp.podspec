@@ -1,0 +1,15 @@
+require "json"
+package = JSON.parse(File.read(File.join(__dir__, "package.json")))
+
+Pod::Spec.new do |s|
+  s.module_name  = "webp"
+  s.name         = "crossbind-port-webp"
+  s.version      = package["nativeVersion"]
+  s.summary      = "WebP codec is a library to encode and decode images in WebP format."
+  s.homepage     = "https://developers.google.com/speed/webp"
+  s.author       = "Webp Authors"
+  s.source       = { :http => "https://crossbind.dev" }
+  s.vendored_frameworks = 'webp.xcframework', 'sharpyuv.xcframework'
+  # arm64-only iOS simulator slice; drop x86_64 to avoid linker errors on consumer apps.
+  s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'x86_64' }
+end

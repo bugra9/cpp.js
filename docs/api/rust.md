@@ -5,7 +5,7 @@
 > hand-written glue. Works on web (emscripten embind), iOS and Android
 > (embind-jsi) with the same JS code; `platform: 'wasi'` skips Rust (no
 > wasm32-wasip3 Rust target yet). The wasm `mt` runtime works too but needs
-> nightly Rust: cpp.js rebuilds std with the atomics/bulk-memory features via
+> nightly Rust: crossbind rebuilds std with the atomics/bulk-memory features via
 > `-Zbuild-std` (run `rustup toolchain install nightly --component rust-src`
 > once; without it the build fails with that exact instruction).
 
@@ -14,10 +14,10 @@
 The engine does not depend on the Rust layer — the consumer declares it:
 
 ```bash
-pnpm add -D @cpp.js/core-embind-rust
+pnpm add -D @crossbind/core-embind-rust
 ```
 
-Bundler plugins (`@cpp.js/plugin-vite`, `-rollup`, `-webpack`, `-react-native`) already
+Bundler plugins (`@crossbind/plugin-vite`, `-rollup`, `-webpack`, `-react-native`) already
 carry it as a dependency, so plugin users usually get it transitively. A
 Rust toolchain (`cargo` + the platform targets) must be installed; cargo
 itself is the incremental cache — rebuilds are no-ops when nothing changed.
@@ -27,11 +27,11 @@ itself is the incremental cache — rebuilds are no-ops when nothing changed.
 ### 1. Direct crate import (`cargo:` scheme)
 
 Import straight from a crates.io crate — no local Rust file at all. Declare
-the crate in `cppjs.config.js`, then import with the `cargo:` prefix (the
+the crate in `crossbind.config.js`, then import with the `cargo:` prefix (the
 `node:`/`npm:` convention: the prefix names the store):
 
 ```js
-// cppjs.config.js — top level, next to `dependencies`
+// crossbind.config.js — top level, next to `dependencies`
 cargoDependencies: {
   uuid: '{ version = "1", features = ["v4"] }',
   semver: '1',
@@ -48,7 +48,7 @@ const id = Uuid.newV4().toString()
 const ok = new VersionReq('^1.2').matches(new Version('1.4.0'))
 ```
 
-cpp.js reads the crate's own sources (following `mod` trees, `pub use`
+crossbind reads the crate's own sources (following `mod` trees, `pub use`
 re-exports and enabled feature gates) and generates the bridge crate from
 what it finds. An undeclared `cargo:` import is a hard error — add the
 crate to `cargoDependencies`.
@@ -76,10 +76,10 @@ import { initNative } from './native/native.h';
 import { Hull } from './native/geo_surface.rs'
 ```
 
-### 3. Rust cpp.js package
+### 3. Rust crossbind package
 
-A whole crate published as a cpp.js package: `export.type: 'cargo'` in its
-`cppjs.config.js` (see [`cppjs-config.md`](./cppjs-config.md)). cpp.js runs
+A whole crate published as a crossbind package: `export.type: 'cargo'` in its
+`crossbind.config.js` (see [`crossbind-config.md`](./crossbind-config.md)). crossbind runs
 `cargo build --release --target <triple>` per platform and stages the `.a`
 like any prebuilt; consumers import the package name exactly like a C++
 package. The wasm `mt` prebuilt builds through the same nightly `-Zbuild-std`
@@ -109,37 +109,37 @@ main thread): on worker-backed runtimes (the wasm `mt` default, or
 identity does not survive structured cloning — use `serde_json::Value` there.
 
 The full grammar, wire contract and builder API live in
-`cppjs-core/cppjs-core-embind-rust/README.md`.
+`core/embind-rust/README.md`.
 
 ## Editor types
 
 Generated declarations never live in your source tree — everything sits under
-`.cppjs/`, and the shared `@cpp.js/typescript-config` package wires all of it.
+`.crossbind/`, and the shared `@crossbind/typescript-config` package wires all of it.
 Install it as a direct devDependency and extend it once:
 
 ```jsonc
 // tsconfig.json (TS 5.5+; array form when you already extend another config)
-{ "extends": "@cpp.js/typescript-config" }
-{ "extends": ["@react-native/typescript-config", "@cpp.js/typescript-config"] }
+{ "extends": "@crossbind/typescript-config" }
+{ "extends": ["@react-native/typescript-config", "@crossbind/typescript-config"] }
 ```
 
 Running with `initNative({ useWorker: true })`? Set `dts: 'promise'` in
-`cppjs.config.js` so generated signatures match the async runtime — see
+`crossbind.config.js` so generated signatures match the async runtime — see
 [`lifecycle-and-types.md`](./lifecycle-and-types.md).
 
 Under the hood the fragment carries two different mechanisms: `cargo:` crates
 are non-relative module names, so their declarations are ambient
-(`declare module 'cargo:<name>'`, under `.cppjs/rust-crates/types/`, pulled in
+(`declare module 'cargo:<name>'`, under `.crossbind/rust-crates/types/`, pulled in
 via `include`); `./x.rs` imports are relative and typed by path resolution
 (TypeScript does not allow ambient declarations for relative names), so their
-declarations mirror the project-relative path under `.cppjs/types/` and
+declarations mirror the project-relative path under `.crossbind/types/` and
 `rootDirs` overlays the two roots. Caveats: `include` is overridden (not
 merged) when your tsconfig defines its own — keep
-`.cppjs/rust-crates/types/**/*.d.ts` in yours in that case; and if you
+`.crossbind/rust-crates/types/**/*.d.ts` in yours in that case; and if you
 override `paths.cache`, copy the two settings with your custom path instead.
 
 ## See also
 
-- [`cppjs-config.md`](./cppjs-config.md) — `cargoDependencies`, `export.type: 'cargo'`, `export.crate`.
+- [`crossbind-config.md`](./crossbind-config.md) — `cargoDependencies`, `export.type: 'cargo'`, `export.crate`.
 - [`cpp-binding-rules.md`](./cpp-binding-rules.md) — the C++ counterpart of this page.
-- Canonical demos: `cppjs-samples/cppjs-playground-web-vite` (all three models on web), `cppjs-samples/cppjs-playground-mobile-reactnative-cli` (the same surface on devices), `cppjs-core/cppjs-core-embind-rust/demo` (a cargo-type package).
+- Canonical demos: `e2e/web-vite` (all three models on web), `e2e/mobile-reactnative-cli` (the same surface on devices), `core/embind-rust/demo` (a cargo-type package).

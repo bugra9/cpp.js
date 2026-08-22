@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- This file is the template for every prerendered route, so only tags that are the same on
+         all of them live here. Title, description, canonical, og:title/description/url and the
+         twitter text tags are written per route by src/main.jsx; a copy here would duplicate
+         itself onto all sixteen pages. The title below is the dev-server fallback and mirrors
+         SITE_TITLE in src/data.js. -->
+    <title>crossbind — import C++ and Rust like JavaScript modules</title>
+    <meta name="theme-color" content="#070b14" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="crossbind" />
+    <meta property="og:image" content="https://crossbind.dev/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="crossbind: import C++ and Rust like JavaScript modules" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://crossbind.dev/og.png" />
+
+    <script>
+        // The prerendered markup carries the dark default, so a light-theme visitor would see a
+        // dark flash until hydration. Painting the canvas here, before first paint, avoids it.
+        // Mirrors src/theme.js: THEME_KEY, lightTokens().bg and darkTokens().bg. An inline script
+        // cannot import them, so change all three together (plus <meta name="theme-color"> above).
+        try {
+            var t = localStorage.getItem('crossbind.landing.theme');
+            if (t === 'light' || t === 'dark') {
+                document.documentElement.style.background = t === 'light' ? '#fafaf7' : '#070b14';
+                document.documentElement.style.colorScheme = t;
+            }
+        } catch (e) { /* private mode blocks storage; the default stands */ }
+    </script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" prerender src="/src/main.jsx"></script>
+</body>
+</html>

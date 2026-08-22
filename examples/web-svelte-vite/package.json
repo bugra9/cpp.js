@@ -1,0 +1,35 @@
+{
+    "name": "@crossbind/example-web-svelte-vite",
+    "private": true,
+    "version": "0.0.0",
+    "description": "crossbind Svelte Vite sample",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/examples/web-svelte-vite#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "e2e:dev": "playwright test --config playwright.dev.config.cjs",
+        "e2e:prod": "playwright test --config playwright.prod.config.cjs"
+    },
+    "dependencies": {
+        "@crossbind/example-lib-prebuilt-matrix": "workspace:^"
+    },
+    "devDependencies": {
+        "@sveltejs/vite-plugin-svelte": "^7.3.0",
+        "svelte": "^5.56.8",
+        "vite": "^8.2.1",
+        "@playwright/test": "^1.62.1",
+        "@crossbind/plugin-vite": "workspace:^"
+    },
+    "keywords": [
+        "crossbind-sample",
+        "webassembly",
+        "bind",
+        "c++",
+        "svelte",
+        "vite"
+    ]
+}

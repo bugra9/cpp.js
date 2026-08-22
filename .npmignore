@@ -1,6 +1,6 @@
 LICENSE
 *.xcframework.zip
 *.tgz
-.cppjs
+.crossbind
 ios/build
 android/build

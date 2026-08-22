@@ -4,7 +4,7 @@
  * failing the whole run on a machine that simply lacks an emulator).
  *
  * Capability keys used by plan.js / runner.js:
- *   docker         - C++ -> Wasm/native builds run inside the cpp.js image
+ *   docker         - C++ -> Wasm/native builds run inside the crossbind image
  *   playwright     - browsers can be installed (web/cloud e2e)
  *   maestro        - mobile e2e flows (maestro.yaml)
  *   androidDevice  - an Android emulator/device is attached
