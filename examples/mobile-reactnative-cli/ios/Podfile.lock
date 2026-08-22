@@ -2123,7 +2123,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  crossbind-example-lib-prebuilt-matrix: 91ebe2c90c89c6dca8f4d5c9a2fcc4a4d811d2ae
+  crossbind-example-lib-prebuilt-matrix: 66ea52bcbd0800cb0cf5e30d243bee60cdcea2a5
   FBLazyVector: 24e62c765683b8d89006a88a2c8f5cf019f0074d
   hermes-engine: b6cef8f1f6c726240e275520fd5cfdb6b2ff6826
   RCTDeprecation: a4c521821fab57cbb125b36effe84d897d0dfa12
@@ -2163,8 +2163,8 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 1aa9126122d4247ffc24bf9d28d50ce923499a71
   React-microtasksnativemodule: d86581169e9bb5bb6f5fc3c5052f890016c1bf21
   React-mutationobservernativemodule: 9a0c4e866f1ef2a57acebc902ebacbdf469ae741
-  react-native-crossbind: 05f1a0dc983036504672bff00216bc6cd407f99d
-  react-native-crossbind-ios-helper: 1668284b47867c27b1261de3b888e38559c378f7
+  react-native-crossbind: 4b26dfb675555bdc5e34d4e0ac43e2278aecb34a
+  react-native-crossbind-ios-helper: 4296d5327059d04866d903b3a58b925b2fef2b75
   react-native-safe-area-context: c1eb308f4b36372a4de4b3bdaa8ed695ec3dd461
   React-NativeModulesApple: cc6ec4767844d610e92cc358bd3ea34937438d56
   React-networking: a8ce15641ed7775d5b54a9d0d32defc367c2216e
