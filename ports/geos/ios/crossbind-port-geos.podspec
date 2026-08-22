@@ -1,0 +1,15 @@
+require "json"
+package = JSON.parse(File.read(File.join(__dir__, "package.json")))
+
+Pod::Spec.new do |s|
+  s.module_name  = "geos"
+  s.name         = "crossbind-port-geos"
+  s.version      = package["nativeVersion"]
+  s.summary      = "GEOS is a C++ library for performing operations on two-dimensional vector geometries."
+  s.homepage     = "https://github.com/libgeos/geos"
+  s.author       = "GEOS Authors"
+  s.source       = { :http => "https://crossbind.dev" }
+  s.vendored_frameworks = 'geos.xcframework', 'geos_c.xcframework'
+  # arm64-only iOS simulator slice; drop x86_64 to avoid linker errors on consumer apps.
+  s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'x86_64' }
+end

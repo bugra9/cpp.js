@@ -1,10 +1,10 @@
-# Playbook — Integrate cpp.js into a JavaScript project
+# Playbook — Integrate crossbind into a JavaScript project
 
-> **Persona 2** — Integrator. The user has an existing (or new) JavaScript / TypeScript / React Native project and wants to consume a `@cpp.js/package-*` (e.g. GDAL) **or** wrap their own C++ code from inside it.
+> **Persona 2** — Integrator. The user has an existing (or new) JavaScript / TypeScript / React Native project and wants to consume a `@crossbind/port-*` (e.g. GDAL) **or** wrap their own C++ code from inside it.
 
 ## Goal
 
-Drop cpp.js into the user's project with the smallest, most idiomatic config change for their framework. Choose the right plugin, wire up the bundler, set up COOP/COEP for multithread when needed, and verify with a smoke build.
+Drop crossbind into the user's project with the smallest, most idiomatic config change for their framework. Choose the right plugin, wire up the bundler, set up COOP/COEP for multithread when needed, and verify with a smoke build.
 
 ## Step 0 — Detect the framework first
 
@@ -49,11 +49,11 @@ What does package.json deps + filesystem look like?
 
 Per-framework playbooks contain:
 
-- Which plugin to install (`@cpp.js/plugin-vite`, etc.)
+- Which plugin to install (`@crossbind/plugin-vite`, etc.)
 - The exact config diff
 - Where to call `init(...)`
 - Headers / build hooks specific to that bundler
-- A reference sample (`cppjs-samples/cppjs-sample-web-vue-vite/`, etc.) to mirror
+- A reference sample (`examples/web-vue-vite/`, etc.) to mirror
 
 ## Step 2 — Multithread decision
 
@@ -69,7 +69,7 @@ Ask once, early:
 
 When recommending `mt`, **always** mention production headers:
 
-> In dev/preview, the cpp.js bundler plugin sets these for you. In production, your hosting layer (Vercel, Netlify, Cloudflare, nginx, S3+CloudFront, …) must send:
+> In dev/preview, the crossbind bundler plugin sets these for you. In production, your hosting layer (Vercel, Netlify, Cloudflare, nginx, S3+CloudFront, …) must send:
 >
 > ```
 > Cross-Origin-Opener-Policy: same-origin
@@ -83,18 +83,18 @@ The framework playbook will name the host-specific config file (`vercel.json`, `
 ## Step 3 — Pick what to consume
 
 ```
-Does the user need a library cpp.js already prebuilds?
+Does the user need a library crossbind already prebuilds?
 │
-├─ Browse cppjs-packages/ (or https://cpp.js.org packages page) for matches:
+├─ Browse ports/ (or https://crossbind.dev packages page) for matches:
 │   gdal, openssl, geos, geotiff, proj, sqlite3, tiff, lerc, zstd, jpegturbo,
 │   webp, iconv, expat, curl, zlib, spatialite
 │
-├─ YES → pnpm add @cpp.js/package-<name> + matching plugin.
+├─ YES → pnpm add @crossbind/port-<name> + matching plugin.
 │         Skip to Step 4.
 │
 └─ NO → User has their own .cpp / a library not yet packaged.
           Two sub-options:
-            (a) Inline in their project: write `cppjs.config.js` pointing at
+            (a) Inline in their project: write `crossbind.config.js` pointing at
                 their src/native/, no separate package needed.
             (b) Publish a reusable package: see docs/playbooks/new-package.md
                 (Persona 3).
@@ -109,11 +109,11 @@ Common touchpoints:
 
 | File | What changes |
 |------|--------------|
-| `package.json` | + `@cpp.js/package-<name>`, + `@cpp.js/plugin-<bundler>` |
-| `vite.config.*` / `webpack.config.*` / etc. | Add the cpp.js plugin to `plugins: []` |
-| `cppjs.config.js` *(new)* | Project-level cpp.js config (deps to consume, build target) |
+| `package.json` | + `@crossbind/port-<name>`, + `@crossbind/plugin-<bundler>` |
+| `vite.config.*` / `webpack.config.*` / etc. | Add the crossbind plugin to `plugins: []` |
+| `crossbind.config.js` *(new)* | Project-level crossbind config (deps to consume, build target) |
 | Public env / headers config | COOP/COEP for `mt` builds in production |
-| `tsconfig.json` *(if TS)* | No change needed — types ship with each `@cpp.js/package-*` |
+| `tsconfig.json` *(if TS)* | No change needed — types ship with each `@crossbind/port-*` |
 
 ## Step 5 — Smoke build
 
@@ -123,14 +123,14 @@ After integrating:
 # Install
 pnpm install
 
-# Dev (verifies plugin wires up, bundler loads cpp.js)
+# Dev (verifies plugin wires up, bundler loads crossbind)
 pnpm dev   # or `pnpm start`, framework-dependent
 
 # Production build
 pnpm build
 ```
 
-The framework playbook lists what to look for in the dev/build output (e.g. "you should see `cpp.js compiled for browser` in the log", "`/cpp.wasm` should be served at runtime").
+The framework playbook lists what to look for in the dev/build output (e.g. "you should see `crossbind compiled for browser` in the log", "`/crossbind.wasm` should be served at runtime").
 
 ## Validation
 
@@ -138,22 +138,22 @@ The framework playbook lists what to look for in the dev/build output (e.g. "you
 - [ ] Correct plugin installed.
 - [ ] Bundler config diff applied and explained to the user.
 - [ ] Multithread decision made; if `mt`, COOP/COEP setup documented for the user's deploy target.
-- [ ] `pnpm dev` succeeds, the bundle loads `cpp.js`/`cpp.wasm` without 404s.
+- [ ] `pnpm dev` succeeds, the bundle loads `crossbind.js`/`crossbind.wasm` without 404s.
 - [ ] `pnpm build` produces artifacts.
-- [ ] User can call into a cpp.js function from JS (e.g. `await initNative(); Module.someFn(...)` returns expected result).
+- [ ] User can call into a crossbind function from JS (e.g. `await initNative(); Module.someFn(...)` returns expected result).
 
 ## Common pitfalls
 
 - **Wrong plugin for the bundler.** Vite ≠ Webpack ≠ Rspack ≠ Rollup. Use the framework playbook to pick.
 - **Forgetting COOP/COEP in prod.** Dev works, prod fails silently with "SharedArrayBuffer is not defined". Always tell the user upfront.
 - **Mixing `mt` and `st` artifacts.** Once the user picks a runtime, config it consistently. Don't half-migrate.
-- **TypeScript in user project, expecting types from cpp.js.** Types ship per-package; if a `@cpp.js/package-*` lacks `.d.ts`, file an issue.
-- **Editing config blindly.** Show the diff. Bundler configs are the user's source of truth — bad edits break their whole app, not just cpp.js.
+- **TypeScript in user project, expecting types from crossbind.** Types ship per-package; if a `@crossbind/port-*` lacks `.d.ts`, file an issue.
+- **Editing config blindly.** Show the diff. Bundler configs are the user's source of truth — bad edits break their whole app, not just crossbind.
 - **Not using filter-detect on monorepos.** If the user's repo has multiple apps, run detection in the right subdir.
 
 ## Reference
 
-- Plugin sources: `cppjs-plugins/cppjs-plugin-{vite,webpack,rollup,react-native,metro}/index.js`
-- Sample integrations: `cppjs-samples/cppjs-sample-web-*` and `cppjs-samples/cppjs-sample-mobile-*`
+- Plugin sources: `plugins/{vite,webpack,rollup,react-native,metro}/index.js`
+- Sample integrations: `examples/web-*` and `examples/mobile-*`
 - Framework detector: `scripts/detect-framework.js`
 - Per-framework playbooks: `docs/playbooks/integration/<framework>.md` (added in Sprint 3)

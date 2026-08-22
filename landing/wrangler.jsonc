@@ -1,0 +1,7 @@
+{
+    // Cloudflare Pages project config. With this present, `wrangler pages deploy` needs no flags.
+    // Build first: pnpm --filter @crossbind/landing build
+    "name": "crossbind",
+    "compatibility_date": "2026-08-11",
+    "pages_build_output_dir": "dist"
+}

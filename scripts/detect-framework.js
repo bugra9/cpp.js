@@ -4,7 +4,7 @@
  *
  * Reads the target's package.json (deps + devDeps + peerDeps) and looks for
  * key config files. Prints a JSON object describing the best match plus a
- * pointer to the matching cpp.js integration playbook.
+ * pointer to the matching crossbind integration playbook.
  *
  * Usage:
  *   node scripts/detect-framework.js [path-to-project]   # default: cwd
@@ -125,16 +125,16 @@ function detect(dir) {
         };
     }
 
-    // cppjs build script flags — strong runtime hint when no bundler matched.
-    const cppjsBuildScript = pkg?.scripts?.build || '';
-    const cppjsRuntimeEnvMatch = cppjsBuildScript.match(/(?:-e|--runtime-env)\s+(\w+)/);
-    if (cppjsRuntimeEnvMatch) {
-        const env = cppjsRuntimeEnvMatch[1];
+    // crossbind build script flags — strong runtime hint when no bundler matched.
+    const crossbindBuildScript = pkg?.scripts?.build || '';
+    const crossbindRuntimeEnvMatch = crossbindBuildScript.match(/(?:-e|--runtime-env)\s+(\w+)/);
+    if (crossbindRuntimeEnvMatch) {
+        const env = crossbindRuntimeEnvMatch[1];
         if (env === 'node') {
             return {
                 framework: 'nodejs',
                 confidence: 'high',
-                evidence: [{ kind: 'script', value: `cppjs build -e ${env}` }],
+                evidence: [{ kind: 'script', value: `crossbind build -e ${env}` }],
                 recommendedPlaybook: 'docs/playbooks/integration/nodejs.md',
                 projectPath: dir,
             };
@@ -143,7 +143,7 @@ function detect(dir) {
             return {
                 framework: 'cloudflare-worker',
                 confidence: 'medium',
-                evidence: [{ kind: 'script', value: `cppjs build -e ${env}` }],
+                evidence: [{ kind: 'script', value: `crossbind build -e ${env}` }],
                 recommendedPlaybook: 'docs/playbooks/integration/cloudflare-worker.md',
                 projectPath: dir,
             };
@@ -152,7 +152,7 @@ function detect(dir) {
             return {
                 framework: 'vanilla',
                 confidence: 'medium',
-                evidence: [{ kind: 'script', value: `cppjs build -e ${env}` }],
+                evidence: [{ kind: 'script', value: `crossbind build -e ${env}` }],
                 recommendedPlaybook: 'docs/playbooks/integration/vanilla.md',
                 projectPath: dir,
             };

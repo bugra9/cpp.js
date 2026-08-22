@@ -1,11 +1,11 @@
 /**
- * Resolves *where* the create-cpp.js scaffolder comes from. Two modes:
+ * Resolves *where* the create-crossbind scaffolder comes from. Two modes:
  *
- *   npm   -> `npm create cpp.js@<tag> -- <args>`  (default; tests the published
+ *   npm   -> `npm create crossbind@<tag> -- <args>`  (default; tests the published
  *            beta exactly as an end user would get it)
  *   local -> build templates/ from the current working tree, `npm pack` the
  *            package, then run that tarball's bin. Validates the scaffolder you
- *            are about to publish. NOTE: the scaffolded project's @cpp.js/*
+ *            are about to publish. NOTE: the scaffolded project's @crossbind/*
  *            dependencies still resolve from npm, so local mode also surfaces
  *            "is this workspace version actually published?" failures.
  *
@@ -17,14 +17,14 @@ const path = require('node:path');
 const { run } = require('./exec');
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
-const PKG_DIR = path.join(REPO_ROOT, 'cppjs-core/cppjs-core-create-app');
+const PKG_DIR = path.join(REPO_ROOT, 'tooling/create-app');
 
 function npmSource(tag) {
     // npx --yes runs the published bin non-interactively (no "Ok to proceed?" prompt),
-    // exactly as `npm create cpp.js@<tag>` would, but without the install confirmation.
+    // exactly as `npm create crossbind@<tag>` would, but without the install confirmation.
     return {
-        describe: `npx create-cpp.js@${tag}`,
-        invoke: (args) => ({ command: 'npx', args: ['--yes', `create-cpp.js@${tag}`, ...args] }),
+        describe: `npx create-crossbind@${tag}`,
+        invoke: (args) => ({ command: 'npx', args: ['--yes', `create-crossbind@${tag}`, ...args] }),
     };
 }
 
@@ -45,7 +45,7 @@ async function localSource(logStream) {
         describe: `local pack (${tarballName})`,
         // `npm exec --package=<tarball>` installs the tarball + its deps in a temp prefix and runs
         // its bin. (Bare `npx <tarball-path>` is misparsed as an executable file by npm 10.)
-        invoke: (args) => ({ command: 'npm', args: ['exec', '--yes', `--package=${tarball}`, '--', 'create-cpp.js', ...args] }),
+        invoke: (args) => ({ command: 'npm', args: ['exec', '--yes', `--package=${tarball}`, '--', 'create-crossbind', ...args] }),
         cleanup: () => fs.rmSync(tarball, { force: true }),
     };
 }

@@ -41,21 +41,22 @@ function printTable(headers, rows, stream = process.stdout) {
 
 // Roots that contain workspace packages (mirrors pnpm-workspace.yaml).
 const SCAN_ROOTS = [
-    'cppjs-core',
-    'cppjs-plugins',
-    'cppjs-samples',
-    'cppjs-packages',
-    'cppjs-extensions',
+    'core',
+    'tooling',
+    'plugins',
+    'ports',
+    'examples',
+    'e2e',
     'website',
     'landing',
     '.', // top-level package.json
 ];
 
-const SKIP_DIRS = new Set(['node_modules', '.cppjs', 'dist', '.git', 'test-results', 'playwright-report']);
+const SKIP_DIRS = new Set(['node_modules', '.crossbind', 'dist', '.git', 'test-results', 'playwright-report']);
 
-// create-cpp.js templates are generated copies of the samples (build-templates.js); scanning
+// create-crossbind templates are generated copies of the samples (build-templates.js); scanning
 // them would double every finding and flag build output that the next build regenerates.
-const SKIP_PATHS = [path.join('cppjs-core', 'cppjs-core-create-app', 'templates')];
+const SKIP_PATHS = [path.join('tooling', 'create-app', 'templates')];
 
 const REGISTRY = 'https://registry.npmjs.org';
 
@@ -73,11 +74,11 @@ const DEP_FIELDS = ['dependencies', 'devDependencies', 'peerDependencies', 'opti
 const PINNED = [
     {
         packages: [
-            '@cpp.js/sample-mobile-reactnative-cli',
-            '@cpp.js/playground-mobile-reactnative-cli',
-            '@cpp.js/sample-mobile-reactnative-expo',
-            '@cpp.js/plugin-metro',
-            '@cpp.js/plugin-react-native',
+            '@crossbind/example-mobile-reactnative-cli',
+            '@crossbind/e2e-mobile-reactnative-cli',
+            '@crossbind/example-mobile-reactnative-expo',
+            '@crossbind/plugin-metro',
+            '@crossbind/plugin-react-native',
         ],
         deps: ['react', 'react-dom', 'react-test-renderer', 'react-native', 'eslint', 'jest', '@types/jest', 'typescript'],
         scopes: ['@babel/', '@react-native/', '@react-native-community/', 'react-native-', 'expo'],

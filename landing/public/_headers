@@ -1,0 +1,5 @@
+# Vite fingerprints everything under /assets, so those URLs can never go stale.
+# The fonts alone are 225 kB; without this they would be revalidated on every visit.
+# index.html and favicon.svg are left out on purpose - they keep their names across deploys.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

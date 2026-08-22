@@ -23,36 +23,36 @@ const scripts = pkg.scripts || {};
 // One-line description per script. Order doesn't matter.
 const ANNOTATIONS = {
     // build
-    'build:packages': 'Build every @cpp.js/package-* (pnpm topological order)',
-    'build:samples': 'Build every @cpp.js/sample-*',
-    'build:samples:lib': 'Build sample-lib-* packages (the C++ library samples)',
-    'build:samples:lib:wasm': 'Build sample-lib-* for wasm only',
-    'build:samples:lib:android': 'Build sample-lib-* for android only',
-    'build:samples:lib:ios': 'Build sample-lib-* for iOS only',
-    'build:samples:wasm': 'Build all wasm-targeting samples (web/cloud/backend) + sample-lib wasm',
+    'build:ports': 'Build every @crossbind/port-* (pnpm topological order)',
+    'build:examples': 'Build every @crossbind/example-*',
+    'build:examples:lib': 'Build sample-lib-* packages (the C++ library samples)',
+    'build:examples:lib:wasm': 'Build sample-lib-* for wasm only',
+    'build:examples:lib:android': 'Build sample-lib-* for android only',
+    'build:examples:lib:ios': 'Build sample-lib-* for iOS only',
+    'build:examples:wasm': 'Build all wasm-targeting samples (web/cloud/backend) + sample-lib wasm',
     'build:website': 'Build the Docusaurus site',
-    build: 'build:packages then build:samples (full)',
+    build: 'build:ports then build:examples (full)',
 
     // clear
-    'clear:cache:samples': "Remove samples' .cppjs/ cache dirs",
-    'clear:cache:packages': "Remove packages' .cppjs/ cache dirs",
+    'clear:cache:examples': "Remove samples' .crossbind/ cache dirs",
+    'clear:cache:ports': "Remove packages' .crossbind/ cache dirs",
     'clear:cache': 'Both samples + packages cache',
-    'clear:dist:samples': "Remove samples' dist/ + *.xcframework",
-    'clear:dist:packages': "Remove packages' dist/ + *.xcframework",
-    'clear:dist:packages:android': 'Remove only android dist/ for packages',
+    'clear:dist:examples': "Remove samples' dist/ + *.xcframework",
+    'clear:dist:ports': "Remove packages' dist/ + *.xcframework",
+    'clear:dist:ports:android': 'Remove only android dist/ for packages',
     'clear:dist': 'Both samples + packages dist',
     'clear:pack': 'Remove published .tgz files (workspace-scoped, never node_modules)',
-    'clear:samples': 'samples cache + dist',
-    'clear:packages': 'packages cache + dist',
-    'clear:packages:android': 'packages cache + android-only dist',
+    'clear:examples': 'samples cache + dist',
+    'clear:ports': 'packages cache + dist',
+    'clear:ports:android': 'packages cache + android-only dist',
     clear: 'All clear: cache + dist + pack',
-    'pack:list': 'List existing .tgz files under cppjs-packages/',
+    'pack:list': 'List existing .tgz files under ports/',
 
     // ci
-    'ci:linux:build:package': 'CI linux: build the zlib package as a smoke test',
+    'ci:linux:build:port': 'CI linux: build the zlib package as a smoke test',
     'ci:linux:build': 'CI linux: build all samples + zlib package',
     'ci:windows:build': 'CI windows: build wasm + android sample-lib + zlib',
-    'ci:ios:build:package': 'CI macos: build zlib for iOS',
+    'ci:ios:build:port': 'CI macos: build zlib for iOS',
     'ci:macos:build': 'CI macos: build sample-lib for iOS + zlib for iOS',
 
     // e2e
@@ -64,12 +64,12 @@ const ANNOTATIONS = {
     e2e: 'dev + prod + mobile e2e',
 
     // publish
-    'publish:samples': 'npm publish all @cpp.js/sample-*',
-    'publish:plugins': 'npm publish all @cpp.js/plugin-*',
-    'publish:core': 'npm publish cpp.js (core)',
+    'publish:examples': 'npm publish all @crossbind/example-*',
+    'publish:plugins': 'npm publish all @crossbind/plugin-*',
+    'publish:core': 'npm publish crossbind (core)',
     'publish:all': 'core + plugins + samples',
     'publish:changeset': 'changeset publish',
-    'publish:beta': 'Publish all @cpp.js/* under the beta tag',
+    'publish:beta': 'Publish all @crossbind/* under the beta tag',
 
     // check
     'check:dist': 'Verify each package has prebuilt artifacts for expected targets',
@@ -119,7 +119,7 @@ function printGroup(title, names) {
     }
 }
 
-process.stdout.write('cpp.js — pnpm scripts\n');
+process.stdout.write('crossbind — pnpm scripts\n');
 process.stdout.write('Run any script with `pnpm run <name>` (or `pnpm <name>` if unambiguous).\n');
 for (const g of GROUPS) printGroup(g.title, buckets.get(g.title));
 process.stdout.write('\nFor agent docs see AGENTS.md, ARCHITECTURE.md, CODEMAP.md.\n');

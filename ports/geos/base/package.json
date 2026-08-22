@@ -1,0 +1,35 @@
+{
+    "name": "@crossbind/port-geos",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "3.14.1",
+    "description": "This package provides the precompiled GEOS library, built using crossbind, for seamless integration into JavaScript, WebAssembly, and React Native projects. It supports advanced geometry operations, including spatial analysis and topological calculations, delivering high performance and cross-platform compatibility. Perfect for web, server-side, and mobile geospatial applications.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/geos#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "LGPL-2.1-or-later",
+    "keywords": [
+        "geos",
+        "libgeos",
+        "geometry",
+        "gis",
+        "crossbind",
+        "crossbind-package",
+        "webassembly",
+        "wasm",
+        "android",
+        "ios",
+        "react-native"
+    ],
+    "crossbind": {
+        "upstream": {
+            "license": {
+                "declared": "LGPL-2.1-only",
+                "selected": null,
+                "files": [
+                    "COPYING"
+                ],
+                "copyright": null
+            }
+        }
+    }
+}

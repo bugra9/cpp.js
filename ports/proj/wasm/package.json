@@ -1,0 +1,33 @@
+{
+    "name": "@crossbind/port-proj-wasm",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "9.8.1",
+    "description": "WebAssembly build of the precompiled PROJ coordinate-transformation library, built with crossbind. Use it together with the main package @crossbind/port-proj.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/proj#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "MIT",
+    "keywords": [
+        "proj",
+        "libproj",
+        "projection",
+        "gis",
+        "crossbind",
+        "crossbind-package",
+        "webassembly",
+        "wasm"
+    ],
+    "scripts": {
+        "build": "crossbind build -p wasm",
+        "clear": "rm -rf .crossbind dist *.xcframework",
+        "prepublishOnly": "crossbind build -p wasm"
+    },
+    "dependencies": {
+        "@crossbind/port-proj": "workspace:^",
+        "@crossbind/port-tiff-wasm": "workspace:^",
+        "@crossbind/port-sqlite3-wasm": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

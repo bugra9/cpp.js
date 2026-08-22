@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-03
-- **Affects:** `cppjs-agents/`, `cppjs-core/cppjs-mcp/`, `website/src/pages/agents.mdx`, `docs/playbooks/`
+- **Affects:** `agents/`, `tooling/mcp/`, `website/src/pages/agents.mdx`, `docs/playbooks/`
 
 ## Context
 
@@ -20,8 +20,8 @@ Ship three distribution layers in parallel. They serve different audiences and r
 
 | Layer | Reach | Depth | Distribution |
 |-------|-------|-------|--------------|
-| Claude Code plugin (`cppjs-agents/`) | Claude Code users | Skills + slash commands + native plugin UX | `/plugin marketplace add bugra9/cpp.js` |
-| MCP server (`@cpp.js/mcp`) | Any MCP-aware agent | 8 typed tools (recommend, list, detect, scaffold, build, …) | `npx -y @cpp.js/mcp` in client config |
+| Claude Code plugin (`agents/`) | Claude Code users | Skills + slash commands + native plugin UX | `/plugin marketplace add crossbind/crossbind` |
+| MCP server (`@crossbind/mcp`) | Any MCP-aware agent | 8 typed tools (recommend, list, detect, scaffold, build, …) | `npx -y @crossbind/mcp` in client config |
 | AGENTS.md snippet (`agents.mdx`) | Every modern agent | Text-only recognition + routing | Copy-paste into the user's `AGENTS.md` |
 
 Internally, all three layers reference the same `docs/playbooks/*.md` as the source of truth for *what to do*. The plugin and MCP wrap the same `scripts/{detect-framework,scaffold-package,doctor}.{js,sh}` for *what to run*. So the maintenance cost is sub-linear: one workflow update flows through all three.
@@ -38,18 +38,18 @@ Internally, all three layers reference the same `docs/playbooks/*.md` as the sou
 **Negative:**
 
 - Three things to update when a workflow changes (skill prompt, MCP tool description, AGENTS.md snippet). Mitigated by the shared playbook, but never zero.
-- Three install paths to document and support. Users can be confused about which to pick — we address this on the `cppjs.org/docs/agent/overview` page.
+- Three install paths to document and support. Users can be confused about which to pick — we address this on the `crossbind.org/docs/agent/overview` page.
 - Spec churn risk × 3. Plugin format, MCP spec, and `AGENTS.md` convention may all evolve independently.
 
 ## Alternatives considered
 
 - **Plugin only** — best Claude Code UX, but excludes Cursor, Codex, Cline, Claude Desktop, and every future client. Rejected.
-- **MCP only** — universal, but no skill prompts. Agents that don't already know about cpp.js won't call its tools because they won't know to. Rejected.
+- **MCP only** — universal, but no skill prompts. Agents that don't already know about crossbind won't call its tools because they won't know to. Rejected.
 - **AGENTS.md only** — works everywhere today, zero install, but gives agents recognition without execution. The user still has to do the work the tools could automate. Rejected as the floor, not the answer.
 
 ## See also
 
-- ADR-0001: AI agents are first-class consumers of cpp.js.
-- `cppjs-agents/.claude-plugin/plugin.json` — plugin manifest.
-- `cppjs-core/cppjs-mcp/src/index.js` — MCP server entry.
+- ADR-0001: AI agents are first-class consumers of crossbind.
+- `agents/.claude-plugin/plugin.json` — plugin manifest.
+- `tooling/mcp/src/index.js` — MCP server entry.
 - `website/src/pages/agents.mdx` — public-facing comparison and install instructions.

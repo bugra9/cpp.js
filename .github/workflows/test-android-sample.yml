@@ -5,21 +5,22 @@ on:
     branches:
       - main
     paths:
-      - cppjs-core/**
-      - cppjs-extensions/**
-      - cppjs-packages/**
-      - cppjs-plugins/**
-      - cppjs-samples/**
+      - core/**
+      - tooling/**
+      - ports/**
+      - plugins/**
+      - examples/**
+      - e2e/**
       - .github/workflows/test-android-sample.yml
   pull_request:
     branches:
       - main
     paths:
-      - cppjs-core/cpp.js/**
-      - cppjs-plugins/cppjs-plugin-metro/**
-      - cppjs-plugins/cppjs-plugin-react-native/**
-      - cppjs-samples/cppjs-sample-lib-prebuilt-matrix/**
-      - cppjs-samples/cppjs-sample-mobile-reactnative-cli/**
+      - core/crossbind/**
+      - plugins/metro/**
+      - plugins/react-native/**
+      - examples/lib-prebuilt-matrix/**
+      - examples/mobile-reactnative-cli/**
       - .github/workflows/test-android-sample.yml
 
 permissions: {}
@@ -45,13 +46,13 @@ jobs:
         run: pnpm install
       - name: Install NDK and CMake
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;29.0.14206865" "cmake;4.1.2" > /dev/null
-      - name: Build cppjs-sample-lib-prebuilt-matrix
-        run: pnpm --filter=@cpp.js/sample-lib-prebuilt-matrix run build:android
+      - name: Build examples/lib-prebuilt-matrix
+        run: pnpm --filter=@crossbind/example-lib-prebuilt-matrix run build:android
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@0bdd871935719febd78681f197cd39af5b6e16a6 #v4
       - name: CMake configure (x86_64)
-        working-directory: cppjs-samples/cppjs-sample-mobile-reactnative-cli/android
-        run: ./gradlew ":cpp.js_plugin-react-native:configureCMakeDebug[x86_64]" -PreactNativeArchitectures=x86_64 --console=plain
+        working-directory: examples/mobile-reactnative-cli/android
+        run: ./gradlew ":crossbind_plugin-react-native:configureCMakeDebug[x86_64]" -PreactNativeArchitectures=x86_64 --console=plain
 
   build:
     runs-on: ubuntu-latest
@@ -70,8 +71,8 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
-      - name: Build cppjs-sample-lib-prebuilt-matrix
-        run: pnpm --filter=@cpp.js/sample-lib-prebuilt-matrix run build:android
+      - name: Build examples/lib-prebuilt-matrix
+        run: pnpm --filter=@crossbind/example-lib-prebuilt-matrix run build:android
 
       - name: Install Maestro
         run: |

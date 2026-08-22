@@ -1,0 +1,39 @@
+{
+    "name": "@crossbind/example-cloud-cloudflare-worker",
+    "private": true,
+    "version": "0.0.0",
+    "description": "crossbind - Cloudflare webassembly sample",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/examples/cloud-cloudflare-worker#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "license": "MIT",
+    "scripts": {
+        "build": "crossbind build -p wasm -a wasm32 -r st -e edge -b release",
+        "dev": "wrangler dev",
+        "deploy": "wrangler dev",
+        "e2e:dev": "playwright test --config playwright.dev.config.cjs",
+        "e2e:prod": "playwright test --config playwright.dev.config.cjs"
+    },
+    "files": [
+        "dist/@crossbind/example-cloud-cloudflare.edge.js",
+        "dist/@crossbind/example-cloud-cloudflare.edge.wasm",
+        "index.js",
+        "crossbind.config.mjs",
+        "wrangler.toml",
+        "src"
+    ],
+    "dependencies": {
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^",
+        "wrangler": "^4.120.0",
+        "@playwright/test": "^1.62.1"
+    },
+    "keywords": [
+        "crossbind-sample",
+        "cloudflare",
+        "cloudflare-worker",
+        "webassembly",
+        "bind",
+        "c++"
+    ]
+}

@@ -1,5 +1,5 @@
 /**
- * Turns src/manifest.json (the same file create-cpp.js ships) into an ordered
+ * Turns src/manifest.json (the same file create-crossbind ships) into an ordered
  * list of template "plan items": how to scaffold each one non-interactively and
  * which host capabilities its build needs. Step selection (which npm scripts to
  * actually run) is decided in runner.js once the project is scaffolded, because
@@ -10,7 +10,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
-const MANIFEST_PATH = path.join(REPO_ROOT, 'cppjs-core/cppjs-core-create-app/src/manifest.json');
+const MANIFEST_PATH = path.join(REPO_ROOT, 'tooling/create-app/src/manifest.json');
 
 function loadManifest() {
     const raw = fs.readFileSync(MANIFEST_PATH, 'utf8');
@@ -28,7 +28,7 @@ function classify(entry) {
 }
 
 /**
- * Mirrors create-cpp.js's prompt flow as positional CLI args:
+ * Mirrors create-crossbind's prompt flow as positional CLI args:
  *   [name, group, framework ?? label, label?]
  * The 4th arg (label) is only needed when more than one entry shares the same
  * "first" choice in the group (e.g. Web/React -> Rspack | Vite).
@@ -43,7 +43,7 @@ function scaffoldArgs(entry, manifest, name) {
 }
 
 // Capabilities required to attempt the build step. The Wasm/native build runs
-// inside the cpp.js Docker image; lib-source/lib-cmake ship no build script.
+// inside the crossbind Docker image; lib-source/lib-cmake ship no build script.
 function buildCaps(klass, entry) {
     if (klass === 'web' || klass === 'cloud' || klass === 'backend') return ['docker'];
     if (klass === 'lib') return entry.key === 'lib-prebuilt' ? ['docker'] : [];

@@ -1,0 +1,34 @@
+{
+    "name": "@crossbind/port-tiff-ios",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "4.7.2",
+    "description": "iOS build of the precompiled TIFF (libtiff) image library, built with crossbind. Use it together with the main package @crossbind/port-tiff.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/tiff#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "libtiff",
+    "keywords": [
+        "tiff",
+        "libtiff",
+        "image",
+        "crossbind",
+        "crossbind-package",
+        "ios",
+        "react-native"
+    ],
+    "scripts": {
+        "build": "crossbind build -p ios",
+        "clear": "rm -rf .crossbind dist *.xcframework",
+        "prepublishOnly": "crossbind build -p ios"
+    },
+    "dependencies": {
+        "@crossbind/port-tiff": "workspace:^",
+        "@crossbind/port-zlib-ios": "workspace:^",
+        "@crossbind/port-jpegturbo-ios": "workspace:^",
+        "@crossbind/port-zstd-ios": "workspace:^",
+        "@crossbind/port-lerc-ios": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

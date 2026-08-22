@@ -1,0 +1,36 @@
+{
+    "name": "@crossbind/port-geotiff",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "1.7.4",
+    "description": "This package provides the precompiled geotiff library, built using crossbind, for easy integration into JavaScript, WebAssembly and React Native projects. Designed for working with GeoTIFF files, offering robust support for geospatial metadata handling, ensuring high performance and cross-platform compatibility. Ideal for use in web and mobile applications.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/geotiff#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "MIT",
+    "keywords": [
+        "geotiff",
+        "libgeotiff",
+        "gis",
+        "geospatial",
+        "crossbind",
+        "crossbind-package",
+        "webassembly",
+        "wasm",
+        "android",
+        "ios",
+        "react-native"
+    ],
+    "crossbind": {
+        "upstream": {
+            "license": {
+                "declared": "MIT",
+                "selected": null,
+                "files": [
+                    "LICENSE"
+                ],
+                "copyright": null,
+                "notes": "Mixed X-style/MIT with public-domain parts; see LICENSE."
+            }
+        }
+    }
+}

@@ -1,0 +1,39 @@
+{
+    "name": "@crossbind/port-gdal-wasi",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "3.13.3",
+    "description": "WASI build of the precompiled GDAL geospatial library, built with crossbind. Use it together with the main package @crossbind/port-gdal.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/gdal#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "MIT",
+    "keywords": [
+        "gdal",
+        "libgdal",
+        "gis",
+        "geospatial",
+        "raster",
+        "vector",
+        "crossbind",
+        "crossbind-package",
+        "webassembly",
+        "wasi"
+    ],
+    "scripts": {
+        "build": "crossbind build -p wasi",
+        "clear": "rm -rf .crossbind dist",
+        "prepublishOnly": "crossbind build -p wasi"
+    },
+    "dependencies": {
+        "@crossbind/port-gdal": "workspace:^",
+        "@crossbind/port-geotiff-wasi": "workspace:^",
+        "@crossbind/port-proj-wasi": "workspace:^",
+        "@crossbind/port-tiff-wasi": "workspace:^",
+        "@crossbind/port-sqlite3-wasi": "workspace:^",
+        "@crossbind/port-zlib-wasi": "workspace:^",
+        "@crossbind/port-curl-wasi": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

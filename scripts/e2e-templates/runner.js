@@ -207,14 +207,14 @@ async function runTemplate(item, ctx) {
         // under CI, `expo run:ios` starts Metro in CI mode and attaches (never exits),
         // so the `run:ios && maestro` chain hangs. Run mobile e2e without CI — exactly
         // how a developer runs `npm run e2e:ios` locally.
-        // Each web/cloud template also gets a fresh OS-assigned port (CPPJS_E2E_PORT):
+        // Each web/cloud template also gets a fresh OS-assigned port (CROSSBIND_E2E_PORT):
         // the shared preview defaults race with the previous template's teardown and
         // with anything already listening on the host.
         let e2eEnv;
         if (item.klass === 'web' || item.klass === 'cloud') {
             const e2ePort = await getFreePort();
-            logStream.write(`[e2e-templates] CPPJS_E2E_PORT=${e2ePort}\n`);
-            e2eEnv = { CI: '1', CPPJS_E2E_PORT: e2ePort };
+            logStream.write(`[e2e-templates] CROSSBIND_E2E_PORT=${e2ePort}\n`);
+            e2eEnv = { CI: '1', CROSSBIND_E2E_PORT: e2ePort };
         }
         const e2eRun = await record(`e2e:${e2e.script.replace('e2e:', '')}`, pm, ['run', e2e.script], {
             cwd: projectDir,

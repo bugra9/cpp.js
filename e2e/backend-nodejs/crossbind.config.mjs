@@ -1,0 +1,56 @@
+import matrix from '@crossbind/example-lib-prebuilt-matrix/crossbind.config.js';
+import embindRustDemo from '@crossbind/embind-rust-demo/crossbind.config.mjs';
+import curl from '@crossbind/port-curl-wasm/crossbind.config.js';
+import expat from '@crossbind/port-expat-wasm/crossbind.config.js';
+import gdal from '@crossbind/port-gdal-wasm/crossbind.config.js';
+import geos from '@crossbind/port-geos-wasm/crossbind.config.js';
+import geotiff from '@crossbind/port-geotiff-wasm/crossbind.config.js';
+import iconv from '@crossbind/port-iconv-wasm/crossbind.config.js';
+import openssl from '@crossbind/port-openssl-wasm/crossbind.config.js';
+import proj from '@crossbind/port-proj-wasm/crossbind.config.js';
+import spatialite from '@crossbind/port-spatialite-wasm/crossbind.config.js';
+import sqlite3 from '@crossbind/port-sqlite3-wasm/crossbind.config.js';
+import tiff from '@crossbind/port-tiff-wasm/crossbind.config.js';
+import webp from '@crossbind/port-webp-wasm/crossbind.config.js';
+import zlib from '@crossbind/port-zlib-wasm/crossbind.config.js';
+
+export default {
+    general: {
+        name: 'crossbind-example-backend-nodejs-wasm',
+    },
+    dependencies: [
+        matrix,
+        embindRustDemo,
+        curl,
+        expat,
+        gdal,
+        geos,
+        geotiff,
+        iconv,
+        openssl,
+        proj,
+        spatialite,
+        sqlite3,
+        tiff,
+        webp,
+        zlib,
+    ],
+    paths: {
+        config: import.meta.url,
+        base: '../..', /* Delete this line for create-crossbind */
+        // Standalone builds bridge every header on this list; the conformance kit's C++
+        // surface rides along from its own workspace package.
+        header: ['src/native', '../conformance/native'],
+        output: 'dist',
+    },
+    targetSpecs: [
+        {
+            platform: 'wasm',
+            specs: {
+                binary: {
+                    emccFlags: ['-sJSPI'],
+                }
+            }
+        }
+    ],
+};

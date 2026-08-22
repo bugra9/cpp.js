@@ -1,12 +1,12 @@
-# ADR-0003: Allow env values in `cppjs.config.js` to be functions of `(state, target)`
+# ADR-0003: Allow env values in `crossbind.config.js` to be functions of `(state, target)`
 
 - **Status:** Accepted
 - **Date:** 2026-05-03
-- **Affects:** `cppjs-core/cpp.js/src/state/index.js`, every `cppjs.config.js` in `cppjs-packages/*/*/` and `cppjs-samples/*/`, plugin authors.
+- **Affects:** `core/crossbind/src/state/index.js`, every `crossbind.config.js` in `ports/*/*/` and `examples/*/`, plugin authors.
 
 ## Context
 
-A package's `cppjs.config.js` declares `env` values that flow into the build (CMake variables, Emscripten flags, NDK toolchain hints, etc.). These were previously **scalar only** — strings, numbers, booleans:
+A package's `crossbind.config.js` declares `env` values that flow into the build (CMake variables, Emscripten flags, NDK toolchain hints, etc.). These were previously **scalar only** — strings, numbers, booleans:
 
 ```js
 env: {
@@ -60,5 +60,5 @@ env: {
 
 ## See also
 
-- `cppjs-core/cpp.js/src/state/index.js` — the resolver that calls functions lazily.
-- Any `cppjs-packages/cppjs-package-gdal/cppjs-package-gdal-wasm/cppjs.config.js` — concrete example using both scalar and function env values.
+- `core/crossbind/src/state/index.js` — the resolver that calls functions lazily.
+- Any `ports/gdal/wasm/crossbind.config.js` — concrete example using both scalar and function env values.

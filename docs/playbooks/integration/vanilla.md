@@ -4,7 +4,7 @@
 
 ## Goal
 
-Build cpp.js artifacts for the browser, ship them as static files, and load via plain `<script>` tags. Optional `serve.json` (or hosting config) sets COOP/COEP for multithread.
+Build crossbind artifacts for the browser, ship them as static files, and load via plain `<script>` tags. Optional `serve.json` (or hosting config) sets COOP/COEP for multithread.
 
 ## When to use
 
@@ -16,8 +16,8 @@ Build cpp.js artifacts for the browser, ship them as static files, and load via 
 
 | File | Role |
 |------|------|
-| `package.json` | + `cpp.js`, optional `@cpp.js/package-<name>`, optional `serve` for local preview. Declare a `build` script that runs `cppjs build -e browser` |
-| `cppjs.config.{js,mjs}` *(new at root)* | Project-level cpp.js config |
+| `package.json` | + `crossbind`, optional `@crossbind/port-<name>`, optional `serve` for local preview. Declare a `build` script that runs `crossbind build -e browser` |
+| `crossbind.config.{js,mjs}` *(new at root)* | Project-level crossbind config |
 | `index.html` | Loads `<script src="./dist/<name>...browser.js"></script>` and calls `initNative({ path: './dist' })` |
 | `src/native/` *(if user wraps own C++)* | `.h` + `.cpp` source |
 | `serve.json` *(local preview, optional)* | COOP/COEP headers for `serve` |
@@ -26,12 +26,12 @@ Build cpp.js artifacts for the browser, ship them as static files, and load via 
 ## Commands
 
 ```bash
-pnpm add -D cpp.js
-pnpm add @cpp.js/package-<name>     # optional
+pnpm add -D crossbind
+pnpm add @crossbind/port-<name>     # optional
 pnpm add -D serve                   # optional, for local preview
 
 # Build
-pnpm cppjs build -p wasm -a wasm32 -r st -e browser -b release
+pnpm crossbind build -p wasm -a wasm32 -r st -e browser -b release
 
 # Local preview (with COOP/COEP via serve.json)
 pnpm serve -c ./serve.json
@@ -39,24 +39,24 @@ pnpm serve -c ./serve.json
 
 ## Reference setup
 
-Mirror `cppjs-samples/cppjs-sample-web-vanilla/`.
+Mirror `examples/web-vanilla/`.
 
 `package.json`:
 
 ```jsonc
 {
   "scripts": {
-    "build": "cppjs build -p wasm -a wasm32 -r st -e browser -b release",
+    "build": "crossbind build -p wasm -a wasm32 -r st -e browser -b release",
     "preview": "serve -c ./serve.json"
   },
   "devDependencies": {
-    "cpp.js": "^2.0.0",
+    "crossbind": "^2.0.0",
     "serve": "^14.0.0"
   }
 }
 ```
 
-`cppjs.config.mjs`:
+`crossbind.config.mjs`:
 
 ```js
 export default {
@@ -89,7 +89,7 @@ export default {
 </html>
 ```
 
-The `path: './dist'` option tells the loader where to find `cpp.wasm` / `cpp.data.txt` relative to the page URL.
+The `path: './dist'` option tells the loader where to find `crossbind.wasm` / `crossbind.data.txt` relative to the page URL.
 
 `serve.json` (for local preview, also matches Netlify/Cloudflare Pages `_headers` semantics):
 
@@ -138,7 +138,7 @@ For `runtime: 'st'`, no headers needed — works on any static host including GH
 
 ## Common pitfalls
 
-- **Loading `<script type="module">`** when the `cppjs build` output is UMD (which it is by default). Drop `type="module"`; `initNative` becomes a global.
+- **Loading `<script type="module">`** when the `crossbind build` output is UMD (which it is by default). Drop `type="module"`; `initNative` becomes a global.
 - **Wrong `path` in `initNative(...)`**. The loader resolves wasm relative to this. If your HTML lives at `/index.html` and dist at `/dist/`, use `path: './dist'`. If served from a CDN at `/assets/dist/`, use that.
 - **Forgetting to copy `dist/` to your deploy.** A static host needs the actual files; nothing magical happens.
 - **GH Pages + multithread.** Doesn't work — no custom headers. Drop to single-thread or move to a host that allows headers.
@@ -147,7 +147,7 @@ For `runtime: 'st'`, no headers needed — works on any static host including GH
 
 ## Reference samples
 
-- `cppjs-samples/cppjs-sample-web-vanilla/` — single-thread vanilla, canonical
-- `cppjs-samples/cppjs-playground-web-vanilla/` — bigger demo with multiple packages
+- `examples/web-vanilla/` — single-thread vanilla, canonical
+- `e2e/web-vanilla/` — bigger demo with multiple packages
 
-Browser runtime adapter: `cppjs-core/cpp.js/src/assets/js-runtime/browser.js`.
+Browser runtime adapter: `core/crossbind/src/assets/js-runtime/browser.js`.

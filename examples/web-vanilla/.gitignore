@@ -1,0 +1,4 @@
+.crossbind
+dist
+test-results
+playwright-report

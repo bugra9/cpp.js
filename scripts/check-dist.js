@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Verifies that every platform-specific package under cppjs-packages/ has a
+ * Verifies that every platform-specific package under ports/ has a
  * `dist/` folder that contains the expected prebuilt libraries.
  *
- * For each `cppjs-package-<name>-<platform>` directory the script:
- *   1. Reads `cppjs.config.js` to determine the library name(s)
+ * For each `ports/<family>/<platform>` directory the script:
+ *   1. Reads `crossbind.config.js` to determine the library name(s)
  *      (`export.libName`, falling back to `general.name`).
  *   2. Checks the expected prebuilt targets exist:
  *        wasm    → wasm-wasm32-mt-release, wasm-wasm32-st-release
@@ -25,7 +25,7 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 
 const ROOT = path.resolve(__dirname, '..');
-const PACKAGES_DIR = path.join(ROOT, 'cppjs-packages');
+const PACKAGES_DIR = path.join(ROOT, 'ports');
 
 const QUIET = process.argv.includes('--quiet');
 
@@ -41,11 +41,9 @@ const PLATFORM_LIB_EXT = {
     android: '.so',
 };
 
-function detectPlatform(pkgDirName) {
-    if (pkgDirName.endsWith('-wasm')) return 'wasm';
-    if (pkgDirName.endsWith('-ios')) return 'ios';
-    if (pkgDirName.endsWith('-android')) return 'android';
-    return null;
+// ports/<family>/<target>: the directory name is the target itself.
+function detectPlatform(target) {
+    return Object.keys(PLATFORM_TARGETS).includes(target) ? target : null;
 }
 
 // The gdal3.js-layout platform configs are thin mergeConfig() calls — name and
@@ -66,21 +64,19 @@ async function loadConfigMeta(configPath, platform) {
 }
 
 function findPlatformPackages() {
-    const groups = fs
-        .readdirSync(PACKAGES_DIR, { withFileTypes: true })
-        .filter((e) => e.isDirectory() && e.name.startsWith('cppjs-package-'))
-        .map((e) => path.join(PACKAGES_DIR, e.name));
+    const families = fs.readdirSync(PACKAGES_DIR, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
 
     const out = [];
-    for (const group of groups) {
-        const subs = fs.readdirSync(group, { withFileTypes: true }).filter((e) => e.isDirectory() && e.name.startsWith('cppjs-package-'));
+    for (const family of families) {
+        const familyDir = path.join(PACKAGES_DIR, family);
+        const subs = fs.readdirSync(familyDir, { withFileTypes: true }).filter((e) => e.isDirectory());
         for (const sub of subs) {
             const platform = detectPlatform(sub.name);
             if (!platform) continue;
             out.push({
-                name: sub.name,
+                name: `@crossbind/port-${family}-${sub.name}`,
                 platform,
-                dir: path.join(group, sub.name),
+                dir: path.join(familyDir, sub.name),
             });
         }
     }
@@ -103,9 +99,9 @@ async function checkPackage(pkg) {
         return { issues, libNames: [] };
     }
 
-    const configPath = path.join(pkg.dir, 'cppjs.config.js');
+    const configPath = path.join(pkg.dir, 'crossbind.config.js');
     if (!fs.existsSync(configPath)) {
-        issues.push('cppjs.config.js missing');
+        issues.push('crossbind.config.js missing');
         return { issues, libNames: [] };
     }
 
@@ -113,12 +109,12 @@ async function checkPackage(pkg) {
     try {
         meta = await loadConfigMeta(configPath, pkg.platform);
     } catch (e) {
-        issues.push(`cppjs.config.js failed to import: ${e.message}`);
+        issues.push(`crossbind.config.js failed to import: ${e.message}`);
         return { issues, libNames: [] };
     }
     const { libNames, libType } = meta;
     if (libNames.length === 0) {
-        issues.push('no libName resolved from cppjs.config.js');
+        issues.push('no libName resolved from crossbind.config.js');
         return { issues, libNames };
     }
 

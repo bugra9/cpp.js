@@ -1,0 +1,47 @@
+{
+    "name": "@crossbind/port-gdal-ios",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "3.13.3",
+    "description": "iOS build of the precompiled GDAL geospatial library, built with crossbind. Use it together with the main package @crossbind/port-gdal.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/gdal#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "MIT",
+    "keywords": [
+        "gdal",
+        "libgdal",
+        "gis",
+        "geospatial",
+        "raster",
+        "vector",
+        "crossbind",
+        "crossbind-package",
+        "ios",
+        "react-native"
+    ],
+    "scripts": {
+        "build": "crossbind build -p ios",
+        "clear": "rm -rf .crossbind dist *.xcframework",
+        "prepublishOnly": "crossbind build -p ios"
+    },
+    "dependencies": {
+        "@crossbind/port-gdal": "workspace:^",
+        "@crossbind/port-curl-ios": "workspace:^",
+        "@crossbind/port-expat-ios": "workspace:^",
+        "@crossbind/port-geos-ios": "workspace:^",
+        "@crossbind/port-geotiff-ios": "workspace:^",
+        "@crossbind/port-iconv-ios": "workspace:^",
+        "@crossbind/port-jpegturbo-ios": "workspace:^",
+        "@crossbind/port-proj-ios": "workspace:^",
+        "@crossbind/port-spatialite-ios": "workspace:^",
+        "@crossbind/port-sqlite3-ios": "workspace:^",
+        "@crossbind/port-tiff-ios": "workspace:^",
+        "@crossbind/port-webp-ios": "workspace:^",
+        "@crossbind/port-zlib-ios": "workspace:^",
+        "@crossbind/port-zstd-ios": "workspace:^",
+        "@crossbind/port-lerc-ios": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

@@ -1,0 +1,35 @@
+{
+    "name": "@crossbind/port-geotiff-wasm",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "1.7.4",
+    "description": "WebAssembly build of the precompiled libgeotiff (GeoTIFF) library, built with crossbind. Use it together with the main package @crossbind/port-geotiff.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/geotiff#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "MIT",
+    "keywords": [
+        "geotiff",
+        "libgeotiff",
+        "gis",
+        "geospatial",
+        "crossbind",
+        "crossbind-package",
+        "webassembly",
+        "wasm"
+    ],
+    "scripts": {
+        "build": "crossbind build -p wasm",
+        "clear": "rm -rf .crossbind dist *.xcframework",
+        "prepublishOnly": "crossbind build -p wasm"
+    },
+    "dependencies": {
+        "@crossbind/port-geotiff": "workspace:^",
+        "@crossbind/port-proj-wasm": "workspace:^",
+        "@crossbind/port-tiff-wasm": "workspace:^",
+        "@crossbind/port-zlib-wasm": "workspace:^",
+        "@crossbind/port-jpegturbo-wasm": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

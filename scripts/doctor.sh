@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# scripts/doctor.sh — verify the cpp.js development toolchain is ready.
+# scripts/doctor.sh — verify the crossbind development toolchain is ready.
 #
 # Checks (in order):
-#   - Node              ≥ 20    (cpp.js engines.node ≥ 20)
+#   - Node              ≥ 20    (crossbind engines.node ≥ 20)
 #   - pnpm              ≥ 10    (workspace packageManager pin)
 #   - git               (any version)
-#   - Docker            (running daemon, can pull cpp.js's Emscripten image)
+#   - Docker            (running daemon, can pull crossbind's Emscripten image)
 #   - Android SDK / NDK (when ANDROID_HOME or ANDROID_SDK_ROOT is set)
 #   - Xcode             (macOS only)
 #

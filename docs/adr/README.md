@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-This folder captures **why** key technical decisions in cpp.js were made — the reasoning, the tradeoffs, and what alternatives were rejected. AI agents and human contributors should read the relevant ADR before changing the affected area.
+This folder captures **why** key technical decisions in crossbind were made — the reasoning, the tradeoffs, and what alternatives were rejected. AI agents and human contributors should read the relevant ADR before changing the affected area.
 
 ADRs are **immutable**. When a decision is overturned, write a new ADR that supersedes the old one (and update the old one's "Status" header to point at the supersession).
 
@@ -8,14 +8,14 @@ ADRs are **immutable**. When a decision is overturned, write a new ADR that supe
 
 | # | Title | Status | Affects |
 |---|-------|--------|---------|
-| [0001](./0001-agent-first-class-support.md) | AI agents are first-class consumers of cpp.js | Accepted | Plugin, MCP, AGENTS.md, playbooks |
-| [0002](./0002-pnpm-topological-build-order.md) | Use pnpm workspace dependencies for transitive C++ build order | Accepted | All `cppjs-packages/*/*/package.json` |
-| [0003](./0003-function-typed-env-values.md) | Allow env values in `cppjs.config.js` to be functions of `(state, target)` | Accepted | `cppjs-core/cpp.js/src/state/`, plugin authors |
-| [0004](./0004-three-layer-agent-distribution.md) | Distribute agent integration in 3 layers: Claude Code plugin, MCP server, AGENTS.md snippet | Accepted | `cppjs-agents/`, `cppjs-core/cppjs-mcp/`, `website/src/pages/agents.mdx` |
+| [0001](./0001-agent-first-class-support.md) | AI agents are first-class consumers of crossbind | Accepted | Plugin, MCP, AGENTS.md, playbooks |
+| [0002](./0002-pnpm-topological-build-order.md) | Use pnpm workspace dependencies for transitive C++ build order | Accepted | All `ports/*/*/package.json` |
+| [0003](./0003-function-typed-env-values.md) | Allow env values in `crossbind.config.js` to be functions of `(state, target)` | Accepted | `core/crossbind/src/state/`, plugin authors |
+| [0004](./0004-three-layer-agent-distribution.md) | Distribute agent integration in 3 layers: Claude Code plugin, MCP server, AGENTS.md snippet | Accepted | `agents/`, `tooling/mcp/`, `website/src/pages/agents.mdx` |
 | [0005](./0005-wasi-platform.md) | Add `platform: 'wasi'` as a first-class build platform (wasm32-wasip3 command components) | Accepted | `buildWasiCommand.js`, `-wasi`/`-bin-wasi` packages, CI |
-| [0006](./0006-rust-bindings.md) | Bind plain Rust through a flat C ABI; the engine never depends on the binding layer | Accepted | `cppjs-core-embind-rust/`, `rustBridgeGen.js`, bundler plugins |
+| [0006](./0006-rust-bindings.md) | Bind plain Rust through a flat C ABI; the engine never depends on the binding layer | Accepted | `core-embind-rust/`, `rustBridgeGen.js`, bundler plugins |
 | [0007](./0007-cargo-import-scheme.md) | Prefix direct crate imports with `cargo:` | Accepted | `getDependFilePath.js`, bundler plugins, `cargoDependencies` |
-| [0008](./0008-bin-license-contract.md) | Govern published binaries with a derived Bin & License Contract (K1-K4) | Accepted | `cppjs-packages/README.md`, `buildBinTools.js`, `check-publish-hygiene.js` |
+| [0008](./0008-bin-license-contract.md) | Govern published binaries with a derived Bin & License Contract (K1-K4) | Accepted | `ports/README.md`, `buildBinTools.js`, `check-publish-hygiene.js` |
 
 ## Writing a new ADR
 

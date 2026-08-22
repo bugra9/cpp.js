@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-05
-- **Affects:** `cppjs-core/cpp.js/src/integration/getDependFilePath.js`, bundler plugins (vite/rollup/metro), the top-level `cargoDependencies` config map, generated `.cppjs/rust-crates/types/`
+- **Affects:** `core/crossbind/src/integration/getDependFilePath.js`, bundler plugins (vite/rollup/metro), the top-level `cargoDependencies` config map, generated `.crossbind/rust-crates/types/`
 
 ## Context
 
@@ -30,7 +30,7 @@ Crate imports carry an explicit store prefix: `import { Uuid } from
 - **Positive** — zero ambiguity with npm names; resolution needs no guards;
   the import line documents its own origin; type declarations get a stable
   module id.
-- **Negative** — a cpp.js-specific module scheme bundlers only understand
+- **Negative** — a crossbind-specific module scheme bundlers only understand
   through our plugins; version choice lives in config rather than the
   specifier (a `cargo:x@1` form stays open for later).
 

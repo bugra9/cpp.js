@@ -1,13 +1,13 @@
 # Troubleshooting — common errors and which override to reach for
 
-> When a cpp.js build or runtime fails, **don't bypass the system** — almost every common error has a designated override mechanism. This doc lists the errors agents actually hit and routes each to the right override (catalogued in [`overrides.md`](./overrides.md)).
+> When a crossbind build or runtime fails, **don't bypass the system** — almost every common error has a designated override mechanism. This doc lists the errors agents actually hit and routes each to the right override (catalogued in [`overrides.md`](./overrides.md)).
 
 The recovery rule:
 
 1. Read the error literally.
 2. Identify which layer it lives in (binding-time / build-time / link-time / runtime / hosting).
 3. Reach for the **least invasive** override (target filter → targetSpecs → env → build hooks → extensions).
-4. Don't manually edit cpp.js source, generated artifacts, or upstream library code outside `replaceList`.
+4. Don't manually edit crossbind source, generated artifacts, or upstream library code outside `replaceList`.
 
 ---
 
@@ -15,26 +15,26 @@ The recovery rule:
 
 ### `Error: ENOENT: no such file or directory ... /dist/...`
 
-cpp.js expected a `dist/` from a dependency that hasn't been built yet.
+crossbind expected a `dist/` from a dependency that hasn't been built yet.
 
 - **Cause:** transitive dep wasn't built. pnpm topological order should handle this, but if you ran a single-package build with `pnpm --filter <one>` it skipped the deps.
-- **Fix:** `pnpm install && pnpm run build` (full topological), or `pnpm --filter '@cpp.js/package-<dep>*' run build` first.
+- **Fix:** `pnpm install && pnpm run build` (full topological), or `pnpm --filter '@crossbind/port-<dep>*' run build` first.
 
 ### `undefined symbol: <name>` at link
 
 The linker can't find a symbol your code references.
 
-- **Cause A — missing dep:** `dependencies: []` in `cppjs.config.js` doesn't list the package providing this symbol.
+- **Cause A — missing dep:** `dependencies: []` in `crossbind.config.js` doesn't list the package providing this symbol.
   **Fix:** add the dep + its sub-arch dep in `package.json`. See ADR-0002.
 - **Cause B — symbol clash:** two libs export the same symbol. Common with `iconv` (gdal renames it to `libiconv` to avoid clash).
-  **Fix:** `cppjs.build.js` `replaceList` to rename one set of symbols, or `targetSpecs[].specs.ignoreLibName` to suppress the duplicate.
+  **Fix:** `crossbind.build.js` `replaceList` to rename one set of symbols, or `targetSpecs[].specs.ignoreLibName` to suppress the duplicate.
 
 ### `error: cannot find -l<libname>`
 
 Linker can't find a library file, but the dep IS declared.
 
 - **Cause:** library was built but produced a different `.a` name than expected. Usually a mismatch between `export.libName` in the dep and what's actually built.
-- **Fix:** check `cppjs-package-<dep>/cppjs-package-<dep>-<arch>/cppjs.config.js` `export.libName` array; verify the produced `.a` exists in `dist/lib/`.
+- **Fix:** check `ports/<dep>/<arch>/crossbind.config.js` `export.libName` array; verify the produced `.a` exists in `dist/lib/`.
 
 ### `wasm-ld: error: --whole-archive ... duplicate symbol`
 
@@ -45,12 +45,12 @@ Two libs define the same function.
 ### `wasm-ld: error: --shared-memory is disallowed by ... not compiled with 'atomics' or 'bulk-memory' features`
 
 A multithread (`mt`) wasm link pulled in a Rust archive whose objects (std
-included) were built without the atomics features. Current cpp.js cannot
+included) were built without the atomics features. Current crossbind cannot
 produce such an archive — mt Rust builds go through nightly `-Zbuild-std` or
 fail with install instructions — so the usual source is a **stale cargo-type
 package prebuilt** built before mt support.
 
-- **Fix:** rebuild the package's wasm prebuilts (`cppjs build -p wasm` in the
+- **Fix:** rebuild the package's wasm prebuilts (`crossbind build -p wasm` in the
   package, with `rustup toolchain install nightly --component rust-src` done
   once) or update to a package version whose mt prebuilt was built that way.
 
@@ -58,7 +58,7 @@ package prebuilt** built before mt support.
 
 Upstream library uses CPU-specific code that doesn't compile for Wasm.
 
-- **Fix:** `cppjs.build.js` `replaceList` to gate the intrinsic with `#ifdef __wasm__`. Real example: gdal-wasm.
+- **Fix:** `crossbind.build.js` `replaceList` to gate the intrinsic with `#ifdef __wasm__`. Real example: gdal-wasm.
 
   ```js
   replaceList: [{
@@ -87,7 +87,7 @@ Emscripten itself ran out of memory during compilation.
 curl-ios SDK 26+ specific.
 
 - **Cause:** autoconf cache miss between SDK detection and actual symbol availability.
-- **Fix:** `getBuildParams` adds `'-D_CURL_PREFILL=ON'`. See curl-ios's cppjs.build.js for the prefill cache pattern.
+- **Fix:** `getBuildParams` adds `'-D_CURL_PREFILL=ON'`. See curl-ios's crossbind.build.js for the prefill cache pattern.
 
 ### iOS: code signing fails on a build utility
 
@@ -205,7 +205,7 @@ Comlink call posted to worker but no response.
 ### Hot Module Reload doesn't pick up `.cpp` changes (Vite/Webpack)
 
 - **Cause:** `paths.native` change not detected by the bundler's file watcher.
-- **Note:** the bundler plugins (`@cpp.js/plugin-vite`, `-webpack`) explicitly add the `paths.native` files to the watcher in dev mode. If HMR fails:
+- **Note:** the bundler plugins (`@crossbind/plugin-vite`, `-webpack`) explicitly add the `paths.native` files to the watcher in dev mode. If HMR fails:
 - **Fix:** restart dev server. If it persists, check that `paths.native` is correctly resolved (look at `state.config.paths.native` in console).
 
 ---
@@ -224,7 +224,7 @@ curl's POSIX socket calls don't exist in Wasm. curl-wasm injects a 200-line `rep
 
 ### 3. CPU intrinsic gates
 
-`CPL_CPUID`, `__asm__`, `<immintrin.h>` etc. don't compile for Wasm by default. gdal-wasm gates them with `#ifdef __wasm__`. Pattern is in gdal's cppjs.build.js.
+`CPL_CPUID`, `__asm__`, `<immintrin.h>` etc. don't compile for Wasm by default. gdal-wasm gates them with `#ifdef __wasm__`. Pattern is in gdal's crossbind.build.js.
 
 ### 4. `depPaths` silent fallback
 
@@ -232,7 +232,7 @@ When `getBuildParams` references `depPaths.X.header` with a wrong key name (typo
 
 ### 5. iOS `_CURL_PREFILL` cache
 
-On iOS SDK 26+, autoconf misdetects `pipe2` due to a cache mismatch. curl-ios uses `_CURL_PREFILL=ON` to force-load a prefill script. Any autotools-based package on iOS may hit similar cache issues; check curl-ios's `cppjs.build.js` for the pattern.
+On iOS SDK 26+, autoconf misdetects `pipe2` due to a cache mismatch. curl-ios uses `_CURL_PREFILL=ON` to force-load a prefill script. Any autotools-based package on iOS may hit similar cache issues; check curl-ios's `crossbind.build.js` for the pattern.
 
 ---
 
@@ -241,10 +241,10 @@ On iOS SDK 26+, autoconf misdetects `pipe2` due to a cache mismatch. curl-ios us
 When the error doesn't match anything above:
 
 1. **`pnpm run doctor`** — verifies Node, pnpm, Docker, Android SDK/NDK, Xcode. Most "weird" build failures are missing toolchains.
-2. **Check `~/.cppjs.json` `LOG_LEVEL: 'DEBUG'`** — turns on verbose tracing in cpp.js itself. Often shows which step failed.
+2. **Check `~/.crossbind.json` `LOG_LEVEL: 'DEBUG'`** — turns on verbose tracing in crossbind itself. Often shows which step failed.
 3. **Reduce to smallest reproducer** — create a fresh project with just the failing dep. Apply the bug-fix playbook (`docs/playbooks/bug-fix.md`).
-4. **Search for the error literal** in `cppjs-core/cpp.js/src/`. Most cpp.js error messages are unique enough to find the throwing site.
-5. **File an issue** if the error originates from cpp.js itself, not from your config or upstream.
+4. **Search for the error literal** in `core/crossbind/src/`. Most crossbind error messages are unique enough to find the throwing site.
+5. **File an issue** if the error originates from crossbind itself, not from your config or upstream.
 
 ## See also
 

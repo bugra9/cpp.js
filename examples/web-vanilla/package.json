@@ -1,0 +1,29 @@
+{
+    "name": "@crossbind/example-web-vanilla",
+    "private": true,
+    "version": "0.0.0",
+    "description": "crossbind Web Vanilla sample",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/examples/web-vanilla#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "license": "MIT",
+    "scripts": {
+        "build": "crossbind build -p wasm -a wasm32 -r st -e browser -b release",
+        "preview": "serve -c ./serve.json",
+        "e2e:prod": "playwright test --config playwright.prod.config.cjs"
+    },
+    "dependencies": {
+        "@crossbind/example-lib-prebuilt-matrix": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^",
+        "serve": "^14.2.6",
+        "@playwright/test": "^1.62.1"
+    },
+    "keywords": [
+        "crossbind-sample",
+        "webassembly",
+        "bind",
+        "c++",
+        "vanilla"
+    ]
+}

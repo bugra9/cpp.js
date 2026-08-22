@@ -1,8 +1,8 @@
 # e2e-templates
 
-Scaffolds **every `create-cpp.js` template** and runs its real build + e2e suite,
-exactly as an end user would after `npm create cpp.js`. It catches the failures the
-monorepo hides: unpublished `@cpp.js/*` versions, workspace-only config that leaks
+Scaffolds **every `create-crossbind` template** and runs its real build + e2e suite,
+exactly as an end user would after `npm create crossbind`. It catches the failures the
+monorepo hides: unpublished `@crossbind/*` versions, workspace-only config that leaks
 into scaffolds, and templates that don't build/run standalone.
 
 ## Usage
@@ -15,7 +15,7 @@ node scripts/e2e-templates.js [options]
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| `--source npm\|local` | `npm` | `npm`: use the published scaffolder (`npx create-cpp.js@<tag>`). `local`: build `templates/` from the working tree, `npm pack`, and run that tarball. |
+| `--source npm\|local` | `npm` | `npm`: use the published scaffolder (`npx create-crossbind@<tag>`). `local`: build `templates/` from the working tree, `npm pack`, and run that tarball. |
 | `--tag <tag>` | `beta` | npm dist-tag for `--source npm`. |
 | `--pm pnpm\|npm` | `pnpm` | Package manager for scaffolded projects. |
 | `--only a,b,c` | — | Run only these manifest `key`s (e.g. `web-react-vite`). |
@@ -34,10 +34,10 @@ Start with `node scripts/e2e-templates.js --list` to see what your machine can r
 
 | Class | Build | E2E | Needs |
 | --- | --- | --- | --- |
-| web (vanilla, react-rspack/vite, vue, svelte) | `cppjs build` / bundler (Docker) | Playwright `e2e:prod`→`e2e:dev` | Docker |
-| cloud (cloudflare-worker) | `cppjs build` (Docker) | Playwright + `wrangler dev` | Docker |
-| backend (nodejs-wasm) | `cppjs build` (Docker) | none → build is the assertion | Docker |
-| lib-prebuilt | `cppjs build` (Docker) | none | Docker |
+| web (vanilla, react-rspack/vite, vue, svelte) | `crossbind build` / bundler (Docker) | Playwright `e2e:prod`→`e2e:dev` | Docker |
+| cloud (cloudflare-worker) | `crossbind build` (Docker) | Playwright + `wrangler dev` | Docker |
+| backend (nodejs-wasm) | `crossbind build` (Docker) | none → build is the assertion | Docker |
+| lib-prebuilt | `crossbind build` (Docker) | none | Docker |
 | lib-source, lib-cmake | none | none | — (scaffold+install only) |
 | mobile-reactnative-cli | via `e2e:*` | Maestro `e2e:ios` / `e2e:android` | iOS sim or Android emulator + Maestro |
 | mobile-reactnative-expo | — | none → `expo prebuild` smoke | node |
@@ -52,10 +52,10 @@ Start with `node scripts/e2e-templates.js --list` to see what your machine can r
 ## Known limitations
 
 - **`--source local` dependency resolution:** the scaffolder is local, but the scaffolded
-  project's `@cpp.js/*` deps still install from npm. So local mode also asserts "are the
+  project's `@crossbind/*` deps still install from npm. So local mode also asserts "are the
   current workspace versions published?". For fully offline isolation, point npm at a local
   registry (e.g. Verdaccio).
 - **Playwright `webServer` hardcodes `pnpm run …`** in the sample configs, so web/cloud e2e
   needs `pnpm` on `PATH` regardless of `--pm`.
-- **Wasm/native builds require Docker** (`bugra9/cpp.js` image, pulled on first run). Mobile
+- **Wasm/native builds require Docker** (`crossbind/crossbind` image, pulled on first run). Mobile
   e2e requires a booted simulator/emulator and Maestro; missing pieces are reported as SKIP.

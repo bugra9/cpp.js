@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Downloads each package's pinned-version source tarball and writes its sha256 into the build
-// recipe (build.mjs), next to getURL, so cpp.js can verify the download at build time (see
+// recipe (build.mjs), next to getURL, so crossbind can verify the download at build time (see
 // downloadAndExtractFile.verifyIntegrity). Run after bumping a package's nativeVersion.
 //
 //   node scripts/pin-source-hash.js             # every family with a getURL recipe
@@ -12,22 +12,18 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { listFamilies, portDir } from './lib/ports.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const PKGROOT = path.join(ROOT, 'cppjs-packages');
 const args = process.argv.slice(2).filter((a) => !a.startsWith('-'));
 
 function families() {
     if (args.length) return args;
-    return fs
-        .readdirSync(PKGROOT)
-        .filter((d) => d.startsWith('cppjs-package-'))
-        .map((d) => d.replace('cppjs-package-', ''))
-        .sort();
+    return listFamilies(ROOT);
 }
 
 function sha256OfUrl(url) {
-    const tmp = path.join(os.tmpdir(), `cppjs-pin-${crypto.randomBytes(6).toString('hex')}`);
+    const tmp = path.join(os.tmpdir(), `crossbind-pin-${crypto.randomBytes(6).toString('hex')}`);
     try {
         execFileSync('curl', ['-fsSL', '--retry', '2', url, '-o', tmp], { stdio: ['ignore', 'ignore', 'pipe'] });
         return crypto.createHash('sha256').update(fs.readFileSync(tmp)).digest('hex');
@@ -53,7 +49,7 @@ let skipped = 0;
 let failed = 0;
 
 for (const family of families()) {
-    const brandDir = path.join(PKGROOT, `cppjs-package-${family}`, `cppjs-package-${family}`);
+    const brandDir = portDir(ROOT, family);
     const buildMjs = path.join(brandDir, 'build.mjs');
     const pkgJson = path.join(brandDir, 'package.json');
     if (!fs.existsSync(buildMjs) || !fs.existsSync(pkgJson)) {

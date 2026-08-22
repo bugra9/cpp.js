@@ -1,12 +1,12 @@
 # `init(opts)` — Runtime API
 
-The single entry point for calling into your Wasm module from JavaScript. Produced by the cpp.js build pipeline; consumed by your application code.
+The single entry point for calling into your Wasm module from JavaScript. Produced by the crossbind build pipeline; consumed by your application code.
 
 > The same function is exported by browser, Node, and Edge runtime entries. The `opts` shape is identical; only the available *defaults* differ per runtime.
 
 ## Where it comes from
 
-With a bundler plugin (Vite, Rollup, Webpack, Rspack, Metro), import it from `cpp.js` and everything else from the header, `.rs` file or `cargo:` crate:
+With a bundler plugin (Vite, Rollup, Webpack, Rspack, Metro), import it from `crossbind` and everything else from the header, `.rs` file or `cargo:` crate:
 
 ```js
 import { initNative } from './native/native.h';
@@ -26,7 +26,7 @@ init(opts?: InitOptions): Promise<Module>
 init.terminate(): void   // browser-only when useWorker:true
 ```
 
-`Module` is the Emscripten runtime module enriched with cpp.js helpers (see [§ Module helpers](#module-helpers) below).
+`Module` is the Emscripten runtime module enriched with crossbind helpers (see [§ Module helpers](#module-helpers) below).
 
 ## `InitOptions`
 
@@ -66,7 +66,7 @@ init.terminate(): void   // browser-only when useWorker:true
       //   2. The browser supports OPFS (Chrome 86+, Firefox 111+,
       //      Safari 15.2+).
       //
-      // If you mount /opfs/... but conditions aren't met, cpp.js
+      // If you mount /opfs/... but conditions aren't met, crossbind
       // logs an error and silently redirects the path to /memfs.
   },
 
@@ -81,7 +81,7 @@ init.terminate(): void   // browser-only when useWorker:true
       // env wiring) and produce a string for the runtime.
       // See ADR-0003.
       //
-      // Token replacement: the literal string `_CPPJS_DATA_PATH_`
+      // Token replacement: the literal string `_CROSSBIND_DATA_PATH_`
       // inside any value is replaced with the runtime data path
       // (e.g. /opfs/<app> in browser, host fs path in Node).
   },
@@ -129,7 +129,7 @@ init.terminate(): void   // browser-only when useWorker:true
 
 ## Return value: `Module`
 
-The Emscripten runtime module, plus cpp.js extensions. Embind exports from your C++ code are attached as named members.
+The Emscripten runtime module, plus crossbind extensions. Embind exports from your C++ code are attached as named members.
 
 ### Module helpers
 
@@ -155,7 +155,7 @@ m.unmount()               // placeholder, no-op
 
 When `useWorker: true`, `Module` is a Comlink-wrapped proxy. Behavior is identical from your code's perspective with one caveat: every call crosses a worker boundary, so:
 
-- All embind objects are auto-proxied (via cpp.js's custom Comlink transfer handlers).
+- All embind objects are auto-proxied (via crossbind's custom Comlink transfer handlers).
 - Calls are async by nature even when the underlying C++ is synchronous.
 - Returned `vector`s arrive as proxies; treat them the same — `m.toArray(vec)` still works.
 
@@ -188,7 +188,7 @@ m.FS.writeFile('/opfs/myapp/data.bin', new Uint8Array([1, 2, 3]))
 
 ```js
 const m = await initNative({
-  // Nothing extra here — `runtime: 'mt'` was set in cppjs.config.js
+  // Nothing extra here — `runtime: 'mt'` was set in crossbind.config.js
   // at build time, so this Wasm IS multithreaded.
   // Just make sure your prod host sends COOP/COEP headers.
 })
@@ -200,7 +200,7 @@ const m = await initNative({
 import { initNative } from './native/native.h';
 
 const m = await initNative({
-  env: { TMPDIR: '_CPPJS_DATA_PATH_/scratch' },
+  env: { TMPDIR: '_CROSSBIND_DATA_PATH_/scratch' },
 })
 ```
 
@@ -227,4 +227,4 @@ const m = await initNative({
 
 - [`filesystem.md`](./filesystem.md) — full OPFS / memfs / node-fs decision tree.
 - [`threading.md`](./threading.md) — `runtime: 'mt'` requirements, COOP/COEP, edge limits.
-- [`cppjs-config.md`](./cppjs-config.md) — build-time config that produces what `init` consumes.
+- [`crossbind-config.md`](./crossbind-config.md) — build-time config that produces what `init` consumes.

@@ -1,0 +1,34 @@
+{
+    "name": "@crossbind/port-tiff-wasm",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "4.7.2",
+    "description": "WebAssembly build of the precompiled TIFF (libtiff) image library, built with crossbind. Use it together with the main package @crossbind/port-tiff.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/tiff#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "libtiff",
+    "keywords": [
+        "tiff",
+        "libtiff",
+        "image",
+        "crossbind",
+        "crossbind-package",
+        "webassembly",
+        "wasm"
+    ],
+    "scripts": {
+        "build": "crossbind build -p wasm",
+        "clear": "rm -rf .crossbind dist *.xcframework",
+        "prepublishOnly": "crossbind build -p wasm"
+    },
+    "dependencies": {
+        "@crossbind/port-tiff": "workspace:^",
+        "@crossbind/port-zlib-wasm": "workspace:^",
+        "@crossbind/port-jpegturbo-wasm": "workspace:^",
+        "@crossbind/port-zstd-wasm": "workspace:^",
+        "@crossbind/port-lerc-wasm": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

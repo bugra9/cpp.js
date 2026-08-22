@@ -1,0 +1,30 @@
+{
+    "name": "@crossbind/port-webp-ios",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "1.6.0",
+    "description": "iOS build of the precompiled WebP image library, built with crossbind. Use it together with the main package @crossbind/port-webp.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/webp#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "BSD-3-Clause",
+    "keywords": [
+        "webp",
+        "libwebp",
+        "image",
+        "crossbind",
+        "crossbind-package",
+        "ios",
+        "react-native"
+    ],
+    "scripts": {
+        "build": "crossbind build -p ios",
+        "clear": "rm -rf .crossbind dist *.xcframework",
+        "prepublishOnly": "crossbind build -p ios"
+    },
+    "dependencies": {
+        "@crossbind/port-webp": "workspace:^"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}

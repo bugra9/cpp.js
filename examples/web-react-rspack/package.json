@@ -1,0 +1,44 @@
+{
+    "name": "@crossbind/example-web-react-rspack",
+    "private": true,
+    "version": "0.0.0",
+    "description": "crossbind React Rspack sample",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/examples/web-react-rspack#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "license": "MIT",
+    "scripts": {
+        "dev": "cross-env NODE_ENV=development rspack serve",
+        "build": "cross-env NODE_ENV=production rspack build",
+        "preview": "serve dist",
+        "e2e:dev": "playwright test --config playwright.dev.config.cjs",
+        "e2e:prod": "playwright test --config playwright.prod.config.cjs"
+    },
+    "dependencies": {
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8",
+        "@crossbind/example-lib-prebuilt-matrix": "workspace:^"
+    },
+    "devDependencies": {
+        "@rspack/plugin-react-refresh": "^2.0.2",
+        "@rspack/cli": "^2.1.8",
+        "@rspack/core": "^2.1.8",
+        "@rspack/dev-server": "^2.2.0",
+        "@types/react": "^19.2.18",
+        "@types/react-dom": "^19.2.4",
+        "cross-env": "^10.1.0",
+        "react-refresh": "^0.18.0",
+        "@playwright/test": "^1.62.1",
+        "serve": "^14.2.6",
+        "@crossbind/plugin-webpack": "workspace:^",
+        "@crossbind/plugin-webpack-loader": "workspace:^"
+    },
+    "keywords": [
+        "crossbind-sample",
+        "webassembly",
+        "bind",
+        "c++",
+        "react",
+        "rspack",
+        "webpack"
+    ]
+}

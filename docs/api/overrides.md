@@ -1,6 +1,6 @@
 # Override mechanisms catalog
 
-> cpp.js picks sane defaults for every build flag, env var, path, and toolchain. When a default doesn't fit your case, there are **20 documented override points**. This doc lists them in order of preference: **start with the least invasive that solves your problem**.
+> crossbind picks sane defaults for every build flag, env var, path, and toolchain. When a default doesn't fit your case, there are **20 documented override points**. This doc lists them in order of preference: **start with the least invasive that solves your problem**.
 
 ## Why "least invasive first"
 
@@ -10,16 +10,16 @@ Order of preference, from least to most invasive:
 
 1. Don't override — restate the constraint as a target filter.
 2. `targetSpecs[].specs.*` for declarative per-target tweaks.
-3. `cppjs.config.js` `env: {}` for runtime env vars.
-4. `cppjs.build.js` hooks (package authors only) for source-acquisition / build-step logic.
+3. `crossbind.config.js` `env: {}` for runtime env vars.
+4. `crossbind.build.js` hooks (package authors only) for source-acquisition / build-step logic.
 5. `extensions[]` for cross-cutting plugin behavior.
-6. `~/.cppjs.json` for system-wide environment defaults.
+6. `~/.crossbind.json` for system-wide environment defaults.
 
 ## The 20 override points
 
 ### Layer 1 — Target filter (narrow the build matrix)
 
-#### 1. `cppjs.config.js` `target.{platform,arch,runtime,buildType,runtimeEnv}`
+#### 1. `crossbind.config.js` `target.{platform,arch,runtime,buildType,runtimeEnv}`
 
 Restrict which of the 30 built-in targets actually build. Doesn't *change* defaults — just skips targets you don't need.
 
@@ -86,7 +86,7 @@ targetSpecs: [{
 }]
 ```
 
-### Layer 3 — `cppjs.config.js` global
+### Layer 3 — `crossbind.config.js` global
 
 #### 7. `env: { KEY: 'value' | ((state, target) => string) }`
 
@@ -96,7 +96,7 @@ Env vars passed to Wasm at runtime. Function values resolved lazily — see [ADR
 env: {
     APP_MODE: 'production',
     DATA_DIR: (state, target) => `${state.config.paths.build}/data`,
-    CERT_PATH: '_CPPJS_DATA_PATH_/certs/cacert.pem',  // _CPPJS_DATA_PATH_ replaced at runtime
+    CERT_PATH: '_CROSSBIND_DATA_PATH_/certs/cacert.pem',  // _CROSSBIND_DATA_PATH_ replaced at runtime
 }
 ```
 
@@ -112,15 +112,15 @@ functions: {
 
 #### 9. `dependencies: [...]`
 
-Each entry is another resolved cpp.js config. Affects build order (pnpm topological per ADR-0002), and the dep's `target.runtime: 'mt'` auto-promotes you to `mt`.
+Each entry is another resolved crossbind config. Affects build order (pnpm topological per ADR-0002), and the dep's `target.runtime: 'mt'` auto-promotes you to `mt`.
 
 #### 10. `paths.cmake`
 
-Point at a custom `CMakeLists.txt` instead of the project default. Rare — cpp.js's bundled CMakeLists works for almost every project.
+Point at a custom `CMakeLists.txt` instead of the project default. Rare — crossbind's bundled CMakeLists works for almost every project.
 
-### Layer 4 — `cppjs.build.js` hooks (package authors only)
+### Layer 4 — `crossbind.build.js` hooks (package authors only)
 
-> These are for `cppjs-package-*` authors wrapping an upstream library. Consumer apps don't write `cppjs.build.js`.
+> These are for `ports/*` authors wrapping an upstream library. Consumer apps don't write `crossbind.build.js`.
 
 #### 11. `getURL: (version) => string` or `getSource: async (state) => void`
 
@@ -136,7 +136,7 @@ Returns extra libs to add to the link line beyond what `dependencies` already wi
 
 #### 14. `env: ((target) => string[]) | string[]`
 
-Build-time env vars (CFLAGS, CXXFLAGS, LDFLAGS as string literals). Different from `cppjs.config.js` `env` which is runtime.
+Build-time env vars (CFLAGS, CXXFLAGS, LDFLAGS as string literals). Different from `crossbind.config.js` `env` which is runtime.
 
 ```js
 env: (target) => [
@@ -193,19 +193,22 @@ extensions: [{
 }]
 ```
 
-Use when you need to share an override across **multiple cpp.js packages**. Inside a single package, prefer `targetSpecs` or `cppjs.build.js` hooks. The OpenSSL Android cert-injection extension is a real example.
+Use when you need to share an override across **multiple crossbind packages**. Inside a single package, prefer `targetSpecs` or `crossbind.build.js` hooks. The OpenSSL Android cert-injection extension is a real example.
 
 ### Layer 6 — System (machine-wide)
 
-#### `~/.cppjs.json` — three keys, host-wide
+#### `~/.crossbind.json` — host-wide keys
 
 | Key | Default | Notes |
 |-----|---------|-------|
 | `XCODE_DEVELOPMENT_TEAM` | `''` | Required for iOS device (not simulator) builds |
 | `RUNNER` | `'DOCKER_RUN'` | `'DOCKER_EXEC'` keeps a long-lived container; `'LOCAL'` skips Docker entirely (only works if you have all toolchains installed) |
 | `LOG_LEVEL` | `'INFO'` | `'DEBUG'` for verbose tracing during build issues |
+| `DOCKER_REGISTRY_MIRROR` | `''` | Registry prefix to pull the build images from, e.g. `registry.example.dev/crossbind`. crossbind appends the release digest itself, so builds stay reproducible. Env: `CROSSBIND_REGISTRY_MIRROR` |
+| `DOCKER_IMAGE_WEB` | `''` | Image used for wasm and wasi builds instead of the pinned one. A reference without the release digest disables the reproducibility guarantee. Env: `CROSSBIND_IMAGE_WEB` |
+| `DOCKER_IMAGE_ANDROID` | `''` | Same, for android builds. Env: `CROSSBIND_IMAGE_ANDROID` |
 
-These apply to every cpp.js project on the machine. Use sparingly — they don't travel with the project.
+These apply to every crossbind project on the machine. Use sparingly — they don't travel with the project.
 
 ## Decision flowchart
 
@@ -217,31 +220,31 @@ Want to change something for ONE platform / runtime / buildType?
 └── targetSpecs[] with the right filter. (Layer 2)
 
 Need an env var passed to the running Wasm?
-└── env: {} in cppjs.config.js. Use function form if it depends on state. (Layer 3)
+└── env: {} in crossbind.config.js. Use function form if it depends on state. (Layer 3)
 
 Are you wrapping an upstream library that needs source patching?
-└── cppjs.build.js replaceList (Layer 4 #15) or prepare hook (#16).
+└── crossbind.build.js replaceList (Layer 4 #15) or prepare hook (#16).
 
 Need to share an override across packages?
 └── extensions[] (Layer 5 #20).
 
 Need to set XCODE team or pick a non-Docker runner?
-└── ~/.cppjs.json (Layer 6).
+└── ~/.crossbind.json (Layer 6).
 ```
 
 ## Anti-patterns
 
-1. **Reaching for `build: async (state)` when `getBuildParams` would do.** Replacing the build runner means you re-implement what cpp.js already does. Override flags first.
-2. **Copying patterns from `extensions[]` into a single package's config.** If only one package needs the override, `targetSpecs` or `cppjs.build.js` keeps it local.
-3. **Using `~/.cppjs.json` for project-specific things.** It's machine-wide; CI won't have your overrides. Project-specific config goes in `cppjs.config.js`.
+1. **Reaching for `build: async (state)` when `getBuildParams` would do.** Replacing the build runner means you re-implement what crossbind already does. Override flags first.
+2. **Copying patterns from `extensions[]` into a single package's config.** If only one package needs the override, `targetSpecs` or `crossbind.build.js` keeps it local.
+3. **Using `~/.crossbind.json` for project-specific things.** It's machine-wide; CI won't have your overrides. Project-specific config goes in `crossbind.config.js`.
 4. **Stacking emccFlags / cmake flags in `targetSpecs` AND in `getBuildParams`.** Confusing. Pick one location.
 5. **Editing the upstream source directly in `getSource` instead of `replaceList`.** `replaceList` patches are reproducible across version bumps; manual edits aren't.
 
 ## See also
 
 - [`build-state.md`](./build-state.md) — `state` and `target` shapes that hooks receive.
-- [`cppjs-config.md`](./cppjs-config.md) — full `cppjs.config.js` field reference.
-- [`cppjs-build.md`](./cppjs-build.md) — full `cppjs.build.js` hook reference.
+- [`crossbind-config.md`](./crossbind-config.md) — full `crossbind.config.js` field reference.
+- [`crossbind-build.md`](./crossbind-build.md) — full `crossbind.build.js` hook reference.
 - [`troubleshooting.md`](./troubleshooting.md) — common errors that map to one of these overrides.
 - [`performance.md`](./performance.md) — which Emscripten/CMake defaults are safe to override.
 - ADR-0003 — function-typed env values.

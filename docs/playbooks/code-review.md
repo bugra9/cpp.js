@@ -1,6 +1,6 @@
 # Code review playbook
 
-> What to check on a cpp.js PR — for human reviewers and AI agents alike. Two checklists: **package PRs** and **fix/feature PRs**. Use the matching one.
+> What to check on a crossbind PR — for human reviewers and AI agents alike. Two checklists: **package PRs** and **fix/feature PRs**. Use the matching one.
 
 ## Universal checks (every PR)
 
@@ -12,21 +12,21 @@ Run these before any code-specific review:
 - [ ] Commits use Conventional Commits format.
 - [ ] No `console.log` left in source (check the diff).
 - [ ] No secrets, tokens, API keys, or `.env`-like files committed.
-- [ ] `.gitignore` not weakened to allow build artifacts (`.cppjs/`, `dist/`, `*.xcframework`).
+- [ ] `.gitignore` not weakened to allow build artifacts (`.crossbind/`, `dist/`, `*.xcframework`).
 - [ ] LICENSE file untouched (unless intentional).
 
-## Package PRs (new `cppjs-package-*` or upstream-version bump)
+## Package PRs (new `ports/*` or upstream-version bump)
 
-For PRs touching `cppjs-packages/`:
+For PRs touching `ports/`:
 
 ### Structure
 
-- [ ] All four sub-dirs present: `cppjs-package-<name>/`, `-wasm/`, `-android/`, `-ios/`.
-- [ ] Each sub-arch has `package.json`, `cppjs.config.js`, `cppjs.build.js`, `README.md`, `LICENSE` (upstream's), `.npmignore`.
-- [ ] iOS sub-arch has `cppjs-package-<name>.podspec` with `EXCLUDED_ARCHS[sdk=iphonesimulator*] = x86_64`.
-- [ ] `.npmignore` excludes `.cppjs/`, source tarballs, intermediates — but **keeps** `dist/prebuilt/`.
+- [ ] All four sub-dirs present: `ports/<name>/`, `-wasm/`, `-android/`, `-ios/`.
+- [ ] Each sub-arch has `package.json`, `crossbind.config.js`, `crossbind.build.js`, `README.md`, `LICENSE` (upstream's), `.npmignore`.
+- [ ] iOS sub-arch has `crossbind-port-<name>.podspec` with `EXCLUDED_ARCHS[sdk=iphonesimulator*] = x86_64`.
+- [ ] `.npmignore` excludes `.crossbind/`, source tarballs, intermediates — but **keeps** `dist/prebuilt/`.
 
-### `cppjs.build.js`
+### `crossbind.build.js`
 
 - [ ] `getURL(version)` returns a stable URL pattern (or `getSource` is justified by a comment).
 - [ ] `buildType` is `'cmake'` (preferred) or `'configure'` (autotools only).
@@ -35,7 +35,7 @@ For PRs touching `cppjs-packages/`:
 - [ ] If `replaceList` patches upstream source: each entry has a comment explaining **why** the patch is needed (often: CPU intrinsics, raw pointers, platform-specific assembly).
 - [ ] If `prepare` or `build` hook is used: justified by the upstream's specific build system. Not used as a "I want more control" shortcut.
 
-### `cppjs.config.js`
+### `crossbind.config.js`
 
 - [ ] `general.name` matches the lib short name.
 - [ ] `dependencies: []` lists every transitive C++ dep at workspace level (`workspace:^`).
@@ -46,18 +46,18 @@ For PRs touching `cppjs-packages/`:
 ### `package.json`
 
 - [ ] `nativeVersion` field set to the latest stable upstream release (run `pnpm run check:native`).
-- [ ] `dependencies` mirrors `cppjs.config.js` `dependencies`.
-- [ ] `keywords` include `cpp.js`, `webassembly`, and the lib's domain (e.g. `geo`, `crypto`, `image`).
+- [ ] `dependencies` mirrors `crossbind.config.js` `dependencies`.
+- [ ] `keywords` include `crossbind`, `webassembly`, and the lib's domain (e.g. `geo`, `crypto`, `image`).
 
 ### Validation
 
-- [ ] All three sub-arches build clean: `pnpm --filter '@cpp.js/package-<name>*' run build`.
-- [ ] If the package is in the `cpp.js` repo (not community / user-org), an e2e exercise exists in a sample.
+- [ ] All three sub-arches build clean: `pnpm --filter '@crossbind/port-<name>*' run build`.
+- [ ] If the package is in the `crossbind` repo (not community / user-org), an e2e exercise exists in a sample.
 - [ ] e2e: `pnpm run e2e:dev && pnpm run e2e:prod` pass.
 
 ## Fix / feature PRs (everything else)
 
-For PRs touching `cppjs-core/`, `cppjs-plugins/`, `cppjs-samples/`, `cppjs-extensions/`, or `scripts/`:
+For PRs touching `core/`, `tooling/`, `plugins/`, `examples/`, `e2e/`, or `scripts/`:
 
 ### Reproducibility
 
@@ -80,7 +80,7 @@ For PRs touching `cppjs-core/`, `cppjs-plugins/`, `cppjs-samples/`, `cppjs-exten
 - [ ] Booleans named with `is`/`has`/`should`/`can` prefix.
 - [ ] Constants in `UPPER_SNAKE_CASE`. Magic numbers extracted to named constants.
 
-### cpp.js-specific
+### crossbind-specific
 
 - [ ] If touching a bundler plugin (vite/webpack/rollup/RN), check the **other plugins** for the same antipattern and fix consistently. (See `AGENTS.md` "Project-specific antipatterns" — don't update one plugin without checking siblings.)
 - [ ] If `paths.native` is read, it's iterated as an array — never `fs.existsSync(paths.native)` directly.
@@ -90,7 +90,7 @@ For PRs touching `cppjs-core/`, `cppjs-plugins/`, `cppjs-samples/`, `cppjs-exten
 
 ### Tests
 
-- [ ] New utility / helper has a Vitest unit test in `cppjs-core/cpp.js/test/`.
+- [ ] New utility / helper has a Vitest unit test in `core/crossbind/test/`.
 - [ ] Bug fix has a regression test that **fails on `main` and passes after the fix**.
 - [ ] Test inputs are synthetic constants. No production data, no real network calls.
 - [ ] AAA structure (Arrange / Act / Assert).
@@ -101,10 +101,10 @@ The right validation depends on what changed:
 
 | Changed | Run |
 |---------|-----|
-| `cppjs-core/cpp.js/src/utils/` | `pnpm test` |
-| `cppjs-core/cpp.js/src/actions/` | `pnpm test` + at least one wasm + one ios + one android package build |
-| One bundler plugin | The matching sample's `dev` + `build` (e.g. plugin-vite → `cppjs-sample-web-vue-vite`) |
-| One package family | `pnpm --filter '@cpp.js/package-<name>*' run build` for all 3 arches |
+| `core/crossbind/src/utils/` | `pnpm test` |
+| `core/crossbind/src/actions/` | `pnpm test` + at least one wasm + one ios + one android package build |
+| One bundler plugin | The matching sample's `dev` + `build` (e.g. plugin-vite → `examples/web-vue-vite`) |
+| One package family | `pnpm --filter '@crossbind/port-<name>*' run build` for all 3 arches |
 | A sample | `pnpm install && pnpm dev && pnpm build` inside that sample |
 
 For multithread (`mt`) fixes, also verify `crossOriginIsolated === true` in the browser console.

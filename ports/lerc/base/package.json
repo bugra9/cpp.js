@@ -1,0 +1,34 @@
+{
+    "name": "@crossbind/port-lerc",
+    "version": "2.0.0-beta.37",
+    "nativeVersion": "4.2.0",
+    "description": "This package provides the LERC (Limited Error Raster Compression) library compiled with crossbind, enabling seamless usage of LERC raster compression in JavaScript, WebAssembly and React Native projects.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/ports/lerc#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "type": "module",
+    "license": "Apache-2.0",
+    "keywords": [
+        "lerc",
+        "libLerc",
+        "raster-compression",
+        "crossbind",
+        "crossbind-package",
+        "webassembly",
+        "wasm",
+        "android",
+        "ios",
+        "react-native"
+    ],
+    "crossbind": {
+        "upstream": {
+            "license": {
+                "declared": "Apache-2.0",
+                "selected": null,
+                "files": [
+                    "LICENSE"
+                ],
+                "copyright": null
+            }
+        }
+    }
+}

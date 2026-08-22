@@ -1,0 +1,108 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.facebook.react'
+
+// build_js.js (SWIG/embind bridges), build_android_deps.js (dependency source rebuilds)
+// and build_android_assets.js (runtime asset copy into this library's assets) run as
+// registered tasks — no external process at configuration time, so the build stays
+// configuration-cache compatible. Each script is content-cached internally, which keeps
+// the always-run tasks cheap.
+def __crossbindAppRoot = new File(rootProject.projectDir, '..').absolutePath
+def __crossbindScriptDir = new File(projectDir, '../script').absolutePath
+
+// crossbind ships Android prebuilts for arm64-v8a and x86_64 only. Build the
+// intersection with the app's reactNativeArchitectures so only the requested
+// supported ABIs are built (never an unsupported one).
+def crossbindAndroidAbis = ['arm64-v8a', 'x86_64']
+def crossbindAbis = providers.gradleProperty('reactNativeArchitectures')
+    .map { value -> (value.split(',') as List).intersect(crossbindAndroidAbis) ?: crossbindAndroidAbis }
+    .getOrElse(crossbindAndroidAbis)
+
+def crossbindBridges = tasks.register('crossbindBridges', Exec) {
+    workingDir __crossbindAppRoot
+    commandLine 'node', new File(__crossbindScriptDir, 'build_js.js').absolutePath, 'android'
+}
+def crossbindDeps = tasks.register('crossbindDeps', Exec) {
+    // After the bridge bundle: a first-time import writes its Rust bridge crate during
+    // bundling, and the deps stamp below must see that fresh set to bust the CMake configure.
+    mustRunAfter crossbindBridges
+    workingDir __crossbindAppRoot
+    // Pinned to Release: dependency prebuilts ship Release-only, debug app builds link the same deps.
+    commandLine 'node', new File(__crossbindScriptDir, 'build_android_deps.js').absolutePath, 'Release', crossbindAbis.join(',')
+}
+def crossbindAssets = tasks.register('crossbindAssets', Exec) {
+    // Asset data may come from a freshly rebuilt dependency.
+    dependsOn crossbindDeps
+    workingDir __crossbindAppRoot
+    // Asset copy is ABI-agnostic (data files are identical across ABIs) — pass the first
+    // requested ABI only so the script can resolve a buildTarget.
+    commandLine 'node', new File(__crossbindScriptDir, 'build_android_assets.js').absolutePath, crossbindAbis[0], 'Release'
+}
+
+// The library's own TurboModule codegen output (generated/source/codegen/jni) must
+// exist before the native build configures: on a fresh checkout the react plugin does
+// not order it ahead of CMake, and expo run:android failed with a missing jni dir
+// until generateCodegenArtifactsFromSchema was run by hand. Match by name, lazily -
+// the task is registered later by the react plugin.
+def crossbindCodegen = tasks.matching { it.name == 'generateCodegenArtifactsFromSchema' }
+
+tasks.named('preBuild').configure { dependsOn(crossbindBridges, crossbindDeps, crossbindAssets, crossbindCodegen) }
+// CMake configure can also be triggered without preBuild (IDE sync, direct invocation).
+tasks.matching { it.name.startsWith('configureCMake') }.configureEach {
+    dependsOn(crossbindBridges, crossbindDeps, crossbindCodegen)
+}
+
+// The APP's autolinking cmake add_subdirectory()s this library's generated codegen/jni, but
+// RNGP only orders codegen ahead of THIS project's build - so a freshly installed plugin
+// fails the app's CMake configure ("codegen/jni ... is not an existing directory"). Wire every
+// other project's CMake configure to this library's codegen once all projects exist.
+gradle.projectsEvaluated {
+    rootProject.allprojects { p ->
+        if (p != project) {
+            p.tasks.matching { it.name.startsWith('configureCMake') }.configureEach {
+                dependsOn(crossbindCodegen)
+            }
+        }
+    }
+}
+
+android {
+    compileSdkVersion 34
+    buildToolsVersion "34.0.0"
+
+    buildFeatures {
+        prefab true
+    }
+
+    defaultConfig {
+        // RN 0.85's prefab (jsi/reactnative/hermestooling) is built for API 24, so the
+        // consuming library must declare minSdk >= 24. Track the app's value when set.
+        minSdkVersion(rootProject.ext.has('minSdkVersion') ? rootProject.ext.minSdkVersion : 24)
+        targetSdkVersion 34
+        versionCode 100
+        versionName "1.0.0"
+
+        externalNativeBuild {
+             cmake {
+                 // RN's prefab (jsi/reactnative/hermestooling) is built against the shared
+                 // libc++; the consuming library must match or prefab linking is rejected.
+                 arguments "-DCROSSBIND_PROJECT_PATH=${rootProject.projectDir.parent}",
+                     "-DANDROID_STL=c++_shared"
+            }
+        }
+
+        ndk {
+            abiFilters(*crossbindAbis)
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "../script/CMakeLists.txt"
+            version "3.25.0+"
+        }
+    }
+}
+
+dependencies {
+    implementation "com.facebook.react:react-native:+"
+}
