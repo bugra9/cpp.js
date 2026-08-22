@@ -81,7 +81,7 @@
             },
             "environment": {
                 "builder": "host",
-                "dockerImage": "bugra9/cpp.js@sha256:044eee6f4dd55e1f3e88a92f075cba40d3eaa8447f18a30d6408156282fee8f1",
+                "dockerImage": "ghcr.io/crossbind/web@sha256:47db7d34e805191bebd7b16618d25e117ac0117a0b89732b560cd88d8adba010",
                 "hostPlatform": "darwin-arm64",
                 "toolchain": {
                     "name": "wasi-sdk",
