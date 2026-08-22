@@ -81,7 +81,7 @@ describe('buildProvenance', () => {
         expect(provenance.recipe).toEqual({ name: '@demo/family', version: '2.0.0-beta.33', nativeVersion: '3.13.2' });
         expect(provenance.source).toEqual({ url: 'https://example.invalid/demo-3.13.2.tar.gz', sha256: 'a'.repeat(64) });
         expect(provenance.environment.builder).toBe('host');
-        expect(provenance.environment.dockerImage).toMatch(/^bugra9\/cpp\.js@sha256:[0-9a-f]{64}$/);
+        expect(provenance.environment.dockerImage).toMatch(/^ghcr\.io\/crossbind\/web@sha256:[0-9a-f]{64}$/);
         expect(provenance.environment.hostPlatform).toBe(`${os.platform()}-${os.arch()}`);
         expect(provenance.environment.toolchain.version).toBe('34.0');
         expect(provenance.sbom).toBe('dist/prebuilt/wasi-wasm32-st-release/sbom.cdx.json');

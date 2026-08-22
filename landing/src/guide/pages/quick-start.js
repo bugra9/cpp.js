@@ -30,7 +30,7 @@ export default {
             file: 'shell',
             code: `docker --version
 node --version
-docker pull bugra9/cpp.js   # optional: the first build pulls it anyway`,
+docker pull ghcr.io/crossbind/web:1.0.0   # optional: the first build pulls it anyway`,
         },
         {
             type: 'callout',
