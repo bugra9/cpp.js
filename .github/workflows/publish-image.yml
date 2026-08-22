@@ -84,11 +84,13 @@ jobs:
           provenance: false
           outputs: type=image,name=${{ env.REGISTRY }}/${{ inputs.image }},push-by-digest=true,name-canonical=true,push=true
 
-      # A file per digest: matrix job outputs would overwrite each other.
+      # A file per digest: matrix job outputs would overwrite each other. The sha256: prefix is
+      # dropped from the name because upload-artifact rejects a colon in a path; merge puts it back.
       - name: Record digest
         run: |
           mkdir -p /tmp/digests
-          touch "/tmp/digests/${{ steps.build.outputs.digest }}"
+          digest='${{ steps.build.outputs.digest }}'
+          touch "/tmp/digests/${digest#sha256:}"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -127,7 +129,7 @@ jobs:
           cd /tmp/digests
           docker buildx imagetools create \
             --tag "${REGISTRY}/${{ inputs.image }}:${{ inputs.tag }}" \
-            $(printf "${REGISTRY}/${{ inputs.image }}@%s " *)
+            $(printf "${REGISTRY}/${{ inputs.image }}@sha256:%s " *)
           digest=$(docker buildx imagetools inspect \
             "${REGISTRY}/${{ inputs.image }}:${{ inputs.tag }}" --format '{{json .Manifest.Digest}}' | tr -d '"')
           echo "digest=${digest}" >> "$GITHUB_OUTPUT"
