@@ -39,13 +39,13 @@ describe('imageRoleFor', () => {
 describe('getDockerImage', () => {
     test('returns the digest-pinned image ref', async () => {
         const { mod } = await importFresh();
-        expect(mod.getDockerImage()).toMatch(/^bugra9\/cpp\.js@sha256:[0-9a-f]{64}$/);
-        expect(mod.getDockerImage('android')).toMatch(/^bugra9\/cpp\.js@sha256:[0-9a-f]{64}$/);
+        expect(mod.getDockerImage()).toMatch(/^ghcr\.io\/crossbind\/web@sha256:[0-9a-f]{64}$/);
+        expect(mod.getDockerImage('android')).toMatch(/^ghcr\.io\/crossbind\/android@sha256:[0-9a-f]{64}$/);
     });
 
     test('returns a distinct digest-pinned amd64 leaf for linux/amd64', async () => {
         const { mod } = await importFresh();
-        expect(mod.getDockerImage('android', 'linux/amd64')).toMatch(/^bugra9\/cpp\.js@sha256:[0-9a-f]{64}$/);
+        expect(mod.getDockerImage('android', 'linux/amd64')).toMatch(/^ghcr\.io\/crossbind\/android@sha256:[0-9a-f]{64}$/);
         expect(mod.getDockerImage('android', 'linux/amd64')).not.toBe(mod.getDockerImage('android'));
     });
 
@@ -63,7 +63,7 @@ describe('image overrides', () => {
 
         const ref = mod.getDockerImage();
 
-        expect(ref).toBe(`registry.example.dev/crossbind/cpp.js${expected.slice(expected.indexOf('@'))}`);
+        expect(ref).toBe(`registry.example.dev/crossbind/web${expected.slice(expected.indexOf('@'))}`);
         expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('registry mirror'));
     });
 
@@ -108,7 +108,7 @@ describe('getDockerContainerName', () => {
         const name = mod.getDockerContainerName('/some/base', 'web');
         expect(name).toMatch(/^[A-Za-z0-9][A-Za-z0-9_.-]*$/);
         expect(name).not.toContain('@');
-        expect(name.startsWith('bugra9-cpp.js-')).toBe(true);
+        expect(name.startsWith('crossbind-')).toBe(true);
         const baseHash = crypto.createHash('sha256').update('/some/base').digest('hex');
         expect(name.endsWith(`-${baseHash}`)).toBe(true);
     });

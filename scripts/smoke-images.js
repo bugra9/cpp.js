@@ -4,22 +4,30 @@
 //
 //   node scripts/smoke-images.js                 # every image built locally
 //   node scripts/smoke-images.js web:amd64       # just one
+//   node scripts/smoke-images.js --published     # what the registry actually serves
 //
 // Asserts what the images promise: the pinned toolchain versions, a compile that actually runs,
 // the caches a container running as the host uid must be able to write, and the two things that
 // must NOT be there - rust-src and RUSTC_BOOTSTRAP.
 
+import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 
 const RUST_VERSION = '1.97.1';
 const MIN_NODE_MAJOR = 20; // crossbind's engines.node floor
 
+// Local builds carry one tag per architecture, because `docker build --load` cannot produce a
+// multi-arch index; a published image is a single index that resolves per platform on pull.
+const PUBLISHED = process.argv.includes('--published');
+const VERSION = fs.readFileSync(new URL('../tooling/docker/VERSION', import.meta.url), 'utf8').trim();
+const refFor = (name, local) => (PUBLISHED ? `ghcr.io/crossbind/${name}:${VERSION}` : local);
+
 const IMAGES = [
-    { name: 'base', ref: 'crossbind/base:dev', arch: 'arm64' },
-    { name: 'base', ref: 'crossbind/base:dev-amd64', arch: 'amd64' },
-    { name: 'web', ref: 'crossbind/web:dev', arch: 'arm64' },
-    { name: 'web', ref: 'crossbind/web:dev-amd64', arch: 'amd64' },
-    { name: 'android', ref: 'crossbind/android:dev', arch: 'amd64' },
+    { name: 'base', ref: refFor('base', 'crossbind/base:dev'), arch: 'arm64' },
+    { name: 'base', ref: refFor('base', 'crossbind/base:dev-amd64'), arch: 'amd64' },
+    { name: 'web', ref: refFor('web', 'crossbind/web:dev'), arch: 'arm64' },
+    { name: 'web', ref: refFor('web', 'crossbind/web:dev-amd64'), arch: 'amd64' },
+    { name: 'android', ref: refFor('android', 'crossbind/android:dev'), arch: 'amd64' },
 ];
 
 // A container that cannot write these is a container that cannot build: crossbind runs docker with
@@ -66,6 +74,11 @@ function inspect(ref, format) {
 }
 
 function smoke({ name, ref, arch }) {
+    // A published ref is an index: inspect reads the local store, so the wanted platform has to be
+    // pulled first - and pulling it is itself part of what this checks.
+    if (PUBLISHED) {
+        execFileSync('docker', ['pull', '--platform', `linux/${arch}`, ref], { stdio: ['ignore', 'ignore', 'pipe'] });
+    }
     const actual = inspect(ref, '{{.Architecture}}');
     if (actual !== arch) throw new Error(`${ref} is ${actual}, expected ${arch}`);
     const env = inspect(ref, '{{json .Config.Env}}');
@@ -78,7 +91,7 @@ function smoke({ name, ref, arch }) {
     return out.trim().split('\n');
 }
 
-const wanted = process.argv.slice(2);
+const wanted = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const selected = wanted.length ? IMAGES.filter(({ name, arch }) => wanted.some((w) => w === name || w === `${name}:${arch}`)) : IMAGES;
 if (!selected.length) {
     console.error(`smoke-images: nothing matches ${wanted.join(', ')}`);

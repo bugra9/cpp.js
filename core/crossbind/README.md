@@ -11,7 +11,7 @@
 </p>
 
 <a href="https://www.npmjs.com/package/crossbind/v/beta"><img alt="NPM version" src="https://img.shields.io/npm/v/crossbind/beta?style=for-the-badge&label=npm" /></a>
-<a href="https://hub.docker.com/r/bugra9/cpp.js"><img alt="Docker image version" src="https://img.shields.io/docker/v/bugra9/cpp.js?style=for-the-badge&logo=docker&label=docker" /></a>
+<a href="https://github.com/crossbind/crossbind/pkgs/container/web"><img alt="Build image" src="https://img.shields.io/badge/ghcr.io-crossbind%2Fweb-20B2AA?style=for-the-badge&logo=docker&label=image" /></a>
 <a href="https://github.com/crossbind/crossbind/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/crossbind/crossbind?style=for-the-badge" /></a>
 <br />
 <img alt="CodeQL" src="https://img.shields.io/github/actions/workflow/status/crossbind/crossbind/github-code-scanning/codeql?branch=main&style=for-the-badge&label=CodeQL">
