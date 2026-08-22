@@ -130,6 +130,29 @@ describe('buildAppRustCrates', () => {
         expect(log).toHaveBeenCalledWith(expect.stringContaining('deleted_surface'));
     });
 
+    test('keeps a bridge whose #[path] is relative to its own src dir', async () => {
+        // What the generator actually writes: the bridge carries a RELATIVE #[path] so the manifest
+        // stays machine-independent (it has to be mountable into the container). Resolving that
+        // against cwd instead of against the file's own directory pruned a live bridge on every
+        // build, and the surface simply vanished from the module - no error, just missing bindings.
+        const live = path.join(work, 'live.rs');
+        fs.writeFileSync(live, 'pub struct A {}\n');
+        const bridgeSrc = path.join(cacheDir, 'rust-bridges/rel_surface/src');
+        addCrate('rel_surface', live);
+        fs.writeFileSync(
+            path.join(bridgeSrc, 'lib.rs'),
+            `#[path = "${path.relative(bridgeSrc, live).split(path.sep).join('/')}"]\nmod user;\n`,
+        );
+        const { buildAppRustCrates, spawnSync } = await importFresh();
+        spawnSync.mockImplementation(() => { fakeCargoOutput(); return { status: 0 }; });
+
+        buildAppRustCrates(WASM, cacheDir);
+
+        expect(fs.existsSync(path.join(cacheDir, 'rust-bridges/rel_surface'))).toBe(true);
+        const manifest = fs.readFileSync(path.join(cacheDir, 'rust-bridges/_app_super/Cargo.toml'), 'utf8');
+        expect(manifest).toContain('rel-surface-crossbind-app');
+    });
+
     test('prunes a crate_ bridge dropped from cargoDependencies, keeps declared ones', async () => {
         addCrate('crate_uuid');
         addCrate('crate_old_dep');
