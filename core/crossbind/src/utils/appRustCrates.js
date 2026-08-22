@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { cargoTripleFor } from './cargoTarget.js';
 import { isMtWasm, assertMtRustToolchain, cargoTargetDirFor, cargoBuildInvocation } from './rustMt.js';
 import runCargo, { cargoRunner } from './runCargo.js';
@@ -29,7 +30,10 @@ export default function buildAppRustCrates(target, cacheDir, cargoDependencies =
         const pathMod = src.match(/#\[path = "(.+?)"\]\s*\r?\nmod user;/);
         let stale = false;
         if (pathMod) {
-            stale = !fs.existsSync(pathMod[1]);
+            // #[path] is written relative to the file that carries it, so it has to be resolved
+            // against that directory - resolving it against cwd finds nothing and prunes a
+            // perfectly live bridge.
+            stale = !fs.existsSync(path.resolve(path.dirname(libRs), pathMod[1]));
         } else if (cargoDependencies && name.startsWith('crate_')) {
             stale = !Object.keys(cargoDependencies)
                 .some((c) => `crate_${c.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase()}` === name);
