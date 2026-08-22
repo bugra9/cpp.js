@@ -3,7 +3,7 @@ import {
 } from 'vitest';
 
 // cargo/rustup run on the host; the tests assert what the engine hands them, not the compile.
-vi.mock('node:child_process', () => ({ spawnSync: vi.fn() }));
+vi.mock('node:child_process', () => ({ spawnSync: vi.fn(), execFileSync: vi.fn() }));
 
 const ST = { platform: 'wasm', arch: 'wasm32', runtime: 'st' };
 const MT = { platform: 'wasm', arch: 'wasm32', runtime: 'mt' };
@@ -88,6 +88,39 @@ describe('rustMt', () => {
             target: MT, triple: TRIPLE, targetDir: '/x/target-mt', manifestPath: '/x/Cargo.toml',
         });
         expect(rustflags.join(' ')).not.toContain('opt-level');
+    });
+
+    test('cargoBuildInvocation links a prebuilt sysroot instead of rebuilding std', async () => {
+        // The whole point of shipping sysroots: stable rustc, no nightly, no -Z, and a std that was
+        // already compiled with the shared-memory features.
+        const { cargoBuildInvocation } = await importFresh();
+        const { args, rustflags, allowUnstable } = cargoBuildInvocation({
+            target: MT, triple: TRIPLE, targetDir: '/x/target-mt', manifestPath: '/x/Cargo.toml', sysroot: true,
+        });
+        expect(args).not.toContain('+nightly');
+        expect(args.join(' ')).not.toContain('-Zbuild-std');
+        expect(rustflags).toEqual(['--sysroot', '/opt/crossbind/rust/current/mt', '-Ctarget-feature=+atomics,+bulk-memory,+mutable-globals']);
+        expect(allowUnstable).toBe(false);
+    });
+
+    test('cargoBuildInvocation points st at its own sysroot', async () => {
+        const { cargoBuildInvocation } = await importFresh();
+        const { rustflags } = cargoBuildInvocation({
+            target: ST, triple: TRIPLE, targetDir: '/x/target', manifestPath: '/x/Cargo.toml', sysroot: true,
+        });
+        expect(rustflags).toEqual(['--sysroot', '/opt/crossbind/rust/current/st']);
+    });
+
+    test('cargoBuildInvocation keeps the nightly rebuild when no sysroot answers', async () => {
+        // RUNNER=LOCAL has no image to take a sysroot from until the artifact channel is live.
+        const { cargoBuildInvocation } = await importFresh();
+        const { args, rustflags, allowUnstable } = cargoBuildInvocation({
+            target: MT, triple: TRIPLE, targetDir: '/x/target-mt', manifestPath: '/x/Cargo.toml',
+        });
+        expect(args[0]).toBe('+nightly');
+        expect(args).toContain('-Zbuild-std=std,panic_abort');
+        expect(rustflags.join(' ')).not.toContain('--sysroot');
+        expect(allowUnstable).toBe(true);
     });
 
     test('cargoBuildInvocation asks for unstable flags only on the mt build-std path', async () => {

@@ -5,7 +5,7 @@ import logger from '../utils/logger.js';
 import { cargoTripleFor } from '../utils/cargoTarget.js';
 import { isMtWasm, assertMtRustToolchain, cargoTargetDirFor, cargoBuildInvocation } from '../utils/rustMt.js';
 import generateRustBridge from '../utils/rustBridgeGen.js';
-import runCargo from '../utils/runCargo.js';
+import runCargo, { cargoRunner } from '../utils/runCargo.js';
 
 // buildType 'cargo': build a Rust staticlib on the host for the target's triple and stage it
 // like any other prebuilt (lib/lib<name>.a + include/*), so the normal prebuilt-link machinery
@@ -19,12 +19,15 @@ export default function buildCargo(target, libdir) {
     const crateDir = path.resolve(paths.project, exp.crate ?? 'crate');
     const libName = exp.libName?.[0] ?? general.name;
 
-    const probe = runCargo(['--version'], { capture: true });
+    const probe = runCargo(['--version'], { capture: true, target });
     if (probe.error) {
         throw new Error('crossbind: cargo not found on PATH - install Rust (https://rustup.rs) to build cargo packages.');
     }
     const isMt = isMtWasm(target);
-    if (isMt) assertMtRustToolchain();
+    // The prebuilt sysroots live in the image, so they answer only where the build runs there.
+    const sysroot = cargoRunner(target) !== 'LOCAL';
+    // Only the nightly rebuild needs a nightly toolchain on this machine.
+    if (isMt && !sysroot) assertMtRustToolchain();
 
     // Auto mode (the default): the user's crate is plain Rust and crossbind generates a companion
     // bridge crate from its pub surface, then builds THAT (it bundles the user crate as a dep).
@@ -44,11 +47,18 @@ export default function buildCargo(target, libdir) {
     const t0 = performance.now();
     const targetDir = cargoTargetDirFor(buildDir, target);
     const { args, rustflags, panic, allowUnstable } = cargoBuildInvocation({
-        target, triple, targetDir, manifestPath: `${buildDir}/Cargo.toml`,
+        target,
+        triple,
+        targetDir,
+        manifestPath: `${buildDir}/Cargo.toml`,
+        sysroot,
     });
-    const build = runCargo(args, { rustflags, panic, allowUnstable });
+    const build = runCargo(args, {
+        rustflags, panic, allowUnstable, target,
+    });
     if (build.status !== 0) {
-        throw new Error(`crossbind: cargo build failed for ${triple}${isMt ? ' (mt/build-std)' : ` (is the target installed? rustup target add ${triple})`}`);
+        const how = sysroot ? ' (prebuilt sysroot)' : ` (is the target installed? rustup target add ${triple})`;
+        throw new Error(`crossbind: cargo build failed for ${triple}${isMt && !sysroot ? ' (mt/build-std)' : how}`);
     }
 
     // Rust staticlib output is lib<crate>.a; stage it under the export libName the CMakeLists expects.
@@ -66,7 +76,7 @@ export default function buildCargo(target, libdir) {
     });
 
     const ms = Math.round(performance.now() - t0);
-    logger.doneStep(target, 'Source', `cargo ${ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`}, ${triple}${isMt ? '/build-std' : ''}`);
+    logger.doneStep(target, 'Source', `cargo ${ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`}, ${triple}${isMt && !sysroot ? '/build-std' : ''}${sysroot ? `/${isMt ? 'mt' : 'st'}-sysroot` : ''}`);
     return true;
 }
 

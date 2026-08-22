@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 // cargo runs on the host; the tests assert what the engine hands it, not the compile itself.
-vi.mock('node:child_process', () => ({ spawnSync: vi.fn() }));
+vi.mock('node:child_process', () => ({ spawnSync: vi.fn(), execFileSync: vi.fn() }));
 vi.mock('../src/utils/logger.js', () => ({
     default: {
         info: vi.fn(), startStep: vi.fn(), doneStep: vi.fn(), cachedStep: vi.fn(),

@@ -2,6 +2,10 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import state from '../state/index.js';
+import getOsUserAndGroupId from './getOsUserAndGroupId.js';
+import replaceBasePathForDockerUtil from './replaceBasePathForDocker.js';
+import pullDockerImage, { getDockerImage, getDockerContainerName, imageRoleFor } from './pullDockerImage.js';
 
 // Every cargo invocation crossbind makes goes through here.
 //
@@ -11,6 +15,11 @@ import path from 'node:path';
 // or -Z unstable features, and cargo discovers it purely from cwd. So: rustflags are injected
 // through the process environment (which wins over both config channels), and the config legs are
 // closed by running from a neutral directory with a crossbind-owned CARGO_HOME.
+//
+// Where it runs follows the runner. A containerized build runs cargo in the image that carries the
+// pinned toolchain, so a project needs Docker and Node and no host Rust. The registry cache is
+// bind-mounted rather than kept in a named volume, which keeps it shared across projects, visible
+// from the host, and addressable - bridge generation reads crate sources out of it.
 
 // Cargo splits this variable on 0x1F, one argv per flag - never a space.
 const RUSTFLAGS_SEPARATOR = String.fromCharCode(0x1f);
@@ -33,8 +42,15 @@ const ALLOWED_ENV = [
 // versions - both are checked so a behaviour change between versions cannot open the gap.
 const CONFIG_NAMES = ['config.toml', 'config'];
 
+// Where the image puts CARGO_HOME (base.Dockerfile), and a directory outside any project so
+// cargo's upward config search finds nothing.
+const CONTAINER_CARGO_HOME = '/var/cache/crossbind/cargo';
+const CONTAINER_CWD = '/tmp/crossbind-cargo';
+
 // Crossbind-owned and machine-wide: $CARGO_HOME/config.toml is one of the discovery legs, so the
-// registry cache lives somewhere we can assert is clean instead of in the user's ~/.cargo.
+// registry cache lives somewhere we can assert is clean instead of in the user's ~/.cargo. It is
+// also the directory bind-mounted into the container, which is why it must not sit inside a
+// project - `pnpm run clear` would otherwise throw away every downloaded crate.
 export function cargoHome() {
     return path.join(os.homedir(), '.crossbind', 'cargo');
 }
@@ -63,35 +79,89 @@ export function assertCleanConfigChain(home, cwd) {
     }
 }
 
-export default function runCargo(args, {
-    cwd, rustflags = [], panic, capture = false, maxBuffer, allowUnstable = false,
-} = {}) {
-    const home = cargoHome();
-    const workdir = cwd ?? neutralCwd();
-    fs.mkdirSync(home, { recursive: true });
-    fs.mkdirSync(workdir, { recursive: true });
-    assertCleanConfigChain(home, workdir);
+// iOS links with Xcode, which is in no image, so its Rust stays on the host - as does every build
+// under RUNNER=LOCAL.
+export function cargoRunner(target) {
+    if (target?.platform === 'ios') return 'LOCAL';
+    const runner = state.config?.system?.RUNNER;
+    return runner === 'DOCKER_RUN' || runner === 'DOCKER_EXEC' ? runner : 'LOCAL';
+}
 
+function allowedEnv() {
     const env = {};
     Object.entries(process.env).forEach(([key, value]) => {
         if (ALLOWED_ENV.some((allowed) => allowed.test(key))) env[key] = value;
     });
-    env.CARGO_HOME = home;
-    // Depth defence: -Z fails with E0554 instead of quietly enabling unstable behaviour. The
-    // value -1 disables unstable features on EVERY channel, nightly included, so the one caller
-    // that still needs -Zbuild-std has to opt out - and only until that path is deleted. Leaving
-    // it unset is still safe: the caller's own RUSTC_BOOTSTRAP never survives the allowlist.
+    return env;
+}
+
+function cargoEnv({
+    home, rustflags, panic, allowUnstable,
+}) {
+    const env = { CARGO_HOME: home };
+    // Depth defence: -Z fails with E0554 instead of quietly enabling unstable behaviour. The value
+    // -1 disables unstable features on EVERY channel, nightly included, so the one caller that
+    // still needs -Zbuild-std has to opt out - and only until that path is deleted. Leaving it
+    // unset is still safe: the caller's own RUSTC_BOOTSTRAP never survives the allowlist.
     if (!allowUnstable) env.RUSTC_BOOTSTRAP = '-1';
     if (rustflags.length) env.CARGO_ENCODED_RUSTFLAGS = rustflags.join(RUSTFLAGS_SEPARATOR);
     // The environment beats the crate's own [profile.release], so a hand-written crate cannot opt
     // out of the panic strategy the std it links against was built with.
     if (panic) env.CARGO_PROFILE_RELEASE_PANIC = panic;
+    return env;
+}
 
-    return spawnSync('cargo', args, {
-        cwd: workdir,
-        env,
-        stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
-        ...(capture ? { encoding: 'utf8' } : {}),
-        ...(maxBuffer ? { maxBuffer } : {}),
+export default function runCargo(args, {
+    cwd, rustflags = [], panic, capture = false, maxBuffer, allowUnstable = false, target,
+} = {}) {
+    const home = cargoHome();
+    const workdir = cwd ?? neutralCwd();
+    fs.mkdirSync(home, { recursive: true });
+    fs.mkdirSync(workdir, { recursive: true });
+    // Checked on the host in both modes: the container sees the same directory through the mount.
+    assertCleanConfigChain(home, workdir);
+
+    const runner = cargoRunner(target);
+    const stdio = capture ? ['ignore', 'pipe', 'pipe'] : 'inherit';
+    const options = { stdio, ...(capture ? { encoding: 'utf8' } : {}), ...(maxBuffer ? { maxBuffer } : {}) };
+
+    if (runner === 'LOCAL') {
+        return spawnSync('cargo', args, {
+            cwd: workdir,
+            env: { ...allowedEnv(), ...cargoEnv({ home, rustflags, panic, allowUnstable }) },
+            ...options,
+        });
+    }
+
+    const { base } = state.config.paths;
+    const role = imageRoleFor(target);
+    // Google ships the linux NDK host tools for x86_64 only.
+    const platform = target?.platform === 'android' ? 'linux/amd64' : undefined;
+
+    // Only what cargo needs travels in: the image already carries PATH, RUSTUP_HOME and the
+    // toolchain, and the host's PATH would be meaningless there.
+    const env = cargoEnv({
+        home: CONTAINER_CARGO_HOME, rustflags, panic, allowUnstable,
     });
+    const envArgs = Object.entries(env).flatMap(([key, value]) => ['-e', `${key}=${value}`]);
+
+    let runnerArgs;
+    if (runner === 'DOCKER_EXEC') {
+        runnerArgs = ['exec', ...envArgs,
+            '--user', getOsUserAndGroupId(),
+            '--workdir', CONTAINER_CWD,
+            getDockerContainerName(base, role)];
+    } else {
+        pullDockerImage(role, platform);
+        runnerArgs = ['run', '--rm',
+            ...(platform ? ['--platform', platform] : []),
+            '-v', `${base}:/tmp/crossbind/live`,
+            '-v', `${home}:${CONTAINER_CARGO_HOME}`,
+            ...envArgs,
+            '--user', getOsUserAndGroupId(),
+            '--workdir', CONTAINER_CWD,
+            getDockerImage(role, platform)];
+    }
+
+    return spawnSync('docker', [...runnerArgs, 'cargo', ...replaceBasePathForDockerUtil(args, base)], options);
 }

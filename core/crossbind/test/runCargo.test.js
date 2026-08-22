@@ -8,7 +8,14 @@ import path from 'node:path';
 // Cargo reads flags from the process environment, $CARGO_HOME/config.toml and any .cargo/config
 // found by walking up from the working directory. These tests pin what the caller's environment
 // and the filesystem are allowed to contribute - a leak here is a different compiler, silently.
-vi.mock('node:child_process', () => ({ spawnSync: vi.fn() }));
+vi.mock('node:child_process', () => ({ spawnSync: vi.fn(), execFileSync: vi.fn() }));
+
+// Where cargo runs follows the runner, so the runner belongs in the fixture rather than being read
+// from whatever ~/.crossbind.json happens to say on the machine running the suite.
+const holder = { config: { paths: { base: '/repo' }, system: {} } };
+vi.mock('../src/state/index.js', () => ({ default: { get config() { return holder.config; } } }));
+
+const setRunner = (RUNNER) => { holder.config = { paths: { base: '/repo' }, system: { RUNNER } }; };
 
 let work;
 
@@ -25,6 +32,7 @@ async function importFresh() {
 const envOf = (spawnSync) => spawnSync.mock.calls[0][2].env;
 
 beforeEach(() => {
+    setRunner(undefined);
     work = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-runcargo-'));
     vi.spyOn(os, 'homedir').mockReturnValue(path.join(work, 'home'));
     vi.spyOn(os, 'tmpdir').mockReturnValue(path.join(work, 'tmp'));
@@ -122,6 +130,48 @@ describe('runCargo environment', () => {
         expect(cwd).toBe(path.join(work, 'tmp', 'crossbind-cargo'));
         expect(cwd.startsWith(os.homedir())).toBe(false);
         expect(fs.existsSync(cwd)).toBe(true);
+    });
+});
+
+describe('where cargo runs', () => {
+    const argvOf = (spawnSync) => spawnSync.mock.calls[0][1];
+
+    test('a containerized runner runs cargo in the image, not on the host', async () => {
+        // The point of the whole move: a project needs Docker and Node, not a host Rust install.
+        setRunner('DOCKER_RUN');
+        const { mod, spawnSync } = await importFresh();
+
+        mod.default(['build', '--manifest-path', '/repo/pkg/Cargo.toml'], { target: { platform: 'wasm' } });
+
+        const [command] = spawnSync.mock.calls[0];
+        const argv = argvOf(spawnSync);
+        expect(command).toBe('docker');
+        expect(argv).toContain('cargo');
+        // Project paths are rewritten to where the mount puts them.
+        expect(argv).toContain('/tmp/crossbind/live/pkg/Cargo.toml');
+        expect(argv.join(' ')).toContain('/repo:/tmp/crossbind/live');
+        // The registry cache is bind-mounted, which is what keeps crate sources readable from the
+        // host for bridge generation.
+        expect(argv.join(' ')).toContain(`${path.join(work, 'home', '.crossbind', 'cargo')}:/var/cache/crossbind/cargo`);
+    });
+
+    test('ios stays on the host even under a containerized runner', async () => {
+        // Xcode is in no image, so the linker only exists on the host.
+        setRunner('DOCKER_RUN');
+        const { mod, spawnSync } = await importFresh();
+
+        mod.default(['build'], { target: { platform: 'ios' } });
+
+        expect(spawnSync.mock.calls[0][0]).toBe('cargo');
+    });
+
+    test('android forces the amd64 platform', async () => {
+        setRunner('DOCKER_RUN');
+        const { mod, spawnSync } = await importFresh();
+
+        mod.default(['build'], { target: { platform: 'android' } });
+
+        expect(argvOf(spawnSync).join(' ')).toContain('--platform linux/amd64');
     });
 });
 
