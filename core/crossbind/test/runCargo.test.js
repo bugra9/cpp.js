@@ -217,3 +217,28 @@ describe('assertCleanConfigChain', () => {
         expect(() => mod.assertCleanConfigChain(home, dir)).not.toThrow();
     });
 });
+
+describe('toHostPath', () => {
+    // The bug this pins: cargo metadata runs in the container and reports container paths, but
+    // bridge generation reads the crate source on the host. Without the inverse mapping it found
+    // no source and emitted a bridge that bound nothing - a silently empty module, not an error.
+    test('maps the cargo home mount back to the host', async () => {
+        const { mod } = await importFresh();
+        const hostSrc = path.join(mod.cargoHome(), 'registry', 'src', 'index.crates.io-x', 'semver-1.0.28');
+        expect(mod.toHostPath('/var/cache/crossbind/cargo/registry/src/index.crates.io-x/semver-1.0.28'))
+            .toBe(hostSrc);
+    });
+
+    test('maps the project mount back to the host', async () => {
+        const { mod } = await importFresh();
+        expect(mod.toHostPath('/tmp/crossbind/live/e2e/web-vite/Cargo.toml'))
+            .toBe(path.join('/repo', 'e2e', 'web-vite', 'Cargo.toml'));
+    });
+
+    test('leaves a path outside every mount alone', async () => {
+        const { mod } = await importFresh();
+        expect(mod.toHostPath('/usr/local/rustup/toolchains/x/lib')).toBe('/usr/local/rustup/toolchains/x/lib');
+        // A prefix that only looks like the mount must not be rewritten.
+        expect(mod.toHostPath('/tmp/crossbind/live-other/x')).toBe('/tmp/crossbind/live-other/x');
+    });
+});

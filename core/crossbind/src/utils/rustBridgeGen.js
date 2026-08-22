@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import resolveEmbindRustRoot, { embindRustVersion } from './resolveEmbindRust.js';
-import runCargo from './runCargo.js';
+import runCargo, { toHostPath } from './runCargo.js';
 import writeIfChanged from './writeIfChanged.js';
 
 // Generates the embind bridge for a cargo package as a COMPANION CRATE, the Rust analog of the
@@ -225,7 +225,8 @@ export function createCrateImportBridge({ crateName, spec, cacheDir, dtsMode = '
         const pkg = meta.packages.find((p) => p.name === crateName);
         if (!pkg) throw new Error(`crossbind: crate import '${crateName}': crate not found in the cargo dependency graph`);
         const features = meta.resolve?.nodes?.find((n) => n.id === pkg.id)?.features ?? [];
-        model = parseCrateSurface({ srcDir: path.join(path.dirname(pkg.manifest_path), 'src'), features, log });
+        const srcDir = path.join(path.dirname(toHostPath(pkg.manifest_path)), 'src');
+        model = parseCrateSurface({ srcDir, features, log });
         // Always audible (the transformer silences routine skip-noise): an empty surface means
         // the import will bind NOTHING - generic/re-export-style crates need an app-local .rs.
         if (!model.classes.length && !model.enums.length && !model.freeFns.length) {
