@@ -30,27 +30,40 @@ export function cargoTargetDirFor(baseDir, target) {
     return `${baseDir}/${isMtWasm(target) ? 'target-mt' : 'target'}`;
 }
 
+// The wasm sysroots the image ships, each a COMPLETE sysroot (see web.Dockerfile): --sysroot is
+// global, so build scripts and proc-macros compiled for the host resolve there too. `current`
+// points at whatever version that image pinned, so the CLI carries no version of its own.
+const SYSROOT = { st: '/opt/crossbind/rust/current/st', mt: '/opt/crossbind/rust/current/mt' };
+
 export function cargoBuildInvocation({
-    target, triple, targetDir, manifestPath,
+    target, triple, targetDir, manifestPath, sysroot = false,
 }) {
     const isMt = isMtWasm(target);
+    // With a prebuilt sysroot there is nothing to rebuild and nothing unstable to ask for: stable
+    // rustc links the std that was compiled with the same features. Without one - RUNNER=LOCAL,
+    // until the artifact channel is live - mt still rebuilds std the nightly way.
+    const buildStd = isMt && !sysroot;
     const args = [
-        ...(isMt ? ['+nightly'] : []),
+        ...(buildStd ? ['+nightly'] : []),
         'build', '--release', '--target', triple,
-        ...(isMt ? ['-Zbuild-std=std,panic_abort'] : []),
+        ...(buildStd ? ['-Zbuild-std=std,panic_abort'] : []),
         '--target-dir', targetDir, '--manifest-path', manifestPath,
     ];
     // Flags travel as data, not as an environment patch: cargo ignores RUSTFLAGS outright when
     // CARGO_ENCODED_RUSTFLAGS is set, so inheriting the caller's environment here used to let a
     // developer who has that variable exported silently link a featureless std into an mt module.
     // panic is the other half of the same contract - the std being linked is built with abort.
+    const wasmSysroot = sysroot && target.platform === 'wasm' ? SYSROOT[isMt ? 'mt' : 'st'] : null;
     return {
         args,
-        rustflags: isMt ? MT_RUSTFLAGS : [],
+        rustflags: [
+            ...(wasmSysroot ? ['--sysroot', wasmSysroot] : []),
+            ...(isMt ? MT_RUSTFLAGS : []),
+        ],
         panic: target.platform === 'wasm' ? 'abort' : undefined,
-        // Only the nightly build-std rebuild needs unstable flags; it goes away with the prebuilt
-        // mt sysroot, and this opt-out goes with it.
-        allowUnstable: isMt,
+        // Only the nightly build-std rebuild needs unstable flags; where a sysroot answers, stable
+        // is enough and the pin stays on.
+        allowUnstable: buildStd,
         isMt,
     };
 }

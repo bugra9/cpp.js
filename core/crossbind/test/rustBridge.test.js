@@ -119,7 +119,9 @@ describe('generateRustBridge', () => {
     test('manifest depends on the user crate by path and keeps one codegen unit', () => {
         expect(manifest).toContain('name = "demo-crate-crossbind-bridge"');
         expect(manifest).toContain('crate-type = ["staticlib"]');
-        expect(manifest).toContain(`demo_crate = { package = "demo-crate", path = "${crateDir}" }`);
+        // Relative, not absolute: the bridge sits two levels under the crate, and the same tree is
+        // read from a container mount where the host checkout path does not exist.
+        expect(manifest).toContain('demo_crate = { package = "demo-crate", path = "../.." }');
         expect(manifest).toContain('embind-rs = { path = ');
         expect(manifest).toContain('codegen-units = 1');
         // Isolated on purpose: a surrounding workspace must never absorb the bridge crate.

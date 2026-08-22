@@ -94,8 +94,8 @@ export default function generateRustBridge({ crateDir, vectors = [], dtsFile = n
         'crate-type = ["staticlib"]',
         '',
         '[dependencies]',
-        `${userCrate} = { package = "${rawCrateName}", path = "${crateDir}" }`,
-        `embind-rs = { path = "${embindRsDir}" }`,
+        `${userCrate} = { package = "${rawCrateName}", path = "${relPath(bridgeDir, crateDir)}" }`,
+        `embind-rs = { path = "${relPath(bridgeDir, embindRsDir)}" }`,
         ...(model.usesJson ? ['serde_json = "1"'] : []),
         '',
         '[profile.release]',
@@ -126,7 +126,7 @@ export function createRustBridgeCrate({ rsFile, cacheDir, projectPath, vectors =
         userCrate: 'user',
         vectors,
         log,
-        prelude: `#[path = "${rsFile}"]\nmod user;`,
+        prelude: `#[path = "${relPath(`${dir}/src`, rsFile)}"]\nmod user;`,
     });
 
     const manifest = [
@@ -143,7 +143,7 @@ export function createRustBridgeCrate({ rsFile, cacheDir, projectPath, vectors =
         'crate-type = ["rlib"]',
         '',
         '[dependencies]',
-        `embind-rs = { path = "${resolveEmbindRsDir()}" }`,
+        `embind-rs = { path = "${relPath(dir, resolveEmbindRsDir())}" }`,
         // The app config's top-level cargoDependencies, so an app-local surface can use
         // upstream crates directly (values: a version string, or a verbatim `{ ... }` spec).
         ...Object.entries(cargoDependencies).map(([name, spec]) => (
@@ -195,7 +195,7 @@ export function createCrateImportBridge({ crateName, spec, cacheDir, dtsMode = '
         '',
         '[dependencies]',
         depLine,
-        `embind-rs = { path = "${resolveEmbindRsDir()}" }`,
+        `embind-rs = { path = "${relPath(dir, resolveEmbindRsDir())}" }`,
         '',
         '[profile.release]',
         'panic = "abort"',
@@ -252,6 +252,14 @@ function resolveEmbindRsDir() {
 
 // Returns the RAW [package] name (dashes kept): cargo dependency lookups need it verbatim.
 // Callers wanting the crate/lib identifier convert dashes to underscores themselves.
+// Generated manifests address their siblings relatively. An absolute path bakes in the host
+// checkout, which is wrong the moment the same tree is read from anywhere else - a container mount
+// being the case that made this visible. Cargo resolves `path` against the manifest's directory
+// and `#[path]` against the file carrying it, so a relative value is correct in both worlds.
+export function relPath(fromDir, target) {
+    return path.relative(fromDir, target).split(path.sep).join('/') || '.';
+}
+
 export function readCrateName(crateDir) {
     const toml = fs.readFileSync(`${crateDir}/Cargo.toml`, 'utf8');
     const name = toml.match(/^\s*name\s*=\s*"([^"]+)"/m)?.[1];

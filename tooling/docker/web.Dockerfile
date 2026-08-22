@@ -48,6 +48,38 @@ RUN chmod -R 0777 "${EM_CACHE}"
 
 COPY --from=sysroot /opt/crossbind/rust /opt/crossbind/rust
 
+# rustc takes --sysroot globally, and build scripts and proc-macros compile for the HOST - so each
+# variant has to be a complete sysroot, not just the wasm tree. Linking the toolchain's own host
+# target in costs nothing and makes `--sysroot <variant>` correct for every unit in the graph.
+# `current` keeps the version out of the CLI: it points at whatever this image shipped.
+RUN set -eu; \
+    host="$(rustc -vV | sed -n 's/^host: //p')"; \
+    version="$(ls /opt/crossbind/rust)"; \
+    for variant in st mt; do \
+      ln -s "/usr/local/rustup/toolchains/${version}-${host}/lib/rustlib/${host}" \
+            "/opt/crossbind/rust/${version}/${variant}/lib/rustlib/${host}"; \
+    done; \
+    ln -s "/opt/crossbind/rust/${version}" /opt/crossbind/rust/current; \
+    test -d "/opt/crossbind/rust/current/mt/lib/rustlib/${host}"
+
+# Prove each sysroot is consumable the way the CLI will consume it - stable rustc, no -Z, the same
+# target features and panic strategy. A sysroot whose std was built with a different panic strategy
+# compiles fine here and fails in the consumer with "does not have the panic strategy", so the
+# image build is where that has to surface.
+RUN set -eu; \
+    mkdir -p /tmp/sysroot-probe/src; cd /tmp/sysroot-probe; \
+    printf '[package]\nname="probe"\nversion="0.0.0"\nedition="2021"\n[lib]\ncrate-type=["staticlib"]\n[profile.release]\npanic="abort"\n[workspace]\n' > Cargo.toml; \
+    printf 'pub fn f() -> usize { vec![1u32,2,3].iter().sum::<u32>() as usize }\n' > src/lib.rs; \
+    sep="$(printf '\037')"; \
+    for variant in st mt; do \
+      features=""; \
+      [ "$variant" = mt ] && features="${sep}-Ctarget-feature=+atomics,+bulk-memory,+mutable-globals"; \
+      CARGO_HOME=/tmp/sysroot-probe/.cargo \
+      CARGO_ENCODED_RUSTFLAGS="--sysroot${sep}/opt/crossbind/rust/current/${variant}${features}" \
+        cargo build --release --target wasm32-unknown-emscripten --target-dir "/tmp/sysroot-probe/t-${variant}"; \
+    done; \
+    rm -rf /tmp/sysroot-probe
+
 # /opt/wasi-sdk is run.js's fallback when no host WASI_SDK_PATH is set; sha256-pinned per arch.
 WORKDIR /opt
 ARG TARGETARCH

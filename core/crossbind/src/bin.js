@@ -21,6 +21,7 @@ import flattenConfigForTable from './utils/flattenConfigForTable.js';
 import systemKeys from './utils/systemKeys.js';
 import logger from './utils/logger.js';
 import { getDockerImage, getDockerContainerName } from './utils/pullDockerImage.js';
+import { cargoHome } from './utils/runCargo.js';
 import { cleanDepsCache } from './utils/dependencyRebuild.js';
 import collectLicenseRows from './actions/licenses.js';
 import { formatNoticesMarkdown, formatCycloneDxSbom, validateSpdx } from './utils/licenseReport.js';
@@ -181,6 +182,8 @@ imageArgument(commandDocker.command('create').description('create docker contain
             ...(platform ? ['--platform', platform] : []),
             '--name', dockerContainerName(image),
             '-v', `${state.config.paths.base}:/tmp/crossbind/live`,
+            // Cargo's registry cache, shared with host builds and with every other project.
+            '-v', `${cargoHome()}:/var/cache/crossbind/cargo`,
             getDockerImage(image, platform),
             'bash',
         ]);

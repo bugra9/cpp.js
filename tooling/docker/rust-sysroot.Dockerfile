@@ -33,7 +33,7 @@ WORKDIR /tmp/mt-seed
 RUN set -eu; \
     printf '[package]\nname = "mt-seed"\nversion = "0.0.0"\nedition = "2021"\n[lib]\ncrate-type = ["rlib"]\n' > Cargo.toml; \
     mkdir -p src; echo 'pub fn seed() {}' > src/lib.rs; \
-    CARGO_ENCODED_RUSTFLAGS="-Ctarget-feature=${MT_FEATURES}" RUSTC_BOOTSTRAP=1 \
+    CARGO_ENCODED_RUSTFLAGS="-Ctarget-feature=${MT_FEATURES}$(printf '\037')-Cpanic=${PANIC}" RUSTC_BOOTSTRAP=1 \
       cargo build -Z build-std=std,panic_abort --target "${RUST_TARGET}" --release; \
     mkdir -p "${OUT}/mt/lib/rustlib/${RUST_TARGET}/lib"; \
     find "target/${RUST_TARGET}/release/deps" -name '*.rlib' ! -name 'libmt_seed-*' \

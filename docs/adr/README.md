@@ -16,6 +16,7 @@ ADRs are **immutable**. When a decision is overturned, write a new ADR that supe
 | [0006](./0006-rust-bindings.md) | Bind plain Rust through a flat C ABI; the engine never depends on the binding layer | Accepted | `core-embind-rust/`, `rustBridgeGen.js`, bundler plugins |
 | [0007](./0007-cargo-import-scheme.md) | Prefix direct crate imports with `cargo:` | Accepted | `getDependFilePath.js`, bundler plugins, `cargoDependencies` |
 | [0008](./0008-bin-license-contract.md) | Govern published binaries with a derived Bin & License Contract (K1-K4) | Accepted | `ports/README.md`, `buildBinTools.js`, `check-publish-hygiene.js` |
+| [0009](./0009-toolchain-images.md) | Own the toolchain images, and run cargo where the build runs | Accepted | `tooling/docker/`, `pullDockerImage.js`, `runCargo.js`, publish workflows |
 
 ## Writing a new ADR
 

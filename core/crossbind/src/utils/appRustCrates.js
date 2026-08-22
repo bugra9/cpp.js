@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import { cargoTripleFor } from './cargoTarget.js';
 import { isMtWasm, assertMtRustToolchain, cargoTargetDirFor, cargoBuildInvocation } from './rustMt.js';
-import runCargo from './runCargo.js';
+import runCargo, { cargoRunner } from './runCargo.js';
+import { relPath } from './rustBridgeGen.js';
 import writeIfChanged from './writeIfChanged.js';
 
 const SUPER = '_app_super';
@@ -42,7 +43,10 @@ export default function buildAppRustCrates(target, cacheDir, cargoDependencies =
     if (crates.length === 0) return [];
 
     const isMt = isMtWasm(target);
-    if (isMt) assertMtRustToolchain();
+    // The prebuilt sysroots live in the image, so they answer only where the build runs there;
+    // only the nightly rebuild needs a nightly toolchain on this machine.
+    const sysroot = cargoRunner(target) !== 'LOCAL';
+    if (isMt && !sysroot) assertMtRustToolchain();
 
     const superDir = `${root}/${SUPER}`;
     const manifest = [
@@ -57,7 +61,7 @@ export default function buildAppRustCrates(target, cacheDir, cargoDependencies =
         'crate-type = ["staticlib"]',
         '',
         '[dependencies]',
-        ...crates.map((c) => `${c.replaceAll('_', '-')}-crossbind-app = { path = "${root}/${c}" }`),
+        ...crates.map((c) => `${c.replaceAll('_', '-')}-crossbind-app = { path = "${relPath(superDir, `${root}/${c}`)}" }`),
         '',
         '[profile.release]',
         'panic = "abort"',
@@ -79,11 +83,17 @@ export default function buildAppRustCrates(target, cacheDir, cargoDependencies =
 
     const targetDir = cargoTargetDirFor(superDir, target);
     const { args, rustflags, panic, allowUnstable } = cargoBuildInvocation({
-        target, triple, targetDir, manifestPath: `${superDir}/Cargo.toml`,
+        target,
+        triple,
+        targetDir,
+        manifestPath: `${superDir}/Cargo.toml`,
+        sysroot,
     });
-    const build = runCargo(args, { rustflags, panic, allowUnstable });
+    const build = runCargo(args, {
+        rustflags, panic, allowUnstable, target,
+    });
     if (build.status !== 0) {
-        throw new Error(`crossbind: cargo build failed for the app rust super-crate (${triple}${isMt ? ', mt/build-std' : ''})`);
+        throw new Error(`crossbind: cargo build failed for the app rust super-crate (${triple}${isMt && !sysroot ? ', mt/build-std' : ''}${sysroot ? `, ${isMt ? 'mt' : 'st'} sysroot` : ''})`);
     }
     const libFile = `${targetDir}/${triple}/release/libcrossbind_app_super.a`;
     if (!fs.existsSync(libFile)) throw new Error(`crossbind: expected cargo output ${libFile} not found`);
