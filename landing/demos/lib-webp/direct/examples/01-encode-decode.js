@@ -14,7 +14,7 @@ export const imports = {
     '@crossbind/port-webp/webp/types.h': ['WebPFree'],
 };
 export const note = 'The same four calls on the headers libwebp ships; what the C++ did for you is now yours. Pixels go in through `allocBuffer` and `writeBytes`, the encoders hand their bytes back through a `uint8_t **` (an `allocPointer(1)` slot read with `readPointerAt`), `WebPGetInfo` writes the size into two `allocBuffer(4)` ints, and everything libwebp allocated goes back through `WebPFree` from `types.h`. `WebPGetEncoderVersion` packs the version into one integer, 0xMMmmpp.';
-export const expected = ['1.6.0 256x256', 'RGBA 262144 B -> lossy q80 1966 B, lossless 87058 B', 'true'];
+export const expected = ({ webp }) => [`${webp} 256x256`, 'RGBA 262144 B -> lossy q80 1966 B, lossless 87058 B', 'true'];
 
 export default async function example({ WebPGetEncoderVersion, WebPEncodeRGBA, WebPEncodeLosslessRGBA, allocBuffer, allocPointer, readPointerAt, readNumberAt, readBytes, writeBytes, WebPGetInfo, WebPDecodeRGBA, WebPFree }, console) {
     let seed = 1;

@@ -6,9 +6,9 @@ export const commands = [
     'wasmtime run --dir=. .crossbind/build/iconv-tool-wasi-wasm32-st-release.wasm UTF-8 CP932 orders.csv orders-sjis.csv',
     'wasmtime run --dir=. .crossbind/build/iconv-tool-wasi-wasm32-st-release.wasm CP932 UTF-8 orders-sjis.csv orders-copy.csv',
 ];
-export const expected = [
-    'iconv 1.19 UTF-8 -> CP932: orders.csv -> orders-sjis.csv, 141371 B read, 110693 B written',
-    'iconv 1.19 CP932 -> UTF-8: orders-sjis.csv -> orders-copy.csv, 110693 B read, 141371 B written',
+export const expected = ({ iconv }) => [
+    `iconv ${iconv} UTF-8 -> CP932: orders.csv -> orders-sjis.csv, 141371 B read, 110693 B written`,
+    `iconv ${iconv} CP932 -> UTF-8: orders-sjis.csv -> orders-copy.csv, 110693 B read, 141371 B written`,
 ];
 
 // The file the commands work on: 4,000 orders in UTF-8, the export a web app would hand to a

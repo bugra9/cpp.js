@@ -19,8 +19,10 @@
         import * as areaAxes from './examples/03-area-axes.js';
         import * as geodesic from './examples/04-geodesic.js';
         import * as identify from './examples/05-identify.js';
+        import nativeVersions from './native-versions.js';
 
         const EXAMPLES = [transform, formats, areaAxes, geodesic, identify].filter((example) => example.default);
+        const expectedOf = (example) => (typeof example.expected === 'function' ? example.expected(nativeVersions) : example.expected);
 
         const out = document.querySelector('#out');
         const lines = [];
@@ -40,7 +42,7 @@
             for (const example of EXAMPLES) {
                 const printed = [];
                 await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });
-                check(`example "${example.expected[0]}"`, printed, example.expected);
+                check(`example "${expectedOf(example)[0]}"`, printed, expectedOf(example));
             }
             const passed = checks.filter(Boolean).length;
             // PJ_INFO's version string is a `const char *` field, which crossbind does not bind; its numbers are.

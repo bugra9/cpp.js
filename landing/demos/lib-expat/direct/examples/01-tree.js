@@ -18,7 +18,7 @@ export const imports = {
     ],
 };
 export const note = 'Handlers are JavaScript functions, which cannot be sent to a worker, so the module runs on the page\'s thread and each handler is freed with `releaseCallback` (64 can be registered at a time). Attributes arrive as a handle to walk with `readPointerAt`, and character data as a handle that `readBuffer` reads for exactly its `length` bytes; `XML_Parse` wants the UTF-8 byte count too, `xml.length` stops one byte short here and fails with `unclosed token`. `XML_ExpatVersionInfo` returns its struct without fields, so the version comes from the `XML_ExpatVersion` string.';
-export const expected = ['Expat 2.9.0', '1 en Dune 9.99 EUR', "2 fr L'Étranger 7.50 EUR", '3 en Pride & Prejudice 5.25 GBP', 'mismatched tag at line 2, column 30'];
+export const expected = ({ expat }) => [`Expat ${expat}`, '1 en Dune 9.99 EUR', "2 fr L'Étranger 7.50 EUR", '3 en Pride & Prejudice 5.25 GBP', 'mismatched tag at line 2, column 30'];
 export const init = { useWorker: false };
 
 export default async function example({ XML_ExpatVersion, XML_ParserCreate, XML_SetElementHandler, XML_SetCharacterDataHandler, XML_Parse, XML_Status, XML_GetErrorCode, XML_ErrorString, XML_GetCurrentLineNumber, XML_GetCurrentColumnNumber, XML_ParserFree, readCString, readPointerAt, readBuffer, releaseCallback }, console) {

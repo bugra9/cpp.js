@@ -13,7 +13,7 @@ export const imports = {
     ],
 };
 export const note = 'The same `compress2` and `uncompress` calls as the C++. JavaScript now allocates the buffers, copies bytes in and out as one character per byte, and passes each length as a `uLongf *`: a 4-byte handle that zlib reads as the room it has and overwrites with the size it used. `Z_OK` and zlib\'s other constants are macros, which do not cross, so the check compares with 0.';
-export const expected = ['1.3.2 27 78 da', 'true'];
+export const expected = ({ zlib }) => [`${zlib} 27 78 da`, 'true'];
 
 export default async function example({ zlibVersion, compressBound, compress2, uncompress, zError, allocBuffer, writeBytes, readBytes, writeNumberAt, readNumberAt }, console) {
     const text = 'crossbind '.repeat(100);

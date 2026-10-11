@@ -18,8 +18,10 @@
         import * as stream from './examples/02-stream.js';
         import * as namespaces from './examples/03-namespaces.js';
         import * as limits from './examples/04-limits.js';
+        import nativeVersions from './native-versions.js';
 
         const EXAMPLES = [tree, stream, namespaces, limits];
+        const expectedOf = (example) => (typeof example.expected === 'function' ? example.expected(nativeVersions) : example.expected);
         const MIB = 1024 * 1024;
 
         const out = document.querySelector('#out');
@@ -52,7 +54,7 @@
             for (const example of EXAMPLES) {
                 const printed = [];
                 await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });
-                check(`example "${example.title}"`, printed, example.expected);
+                check(`example "${example.title}"`, printed, expectedOf(example));
             }
 
             // Streaming app: the generator writes the reference's bytes, and the counts match pyexpat's on

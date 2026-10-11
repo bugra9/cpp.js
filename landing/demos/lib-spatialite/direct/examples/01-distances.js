@@ -15,7 +15,7 @@ export const imports = {
     ],
 };
 export const note = 'The same calls `spatial_database.h` makes, on `sqlite3.h` and `spatialite.h` as the ports ship them. The `sqlite3 **` and `sqlite3_stmt **` out-parameters are a slot from `allocPointer` read back with `readPointerAt`, `sqlite3_column_text` returns a pointer that `readCString` reads, and `SQLITE_OK` and `SQLITE_ROW` are macros, which do not bind, so their values are written out. The build also needs this module\'s `crossbind.overrides.js`: the two headers declare 20 functions the published libraries do not define, such as `sqlite3_snapshot_get` and `load_XL`, and the build stops until `export.ignoredDeclarations` leaves them out.';
-export const expected = ['5.1.0 3', 'Istanbul 0 km, Izmir 327 km, Ankara 350 km'];
+export const expected = ({ spatialite }) => [`${spatialite} 3`, 'Istanbul 0 km, Izmir 327 km, Ankara 350 km'];
 
 export default async function example({ spatialite_version, spatialite_alloc_connection, spatialite_init_ex, spatialite_cleanup_ex, sqlite3_open, sqlite3_exec, sqlite3_errmsg, sqlite3_prepare_v2, sqlite3_step, sqlite3_column_text, sqlite3_finalize, sqlite3_close, allocPointer, readPointerAt, readCString }, console) {
     const SQLITE_OK = 0;

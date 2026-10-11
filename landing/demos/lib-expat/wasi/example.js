@@ -5,8 +5,8 @@ export const commands = [
     'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. .crossbind/build/xml-stats-wasi-wasm32-st-release.wasm sitemap.xml',
 ];
-export const expected = [
-    'sitemap.xml: 4389004 bytes of well-formed XML (expat_2.9.0)',
+export const expected = ({ expat }) => [
+    `sitemap.xml: 4389004 bytes of well-formed XML (expat_${expat})`,
     '150001 elements, 1 attribute, nested 3 deep',
     'lastmod 50000',
     'loc 50000',

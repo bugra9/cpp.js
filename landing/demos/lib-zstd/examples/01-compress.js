@@ -1,7 +1,7 @@
 export const title = 'Compress and decompress a buffer';
 export const summary = 'The two calls most zstd code makes: ZSTD_compress, and ZSTD_decompress with the original size read back from the frame.';
 export const native = 'zstd_codec.h';
-export const expected = ['1.5.7 27 28 b5 2f fd', 'true'];
+export const expected = ({ zstd }) => [`${zstd} 27 28 b5 2f fd`, 'true'];
 
 export default async function example({ Zstd }, console) {
     const text = 'crossbind '.repeat(100);

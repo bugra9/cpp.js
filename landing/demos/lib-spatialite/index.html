@@ -21,8 +21,10 @@
         import * as measure from './examples/03-measure.js';
         import * as transform from './examples/04-transform.js';
         import * as geojson from './examples/05-geojson.js';
+        import nativeVersions from './native-versions.js';
 
         const EXAMPLES = [distances, spatialIndex, measure, transform, geojson];
+        const expectedOf = (example) => (typeof example.expected === 'function' ? example.expected(nativeVersions) : example.expected);
 
         // The playground app's preset queries, exactly as the app runs them.
         const PRESETS = [
@@ -110,7 +112,7 @@ FROM (SELECT id, kind, ST_Transform(geom, 32635) AS utm FROM pois WHERE city = '
             for (const example of EXAMPLES) {
                 const printed = [];
                 await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });
-                check(`example "${example.title}"`, printed, example.expected);
+                check(`example "${example.title}"`, printed, expectedOf(example));
             }
 
             // Playground app: the generated tables, then every preset. Geometries are summed up as
@@ -179,7 +181,8 @@ FROM (SELECT id, kind, ST_Transform(geom, 32635) AS utm FROM pois WHERE city = '
 
             // What this build compiled in, as the README states it.
             const db = await new m.SpatialDatabase();
-            check('versions', await db.scalar("SELECT spatialite_version() || ' | ' || geos_version() || ' | ' || proj_version() || ' | ' || sqlite_version()"), '5.1.0 | 3.15.0-CAPI-1.21.0 | Rel. 9.9.0, September 15th, 2026 | 3.54.0');
+            const [spatialite, geos, proj, sqlite] = (await db.scalar("SELECT spatialite_version() || ' | ' || geos_version() || ' | ' || proj_version() || ' | ' || sqlite_version()")).split(' | ');
+            check('versions', [spatialite, geos.split('-CAPI-')[0], proj.split(',')[0], sqlite], [nativeVersions.spatialite, nativeVersions.geos, `Rel. ${nativeVersions.proj}`, nativeVersions.sqlite3]);
             await db.exec('SELECT InitSpatialMetaData(1)');
             check('EPSG codes', await db.scalar('SELECT count(*) FROM spatial_ref_sys'), '6559');
             check('trusted_schema', await db.scalar('PRAGMA trusted_schema'), '1');

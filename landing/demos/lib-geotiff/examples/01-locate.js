@@ -1,8 +1,8 @@
 export const title = 'Find where a GeoTIFF is';
 export const summary = 'The question most GeoTIFF code answers: GTIFNew reads the GeoKeys, GTIFGetDefn turns them into a coordinate system, GTIFImageToPCS places pixels on the map and GTIFProj4ToLatLong turns map coordinates into degrees.';
 export const native = 'geotiff_locator.h';
-export const expected = [
-    'libgeotiff 1.7.4, 10262 B: EPSG:32633 WGS 84 / UTM zone 33N, 100 x 100 pixels',
+export const expected = ({ geotiff }) => [
+    `libgeotiff ${geotiff}, 10262 B: EPSG:32633 WGS 84 / UTM zone 33N, 100 x 100 pixels`,
     'upper left 500000, 4650000 = 15.000000 E, 42.002015 N',
     'lower right 503000, 4647000 = 15.036210 E, 41.974990 N',
 ];

@@ -14,6 +14,7 @@ import {
 import { buildPortsCatalog, renderCatalogModule } from './build-ports-catalog.mjs';
 import { DEMOS_ROOT, MANIFEST_NAME } from './build-example-demos.mjs';
 import { buildLibraryExamples, renderLibraryExamplesModule } from './build-library-examples.mjs';
+import { siteNativeVersions } from './native-versions.mjs';
 import { parseReleaseNotes } from '../release/release-lib.mjs';
 import { releaseNotesBlocks } from '../release/release-notes-blocks.mjs';
 import { assertChangelogCurrent, CHANGELOG_FILE, REPOSITORY_ROOT as CHANGELOG_ROOT, splitChangelog } from '../release/render-changelog.mjs';
@@ -96,7 +97,7 @@ export async function prepareSite({ channel, outDir, env = process.env }) {
     );
     // The usage examples are source, not build output: the pages show them whether or not the
     // library modules were built, and run them only where the module is.
-    const libraries = await buildLibraryExamples();
+    const libraries = await buildLibraryExamples({ nativeVersions: siteNativeVersions(demos) });
     fs.writeFileSync(path.join(outDir, 'library-examples.js'), renderLibraryExamplesModule(libraries));
     const exampleCount = Object.values(libraries).reduce((total, library) => total + library.examples.length, 0);
     log(

@@ -18,8 +18,10 @@
         import * as blobInfo from './examples/02-blob-info.js';
         import * as lossless from './examples/03-lossless.js';
         import * as nodata from './examples/04-nodata.js';
+        import nativeVersions from './native-versions.js';
 
         const EXAMPLES = [compress, blobInfo, lossless, nodata];
+        const expectedOf = (example) => (typeof example.expected === 'function' ? example.expected(nativeVersions) : example.expected);
         const DIRECTORY = '/memfs/lercapps';
         const BUDGETS = [0, 0.01, 0.1, 0.5, 1, 5];
 
@@ -46,7 +48,7 @@
             for (const example of EXAMPLES) {
                 const printed = [];
                 await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });
-                check(`example "${example.title}"`, printed, example.expected);
+                check(`example "${example.title}"`, printed, expectedOf(example));
             }
 
             await m.FS.mkdirTree(DIRECTORY);

@@ -21,8 +21,10 @@
         import * as escape from './examples/03-escape.js';
         import * as dates from './examples/04-dates.js';
         import * as buildInfo from './examples/05-build-info.js';
+        import nativeVersions from './native-versions.js';
 
         const EXAMPLES = [parseUrl, buildUrl, escape, dates, buildInfo];
+        const expectedOf = (example) => (typeof example.expected === 'function' ? example.expected(nativeVersions) : example.expected);
 
         const ALLOWED = 'example.com';
         const OTHER = 'attacker.example';
@@ -95,7 +97,7 @@
             for (const example of EXAMPLES) {
                 const printed = [];
                 await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });
-                check(`example "${example.title}"`, printed, example.expected);
+                check(`example "${example.title}"`, printed, expectedOf(example));
             }
 
             // URL filter check: where libcurl connects for each trick.

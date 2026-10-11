@@ -6,9 +6,9 @@ export const commands = [
     'wasmtime run --dir=. .crossbind/build/zstd-tool-wasi-wasm32-st-release.wasm compress access.log access.log.zst 3',
     'wasmtime run --dir=. .crossbind/build/zstd-tool-wasi-wasm32-st-release.wasm decompress access.log.zst access.copy.log',
 ];
-export const expected = [
-    'zstd 1.5.7 compress: access.log -> access.log.zst, 378699 B written',
-    'zstd 1.5.7 decompress: access.log.zst -> access.copy.log, 2537578 B written',
+export const expected = ({ zstd }) => [
+    `zstd ${zstd} compress: access.log -> access.log.zst, 378699 B written`,
+    `zstd ${zstd} decompress: access.log.zst -> access.copy.log, 2537578 B written`,
 ];
 
 // The file the commands work on: the log the WebAssembly streaming example writes, so the two

@@ -1,8 +1,8 @@
 export const title = 'Encode pixels to a JPEG';
 export const summary = 'jpeg_mem_dest writes the file into memory; jpeg_set_quality and the luma sampling factors decide how much detail it keeps.';
 export const native = 'jpeg_encoder.h';
-export const expected = [
-    'libjpeg-turbo 3.2.0: 100x75, 30000 B of RGBA',
+export const expected = ({ jpegturbo }) => [
+    `libjpeg-turbo ${jpegturbo}: 100x75, 30000 B of RGBA`,
     'quality 90, subsampling 444: 2791 B',
     'quality 90, subsampling 420: 1932 B',
     'quality 50, subsampling 420: 1171 B',

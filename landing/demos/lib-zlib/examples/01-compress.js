@@ -1,7 +1,7 @@
 export const title = 'Compress and decompress a buffer';
 export const summary = 'The two calls most zlib code makes: compress2 at a chosen level, and uncompress with the original size the caller kept.';
 export const native = 'zlib_codec.h';
-export const expected = ['1.3.2 27 78 da', 'true'];
+export const expected = ({ zlib }) => [`${zlib} 27 78 da`, 'true'];
 
 export default async function example({ Zlib }, console) {
     const text = 'crossbind '.repeat(100);

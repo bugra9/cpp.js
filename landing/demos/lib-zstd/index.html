@@ -18,8 +18,10 @@
         import * as stream from './examples/02-stream.js';
         import * as parameters from './examples/03-parameters.js';
         import * as dictionary from './examples/04-dictionary.js';
+        import nativeVersions from './native-versions.js';
 
         const EXAMPLES = [compress, stream, parameters, dictionary];
+        const expectedOf = (example) => (typeof example.expected === 'function' ? example.expected(nativeVersions) : example.expected);
 
         const out = document.querySelector('#out');
         const lines = [];
@@ -45,7 +47,7 @@
             for (const example of EXAMPLES) {
                 const printed = [];
                 await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });
-                check(`example "${example.title}"`, printed, example.expected);
+                check(`example "${example.title}"`, printed, expectedOf(example));
             }
 
             // The generator behind the apps: 2,000 records joined with '\n' (v1 minus its final newline).

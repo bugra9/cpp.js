@@ -18,7 +18,7 @@ export const imports = {
     ],
 };
 export const note = 'The same calls on `sqlite3.h` as SQLite ships it; its constants are macros without bindings, so the result codes are written out and `SQLITE_TRANSIENT`, `((sqlite3_destructor_type)-1)`, is read from a slot holding -1. `null` (`SQLITE_STATIC`) is no stand-in: the binding frees its copy of a JavaScript string when the call returns, and a test that allocated before `sqlite3_step` stored other text. Text columns come back as handles for `readCString`, and every statement is finalized by hand.';
-export const expected = ['3.54.0 3', "2: write the README\n3: fix the parser's bug"];
+export const expected = ({ sqlite3 }) => [`${sqlite3} 3`, "2: write the README\n3: fix the parser's bug"];
 
 export default async function example({ sqlite3_libversion, sqlite3_open, sqlite3_close, sqlite3_exec, sqlite3_prepare_v2, sqlite3_bind_text, sqlite3_step, sqlite3_column_int, sqlite3_column_text, sqlite3_finalize, sqlite3_errmsg, allocPointer, readPointerAt, writeNumberAt, readCString }, console) {
     // sqlite3.h's constants are macros without bindings. SQLITE_TRANSIENT is

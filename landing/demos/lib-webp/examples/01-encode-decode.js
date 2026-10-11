@@ -1,7 +1,7 @@
 export const title = 'Encode pixels to WebP and decode them back';
 export const summary = 'The simple API most code starts with: WebPEncodeRGBA at a quality, WebPEncodeLosslessRGBA, WebPGetInfo for the size in the header and WebPDecodeRGBA for the pixels. The input is a generated 256×256 landscape with a little noise, standing in for a photo.';
 export const native = 'webp_codec.h';
-export const expected = ['1.6.0 256x256', 'RGBA 262144 B -> lossy q80 1966 B, lossless 87058 B', 'true'];
+export const expected = ({ webp }) => [`${webp} 256x256`, 'RGBA 262144 B -> lossy q80 1966 B, lossless 87058 B', 'true'];
 
 export default async function example({ WebpCodec }, console) {
     let seed = 1;

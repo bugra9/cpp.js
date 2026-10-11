@@ -18,8 +18,10 @@
         import * as fallbacks from './examples/02-fallbacks.js';
         import * as stream from './examples/03-stream.js';
         import * as encodings from './examples/04-encodings.js';
+        import nativeVersions from './native-versions.js';
 
         const EXAMPLES = [convert, fallbacks, stream, encodings];
+        const expectedOf = (example) => (typeof example.expected === 'function' ? example.expected(nativeVersions) : example.expected);
 
         // Mojibake doctor: text saved in one encoding and shown by a browser as another. `bytes` are the
         // legacy bytes as CPython encodes them; the doctor must repair each garbled text to `original`.
@@ -92,7 +94,7 @@
             for (const example of EXAMPLES) {
                 const printed = [];
                 await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });
-                check(`example "${example.title}"`, printed, example.expected);
+                check(`example "${example.title}"`, printed, expectedOf(example));
             }
 
             // Mojibake doctor: the garbled texts are what this browser's own decoder shows...
