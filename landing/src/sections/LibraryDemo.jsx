@@ -168,7 +168,7 @@ export default function LibraryDemo({ tokens }) {
     const booted = Boolean(state.db);
 
     return (
-        <section style={{ padding: '20px var(--content-x) 80px' }}>
+        <section style={{ padding: '80px var(--content-x) 80px' }}>
             <div style={{ marginBottom: 26 }}>
                 <div style={{ fontFamily: tokens.mono, fontSize: 11, letterSpacing: 1.4, color: tokens.textMuted, marginBottom: 12 }}>
                     LIVE · SQLITE, COMPILED BY CROSSBIND

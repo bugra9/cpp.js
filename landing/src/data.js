@@ -10,8 +10,8 @@
 // Content note (15 Aug 2026): every figure below is now measured or counted from this repo -
 // 16 library recipes, 68 wasi commands, 30 build targets, 20 override points, one portable
 // agent skill, 12 templates, the pinned upstream versions in SHOWCASE, live GitHub counters, and
-// the real release notes. The performance section is gone entirely - see the note above
-// RUNTIME_CHIPS for the measurements that retired it.
+// the real release notes. The performance section is gone entirely - see the note below
+// RUNTIMES for the measurements that retired it.
 //
 // Feature audit (17 Aug 2026): FEATURES was re-checked claim by claim against the source. Four
 // statements did not survive and are gone - LTO (no -flto anywhere in the build), "pthreads
@@ -52,7 +52,10 @@ export const PLAYGROUND_URL = '/playground/';
 export const V1_DOCS_URL = 'https://v1.crossbind.dev';
 // The `@beta` / `@next` suffix follows the resolved release channel, so a beta-era visitor never
 // installs whatever `latest` happens to point at. Stable drops the suffix.
-export const CREATE_COMMAND = `npm create crossbind${RELEASE.distTagSuffix}`;
+const createCommand = (manager) => `${manager} create crossbind${RELEASE.distTagSuffix}`;
+export const CREATE_COMMAND = createCommand('npm');
+// Each one was run against the published beta; add a manager only after doing the same.
+export const CREATE_COMMANDS = ['npm', 'pnpm', 'bun'].map((manager) => ({ id: manager, label: manager, command: createCommand(manager) }));
 export const installCommand = (packageName) => `npm install -D ${packageName}${RELEASE.distTagSuffix}`;
 
 // The Skills CLI installs straight from the repository tree, so this is derived from REPO_URL
@@ -73,50 +76,46 @@ Start with the crossbind documentation index at ${SITE}/llms.txt and follow the 
 
 Follow the repository's conventions and make the smallest complete integration. Ask for clarification only when missing information prevents a correct implementation.`;
 
-// Counts in copy are derived from the arrays below so they cannot drift, but they still have to
-// read as prose rather than as data.
-const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
-export const spell = (n) => NUMBER_WORDS[n] ?? String(n);
-
 // The point of the page: this call is identical on every runtime. The boot call ships with the
-// header you already import, and one initNative() binds every native module on the page.
+// header you already import, and one initNative() binds every module imported on the page. The
+// imports run from your own C++ and Rust to the three package sources: a crossbind port, a crate
+// (`cargo:`) and a Conan package (`conan:`), both declared in crossbind.config.js.
 // The port import shows the intended package contract (meta package, header imported from
 // JavaScript). The published beta.56 ports do not bind upstream headers yet; tracked as an
 // open item, not a site concern. The fold only shows this sample - the live proof is the SQLite
 // panel below it, which runs a published port rather than a snippet built for the page.
 export const UNIVERSAL_CODE = `import { initNative, Matrix } from './native/Matrix.h';
+import { fibonacci } from './native/math.rs';
 import { GDALVersionInfo } from '@crossbind/port-gdal/gdal.h';
+import { Uuid } from 'cargo:uuid';
+import { zlibVersion } from 'conan:zlib/zlib.h';
 
 await initNative();
 
 const a = new Matrix(1210000, 1);
-const b = new Matrix(1210000, 2);
-const result = a.multiple(b);
+const result = a.multiple(new Matrix(1210000, 2));
 
-console.log(result.get(0), GDALVersionInfo('RELEASE_NAME'));`;
+console.log(result.get(0), fibonacci(90));
+console.log(Uuid.newV4().toString(), zlibVersion());
+console.log(GDALVersionInfo('RELEASE_NAME'));`;
 
-// Rust arrives through the same import; `cargo:` names a crate declared in crossbind.config.js.
-export const RUST_CODE = `import { initNative, Uuid } from 'cargo:uuid';
-import { Version, VersionReq } from 'cargo:semver';
-
-await initNative();
-
-const id = Uuid.newV4().toString();
-const ok = new VersionReq('^1.2').matches(new Version('1.4.0'));
-
-console.log(id, ok);`;
-
-export const LANGUAGE_TABS = [
-    { id: 'cpp', label: 'C++', title: 'src/main.js', code: UNIVERSAL_CODE },
-    { id: 'rust', label: 'Rust', title: 'src/main.js', code: RUST_CODE },
-];
-
-export const RUNTIME_CHIPS = [
-    { id: 'browser', label: 'Browser', sub: 'Chrome · Firefox · Safari', tone: '#5ba3e3', glyphs: ['chrome', 'firefox', 'safari'] },
-    { id: 'node', label: 'Node.js', sub: 'CJS or ESM', tone: '#5FA04E', glyphs: ['node'] },
-    { id: 'rn', label: 'React Native', sub: 'iOS + Android · JSI', tone: '#61DAFB', glyphs: ['ios', 'android'] },
-    { id: 'cf', label: 'CF Workers', sub: 'Edge · single-threaded', tone: '#F6821F', glyphs: ['cf'] },
-    { id: 'wasi', label: 'WASI', sub: 'wasmtime 47+ · wasip3', tone: '#a78bfa', glyphs: ['wasi'] },
+// The band under the hero: a drawing per kind of host (components/PlatformScene.jsx) with the
+// products named in text. Apple's and Microsoft's terms forbid their logos without a licence but
+// allow their product names for stating compatibility. `detail` (the tooltip and the llms.txt line)
+// is what each target is built as, per docs/playbooks/integration/nodejs.md and the WASI and
+// architecture guides.
+export const RUNTIMES = [
+    { id: 'browsers', scene: 'browser', title: 'Browsers', names: 'Chrome, Firefox, Safari', detail: 'WebAssembly' },
+    { id: 'mobile', scene: 'phone', title: 'Mobile', names: 'React Native, iOS, Android', detail: 'Native code over JSI' },
+    { id: 'server', scene: 'cloud', title: 'Server & Edge', names: 'Node.js, Cloudflare Workers', detail: 'WebAssembly, or a Node-API addon in Node.js' },
+    {
+        id: 'desktop',
+        scene: 'laptop',
+        title: 'Desktop',
+        names: 'Electron, macOS, Linux, Windows',
+        detail: 'A Node-API addon in Electron, or an executable or a library for macOS, Linux and Windows',
+    },
+    { id: 'wasi', scene: 'terminal', title: 'WASI', names: 'wasmtime 47+', detail: 'A command or a library for WASI 0.3' },
 ];
 
 // No performance section: re-running the docs' 1100×1100 matrix benchmark here (Chrome 141
@@ -444,25 +443,4 @@ export const SHOWCASE_COUNT = String(PORTS.length);
 // neither is listed.
 export const SCAFFOLD_FRAMEWORKS = ['React', 'Vue', 'Svelte', 'Vanilla'];
 export const SCAFFOLD_BUNDLERS = ['Vite', 'Rspack', 'Webpack', 'Rollup', 'Metro'];
-export const SCAFFOLD_TARGETS = [
-    { label: 'Web (WASM)', glyph: 'chrome', tone: '#5ba3e3' },
-    { label: 'React Native', glyph: 'rn', tone: '#61DAFB' },
-    { label: 'Node.js', glyph: 'node', tone: '#5FA04E' },
-    { label: 'Cloudflare Workers', glyph: 'cf', tone: '#F6821F' },
-];
-
-// Typed out one line at a time by the scaffolder terminal; `delay` is the pause before the next.
-export const SCAFFOLD_LINES = [
-    { delay: 200, kind: 'user', text: `> ${CREATE_COMMAND}` },
-    { delay: 700, kind: 'gap', text: '' },
-    { delay: 200, kind: 'question', text: '? Project name › my-crossbind-app' },
-    { delay: 400, kind: 'question', text: '? Where should we create your project? › ./my-crossbind-app' },
-    { delay: 400, kind: 'question', text: '? What kind of project? › Web' },
-    { delay: 400, kind: 'question', text: '? Choose framework / variant › React' },
-    { delay: 400, kind: 'question', text: '? Choose bundler / ecosystem › Vite' },
-    { delay: 700, kind: 'gap', text: '' },
-    // 18 is what the React + Vite template actually contains; other templates print fewer.
-    { delay: 200, kind: 'ok', text: '✓ Scaffolded 18 files into ./my-crossbind-app' },
-    { delay: 400, kind: 'gap', text: '' },
-    { delay: 200, kind: 'next', text: 'Next:  cd my-crossbind-app && npm install && npm run build' },
-];
+export const SCAFFOLD_TARGETS = ['Web (WASM)', 'React Native', 'Node.js', 'Cloudflare Workers'];

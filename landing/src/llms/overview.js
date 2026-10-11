@@ -10,7 +10,7 @@ import {
     FEATURES,
     installCommand,
     LIBRARIES_URL,
-    RUNTIME_CHIPS,
+    RUNTIMES,
     SCAFFOLD_BUNDLERS,
     SCAFFOLD_FRAMEWORKS,
     SCAFFOLD_TARGETS,
@@ -19,7 +19,6 @@ import {
     SITE,
     SITE_DESCRIPTION,
     SKILL_COMMAND,
-    spell,
 } from '../data.js';
 import { guideHref } from '../guide/nav.js';
 import EXAMPLES_PAGE from '../pages/examples.js';
@@ -84,7 +83,7 @@ export const OVERVIEW_PAGE = {
             type: 'p',
             text: 'A new project: the scaffolder asks for a name, a target, a framework and a bundler and prints a working repo '
                 + `with a sample C++ binding already wired. Frameworks: ${SCAFFOLD_FRAMEWORKS.join(', ')}. `
-                + `Bundlers: ${SCAFFOLD_BUNDLERS.join(', ')}. Targets: ${SCAFFOLD_TARGETS.map((target) => target.label).join(', ')}.`,
+                + `Bundlers: ${SCAFFOLD_BUNDLERS.join(', ')}. Targets: ${SCAFFOLD_TARGETS.join(', ')}.`,
         },
         { type: 'code', file: 'shell', code: CREATE_COMMAND },
         {
@@ -99,8 +98,8 @@ export const OVERVIEW_PAGE = {
         },
         { type: 'code', file: 'shell', code: SKILL_COMMAND },
 
-        { type: 'h2', text: `Same code, ${spell(RUNTIME_CHIPS.length)} runtimes` },
-        { type: 'ul', items: RUNTIME_CHIPS.map((chip) => `**${chip.label}** - ${chip.sub}`) },
+        { type: 'h2', text: 'Runs on' },
+        { type: 'ul', items: RUNTIMES.map((runtime) => `**${runtime.title}** (${runtime.names}) - ${runtime.detail}`) },
 
         { type: 'h2', text: `Why ${BRAND}` },
         { type: 'ul', items: WHY_POINTS.map(([title, text]) => `**${title}** - ${text}`) },
