@@ -3,7 +3,7 @@ export const summary =
     "WASI has no JavaScript bindings: the program is a main() that links the library, built into one .wasm and run with wasmtime. This one is a small ogrinfo and ogr2ogr. The build copies GDAL's and PROJ's data files to dist/data, and the GDAL_DATA and PROJ_DATA variables tell GDAL and PROJ where they are; PROJ reads its coordinate systems from proj.db there.";
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. --env GDAL_DATA=dist/data/gdal --env PROJ_DATA=dist/data/proj dist/gdal-tool-wasi-wasm32-st-release.wasm info cities.geojson',
     'wasmtime run --dir=. --env GDAL_DATA=dist/data/gdal --env PROJ_DATA=dist/data/proj dist/gdal-tool-wasi-wasm32-st-release.wasm convert cities.geojson cities.gpkg GPKG EPSG:3857',
     'wasmtime run --dir=. --env GDAL_DATA=dist/data/gdal --env PROJ_DATA=dist/data/proj dist/gdal-tool-wasi-wasm32-st-release.wasm info cities.gpkg',

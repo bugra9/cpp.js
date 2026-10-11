@@ -2,7 +2,7 @@ export const title = 'An iconv command-line tool';
 export const summary = 'WASI has no JavaScript bindings: the program is a main() that links the library, built into one .wasm and run with wasmtime. This one converts files the way the iconv command does, in 64 KB pieces, carrying a character cut between two pieces over to the next.';
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. .crossbind/build/iconv-tool-wasi-wasm32-st-release.wasm UTF-8 CP932 orders.csv orders-sjis.csv',
     'wasmtime run --dir=. .crossbind/build/iconv-tool-wasi-wasm32-st-release.wasm CP932 UTF-8 orders-sjis.csv orders-copy.csv',
 ];

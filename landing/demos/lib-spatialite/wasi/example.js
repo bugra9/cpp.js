@@ -3,7 +3,7 @@ export const summary =
     "WASI has no JavaScript bindings: the program is a main() that links SpatiaLite with SQLite, GEOS and PROJ, built into one .wasm and run with wasmtime. It runs SQL against a database file in the current directory and prints geometries as WKT, and the file it writes opens in QGIS and GDAL. ST_Transform reads PROJ's proj.db, which the build copies to dist/data/proj: the second --dir flag mounts that folder and PROJ_DATA tells PROJ where it is.";
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. --dir=dist/data/proj::/data/proj --env PROJ_DATA=/data/proj dist/spatialite-tool-wasi-wasm32-st-release.wasm cities.db < cities.sql',
     'wasmtime run --dir=. --dir=dist/data/proj::/data/proj --env PROJ_DATA=/data/proj dist/spatialite-tool-wasi-wasm32-st-release.wasm cities.db "SELECT name, ST_Transform(geom, 32635) FROM cities ORDER BY name"',
     'wasmtime run --dir=. --dir=dist/data/proj::/data/proj --env PROJ_DATA=/data/proj dist/spatialite-tool-wasi-wasm32-st-release.wasm cities.db "SELECT name, CAST(Round(ST_Distance(geom, MakePoint(28.9784, 41.0082, 4326), 1) / 1000) AS INTEGER) AS km FROM cities ORDER BY km"',

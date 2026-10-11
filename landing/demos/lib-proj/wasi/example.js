@@ -3,7 +3,7 @@ export const summary =
     "WASI has no JavaScript bindings: the program is a main() that links the library, built into one .wasm and run with wasmtime. This one reads PROJ's database, proj.db, which the build copies to dist/data/proj; the PROJ_DATA variable tells PROJ where it is. It describes a CRS and turns GPS positions into Swiss LV95 grid coordinates, through EPSG's Helmert transformation, which EPSG gives an accuracy of 1 m.";
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. --env PROJ_DATA=dist/data/proj dist/proj-tool-wasi-wasm32-st-release.wasm info EPSG:2056',
     'wasmtime run --dir=. --env PROJ_DATA=dist/data/proj dist/proj-tool-wasi-wasm32-st-release.wasm EPSG:4326 EPSG:2056 points.txt',
 ];

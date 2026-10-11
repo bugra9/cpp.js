@@ -2,7 +2,7 @@ export const title = 'A GEOS command-line tool';
 export const summary = 'WASI has no JavaScript bindings: the program is a main() that links the library, built into one .wasm and run with wasmtime. This one reads shapes from WKT files and prints what GEOS makes of them.';
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. .crossbind/build/geos-tool-wasi-wasm32-st-release.wasm intersection parcel.wkt flood.wkt',
     'wasmtime run --dir=. .crossbind/build/geos-tool-wasi-wasm32-st-release.wasm difference parcel.wkt flood.wkt',
     'wasmtime run --dir=. .crossbind/build/geos-tool-wasi-wasm32-st-release.wasm validate bowtie.wkt',

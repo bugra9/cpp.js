@@ -2,7 +2,7 @@ export const title = 'A WebP command-line tool';
 export const summary = 'WASI has no JavaScript bindings: the program is a main() that links libwebp, built into one .wasm and run with wasmtime. This one encodes a PPM to WebP at a quality and reads a WebP header back.';
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. .crossbind/build/webp-tool-wasi-wasm32-st-release.wasm encode landscape.ppm landscape.webp 80',
     'wasmtime run --dir=. .crossbind/build/webp-tool-wasi-wasm32-st-release.wasm info landscape.webp',
 ];

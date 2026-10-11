@@ -2,7 +2,7 @@ export const title = 'A checksum tool on OpenSSL';
 export const summary = "WASI has no JavaScript bindings: the program is a main() that links OpenSSL, built into one .wasm and run with wasmtime. This one prints file digests in sha256sum's format with any digest OpenSSL has, checks a checksum list the way sha256sum -c does, and computes the HMAC a webhook sender signs its payload with.";
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. .crossbind/build/openssl-tool-wasi-wasm32-st-release.wasm digest sha256 notes.txt app.js',
     'wasmtime run --dir=. .crossbind/build/openssl-tool-wasi-wasm32-st-release.wasm digest sha3-256 notes.txt',
     'wasmtime run --dir=. .crossbind/build/openssl-tool-wasi-wasm32-st-release.wasm check SHA256SUMS',

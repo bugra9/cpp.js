@@ -3,7 +3,7 @@ export const summary =
     'WASI has no JavaScript bindings: the program is a main() that links libcurl, built into one .wasm and run with wasmtime. This one is a small trurl: it parses a URL with the flags curl uses before a transfer, follows a Location header and appends encoded query pairs, without opening a connection. For transfers, @crossbind/port-curl-standalone-wasi ships the curl command itself, which fetches over wasi:sockets with OpenSSL and verifies certificates: `npx -p @crossbind/port-curl-standalone-wasi@beta curl-wasi -sS https://example.com -o page.html`.';
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     "wasmtime run .crossbind/build/url-tool-wasi-wasm32-st-release.wasm 'http://example.com\\@attacker.example/'",
     "wasmtime run .crossbind/build/url-tool-wasi-wasm32-st-release.wasm https://example.com/a/b/c --follow '../d?y=2'",
     "wasmtime run .crossbind/build/url-tool-wasi-wasm32-st-release.wasm https://example.com/search --append 'q=crème brûlée & tea' --append 'sort=price+asc'",
