@@ -39,6 +39,7 @@ export const SITE_DESCRIPTION =
 export const REPO_URL = 'https://github.com/crossbind/crossbind';
 export const DISCUSSIONS_URL = `${REPO_URL}/discussions`;
 export const LICENSE_URL = `${REPO_URL}/blob/main/LICENSE`;
+export const PRIVACY_EMAIL = 'privacy@crossbind.dev';
 export const API_URL = '/api/';
 export const AGENT_URL = '/agent/';
 export const LIBRARIES_URL = '/ports/';

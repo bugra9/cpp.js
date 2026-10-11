@@ -1,4 +1,4 @@
-import { DISCUSSIONS_URL } from '../data.js';
+import { DISCUSSIONS_URL, LICENSE_URL, PRIVACY_EMAIL } from '../data.js';
 
 // /privacy/: what crossbind.dev, the playground and crossbind cloud (tooling/cloud) keep, for how long, and how to
 // delete it. Every period here is one the code enforces; change them together.
@@ -9,7 +9,7 @@ export default {
     title: 'Privacy',
     kicker: 'PRIVACY',
     description: 'What crossbind.dev, the playground and crossbind cloud keep about you, for how long, and how to delete it.',
-    lede: 'crossbind.dev has no analytics and sets no tracking cookies. The playground and crossbind cloud keep what they need to run and to stop abuse: your GitHub id and name once you sign in, and how much you used. No email, no GitHub token, nothing to pay with. Last changed 10 October 2026.',
+    lede: 'crossbind.dev has no analytics and sets no tracking cookies. The playground and crossbind cloud keep what they need to run and to stop abuse: your GitHub id and name once you sign in, and how much you used. No email, no GitHub token, nothing to pay with. Last changed 11 October 2026.',
     section: 'Privacy',
     path: '/privacy',
     href: '/privacy/',
@@ -70,10 +70,16 @@ export default {
             text: 'Or sign in on the [playground](/playground/) and press Delete account. Either deletes your account and signs out every machine at once. Two things stay after it, under your GitHub id alone: this month\'s build minutes, until the month ends, so that signing in again does not bring a fresh month; and, for an account blocked for abuse, the block. To also remove crossbind from your GitHub account, revoke it under Settings, Applications, Authorized OAuth Apps.',
         },
 
+        { type: 'h2', id: 'no-warranty', text: 'No warranty' },
+        {
+            type: 'p',
+            text: `crossbind is an open-source project, free under the [MIT license](${LICENSE_URL}). crossbind.dev, the playground and crossbind cloud are provided as they are, without warranty of any kind, and may change, pause or stop at any time without notice. To the extent the law allows, the crossbind project is not liable for any loss that comes from using them. You are responsible for the code you send and for what you do with what comes back: keep your own copies, and do not rely on these services where an outage or a wrong result would cause harm.`,
+        },
+
         { type: 'h2', id: 'who', text: 'Who runs it' },
         {
             type: 'p',
-            text: `crossbind and crossbind cloud are run by Buğra Sarı, on Cloudflare (hosting, the compiler and the runners, Turnstile, logs) with GitHub for signing in; each handles what passes through it under its own privacy policy. Ask anything about this page in [GitHub Discussions](${DISCUSSIONS_URL}), without personal details there.`,
+            text: `crossbind and crossbind cloud are run by the crossbind open-source project, on Cloudflare (hosting, the compiler and the runners, Turnstile, logs) with GitHub for signing in; each handles what passes through it under its own privacy policy. For anything about your data, write to [${PRIVACY_EMAIL}](mailto:${PRIVACY_EMAIL}). General questions go to [GitHub Discussions](${DISCUSSIONS_URL}), without personal details there.`,
         },
     ],
 };
