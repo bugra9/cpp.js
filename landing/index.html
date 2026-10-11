@@ -10,8 +10,8 @@
          itself onto all sixteen pages. The title below is the dev-server fallback and mirrors
          SITE_TITLE in src/data.js. -->
     <title>crossbind — import C++ and Rust like JavaScript modules</title>
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafaf7" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d1117" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#22262e" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="crossbind" />
@@ -33,7 +33,7 @@
             if (t !== 'light' && t !== 'dark') {
                 t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
             }
-            document.documentElement.style.background = t === 'light' ? '#fafaf7' : '#0d1117';
+            document.documentElement.style.background = t === 'light' ? '#ffffff' : '#22262e';
             document.documentElement.style.colorScheme = t;
         } catch (e) { /* private mode blocks storage; the default stands */ }
     </script>

@@ -11,6 +11,9 @@
     --content-x: calc(var(--page-x) + 1px + var(--card-p));
     --nav-gap: 40px;
     --nav-y: 20px;
+    /* The sticky header's rendered height (both --nav-y paddings, its tallest control and the
+       border), so the hero can fill the rest of the first screen. */
+    --nav-h: 75px;
 }
 
 /* Shared by landing and guide cards. */
@@ -201,6 +204,61 @@
     gap: 16px;
 }
 
+/* The hero fills the first screen under the header, as cpp.js.org's did: copy and the create
+   command beside the code, centred in the height the runtime strip leaves them. 560px holds the
+   longest sample line without wrapping, so the columns stack once it no longer fits. The title
+   scales with its column so "Import C++ and Rust" stays on one line. */
+.hero {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100svh - var(--nav-h));
+}
+
+.hero-grid {
+    --hero-title: clamp(36px, 3.3vw, 48px);
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 560px;
+    gap: 80px;
+    align-items: center;
+    align-content: center;
+}
+
+/* The platform band under the hero: a drawing per kind of host with its names under it, spread
+   across the column, in centred rows once they no longer fit on one line. */
+.runs-on-list {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 32px 24px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.runs-on-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+@media (max-width: 1060px) {
+    .runs-on-list {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 1240px) {
+    .hero-grid {
+        --hero-title: clamp(36px, 5vw, 56px);
+        grid-template-columns: minmax(0, 1fr);
+        gap: 40px;
+    }
+}
+
+
 @media (max-width: 950px) {
     .playground-grid {
         grid-template-columns: minmax(0, 1fr);
@@ -245,6 +303,7 @@
         --nav-gap: 0px;
         /* The header is one row here, so its padding is the only thing making it tall. */
         --nav-y: 10px;
+        --nav-h: 65px;
         --content-x: calc(var(--page-x) + var(--card-p));
     }
 
@@ -293,7 +352,7 @@ body {
         -apple-system,
         BlinkMacSystemFont,
         sans-serif;
-    background: #fafaf7;
+    background: #ffffff;
     color: #0a0a0a;
 }
 
@@ -310,12 +369,6 @@ a {
 
 button {
     font-family: inherit;
-}
-
-@keyframes blink {
-    50% {
-        opacity: 0;
-    }
 }
 
 /* ::backdrop cannot be reached from an inline style attribute, so it lives here. */

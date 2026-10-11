@@ -14,9 +14,9 @@ const MONO = '"Geist Mono", ui-monospace, monospace';
 
 function lightTokens() {
     return {
-        bg: '#fafaf7',
+        bg: '#ffffff',
         panel: '#ffffff',
-        panelAlt: '#f4f2ec',
+        panelAlt: '#f6f8fa',
         border: 'rgba(0,0,0,0.08)',
         borderStrong: 'rgba(0,0,0,0.13)',
         text: '#0a0a0a',
@@ -39,10 +39,10 @@ function lightTokens() {
         pillBg: 'rgba(0,0,0,0.04)',
         pillBorder: 'rgba(0,0,0,0.08)',
         // Syntax colours are fixed like a real editor; only the number colour tracks the brand.
-        codeBg: '#fbf9f2',
-        codeSurface: '#f4f1e6',
+        codeBg: '#f6f8fa',
+        codeSurface: '#eff2f5',
         codeText: '#1a1a1a',
-        codeMuted: '#716a5a',
+        codeMuted: '#636c76',
         warn: '#9a3412',
         codeKey: '#7c3aed',
         codeStr: '#b8501e',
@@ -56,14 +56,15 @@ function lightTokens() {
 
 function darkTokens() {
     return {
-        bg: '#0d1117',
-        panel: '#151b26',
-        panelAlt: '#121929',
+        bg: '#22262e',
+        panel: '#282c35',
+        panelAlt: '#252932',
         border: 'rgba(255,255,255,0.07)',
         borderStrong: 'rgba(255,255,255,0.13)',
         text: '#e7ebf3',
-        textDim: '#9aa3b5',
-        textMuted: '#78829a',
+        // Measured against the lightest surface they sit on (a pill inside panelRaised), so every use clears 4.5:1.
+        textDim: '#b9c0cc',
+        textMuted: '#a3abbc',
         accent: P.a,
         accentText: P.a,
         // At headline size the link-bright accent reads as neon on the dark canvas; one step down.
@@ -73,15 +74,15 @@ function darkTokens() {
         buttonBg: '#e7ebf3',
         buttonText: '#0d1117',
         // `panel` only clears the page by 1.08:1, which reads as a flat block once dimmed by a backdrop.
-        panelRaised: '#1c2438',
+        panelRaised: '#30343f',
         borderRaised: 'rgba(255,255,255,0.18)',
         raisedShadow: '0 28px 70px rgba(0,0,0,0.6)',
         pillBg: 'rgba(255,255,255,0.04)',
         pillBorder: 'rgba(255,255,255,0.07)',
-        codeBg: '#0d1322',
+        codeBg: '#282a36',
         codeSurface: 'rgba(255,255,255,0.03)',
         codeText: '#e7ebf3',
-        codeMuted: '#78829a',
+        codeMuted: '#9aa3b5',
         warn: '#f4b893',
         codeAccent: P.a,
         codeKey: P.c,
