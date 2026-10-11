@@ -7,9 +7,9 @@ export const commands = [
     'wasmtime run --dir=. .crossbind/build/tiff-tool-wasi-wasm32-st-release.wasm archive scan.tif archive.tif',
     'wasmtime run --dir=. .crossbind/build/tiff-tool-wasi-wasm32-st-release.wasm info archive.tif',
 ];
-export const expected = [
+export const expected = ({ tiff }) => [
     'wrote scan.tif: 3 pages, 2194119 B',
-    'libtiff 4.7.2: scan.tif 2194119 B -> archive.tif 57777 B',
+    `libtiff ${tiff}: scan.tif 2194119 B -> archive.tif 57777 B`,
     'page 1 "letter": 1240x1754, 1 x 1-bit, CCITT Group 4, 2971 B',
     'page 2 "grey": 800x600, 1 x 8-bit, AdobeDeflate, 36879 B',
     'page 3 "colour": 800x600, 3 x 8-bit, AdobeDeflate, 15296 B',

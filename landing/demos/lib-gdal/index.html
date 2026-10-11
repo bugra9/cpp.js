@@ -24,8 +24,10 @@
         import * as cog from './examples/03-cog.js';
         import * as terrain from './examples/04-terrain.js';
         import * as features from './examples/05-features.js';
+        import nativeVersions from './native-versions.js';
 
         const EXAMPLES = [convert, rasterInfo, cog, terrain, features];
+        const expectedOf = (example) => (typeof example.expected === 'function' ? example.expected(nativeVersions) : example.expected);
 
         // The converter's arguments per format, as the app builds them.
         const WGS84_ONLY = ['GPX', 'KML', 'GeoRSS'];
@@ -85,7 +87,7 @@
                 for (const example of EXAMPLES) {
                     const printed = [];
                     await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });
-                    check(`example "${example.title}"${pass === 2 ? ' again' : ''}`, printed, example.expected);
+                    check(`example "${example.title}"${pass === 2 ? ' again' : ''}`, printed, expectedOf(example));
                 }
             }
 

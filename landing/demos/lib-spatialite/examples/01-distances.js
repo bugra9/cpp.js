@@ -2,7 +2,7 @@ export const title = 'Store points and measure the distance between them';
 export const summary =
     'The calls every SpatiaLite program starts with: `spatialite_alloc_connection` and `spatialite_init_ex` register the spatial SQL functions on a SQLite connection, `InitSpatialMetaData` creates the metadata tables and `AddGeometryColumn` adds a geometry column. `GeomFromText` reads WKT, and `ST_Distance(a, b, 1)` measures on the WGS 84 ellipsoid.';
 export const native = 'spatial_database.h';
-export const expected = ['5.1.0 3', 'Istanbul 0 km, Izmir 327 km, Ankara 350 km'];
+export const expected = ({ spatialite }) => [`${spatialite} 3`, 'Istanbul 0 km, Izmir 327 km, Ankara 350 km'];
 
 export default async function example({ SpatialDatabase }, console) {
     const db = await new SpatialDatabase();

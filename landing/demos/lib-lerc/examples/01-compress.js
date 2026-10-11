@@ -1,7 +1,7 @@
 export const title = 'Compress heights to within 1 cm';
 export const summary = "LERC's main job: `lerc_encode` stores a float raster so that no value moves by more than the error you allow, and `lerc_decode` reads it back. The example checks the bound on every one of the 65,536 heights.";
 export const native = 'lerc_codec.h';
-export const expected = ['LERC 4.2.0: 262144 B of float32 heights -> 94775 B', 'largest error 0.0099 m, within 1 cm: true'];
+export const expected = ({ lerc }) => [`LERC ${lerc}: 262144 B of float32 heights -> 94775 B`, 'largest error 0.0099 m, within 1 cm: true'];
 
 export default async function example({ LercCodec }, console) {
     let seed = 42;

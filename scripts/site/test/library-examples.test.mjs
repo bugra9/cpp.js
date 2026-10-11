@@ -313,6 +313,45 @@ test('each C++ example carries its JavaScript-only version or the reason there i
     });
 });
 
+test('expected output written as a function shows the native versions it is given', async () => {
+    const versionLine = 'export const expected = ({ demo }) => [`Demo ${demo}`];';
+    const direct = {
+        '01-version': [
+            "export const imports = { '@crossbind/port-demo/demo.h': ['Demo_version'] };",
+            "export const note = 'Calls the C function.';",
+            versionLine,
+            '',
+            'export default async function example({ Demo_version }, console) {',
+            '    console.log(await Demo_version());',
+            '}',
+        ].join('\n'),
+    };
+    await withLibrary({ direct }, async (demos) => {
+        const library = path.join(demos, 'lib-demo');
+        const example = path.join(library, 'examples', '01-version.js');
+        fs.writeFileSync(example, fs.readFileSync(example, 'utf8').replace("export const expected = ['1'];", versionLine));
+        fs.mkdirSync(path.join(library, 'wasi', 'src'), { recursive: true });
+        fs.writeFileSync(path.join(library, 'wasi', 'src', 'main.cpp'), 'int main() { return 0; }\n');
+        fs.writeFileSync(path.join(library, 'wasi', 'crossbind.config.js'), 'export default {};\n');
+        fs.writeFileSync(
+            path.join(library, 'wasi', 'example.js'),
+            [
+                "export const title = 'A command';",
+                "export const summary = 'A demo.';",
+                "export const source = 'src/main.cpp';",
+                "export const commands = ['wasmtime run demo.wasm'];",
+                'export const expected = ({ demo }) => [`demo ${demo}`];',
+            ].join('\n'),
+        );
+
+        const { demo } = await buildLibraryExamples({ demosDir: demos, nativeVersions: { demo: '1.2.3' } });
+
+        assert.deepEqual(demo.examples[0].expected, ['Demo 1.2.3']);
+        assert.deepEqual(demo.examples[0].direct.expected, ['Demo 1.2.3']);
+        assert.deepEqual(demo.wasi.expected, ['demo 1.2.3']);
+    });
+});
+
 test('JavaScript-only examples pair one to one with the C++ ones', async () => {
     await withLibrary({ direct: { '02-stream': null } }, (demos) =>
         assert.rejects(buildLibraryExamples({ demosDir: demos }), /no JavaScript-only version of 02-stream/),

@@ -19,8 +19,10 @@
         import * as keys from './examples/03-keys.js';
         import * as definition from './examples/04-definition.js';
         import * as pixels from './examples/05-pixels.js';
+        import nativeVersions from './native-versions.js';
 
         const EXAMPLES = [locate, write, keys, definition, pixels].filter((example) => example.default);
+        const expectedOf = (example) => (typeof example.expected === 'function' ? example.expected(nativeVersions) : example.expected);
 
         const out = document.querySelector('#out');
         const lines = [];
@@ -42,7 +44,7 @@
             for (const example of EXAMPLES) {
                 const printed = [];
                 await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });
-                check(`example "${example.expected[0]}"`, printed, example.expected);
+                check(`example "${expectedOf(example)[0]}"`, printed, expectedOf(example));
             }
             const passed = checks.filter(Boolean).length;
             // No version: libgeotiff has it only as the LIBGEOTIFF_VERSION macro, and macros are not bound.

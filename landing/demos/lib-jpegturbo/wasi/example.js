@@ -6,9 +6,9 @@ export const commands = [
     'wasmtime run --dir=. .crossbind/build/jpeg-tool-wasi-wasm32-st-release.wasm encode photo.ppm photo.jpg 85',
     'wasmtime run --dir=. .crossbind/build/jpeg-tool-wasi-wasm32-st-release.wasm thumbnail photo.jpg thumb.jpg 8 85',
 ];
-export const expected = [
-    'libjpeg-turbo 3.2.0 encode: photo.ppm (640x480) -> photo.jpg, 15356 B at quality 85',
-    'libjpeg-turbo 3.2.0 thumbnail: photo.jpg (640x480) -> thumb.jpg (80x60), 1341 B at quality 85',
+export const expected = ({ jpegturbo }) => [
+    `libjpeg-turbo ${jpegturbo} encode: photo.ppm (640x480) -> photo.jpg, 15356 B at quality 85`,
+    `libjpeg-turbo ${jpegturbo} thumbnail: photo.jpg (640x480) -> thumb.jpg (80x60), 1341 B at quality 85`,
 ];
 
 // The file the commands work on: a 640x480 gradient with a red disc, as binary PPM.

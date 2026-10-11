@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { channelDistTag } from '../release/resolve-site-release.mjs';
+import { readNativeVersions, resolveExpected } from './native-versions.mjs';
 
 // Builds and runs the WASI examples the /ports/<family>/wasi/ pages show. Each one is copied to a
 // scratch directory, installed from npm on the site's channel (the published -wasi package and
@@ -61,8 +62,9 @@ export async function checkWasiExamples({ channel, only = null } = {}) {
                 const output = run(command, work);
                 return command.startsWith('wasmtime ') ? output.trimEnd().split('\n') : [];
             });
-            if (JSON.stringify(printed) !== JSON.stringify(example.expected)) {
-                throw new Error(`${demo}: the WASI example printed ${JSON.stringify(printed)}, expected ${JSON.stringify(example.expected)}.`);
+            const expected = resolveExpected(example.expected, readNativeVersions(work));
+            if (JSON.stringify(printed) !== JSON.stringify(expected)) {
+                throw new Error(`${demo}: the WASI example printed ${JSON.stringify(printed)}, expected ${JSON.stringify(expected)}.`);
             }
             log(`${demo}: ok - ${printed.join(' | ')}`);
             checked.push(demo);

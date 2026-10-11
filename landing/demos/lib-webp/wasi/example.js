@@ -6,9 +6,9 @@ export const commands = [
     'wasmtime run --dir=. .crossbind/build/webp-tool-wasi-wasm32-st-release.wasm encode landscape.ppm landscape.webp 80',
     'wasmtime run --dir=. .crossbind/build/webp-tool-wasi-wasm32-st-release.wasm info landscape.webp',
 ];
-export const expected = [
-    'webp 1.6.0 encode: landscape.ppm 256x256 -> landscape.webp, 1966 B at quality 80',
-    'webp 1.6.0 info: landscape.webp 256x256 lossy, 1966 B, alpha: no, animated: no',
+export const expected = ({ webp }) => [
+    `webp ${webp} encode: landscape.ppm 256x256 -> landscape.webp, 1966 B at quality 80`,
+    `webp ${webp} info: landscape.webp 256x256 lossy, 1966 B, alpha: no, animated: no`,
 ];
 
 // The file the commands work on: the landscape the WebAssembly examples encode, as a binary PPM, so

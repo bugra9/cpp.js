@@ -5,6 +5,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { channelDistTag, distTagSuffix } from '../release/resolve-site-release.mjs';
+import { readNativeVersions } from './native-versions.mjs';
 
 // Builds the live demos the Examples page embeds: each web example is scaffolded with the same
 // `npm create crossbind@<tag>` command the page shows, installed from npm, built for its subpath
@@ -159,8 +160,11 @@ async function buildSource(project, id, out) {
     if (!patchFile(path.join(out, 'index.html'), [["path: './dist'", `path: '/examples/${id}/dist'`]])) {
         throw new Error(`${id}: index.html no longer passes path: './dist'; the demo changed shape.`);
     }
-    // A library module's usage examples are ES modules its page imports and checks.
+    // A library module's usage examples are ES modules its page imports and checks, against the
+    // native versions this install pulled in.
     if (fs.existsSync(path.join(project, 'examples'))) copyDir(path.join(project, 'examples'), path.join(out, 'examples'));
+    const nativeVersions = readNativeVersions(project);
+    fs.writeFileSync(path.join(out, 'native-versions.js'), `export default ${JSON.stringify(nativeVersions)};\n`);
     const build = path.join(project, '.crossbind', 'build');
     // Libraries with runtime data (PROJ's proj.db, GDAL's tables) preload a `.data.txt` next to the wasm.
     const artifacts = fs.readdirSync(build).filter((name) => /\.browser\.(js|wasm|data\.txt)$/.test(name));
@@ -169,7 +173,7 @@ async function buildSource(project, id, out) {
     const wasm = artifacts.find((name) => name.endsWith('.wasm'));
     if (!script || !wasm) throw new Error(`${id}: the build produced no browser artifact.`);
     const bytes = artifacts.reduce((total, name) => total + fs.statSync(path.join(build, name)).size, 0);
-    return { script: `/examples/${id}/dist/${script}`, path: `/examples/${id}/dist`, bytes };
+    return { script: `/examples/${id}/dist/${script}`, path: `/examples/${id}/dist`, bytes, nativeVersions };
 }
 
 const BUILDERS = { vite: buildVite, vanilla: buildVanilla, rspack: buildRspack, source: buildSource };

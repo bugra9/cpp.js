@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { repoNativeVersions, resolveExpected } from './native-versions.mjs';
 
 // The usage examples on /ports/<family>/ pages. Each one is a file under
 // landing/demos/lib-<family>/examples/ that the library module's self-check runs in a browser, so
@@ -166,11 +167,12 @@ function requireLines(module, field, name, why) {
     }
 }
 
-async function readExample(directory, owners, file) {
+async function readExample(directory, owners, file, nativeVersions) {
     const module = await import(pathToFileURL(file).href);
     const name = path.relative(REPOSITORY_ROOT, file);
     for (const field of ['title', 'summary', 'native']) requireText(module, field, name);
-    requireLines(module, 'expected', name, 'the lines the example prints; only checked examples reach the site');
+    const expected = resolveExpected(module.expected, nativeVersions);
+    requireLines({ expected }, 'expected', name, 'the lines the example prints; only checked examples reach the site');
     const header = path.join(directory, 'src', 'native', module.native);
     if (!fs.existsSync(header)) throw new Error(`${name}: native header ${module.native} does not exist.`);
     return {
@@ -180,18 +182,19 @@ async function readExample(directory, owners, file) {
         native: module.native,
         nativeSource: fs.readFileSync(header, 'utf8').trimEnd(),
         ...usageSnippet(fs.readFileSync(file, 'utf8'), module.native, owners, name),
-        expected: module.expected,
+        expected,
     };
 }
 
-async function readWasiExample(directory) {
+async function readWasiExample(directory, nativeVersions) {
     const file = path.join(directory, 'wasi', 'example.js');
     if (!fs.existsSync(file)) return null;
     const module = await import(pathToFileURL(file).href);
     const name = path.relative(REPOSITORY_ROOT, file);
     for (const field of ['title', 'summary', 'source']) requireText(module, field, name);
     requireLines(module, 'commands', name, 'the commands a reader types after installing');
-    requireLines(module, 'expected', name, 'the lines the commands print');
+    const expected = resolveExpected(module.expected, nativeVersions);
+    requireLines({ expected }, 'expected', name, 'the lines the commands print');
     const read = (relative) => fs.readFileSync(path.join(directory, 'wasi', relative), 'utf8').trimEnd();
     return {
         title: module.title,
@@ -200,13 +203,13 @@ async function readWasiExample(directory) {
         source: read(module.source),
         config: read('crossbind.config.js'),
         commands: module.commands,
-        expected: module.expected,
+        expected,
     };
 }
 
 // A JavaScript-only example either runs, with a note on what changes against the C++ version, or
 // says why it cannot and has nothing to run.
-async function readDirectExample(file) {
+async function readDirectExample(file, nativeVersions) {
     const module = await import(pathToFileURL(file).href);
     const name = path.relative(REPOSITORY_ROOT, file);
     if (module.impossible !== undefined) {
@@ -215,12 +218,13 @@ async function readDirectExample(file) {
         return { impossible: module.impossible };
     }
     requireText(module, 'note', name);
-    requireLines(module, 'expected', name, 'the lines the example prints; only checked examples reach the site');
+    const expected = resolveExpected(module.expected, nativeVersions);
+    requireLines({ expected }, 'expected', name, 'the lines the example prints; only checked examples reach the site');
     const init = module.init ?? null;
     if (init !== null && (typeof init !== 'object' || Array.isArray(init)))
         throw new Error(`${name}: \`init\` must be the options object initNative takes.`);
     const { usage, webOnly } = directSnippet(fs.readFileSync(file, 'utf8'), module.imports, { init, file: name });
-    return { imports: module.imports, init, note: module.note, expected: module.expected, usage, webOnly };
+    return { imports: module.imports, init, note: module.note, expected, usage, webOnly };
 }
 
 // The page boots the module once, so every example that asks for an init option asks for the same one.
@@ -291,7 +295,7 @@ const directConfig = (directory) =>
         .map(({ file, code }) => ({ file, code }));
 
 // direct/examples/<id>.js beside every examples/<id>.js, and nothing else.
-async function readDirect(directory, examples) {
+async function readDirect(directory, examples, nativeVersions) {
     const examplesDir = path.join(directory, 'direct', 'examples');
     if (!fs.existsSync(examplesDir)) return null;
     const demo = `${path.basename(directory)}-direct`;
@@ -306,7 +310,7 @@ async function readDirect(directory, examples) {
     if (missing.length)
         throw new Error(`${demo}: no JavaScript-only version of ${missing.join(', ')}; add one, or one that says why it is impossible.`);
     const entries = [];
-    for (const id of ids) entries.push([id, await readDirectExample(path.join(examplesDir, `${id}.js`))]);
+    for (const id of ids) entries.push([id, await readDirectExample(path.join(examplesDir, `${id}.js`), nativeVersions)]);
     const published = ({ impossible, note, expected, usage, webOnly }) => (impossible ? { impossible } : { usage, webOnly, note, expected });
     const byId = new Map(entries.map(([id, entry]) => [id, published(entry)]));
     const runnable = entries.map(([, entry]) => entry).filter((entry) => !entry.impossible);
@@ -318,7 +322,7 @@ async function readDirect(directory, examples) {
     return { demo, init, config: directConfig(directory), byId };
 }
 
-export async function buildLibraryExamples({ demosDir = DEMOS_DIR } = {}) {
+export async function buildLibraryExamples({ demosDir = DEMOS_DIR, nativeVersions = repoNativeVersions() } = {}) {
     const libraries = {};
     const modules = fs.existsSync(demosDir)
         ? fs
@@ -336,12 +340,12 @@ export async function buildLibraryExamples({ demosDir = DEMOS_DIR } = {}) {
             .filter((name) => name.endsWith('.js'))
             .sort();
         const examples = [];
-        for (const file of files) examples.push(await readExample(directory, owners, path.join(examplesDir, file)));
-        const direct = await readDirect(directory, examples);
+        for (const file of files) examples.push(await readExample(directory, owners, path.join(examplesDir, file), nativeVersions));
+        const direct = await readDirect(directory, examples, nativeVersions);
         libraries[demo.slice('lib-'.length)] = {
             demo,
             examples: examples.map((example) => ({ ...example, direct: direct?.byId.get(example.id) ?? null })),
-            wasi: await readWasiExample(directory),
+            wasi: await readWasiExample(directory, nativeVersions),
             direct: direct ? { demo: direct.demo, init: direct.init, config: direct.config } : null,
         };
     }

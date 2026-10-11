@@ -7,11 +7,11 @@ export const commands = [
     'wasmtime run --dir=. .crossbind/build/sqlite-tool-wasi-wasm32-st-release.wasm shop.db < shop.sql',
     'wasmtime run --dir=. .crossbind/build/sqlite-tool-wasi-wasm32-st-release.wasm shop.db "select customer, sum(qty * price) from orders group by customer order by 2 desc"',
 ];
-export const expected = [
-    'sqlite 3.54.0, shop.db: 3 statements, 4 rows changed',
+export const expected = ({ sqlite3 }) => [
+    `sqlite ${sqlite3}, shop.db: 3 statements, 4 rows changed`,
     'linus|15.0',
     'ada|13.75',
-    'sqlite 3.54.0, shop.db: 1 statement, 0 rows changed',
+    `sqlite ${sqlite3}, shop.db: 1 statement, 0 rows changed`,
 ];
 
 // The script the second command reads: the orders of the JSON usage example, as a table.

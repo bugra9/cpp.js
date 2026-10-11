@@ -6,8 +6,8 @@ export const commands = [
     'wasmtime run --dir=. dist/geotiff-tool-wasi-wasm32-st-release.wasm write utm33.tif 32633 500000 4650000 30',
     'wasmtime run --dir=. --dir=dist/data::/data --env PROJ_DATA=/data/proj dist/geotiff-tool-wasi-wasm32-st-release.wasm info utm33.tif',
 ];
-export const expected = [
-    'libgeotiff 1.7.4 write: utm33.tif, 100 x 100 pixels in EPSG:32633, 10262 B',
+export const expected = ({ geotiff }) => [
+    `libgeotiff ${geotiff} write: utm33.tif, 100 x 100 pixels in EPSG:32633, 10262 B`,
     'utm33.tif: 100 x 100 pixels, 1 band, 8 bits per sample',
     'EPSG:32633 WGS 84 / UTM zone 33N, datum World Geodetic System 1984',
     'upper left 500000.000 4650000.000 = lon 15.000000, lat 42.002015',

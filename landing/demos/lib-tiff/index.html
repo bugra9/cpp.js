@@ -19,8 +19,10 @@
         import * as samples from './examples/03-samples.js';
         import * as tiles from './examples/04-tiles.js';
         import * as openFile from './examples/05-open-file.js';
+        import nativeVersions from './native-versions.js';
 
         const EXAMPLES = [encodeDecode, pages, samples, tiles, openFile];
+        const expectedOf = (example) => (typeof example.expected === 'function' ? example.expected(nativeVersions) : example.expected);
 
         // The compression lab's variants: [label, COMPRESSION_*, predictor, LERC max error].
         const LAB = {
@@ -53,7 +55,7 @@
             for (const example of EXAMPLES) {
                 const printed = [];
                 await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });
-                check(`example "${example.title}"`, printed, example.expected);
+                check(`example "${example.title}"`, printed, expectedOf(example));
             }
 
             // The codecs compiled into this build.

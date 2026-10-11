@@ -19,8 +19,10 @@
         import * as aesGcm from './examples/03-aes-gcm.js';
         import * as signing from './examples/04-signing.js';
         import * as selfSigned from './examples/05-self-signed.js';
+        import nativeVersions from './native-versions.js';
 
         const EXAMPLES = [certificate, hashing, aesGcm, signing, selfSigned];
+        const expectedOf = (example) => (typeof example.expected === 'function' ? example.expected(nativeVersions) : example.expected);
 
         // RFC 8032 section 7.1, TEST 1: the secret key, and its signature of the empty message.
         const RFC8032_SEED = '9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60';
@@ -103,7 +105,7 @@ SbqKkb0RUXoYBoI=
             for (const example of EXAMPLES) {
                 const printed = [];
                 await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });
-                check(`example "${example.title}"`, printed, example.expected);
+                check(`example "${example.title}"`, printed, expectedOf(example));
             }
 
             // Two examples against this browser's WebCrypto, an implementation that is not OpenSSL.

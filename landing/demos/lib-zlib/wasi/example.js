@@ -6,9 +6,9 @@ export const commands = [
     'wasmtime run --dir=. .crossbind/build/zlib-tool-wasi-wasm32-st-release.wasm gzip access.log access.log.gz 6',
     'wasmtime run --dir=. .crossbind/build/zlib-tool-wasi-wasm32-st-release.wasm gunzip access.log.gz access.copy.log',
 ];
-export const expected = [
-    'zlib 1.3.2 gzip: access.log -> access.log.gz, 363636 B written',
-    'zlib 1.3.2 gunzip: access.log.gz -> access.copy.log, 2537578 B written',
+export const expected = ({ zlib }) => [
+    `zlib ${zlib} gzip: access.log -> access.log.gz, 363636 B written`,
+    `zlib ${zlib} gunzip: access.log.gz -> access.copy.log, 2537578 B written`,
 ];
 
 // The file the commands work on: the log the WebAssembly streaming example writes, so the two

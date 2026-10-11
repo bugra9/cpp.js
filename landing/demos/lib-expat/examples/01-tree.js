@@ -1,7 +1,7 @@
 export const title = 'Turn XML into JavaScript objects';
 export const summary = 'The calls most Expat code makes: XML_ParserCreate, an element handler and a character data handler, then XML_Parse. A malformed document throws with the line and column where Expat stopped.';
 export const native = 'xml_tree.h';
-export const expected = ['Expat 2.9.0', '1 en Dune 9.99 EUR', "2 fr L'Étranger 7.50 EUR", '3 en Pride & Prejudice 5.25 GBP', 'mismatched tag at line 2, column 30'];
+export const expected = ({ expat }) => [`Expat ${expat}`, '1 en Dune 9.99 EUR', "2 fr L'Étranger 7.50 EUR", '3 en Pride & Prejudice 5.25 GBP', 'mismatched tag at line 2, column 30'];
 
 export default async function example({ XmlTree }, console) {
     console.log('Expat', await XmlTree.version());

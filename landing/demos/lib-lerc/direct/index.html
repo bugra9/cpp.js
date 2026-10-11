@@ -18,8 +18,10 @@
         import * as blobInfo from './examples/02-blob-info.js';
         import * as lossless from './examples/03-lossless.js';
         import * as nodata from './examples/04-nodata.js';
+        import nativeVersions from './native-versions.js';
 
         const EXAMPLES = [compress, blobInfo, lossless, nodata].filter((example) => example.default);
+        const expectedOf = (example) => (typeof example.expected === 'function' ? example.expected(nativeVersions) : example.expected);
 
         const out = document.querySelector('#out');
         const lines = [];
@@ -39,7 +41,7 @@
             for (const example of EXAMPLES) {
                 const printed = [];
                 await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });
-                check(`example "${example.expected[0]}"`, printed, example.expected);
+                check(`example "${expectedOf(example)[0]}"`, printed, expectedOf(example));
             }
             const passed = checks.filter(Boolean).length;
             // No version here: LERC's C API has no version call, only the LERC_VERSION_* macros, which

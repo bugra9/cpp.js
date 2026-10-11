@@ -13,7 +13,7 @@ export const imports = {
     ],
 };
 export const note = 'The same two calls on `zstd.h` as zstd ships it. What the C++ did for you is now yours: size and allocate each buffer (`allocBuffer` memory is released with its handle), copy bytes in and out as one character per byte, and check every return with `ZSTD_isError`. `ZSTD_getFrameContentSize` returns an `unsigned long long`, so it arrives as a BigInt.';
-export const expected = ['1.5.7 27 28 b5 2f fd', 'true'];
+export const expected = ({ zstd }) => [`${zstd} 27 28 b5 2f fd`, 'true'];
 
 export default async function example({ ZSTD_versionString, ZSTD_compressBound, ZSTD_compress, ZSTD_isError, ZSTD_getErrorName, ZSTD_getFrameContentSize, ZSTD_decompress, allocBuffer, writeBytes, readBytes }, console) {
     const text = 'crossbind '.repeat(100);

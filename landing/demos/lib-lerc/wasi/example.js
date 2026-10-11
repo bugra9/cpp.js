@@ -7,8 +7,8 @@ export const commands = [
     'wasmtime run --dir=. .crossbind/build/lerc-tool-wasi-wasm32-st-release.wasm info dem.lerc',
     'wasmtime run --dir=. .crossbind/build/lerc-tool-wasi-wasm32-st-release.wasm decode dem.lerc dem.copy.f32 dem.f32',
 ];
-export const expected = [
-    'LERC 4.2.0 encode: dem.f32 -> dem.lerc, 262144 B -> 94775 B within 0.01',
+export const expected = ({ lerc }) => [
+    `LERC ${lerc} encode: dem.f32 -> dem.lerc, 262144 B -> 94775 B within 0.01`,
     'dem.lerc: Lerc2 v6, 256x256, 1 band of float32, 65536 valid pixels, 1032.268 to 1500.945, max error 0.0098779',
     'dem.lerc -> dem.copy.f32, 262144 B, largest difference from dem.f32 0.0098877',
 ];

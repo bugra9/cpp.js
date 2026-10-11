@@ -20,8 +20,10 @@
         import * as areaAxes from './examples/03-area-axes.js';
         import * as geodesic from './examples/04-geodesic.js';
         import * as identify from './examples/05-identify.js';
+        import nativeVersions from './native-versions.js';
 
         const EXAMPLES = [transform, formats, areaAxes, geodesic, identify];
+        const expectedOf = (example) => (typeof example.expected === 'function' ? example.expected(nativeVersions) : example.expected);
 
         const PRJ =
             'PROJCS["WGS_1984_UTM_Zone_35N",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",27.0],PARAMETER["Scale_Factor",0.9996],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]';
@@ -66,7 +68,7 @@
             for (const example of EXAMPLES) {
                 const printed = [];
                 await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });
-                check(`example "${example.title}"`, printed, example.expected);
+                check(`example "${example.title}"`, printed, expectedOf(example));
             }
 
             // Projection atlas.
@@ -91,7 +93,7 @@
             // CRS detective.
             const detective = await new m.CrsDetective();
             const versions = JSON.parse(await detective.versions());
-            check('app detective registry', [versions.proj, versions.epsg, versions.epsgDate, versions.crs], ['9.9.0', 'v13.102', '2026-08-27', { EPSG: 7468, ESRI: 1642, IAU_2015: 2201, IGNF: 864, NKG: 2, OGC: 4, PROJ: 4 }]);
+            check('app detective registry', [versions.proj, versions.epsg, versions.epsgDate, versions.crs], [nativeVersions.proj, 'v13.102', '2026-08-27', { EPSG: 7468, ESRI: 1642, IAU_2015: 2201, IGNF: 864, NKG: 2, OGC: 4, PROJ: 4 }]);
             const prj = JSON.parse(await detective.inspect(PRJ));
             check('app detective .prj', [prj.identified[0].code, prj.identified[0].confidence, prj.areaFrom, prj.area.west, prj.area.south, prj.area.east, prj.area.north, prj.axes.map((axis) => `${axis.abbreviation} ${axis.direction}`).join(', '), prj.datum, prj.ellipsoid.name, prj.ellipsoid.semiMajor, prj.ellipsoid.inverseFlattening.toFixed(9)], ['EPSG:32635', 100, 'EPSG:32635', 24, 0, 30, 84, 'E east, N north', 'World Geodetic System 1984', 'WGS 84', 6378137, '298.257223563']);
             const nad = JSON.parse(await detective.operations('EPSG:4267', 'EPSG:4269'));

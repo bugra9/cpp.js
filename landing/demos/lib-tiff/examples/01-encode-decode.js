@@ -1,7 +1,7 @@
 export const title = 'Encode pixels as a TIFF and decode them back';
 export const summary = 'The core of libtiff: TIFFSetField and TIFFWriteScanline write a page, TIFFGetField and TIFFReadRGBAImageOriented read it back as display pixels. TIFFStreamOpen keeps the file in memory.';
 export const native = 'tiff_codec.h';
-export const expected = ['libtiff 4.7.2: 76800 B of RGBA -> 27692 B, starts with II*', '160x120, 3 x 8-bit samples, LZW, 1 page', 'true'];
+export const expected = ({ tiff }) => [`libtiff ${tiff}: 76800 B of RGBA -> 27692 B, starts with II*`, '160x120, 3 x 8-bit samples, LZW, 1 page', 'true'];
 
 export default async function example({ Tiff }, console) {
     const width = 160;
