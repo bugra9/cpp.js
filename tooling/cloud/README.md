@@ -49,9 +49,11 @@ D1 (`migrations/`, binding `DB`) keeps everyone who signed in with GitHub, on th
 
 Deleting an account removes it and its tokens at once, and its earlier months of build seconds; the current month's stay under the bare id until the month ends, so a new sign-in does not bring a fresh month, and a blocked account stays as its id, or deleting it would lift the block. A cron trigger prunes daily what is kept only for a while (`prune` in `worker/accounts.js`); `landing/src/pages/privacy.js` states the same periods, and a landing test holds the two together.
 
+Query it from the repository root: in this package wrangler first validates `wrangler.jsonc`, which fails until a deploy or `pnpm build:image` has assembled the image contexts in `.build/`.
+
 ```bash
-pnpm exec wrangler d1 execute crossbind-accounts --remote --command "SELECT id, login, last_login_at FROM users WHERE login = '<name>'"
-pnpm exec wrangler d1 execute crossbind-accounts --remote --command "UPDATE users SET blocked = 1 WHERE id = <id>"
+tooling/cloud/node_modules/.bin/wrangler d1 execute crossbind-accounts --remote --command "SELECT id, login, last_login_at FROM users WHERE login = '<name>'"
+tooling/cloud/node_modules/.bin/wrangler d1 execute crossbind-accounts --remote --command "UPDATE users SET blocked = 1 WHERE id = <id>"
 ```
 
 GitHub sign-in needs a GitHub OAuth app with its callback at `https://api.crossbind.dev/playground/callback/github` and the device flow enabled; its client id and secret are the `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` secrets.
