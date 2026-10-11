@@ -179,7 +179,7 @@ FROM (SELECT id, kind, ST_Transform(geom, 32635) AS utm FROM pois WHERE city = '
 
             // What this build compiled in, as the README states it.
             const db = await new m.SpatialDatabase();
-            check('versions', await db.scalar("SELECT spatialite_version() || ' | ' || geos_version() || ' | ' || proj_version() || ' | ' || sqlite_version()"), '5.1.0 | 3.15.0-CAPI-1.21.0 | Rel. 9.9.0, September 15th, 2026 | 3.53.4');
+            check('versions', await db.scalar("SELECT spatialite_version() || ' | ' || geos_version() || ' | ' || proj_version() || ' | ' || sqlite_version()"), '5.1.0 | 3.15.0-CAPI-1.21.0 | Rel. 9.9.0, September 15th, 2026 | 3.54.0');
             await db.exec('SELECT InitSpatialMetaData(1)');
             check('EPSG codes', await db.scalar('SELECT count(*) FROM spatial_ref_sys'), '6559');
             check('trusted_schema', await db.scalar('PRAGMA trusted_schema'), '1');

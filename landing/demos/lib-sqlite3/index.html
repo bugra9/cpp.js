@@ -131,7 +131,7 @@ from requests group by region order by region`;
             check('explorer sample', await m.DbExplorer.writeSample(`${dir}/api-log.sqlite`, 100000, SEED), 100000);
             const explorer = await new m.DbExplorer(`${dir}/api-log.sqlite`);
             const info = JSON.parse(await explorer.info());
-            check('explorer header', [info.bytes, info.pageSize, info.pages, info.journal, info.encoding, info.kind, info.writtenBy], [6443008, 4096, 1573, 'rollback', 'UTF-8', 'SQLite database', '3.53.4']);
+            check('explorer header', [info.bytes, info.pageSize, info.pages, info.journal, info.encoding, info.kind, info.writtenBy], [6443008, 4096, 1573, 'rollback', 'UTF-8', 'SQLite database', '3.54.0']);
             const schema = JSON.parse(await explorer.tables());
             check('explorer schema', schema.map((entry) => [entry.type, entry.name, entry.rows ?? null, entry.columns ? entry.columns.map((column) => column.name).join(' ') : null]), [
                 ['table', 'requests', 100000, 'id minute route_id status ms client'],

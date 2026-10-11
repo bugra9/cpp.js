@@ -12,10 +12,11 @@ export const imports = {
         'XML_GetCurrentColumnNumber',
         'XML_ParserFree',
         'readCString',
+        'readBuffer',
         'releaseCallback',
     ],
 };
-export const note = 'The namespace separator is a C `char`, so it crosses as a number, `\'|\'.charCodeAt(0)`: the string `\'|\'` is accepted without an error but arrives as 0, and Expat then joins URI and local name with nothing between them. The handlers run on the page\'s thread as in the tree example, the default namespace\'s prefix arrives as `null`, and the text inside `hr` is cut to the byte count Expat reports.';
+export const note = 'The namespace separator is a C `char`, so it crosses as a number, `\'|\'.charCodeAt(0)`: the string `\'|\'` is accepted without an error but arrives as 0, and Expat then joins URI and local name with nothing between them. The handlers run on the page\'s thread as in the tree example, the default namespace\'s prefix arrives as `null`, and the text inside `hr` is read with `readBuffer` for the byte count Expat reports.';
 export const expected = [
     'gpxtpx:hr 128 131',
     'ns3:hr 128 131',
@@ -24,7 +25,7 @@ export const expected = [
 ];
 export const init = { useWorker: false };
 
-export default async function example({ XML_ParserCreateNS, XML_SetElementHandler, XML_SetCharacterDataHandler, XML_SetStartNamespaceDeclHandler, XML_Parse, XML_Status, XML_GetErrorCode, XML_ErrorString, XML_GetCurrentLineNumber, XML_GetCurrentColumnNumber, XML_ParserFree, readCString, releaseCallback }, console) {
+export default async function example({ XML_ParserCreateNS, XML_SetElementHandler, XML_SetCharacterDataHandler, XML_SetStartNamespaceDeclHandler, XML_Parse, XML_Status, XML_GetErrorCode, XML_ErrorString, XML_GetCurrentLineNumber, XML_GetCurrentColumnNumber, XML_ParserFree, readCString, readBuffer, releaseCallback }, console) {
     const GPX = 'http://www.topografix.com/GPX/1/1';
     const HR = 'http://www.garmin.com/xmlschemas/TrackPointExtension/v1';
     // The same heart rates, written by two exporters that picked different prefixes for Garmin's extension.
@@ -49,9 +50,8 @@ export default async function example({ XML_ParserCreateNS, XML_SetElementHandle
         const onEnd = (data, element) => {
             if (element === name) texts.push(open.pop());
         };
-        // `text` runs on to the next NUL byte in memory: only its first `length` bytes are this call's.
         const onText = (data, text, length) => {
-            if (open.length) open[open.length - 1] += decoder.decode(encoder.encode(text).subarray(0, length));
+            if (open.length) open[open.length - 1] += decoder.decode(readBuffer(text, length));
         };
         const onNamespace = (data, prefix, namespace) => {
             declared[prefix ?? ''] = namespace ?? '';

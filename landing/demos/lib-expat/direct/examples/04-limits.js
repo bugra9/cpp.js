@@ -10,10 +10,11 @@ export const imports = {
         'XML_GetCurrentColumnNumber',
         'XML_ParserFree',
         'readCString',
+        'readBuffer',
         'releaseCallback',
     ],
 };
-export const note = '`XML_SetBillionLaughsAttackProtectionMaximumAmplification` and `...ActivationThreshold` are declared in `expat.h` only if `XML_DTD` is defined or `XML_GE` is 1, which the library\'s build sets in `expat_config.h`, a header the binding never reads, so importing either fails with `MISSING_EXPORT` although the library contains both. The protection still runs with the defaults the C++ passes (100 times, from 8 MiB), so the first three lines match and the 64 KiB threshold of the fourth cannot be set. Each piece of character data is a call into JavaScript that cuts its string down to `length` bytes, 867,703 of them before Expat stops the 9-level document, so this version runs nearly 20 times longer than the C++ one.';
+export const note = '`XML_SetBillionLaughsAttackProtectionMaximumAmplification` and `...ActivationThreshold` are declared in `expat.h` only if `XML_DTD` is defined or `XML_GE` is 1, which the library\'s build sets in `expat_config.h`, a header the binding never reads, so importing either fails with `MISSING_EXPORT` although the library contains both. The protection still runs with the defaults the C++ passes (100 times, from 8 MiB), so the first three lines match and the 64 KiB threshold of the fourth cannot be set. Each piece of character data is a call into JavaScript that reads its `length` bytes with `readBuffer`, 867,703 of them before Expat stops the 9-level document, so this version runs about 10 times longer than the C++ one.';
 export const expected = [
     'crossbind parses crossbind',
     '5 levels: 300000 characters',
@@ -21,15 +22,14 @@ export const expected = [
 ];
 export const init = { useWorker: false };
 
-export default async function example({ XML_ParserCreate, XML_SetCharacterDataHandler, XML_Parse, XML_Status, XML_GetErrorCode, XML_ErrorString, XML_GetCurrentLineNumber, XML_GetCurrentColumnNumber, XML_ParserFree, readCString, releaseCallback }, console) {
+export default async function example({ XML_ParserCreate, XML_SetCharacterDataHandler, XML_Parse, XML_Status, XML_GetErrorCode, XML_ErrorString, XML_GetCurrentLineNumber, XML_GetCurrentColumnNumber, XML_ParserFree, readCString, readBuffer, releaseCallback }, console) {
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
     // The document's character data, entities expanded under Expat's default limits.
     const text = (xml) => {
         let result = '';
-        // `chunk` runs on to the next NUL byte in memory: only its first `length` bytes are this call's.
         const onText = (data, chunk, length) => {
-            result += decoder.decode(encoder.encode(chunk).subarray(0, length));
+            result += decoder.decode(readBuffer(chunk, length));
         };
         const parser = XML_ParserCreate(null);
         try {
