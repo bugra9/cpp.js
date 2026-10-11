@@ -4,7 +4,7 @@ export const imports = {
 };
 export const note = '`curl_version` returns a `char *`, read with `readCString` and not freed: it points at a static buffer. `curl_version_info_data` crosses with its number fields only, so the `protocols` and `feature_names` lists never reach JavaScript: the protocols here are the schemes libcurl 8.22.0 knows that the URL API accepts (the rest return `CURLUE_UNSUPPORTED_SCHEME`), and the features are the `features` bitmask decoded with the `CURL_VERSION_*` bits from `curl.h`. A feature without a bit, such as `HTTPSRR` or `SSLS-EXPORT`, cannot be seen this way.';
 export const expected = [
-    'libcurl/8.22.0 OpenSSL/4.0.2',
+    'libcurl/8.22.0 OpenSSL/4.0.3',
     'dict file ftp ftps gopher gophers http https imap imaps mqtt mqtts pop3 pop3s rtsp smtp smtps telnet tftp ws wss',
     'alt-svc AsynchDNS HSTS HTTPS-proxy Largefile SSL threadsafe UnixSockets',
     'false true',

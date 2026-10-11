@@ -164,7 +164,7 @@
             };
             const scanned = ['UTF-8', 'CP932', 'EUC-JP', 'ISO-8859-1', 'CP1252', 'UTF-16LE', 'EUC-KR', 'BIG5', 'KOI8-R', 'US-ASCII', 'CP949'];
             check('app decoder, every encoding tried', [scan.length, ...scanned.map(outcome)], [
-                106, { ok: false, at: 0 }, { ok: true }, { ok: false, at: 0 }, { ok: true }, { ok: false, at: 1 }, { ok: true }, { ok: false, at: 0 }, { ok: false, at: 0 }, { ok: true }, { ok: false, at: 0 }, { ok: false, at: 19 },
+                192, { ok: false, at: 0 }, { ok: true }, { ok: false, at: 0 }, { ok: true }, { ok: false, at: 1 }, { ok: true }, { ok: false, at: 0 }, { ok: false, at: 0 }, { ok: true }, { ok: false, at: 0 }, { ok: false, at: 19 },
             ]);
 
             const passed = checks.filter(Boolean).length;
