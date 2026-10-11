@@ -2,7 +2,7 @@ export const title = 'A LERC command-line tool';
 export const summary = 'WASI has no JavaScript bindings: the program is a main() that links the library, built into one .wasm and run with wasmtime. This one compresses a float32 height grid within an error bound, reads the header back, then decodes and measures the largest difference.';
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. .crossbind/build/lerc-tool-wasi-wasm32-st-release.wasm encode dem.f32 256 256 0.01 dem.lerc',
     'wasmtime run --dir=. .crossbind/build/lerc-tool-wasi-wasm32-st-release.wasm info dem.lerc',
     'wasmtime run --dir=. .crossbind/build/lerc-tool-wasi-wasm32-st-release.wasm decode dem.lerc dem.copy.f32 dem.f32',

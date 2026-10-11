@@ -2,11 +2,11 @@ export const title = 'An XML summary command';
 export const summary = 'WASI has no JavaScript bindings: the program is a main() that links the library, built into one .wasm and run with wasmtime. This one streams each file through Expat in 64 KiB reads and prints what is inside, or the first error with its line and column.';
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. .crossbind/build/xml-stats-wasi-wasm32-st-release.wasm sitemap.xml',
 ];
 export const expected = [
-    'sitemap.xml: 4389004 bytes of well-formed XML (expat_2.8.5)',
+    'sitemap.xml: 4389004 bytes of well-formed XML (expat_2.9.0)',
     '150001 elements, 1 attribute, nested 3 deep',
     'lastmod 50000',
     'loc 50000',

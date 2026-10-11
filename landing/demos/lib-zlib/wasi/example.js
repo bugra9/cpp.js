@@ -2,7 +2,7 @@ export const title = 'A gzip command-line tool';
 export const summary = 'WASI has no JavaScript bindings: the program is a main() that links the library, built into one .wasm and run with wasmtime. This one uses gzopen, gzwrite and gzread, the .gz file functions zlib ships, and streams in 64 KB steps.';
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. .crossbind/build/zlib-tool-wasi-wasm32-st-release.wasm gzip access.log access.log.gz 6',
     'wasmtime run --dir=. .crossbind/build/zlib-tool-wasi-wasm32-st-release.wasm gunzip access.log.gz access.copy.log',
 ];

@@ -3,15 +3,15 @@ export const summary =
     'WASI has no JavaScript bindings: the program is a main() that links SQLite, built into one .wasm and run with wasmtime. This one runs SQL against a database file in the current directory and prints rows the way the sqlite3 shell does, so the file it writes opens in any SQLite tool.';
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. .crossbind/build/sqlite-tool-wasi-wasm32-st-release.wasm shop.db < shop.sql',
     'wasmtime run --dir=. .crossbind/build/sqlite-tool-wasi-wasm32-st-release.wasm shop.db "select customer, sum(qty * price) from orders group by customer order by 2 desc"',
 ];
 export const expected = [
-    'sqlite 3.53.4, shop.db: 3 statements, 4 rows changed',
+    'sqlite 3.54.0, shop.db: 3 statements, 4 rows changed',
     'linus|15.0',
     'ada|13.75',
-    'sqlite 3.53.4, shop.db: 1 statement, 0 rows changed',
+    'sqlite 3.54.0, shop.db: 1 statement, 0 rows changed',
 ];
 
 // The script the second command reads: the orders of the JSON usage example, as a table.

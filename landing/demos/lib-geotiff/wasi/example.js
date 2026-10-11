@@ -2,7 +2,7 @@ export const title = 'A GeoTIFF command-line tool';
 export const summary = 'WASI has no JavaScript bindings: the program is a main() that links libgeotiff, libtiff and PROJ, built into one .wasm and run with wasmtime. It writes the first usage example\'s file, byte for byte, then says where it is. GTIFGetDefn looks EPSG codes up in PROJ\'s proj.db, which the build copies to dist/data; the last command mounts that folder and sets PROJ_DATA.';
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. dist/geotiff-tool-wasi-wasm32-st-release.wasm write utm33.tif 32633 500000 4650000 30',
     'wasmtime run --dir=. --dir=dist/data::/data --env PROJ_DATA=/data/proj dist/geotiff-tool-wasi-wasm32-st-release.wasm info utm33.tif',
 ];

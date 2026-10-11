@@ -2,7 +2,7 @@ export const title = 'A zstd command-line tool';
 export const summary = 'WASI has no JavaScript bindings: the program is a main() that links the library, built into one .wasm and run with wasmtime. This one streams files through zstd in 128 KB steps.';
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. .crossbind/build/zstd-tool-wasi-wasm32-st-release.wasm compress access.log access.log.zst 3',
     'wasmtime run --dir=. .crossbind/build/zstd-tool-wasi-wasm32-st-release.wasm decompress access.log.zst access.copy.log',
 ];

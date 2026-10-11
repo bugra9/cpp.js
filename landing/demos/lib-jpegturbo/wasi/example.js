@@ -2,7 +2,7 @@ export const title = 'A JPEG command-line tool';
 export const summary = 'WASI has no JavaScript bindings: the program is a main() that links the library, built into one .wasm and run with wasmtime. This one encodes a PPM at a chosen quality and makes a thumbnail with DCT scaling, decoding the photo straight at 1/8 of its size.';
 export const source = 'src/native/main.cpp';
 export const commands = [
-    'npx crossbind build -p wasi -b release',
+    'npx crossbind build -p wasi -e wasi -b release',
     'wasmtime run --dir=. .crossbind/build/jpeg-tool-wasi-wasm32-st-release.wasm encode photo.ppm photo.jpg 85',
     'wasmtime run --dir=. .crossbind/build/jpeg-tool-wasi-wasm32-st-release.wasm thumbnail photo.jpg thumb.jpg 8 85',
 ];
