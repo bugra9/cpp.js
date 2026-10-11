@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { styleText } from 'node:util';
 import * as p from '@clack/prompts';
 import { unpackDotfiles } from './dotfiles.js';
+import { renameInReadme } from './readme.js';
 import { pkgManager } from './utils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -157,9 +158,15 @@ async function main() {
     let scripts = {};
     if (fs.existsSync(pjPath)) {
         const pkg = JSON.parse(await fsp.readFile(pjPath, 'utf8'));
+        const templateName = pkg.name;
         pkg.name = entry.kind === 'lib' ? `crossbind-lib-${name}` : name;
         await fsp.writeFile(pjPath, `${JSON.stringify(pkg, null, 2)}\n`);
         scripts = pkg.scripts || {};
+
+        const readmePath = path.join(cwd, 'README.md');
+        if (fs.existsSync(readmePath)) {
+            await fsp.writeFile(readmePath, renameInReadme(await fsp.readFile(readmePath, 'utf8'), templateName, pkg.name));
+        }
     }
 
     const gradlew = path.join(cwd, 'android', 'gradlew');
