@@ -53,6 +53,16 @@ const SCENES = {
             </>
         ),
     },
+    package: {
+        width: 92,
+        body: () => (
+            <>
+                <rect x="1.25" y="8" width="89.5" height="16" rx="4" {...OUTLINE} />
+                <rect x="6" y="24" width="80" height="66.75" rx="5" {...OUTLINE} />
+                <rect x="37" y="8" width="18" height="40" rx="2" {...BLOCK} />
+            </>
+        ),
+    },
     terminal: {
         width: 110,
         body: () => (

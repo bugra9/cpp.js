@@ -170,9 +170,6 @@ export default function LibraryDemo({ tokens }) {
     return (
         <section style={{ padding: '80px var(--content-x) 80px' }}>
             <div style={{ marginBottom: 26 }}>
-                <div style={{ fontFamily: tokens.mono, fontSize: 11, letterSpacing: 1.4, color: tokens.textMuted, marginBottom: 12 }}>
-                    LIVE · SQLITE, COMPILED BY CROSSBIND
-                </div>
                 <h2 style={{ fontSize: 36, margin: '0 0 12px', fontWeight: 600, letterSpacing: -1, color: tokens.text }}>
                     Query a real C library, here.
                 </h2>
