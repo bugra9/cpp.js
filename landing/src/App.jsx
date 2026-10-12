@@ -8,9 +8,9 @@ import LibrariesPage from './ports/LibrariesPage.jsx';
 import PortPage from './ports/PortPage.jsx';
 import Search from './guide/Search.jsx';
 import Closing from './sections/Closing.jsx';
-import Features from './sections/Features.jsx';
 import Hero from './sections/Hero.jsx';
 import LibraryDemo from './sections/LibraryDemo.jsx';
+import PlatformMap from './sections/PlatformMap.jsx';
 import Showcase from './sections/Showcase.jsx';
 import { findSitePage } from './site-pages.js';
 import { resolveTokens, useTheme } from './theme.js';
@@ -64,8 +64,8 @@ export default function App({ url }) {
             ) : (
                 <main id="content">
                     <Hero tokens={tokens} />
+                    <PlatformMap tokens={tokens} />
                     <LibraryDemo tokens={tokens} />
-                    <Features tokens={tokens} />
                     <Showcase tokens={tokens} />
                 </main>
             )}

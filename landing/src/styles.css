@@ -37,145 +37,6 @@
     transform: translateY(-1px);
 }
 
-.feature-section {
-    padding: 56px var(--content-x) 88px;
-}
-
-.feature-all-link {
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.feature-all-link:focus-visible {
-    outline: 2px solid currentColor;
-    outline-offset: 4px;
-}
-
-.feature-matrix {
-    overflow: hidden;
-    border-radius: 18px;
-}
-
-.feature-matrix-header {
-    display: flex;
-    min-height: 72px;
-    padding: 18px 24px;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-}
-
-.feature-matrix-label,
-.feature-matrix-title {
-    display: block;
-}
-
-.feature-matrix-label {
-    margin: 0 0 5px;
-    font-size: 11px;
-    font-weight: 400;
-    letter-spacing: 1.4px;
-}
-
-.feature-matrix-title {
-    font-size: 15px;
-    font-weight: 600;
-}
-
-.feature-matrix-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 32px;
-    padding: 8px 24px 28px;
-}
-
-.feature-matrix-group-header {
-    display: flex;
-    min-height: 76px;
-    margin-top: 12px;
-    padding: 12px 0 10px;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 24px;
-}
-
-.feature-matrix-group-title {
-    margin: 0;
-    font-size: 17px;
-    font-weight: 600;
-}
-
-.feature-matrix-group-hint {
-    max-width: 42ch;
-    margin: 7px 0 0;
-    font-size: 12px;
-    line-height: 1.5;
-}
-
-.feature-matrix-group-count {
-    padding-top: 2px;
-    font-size: 11px;
-    letter-spacing: 1px;
-}
-
-.feature-matrix-list {
-    display: grid;
-}
-
-.feature-matrix-item {
-    display: block;
-    padding: 9px 0;
-    border-top: 1px solid;
-}
-
-.feature-matrix-item-heading {
-    display: grid;
-    grid-template-columns: 28px minmax(0, 1fr) auto;
-    gap: 10px;
-    align-items: baseline;
-    font-size: 14px;
-}
-
-.feature-matrix-item:hover .feature-matrix-item-heading strong,
-.feature-matrix-item:focus-visible .feature-matrix-item-heading strong {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-
-.feature-matrix-item:focus-visible {
-    outline: 2px solid currentColor;
-    outline-offset: 3px;
-}
-
-.feature-matrix-extras {
-    padding: 20px 24px;
-    border-top: 1px solid;
-}
-
-.feature-footer {
-    display: flex;
-    min-height: 72px;
-    padding: 18px 4px 0;
-    align-items: center;
-    justify-content: space-between;
-    gap: 36px;
-    border-bottom: 1px solid;
-}
-
-.feature-footer p {
-    max-width: 740px;
-    margin: 0;
-    font-size: 12.5px;
-    line-height: 1.55;
-}
-
-.feature-all-link {
-    display: inline-flex;
-    flex: 0 0 auto;
-    align-items: center;
-    gap: 10px;
-}
-
 /* WCAG 2.2 target size (2.5.8) is 24px; the mobile block below raises it to a thumb-sized 44. */
 .tap-target {
     min-height: 24px;
@@ -250,6 +111,40 @@
     }
 }
 
+/* The platform map: a flow diagram where its three columns have room, three panels with arrows
+   below that, and the panels stacked with downward arrows on phones. */
+.platform-flow {
+    position: relative;
+}
+
+.platform-map {
+    display: none;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+}
+
+@media (max-width: 1240px) {
+    .platform-flow {
+        display: none;
+    }
+
+    .platform-map {
+        display: grid;
+    }
+}
+
+@media (max-width: 960px) {
+    .platform-map {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .platform-map-arrow {
+        justify-self: center;
+        transform: rotate(90deg);
+    }
+}
+
 @media (max-width: 1240px) {
     .hero-grid {
         --hero-title: clamp(36px, 5vw, 56px);
@@ -314,32 +209,6 @@
         display: inline-flex !important;
         align-items: center;
         justify-content: center;
-    }
-
-    .feature-section {
-        padding: 48px var(--content-x) 72px;
-    }
-
-    .feature-matrix-header {
-        padding: 16px 18px;
-    }
-
-    .feature-matrix-grid {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 8px;
-    }
-
-    .feature-matrix-grid,
-    .feature-matrix-extras {
-        padding-right: 18px;
-        padding-left: 18px;
-    }
-
-    .feature-footer {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 10px;
-        padding-bottom: 18px;
     }
 }
 

@@ -1,4 +1,3 @@
-import { Pill } from '../components/ui.jsx';
 import { LIBRARIES_URL, SHOWCASE, SHOWCASE_COUNT } from '../data.js';
 
 export default function Showcase({ tokens }) {
@@ -6,7 +5,6 @@ export default function Showcase({ tokens }) {
         <section style={{ padding: '40px var(--content-x) 80px' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: 16, marginBottom: 30 }}>
                 <div>
-                    <Pill tokens={tokens} style={{ marginBottom: 14 }}>PREBUILT LIBRARIES</Pill>
                     <h2 style={{ fontSize: 36, margin: 0, fontWeight: 600, letterSpacing: -1, color: tokens.text }}>
                         Drop in real C++ libraries.
                     </h2>

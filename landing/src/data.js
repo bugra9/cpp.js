@@ -119,6 +119,44 @@ export const RUNTIMES = [
     { id: 'wasi', scene: 'terminal', title: 'WASI', names: 'wasmtime 47+', detail: 'A command or a library for WASI 0.3' },
 ];
 
+// The platform map under the live demo: where native code comes from, what crossbind does with it
+// and what each platform gets back. Every row is a shipped capability; Apple targets build with the
+// host's Xcode, the rest in the pinned Docker images.
+export const PLATFORM_MAP = {
+    title: 'From native source to every runtime.',
+    lede: 'crossbind takes C++ and Rust from wherever they live, builds them for every target and hands each platform what it loads, packaged for npm.',
+    sources: {
+        label: 'YOUR SOURCES',
+        rows: [
+            { chip: '.h', title: 'Your C++', note: 'Headers under src/native' },
+            { chip: '.rs', title: 'Your Rust', note: 'Files beside your C++' },
+            { chip: '@crossbind', title: 'crossbind ports', note: `${PORTS.length} prebuilt libraries` },
+            { chip: 'cargo:', title: 'crates.io', note: 'Rust crates' },
+            { chip: 'conan:', title: 'ConanCenter', note: 'C and C++ packages' },
+        ],
+    },
+    core: {
+        rows: [
+            { title: 'Bindings and TypeScript types', note: 'Generated from your imports' },
+            { title: 'The dependency graph', note: 'Resolved, prebuilt first' },
+            { title: 'Every target', note: 'One crossbind build command' },
+            { title: 'Toolchains', note: 'Pinned Docker images; Xcode for Apple' },
+            { title: 'Runners', note: 'Local, remote or crossbind cloud' },
+        ],
+    },
+    outputs: {
+        label: 'WHAT YOU SHIP',
+        rows: [
+            { scene: 'browser', title: 'WebAssembly', note: 'Browsers, Node.js, Workers' },
+            { scene: 'cloud', title: 'Node-API addons', note: 'Node.js and Electron' },
+            { scene: 'phone', title: 'iOS & Android', note: 'Libraries for React Native' },
+            { scene: 'laptop', title: 'Executables', note: 'macOS, Linux, Windows' },
+            { scene: 'terminal', title: 'WASI', note: 'Commands and libraries' },
+            { scene: 'package', title: 'npm packages', note: 'Prebuilt per platform' },
+        ],
+    },
+};
+
 // No performance section: re-running the docs' 1100×1100 matrix benchmark here (Chrome 141
 // and Node 24, Apple Silicon, 15 Aug 2026) gave 2.59s / 2.51s for wasm against 2.06s / 1.92s
 // for the same algorithm in plain JavaScript, so the previously published 6.75× no longer
