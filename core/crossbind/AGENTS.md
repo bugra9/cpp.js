@@ -4,7 +4,8 @@
 
 ## What lives here
 
-- `src/bin.js` — `crossbind` CLI entry; commander commands, target filtering and top-level orchestration.
+- `src/cli.js` — `crossbind` CLI entry: `login`, `logout`, `usage`, `account`, `config` and `--version` run from `src/program.js` without loading a project (only `config list -t all|project` loads it); every other command goes to `src/bin.js`.
+- `src/bin.js` — the commands that need a project; commander commands, target filtering and top-level orchestration.
 - `src/index.js` — public API barrel re-exported as the `crossbind` npm package (`createLib`, `buildWasm`, `state`, `getData`, `isSourceNewer`, …).
 - `src/actions/` — the actual build steps. **Most edits land here.**
 - `src/state/` — config loading + target matrix.

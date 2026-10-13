@@ -110,7 +110,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 
 | Concept | File |
 |---------|------|
-| CLI entry, command parsing | `src/bin.js` |
+| CLI entry, command parsing | `src/cli.js` (entry), `src/program.js` (commands that need no project), `src/bin.js` (the rest) |
 | Per-target static lib build | `src/actions/createLib.js` |
 | Wasm linking + JS loader gen | `src/actions/buildWasm.js` |
 | Node-API addon link (`.node`) + CommonJS loader | `src/actions/buildNode.js` |

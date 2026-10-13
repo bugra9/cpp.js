@@ -1,6 +1,5 @@
-import os from 'node:os';
 import fs from 'node:fs';
-import systemKeys from '../utils/systemKeys.js';
+import loadSystemConfig, { systemConfigPath } from '../utils/systemConfig.js';
 import loadJs from '../utils/loadJs.js';
 import {
     resolveDependencyOverride, resolveDependencyReplace, restampIdentity, resolveExcludedNames, getOverrideKey,
@@ -83,14 +82,8 @@ export default async function loadConfig(configDir = process.cwd(), configName =
         }
     });
 
-    output.paths.systemConfig = `${os.homedir()}/.crossbind.json`;
-    output.system = loadJson(output.paths.systemConfig) || {};
-
-    Object.entries(systemKeys).forEach(([key, value]) => {
-        if (!(key in output.system)) {
-            output.system[key] = value.default;
-        }
-    });
+    output.paths.systemConfig = systemConfigPath();
+    output.system = loadSystemConfig();
 
     return output;
 }

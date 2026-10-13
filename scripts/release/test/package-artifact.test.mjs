@@ -23,7 +23,10 @@ test('the exact tarball is installed and smoked without release credentials', ()
                 if (command === 'npm') {
                     const installed = path.join(smoke, 'node_modules', 'crossbind');
                     fs.mkdirSync(installed, { recursive: true });
-                    fs.writeFileSync(path.join(installed, 'package.json'), `${JSON.stringify({ name: 'crossbind', version: '9.9.9-beta.41' })}\n`);
+                    fs.writeFileSync(
+                        path.join(installed, 'package.json'),
+                        `${JSON.stringify({ name: 'crossbind', version: '9.9.9-beta.41', bin: { crossbind: './src/cli.js' } })}\n`,
+                    );
                     return '';
                 }
                 return args.includes('--version') ? '9.9.9-beta.41\n' : '';
@@ -35,6 +38,7 @@ test('the exact tarball is installed and smoked without release credentials', ()
         assert.equal(calls[0].args.at(-1), tarball);
         assert.equal(calls[0].options.env.NODE_AUTH_TOKEN, undefined);
         assert.equal(calls.filter((call) => call.command === process.execPath).length, 2);
+        assert.deepEqual(calls[1].args, [path.join(smoke, 'node_modules', 'crossbind', 'src', 'cli.js'), '--version']);
     } finally {
         if (previousToken === undefined) delete process.env.NODE_AUTH_TOKEN;
         else process.env.NODE_AUTH_TOKEN = previousToken;

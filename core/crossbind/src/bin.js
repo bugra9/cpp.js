@@ -2,9 +2,10 @@
 
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { Command, Option } from 'commander';
+import { Option } from 'commander';
 
 import { state } from './index.js';
+import { addSystemCommands, createProgram, handleFatal } from './program.js';
 import createBridgeFile from './actions/createInterface.js';
 import createLib from './actions/createLib.js';
 import buildWasm from './actions/buildWasm.js';
@@ -28,18 +29,11 @@ import { OPT_IN_PLATFORMS, selectRuntimeEnvs } from './utils/targets.js';
 import { resolveHostPlatform } from './utils/hostPlatform.js';
 import resolveEmbindNapiRoot, { resolveEmbindJsiRoot } from './utils/resolveEmbindNapi.js';
 
-import writeJson from './utils/writeJson.js';
-import flattenConfigForTable from './utils/flattenConfigForTable.js';
-import systemKeys from './utils/systemKeys.js';
 import logger from './utils/logger.js';
 import { getDockerImage, getDockerContainerName } from './utils/pullDockerImage.js';
 import {
     RUNNER_PLATFORMS, RUNNER_ROLES, connectCommands, deploySteps, initRunner, newRunnerToken, runnerHostPort, startRunner, stopRunner,
 } from './actions/runnerCommands.js';
-import {
-    deleteAccount as deleteCloudAccount, fetchUsage, login as loginToCloud, logout as logoutOfCloud, usageLines,
-} from './actions/cloudCommands.js';
-import { cloudUrl } from './utils/cloudAccount.js';
 import { cargoHome } from './utils/runCargo.js';
 import { conanRoot } from './utils/runConan.js';
 import { cleanDepsCache } from './utils/dependencyRebuild.js';
@@ -48,36 +42,16 @@ import { formatNoticesMarkdown, formatCycloneDxSbom, validateSpdx } from './util
 import { SBOM_FILE, nodePackageMeta, writeNodePackageLicense } from './utils/packageLicense.js';
 import findFiles from './utils/findFiles.js';
 
-const packageJSON = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url)));
-
 const platforms = [...new Set(state.targets.map(target => target.platform).filter(t => t))];
 const archs = [...new Set(state.targets.map(target => target.arch).filter(t => t))];
 const runtimes = [...new Set(state.targets.map(target => target.runtime).filter(t => t))];
 const buildTypes = [...new Set(state.targets.map(target => target.buildType).filter(t => t))];
 const runtimeEnvs = [...new Set(state.targets.map(target => target.runtimeEnv).filter(t => t))];
 
-// Build failures bubble up as exceptions with a `cause` chain (see actions/run.js);
-// show the operator a single line — DEBUG=1 for the full stack — and exit non-zero.
-const handleFatal = (e) => {
-    if (process.env.DEBUG) {
-        console.error(e);
-    } else {
-        let message = e?.message || String(e);
-        if (e?.cause?.message) message += `\n  caused by: ${e.cause.message.split('\n')[0]}`;
-        console.error(message);
-    }
-    process.exit(1);
-};
 process.on('uncaughtException', handleFatal);
 process.on('unhandledRejection', handleFatal);
 
-const program = new Command();
-
-program
-    .name('crossbind')
-    .description('Compile C++ files to WebAssembly and native platforms.')
-    .version(packageJSON.version)
-    .showHelpAfterError();
+const program = createProgram();
 
 program.command('build')
     .description('compile the project that was set up using crossbind')
@@ -306,76 +280,7 @@ commandRunner.command('init')
         deploySteps(platform, dir, newRunnerToken(), options.role, url).forEach((step) => console.log(`  ${step}`));
     }));
 
-program.command('login')
-    .description('sign in to crossbind cloud with your GitHub account')
-    .action(async () => {
-        const url = cloudUrl(state.config.system);
-        const { login } = await loginToCloud({ url });
-        console.log(`crossbind: signed in to ${url} as ${login}.`);
-    });
-
-program.command('logout')
-    .description('sign out of crossbind cloud on this machine')
-    .option('--all', 'sign out every machine signed in to this account')
-    .action(async (options) => {
-        const url = cloudUrl(state.config.system);
-        const result = await logoutOfCloud({ url, all: Boolean(options.all) });
-        if (!result) {
-            console.log(`crossbind: not signed in to ${url}.`);
-        } else if (result.revoked) {
-            console.log(`crossbind: signed ${result.login} out${options.all ? ' on every machine' : ''}.`);
-        } else {
-            console.warn(`crossbind: signed out here, but crossbind cloud did not revoke the token (${result.reason.replace(/^crossbind: /, '')}). Sign in again and run crossbind logout --all to revoke it.`);
-        }
-    });
-
-program.command('usage')
-    .description('show what you used of crossbind cloud this month and what is left')
-    .action(async () => {
-        usageLines(await fetchUsage({ url: cloudUrl(state.config.system) })).forEach((line) => console.log(line));
-    });
-
-program.command('account')
-    .description('manage your crossbind cloud account')
-    .command('delete')
-    .description('delete your crossbind cloud account, with the sign-in of every machine (https://crossbind.dev/privacy/)')
-    .option('--yes', 'delete it; without this, nothing is deleted')
-    .action(async (options) => {
-        const url = cloudUrl(state.config.system);
-        if (!options.yes) {
-            throw new Error(`crossbind: this deletes your crossbind cloud account at ${url}, with the sign-in of every machine. Run crossbind account delete --yes to go ahead.`);
-        }
-        const { login } = await deleteCloudAccount({ url });
-        console.log(`crossbind: deleted the crossbind cloud account of ${login}.`);
-    });
-
-const commandConfig = program.command('config')
-    .description('manage the crossbind configuration files');
-
-commandConfig.command('get')
-    .description('get the crossbind system configuration')
-    .argument('<key>', 'configuration key to read')
-    .action((key) => getSystemConfig(key));
-
-commandConfig.command('set')
-    .description('set the crossbind system configuration')
-    .argument('<key>', 'configuration key to set')
-    .argument('<value>', 'value to assign')
-    .action((key, value) => setSystemConfig(key, value));
-
-commandConfig.command('delete')
-    .description('delete the crossbind system configuration')
-    .argument('<key>', 'configuration key to remove')
-    .action((key) => deleteSystemConfig(key));
-
-commandConfig.command('list')
-    .description('list the crossbind configurations')
-    .addOption(new Option('-t, --type <type>', 'config type').default('system').choices(['all', 'system', 'project']))
-    .action((options) => listSystemConfig(options.type));
-
-commandConfig.command('keys')
-    .description('list all available system configuration keys for crossbind')
-    .action(() => listSystemKeys());
+addSystemCommands(program);
 
 // `pnpm run <script> -- --flag` forwards the `--` literally and commander would then
 // treat the flags as positionals. Strip the first separator for commands where every
@@ -387,67 +292,6 @@ if (['build', 'clean-deps', 'licenses'].includes(argv[2])) {
 }
 
 program.parse(argv);
-
-function listSystemKeys() {
-    console.info('Available configurations:');
-    console.table(systemKeys);
-}
-
-function getSystemConfig(systemKey) {
-    if (!systemKey) {
-        listSystemConfig('system');
-        return;
-    }
-    const key = systemKey.toUpperCase();
-    const output = {};
-    if (key in state.config.system) {
-        output[key] = { value: state.config.system[key] || 'undefined', default: systemKeys[key].default };
-    }
-    Object.keys(systemKeys).filter((k) => k.includes(key)).forEach((k) => {
-        if (k in state.config.system) {
-            output[k] = { value: state.config.system[k] || 'undefined', default: systemKeys[k].default };
-        }
-    });
-
-    console.table(output);
-}
-
-function setSystemConfig(key, value) {
-    if (!systemKeys[key]) {
-        throw new Error(`Configuration ${key} is not available. Please choose from the following available configurations: ${Object.keys(systemKeys).join(', ')}`);
-    }
-    if (systemKeys[key].options && !systemKeys[key].options.includes(value)) {
-        throw new Error(`Value ${value} is not available. Please choose from the following available values: ${systemKeys[key].options.join(', ')}`);
-    }
-
-    state.config.system[key] = value;
-    writeJson(state.config.paths.systemConfig, state.config.system);
-}
-
-function deleteSystemConfig(key) {
-    if (!systemKeys[key]) {
-        throw new Error(`Configuration ${key} is not available. Please choose from the following available configurations: ${Object.keys(systemKeys).join(', ')}`);
-    }
-    delete state.config.system[key];
-    writeJson(state.config.paths.systemConfig, state.config.system);
-}
-
-function listSystemConfig(type) {
-    const { system: systemConfig, ...projectConfig } = state.config;
-    if (type === 'all' || type === 'system') {
-        console.log('System Configuration');
-        console.table(systemConfig);
-    }
-
-    if (type === 'all') {
-        console.log('');
-    }
-
-    if (type === 'all' || type === 'project') {
-        console.log(`Project Configuration (paths relative to ${projectConfig.paths.base})`);
-        console.table(flattenConfigForTable(projectConfig, { base: projectConfig.paths.base }));
-    }
-}
 
 function run(programName, params) {
     runCrossbindApp(programName, params, null, null, { console: true });
