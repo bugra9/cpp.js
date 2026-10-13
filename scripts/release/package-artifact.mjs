@@ -115,7 +115,7 @@ export function smokeTestCrossbindTarball({ tarball, expectedVersion, temporaryR
             );
         }
 
-        const cliVersion = run(process.execPath, [path.join(installedRoot, 'src', 'bin.js'), '--version'], options).trim();
+        const cliVersion = run(process.execPath, [path.join(installedRoot, installedManifest.bin.crossbind), '--version'], options).trim();
         if (cliVersion !== expectedVersion) {
             throw new Error(`Installed crossbind CLI reports ${cliVersion || '(empty)'}, expected ${expectedVersion}.`);
         }

@@ -10,7 +10,7 @@
         "node": ">=24"
     },
     "bin": {
-        "crossbind": "./src/bin.js"
+        "crossbind": "./src/cli.js"
     },
     "main": "src/index.js",
     "exports": {

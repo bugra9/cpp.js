@@ -7,7 +7,7 @@
 ```mermaid
 flowchart TD
     User["User: pnpm crossbind build"]
-    Bin["bin.js<br/>(CLI entry)"]
+    Bin["cli.js → bin.js<br/>(CLI entry)"]
     State["state/loadConfig.js<br/>(merge crossbind.config.* + targets)"]
     BuildLib["actions/createLib.js<br/>(per-target static lib)"]
     XCFwk["actions/createXCFramework.js<br/>(combine iOS slices, darwin only)"]
