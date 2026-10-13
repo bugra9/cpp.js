@@ -126,7 +126,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | iOS xcframework assembly | `src/actions/createXCFramework.js` |
 | CMake parameter generation | `src/actions/getCmakeParameters.js` |
 | Docker / Xcode shell-out | `src/actions/run.js` |
-| `crossbind runner` start/stop and the deploy folders `runner init` writes (Fly, Cloudflare) | `src/actions/runnerCommands.js` |
+| `crossbind runner` start/delete and the deploy folders `runner init` writes (Fly, Cloudflare) | `src/actions/runnerCommands.js` |
 | `crossbind login`, `logout`, `usage`; the cloud address and the sign-in kept in `~/.crossbind/credentials.json`, which `RUNNER=REMOTE` builds on when the machine names no runner address | `src/actions/cloudCommands.js`, `src/utils/cloudAccount.js` |
 | Remote runner server (`/v1` protocol), its blob store and the file sync it shares with the client | `src/runner/{server,blobs,files}.js` |
 | Bridge file generation (SWIG) | `src/actions/createInterface.js` |
