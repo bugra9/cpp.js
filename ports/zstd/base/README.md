@@ -113,13 +113,13 @@ console.log((await Zstd.decompress(frame)) === text); // true
 - For files, pass paths instead of bytes: mount the file into the module's filesystem (`autoMountFiles`) and read it in C++ with `fopen`. The `.tar.zst` opener above works that way.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/zstd](https://crossbind.dev/ports/zstd/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/zstd](https://crossbind.dev/ports/zstd/#examples), next to the code shown there:
 
 - [Stream a file through zstd](https://crossbind.dev/ports/zstd/#02-stream): `ZSTD_compressStream2` and `ZSTD_decompressStream`, file to file in 128 KB steps.
 - [Choose a level, a checksum and a window](https://crossbind.dev/ports/zstd/#03-parameters): `ZSTD_CCtx_setParameter`, read back with `ZSTD_getFrameHeader`.
 - [Compress small messages with a dictionary](https://crossbind.dev/ports/zstd/#04-dictionary): train with `ZDICT_trainFromBuffer`, then compress against `ZSTD_createCDict` and `ZSTD_createDDict`.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/zstd/wasm/) · [Android](https://crossbind.dev/ports/zstd/android/) · [iOS](https://crossbind.dev/ports/zstd/ios/) · [macOS](https://crossbind.dev/ports/zstd/darwin/) · [Linux](https://crossbind.dev/ports/zstd/linux/) · [Windows](https://crossbind.dev/ports/zstd/win32/) · [WASI](https://crossbind.dev/ports/zstd/wasi/), which also has a command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/zstd](https://crossbind.dev/ports/zstd/#install). The same page has [a command-line program](https://crossbind.dev/ports/zstd/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - zstd 1.5.7 as a static library, with the dictionary builder (`ZDICT_*`) compiled in.

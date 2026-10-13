@@ -9,7 +9,7 @@ export default {
     title: 'Privacy',
     kicker: 'PRIVACY',
     description: 'What crossbind.dev, the playground and crossbind cloud keep about you, for how long, and how to delete it.',
-    lede: 'crossbind.dev has no analytics and sets no tracking cookies. The playground and crossbind cloud keep what they need to run and to stop abuse: your GitHub id and name once you sign in, and how much you used. No email, no GitHub token, nothing to pay with. Last changed 11 October 2026.',
+    lede: 'crossbind.dev has no analytics and sets no tracking cookies. The playground and crossbind cloud keep what they need to run and to stop abuse: your GitHub id and name once you sign in, and how much you used. No email, no GitHub token, nothing to pay with. Last changed 13 October 2026.',
     section: 'Privacy',
     path: '/privacy',
     href: '/privacy/',
@@ -18,14 +18,14 @@ export default {
         { type: 'h2', id: 'site', text: 'This site' },
         {
             type: 'p',
-            text: 'The pages are static files served by Cloudflare. Your browser keeps your theme and your playground draft in its local storage; neither leaves it.',
+            text: 'The pages are static files served by Cloudflare. Your browser keeps your theme and your edits to the samples in the playground and the tutorial in its local storage; none of it leaves your browser.',
         },
 
         { type: 'h2', id: 'playground', text: 'The playground' },
         {
             type: 'ul',
             items: [
-                'Run sends `native.h` and `native.cpp` to the playground compiler, which builds them in a sandbox without network access and deletes them afterwards. The result, the module with its build log, is cached for up to a week under a hash of the sources, so the same code compiles once.',
+                'An unedited sample runs a module built along with this site and sends nothing. Once you edit its C++, Run sends `native.h` and `native.cpp` to the playground compiler, which builds them in a sandbox without network access and deletes them afterwards. The result, the module with its build log, is cached for up to a week under a hash of the sources, so the same code compiles once.',
                 'Compiles count per network (your IP address, or the /64 an IPv6 address belongs to) or per account, for the day. Without an account, Cloudflare Turnstile checks your browser before a compile.',
                 'Signing in with GitHub asks for no permission. It records your GitHub id and name, and sets a cookie that keeps you signed in for 30 days or until you sign out.',
                 'The code your `main.js` runs stays in your browser, in a sandboxed frame.',

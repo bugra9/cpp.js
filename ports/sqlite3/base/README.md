@@ -146,14 +146,14 @@ console.log(await notes.find('the'));
 - `:memory:` keeps the database in memory. For a file, open a path instead: in the browser a path in the module's filesystem (`/memfs/…`, or `/opfs/…` with `useWorker: true`), on Android and iOS a path in the app's storage, in a native Node.js addon any path of the file system.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/sqlite3](https://crossbind.dev/ports/sqlite3/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/sqlite3](https://crossbind.dev/ports/sqlite3/#examples), next to the code shown there:
 
 - [Apply a batch in one transaction](https://crossbind.dev/ports/sqlite3/#02-transaction): `BEGIN`, one prepared upsert (`ON CONFLICT DO UPDATE`) reset for every row, then `COMMIT`, or `ROLLBACK` when a row breaks a `CHECK` constraint.
 - [Query JSON documents with SQL](https://crossbind.dev/ports/sqlite3/#03-json): `->>`, `json_each`, `json_group_object` and `json_group_array`.
 - [Search text with FTS4](https://crossbind.dev/ports/sqlite3/#04-search): `MATCH` with stemming, phrases, prefixes, `NOT` and `NEAR`, cut into `snippet()`s.
 - [Save a database to bytes and open it again](https://crossbind.dev/ports/sqlite3/#05-serialize): `sqlite3_serialize` and `sqlite3_deserialize`, then the tables listed with `pragma_table_info`.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/sqlite3/wasm/) · [Android](https://crossbind.dev/ports/sqlite3/android/) · [iOS](https://crossbind.dev/ports/sqlite3/ios/) · [macOS](https://crossbind.dev/ports/sqlite3/darwin/) · [Linux](https://crossbind.dev/ports/sqlite3/linux/) · [Windows](https://crossbind.dev/ports/sqlite3/win32/) · [WASI](https://crossbind.dev/ports/sqlite3/wasi/), which also has a command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/sqlite3](https://crossbind.dev/ports/sqlite3/#install). The same page has [a command-line program](https://crossbind.dev/ports/sqlite3/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - SQLite 3.53.4, built from the amalgamation as a static library. The recipe passes the same `SQLITE_ENABLE_*` options to every platform; the WebAssembly and WASI builds report them as below.

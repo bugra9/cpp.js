@@ -1,21 +1,24 @@
-import { useEffect, useRef, useState } from 'react';
-import { CodeWindow, primaryButtonStyle, secondaryButtonStyle } from '../components/ui.jsx';
+import { useEffect, useState } from 'react';
+import { CodeWindow } from '../components/ui.jsx';
 import { inline } from '../guide/inline.jsx';
 import {
-    LOGIN_URL, deleteAccount, fetchSession, requestCompile, signOut, turnstileToken,
-} from './client.js';
-import Editor from './Editor.jsx';
-import { runInSandbox } from './sandbox.js';
-import { SAMPLE_FILES, SAMPLE_SCRIPT } from './samples.js';
+    editDraft, readDrafts, updateDrafts, without,
+} from './drafts.js';
+import Editor, { fitHeight } from './Editor.jsx';
+import {
+    Console, Notice, Toolbar, linkButtonStyle,
+} from './parts.jsx';
+import { DEFAULT_SAMPLE, SAMPLES, findSample } from './samples.js';
+import { canRunPrebuilt, useRunner } from './useRunner.js';
 
-// /playground/: three editors, a Run button and a console. Run sends native.h and native.cpp to the playground
-// compiler (tooling/cloud) and runs the module it returns, with main.js, in a sandboxed frame (sandbox.js).
-// The first render matches the prerendered page: the draft, the sign-in result and the session load afterwards.
+// /playground/: a sample picker, three editors, a Run button and a console. useRunner.js runs main.js against the
+// sample's prebuilt module, or against one the playground compiler (tooling/cloud) builds from edited C++. The first
+// render matches the prerendered page: the drafts, the linked sample, the sign-in result and the session load
+// afterwards.
 
 const DRAFT_KEY = 'crossbind.playground.draft';
-const MAX_LINES = 500;
-const SAMPLE = Object.freeze({ ...SAMPLE_FILES, 'main.js': SAMPLE_SCRIPT });
-const ERROR_STREAMS = new Set(['stderr', 'warn', 'error']);
+const SAMPLE_PARAM = 'sample';
+const RESET_QUESTION = 'Discard your changes to this sample?';
 const LOGIN_NOTICES = Object.freeze({
     ok: 'Signed in.',
     'too-new': 'This GitHub account is too new to sign in here yet.',
@@ -23,32 +26,14 @@ const LOGIN_NOTICES = Object.freeze({
     failed: 'Signing in did not work; try again.',
     cancelled: 'Signing in was cancelled.',
 });
-const DELETE_QUESTION = 'Delete your crossbind cloud account? This signs you out here and on every machine where crossbind login used it.';
-const UNREACHABLE = 'The playground service cannot be reached right now.';
-const FAILURE_NOTICES = Object.freeze({
-    compile: 'The build failed; its log is in the console.',
-    timeout: 'The compile ran out of time.',
-    memory: 'The compile ran out of memory.',
-    output: 'The build printed too much or left no module.',
-});
 
-// The draft survives the round trip through a sign-in. Storage can be blocked, as in private windows; the page then
-// starts from the sample.
-function readDraft() {
-    try {
-        const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? 'null');
-        return Object.keys(SAMPLE).every((name) => typeof draft?.[name] === 'string') ? draft : null;
-    } catch {
-        return null;
-    }
-}
+// ?sample=<id> opens that sample, and the address follows the picker, so every sample can be linked to.
+const linkedSample = () => findSample(new URLSearchParams(location.search).get(SAMPLE_PARAM))?.id;
 
-function writeDraft(draft) {
-    try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-    } catch {
-        // Not stored; the code stays on the page.
-    }
+function linkSample(id) {
+    const url = new URL(location.href);
+    url.searchParams.set(SAMPLE_PARAM, id);
+    history.replaceState(null, '', url);
 }
 
 function takeLoginResult() {
@@ -58,176 +43,97 @@ function takeLoginResult() {
     return LOGIN_NOTICES[result] ?? null;
 }
 
-function statusText(phase, session) {
-    if (phase === 'compiling') return 'Compiling on the playground server…';
-    if (phase === 'running') return 'Running in your browser…';
-    if (!session) return 'Connecting…';
-    if (session.error) return session.error;
-    if (!session.enabled) return 'The playground is paused for now.';
-    return `${session.remaining} of ${session.limit} compiles left today`;
-}
-
-function SignInLink({ tokens }) {
-    return (
-        <a href={LOGIN_URL} className="tap-target" style={{ color: tokens.accentText, fontWeight: 500, textDecoration: 'none' }}>
-            Sign in with GitHub
-        </a>
-    );
-}
-
-function Account({
-    tokens, session, onSignOut, onDeleteAccount,
+function SamplePicker({
+    tokens, sampleId, edited, disabled, onSelect, onReset,
 }) {
-    if (!session || session.error) return null;
-    const style = { display: 'inline-flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', fontSize: 13, color: tokens.textDim, marginLeft: 'auto' };
-    const linkButton = { background: 'none', border: 'none', padding: 0, color: tokens.accentText, cursor: 'pointer', font: 'inherit' };
-    if (session.user) {
-        return (
-            <span style={style}>
-                {`Signed in as ${session.user.name}`}
-                <button type="button" onClick={onSignOut} className="tap-target" style={linkButton}>Sign out</button>
-                <button type="button" onClick={onDeleteAccount} className="tap-target" style={{ ...linkButton, color: tokens.textDim }}>Delete account</button>
-            </span>
-        );
-    }
-    if (!session.canSignIn) return null;
     return (
-        <span style={style}>
-            More compiles a day:
-            <SignInLink tokens={tokens} />
+        <span style={{ display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, fontSize: 13, color: tokens.textDim }}>
+            <label htmlFor="playground-sample">Sample</label>
+            <select
+                id="playground-sample"
+                value={sampleId}
+                disabled={disabled}
+                onChange={(event) => onSelect(event.target.value)}
+                className="tap-target"
+                style={{
+                    padding: '9px 12px',
+                    fontSize: 14,
+                    fontFamily: 'inherit',
+                    color: tokens.text,
+                    background: tokens.panel,
+                    border: `1px solid ${tokens.borderStrong}`,
+                    borderRadius: 8,
+                    cursor: disabled ? 'default' : 'pointer',
+                }}
+            >
+                {SAMPLES.map((sample) => (
+                    <option key={sample.id} value={sample.id}>{sample.title}</option>
+                ))}
+            </select>
+            {edited && (
+                <button type="button" onClick={onReset} disabled={disabled} className="tap-target" style={linkButtonStyle(tokens)}>
+                    Reset
+                </button>
+            )}
         </span>
     );
 }
 
-function Toolbar({
-    tokens, phase, session, onRun, onStop, onSignOut, onDeleteAccount,
-}) {
-    const ready = phase === 'idle' && Boolean(session) && !session.error && session.enabled;
-    const button = { padding: '10px 20px', fontSize: 14, cursor: 'pointer' };
-    return (
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-            {phase === 'running' ? (
-                <button type="button" onClick={onStop} className="tap-target" style={{ ...secondaryButtonStyle(tokens), ...button }}>Stop</button>
-            ) : (
-                <button
-                    type="button"
-                    onClick={onRun}
-                    disabled={!ready}
-                    className="tap-target"
-                    aria-keyshortcuts="Control+Enter Meta+Enter"
-                    style={{ ...primaryButtonStyle(tokens), ...button, opacity: ready ? 1 : 0.55, cursor: ready ? 'pointer' : 'default' }}
-                >
-                    {phase === 'compiling' ? 'Compiling…' : 'Run'}
-                </button>
-            )}
-            <span aria-live="polite" style={{ fontSize: 13, color: tokens.textDim }}>{statusText(phase, session)}</span>
-            <Account tokens={tokens} session={session} onSignOut={onSignOut} onDeleteAccount={onDeleteAccount} />
-        </div>
-    );
-}
-
-function Notice({ tokens, notice, canSignIn }) {
-    return (
-        <div role="status" style={{ border: `1px solid ${tokens.borderStrong}`, borderRadius: 10, padding: '12px 16px', margin: '0 0 16px', fontSize: 14, color: tokens.text, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-            <span>{notice.text}</span>
-            {notice.login && canSignIn && <SignInLink tokens={tokens} />}
-        </div>
-    );
-}
-
-function Console({ tokens, lines, buildLog }) {
-    return (
-        <CodeWindow tokens={tokens} title="Console">
-            <div aria-live="polite" style={{ minHeight: 140, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                {buildLog && <div style={{ color: tokens.warn }}>{buildLog}</div>}
-                {/* Lines only ever append, so the index is a stable key. */}
-                {lines.map((line, index) => (
-                    <div key={index} style={{ color: ERROR_STREAMS.has(line.stream) ? tokens.warn : tokens.codeText }}>{line.text}</div>
-                ))}
-                {!buildLog && lines.length === 0 && <span style={{ color: tokens.codeMuted }}>Press Run, or Ctrl+Enter, to compile and run.</span>}
-            </div>
-        </CodeWindow>
-    );
-}
-
-// Tall enough for the sample without a scrollbar; the editors still grow by their resize handle.
+// Never shorter than these, and tall enough for the sample without a scrollbar; the editors still grow by their
+// resize handle.
 const EDITOR_HEIGHTS = Object.freeze({ 'native.h': 400, 'native.cpp': 400, 'main.js': 240 });
 
-function EditorWindow({ tokens, name, value, onChange }) {
+function EditorWindow({
+    tokens, name, value, original, onChange,
+}) {
     return (
         <CodeWindow tokens={tokens} title={name} padded={false}>
-            <Editor tokens={tokens} label={name} value={value} onChange={onChange} minHeight={EDITOR_HEIGHTS[name]} />
+            <Editor tokens={tokens} label={name} value={value} onChange={onChange} minHeight={Math.max(EDITOR_HEIGHTS[name], fitHeight(original))} />
         </CodeWindow>
     );
 }
 
 export default function PlaygroundPage({ tokens, page }) {
-    const [sources, setSources] = useState(SAMPLE);
-    const [session, setSession] = useState(null);
-    const [phase, setPhase] = useState('idle');
-    const [notice, setNotice] = useState(null);
-    const [lines, setLines] = useState([]);
-    const [buildLog, setBuildLog] = useState('');
-    const check = useRef(null);
-    const stop = useRef(null);
-    const reloadSession = () => fetchSession().then(setSession, () => setSession({ error: UNREACHABLE }));
+    const [sampleId, setSampleId] = useState(DEFAULT_SAMPLE.id);
+    const [drafts, setDrafts] = useState({});
+    const [restored, setRestored] = useState(false);
+    const runner = useRunner();
+    const sample = findSample(sampleId);
+    const sources = { ...sample.files, ...drafts[sampleId] };
+    const prebuilt = canRunPrebuilt(sampleId, sources, sample.files);
 
     useEffect(() => {
-        const draft = readDraft();
-        if (draft) setSources(draft);
+        const stored = readDrafts(DRAFT_KEY, SAMPLES);
+        const linked = linkedSample();
+        const id = linked ?? stored.sample ?? DEFAULT_SAMPLE.id;
+        setDrafts(stored.drafts);
+        setSampleId(id);
+        setRestored(true);
+        // A sample restored from an earlier visit goes into the address too, so a copied link keeps it.
+        if (!linked && id !== DEFAULT_SAMPLE.id) linkSample(id);
         const loginNotice = takeLoginResult();
-        if (loginNotice) setNotice({ text: loginNotice });
-        reloadSession();
+        if (loginNotice) runner.setNotice({ text: loginNotice });
     }, []);
 
-    useEffect(() => {
-        if (sources !== SAMPLE) writeDraft(sources);
-    }, [sources]);
+    const edit = (name) => (text) => {
+        setDrafts((current) => editDraft(current, sample, name, text));
+        updateDrafts(DRAFT_KEY, SAMPLES, (store) => ({ ...store, drafts: editDraft(store.drafts, sample, name, text) }));
+    };
+    const run = () => runner.run({ sampleId, sources, original: sample.files });
 
-    const edit = (name) => (text) => setSources((current) => ({ ...current, [name]: text }));
-    const print = (line) => setLines((current) => [...current.slice(-(MAX_LINES - 1)), line]);
-
-    async function run() {
-        if (phase !== 'idle' || !session || session.error || !session.enabled) return;
-        setLines([]);
-        setBuildLog('');
-        setNotice(null);
-        setPhase('compiling');
-        try {
-            const turnstile = session.user ? undefined : await turnstileToken(check.current, session.turnstileSiteKey);
-            const result = await requestCompile({ 'native.h': sources['native.h'], 'native.cpp': sources['native.cpp'] }, turnstile);
-            if (typeof result.remaining === 'number') setSession((current) => ({ ...current, remaining: result.remaining }));
-            if (result.status !== 200) {
-                setNotice({ text: result.error ?? `The playground answered ${result.status}.`, login: Boolean(result.login) });
-                return;
-            }
-            if (!result.ok) {
-                setBuildLog(result.log ?? '');
-                setNotice({ text: FAILURE_NOTICES[result.reason] ?? 'The build failed.' });
-                return;
-            }
-            setPhase('running');
-            const runner = runInSandbox({ js: result.js, wasm: result.wasm, code: sources['main.js'], onOutput: print });
-            stop.current = runner.stop;
-            await runner.done;
-        } catch (error) {
-            setNotice({ text: error.message || UNREACHABLE });
-        } finally {
-            stop.current = null;
-            setPhase('idle');
-        }
+    function selectSample(id) {
+        setSampleId(id);
+        linkSample(id);
+        updateDrafts(DRAFT_KEY, SAMPLES, (store) => ({ ...store, sample: id }));
+        runner.clear();
     }
 
-    async function leave() {
-        await signOut().catch(() => undefined);
-        reloadSession();
-    }
-
-    async function removeAccount() {
-        if (!window.confirm(DELETE_QUESTION)) return;
-        const response = await deleteAccount().catch(() => null);
-        setNotice({ text: response?.ok ? 'Your crossbind cloud account is deleted, and every machine is signed out of it.' : 'The account could not be deleted; try again.' });
-        reloadSession();
+    function resetSample() {
+        if (!window.confirm(RESET_QUESTION)) return;
+        setDrafts((current) => without(current, sampleId));
+        updateDrafts(DRAFT_KEY, SAMPLES, (store) => ({ ...store, drafts: without(store.drafts, sampleId) }));
+        // The button goes with the draft, so focus moves to the picker beside it.
+        document.getElementById('playground-sample')?.focus();
     }
 
     const onKeyDown = (event) => {
@@ -236,6 +142,11 @@ export default function PlaygroundPage({ tokens, page }) {
             run();
         }
     };
+
+    // Keyed by the sample, so switching starts each editor at the top and at its own height.
+    const editor = (name) => (
+        <EditorWindow key={`${sampleId}/${name}`} tokens={tokens} name={name} value={sources[name]} original={sample.files[name]} onChange={edit(name)} />
+    );
 
     return (
         <main id="content">
@@ -249,17 +160,29 @@ export default function PlaygroundPage({ tokens, page }) {
             </section>
 
             <section style={{ padding: '0 var(--content-x) 32px' }} onKeyDown={onKeyDown}>
-                <Toolbar tokens={tokens} phase={phase} session={session} onRun={run} onStop={() => stop.current?.()} onSignOut={leave} onDeleteAccount={removeAccount} />
-                <div ref={check} />
-                {notice && <Notice tokens={tokens} notice={notice} canSignIn={Boolean(session?.canSignIn)} />}
+                <Toolbar
+                    tokens={tokens}
+                    phase={runner.phase}
+                    session={runner.session}
+                    ready={restored && runner.phase === 'idle' && (prebuilt || runner.canCompile)}
+                    prebuilt={prebuilt}
+                    onRun={run}
+                    onStop={runner.stop}
+                    onSignOut={runner.leave}
+                    onDeleteAccount={runner.removeAccount}
+                >
+                    <SamplePicker tokens={tokens} sampleId={sampleId} edited={Boolean(drafts[sampleId])} disabled={runner.phase !== 'idle'} onSelect={selectSample} onReset={resetSample} />
+                </Toolbar>
+                <div ref={runner.check} />
+                {runner.notice && <Notice tokens={tokens} notice={runner.notice} canSignIn={Boolean(runner.session?.canSignIn)} />}
                 <div className="playground-grid">
                     <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
-                        <EditorWindow tokens={tokens} name="native.h" value={sources['native.h']} onChange={edit('native.h')} />
-                        <EditorWindow tokens={tokens} name="native.cpp" value={sources['native.cpp']} onChange={edit('native.cpp')} />
+                        {editor('native.h')}
+                        {editor('native.cpp')}
                     </div>
                     <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
-                        <EditorWindow tokens={tokens} name="main.js" value={sources['main.js']} onChange={edit('main.js')} />
-                        <Console tokens={tokens} lines={lines} buildLog={buildLog} />
+                        {editor('main.js')}
+                        <Console tokens={tokens} lines={runner.lines} buildLog={runner.buildLog} />
                     </div>
                 </div>
             </section>

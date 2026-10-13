@@ -48,6 +48,7 @@ export const LLMS_URL = '/llms.txt';
 // set it to null again if that page ever loses an entry.
 export const EXAMPLES_URL = '/examples/';
 export const PLAYGROUND_URL = '/playground/';
+export const TUTORIAL_URL = '/tutorial/';
 // The frozen cpp.js 1.x documentation (branch archive/v1-docs), linked from the version menu and
 // the migration guide.
 export const V1_DOCS_URL = 'https://v1.crossbind.dev';

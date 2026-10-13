@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Disclosure from '../components/Disclosure.jsx';
 import DocCode from '../guide/DocCode.jsx';
 import { inline } from '../guide/inline.jsx';
 import { isLive, liveDemo, loadDemo } from '../live/runtime.js';
@@ -156,12 +157,12 @@ function DirectPanel({ tokens, demo, example, direct, runnable }) {
     );
 }
 
-export default function RunnableExample({ tokens, demo, example, runnable, direct = null }) {
+// With `open` set, the example folds into a disclosure that starts open or closed.
+export default function RunnableExample({ tokens, demo, example, runnable, direct = null, open }) {
     const [mode, setMode] = useState('cpp');
     const withDirect = Boolean(direct && example.direct);
-    return (
-        <div data-example={example.id} style={{ margin: '30px 0 38px' }}>
-            <h3 id={example.id} style={{ fontSize: 18, fontWeight: 600, letterSpacing: -0.2, color: tokens.text, margin: '0 0 8px', scrollMarginTop: 90 }}>{example.title}</h3>
+    const body = (
+        <>
             <p style={{ fontSize: 14.5, lineHeight: 1.7, color: tokens.textDim, margin: 0, overflowWrap: 'anywhere' }}>{inline(example.summary, tokens)}</p>
             {withDirect ? <ModeSwitch tokens={tokens} id={example.id} mode={mode} onChange={setMode} impossible={Boolean(example.direct.impossible)} /> : null}
             <div role={withDirect ? 'tabpanel' : undefined} id={`${example.id}-cpp`} aria-labelledby={withDirect ? `${example.id}-cpp-tab` : undefined} hidden={mode !== 'cpp'}>
@@ -181,6 +182,21 @@ export default function RunnableExample({ tokens, demo, example, runnable, direc
                     <DirectPanel tokens={tokens} demo={demo} example={example} direct={direct} runnable={runnable} />
                 </div>
             ) : null}
+        </>
+    );
+    if (open !== undefined) {
+        return (
+            <div data-example={example.id}>
+                <Disclosure tokens={tokens} id={example.id} title={example.title} open={open}>
+                    {body}
+                </Disclosure>
+            </div>
+        );
+    }
+    return (
+        <div data-example={example.id} style={{ margin: '30px 0 38px' }}>
+            <h3 id={example.id} style={{ fontSize: 18, fontWeight: 600, letterSpacing: -0.2, color: tokens.text, margin: '0 0 8px', scrollMarginTop: 90 }}>{example.title}</h3>
+            {body}
         </div>
     );
 }

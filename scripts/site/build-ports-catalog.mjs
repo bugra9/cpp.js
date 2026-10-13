@@ -18,6 +18,9 @@ export const REGISTRY_CONCURRENCY = 8;
 // `-wasi` library package is never listed as a command tool.
 export const BIN_TARGET = 'standalone-wasi';
 export const LIBRARY_TARGETS = PLATFORMS.filter((target) => target !== BIN_TARGET);
+// The prebuilt Node-API package: installed and imported, never built. It is a target of the catalog,
+// not a platform: npm picks the machine's addon from its optional dependencies.
+export const NAPI_TARGET = 'standalone-napi';
 
 // How upstream spells its own name; the family slug is the fallback for a port not listed here.
 const DISPLAY_NAMES = {
@@ -61,10 +64,12 @@ export async function readPortsTree(root = REPOSITORY_ROOT) {
         const meta = curated[family];
         if (!meta?.category || !meta?.summary) throw new Error(`ports/catalog.json has no category/summary for ${family}.`);
         if (typeof base.nativeVersion !== 'string') throw new Error(`${portName(family)} declares no nativeVersion.`);
-        const targets = PLATFORMS.filter((target) => fs.existsSync(path.join(portDir(root, family, target), 'package.json'))).map((target) => ({
-            target,
-            package: portName(family, target),
-        }));
+        const targets = [...PLATFORMS, NAPI_TARGET]
+            .filter((target) => fs.existsSync(path.join(portDir(root, family, target), 'package.json')))
+            .map((target) => ({
+                target,
+                package: portName(family, target),
+            }));
         const binManifest = path.join(portDir(root, family, BIN_TARGET), 'package.json');
         const binCommands = fs.existsSync(binManifest) ? Object.keys(readJson(binManifest).bin ?? {}).sort() : [];
         entries.push({

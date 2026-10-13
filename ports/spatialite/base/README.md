@@ -135,14 +135,14 @@ console.log(await db.scalar(`
 - SQLite's `trusted_schema` has to stay on, as it is by default: with it off, the first insert into a table from `AddGeometryColumn` fails with `unsafe use of GeometryConstraints()`.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/spatialite](https://crossbind.dev/ports/spatialite/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/spatialite](https://crossbind.dev/ports/spatialite/#examples), next to the code shown there:
 
 - [Find places in a map view and the nearest ones with a spatial index](https://crossbind.dev/ports/spatialite/#02-spatial-index): `CreateSpatialIndex`, the `SpatialIndex` virtual table with a `BuildMbr` box, and `KNN2` for the nearest rows with their distance in metres.
 - [Measure areas and distances in metres](https://crossbind.dev/ports/spatialite/#03-measure): `ST_Area` and `ST_Distance` after `ST_Transform` to UTM zone 35N, and `ST_Distance(a, b, 1)` on the ellipsoid.
 - [Reproject coordinates between EPSG codes](https://crossbind.dev/ports/spatialite/#04-transform): `ST_Transform` through PROJ, and the reference systems' names in `spatial_ref_sys`.
 - [Read GeoJSON in and write a FeatureCollection out](https://crossbind.dev/ports/spatialite/#05-geojson): `GeomFromGeoJSON`, `AsGeoJSON` and SQLite's JSON functions.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/spatialite/wasm/) · [Android](https://crossbind.dev/ports/spatialite/android/) · [iOS](https://crossbind.dev/ports/spatialite/ios/) · [macOS](https://crossbind.dev/ports/spatialite/darwin/) · [Linux](https://crossbind.dev/ports/spatialite/linux/) · [Windows](https://crossbind.dev/ports/spatialite/win32/) · [WASI](https://crossbind.dev/ports/spatialite/wasi/), which also has a command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/spatialite](https://crossbind.dev/ports/spatialite/#install). The same page has [a command-line program](https://crossbind.dev/ports/spatialite/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - SpatiaLite 5.1.0 with GEOS 3.15.0, PROJ 9.9.0 and SQLite 3.53.4, as `spatialite_version()`, `geos_version()`, `proj_version()` and `sqlite_version()` report them in the WebAssembly build.

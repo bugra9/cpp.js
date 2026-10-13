@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useState } from 'react';
+import PrevNext from '../components/PrevNext.jsx';
 import Article from './Article.jsx';
 import { inline } from './inline.jsx';
 import { getNeighbours, GUIDE_EXTERNAL_LINKS, GUIDE_HOME, GUIDE_SECTIONS } from './nav.js';
@@ -117,52 +118,6 @@ function Toc({ tokens, headings, active }) {
     );
 }
 
-function PrevNext({ tokens, page }) {
-    const { prev, next } = getNeighbours(page);
-    // Reference pages sit outside the reading order.
-    if (!prev && !next) return null;
-    const label = {
-        fontFamily: tokens.mono,
-        fontSize: 10,
-        letterSpacing: 1.2,
-        color: tokens.textMuted,
-        display: 'block',
-        marginBottom: 4,
-    };
-
-    return (
-        <nav
-            aria-label="Guide pages"
-            style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                gap: 14,
-                marginTop: 52,
-                paddingTop: 20,
-                borderTop: `1px solid ${tokens.border}`,
-                fontSize: 13.5,
-            }}
-        >
-            {prev ? (
-                <a href={prev.href} className="tap-target" style={{ color: tokens.textDim, display: 'block' }}>
-                    <span style={label}>← PREV</span>
-                    {prev.title}
-                </a>
-            ) : (
-                <span />
-            )}
-            {next ? (
-                <a href={next.href} className="tap-target" style={{ color: tokens.accentText, display: 'block', textAlign: 'right' }}>
-                    <span style={label}>NEXT →</span>
-                    {next.title}
-                </a>
-            ) : (
-                <span />
-            )}
-        </nav>
-    );
-}
-
 export default function Guide({ tokens, page }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const headings = page.blocks.filter((block) => block.type === 'h2' && block.id);
@@ -220,7 +175,7 @@ export default function Guide({ tokens, page }) {
                 <p style={{ fontSize: 16.5, lineHeight: 1.65, color: tokens.textDim, margin: '0 0 34px' }}>{inline(page.lede, tokens)}</p>
 
                 <Article tokens={tokens} blocks={page.blocks} />
-                <PrevNext tokens={tokens} page={page} />
+                <PrevNext tokens={tokens} label="Guide pages" {...getNeighbours(page)} />
             </main>
 
             <Toc tokens={tokens} headings={headings} active={active} />

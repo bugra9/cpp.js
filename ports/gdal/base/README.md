@@ -147,14 +147,14 @@ console.log(await converter.convert(cities, 'ESRI Shapefile', 'EPSG:32635', '/vs
 - When GDAL fails, the wrapper throws GDAL's last error message; for an unknown format JavaScript catches an error reading ``std::runtime_error: Unable to find driver `NoSuchFormat'.``, and for an unknown code `std::runtime_error: Failed to process SRS definition: EPSG:999999`.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/gdal](https://crossbind.dev/ports/gdal/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/gdal](https://crossbind.dev/ports/gdal/#examples), next to the code shown there:
 
 - [Write a GeoTIFF and read its georeferencing back](https://crossbind.dev/ports/gdal/#02-raster-info): `GDALCreate`, `GDALSetGeoTransform` and `OSRImportFromEPSG`, then `GDALOpenEx`, `GDALGetGeoTransform`, `GDALGetSpatialRef` and the `gdalinfo` report from `GDALInfo`.
 - [Reproject a raster and write a Cloud-Optimized GeoTIFF](https://crossbind.dev/ports/gdal/#03-cog): `GDALWarp` into a virtual raster, then `GDALTranslate` with `-of COG`.
 - [Hillshade, slope and contour lines from an elevation model](https://crossbind.dev/ports/gdal/#04-terrain): `GDALDEMProcessing` and `GDALContourGenerateEx`.
 - [Read features and filter them by attribute and area](https://crossbind.dev/ports/gdal/#05-features): `OGR_L_SetAttributeFilter`, `OGR_L_SetSpatialFilterRect` and `OGR_L_GetNextFeature` over a CSV opened with open options.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/gdal/wasm/) · [Android](https://crossbind.dev/ports/gdal/android/) · [iOS](https://crossbind.dev/ports/gdal/ios/) · [macOS](https://crossbind.dev/ports/gdal/darwin/) · [Linux](https://crossbind.dev/ports/gdal/linux/) · [Windows](https://crossbind.dev/ports/gdal/win32/) · [WASI](https://crossbind.dev/ports/gdal/wasi/), which also has a command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/gdal](https://crossbind.dev/ports/gdal/#install). The same page has [a command-line program](https://crossbind.dev/ports/gdal/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - GDAL 3.13.3 as one static library, `libgdal`, with its dependencies from their own crossbind packages: PROJ 9.9.0, GEOS 3.15.0, SQLite 3.53.4, SpatiaLite 5.1.0, libtiff 4.7.2, libgeotiff 1.7.4, libjpeg-turbo 3.2.0, libwebp 1.6.0, zstd 1.5.7, LERC 4.2.0, zlib 1.3.2, Expat 2.8.5, libiconv 1.19, curl 8.22.0 and OpenSSL 4.0.2.

@@ -154,13 +154,13 @@ try {
 - For files, pass paths instead of bytes: mount the file into the module's filesystem (`autoMountFiles`) and read it in C++ with `fopen`. The TextDecoder app above works that way.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/iconv](https://crossbind.dev/ports/iconv/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/iconv](https://crossbind.dev/ports/iconv/#examples), next to the code shown there:
 
 - [Transliterate or drop what the target cannot hold](https://crossbind.dev/ports/iconv/#02-fallbacks): the `//TRANSLIT` and `//IGNORE` suffixes, and the count `iconv` returns.
 - [Decode a stream that cuts characters in two](https://crossbind.dev/ports/iconv/#03-stream): `EINVAL` at a cut character, whose bytes wait for the next piece.
 - [List the encodings and check a name](https://crossbind.dev/ports/iconv/#04-encodings): `iconvlist`, `iconv_canonicalize`, and `iconv_open` as the real test.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/iconv/wasm/) · [Android](https://crossbind.dev/ports/iconv/android/) · [iOS](https://crossbind.dev/ports/iconv/ios/) · [macOS](https://crossbind.dev/ports/iconv/darwin/) · [Linux](https://crossbind.dev/ports/iconv/linux/) · [Windows](https://crossbind.dev/ports/iconv/win32/) · [WASI](https://crossbind.dev/ports/iconv/wasi/), which also has an iconv-style command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/iconv](https://crossbind.dev/ports/iconv/#install). The same page has [an iconv-style command-line program](https://crossbind.dev/ports/iconv/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - GNU libiconv 1.19 as a static library. The GPL `iconv` program and its gnulib support are not built.

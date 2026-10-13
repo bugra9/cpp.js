@@ -32,7 +32,7 @@ if (typeof document !== 'undefined') {
 // template. index.html's <title> is the dev-server fallback and mirrors SITE_TITLE.
 function headFor(page) {
     const url = SITE + (page ? page.href : '/');
-    const title = page ? `${page.title} · ${BRAND}` : SITE_TITLE;
+    const title = page ? `${page.headTitle ?? page.title} · ${BRAND}` : SITE_TITLE;
     const description = page ? page.description : SITE_DESCRIPTION;
 
     return {

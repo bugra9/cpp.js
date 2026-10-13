@@ -161,14 +161,14 @@ console.log(await Overlay.area(await Overlay.unite(parcel, floodZone)), await Ov
 - Each call opens its own GEOS context with `GEOS_init_r`, which keeps the reentrant C API safe to call from several threads. When GEOS fails, the wrapper throws GEOS's message; for broken WKT, JavaScript catches an error reading `std::runtime_error: ParseException: Expected word but encountered end of stream`.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/geos](https://crossbind.dev/ports/geos/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/geos](https://crossbind.dev/ports/geos/#examples), next to the code shown there:
 
 - [Test points against a prepared polygon](https://crossbind.dev/ports/geos/#02-zone): `GEOSPrepare_r` once, then `GEOSPreparedContainsXY_r` and `GEOSPreparedIntersectsXY_r` for each point, and `GEOSPreparedRelate_r` for the DE-9IM matrix.
 - [Measure area, length and distance](https://crossbind.dev/ports/geos/#03-measure): `GEOSArea_r`, `GEOSLength_r`, `GEOSDistance_r`, `GEOSNearestPoints_r` and `GEOSGetCentroid_r`.
 - [Buffer points, lines and polygons](https://crossbind.dev/ports/geos/#04-buffer): `GEOSBuffer_r`, `GEOSBufferWithStyle_r` with cap and join styles, and `GEOSOffsetCurve_r`.
 - [Find why a polygon is invalid and repair it](https://crossbind.dev/ports/geos/#05-validity): `GEOSisValidReason_r`, and `GEOSMakeValidWithParams_r` with both of its methods.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/geos/wasm/) · [Android](https://crossbind.dev/ports/geos/android/) · [iOS](https://crossbind.dev/ports/geos/ios/) · [macOS](https://crossbind.dev/ports/geos/darwin/) · [Linux](https://crossbind.dev/ports/geos/linux/) · [Windows](https://crossbind.dev/ports/geos/win32/) · [WASI](https://crossbind.dev/ports/geos/wasi/), which also has a command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/geos](https://crossbind.dev/ports/geos/#install). The same page has [a command-line program](https://crossbind.dev/ports/geos/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - GEOS 3.15.0 (C API 1.21.0) as two static libraries: `libgeos_c`, the stable C API the examples use, and `libgeos`, the C++ library behind it.

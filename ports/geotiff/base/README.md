@@ -176,14 +176,14 @@ console.log(`lower right ${where.lowerRight.join(', ')} = ${degrees(where.lowerR
 - `GTIFProj4ToLatLong` gives degrees on the file's own datum, through the PROJ string libgeotiff builds. The corners above match the Krüger series for transverse Mercator to 1e-13°. libgeotiff 1.7.4 writes transverse Mercator scale factors into that string with six decimals, `+k=0.999601` for British National Grid's 0.9996012717, which moves the corners of the London sample by up to 9 cm.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/geotiff](https://crossbind.dev/ports/geotiff/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/geotiff](https://crossbind.dev/ports/geotiff/#examples), next to the code shown there:
 
 - [Write a compressed GeoTIFF](https://crossbind.dev/ports/geotiff/#02-write): `TIFFTAG_GEOTIEPOINTS` and `TIFFTAG_GEOPIXELSCALE`, `GTIFKeySet` and `GTIFWriteKeys`, Deflate with a predictor, and `GTIFPrint` for the dump listgeo prints.
 - [Read the GeoKeys, the tiepoint and the pixel scale](https://crossbind.dev/ports/geotiff/#03-keys): `GTIFDirectoryInfo`, `GTIFKeyInfo`, `GTIFKeyGet` and `GTIFValueNameEx`, and `TIFFGetField` for the tags.
 - [Expand an EPSG code into a full definition](https://crossbind.dev/ports/geotiff/#04-definition): `GTIFGetDefn`, the EPSG name functions and `GTIFGetProj4Defn`.
 - [Convert between pixels and longitude, latitude](https://crossbind.dev/ports/geotiff/#05-pixels): `GTIFProj4FromLatLong` and `GTIFPCSToImage` one way, `GTIFImageToPCS` and `GTIFProj4ToLatLong` the other.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/geotiff/wasm/) · [Android](https://crossbind.dev/ports/geotiff/android/) · [iOS](https://crossbind.dev/ports/geotiff/ios/) · [macOS](https://crossbind.dev/ports/geotiff/darwin/) · [Linux](https://crossbind.dev/ports/geotiff/linux/) · [Windows](https://crossbind.dev/ports/geotiff/win32/) · [WASI](https://crossbind.dev/ports/geotiff/wasi/), which also has a command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/geotiff](https://crossbind.dev/ports/geotiff/#install). The same page has [a command-line program](https://crossbind.dev/ports/geotiff/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - libgeotiff 1.7.4 as the static library `libgeotiff`, linked against libtiff 4.7.2 and PROJ 9.9.0 from their own crossbind packages. libtiff's C++ stream API, which the examples use, ships as `libtiffxx`.

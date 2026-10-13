@@ -1,4 +1,6 @@
-import { AGENT_URL, API_URL, REPO_URL } from '../data.js';
+import {
+    AGENT_URL, API_URL, REPO_URL, TUTORIAL_URL,
+} from '../data.js';
 import architecture from './pages/architecture.js';
 import assets from './pages/assets.js';
 import bindings from './pages/bindings.js';
@@ -54,27 +56,35 @@ export const GUIDE_HOME = {
     section: '',
     path: GUIDE_BASE,
     href: guideHref(),
-    blocks: GUIDE_SECTIONS.flatMap((section) => [
-        { type: 'h2', id: section.label.toLowerCase().replace(/\s+/g, '-'), text: section.label },
+    blocks: [
         {
-            type: 'cards',
-            items: section.pages.map((page) => ({
-                kicker: page.kicker || section.label.toUpperCase(),
-                title: page.title,
-                desc: page.description,
-                href: page.href,
-            })),
+            type: 'callout',
+            title: 'New to crossbind?',
+            text: `The [tutorial](${TUTORIAL_URL}) runs in your browser: seven short steps from a first function to C++ exceptions.`,
         },
-    ]),
+        ...GUIDE_SECTIONS.flatMap((section) => [
+            { type: 'h2', id: section.label.toLowerCase().replace(/\s+/g, '-'), text: section.label },
+            {
+                type: 'cards',
+                items: section.pages.map((page) => ({
+                    kicker: page.kicker || section.label.toUpperCase(),
+                    title: page.title,
+                    desc: page.description,
+                    href: page.href,
+                })),
+            },
+        ]),
+    ],
 };
 
 export const GUIDE_PAGES = [GUIDE_HOME, ...GUIDE_SECTIONS.flatMap((section) => section.pages)];
 
 export const GUIDE_ROUTES = GUIDE_PAGES.map((page) => page.href);
 
-// Reference pages the guide deliberately does not duplicate. The changelog is not here: it is
-// linked from Guide.jsx with the active state a section link gets.
+// The tutorial, and reference pages the guide deliberately does not duplicate. The changelog is not
+// here: it is linked from Guide.jsx with the active state a section link gets.
 export const GUIDE_EXTERNAL_LINKS = [
+    { label: 'Tutorial', href: TUTORIAL_URL },
     { label: 'API reference', href: API_URL },
     { label: 'Agent setup', href: AGENT_URL },
     { label: 'GitHub', href: REPO_URL, external: true },

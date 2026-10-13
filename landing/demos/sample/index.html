@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>crossbind - playground sample</title>
+    <script src="./dist/sample-wasm-wasm32-st-release.browser.js"></script>
+</head>
+
+<body>
+    <pre id="out"></pre>
+    <script>
+        // The tutorial and the playground run this module for an unedited sample; this page is what
+        // the demo build opens to prove it runs the sample's main.js as the playground would, which
+        // boots it on the page's own thread.
+        const out = document.querySelector('#out');
+        const describe = (value) => (typeof value === 'string' ? value : JSON.stringify(value, (key, item) => (typeof item === 'bigint' ? `${item}n` : item)));
+        const print = (...values) => {
+            out.textContent += `${values.map(describe).join(' ')}\n`;
+        };
+        const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
+        Promise.all([initNative({ path: './dist', useWorker: false }), fetch('./main.js').then((response) => response.text())])
+            .then(async ([Module, code]) => {
+                await new AsyncFunction('Module', 'console', code)(Module, { log: print, info: print, warn: print, error: print });
+                print('=> done');
+            })
+            .catch((error) => print(`failed => ${error && error.message ? error.message : error}`));
+    </script>
+</body>
+
+</html>

@@ -1,6 +1,6 @@
 import { changelogHref } from '../../changelog/route.js';
 import {
-    BRAND, CREATE_COMMAND, installCommand, SETUP_PROMPT, SKILL_COMMAND,
+    BRAND, CREATE_COMMAND, installCommand, SETUP_PROMPT, SKILL_COMMAND, TUTORIAL_URL,
 } from '../../data.js';
 import { RELEASE, WEB_IMAGE } from '../../release.js';
 
@@ -17,6 +17,11 @@ export default {
     description: 'Prerequisites, a new project or an existing one, and your first call into C++.',
     lede: `Two paths lead to the same place: scaffold a fresh project, or add ${BRAND} to an app you already have. Either way you end up with a bundler plugin, a \`crossbind.config.js\`, and a header you can import from JavaScript.`,
     blocks: [
+        {
+            type: 'callout',
+            title: 'Rather try it first?',
+            text: `The [tutorial](${TUTORIAL_URL}) runs in your browser with nothing to install: seven short steps from a first function to C++ exceptions.`,
+        },
         { type: 'h2', id: 'prerequisites', text: 'Prerequisites' },
         {
             type: 'p',

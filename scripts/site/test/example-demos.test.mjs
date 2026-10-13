@@ -3,13 +3,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import { assertDemosMatchSnapshot, DEMOS, REPOSITORY_ROOT, patchBundles } from '../build-example-demos.mjs';
+import { assertDemosMatchSnapshot, DEMOS, REPOSITORY_ROOT, patchBundles, sampleSourceHash } from '../build-example-demos.mjs';
 
 const snapshot = { version: '2.0.0-beta.56' };
+const sourcesOf = (demo) => (demo.kind === 'sample' ? { sources: sampleSourceHash(demo.id.replace(/^sample-/, '')) } : {});
 const manifestFor = (version) => ({
     builtAt: '2026-09-11T15:28:51.897Z',
     distTag: 'beta',
-    demos: DEMOS.map((demo) => ({ id: demo.id, href: `/examples/${demo.id}/`, crossbind: version })),
+    demos: DEMOS.map((demo) => ({ id: demo.id, href: `/examples/${demo.id}/`, crossbind: version, ...sourcesOf(demo) })),
 });
 
 test('base-aware demo bundles build without needing a compatibility patch', () => {
@@ -61,6 +62,22 @@ test('demos built from another crossbind version are refused as stale', () => {
         () => assertDemosMatchSnapshot(manifestFor('2.0.0-beta.55'), snapshot),
         /web-react-vite@2\.0\.0-beta\.55.* resolved 2\.0\.0-beta\.56/,
     );
+});
+
+test('a playground sample whose C++ changed after its build is refused by name', () => {
+    const manifest = manifestFor(snapshot.version);
+    const changed = {
+        ...manifest,
+        demos: manifest.demos.map((demo) => (demo.id === 'sample-numbers' ? { ...demo, sources: 'an older build' } : demo)),
+    };
+    assert.throws(() => assertDemosMatchSnapshot(changed, snapshot), /samples changed after their modules were built: sample-numbers;/);
+});
+
+test('every playground sample is prebuilt, and nothing else is', () => {
+    const samplesDir = path.join(REPOSITORY_ROOT, 'landing', 'src', 'playground', 'samples');
+    const samples = fs.readdirSync(samplesDir).filter((name) => fs.existsSync(path.join(samplesDir, name, 'main.js')));
+    const built = DEMOS.filter((demo) => demo.kind === 'sample').map((demo) => demo.id.replace(/^sample-/, ''));
+    assert.deepEqual(built.toSorted(), samples.toSorted());
 });
 
 test('every JavaScript-only module under landing/demos is built, from its own directory', () => {

@@ -3,11 +3,10 @@ import catalog from '../../generated/ports-catalog.js';
 // The Libraries catalog, generated before every build by scripts/site/build-ports-catalog.mjs
 // from ports/catalog.json, the port manifests and what npm serves on the release channel's
 // dist-tag. Only a published variant counts as supported.
-export const PORTS_CATALOG = catalog;
-
 export const PORTS = [...catalog.ports].sort((left, right) => left.name.localeCompare(right.name, 'en'));
 
 export const BIN_TARGET = 'standalone-wasi';
+export const NAPI_TARGET = 'standalone-napi';
 
 export const CATEGORY_LABELS = {
     geo: 'Geospatial',
@@ -33,7 +32,7 @@ export const TARGET_LABELS = {
 
 export const publishedTarget = (port, target) => port.targets.find((entry) => entry.target === target && entry.published) ?? null;
 
-export const publishedLibraryTargets = (port) => port.targets.filter((entry) => entry.target !== BIN_TARGET && entry.published);
+export const publishedLibraryTargets = (port) => port.targets.filter((entry) => entry.target !== BIN_TARGET && entry.target !== NAPI_TARGET && entry.published);
 
 // Command tools are the published -standalone-wasi packages only; a web or library build never counts.
 export const WASI_TOOL_PORTS = PORTS.filter((port) => port.binCommands.length > 0 && publishedTarget(port, BIN_TARGET));

@@ -213,14 +213,14 @@ console.log(await cert.sha256()); // 68:2D:81:9E:75:7E:2C:15:C1:92:FB:84:3D:BE:A
 - `covers` is `X509_check_host`, the check a TLS client runs against the alternative names, wildcards included.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/openssl](https://crossbind.dev/ports/openssl/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/openssl](https://crossbind.dev/ports/openssl/#examples), next to the code shown there:
 
 - [Hash and HMAC](https://crossbind.dev/ports/openssl/#02-hashing): `EVP_Q_digest` with SHA-256, SHA3-256 and BLAKE2b-512, `EVP_DigestUpdate` for data that arrives in pieces, and `EVP_Q_mac` for HMAC. Every line is its standard's published test vector.
 - [Encrypt and authenticate with AES-256-GCM](https://crossbind.dev/ports/openssl/#03-aes-gcm): `EVP_CipherInit_ex2`, the tag through `EVP_CTRL_AEAD_GET_TAG` and `EVP_CTRL_AEAD_SET_TAG`, and a refused decryption when the associated data changes. WebCrypto decrypts what it writes.
 - [Generate a key, sign and verify](https://crossbind.dev/ports/openssl/#04-signing): `EVP_PKEY_Q_keygen`, `EVP_DigestSign` and `EVP_DigestVerify` with ECDSA P-256, Ed25519 and the post-quantum ML-DSA-65 of FIPS 204.
 - [Make a self-signed certificate for localhost](https://crossbind.dev/ports/openssl/#05-self-signed): `X509_sign` with a random serial and the `subjectAltName` browsers match, read back with the certificate example.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/openssl/wasm/) · [Android](https://crossbind.dev/ports/openssl/android/) · [iOS](https://crossbind.dev/ports/openssl/ios/) · [macOS](https://crossbind.dev/ports/openssl/darwin/) · [Linux](https://crossbind.dev/ports/openssl/linux/) · [Windows](https://crossbind.dev/ports/openssl/win32/) · [WASI](https://crossbind.dev/ports/openssl/wasi/), which also has a command-line program built with `crossbind build -p wasi -e wasi`: file digests in `sha256sum`'s format, a `sha256sum -c` style check and webhook HMACs.
+Setup for every platform: [crossbind.dev/ports/openssl](https://crossbind.dev/ports/openssl/#install). The same page has [a command-line program](https://crossbind.dev/ports/openssl/#wasi-program) built with `crossbind build -p wasi -e wasi`: file digests in `sha256sum`'s format, a `sha256sum -c` style check and webhook HMACs.
 
 ## What this build includes
 - OpenSSL 4.0.2 as two static libraries, `libssl` and `libcrypto`, built with OpenSSL's own `Configure` and `no-apps no-docs no-tests no-shared`.

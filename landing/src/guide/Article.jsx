@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import RunnableExample from '../apps/RunnableExample.jsx';
+import Disclosure from '../components/Disclosure.jsx';
 import DocCode from './DocCode.jsx';
 import ReleaseMeta from '../changelog/ReleaseMeta.jsx';
 import { inline } from './inline.jsx';
@@ -190,7 +191,7 @@ function Tabs({ tokens, tabs }) {
                 ))}
             </div>
             {tabs.map((tab, index) => (
-                <div key={tab.label} role="tabpanel" aria-label={tab.label} hidden={index !== active}>
+                <div key={tab.label} role="tabpanel" aria-label={tab.label} hidden={index !== active} style={{ marginTop: 14 }}>
                     <Article tokens={tokens} blocks={tab.blocks} />
                 </div>
             ))}
@@ -225,9 +226,15 @@ export default function Article({ tokens, blocks }) {
             case 'release':
                 return <ReleaseMeta key={key} tokens={tokens} release={block.release} />;
             case 'example':
-                return <RunnableExample key={key} tokens={tokens} demo={block.demo} example={block.example} runnable={block.runnable} direct={block.direct} />;
+                return <RunnableExample key={key} tokens={tokens} demo={block.demo} example={block.example} runnable={block.runnable} direct={block.direct} open={block.open} />;
             case 'tabs':
                 return <Tabs key={key} tokens={tokens} tabs={block.tabs} />;
+            case 'details':
+                return (
+                    <Disclosure key={key} tokens={tokens} id={block.id} title={block.summary}>
+                        <Article tokens={tokens} blocks={block.blocks} />
+                    </Disclosure>
+                );
             default:
                 return null;
         }
