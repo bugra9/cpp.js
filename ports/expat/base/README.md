@@ -180,13 +180,13 @@ try {
 - For large documents, pass a path instead of a string and let Expat read the file in pieces: the streaming example below does that.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/expat](https://crossbind.dev/ports/expat/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/expat](https://crossbind.dev/ports/expat/#examples), next to the code shown there:
 
 - [Stream a file through Expat](https://crossbind.dev/ports/expat/#02-stream): `XML_GetBuffer` and `XML_ParseBuffer`, 64 KiB at a time.
 - [Read namespaced XML whatever the prefixes](https://crossbind.dev/ports/expat/#03-namespaces): `XML_ParserCreateNS` and `XML_SetStartNamespaceDeclHandler`.
 - [Expand entities without a billion laughs](https://crossbind.dev/ports/expat/#04-limits): `XML_SetBillionLaughsAttackProtectionMaximumAmplification` and `XML_SetBillionLaughsAttackProtectionActivationThreshold`.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/expat/wasm/) · [Android](https://crossbind.dev/ports/expat/android/) · [iOS](https://crossbind.dev/ports/expat/ios/) · [macOS](https://crossbind.dev/ports/expat/darwin/) · [Linux](https://crossbind.dev/ports/expat/linux/) · [Windows](https://crossbind.dev/ports/expat/win32/) · [WASI](https://crossbind.dev/ports/expat/wasi/), which also has a command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/expat](https://crossbind.dev/ports/expat/#install). The same page has [a command-line program](https://crossbind.dev/ports/expat/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - Expat 2.8.5 as a static library, built with upstream's CMake defaults: DTD and general entity support (`XML_DTD`, `XML_GE`), namespaces (`XML_NS`) and 1,024 bytes of context (`XML_CONTEXT_BYTES`). The API speaks UTF-8.

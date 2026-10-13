@@ -166,13 +166,13 @@ console.log((await WebpCodec.decode(lossless)) === rgba); // true
 - For large images, pass paths instead of bytes: write the pixels with `m.FS.writeFile`, read and write the files in C++, and read the result back with `m.getFileBytes`. The apps above work that way.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/webp](https://crossbind.dev/ports/webp/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/webp](https://crossbind.dev/ports/webp/#examples), next to the code shown there:
 
 - [Tune the encoder and measure what it gave away](https://crossbind.dev/ports/webp/#02-tune): `WebPConfigPreset`, method, sharp YUV and a target size, measured with `WebPPlaneDistortion`.
 - [Keep transparency, and decide what happens under it](https://crossbind.dev/ports/webp/#03-transparency): `alpha_quality` for lossy files and `exact` for lossless ones.
 - [Inspect a WebP, then decode only what you need](https://crossbind.dev/ports/webp/#04-read): `WebPGetFeatures`, and `WebPDecode` scaling to a thumbnail or cropping a region.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/webp/wasm/) · [Android](https://crossbind.dev/ports/webp/android/) · [iOS](https://crossbind.dev/ports/webp/ios/) · [macOS](https://crossbind.dev/ports/webp/darwin/) · [Linux](https://crossbind.dev/ports/webp/linux/) · [Windows](https://crossbind.dev/ports/webp/win32/) · [WASI](https://crossbind.dev/ports/webp/wasi/), which also has a command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/webp](https://crossbind.dev/ports/webp/#install). The same page has [a command-line program](https://crossbind.dev/ports/webp/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - libwebp 1.6.0: static libraries for WebAssembly, iOS, macOS, Linux, Windows and WASI, shared libraries for Android.

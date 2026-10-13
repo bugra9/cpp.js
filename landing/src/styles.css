@@ -44,15 +44,33 @@
     align-items: center;
 }
 
-/* The link row needs ~950px before it stops wrapping the header onto a second line. Below that
-   it folds into a menu the header button opens, as a full-width column under the controls. */
+/* The link row needs ~961px before it stops wrapping the header onto a second line, and a classic
+   scrollbar takes another 17px of that. Up to 1100px it folds into a menu the header button opens,
+   as a full-width column under the controls. */
 .nav-menu-btn {
     display: none;
 }
 
+/* The navbar's menus and the sections that open in place are <details>: their summaries carry no
+   disclosure marker, and the chevron turns while one is open. */
+.nav-dropdown > summary::-webkit-details-marker,
+.disclosure > summary::-webkit-details-marker {
+    display: none;
+}
+
+.nav-dropdown[open] > summary svg,
+.disclosure[open] > summary svg {
+    transform: rotate(180deg);
+}
+
+.disclosure > summary:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
 .nav-link:focus-visible,
 .nav-menu-btn:focus-visible,
-.version-item:focus-visible {
+.menu-item:focus-visible {
     outline: 2px solid currentColor;
     outline-offset: 2px;
 }
@@ -63,6 +81,21 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
+}
+
+/* A tutorial step: the lesson beside its code where both fit, the lesson first below that. */
+.tutorial-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 48px;
+    align-items: start;
+}
+
+@media (max-width: 1100px) {
+    .tutorial-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 32px;
+    }
 }
 
 /* The hero fills the first screen under the header, as cpp.js.org's did: copy and the create
@@ -158,7 +191,9 @@
     .playground-grid {
         grid-template-columns: minmax(0, 1fr);
     }
+}
 
+@media (max-width: 1100px) {
     .nav-links {
         display: none !important;
     }
@@ -167,7 +202,7 @@
         display: flex !important;
         flex-basis: 100%;
         flex-direction: column;
-        align-items: stretch;
+        align-items: stretch !important;
         order: 10;
         margin-left: 0 !important;
         padding: 6px 0 2px;
@@ -179,11 +214,21 @@
     }
 
     .version-menu {
-        margin-left: 0 !important;
+        margin: 0 !important;
     }
 
     .nav-menu-btn {
         display: grid !important;
+    }
+
+    /* In the folded column the menus open in place, their links indented under them. */
+    .nav-dropdown-panel {
+        position: static !important;
+        min-width: 0 !important;
+        padding: 0 0 0 14px !important;
+        border: 0 !important;
+        background: none !important;
+        box-shadow: none !important;
     }
 }
 
@@ -267,36 +312,52 @@ button {
 
 /* Libraries (/ports/) and its detail pages, and Examples: full-width pages of their own. Grids and
    breakpoints live here for the same reason as the guide's. */
-.lib-head {
+/* One library per row: name, what it does, version and licence, under one heading row that labels
+   the last two columns. Up to 900px the name and version share the first line and the rest follow
+   underneath. */
+.lib-row,
+.lib-group-head {
     display: grid;
-    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-    gap: 32px;
-    align-items: end;
+    grid-template-columns: 160px minmax(0, 1fr) 80px 200px;
+    grid-template-areas: 'name summary version license';
+    column-gap: 20px;
+    align-items: baseline;
 }
 
-.lib-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
-    gap: 14px;
+.lib-group-head h2 {
+    grid-column: 1 / 3;
 }
 
-.tool-row {
-    display: grid;
-    grid-template-columns: 200px minmax(0, 1fr);
-    gap: 20px;
-    align-items: start;
+.lib-row {
+    row-gap: 4px;
+    padding: 13px 10px;
+    margin: 0 -10px;
+    border-radius: 8px;
 }
 
-.port-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
-    gap: 40px;
-    align-items: start;
+.lib-row:hover {
+    background: rgba(127, 127, 127, 0.08);
 }
 
-.port-aside {
-    position: sticky;
-    top: 86px;
+.lib-row:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+}
+
+.lib-name {
+    grid-area: name;
+}
+
+.lib-summary {
+    grid-area: summary;
+}
+
+.lib-version {
+    grid-area: version;
+}
+
+.lib-license {
+    grid-area: license;
 }
 
 .example-card {
@@ -320,16 +381,12 @@ button {
     overflow-y: auto;
 }
 
-.filter-chip:focus-visible,
-.tab-btn:focus-visible {
+.filter-chip:focus-visible {
     outline: 2px solid currentColor;
     outline-offset: 2px;
 }
 
 @media (max-width: 900px) {
-    .lib-head,
-    .tool-row,
-    .port-layout,
     .example-card,
     .changelog-layout {
         grid-template-columns: minmax(0, 1fr);
@@ -339,13 +396,17 @@ button {
         display: none;
     }
 
-    .lib-head {
-        gap: 22px;
+    .lib-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: 'name version' 'summary summary' 'license license';
     }
 
-    .port-aside {
-        position: static;
-        order: -1;
+    .lib-group-head {
+        display: block;
+    }
+
+    .lib-label {
+        display: none;
     }
 }
 

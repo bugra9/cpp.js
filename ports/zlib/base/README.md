@@ -116,14 +116,14 @@ console.log((await Zlib.decompress(packed, text.length)) === text); // true
 - For files, pass paths instead of bytes: mount the file into the module's filesystem (`autoMountFiles`) and read it in C++ with `fopen`. The three apps above work that way.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/zlib](https://crossbind.dev/ports/zlib/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/zlib](https://crossbind.dev/ports/zlib/#examples), next to the code shown there:
 
 - [Write a .gz that remembers its file name](https://crossbind.dev/ports/zlib/#02-gzip): `deflateInit2` with windowBits 15 + 16 for gzip, `deflateSetHeader` for the name and date, `inflateGetHeader` to read them back.
 - [Stream a file through gzip](https://crossbind.dev/ports/zlib/#03-stream): the `deflate()` and `inflate()` loops of zlib's `zpipe.c`, file to file in 64 KB steps, reading every member of a concatenated .gz.
 - [Compress small messages with a preset dictionary](https://crossbind.dev/ports/zlib/#04-dictionary): raw deflate with `deflateSetDictionary` and `inflateSetDictionary`; a 59-byte message goes from 59 B to 11 B.
 - [Checksum data in pieces](https://crossbind.dev/ports/zlib/#05-checksum): `crc32` and `adler32` as running values, and `crc32_combine` and `adler32_combine` to join pieces checksummed separately.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/zlib/wasm/) · [Android](https://crossbind.dev/ports/zlib/android/) · [iOS](https://crossbind.dev/ports/zlib/ios/) · [macOS](https://crossbind.dev/ports/zlib/darwin/) · [Linux](https://crossbind.dev/ports/zlib/linux/) · [Windows](https://crossbind.dev/ports/zlib/win32/) · [WASI](https://crossbind.dev/ports/zlib/wasi/), which also has a gzip command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/zlib](https://crossbind.dev/ports/zlib/#install). The same page has [a gzip command-line program](https://crossbind.dev/ports/zlib/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - zlib 1.3.2 from the release tarball, pinned by SHA-256, built with zlib's own CMake options at their defaults apart from `ZLIB_BUILD_TESTING=OFF` and the library type: static on every platform. On Android the archive is position-independent and goes into the libraries that use it, because the app process already holds the system's own `libz.so`, which would shadow a shared build. Its symbols are hidden there, so every library that links it keeps its copy private and calls its own.

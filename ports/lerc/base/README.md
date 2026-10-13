@@ -186,13 +186,13 @@ console.log(`largest error ${worst.toFixed(4)} m, within 1 cm: ${worst <= 0.01}`
 - For files, pass paths instead of bytes: mount the file into the module's filesystem (`autoMountFiles`) and read it in C++ with `fopen`. The tile inspector above works that way.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/lerc](https://crossbind.dev/ports/lerc/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/lerc](https://crossbind.dev/ports/lerc/#examples), next to the code shown there:
 
 - [Read a blob's header without decoding it](https://crossbind.dev/ports/lerc/#02-blob-info): `lerc_getBlobInfo` reports size, data type, bands, valid pixels, the value range and the error used.
 - [Keep integer data exact](https://crossbind.dev/ports/lerc/#03-lossless): lossless LERC for any of its eight data types, here a 12-bit sensor band in `uint16`.
 - [Leave out pixels that have no data](https://crossbind.dev/ports/lerc/#04-nodata): a NoData value goes into LERC's validity mask instead of the heights, through `lerc_encode` and `lerc_decode`.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/lerc/wasm/) · [Android](https://crossbind.dev/ports/lerc/android/) · [iOS](https://crossbind.dev/ports/lerc/ios/) · [macOS](https://crossbind.dev/ports/lerc/darwin/) · [Linux](https://crossbind.dev/ports/lerc/linux/) · [Windows](https://crossbind.dev/ports/lerc/win32/) · [WASI](https://crossbind.dev/ports/lerc/wasi/), which also has a command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/lerc](https://crossbind.dev/ports/lerc/#install). The same page has [a command-line program](https://crossbind.dev/ports/lerc/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - LERC 4.2.0 with all 12 functions of `Lerc_c_api.h`: encoding as well as decoding, the `_4D` variants with NoData values, and `lerc_encodeForVersion` for older decoders.

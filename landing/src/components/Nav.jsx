@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { AGENT_URL, BRAND, EXAMPLES_URL, LIBRARIES_URL, PLAYGROUND_URL, REPO_URL } from '../data.js';
-import { guideHref } from '../guide/nav.js';
+import { AGENT_URL, BRAND, LIBRARIES_URL, PLAYGROUND_URL, REPO_URL } from '../data.js';
+import DocsMenu from './DocsMenu.jsx';
 import Logo from './Logo.jsx';
+import { isUnder, navLinkStyle } from './menu.jsx';
 import VersionMenu from './VersionMenu.jsx';
 
-// The primary items, in order. Examples only joins once three examples are proof-complete
-// (see data.js EXAMPLES_URL); Why has no entry on purpose, it lives in the docs and README.
+const DOCS_PREFIXES = ['/guide', '/tutorial', '/examples', '/api'];
+
+// The links after the Docs menu, in order. Why has no entry on purpose, it lives in the docs and README.
 const LINKS = [
-    { id: 'docs', label: 'Docs', href: guideHref(), prefix: '/guide' },
     { id: 'libraries', label: 'Libraries', href: LIBRARIES_URL, prefix: '/ports' },
-    ...(EXAMPLES_URL ? [{ id: 'examples', label: 'Examples', href: EXAMPLES_URL, prefix: '/examples' }] : []),
     { id: 'playground', label: 'Playground', href: PLAYGROUND_URL, prefix: '/playground' },
 ];
 
@@ -106,8 +106,6 @@ const iconButton = (tokens) => ({
     padding: 0,
 });
 
-const isUnder = (path, prefix) => path === prefix || path.startsWith(`${prefix}/`);
-
 export default function Nav({ tokens, path = '/', onToggleTheme, onOpenSearch }) {
     const [menuOpen, setMenuOpen] = useState(false);
 
@@ -137,14 +135,15 @@ export default function Nav({ tokens, path = '/', onToggleTheme, onOpenSearch })
                 {BRAND}
             </a>
 
-            {/* Below 950px this row folds into the menu the button at the right opens, badge included. */}
+            {/* Up to 1100px this row folds into the menu the button at the right opens, the version menu included. */}
             <nav
                 id="site-nav"
                 className="nav-links"
                 aria-label="Site"
                 data-open={menuOpen ? 'true' : 'false'}
-                style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4, marginLeft: 'var(--nav-gap)' }}
+                style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4, flexGrow: 1, marginLeft: 'var(--nav-gap)' }}
             >
+                <DocsMenu tokens={tokens} path={path} active={DOCS_PREFIXES.some((prefix) => isUnder(path, prefix))} />
                 {LINKS.map((link) => {
                     const active = isUnder(path, link.prefix);
                     return (
@@ -153,14 +152,7 @@ export default function Nav({ tokens, path = '/', onToggleTheme, onOpenSearch })
                             href={link.href}
                             className="tap-target nav-link"
                             aria-current={active ? 'page' : undefined}
-                            style={{
-                                padding: '7px 14px',
-                                borderRadius: 8,
-                                fontSize: 14,
-                                color: active ? tokens.text : tokens.textDim,
-                                background: active ? tokens.pillBg : 'transparent',
-                                fontWeight: active ? 600 : 400,
-                            }}
+                            style={navLinkStyle(tokens, active)}
                         >
                             {link.label}
                         </a>
@@ -170,8 +162,6 @@ export default function Nav({ tokens, path = '/', onToggleTheme, onOpenSearch })
                     only show a version that is really published. */}
                 <VersionMenu tokens={tokens} path={path} />
             </nav>
-
-            <div style={{ flex: 1 }} />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
                 <button

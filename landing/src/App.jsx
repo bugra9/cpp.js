@@ -14,6 +14,7 @@ import PlatformMap from './sections/PlatformMap.jsx';
 import Showcase from './sections/Showcase.jsx';
 import { findSitePage } from './site-pages.js';
 import { resolveTokens, useTheme } from './theme.js';
+import TutorialPage from './tutorial/TutorialPage.jsx';
 
 // Routing is one lookup. Every guide URL is prerendered to its own HTML file, so links stay
 // plain <a href> and the browser does the navigation - no router, no history handling, and a
@@ -25,13 +26,14 @@ function currentPath(url) {
     return typeof location === 'undefined' ? '/' : location.pathname;
 }
 
-// Libraries, Examples and the playground are pages of their own; everything else that is not the
-// landing renders in the guide shell.
+// Libraries, Examples, the playground and the tutorial are pages of their own; everything else that
+// is not the landing renders in the guide shell.
 function Page({ tokens, page }) {
     if (page.kind === 'ports-index') return <LibrariesPage tokens={tokens} page={page} />;
-    if (page.kind === 'port' || page.kind === 'port-platform') return <PortPage tokens={tokens} page={page} />;
+    if (page.kind === 'port') return <PortPage tokens={tokens} page={page} />;
     if (page.kind === 'examples') return <ExamplesPage tokens={tokens} page={page} />;
     if (page.kind === 'playground') return <PlaygroundPage tokens={tokens} page={page} />;
+    if (page.kind === 'tutorial') return <TutorialPage tokens={tokens} page={page} />;
     if (page.kind === 'changelog') return <ChangelogPage tokens={tokens} page={page} />;
     return <Guide tokens={tokens} page={page} />;
 }

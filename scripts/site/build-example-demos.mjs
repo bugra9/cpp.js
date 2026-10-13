@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -67,6 +68,16 @@ export const DEMOS = [
     { id: 'lib-openssl-direct', kind: 'source', source: 'lib-openssl/direct', expect: '=> 5/5 checks passed' },
     { id: 'lib-gdal', kind: 'source', expect: '=> 21/21 checks passed' },
     { id: 'lib-gdal-direct', kind: 'source', source: 'lib-gdal/direct', expect: '=> 4/4 checks passed' },
+    // The playground's samples (landing/src/playground/samples), built ahead of time so an unedited one runs in the
+    // tutorial and the playground without a compile. `sample-<name>` builds landing/demos/sample with that sample's
+    // C++, and its page runs the sample's main.js.
+    { id: 'sample-hello', kind: 'sample', expect: 'the counter is at 42' },
+    { id: 'sample-numbers', kind: 'sample', expect: 'fibonacci(90) = 2880067194370816120' },
+    { id: 'sample-strings', kind: 'sample', expect: 'total: 10' },
+    { id: 'sample-structs', kind: 'sample', expect: 'north again: true' },
+    { id: 'sample-inheritance', kind: 'sample', expect: 'is a Shape: true' },
+    { id: 'sample-callbacks', kind: 'sample', expect: 'applied twice: 400' },
+    { id: 'sample-errors', kind: 'sample', expect: 'std::out_of_range: not between 0 and 100' },
 ];
 
 const log = (message) => process.stderr.write(`${message}\n`);
@@ -176,7 +187,42 @@ async function buildSource(project, id, out) {
     return { script: `/examples/${id}/dist/${script}`, path: `/examples/${id}/dist`, bytes, nativeVersions };
 }
 
-const BUILDERS = { vite: buildVite, vanilla: buildVanilla, rspack: buildRspack, source: buildSource };
+const SAMPLES_ROOT = path.join(REPOSITORY_ROOT, 'landing', 'src', 'playground', 'samples');
+// A sample without C++ of its own uses the playground compiler's template, as landing/src/playground/samples.js does.
+const TEMPLATE_NATIVE = path.join(REPOSITORY_ROOT, 'tooling', 'cloud', 'compiler', 'template', 'src', 'native');
+
+const NATIVE_FILES = ['native.h', 'native.cpp'];
+
+const sampleOf = (demo) => demo.id.replace(/^sample-/, '');
+
+const hashFiles = (files) => files.reduce((hash, file) => hash.update(fs.readFileSync(file)), crypto.createHash('sha256')).digest('hex');
+
+const sampleSources = (sample) =>
+    NATIVE_FILES.map((name) => {
+        const own = path.join(SAMPLES_ROOT, sample, name);
+        return fs.existsSync(own) ? own : path.join(TEMPLATE_NATIVE, name);
+    });
+
+// Recorded with the build and compared before a deploy, so a sample whose C++ changed never ships its old module.
+export const sampleSourceHash = (sample) => hashFiles(sampleSources(sample));
+
+function copySample(sample, project) {
+    const native = path.join(project, 'src', 'native');
+    fs.mkdirSync(native, { recursive: true });
+    for (const file of sampleSources(sample)) fs.copyFileSync(file, path.join(native, path.basename(file)));
+    fs.copyFileSync(path.join(SAMPLES_ROOT, sample, 'main.js'), path.join(project, 'main.js'));
+}
+
+// A playground sample: the source build, plus the main.js its page runs, where its wasm lies (the playground's
+// sandbox takes it as bytes) and which C++ it was built from.
+async function buildSample(project, id, out) {
+    const artifact = await buildSource(project, id, out);
+    fs.copyFileSync(path.join(project, 'main.js'), path.join(out, 'main.js'));
+    const sources = hashFiles(NATIVE_FILES.map((name) => path.join(project, 'src', 'native', name)));
+    return { ...artifact, wasm: artifact.script.replace(/\.js$/, '.wasm'), sources };
+}
+
+const BUILDERS = { vite: buildVite, vanilla: buildVanilla, rspack: buildRspack, source: buildSource, sample: buildSample };
 
 // The demo sources carry `beta` so they install from the prerelease channel by default; a site
 // built from another channel has to install that channel's packages instead.
@@ -258,6 +304,12 @@ export function assertDemosMatchSnapshot(manifest, snapshot, { distRoot = null }
             `live demos built with crossbind ${stale.map((demo) => `${demo.id}@${demo.crossbind}`).join(', ')} but the site resolved ${snapshot.version}; rerun the demo build.`,
         );
     }
+    const outdated = DEMOS.filter((demo) => demo.kind === 'sample' && byId.get(demo.id).sources !== sampleSourceHash(sampleOf(demo)));
+    if (outdated.length) {
+        throw new Error(
+            `playground samples changed after their modules were built: ${outdated.map((demo) => demo.id).join(', ')}; rerun the demo build.`,
+        );
+    }
     if (distRoot) {
         const absent = DEMOS.map((demo) => demo.id).filter((id) => !fs.existsSync(path.join(distRoot, 'examples', id, 'index.html')));
         if (absent.length) throw new Error(`live demos not in the build: ${absent.join(', ')}; rebuild the site.`);
@@ -277,6 +329,11 @@ export async function buildExampleDemos({ channel, only = null } = {}) {
             log(`${demo.id}: building landing/demos/${source} against npm ${distTag}`);
             copyDir(path.join(REPOSITORY_ROOT, 'landing', 'demos', source), project);
             pinDependencies(path.join(project, 'package.json'), distTag);
+        } else if (demo.kind === 'sample') {
+            log(`${demo.id}: building a playground sample against npm ${distTag}`);
+            copyDir(path.join(REPOSITORY_ROOT, 'landing', 'demos', 'sample'), project);
+            copySample(sampleOf(demo), project);
+            pinDependencies(path.join(project, 'package.json'), distTag);
         } else {
             log(`${demo.id}: npm create crossbind${suffix} -- ${demo.id} ${demo.args.join(' ')}`);
             await run('npm', ['create', `crossbind${suffix}`, '--', demo.id, ...demo.args], workspace);
@@ -292,6 +349,10 @@ export async function buildExampleDemos({ channel, only = null } = {}) {
         const onScreen = await verifyDemo(demo.id);
         if (demo.expect && !onScreen.includes(demo.expect)) {
             throw new Error(`${demo.id}: expected "${demo.expect}" on the page, saw "${onScreen.slice(0, 120)}"`);
+        }
+        // A sample's page ends with "=> done" only once its whole main.js ran.
+        if (demo.kind === 'sample' && !onScreen.endsWith('=> done')) {
+            throw new Error(`${demo.id}: main.js did not run to its end; saw "${onScreen.slice(-120)}"`);
         }
         log(`${demo.id}: ok - "${onScreen.slice(0, 80)}"`);
         built.push({ id: demo.id, href: `/examples/${demo.id}/`, crossbind: crossbindVersion, onScreen, ...(artifact ?? {}) });

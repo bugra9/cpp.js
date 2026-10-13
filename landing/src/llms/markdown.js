@@ -96,6 +96,8 @@ const RENDERERS = {
     example,
     // Markdown has no tabs: each panel becomes a heading of its own.
     tabs: (block, resolveLink) => block.tabs.map((tab) => `#### ${tab.label}\n\n${renderBlocks(tab.blocks, resolveLink)}`).join('\n\n'),
+    // Nor anything folded: a closed section is written out under its heading.
+    details: (block, resolveLink) => `### ${block.summary}\n\n${renderBlocks(block.blocks, resolveLink)}`,
 };
 
 // llms-full.txt is one document: a page's H1 becomes a prefixed H2 and every heading under it

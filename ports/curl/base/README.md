@@ -117,14 +117,14 @@ try {
 - When libcurl refuses a URL, the wrapper throws the message from `curl_url_strerror`, which JavaScript catches as shown.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/curl](https://crossbind.dev/ports/curl/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/curl](https://crossbind.dev/ports/curl/#examples), next to the code shown there:
 
 - [Build a URL from parts without breaking it](https://crossbind.dev/ports/curl/#02-build-url): `curl_url_set` with `CURLU_APPENDQUERY` and `CURLU_URLENCODE`, and a relative reference resolved the way curl follows a redirect.
 - [Percent-encode and decode text](https://crossbind.dev/ports/curl/#03-escape): `curl_easy_escape` and `curl_easy_unescape`, the encoding the curl tool's `--data-urlencode` uses.
 - [Read the dates in HTTP headers](https://crossbind.dev/ports/curl/#04-dates): `curl_getdate` on the three date formats HTTP allows.
 - [Check what this libcurl was built with](https://crossbind.dev/ports/curl/#05-build-info): `curl_version_info`, with the protocols and features of this build.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/curl/wasm/) · [Android](https://crossbind.dev/ports/curl/android/) · [iOS](https://crossbind.dev/ports/curl/ios/) · [macOS](https://crossbind.dev/ports/curl/darwin/) · [Linux](https://crossbind.dev/ports/curl/linux/) · [Windows](https://crossbind.dev/ports/curl/win32/) · [WASI](https://crossbind.dev/ports/curl/wasi/), which also has a command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/curl](https://crossbind.dev/ports/curl/#install). The same page has [a command-line program](https://crossbind.dev/ports/curl/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - libcurl 8.22.0 with OpenSSL 4.0.2 for TLS (`curl_version()` reports `libcurl/8.22.0 OpenSSL/4.0.2`): a static library for WebAssembly, iOS, macOS, Linux, Windows and WASI, a shared one for Android.

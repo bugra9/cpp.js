@@ -199,21 +199,21 @@ console.log((await Tiff.decode(tiff)) === rgba); // true
 - For files, pass paths instead of bytes: mount the file into the module's memory with `m.autoMountFiles([file], await m.getRandomPath('/memfs'))` and open it in C++ with `TIFFOpen`. The viewer above works that way, and its pages never need a full-size RGBA copy.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/tiff](https://crossbind.dev/ports/tiff/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/tiff](https://crossbind.dev/ports/tiff/#examples), next to the code shown there:
 
 - [Store several pages in one file](https://crossbind.dev/ports/tiff/#02-pages): `TIFFWriteDirectory`, `TIFFReadDirectory` and `TIFFSetDirectory`, with 1-bit CCITT Group 4 pages.
 - [Keep 32-bit float samples exact](https://crossbind.dev/ports/tiff/#03-samples): `SAMPLEFORMAT_IEEEFP`, the floating-point predictor and `TIFFReadScanline`.
 - [Read one tile of a big image](https://crossbind.dev/ports/tiff/#04-tiles): `TIFFWriteTile`, `TIFFComputeTile` and `TIFFReadTile`.
 - [Open a TIFF file and print its tags](https://crossbind.dev/ports/tiff/#05-open-file): `m.autoMountFiles`, `TIFFOpen` and `TIFFPrintDirectory`, on WebAssembly.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/tiff/wasm/) · [Android](https://crossbind.dev/ports/tiff/android/) · [iOS](https://crossbind.dev/ports/tiff/ios/) · [macOS](https://crossbind.dev/ports/tiff/darwin/) · [Linux](https://crossbind.dev/ports/tiff/linux/) · [Windows](https://crossbind.dev/ports/tiff/win32/) · [WASI](https://crossbind.dev/ports/tiff/wasi/), which also has a command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/tiff](https://crossbind.dev/ports/tiff/#install). The same page has [a command-line program](https://crossbind.dev/ports/tiff/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - libtiff 4.7.2 with libtiffxx, the C++ stream API (`TIFFStreamOpen`): static libraries on WebAssembly, iOS, macOS, Linux, Windows and WASI, shared ones (`libtiff.so`, `libtiffxx.so`) on Android.
 - Codecs on WebAssembly, as `TIFFGetConfiguredCODECs` lists them: None, LZW, PackBits, ThunderScan, NeXT, JPEG, Old-style JPEG, CCITT RLE, CCITT RLE/W, CCITT Group 3, CCITT Group 4, Deflate, AdobeDeflate, PixarLog, SGILog, SGILog24, ZSTD and LERC. Android and iOS are built from the same recipe with the same four codec libraries: zlib, libjpeg-turbo, zstd and LERC.
 - No WebP, LZMA or JBIG: files that use them open and list their tags, but their pixels cannot be decoded.
 - The WASI build links zlib only, so it has None, LZW, PackBits, ThunderScan, NeXT, the CCITT codecs, Deflate, PixarLog and SGILog: no JPEG, ZSTD or LERC. The `-standalone-wasi` tools have the same set.
-- On WASI, a multi-page TIFF written straight to a file with `TIFFOpen` comes out corrupt: with wasi-sdk 34's `wasm32-wasip2` and `-wasip3` libc, a write after `lseek(fd, 0, SEEK_END)` lands at the previous position, and libtiff seeks that way before each page after the first. One-page files are not affected, and neither is a file built in memory with `TIFFClientOpen` and saved in one write, as the [WASI program](https://crossbind.dev/ports/tiff/wasi/) does.
+- On WASI, a multi-page TIFF written straight to a file with `TIFFOpen` comes out corrupt: with wasi-sdk 34's `wasm32-wasip2` and `-wasip3` libc, a write after `lseek(fd, 0, SEEK_END)` lands at the previous position, and libtiff seeks that way before each page after the first. One-page files are not affected, and neither is a file built in memory with `TIFFClientOpen` and saved in one write, as the [WASI program](https://crossbind.dev/ports/tiff/#wasi-program) does.
 
 ## Supported platforms
 This is the main package; the precompiled binaries are shipped per platform:

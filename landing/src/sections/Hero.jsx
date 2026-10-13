@@ -2,6 +2,7 @@ import { useState } from 'react';
 import CommandChip from '../components/CommandChip.jsx';
 import PlatformScene from '../components/PlatformScene.jsx';
 import PromptModal from '../components/PromptModal.jsx';
+import Tabs from '../components/Tabs.jsx';
 import {
     CodeWindow, highlight, primaryButtonStyle, secondaryButtonStyle,
 } from '../components/ui.jsx';
@@ -27,52 +28,6 @@ function RunsOn({ tokens }) {
     );
 }
 
-function Tabs({ tokens, label, tabs, panelId, active, onSelect }) {
-    // Arrow keys are what a screen-reader user expects once this announces as a tablist.
-    const onKeyDown = (event) => {
-        const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key];
-        if (!step) return;
-        event.preventDefault();
-        const i = tabs.findIndex((t) => t.id === active);
-        onSelect(tabs[(i + step + tabs.length) % tabs.length].id);
-    };
-
-    return (
-        <div
-            role="tablist"
-            aria-label={label}
-            onKeyDown={onKeyDown}
-            style={{ display: 'flex', gap: 4, marginBottom: 10 }}
-        >
-            {tabs.map((tab) => (
-                <button
-                    key={tab.id}
-                    type="button"
-                    role="tab"
-                    id={`tab-${tab.id}`}
-                    className="tap-target"
-                    aria-selected={tab.id === active}
-                    aria-controls={panelId}
-                    tabIndex={tab.id === active ? 0 : -1}
-                    onClick={() => onSelect(tab.id)}
-                    style={{
-                        background: tab.id === active ? tokens.pillBg : 'transparent',
-                        border: `1px solid ${tab.id === active ? tokens.borderStrong : 'transparent'}`,
-                        color: tab.id === active ? tokens.text : tokens.textDim,
-                        borderRadius: 8,
-                        padding: '5px 14px',
-                        fontSize: 12.5,
-                        fontFamily: tokens.mono,
-                        cursor: 'pointer',
-                    }}
-                >
-                    {tab.label}
-                </button>
-            ))}
-        </div>
-    );
-}
-
 function CreateCommand({ tokens }) {
     const [active, setActive] = useState(CREATE_COMMANDS[0].id);
     const { command } = CREATE_COMMANDS.find((entry) => entry.id === active);
@@ -80,7 +35,7 @@ function CreateCommand({ tokens }) {
     return (
         <>
             <Tabs tokens={tokens} label="Package manager" tabs={CREATE_COMMANDS} panelId="create-panel" active={active} onSelect={setActive} />
-            <div role="tabpanel" id="create-panel" aria-labelledby={`tab-${active}`} style={{ maxWidth: 560 }}>
+            <div role="tabpanel" id="create-panel" aria-labelledby={`create-panel-${active}`} style={{ maxWidth: 560 }}>
                 <CommandChip tokens={tokens} command={command} />
             </div>
         </>

@@ -145,14 +145,14 @@ console.log(x.toFixed(2), y.toFixed(2)); // 3225860.73 5013551.24
 - When PROJ cannot read a definition, the wrapper throws the reason PROJ logged: `new Transformer('EPSG:4326', 'EPSG:99999')` rejects with `std::runtime_error: proj_create: crs not found: EPSG:99999`.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/proj](https://crossbind.dev/ports/proj/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/proj](https://crossbind.dev/ports/proj/#examples), next to the code shown there:
 
 - [Write a CRS as WKT, a .prj, PROJJSON or a PROJ string](https://crossbind.dev/ports/proj/#02-formats): `proj_create`, `proj_as_wkt` for WKT2 and ESRI WKT, `proj_as_projjson` and `proj_as_proj_string`.
 - [Read where a CRS applies and the order of its axes](https://crossbind.dev/ports/proj/#03-area-axes): `proj_get_area_of_use`, `proj_crs_get_coordinate_system` and `proj_cs_get_axis_info`.
 - [Measure distances, headings and areas on the ellipsoid](https://crossbind.dev/ports/proj/#04-geodesic): `geod_inverse`, `geod_direct` and `geod_polygonarea` from `geodesic.h`.
 - [Find the EPSG code of a .prj, and the UTM zone of a point](https://crossbind.dev/ports/proj/#05-identify): `proj_identify` and `proj_get_crs_info_list_from_database`.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/proj/wasm/) · [Android](https://crossbind.dev/ports/proj/android/) · [iOS](https://crossbind.dev/ports/proj/ios/) · [macOS](https://crossbind.dev/ports/proj/darwin/) · [Linux](https://crossbind.dev/ports/proj/linux/) · [Windows](https://crossbind.dev/ports/proj/win32/) · [WASI](https://crossbind.dev/ports/proj/wasi/), which also has a command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/proj](https://crossbind.dev/ports/proj/#install). The same page has [a command-line program](https://crossbind.dev/ports/proj/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - PROJ 9.9.0 as a static library, `libproj`, with its C API (`proj.h`), the geodesic library (`geodesic.h`) and the C++ API headers. SQLite 3.53.4 reads its database and libtiff 4.7.2 its GeoTIFF grid files.

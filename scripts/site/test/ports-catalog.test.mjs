@@ -6,6 +6,7 @@ import {
     createFixtureRegistryClient,
     createRegistryClient,
     LIBRARY_TARGETS,
+    NAPI_TARGET,
     readPortsTree,
     renderCatalogModule,
     resolvePublication,
@@ -34,6 +35,8 @@ test('every port family in the tree yields a catalog entry with canonical facts'
     assert.ok(gdal.binCommands.includes('gdalinfo-wasi'));
     assert.deepEqual(LIBRARY_TARGETS, ['wasm', 'wasi', 'android', 'ios', 'darwin', 'linux', 'linuxmusl', 'win32']);
     assert.ok(['darwin', 'linux', 'linuxmusl', 'win32'].every((platform) => gdal.targets.some((target) => target.target === platform)));
+    // The prebuilt Node-API package is a target of its own, so the site can offer it.
+    assert.ok(gdal.targets.some((target) => target.target === NAPI_TARGET && target.package === '@crossbind/port-gdal-standalone-napi'));
 });
 
 test('publication comes from the dist-tag npm serves, not from the directory existing', async () => {

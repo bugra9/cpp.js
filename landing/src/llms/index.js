@@ -8,6 +8,7 @@ import { GUIDE_HOME, GUIDE_SECTIONS } from '../guide/nav.js';
 import AGENT_PAGE from '../pages/agent.js';
 import API_PAGE, { REFERENCE_DOCUMENTS } from '../pages/api.js';
 import EXAMPLES_PAGE, { EXAMPLES } from '../pages/examples.js';
+import { TUTORIAL_PAGES } from '../pages/tutorial.js';
 import { PORT_PAGES, PORTS_INDEX } from '../ports/pages.js';
 import { RELEASE } from '../release.js';
 import { API_DOCS_BASE, readApiDocs } from './apiDocs.js';
@@ -66,6 +67,10 @@ export function renderLlmsIndex() {
         entry(GUIDE_HOME),
         ...GUIDE_SECTIONS.flatMap((section) => ['', `### ${section.label}`, '', ...section.pages.map(entry)]),
         '',
+        '## Tutorial',
+        '',
+        ...TUTORIAL_PAGES.map(entry),
+        '',
         '## API reference',
         '',
         entry(API_PAGE),
@@ -122,6 +127,7 @@ export function renderLlmsFull() {
     const sections = [
         section(overviewDocument(), 'Project overview'),
         ...GUIDE_SECTIONS.flatMap((group) => group.pages).map((item) => page(item, `Guide: ${item.title}`)),
+        ...TUTORIAL_PAGES.map((item) => page(item, `Tutorial: ${item.title}`)),
         page(API_PAGE, 'API overview'),
         ...REFERENCE_DOCUMENTS.flatMap(([file]) => (apiDocs.has(file)
             ? [section(withPageLine(apiDocs.get(file)), `API: ${API_DOC_TITLES[file] ?? file}`)]

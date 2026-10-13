@@ -162,14 +162,14 @@ for (const [quality, subsampling] of [[90, 444], [90, 420], [50, 420]]) {
 - For files, pass paths instead of bytes: mount the file into the module's filesystem (`autoMountFiles`) and read it in C++ with `fopen`. The apps above work that way.
 
 ### More examples
-Each one runs in your browser on [crossbind.dev/ports/jpegturbo](https://crossbind.dev/ports/jpegturbo/#usage), next to the code shown there:
+Each one runs in your browser on [crossbind.dev/ports/jpegturbo](https://crossbind.dev/ports/jpegturbo/#examples), next to the code shown there:
 
 - [Decode a JPEG and read its header](https://crossbind.dev/ports/jpegturbo/#02-decode): `jpeg_mem_src`, `jpeg_read_header` and `jpeg_read_scanlines` to RGBA, and the error a file that is not a JPEG raises.
 - [Decode straight to a thumbnail](https://crossbind.dev/ports/jpegturbo/#03-thumbnail): `scale_num` and `scale_denom`, with `jpeg_calc_output_dimensions` for the size before decoding.
 - [Make a JPEG smaller without re-encoding it](https://crossbind.dev/ports/jpegturbo/#04-transcode): `jpeg_read_coefficients` and `jpeg_write_coefficients` with optimised or progressive Huffman coding, byte for byte what `jpegtran -copy all` writes.
 - [Read and write EXIF and comments](https://crossbind.dev/ports/jpegturbo/#05-markers): `jpeg_save_markers` and `jpeg_write_marker`.
 
-Setup and differences per platform: [WebAssembly](https://crossbind.dev/ports/jpegturbo/wasm/) · [Android](https://crossbind.dev/ports/jpegturbo/android/) · [iOS](https://crossbind.dev/ports/jpegturbo/ios/) · [macOS](https://crossbind.dev/ports/jpegturbo/darwin/) · [Linux](https://crossbind.dev/ports/jpegturbo/linux/) · [Windows](https://crossbind.dev/ports/jpegturbo/win32/) · [WASI](https://crossbind.dev/ports/jpegturbo/wasi/), which also has a command-line program built with `crossbind build -p wasi -e wasi`.
+Setup for every platform: [crossbind.dev/ports/jpegturbo](https://crossbind.dev/ports/jpegturbo/#install). The same page has [a command-line program](https://crossbind.dev/ports/jpegturbo/#wasi-program) built with `crossbind build -p wasi -e wasi`.
 
 ## What this build includes
 - libjpeg-turbo 3.2.0's libjpeg API (`jpeglib.h`) and TurboJPEG API (`turbojpeg.h`): static `libjpeg.a` and `libturbojpeg.a` for WebAssembly, WASI, iOS, macOS, Linux and Windows, and shared `libjpeg.so` and `libturbojpeg.so` for Android.

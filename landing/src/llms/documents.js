@@ -29,7 +29,7 @@ const commandsCell = (port) => {
     return bin ? `${port.binCommands.length} via \`${bin.package}\`` : 'none';
 };
 
-// The port page's "at a glance" rail and its outbound links, which the block list does not carry.
+// The port page's facts and its outbound links, which the block list does not carry.
 function portFacts(page) {
     const { port } = page;
     return render([
@@ -41,7 +41,6 @@ function portFacts(page) {
                 `Licence: \`${port.license}\``,
                 `Targets: ${targetsCell(port)}`,
                 `WASI commands: ${commandsCell(port)}`,
-                ...(page.install ? [`Install: \`${page.install}\``] : []),
             ],
         },
         { type: 'p', text: page.links.map((link) => `[${link.label}](${link.href})`).join(' · ') },
