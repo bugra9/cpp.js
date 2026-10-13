@@ -8,7 +8,7 @@
 
 ```bash
 crossbind runner start                # the web image on port 8787
-# crossbind: crossbind-runner-web is running. Build against it with:
+# crossbind: crossbind-local-runner-web is running. Build against it with:
 #   crossbind config set RUNNER REMOTE
 #   crossbind config set REMOTE_URL_WEB http://127.0.0.1:8787
 #   export CROSSBIND_TOKEN_WEB=<token>
@@ -20,7 +20,7 @@ crossbind build -p wasm
 # crossbind: web steps run on the runner at http://127.0.0.1:8787 (RUNNER=REMOTE from ~/.crossbind.json, address from REMOTE_URL_WEB in ~/.crossbind.json).
 
 crossbind config set RUNNER DOCKER_RUN   # back to the local Docker
-crossbind runner stop
+crossbind runner delete
 ```
 
 For a single build, the environment does the same without changing `~/.crossbind.json`:
@@ -49,7 +49,7 @@ crossbind usage                       # this month's build minutes, by image
 - `crossbind login` asks GitHub for no permission and turns away GitHub accounts younger than 30 days. Its token is kept for that cloud address in `~/.crossbind/credentials.json`, readable by you only, and stops working after 90 days unused. `crossbind logout` revokes it, `--all` the token of every machine signed in to the account. `CLOUD_URL` in `~/.crossbind.json`, or `CROSSBIND_CLOUD_URL`, names another cloud.
 - crossbind cloud keeps your GitHub id and name, when you signed in, your tokens' hashes and how long your runners were up; no email, and none of your sources once the runner stops. `crossbind account delete --yes` deletes the account and signs out every machine; [crossbind.dev/privacy](https://crossbind.dev/privacy/) says what stays and for how long.
 
-`runner start` runs the runner in the local Docker, which is how you try it out or turn one machine into the build machine of others (`--host 0.0.0.0`, `--port`, `--token`; the token defaults to `$CROSSBIND_RUNNER_TOKEN`, else a new one). `--role android|linux|windows` starts the other images, on ports 8788, 8789 and 8790, so the runners one build needs fit on one machine. To run a runner elsewhere, deploy it.
+`runner start` runs the runner in the local Docker, which is how you try it out or turn one machine into the build machine of others (`--host 0.0.0.0`, `--port`, `--token`; the token defaults to `$CROSSBIND_RUNNER_TOKEN`, else a new one). `--role android|linux|windows` starts the other images, on ports 8788, 8789 and 8790, so the runners one build needs fit on one machine. Its container is `crossbind-local-runner-<role>`; `runner delete` removes it, and one an older crossbind started as `crossbind-runner-<role>`. To run a runner elsewhere, deploy it.
 
 ## Deploy a runner
 
@@ -119,14 +119,14 @@ Each step is its own request, made only when crossbind runs the step; a step it 
 
 ## Versions
 
-A runner serves the image digest pinned by the crossbind that started or generated it. A build whose crossbind pins another digest stops with `toolchain mismatch: runner has <image>, build pins <image>`: after upgrading crossbind, `runner stop` and `runner start` again, or rerun `runner init` and redeploy. Images are compared by digest, so a runner pulled through a registry mirror serves builds that pin the release digest.
+A runner serves the image digest pinned by the crossbind that started or generated it. A build whose crossbind pins another digest stops with `toolchain mismatch: runner has <image>, build pins <image>`: after upgrading crossbind, `runner delete` and `runner start` again, or rerun `runner init` and redeploy. Images are compared by digest, so a runner pulled through a registry mirror serves builds that pin the release digest.
 
 Releases from before `RUNNER=REMOTE` read the same `~/.crossbind.json` and stop with `The runner REMOTE is invalid`. While the machine still builds projects with one of them, choose the runner per build with `CROSSBIND_RUNNER=REMOTE` and keep `RUNNER` out of the file.
 
 ## Security
 
 - A runner runs any command a token holder sends, inside the toolchain image and with internet access (crates, Conan packages, library sources). Treat the token like a deploy key and give a runner to one person or a team that trusts each other: a build can read what earlier builds left on it.
-- A runner lives on between builds, so it is only as trustworthy as everything it has built. Build steps run as the same unprivileged user as the runner: they cannot change the toolchain, but a malicious build script can change the emscripten cache and the files the runner keeps for later builds, and read the token from the runner process, although it is not in the steps' environment. Restart the runner (`runner stop` and `runner start`, or redeploy) after building something you do not trust. `RUNNER=DOCKER_EXEC` shares this; `RUNNER=DOCKER_RUN` starts every step in a fresh container.
+- A runner lives on between builds, so it is only as trustworthy as everything it has built. Build steps run as the same unprivileged user as the runner: they cannot change the toolchain, but a malicious build script can change the emscripten cache and the files the runner keeps for later builds, and read the token from the runner process, although it is not in the steps' environment. Restart the runner (`runner delete` and `runner start`, or redeploy) after building something you do not trust. `RUNNER=DOCKER_EXEC` shares this; `RUNNER=DOCKER_RUN` starts every step in a fresh container.
 - The runner refuses to start without a `CROSSBIND_RUNNER_TOKEN` of at least 16 characters, checks it in constant time on every request except `GET /v1/health`, and syncs files only inside its mount folders.
 - The Cloudflare Worker checks the token, in constant time, before it wakes the container.
 - A Cloud Run runner gets a service account of its own that may read only its token secret. A build step can ask the metadata server for the token of the instance's account, and the project's default compute account often holds broad roles.

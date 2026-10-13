@@ -40,6 +40,7 @@ const BOOT_SCRIPT = [
 const VERSION = JSON.parse(fs.readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version;
 
 const runnerName = (role) => `crossbind-runner-${role}`;
+const localRunnerName = (role) => `crossbind-local-runner-${role}`;
 const runnerFiles = () => fs.readdirSync(RUNNER_SOURCE).filter((file) => file.endsWith('.js'));
 // Google ships the linux NDK for x86_64 only, so an android runner is always amd64.
 const platformOf = (role) => (role === 'android' ? 'linux/amd64' : undefined);
@@ -62,7 +63,7 @@ function assertRole(role) {
 export function runnerStartArgs({ role, port, host }) {
     const platform = platformOf(role);
     return [
-        'run', '-d', '--name', runnerName(role), '--restart', 'unless-stopped',
+        'run', '-d', '--name', localRunnerName(role), '--restart', 'unless-stopped',
         ...(platform ? ['--platform', platform] : []),
         ...DOCKER_RUN_SECURITY_ARGS,
         '-p', `${host}:${port}:${RUNNER_PORT}`,
@@ -89,13 +90,24 @@ export function startRunner({ role = 'web', port = runnerHostPort(role), host = 
     });
     // A token taken from the environment is shown by its variable, so the line printed for it puts no secret in a log.
     return {
-        name: runnerName(role), url: `http://${host}:${port}`, token: secret, displayToken: fromEnvironment ? '$CROSSBIND_RUNNER_TOKEN' : secret,
+        name: localRunnerName(role), url: `http://${host}:${port}`, token: secret, displayToken: fromEnvironment ? '$CROSSBIND_RUNNER_TOKEN' : secret,
     };
 }
 
-export function stopRunner({ role = 'web' } = {}) {
+// A container that is not there is already deleted: docker reports one on stderr even with -f, and some engines exit 1.
+function removeContainer(name) {
+    try {
+        execFileSync('docker', ['rm', '-f', name], { stdio: ['ignore', 'inherit', 'pipe'] });
+    } catch (error) {
+        if (!/no such container/i.test(String(error.stderr))) throw error;
+    }
+}
+
+export function deleteRunner({ role = 'web' } = {}) {
     assertRole(role);
-    execFileSync('docker', ['rm', '-f', runnerName(role)], { stdio: 'inherit' });
+    removeContainer(localRunnerName(role));
+    // An older crossbind started its local runner under the name the deployed runners take.
+    removeContainer(runnerName(role));
 }
 
 function dockerfile(role) {

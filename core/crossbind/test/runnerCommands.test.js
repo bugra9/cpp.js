@@ -11,7 +11,7 @@ const { execFileSync } = await import('node:child_process');
 const { spawnSync } = await vi.importActual('node:child_process');
 const { getDockerImage } = await import('../src/utils/pullDockerImage.js');
 const {
-    runnerStartArgs, startRunner, stopRunner, initRunner, connectCommands, deploySteps,
+    runnerStartArgs, startRunner, deleteRunner, initRunner, connectCommands, deploySteps,
 } = await import('../src/actions/runnerCommands.js');
 
 describe('crossbind runner start', () => {
@@ -85,10 +85,37 @@ describe('crossbind runner start', () => {
         expect(startRunner({ role: 'web', token: 'token-given-on-the-line' }).displayToken).toBe('token-given-on-the-line');
     });
 
-    test('stop removes the runner container of that role', () => {
-        stopRunner({ role: 'web' });
+    test('names the local runner apart from the runners that runner init deploys', () => {
+        const runner = startRunner({ role: 'web', token: 'token-for-the-name-test' });
 
-        expect(execFileSync.mock.calls[0][1]).toEqual(['rm', '-f', 'crossbind-runner-web']);
+        expect(runner.name).toBe('crossbind-local-runner-web');
+        expect(execFileSync.mock.calls[0][1].slice(0, 4)).toEqual(['run', '-d', '--name', 'crossbind-local-runner-web']);
+    });
+
+    test('delete removes the local runner of that role, and one an older crossbind started under the deployed runners\' name', () => {
+        deleteRunner({ role: 'web' });
+
+        expect(execFileSync.mock.calls.map((call) => call[1])).toEqual([
+            ['rm', '-f', 'crossbind-local-runner-web'],
+            ['rm', '-f', 'crossbind-runner-web'],
+        ]);
+    });
+
+    test('delete passes over a container that is not there, on engines that fail for it too', () => {
+        execFileSync.mockImplementationOnce(() => {
+            throw Object.assign(new Error('Command failed'), { stderr: Buffer.from('Error: no container with name or ID "crossbind-local-runner-web" found: no such container\n') });
+        });
+
+        expect(() => deleteRunner({ role: 'web' })).not.toThrow();
+        expect(execFileSync.mock.calls[1][1]).toEqual(['rm', '-f', 'crossbind-runner-web']);
+    });
+
+    test('delete stops at any other docker error', () => {
+        const daemonDown = Object.assign(new Error('Command failed'), { stderr: Buffer.from('Cannot connect to the Docker daemon. Is the docker daemon running?\n') });
+        execFileSync.mockImplementationOnce(() => { throw daemonDown; });
+
+        expect(() => deleteRunner({ role: 'web' })).toThrow(daemonDown);
+        expect(execFileSync).toHaveBeenCalledTimes(1);
     });
 });
 

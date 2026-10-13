@@ -34,7 +34,7 @@ import systemKeys from './utils/systemKeys.js';
 import logger from './utils/logger.js';
 import { getDockerImage, getDockerContainerName } from './utils/pullDockerImage.js';
 import {
-    RUNNER_PLATFORMS, RUNNER_ROLES, connectCommands, deploySteps, initRunner, newRunnerToken, runnerHostPort, startRunner, stopRunner,
+    RUNNER_PLATFORMS, RUNNER_ROLES, connectCommands, deleteRunner, deploySteps, initRunner, newRunnerToken, runnerHostPort, startRunner,
 } from './actions/runnerCommands.js';
 import {
     deleteAccount as deleteCloudAccount, fetchUsage, login as loginToCloud, logout as logoutOfCloud, usageLines,
@@ -284,10 +284,10 @@ commandRunner.command('start')
         connectCommands(options.role, runner.url, runner.displayToken).forEach((line) => console.log(`  ${line}`));
     }));
 
-commandRunner.command('stop')
-    .description('stop and remove the local runner')
+commandRunner.command('delete')
+    .description('stop and delete the local runner')
     .addOption(roleOption())
-    .action(runnerAction((options) => stopRunner({ role: options.role })));
+    .action(runnerAction((options) => deleteRunner({ role: options.role })));
 
 commandRunner.command('init')
     .description('write a folder that deploys a runner to a hosting platform')
