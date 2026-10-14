@@ -1,6 +1,7 @@
 import { REPO_URL } from '../data.js';
 import { guideHref } from '../guide/nav.js';
 import { RELEASE } from '../release.js';
+import { httpComponentName, httpHandlerCode, spinManifestCode } from '../wasiHttp.js';
 import { BIN_TARGET, NAPI_TARGET, publishedTarget } from './catalog.js';
 
 // How a library goes into each kind of project: a browser app, Node.js, an edge runtime, Electron,
@@ -155,24 +156,47 @@ function nodeBlocks(port, { headerImport }) {
     ];
 }
 
+// A library with data files or environment is left out of the WASI part: no host mounts them for a component.
 function edgeBlocks(port) {
     const wasm = publishedTarget(port, 'wasm');
-    if (!wasm) return [];
+    const wasi = port.hasWasiData ? null : publishedTarget(port, 'wasi');
+    if (!wasm && !wasi) return [];
     return [
-        {
-            type: 'p',
-            text: `Cloudflare Workers, and the edge runtimes that follow their model, run the \`-wasm\` package single-threaded, with no Worker and no OPFS. A Worker has no bundler plugin, so it reaches ${port.name} through a header of your own in \`src/native\`.`,
-        },
-        { type: 'code', file: 'shell', code: install([wasm.package], ['crossbind']) },
-        { type: 'code', file: 'crossbind.config.js', code: configCode(port, [wasm], { name: 'my-worker', output: 'dist' }) },
-        { type: 'code', file: 'shell', code: 'npx crossbind build -p wasm -a wasm32 -r st -e edge -b release' },
-        { type: 'code', file: 'index.js', code: WORKER_ENTRY },
-        { type: 'code', file: 'wrangler.toml', code: WRANGLER_CONFIG },
-        { type: 'code', file: 'shell', code: 'npx wrangler dev\nnpx wrangler deploy' },
-        {
-            type: 'p',
-            text: `A free Worker gets 10 ms of CPU a request, and every plan caps a Worker's size: check the library's \`.wasm\` against yours. The [Cloudflare Worker playbook](${PLAYBOOKS}/cloudflare-worker.md) has the rest.`,
-        },
+        ...(wasm
+            ? [
+                  { type: 'h3', text: 'Cloudflare Workers' },
+                  {
+                      type: 'p',
+                      text: `Cloudflare Workers, and the edge runtimes that follow their model, run the \`-wasm\` package single-threaded, with no Worker and no OPFS. A Worker has no bundler plugin, so it reaches ${port.name} through a header of your own in \`src/native\`.`,
+                  },
+                  { type: 'code', file: 'shell', code: install([wasm.package], ['crossbind']) },
+                  { type: 'code', file: 'crossbind.config.js', code: configCode(port, [wasm], { name: 'my-worker', output: 'dist' }) },
+                  { type: 'code', file: 'shell', code: 'npx crossbind build -p wasm -a wasm32 -r st -e edge -b release' },
+                  { type: 'code', file: 'index.js', code: WORKER_ENTRY },
+                  { type: 'code', file: 'wrangler.toml', code: WRANGLER_CONFIG },
+                  { type: 'code', file: 'shell', code: 'npx wrangler dev\nnpx wrangler deploy' },
+                  {
+                      type: 'p',
+                      text: `A free Worker gets 10 ms of CPU a request, and every plan caps a Worker's size: check the library's \`.wasm\` against yours. The [Cloudflare Worker playbook](${PLAYBOOKS}/cloudflare-worker.md) has the rest.`,
+                  },
+              ]
+            : []),
+        ...(wasi
+            ? [
+                  { type: 'h3', text: 'WASI 0.3' },
+                  {
+                      type: 'p',
+                      text: `Spin, wasmCloud and \`wasmtime serve\` run an HTTP component, one that exports \`wasi:http/handler\`: a handler of your own in \`src/native\`, with ${port.name} from the \`-wasi\` package linked in.`,
+                  },
+                  { type: 'code', file: 'shell', code: install([wasi.package], ['crossbind']) },
+                  { type: 'code', file: 'crossbind.config.js', code: configCode(port, [wasi], { name: 'my-service', output: 'dist' }) },
+                  { type: 'code', file: 'src/native/handler.cpp', code: httpHandlerCode(`Include ${port.name}'s headers and call it here.`) },
+                  { type: 'code', file: 'shell', code: `npx crossbind build -p wasi -e http -b release\nwasmtime serve dist/${httpComponentName('my-service')}` },
+                  { type: 'code', file: 'spin.toml', code: spinManifestCode('my-service') },
+                  { type: 'code', file: 'shell', code: 'spin up' },
+                  { type: 'p', text: `The handler gets each request with its whole body. [HTTP components](${guideHref('wasi')}#http) has what it does and does not do yet.` },
+              ]
+            : []),
     ];
 }
 

@@ -1,8 +1,11 @@
+import { REPO_URL } from '../../data.js';
+import { httpHandlerCode, spinManifestCode } from '../../wasiHttp.js';
+
 export default {
     slug: 'wasi',
-    title: 'WASI commands',
-    description: 'Compile to a single wasm command, or run the prebuilt CLI tools straight from npm.',
-    lede: 'With `platform: \'wasi\'` there is no JavaScript host at all. Your C++ becomes one `wasm32-wasip3` command component that runs under any WASI 0.3 runtime with Wasm 3.0 exception support - wasmtime 47 and newer. No glue, no loader, no `initNative`.',
+    title: 'WASI',
+    description: 'Compile to a single wasm command or an HTTP component, or run the prebuilt CLI tools straight from npm.',
+    lede: 'With `platform: \'wasi\'` there is no JavaScript host at all. Your C++ becomes one `wasm32-wasip3` command component that runs under any WASI 0.3 runtime with Wasm 3.0 exception support - wasmtime 47 and newer - or an HTTP component that Spin and wasmCloud serve. No glue, no loader, no `initNative`.',
     blocks: [
         { type: 'h2', id: 'build', text: 'Build a command' },
         {
@@ -23,6 +26,25 @@ wasmtime run --dir=. dist/myapp-wasi-wasm32-st-release.wasm input.txt`,
             type: 'code',
             file: 'shell',
             code: 'CROSSBIND_RUNNER=LOCAL CROSSBIND_WASI_SDK_PATH=/opt/wasi-sdk crossbind build -p wasi -e wasi -b release',
+        },
+
+        { type: 'h2', id: 'http', text: 'HTTP components' },
+        {
+            type: 'p',
+            text: 'With `-e http` the same archives become an HTTP component, one that exports `wasi:http/handler`, which Spin, wasmCloud and `wasmtime serve` call once per request. In place of `main`, `src/native` defines the handler `<crossbind/http.h>` declares:',
+        },
+        { type: 'code', file: 'src/native/handler.cpp', code: httpHandlerCode('Your C++ and its libraries run here.') },
+        {
+            type: 'code',
+            file: 'shell',
+            code: `crossbind build -p wasi -e http -b release
+wasmtime serve dist/myapp-wasi-wasm32-st-release.http.wasm`,
+        },
+        { type: 'p', text: '`spin up` serves it from a manifest:' },
+        { type: 'code', file: 'spin.toml', code: spinManifestCode('myapp') },
+        {
+            type: 'p',
+            text: `The handler gets the request with its whole body, and an exception out of it answers 500 and logs a line to stderr. A host can reuse an instance for many requests, so static state can outlive one. Outgoing requests, streamed bodies and the data files of dependencies are not there yet; [HTTP components](${REPO_URL}/blob/main/docs/api/wasi.md#http-components--e-http) has the rest.`,
         },
 
         { type: 'h2', id: 'io', text: 'Files and network' },

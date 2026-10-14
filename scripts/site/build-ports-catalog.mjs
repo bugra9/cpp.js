@@ -54,6 +54,18 @@ async function upstreamSource(root, family, nativeVersion) {
     return typeof url === 'string' && /^https:\/\//.test(url) ? url : null;
 }
 
+// Whether the wasi build of a family brings data files or environment, its own or a dependency's: a command's
+// runner provides them, the host of an HTTP component does not.
+async function hasWasiData(root, family) {
+    const file = path.join(portDir(root, family, 'wasi'), 'crossbind.config.js');
+    if (!fs.existsSync(file)) return false;
+    const { default: config } = await import(pathToFileURL(file).href);
+    const carries = (entry) =>
+        (entry.targetSpecs ?? []).some((spec) => (!spec.platform || spec.platform === 'wasi') && (spec.specs?.data || spec.specs?.env)) ||
+        (entry.dependencies ?? []).some(carries);
+    return carries(config);
+}
+
 // Everything the repository knows about its ports, before asking npm anything.
 export async function readPortsTree(root = REPOSITORY_ROOT) {
     const curated = readJson(path.join(root, 'ports', 'catalog.json'));
@@ -85,6 +97,7 @@ export async function readPortsTree(root = REPOSITORY_ROOT) {
             repositoryUrl: `${REPOSITORY_URL}/tree/main/ports/${family}`,
             targets,
             binCommands,
+            hasWasiData: await hasWasiData(root, family),
         });
     }
     return entries;
