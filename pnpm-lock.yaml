@@ -65,7 +65,7 @@ importers:
         version: 17.13.0
       prettier:
         specifier: ^3.9.6
-        version: 3.9.9
+        version: 3.9.10
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -560,7 +560,7 @@ importers:
         version: 0.87.1(@babel/core@7.29.7(supports-color@10.2.2))
       '@react-native/eslint-config':
         specifier: 0.87.1
-        version: 0.87.1(eslint@8.57.1(supports-color@10.2.2))(jest@29.7.0(@types/node@22.10.2)(supports-color@10.2.2))(prettier@3.9.9)(supports-color@10.2.2)(typescript@6.0.3)
+        version: 0.87.1(eslint@8.57.1(supports-color@10.2.2))(jest@29.7.0(@types/node@22.10.2)(supports-color@10.2.2))(prettier@3.9.10)(supports-color@10.2.2)(typescript@6.0.3)
       '@react-native/gradle-plugin':
         specifier: 0.87.1
         version: 0.87.1
@@ -589,8 +589,8 @@ importers:
         specifier: ^29.6.3
         version: 29.7.0(@types/node@22.10.2)(supports-color@10.2.2)
       prettier:
-        specifier: 3.9.9
-        version: 3.9.9
+        specifier: 3.9.10
+        version: 3.9.10
       react-test-renderer:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
@@ -824,7 +824,7 @@ importers:
         version: 1.64.0
       '@vitejs/plugin-vue':
         specifier: ^6.0.9
-        version: 6.0.9(vite@8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0))(vue@3.5.43(typescript@7.0.2))
+        version: 6.0.10(vite@8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0))(vue@3.5.43(typescript@7.0.2))
       vite:
         specifier: ^8.2.1
         version: 8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0)
@@ -903,7 +903,7 @@ importers:
         version: 1.64.0
       '@vitejs/plugin-vue':
         specifier: ^6.0.9
-        version: 6.0.9(vite@8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0))(vue@3.5.43(typescript@7.0.2))
+        version: 6.0.10(vite@8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0))(vue@3.5.43(typescript@7.0.2))
       vite:
         specifier: ^8.2.1
         version: 8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0)
@@ -1036,7 +1036,7 @@ importers:
         version: 0.87.1(@babel/core@7.29.7(supports-color@10.2.2))
       '@react-native/eslint-config':
         specifier: 0.87.1
-        version: 0.87.1(eslint@8.57.1(supports-color@10.2.2))(jest@29.7.0(@types/node@24.19.1)(supports-color@10.2.2))(prettier@3.9.9)(supports-color@10.2.2)(typescript@6.0.3)
+        version: 0.87.1(eslint@8.57.1(supports-color@10.2.2))(jest@29.7.0(@types/node@24.19.1)(supports-color@10.2.2))(prettier@3.9.10)(supports-color@10.2.2)(typescript@6.0.3)
       '@react-native/gradle-plugin':
         specifier: 0.87.1
         version: 0.87.1
@@ -1065,8 +1065,8 @@ importers:
         specifier: ^29.6.3
         version: 29.7.0(@types/node@24.19.1)(supports-color@10.2.2)
       prettier:
-        specifier: 3.9.9
-        version: 3.9.9
+        specifier: 3.9.10
+        version: 3.9.10
       react-test-renderer:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
@@ -1234,7 +1234,7 @@ importers:
         version: 1.64.0
       '@vitejs/plugin-vue':
         specifier: ^6.0.9
-        version: 6.0.9(vite@8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0))(vue@3.5.43(typescript@7.0.2))
+        version: 6.0.10(vite@8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0))(vue@3.5.43(typescript@7.0.2))
       vite:
         specifier: ^8.2.1
         version: 8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0)
@@ -9248,12 +9248,12 @@ packages:
       oxc-transform-react:
         optional: true
 
-  '@vitejs/plugin-vue@6.0.9':
-    resolution: {integrity: sha512-rD/MORlhaZMlXWW0rEn4FB4wMinWC0z/D7Ye160S5+Rs1mC8ZDAdcDp4SjKfUhG5t8q1ktcPVw4xuTkPRlzrSA==}
+  '@vitejs/plugin-vue@6.0.10':
+    resolution: {integrity: sha512-b80aUQh3n+qEzzZm5oQp3rT2QImeCx58K6eFl/RkJ3d65KW0kTuv5lNsLRVAjbW9YRUpo/wzmvzMgV34bTAItA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     peerDependencies:
       vite: ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
-      vue: ^3.2.25
+      vue: ^3.2.25 || ^3.6.0-rc.10
 
   '@vitest/coverage-v8@5.0.3':
     resolution: {integrity: sha512-+klsyz7BvT1vCU28Zkfzms1Ia78XD0V41U3FUtRaa3S+vOr/EXvK1O6BvVD7l1RzEjm6SONR2aybOvDDf9u0mQ==}
@@ -11999,8 +11999,8 @@ packages:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
 
-  prettier@3.9.9:
-    resolution: {integrity: sha512-Z/CJHIkdujO/OtN7nXUii0Rf3VT5SRuhjBA82Xvu2XhBUgX3nhP67T0LHceBdQLex7OOFGTox+Q5Yg8Jk2Qivg==}
+  prettier@3.9.10:
+    resolution: {integrity: sha512-skGHTH1Yb9QvaTC4hWnRTzEYtCpApF0UMBPz+t/0ZPzP8ihefo/btKd+QA7pUE0fEwA1SbS/NmhyEcstdXOIdA==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -15817,7 +15817,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@react-native/eslint-config@0.87.1(eslint@8.57.1(supports-color@10.2.2))(jest@29.7.0(@types/node@22.10.2)(supports-color@10.2.2))(prettier@3.9.9)(supports-color@10.2.2)(typescript@6.0.3)':
+  '@react-native/eslint-config@0.87.1(eslint@8.57.1(supports-color@10.2.2))(jest@29.7.0(@types/node@22.10.2)(supports-color@10.2.2))(prettier@3.9.10)(supports-color@10.2.2)(typescript@6.0.3)':
     dependencies:
       '@babel/core': 7.29.7(supports-color@10.2.2)
       '@babel/eslint-parser': 7.25.9(@babel/core@7.29.7(supports-color@10.2.2))(eslint@8.57.1(supports-color@10.2.2))
@@ -15832,13 +15832,13 @@ snapshots:
       eslint-plugin-react: 7.37.5(eslint@8.57.1(supports-color@10.2.2))
       eslint-plugin-react-hooks: 7.1.1(eslint@8.57.1(supports-color@10.2.2))(supports-color@10.2.2)
       eslint-plugin-react-native: 5.0.0(eslint@8.57.1(supports-color@10.2.2))
-      prettier: 3.9.9
+      prettier: 3.9.10
     transitivePeerDependencies:
       - jest
       - supports-color
       - typescript
 
-  '@react-native/eslint-config@0.87.1(eslint@8.57.1(supports-color@10.2.2))(jest@29.7.0(@types/node@24.19.1)(supports-color@10.2.2))(prettier@3.9.9)(supports-color@10.2.2)(typescript@6.0.3)':
+  '@react-native/eslint-config@0.87.1(eslint@8.57.1(supports-color@10.2.2))(jest@29.7.0(@types/node@24.19.1)(supports-color@10.2.2))(prettier@3.9.10)(supports-color@10.2.2)(typescript@6.0.3)':
     dependencies:
       '@babel/core': 7.29.7(supports-color@10.2.2)
       '@babel/eslint-parser': 7.25.9(@babel/core@7.29.7(supports-color@10.2.2))(eslint@8.57.1(supports-color@10.2.2))
@@ -15853,7 +15853,7 @@ snapshots:
       eslint-plugin-react: 7.37.5(eslint@8.57.1(supports-color@10.2.2))
       eslint-plugin-react-hooks: 7.1.1(eslint@8.57.1(supports-color@10.2.2))(supports-color@10.2.2)
       eslint-plugin-react-native: 5.0.0(eslint@8.57.1(supports-color@10.2.2))
-      prettier: 3.9.9
+      prettier: 3.9.10
     transitivePeerDependencies:
       - jest
       - supports-color
@@ -16702,7 +16702,7 @@ snapshots:
       '@rolldown/pluginutils': 1.0.1
       vite: 8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0)
 
-  '@vitejs/plugin-vue@6.0.9(vite@8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0))(vue@3.5.43(typescript@7.0.2))':
+  '@vitejs/plugin-vue@6.0.10(vite@8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0))(vue@3.5.43(typescript@7.0.2))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
       vite: 8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0)
@@ -20145,7 +20145,7 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier@3.9.9: {}
+  prettier@3.9.10: {}
 
   pretty-format@29.7.0:
     dependencies:
