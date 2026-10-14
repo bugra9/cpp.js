@@ -203,13 +203,14 @@ export default {
       // Auto-promotes to 'mt' if any item in `dependencies` is 'mt'.
 
     runtimeEnv: undefined,
-      // The binary a build makes: 'browser' | 'edge' | 'node' | 'native' | 'wasi'.
+      // The binary a build makes: 'browser' | 'edge' | 'node' | 'native' | 'wasi' | 'http'.
       // Usually left unset - bundler plugins pick their own, and on the command
       // line -e picks one or more and wins over this. With neither, `crossbind
       // build` makes only the static archives in <paths.output>/prebuilt/<target>/.
       // 'node' is a wasm module under -p wasm and a Node-API addon under -p
       // darwin, linux, linuxmusl or win32; 'native' is an executable on those
-      // four (see native.md).
+      // four (see native.md). Under -p wasi, 'wasi' is a command and 'http' a
+      // wasi:http/service component (see wasi.md).
   },
 
   targetSpecs: [

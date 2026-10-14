@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import loadJson from '../utils/loadJson.js';
 import writeJson from '../utils/writeJson.js';
-import { TARGETS, targetPathOf, nodeAddonNamesOf, nativeCommandNamesOf } from '../utils/targets.js';
+import {
+    TARGETS, targetPathOf, nodeAddonNamesOf, nativeCommandNamesOf, wasiNamesOf,
+} from '../utils/targets.js';
 import { findCargoModuleImportsIn, writeCargoMarker } from '../utils/cargoImport.js';
 import { exportWasiSdkPath } from '../utils/wasiToolchain.js';
 import loadConfig, { assertBinarySelection } from './loadConfig.js';
@@ -52,8 +54,7 @@ async function initProcessState() {
             target.dataTxtName = `${state.config.general.name}-${target.path}.${target.runtimeEnv}.data.txt`;
         }
         if (target.platform === 'wasi') {
-            // A wasi build is a single command module - no JS glue, no preload.
-            target.wasmName = `${state.config.general.name}-${target.path}.wasm`;
+            Object.assign(target, wasiNamesOf(target, state.config.general.name));
         }
         if (target.runtimeEnv === 'node' && target.platform !== 'wasm') {
             Object.assign(target, nodeAddonNamesOf(target, state.config.general.name));

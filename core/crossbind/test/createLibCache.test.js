@@ -3,11 +3,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { run, state, getData } = vi.hoisted(() => ({ run: vi.fn(), state: { config: {} }, getData: vi.fn() }));
+const { run, state, getData, getCmakeParameters } = vi.hoisted(() => ({
+    run: vi.fn(), state: { config: {} }, getData: vi.fn(), getCmakeParameters: vi.fn(() => []),
+}));
 
 vi.mock('../src/actions/run.js', () => ({ default: run }));
 vi.mock('../src/actions/buildCargo.js', () => ({ default: vi.fn() }));
-vi.mock('../src/actions/getCmakeParameters.js', () => ({ default: () => [] }));
+vi.mock('../src/actions/getCmakeParameters.js', () => ({ default: getCmakeParameters }));
 vi.mock('../src/actions/getData.js', () => ({ default: getData }));
 vi.mock('../src/actions/extensions.js', () => ({ default: () => {} }));
 vi.mock('../src/utils/dependencyBridges.js', () => ({ withDependencyBridges: (glob) => glob }));
@@ -107,5 +109,58 @@ describe('createLib cache', () => {
         state.config.build.sourceReplaceList = () => [{ regex: 'allocate', replacement: 'safeAllocate', paths: ['codec.cpp'] }];
         expect(build()).toBe(true);
         expect(fs.readFileSync(`${copy}/codec.cpp`, 'utf8')).toBe('safeAllocate();');
+    });
+});
+
+describe('createLib wasi source', () => {
+    const wasi = {
+        platform: 'wasi', arch: 'wasm32', runtime: 'st', buildType: 'release', path: 'wasi-wasm32-st-release',
+    };
+    let work;
+    let header;
+
+    const build = () => {
+        run.mockClear();
+        createLib(wasi, 'Source', { buildSource: true });
+        fs.mkdirSync(`${work}/build/Source-Release/prebuilt/${wasi.path}/lib`, { recursive: true });
+        return run.mock.calls.length > 0;
+    };
+
+    beforeEach(() => {
+        work = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-createlib-wasi-'));
+        const runtime = `${work}/cli/assets/wasi-runtime`;
+        header = `${runtime}/http/include/crossbind/http.h`;
+        fs.mkdirSync(path.dirname(header), { recursive: true });
+        fs.writeFileSync(header, '// api v1');
+        fs.writeFileSync(`${runtime}/stubs.c`, '');
+        getData.mockReset();
+        getData.mockReturnValue({});
+        state.config = {
+            paths: {
+                build: `${work}/build`, cmakeDir: `${work}/cmake`, cli: `${work}/cli`, native: [],
+            },
+            build: {},
+            export: {},
+            allDependencyPaths: { [wasi.path]: {} },
+        };
+    });
+
+    afterEach(() => {
+        fs.rmSync(work, { recursive: true, force: true });
+    });
+
+    test('compiles the app against a staged <crossbind/http.h>', () => {
+        build();
+        const { headerDirs } = getCmakeParameters.mock.calls.at(-1)[1];
+        expect(headerDirs).toEqual([`${work}/build/Source-Release/${wasi.path}/crossbind-wasi-http/include`]);
+        expect(fs.readFileSync(`${headerDirs[0]}/crossbind/http.h`, 'utf8')).toBe('// api v1');
+    });
+
+    test('rebuilds when crossbind brings a new <crossbind/http.h>', () => {
+        expect(build()).toBe(true);
+        expect(build()).toBe(false);
+        fs.writeFileSync(header, '// api v2');
+
+        expect(build()).toBe(true);
     });
 });

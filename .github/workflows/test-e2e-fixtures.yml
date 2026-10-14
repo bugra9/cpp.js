@@ -47,6 +47,7 @@ jobs:
                     - backend-nodejs-multithread
                     - backend-nodejs-import-hooks
                     - cli-wasi
+                    - cloud-wasi-http
                     - cloud-cloudflare-worker
                     - web-vanilla
                     - web-vite
@@ -68,12 +69,20 @@ jobs:
             - name: Install Playwright browsers
               run: pnpm exec playwright install --with-deps
             - name: Install the WASI runtime
-              if: matrix.fixture == 'cli-wasi'
+              if: matrix.fixture == 'cli-wasi' || matrix.fixture == 'cloud-wasi-http'
               run: |
                   curl -sSfL https://github.com/bytecodealliance/wasmtime/releases/download/v47.0.2/wasmtime-v47.0.2-x86_64-linux.tar.xz -o "$RUNNER_TEMP/wasmtime.tar.xz"
                   echo "9ec85751649139711b6a5061c4f48a41412bf9b1ab98a08b9924ca73f22ca575  $RUNNER_TEMP/wasmtime.tar.xz" | sha256sum -c -
                   tar -xJf "$RUNNER_TEMP/wasmtime.tar.xz" -C "$RUNNER_TEMP"
                   echo "$RUNNER_TEMP/wasmtime-v47.0.2-x86_64-linux" >> "$GITHUB_PATH"
+            - name: Install Spin
+              if: matrix.fixture == 'cloud-wasi-http'
+              run: |
+                  curl -sSfL https://github.com/spinframework/spin/releases/download/v4.2.2/spin-v4.2.2-linux-amd64.tar.gz -o "$RUNNER_TEMP/spin.tar.gz"
+                  echo "e2c8b2b9893119ce1b8fc1db22ed27d6c3f1ef23ec8880848d14a4f85fd2a685  $RUNNER_TEMP/spin.tar.gz" | sha256sum -c -
+                  mkdir "$RUNNER_TEMP/spin"
+                  tar -xzf "$RUNNER_TEMP/spin.tar.gz" -C "$RUNNER_TEMP/spin"
+                  echo "$RUNNER_TEMP/spin" >> "$GITHUB_PATH"
             - name: Build the fixture
               run: pnpm --filter=@crossbind/e2e-${{ matrix.fixture }} run build
             - name: Run production conformance

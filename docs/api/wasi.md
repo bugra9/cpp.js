@@ -1,6 +1,6 @@
-# WASI — `platform: 'wasi'` command builds
+# WASI — `platform: 'wasi'` commands and HTTP components
 
-> Compiles the project into a single **WASI command component** (`<name>-wasi-wasm32-st-<buildType>.wasm`, target `wasm32-wasip3`): no JS glue, no embind bridge, runnable under any WASI 0.3 runtime with Wasm 3.0 exception support (wasmtime 47+).
+> Compiles the project into a single **WASI command component** (`<name>-wasi-wasm32-st-<buildType>.wasm`, target `wasm32-wasip3`): no JS glue, no embind bridge, runnable under any WASI 0.3 runtime with Wasm 3.0 exception support (wasmtime 47+). With `-e http` it compiles into an **HTTP component** instead, which Spin, wasmCloud and `wasmtime serve` run ([HTTP components](#http-components--e-http)).
 
 ## Quick start
 
@@ -25,12 +25,84 @@ The source archive is linked whole (its code is the root set); dependency
 archives are dead-code-eliminated down to what `main` reaches, and the
 `export.wholeArchive` escape hatches apply as usual.
 
+## HTTP components (`-e http`)
+
+`-e http` links the same archives into a component that exports `wasi:http/handler@0.3.0`, the export
+of the `wasi:http/service` world: `<name>-wasi-wasm32-st-<buildType>.http.wasm`, with no `main()`,
+which the host calls once per request. `src/native` defines the one function `<crossbind/http.h>`
+declares:
+
+```cpp
+#include <crossbind/http.h>
+
+namespace crossbind::http {
+
+Response handle(Request request) {
+    return {
+        200,
+        { { "content-type", "text/plain" } },
+        "hello " + request.path + "\n",
+    };
+}
+
+}
+```
+
+With `paths: { output: 'dist' }`:
+
+```bash
+crossbind build -p wasi -e http -b release
+wasmtime serve dist/<name>-wasi-wasm32-st-release.http.wasm
+```
+
+Spin 4 serves it from a manifest like this one (`spin up`); wasmCloud's `wash dev` takes the file as
+`build.component_path` in `.wash/config.yaml`:
+
+```toml
+spin_manifest_version = 2
+
+[application]
+name = "my-app"
+
+[[trigger.http]]
+route = "/..."
+component = "handler"
+
+[component.handler]
+source = "dist/<name>-wasi-wasm32-st-release.http.wasm"
+```
+
+- `Request` carries `method` (`"GET"`, …), `authority` (the request's, else its `host` header), `path`
+  and `query` as the client sent them (split at `?`, percent-encoding kept), `headers` with names in
+  lowercase, and `body`, read whole before `handle` runs. `handle` takes the request by value, so its
+  body can move into the response.
+- `Response` is `status` (200 unless set), `headers` and `body`. The body is written after `handle`
+  returns, as fast as the client takes it, while the instance serves other requests.
+- An exception out of `handle` answers 500 and logs `crossbind: <method> <path> threw: <what>` to
+  stderr; so does a status outside 100–999. A response header the host rejects is logged and left out.
+- A body that does not fit in memory, or does not arrive whole, never reaches `handle`: the host gets
+  `HTTP-request-body-size` or the error it reported instead of a response (`wasmtime serve` answers 500).
+- Each request runs on a stack of its own, 1 MiB with no guard page below it; `-Wl,-z,stack-size=<bytes>`
+  in `binary.wasiFlags` changes it.
+- A host can reuse one instance for many requests, several at a time (`wasmtime serve` and Spin do;
+  `wash dev` starts one per request): static state outlives a request, and `handle` runs for one
+  request while the body of another is still being written. Calls of `handle` never overlap.
+- While a request body is still arriving, its instance starts no other request, so a slow upload
+  delays the requests the host gives that instance ([ADR-0016](../adr/0016-wasi-http-components.md)).
+- Besides the imports of the `wasi:http/service` world, the component imports the `wasi:cli`
+  environment, exit and terminal interfaces wasi-libc uses. The three hosts provide them; a host that
+  offers only the world's imports rejects the component.
+- Not yet: outgoing requests (`wasi:http/client`), streamed request or response bodies, trailers, and
+  the `data` and `env` of dependencies such as PROJ, GDAL and openssl, which land in `dist/data` but
+  reach the component from no host.
+- Tested with `wasmtime serve` 47 and Spin 4.2 (`e2e/cloud-wasi-http`), and with `wash dev` 2.10 by hand.
+
 ## What differs from `platform: 'wasm'`
 
 | | `wasm` (emscripten) | `wasi` (wasi-sdk) |
 |---|---|---|
 | Output | wasm + JS glue + runtime | single `.wasm` |
-| Bindings | embind bridge (swig) | none — `main()` only |
+| Bindings | embind bridge (swig) | none — `main()`, or `crossbind::http::handle` with `-e http` |
 | Filesystem | WASMFS / OPFS / preload | host dirs via `--dir` preopens |
 | Data files | `.data.txt` preload | real `data/` folder beside the command, to preopen |
 | Threads | `runtime: 'mt'` (workers) | not yet (the wasi threads ABI is still in flux) |

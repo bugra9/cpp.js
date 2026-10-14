@@ -69,6 +69,12 @@ const BASE_TARGETS = [
         platform: 'wasi', arch: 'wasm32', runtime: 'st', buildType: 'debug', runtimeEnv: 'wasi',
     },
     {
+        platform: 'wasi', arch: 'wasm32', runtime: 'st', buildType: 'release', runtimeEnv: 'http',
+    },
+    {
+        platform: 'wasi', arch: 'wasm32', runtime: 'st', buildType: 'debug', runtimeEnv: 'http',
+    },
+    {
         platform: 'android', arch: 'arm64-v8a', runtime: 'mt', buildType: 'release',
     },
     {
@@ -191,6 +197,11 @@ export function nodeAddonNamesOf(target, projectName) {
         jsName: `${projectName}.native${suffix}.cjs`,
     };
 }
+
+// A wasi build is one component, with no JS glue: the command keeps the plain name, an http component adds its own.
+export const wasiNamesOf = (target, projectName) => ({
+    wasmName: `${projectName}-${targetPathOf(target)}${target.runtimeEnv === 'http' ? '.http' : ''}.wasm`,
+});
 
 // One executable per platform, arch and build type, named like the addons it replaces.
 export function nativeCommandNamesOf(target, projectName) {

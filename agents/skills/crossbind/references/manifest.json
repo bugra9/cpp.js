@@ -14,12 +14,12 @@
     {
       "source": "docs/api/README.md",
       "output": "api/README.md",
-      "sha256": "84a4f1a5a5971cabe65c09f17c411292cc1135e8fc9967cd51e20eeb534f0c21"
+      "sha256": "42fe657fde5881efe2189c82cd31792d54c64bcd20b369f2142f58cef8c22dbb"
     },
     {
       "source": "docs/api/build-state.md",
       "output": "api/build-state.md",
-      "sha256": "eacb6d2025e4110b3f32034a41d9e90916d0d6f5333c4f8c03f0b28a3b9bedf9"
+      "sha256": "6de996e4ffe71fa65de7c522af916db902e7ec9cc38a5ee3557eda7550f58422"
     },
     {
       "source": "docs/api/conan.md",
@@ -39,7 +39,7 @@
     {
       "source": "docs/api/crossbind-config.md",
       "output": "api/crossbind-config.md",
-      "sha256": "b03c554488c4c6515b2993a4a6fabbbcc44170374b0c5c212728f2fb027fa758"
+      "sha256": "be7b7a46d893007d6845ae86e1fec1b1a0745fecc04e100cf83c5968a149893a"
     },
     {
       "source": "docs/api/filesystem.md",
@@ -99,7 +99,7 @@
     {
       "source": "docs/api/wasi.md",
       "output": "api/wasi.md",
-      "sha256": "be069185259f986e522436e93190ac06903767db7a8722a513e8919b945b3161"
+      "sha256": "5ea5b4bdd9279c4a25817d991f3f697eaa7c9f0ab17cdc114d2b84100e2baa33"
     },
     {
       "source": "docs/playbooks/integration/README.md",

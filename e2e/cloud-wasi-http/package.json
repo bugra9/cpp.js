@@ -1,0 +1,14 @@
+{
+    "name": "@crossbind/e2e-cloud-wasi-http",
+    "version": "0.0.0",
+    "private": true,
+    "description": "WASI 0.3 HTTP component: one C++ handler built with -e http and served by wasmtime serve and Spin.",
+    "scripts": {
+        "build": "crossbind build -p wasi -e http -b release",
+        "e2e:prod": "node e2e/run.mjs",
+        "clear": "rm -rf .crossbind dist"
+    },
+    "devDependencies": {
+        "crossbind": "workspace:^"
+    }
+}
