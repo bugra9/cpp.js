@@ -1,8 +1,8 @@
-import { BRAND } from '../../data.js';
+import { BRAND, REPO_URL } from '../../data.js';
 
 export default {
     slug: 'architecture',
-    title: 'Architecture',
+    title: 'How it works',
     description: 'What runs when you build: targets, bridges, the toolchain boundary, and the cache.',
     lede: `You never call the compiler yourself, which is exactly why it helps to know what happens when you do. This is the one-screen model of a ${BRAND} build - from \`crossbind build\` to the files your bundler picks up.`,
     blocks: [
@@ -97,7 +97,7 @@ export default {
         },
         {
             type: 'p',
-            text: 'Layers one to three live in [Configuration](/guide/configuration/); the rest are package-author territory, documented in the API reference linked from the sidebar.',
+            text: `Layers one to three live in [Configuration](/guide/configuration/); the rest are package-author territory: [Publishing packages](/guide/publishing/#build-hooks), and every layer in [overrides.md](${REPO_URL}/blob/main/docs/api/overrides.md).`,
         },
     ],
 };

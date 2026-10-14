@@ -1,14 +1,15 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
+import { Chevron } from '../components/menu.jsx';
 import PrevNext from '../components/PrevNext.jsx';
 import Article from './Article.jsx';
 import { inline } from './inline.jsx';
-import { getNeighbours, GUIDE_EXTERNAL_LINKS, GUIDE_HOME, GUIDE_SECTIONS } from './nav.js';
+import { getNeighbours, GUIDE_SECTIONS } from './nav.js';
 
 // The doc shell: gdal3.js's three-column layout - grouped sidebar, article, "on this page" -
 // rebuilt on this site's tokens so the theme toggle keeps working. The grid columns and every
 // breakpoint live in styles.css, because an inline style cannot carry a media query.
 
-// A section link is active for its index and everything under it, e.g. /ports/gdal under /ports/.
+// A link to a page outside /guide/ is active on that page and everything under it.
 const isUnder = (path, href) => {
     const prefix = href.replace(/\/$/, '');
     return path === prefix || path.startsWith(`${prefix}/`);
@@ -41,13 +42,12 @@ function useActiveHeading(headings) {
     return active;
 }
 
-function SideLink({ tokens, href, label, active, external }) {
+function SideLink({ tokens, href, label, active, current = 'page' }) {
     return (
         <a
             href={href}
             className="tap-target"
-            target={external ? '_blank' : undefined}
-            rel={external ? 'noreferrer' : undefined}
+            aria-current={active ? current : undefined}
             style={{
                 fontSize: 13,
                 lineHeight: 1.5,
@@ -58,49 +58,40 @@ function SideLink({ tokens, href, label, active, external }) {
             }}
         >
             {label}
-            {external ? ' ↗' : ''}
         </a>
     );
 }
 
 function SideHeading({ tokens, children }) {
-    return (
-        <div
-            style={{
-                fontFamily: tokens.mono,
-                fontSize: 10.5,
-                letterSpacing: 1.5,
-                color: tokens.textMuted,
-                margin: '18px 0 6px',
-            }}
-        >
-            {children.toUpperCase()}
-        </div>
-    );
+    return <div style={{ fontSize: 13, fontWeight: 600, color: tokens.text, margin: '18px 0 6px' }}>{children}</div>;
+}
+
+// Scrolls the sidebar itself, never the window, so an anchor jump stays where it landed.
+function useCurrentInView(ref, path) {
+    useEffect(() => {
+        const side = ref.current;
+        const current = side?.querySelector('[aria-current="page"]');
+        if (!current) return;
+        const hidden = current.offsetTop < side.scrollTop || current.offsetTop + current.offsetHeight > side.scrollTop + side.clientHeight;
+        if (hidden) side.scrollTop = current.offsetTop - side.clientHeight / 2;
+    }, [ref, path]);
 }
 
 function Sidebar({ tokens, page, open }) {
+    const ref = useRef(null);
+    useCurrentInView(ref, page.path);
     return (
-        <aside className="doc-side" data-open={open ? 'true' : 'false'} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <SideLink tokens={tokens} href={GUIDE_HOME.href} label="All guides" active={page.path === GUIDE_HOME.path} />
+        <aside ref={ref} id="guide-menu" className="doc-side" data-open={open ? 'true' : 'false'} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {GUIDE_SECTIONS.map((section) => (
                 <Fragment key={section.label}>
                     <SideHeading tokens={tokens}>{section.label}</SideHeading>
                     {section.pages.map((item) => (
                         <SideLink key={item.path} tokens={tokens} href={item.href} label={item.title} active={item.path === page.path} />
                     ))}
+                    {section.links.map((link) => (
+                        <SideLink key={link.href} tokens={tokens} href={link.href} label={link.title} active={isUnder(page.path, link.href)} />
+                    ))}
                 </Fragment>
-            ))}
-            <SideHeading tokens={tokens}>More</SideHeading>
-            {GUIDE_EXTERNAL_LINKS.map((link) => (
-                <SideLink
-                    key={link.href}
-                    tokens={tokens}
-                    href={link.href}
-                    label={link.label}
-                    external={link.external}
-                    active={isUnder(page.path, link.href)}
-                />
             ))}
         </aside>
     );
@@ -112,7 +103,7 @@ function Toc({ tokens, headings, active }) {
         <aside className="doc-toc" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <SideHeading tokens={tokens}>On this page</SideHeading>
             {headings.map((heading) => (
-                <SideLink key={heading.id} tokens={tokens} href={`#${heading.id}`} label={heading.text} active={heading.id === active} />
+                <SideLink key={heading.id} tokens={tokens} href={`#${heading.id}`} label={heading.text} active={heading.id === active} current="location" />
             ))}
         </aside>
     );
@@ -123,10 +114,7 @@ export default function Guide({ tokens, page }) {
     const headings = page.blocks.filter((block) => block.type === 'h2' && block.id);
     const active = useActiveHeading(headings);
     // Pages outside the guide bring their own eyebrow; guide breadcrumbs are shouted.
-    const eyebrow = page.eyebrow ?? {
-        head: `GUIDE · ${page.section || 'INDEX'}`.toUpperCase(),
-        tail: page.section ? ` · ${page.title.toUpperCase()}` : '',
-    };
+    const eyebrow = page.eyebrow ?? { head: `GUIDE · ${page.section}`.toUpperCase(), tail: ` · ${page.title.toUpperCase()}` };
 
     return (
         <div className="doc-grid" style={{ padding: '32px var(--content-x) 80px' }}>
@@ -135,8 +123,11 @@ export default function Guide({ tokens, page }) {
                 className="doc-menu-btn tap-target"
                 onClick={() => setMenuOpen((current) => !current)}
                 aria-expanded={menuOpen}
+                aria-controls="guide-menu"
+                aria-label={`Guide menu, ${page.title}`}
                 style={{
                     display: 'none',
+                    alignItems: 'center',
                     background: tokens.pillBg,
                     border: `1px solid ${tokens.borderStrong}`,
                     color: tokens.text,
@@ -148,7 +139,10 @@ export default function Guide({ tokens, page }) {
                     marginBottom: 4,
                 }}
             >
-                {menuOpen ? 'Hide guide menu' : 'Guide menu'}
+                {page.title}
+                <span style={{ display: 'inline-flex', marginLeft: 8, transition: 'transform 0.15s', transform: menuOpen ? 'rotate(180deg)' : 'none' }}>
+                    <Chevron />
+                </span>
             </button>
 
             <Sidebar tokens={tokens} page={page} open={menuOpen} />

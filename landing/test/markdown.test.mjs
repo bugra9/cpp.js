@@ -18,7 +18,7 @@ test('maps code block file names to fence languages', () => {
 test('renders headings, paragraphs and lists with rewritten links', () => {
     const markdown = renderBlocks([
         { type: 'h2', text: 'Setup' },
-        { type: 'p', text: 'See [Runtimes](/guide/runtimes/) and `init`.' },
+        { type: 'p', text: 'See [Browser](/guide/browser/) and `init`.' },
         { type: 'ul', items: ['one', '[two](/guide/two/)'] },
         { type: 'ol', items: ['first', 'second'] },
         { type: 'h3', text: 'Deeper' },
@@ -27,7 +27,7 @@ test('renders headings, paragraphs and lists with rewritten links', () => {
     assert.equal(markdown, [
         '## Setup',
         '',
-        'See [Runtimes](https://example.test/guide/runtimes/) and `init`.',
+        'See [Browser](https://example.test/guide/browser/) and `init`.',
         '',
         '- one',
         '- [two](https://example.test/guide/two/)',
@@ -115,9 +115,8 @@ test('demotes a page under a prefixed section title without touching code fences
     ].join('\n'));
 });
 
-test('renders cards and release rows, and skips unknown blocks', () => {
+test('renders release rows and skips unknown blocks', () => {
     const markdown = renderBlocks([
-        { type: 'cards', items: [{ title: 'Quick start', desc: 'First call.', href: '/guide/quick-start/' }] },
         { type: 'mystery' },
         {
             type: 'release',
@@ -132,8 +131,6 @@ test('renders cards and release rows, and skips unknown blocks', () => {
     ], absolute);
 
     assert.equal(markdown, [
-        '- [Quick start](https://example.test/guide/quick-start/): First call.',
-        '',
         'Beta · prerelease · published 9 September 2026 · [npm](https://npm.test/p) · [GitHub Release](https://gh.test/r)',
     ].join('\n'));
 });

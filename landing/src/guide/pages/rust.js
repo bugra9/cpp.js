@@ -1,77 +1,77 @@
+import { REPO_URL } from '../../data.js';
+
 export default {
     slug: 'rust',
     title: 'Rust',
-    description: 'Import a crates.io crate or a local .rs file with the same one-line import.',
-    lede: 'Rust binds the way C++ headers do: one import, no proc-macros, no hand-written glue. Bring in a crate straight from crates.io with the `cargo:` scheme, or write Rust next to your other native sources and import the file.',
+    description: 'Write Rust next to your C++ and import a .rs file from JavaScript, the way you import a header.',
+    lede: 'Rust binds the way a C++ header does: plain `struct`s, `impl` blocks and `pub fn`s become classes and functions, with no proc-macros and no hand-written glue. Write the file next to your other native sources and import it.',
     blocks: [
         { type: 'h2', id: 'setup', text: 'Setup' },
         {
             type: 'p',
-            text: 'A Rust toolchain (`cargo` plus the platform targets) has to be installed - cargo doubles as the incremental cache, so unchanged code rebuilds as a no-op. The binding layer is a single dev dependency, and bundler plugins already depend on it, so most projects get it transitively:',
+            text: 'With the default Docker runner, builds for the web, Android, Linux and Windows need no Rust on your machine: cargo runs in the toolchain image, which carries the pinned Rust and the std of every target it builds. iOS and macOS builds run cargo on your Mac, as every build does under `RUNNER=LOCAL`, so those need a Rust toolchain - `cargo` plus the platform targets. cargo doubles as the incremental cache, so unchanged code rebuilds as a no-op.',
+        },
+        {
+            type: 'p',
+            text: 'The binding layer is a single dev dependency, and the Vite, Rollup, Webpack and React Native plugins already depend on it, so most projects get it transitively:',
         },
         { type: 'code', file: 'shell', code: 'npm install -D @crossbind/core-embind-rust' },
         {
             type: 'callout',
             tone: 'warn',
             title: 'Two limits worth knowing up front',
-            text: '`platform: \'wasi\'` skips Rust entirely - there is no `wasm32-wasip3` Rust target yet. And the wasm `mt` runtime needs nightly, because std is rebuilt with the atomics features: run `rustup toolchain install nightly --component rust-src` once.',
+            text: "`platform: 'wasi'` skips Rust - there is no `wasm32-wasip3` Rust target yet. And the wasm `mt` runtime links a std built with the atomics features: the toolchain image carries one, and under `RUNNER=LOCAL` crossbind downloads the same build when your `rustc` is the pinned one. With any other `rustc` it rebuilds std on nightly, which needs `rustup toolchain install nightly --component rust-src` once.",
         },
 
-        { type: 'h2', id: 'cargo-imports', text: 'Import a crate directly' },
+        { type: 'h2', id: 'local-rs', text: 'Import a .rs file' },
         {
             type: 'p',
-            text: 'Declare the crate in `crossbind.config.js`, then import it with the `cargo:` prefix - the prefix names the store, the way `node:` does. Importing an undeclared crate is a hard error, not a silent miss.',
+            text: 'Write Rust beside your C++ under `src/native` and import the file the way you import a header:',
+        },
+        {
+            type: 'code',
+            file: 'src/native/counter.rs',
+            code: `pub struct Counter {
+    total: i32,
+}
+
+impl Counter {
+    pub fn new(start: i32) -> Self {
+        Counter { total: start }
+    }
+    pub fn add(&mut self, n: i32) -> i32 {
+        self.total += n;
+        self.total
+    }
+    pub fn total(&self) -> i32 {
+        self.total
+    }
+}`,
+        },
+        {
+            type: 'code',
+            file: 'src/main.js',
+            code: `import { initNative, Counter } from './native/counter.rs';
+
+await initNative();
+
+const counter = await new Counter(40);
+console.log(await counter.add(2));`,
+        },
+        {
+            type: 'p',
+            text: "The bridge reads that one file's public items. Crates the file uses go into `cargoDependencies` in `crossbind.config.js`, the same map that lets you import a crate directly, with no Rust of your own - see [crates.io](/guide/crates-io/):",
         },
         {
             type: 'code',
             file: 'crossbind.config.js',
             code: `export default {
     cargoDependencies: {
-        uuid: '{ version = "1", features = ["v4"] }',
-        semver: '1',
+        geo: '0.29',
+        wkt: '0.11',
     },
     paths: { config: import.meta.url },
 };`,
-        },
-        {
-            type: 'code',
-            file: 'src/main.js',
-            code: `import { initNative, Uuid } from 'cargo:uuid';
-import { Version, VersionReq } from 'cargo:semver';
-
-await initNative();
-
-const id = Uuid.newV4().toString();
-const ok = new VersionReq('^1.2').matches(new Version('1.4.0'));`,
-        },
-        {
-            type: 'p',
-            text: 'The crate\'s own sources are read - module trees, `pub use` re-exports, enabled feature gates - and the bridge is generated from what is found there. You write no Rust at all.',
-        },
-
-        { type: 'h2', id: 'local-rs', text: 'Import a local .rs file' },
-        {
-            type: 'p',
-            text: 'Rust can also sit beside your C++ under `src/native` and be imported like a header. Upstream crates it uses go into the same `cargoDependencies` map.',
-        },
-        {
-            type: 'code',
-            file: 'src/native/geo_surface.rs',
-            code: `use geo::{ConvexHull, MultiPoint, Point};
-
-pub struct Hull { points: Vec<Point<f64>> }
-
-impl Hull {
-    pub fn new() -> Self { Hull { points: Vec::new() } }
-    pub fn add(&mut self, x: f64, y: f64) { self.points.push(Point::new(x, y)); }
-    pub fn wkt(&self) -> String { /* ... */ }
-}`,
-        },
-        {
-            type: 'code',
-            file: 'src/main.js',
-            code: `import { initNative } from './native/native.h';
-import { Hull } from './native/geo_surface.rs';`,
         },
 
         { type: 'h2', id: 'mapping', text: 'What plain Rust maps to' },
@@ -94,33 +94,28 @@ import { Hull } from './native/geo_surface.rs';`,
             ],
         },
         {
+            type: 'p',
+            text: `Slices, collections, serde types and \`std::io\` streams have rows of their own in the [full table](${REPO_URL}/blob/main/docs/api/rust.md#what-plain-rust-maps-to). A function the bridge cannot carry is left out of the module - one with more than six parameters, or seven for \`new\`, for one.`,
+        },
+        {
             type: 'callout',
             tone: 'warn',
             title: 'JsValue and JsFunction need a synchronous runtime',
-            text: 'Native JSI or wasm `st` on the main thread. Functions cannot cross a worker boundary and identity does not survive structured cloning, so on worker-backed runtimes - the `mt` default, or `useWorker: true` - use `serde_json::Value` instead.',
+            text: 'React Native, a Node.js addon, or wasm `st` on the main thread, which in a browser means `useWorker: false`. Behind a worker, the browser default, functions cannot cross the boundary and identity does not survive structured cloning, so use `serde_json::Value` there.',
         },
-
-        { type: 'h2', id: 'publish', text: 'Publish a crate as a package' },
         {
             type: 'p',
-            text: 'A whole crate can ship as a package: set `export.type: \'cargo\'` and `cargo build --release --target <triple>` runs per platform, staging the static library like any other prebuilt. Consumers import the package name exactly as they would a C++ one.',
+            text: "A panic inside a binding reaches JavaScript as an `Error` carrying the panic message. Treat it as a crash: on wasm the instance is spent afterwards, so start a fresh module rather than calling into it again. A wasm build that links Rust also gets a 1 MiB stack instead of Emscripten's 64 KiB; for more, set `-sSTACK_SIZE` in `targetSpecs` `binary.emccFlags`.",
         },
         {
-            type: 'code',
-            file: 'crossbind.config.js',
-            code: `export default {
-    export: {
-        type: 'cargo',
-        crate: '.',
-    },
-    paths: { config: import.meta.url },
-};`,
+            type: 'p',
+            text: 'To ship Rust for other projects to install, publish the crate as a package: see [Publishing packages](/guide/publishing/#rust).',
         },
 
         { type: 'h2', id: 'typescript', text: 'TypeScript' },
         {
             type: 'p',
-            text: 'Generated declarations live under `.crossbind/`, never in your source tree, and `@crossbind/typescript-config` wires them. One caveat: when your own tsconfig defines `include`, it overrides rather than merges - keep `.crossbind/rust-crates/types/**/*.d.ts` in yours.',
+            text: 'Generated declarations live under `.crossbind/`, never in your source tree. A `.rs` import is typed by a declaration that mirrors its path under `.crossbind/types/`, which `@crossbind/typescript-config` overlays with `rootDirs`. Add the package as a dev dependency and extend it once (TypeScript 5.5 or later):',
         },
         {
             type: 'code',
@@ -129,7 +124,7 @@ import { Hull } from './native/geo_surface.rs';`,
         },
         {
             type: 'p',
-            text: 'The same `dts: \'promise\'` note from [C++ bindings](/guide/bindings/#typescript) applies here.',
+            text: 'The same `dts: \'promise\'` note from [C++](/guide/bindings/#typescript) applies here.',
         },
     ],
 };

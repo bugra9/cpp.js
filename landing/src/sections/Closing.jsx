@@ -1,22 +1,10 @@
-import { CHANGELOG_PAGE } from '../changelog/page.js';
 import PRIVACY_PAGE from '../pages/privacy.js';
-import {
-    AGENT_URL, DISCUSSIONS_URL, LIBRARIES_URL, LICENSE_URL, LLMS_URL, REPO_URL,
-} from '../data.js';
-import { guideHref } from '../guide/nav.js';
+import { LICENSE_URL } from '../data.js';
 
-// Order agreed for the footer; internal targets are site pages, the rest were checked against
-// the repository (Discussions is enabled, the licence file is MIT). No commercial-support entry:
-// nothing paid is offered.
+// Docs, Libraries, the changelog (version menu) and GitHub sit in the navbar on every page, so the
+// footer keeps only what the navbar lacks.
 const LINKS = [
-    { label: 'Docs', href: guideHref() },
-    { label: 'Libraries', href: LIBRARIES_URL },
-    { label: 'Changelog', href: CHANGELOG_PAGE.href },
-    { label: 'Agent setup', href: AGENT_URL },
-    { label: 'llms.txt', href: LLMS_URL },
-    { label: 'GitHub', href: REPO_URL, external: true },
-    { label: 'Discussions', href: DISCUSSIONS_URL, external: true },
-    { label: 'MIT', href: LICENSE_URL, external: true },
+    { label: 'MIT License', href: LICENSE_URL, external: true },
     { label: 'Privacy', href: PRIVACY_PAGE.href },
 ];
 
@@ -27,6 +15,7 @@ export default function Closing({ tokens }) {
             borderTop: `1px solid ${tokens.border}`,
             display: 'flex',
             justifyContent: 'space-between',
+            alignItems: 'center',
             flexWrap: 'wrap',
             gap: 16,
             color: tokens.textMuted,

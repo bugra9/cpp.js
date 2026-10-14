@@ -51,6 +51,14 @@ checked).
 
 **K3 — NOTICE/SBOM are derived at build time, never hand-written.**
 Scope: packages whose dist carries upstream code (archives, binaries, data).
+Each one ships the license texts of the upstream code it carries: the upstream's
+`LICENSE`, and the texts of what the upstream compiles in under
+`dist/licenses/<name>/`. A package that ships a linked binary (`-standalone-wasi`,
+`-standalone-napi`) also ships the CycloneDX SBOM derived for that binary; a
+`-standalone-napi` package's `LICENSE` is the derived notices of everything linked
+in. An archive package ships no NOTICE or SBOM: what an app links from it is known
+only when the app links, so the app derives both with
+`crossbind licenses --notices --sbom`.
 Recipe-only family packages distribute no upstream code and therefore carry no
 artifacts; their upstream license identity lives in the manifest's
 `crossbind.upstream.license` block (§D).
@@ -60,7 +68,7 @@ pulls license texts from the family's extracted source tree, or in a package
 installed without one from the `LICENSE` it ships and the vendored copies' texts
 the build keeps in `dist/licenses/<name>/`) plus the thin
 wrapper `scripts/generate-third-party.js` (writes next to
-`dist/prebuilt/<host>/`). The outputs ship in the npm tarball.
+`dist/prebuilt/<host>/`).
 
 **K4 — `-bin` packages carry provenance metadata.**
 A machine-readable `crossbind.provenance` block in package.json (namespaced under

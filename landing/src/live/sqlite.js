@@ -22,7 +22,8 @@ export function insertStatement(ports = PORTS) {
     return `insert into ${TABLE} values ${rows.map((row) => `(${row.join(', ')})`).join(', ')};`;
 }
 
-export const DEFAULT_QUERY = `select category, count(*) as libraries, group_concat(name, ', ') as names
+export const DEFAULT_QUERY = `select category, count(*) as libraries,
+       group_concat(name, ', ') as names
 from ${TABLE}
 group by category
 order by libraries desc, category;`;

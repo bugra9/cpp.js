@@ -90,7 +90,7 @@ export default {
         { type: 'h2', id: 'target', text: 'Target' },
         {
             type: 'p',
-            text: "`target` narrows what gets built. `runtime` is the one people set most - `'st'` (default) or `'mt'`; see [Threading](/guide/threading/) for what `mt` demands from your host.",
+            text: "`target` narrows what gets built. `runtime` is the one people set most - `'st'` (default) or `'mt'`; see [Threads and workers](/guide/threading/) for what `mt` demands from your host.",
         },
         {
             type: 'code',
@@ -124,7 +124,7 @@ export default {
         },
         {
             type: 'p',
-            text: 'Shipping data files is the most common use - that has its own page, [Assets](/guide/assets/).',
+            text: 'Shipping data files is the most common use - that has its own page, [Data files](/guide/assets/).',
         },
 
         { type: 'h2', id: 'export', text: 'Export' },
@@ -192,13 +192,11 @@ export default {
     useWorker: true,
     fs: { opfs: true },
     env: { TMPDIR: '_CROSSBIND_DATA_PATH_/scratch' },
-    logHandler: (text) => console.debug(text),
-    errorHandler: (text) => console.error(text),
 });`,
         },
         {
             type: 'p',
-            text: 'The full option list is in the API reference; the ones that change behaviour most are covered in [Threading](/guide/threading/) and [Filesystem](/guide/filesystem/).',
+            text: 'The full option list is in [Runtime API](/guide/runtime-api/#options); the ones that change behaviour most are covered in [Threads and workers](/guide/threading/) and [Files](/guide/filesystem/).',
         },
     ],
 };

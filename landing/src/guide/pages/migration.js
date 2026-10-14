@@ -9,7 +9,6 @@ const suffix = RELEASE.distTagSuffix;
 export default {
     slug: 'migration',
     title: 'Migrating from cpp.js 1.x',
-    kicker: 'HELP',
     description:
         'What changed between cpp.js 1.0.4 and crossbind 2.0: names, packages, config, CLI and runtime API, with the steps to move a project.',
     lede: `crossbind is cpp.js under a new name, with the same header-import model. Every rename below was checked against the last cpp.js release, 1.0.4, and the current tree. Work through the steps in order; most projects need the first five. The [cpp.js 1.x documentation](${V1_DOCS_URL}) stays online.`,
@@ -28,7 +27,7 @@ export default {
                 ['`@cpp.js/core-embind-jsi`', '`@crossbind/core-embind-jsi`'],
                 [
                     '`@cpp.js/package-<name>`, one package with every platform inside',
-                    '`@crossbind/port-<name>` plus one package per platform: `-wasm`, `-android`, `-ios`, `-wasi`; see [Libraries](/guide/libraries/)',
+                    '`@crossbind/port-<name>` plus one package per platform: `-wasm`, `-android`, `-ios`, `-wasi`; see [crossbind ports](/guide/libraries/)',
                 ],
                 ['`cppjs.config.js`', '`crossbind.config.js`'],
                 ['`cppjs.build.js`, package authors only', '`crossbind.build.js`'],
@@ -144,7 +143,7 @@ export default defineConfig({
         },
         {
             type: 'p',
-            text: 'Rollup, Webpack, Rspack, Metro and the React Native plugin follow the same rename; how each one is registered is unchanged. See [Bundlers](/guide/bundlers/).',
+            text: 'Rollup, Webpack, Rspack, Metro and the React Native plugin follow the same rename; how each one is registered is unchanged. See [Browser](/guide/browser/) and [React Native](/guide/react-native/#metro).',
         },
 
         { type: 'h2', id: 'code', text: '5. Update the JavaScript' },
@@ -159,7 +158,7 @@ console.log(MyClass.sample());`,
         },
         {
             type: 'p',
-            text: 'Header import paths are unchanged, for your own headers and for library headers such as `@crossbind/port-gdal/gdal.h`. `initNative()` takes options where `initCppJs()` took none - worker mode, persistent storage, environment variables - all listed in the [API reference](/api/).',
+            text: 'Header import paths are unchanged, for your own headers and for library headers such as `@crossbind/port-gdal/gdal.h`. `initNative()` takes options where `initCppJs()` took none - worker mode, persistent storage, environment variables - all listed in [Runtime API](/guide/runtime-api/#options).',
         },
         {
             type: 'p',
@@ -169,7 +168,7 @@ console.log(MyClass.sample());`,
             type: 'ul',
             items: [
                 '`generateVirtualPath()` is now `getRandomPath()`.',
-                'Browser files no longer live under `/virtual/`. They mount under `/memfs/<app>/`, or `/opfs/<app>/` once you opt into persistent storage with `useWorker: true`. `autoMountFiles` returns the new paths, so code that only uses what it returns keeps working; hard-coded `/virtual/...` paths do not. See [Filesystem](/guide/filesystem/).',
+                'Browser files no longer live under `/virtual/`. They mount under `/memfs/<app>/`, or `/opfs/<app>/` once you opt into persistent storage with `useWorker: true`. `autoMountFiles` returns the new paths, so code that only uses what it returns keeps working; hard-coded `/virtual/...` paths do not. See [Files](/guide/filesystem/).',
             ],
         },
 
@@ -197,7 +196,7 @@ console.log(MyClass.sample());`,
         },
         {
             type: 'p',
-            text: 'A script or a Cloudflare Worker that imports the built module by file name needs the new path; [Runtimes](/guide/runtimes/) shows the current names per environment.',
+            text: 'A script or a Cloudflare Worker that imports the built module by file name needs the new path; [Node.js](/guide/node/) and [Edge](/guide/edge/) show the current names.',
         },
 
         { type: 'h2', id: 'native', text: '7. Rebuild native apps' },
@@ -211,9 +210,9 @@ console.log(MyClass.sample());`,
             type: 'ul',
             items: [
                 "[Rust](/guide/rust/): `export.type: 'cargo'` and `cargoDependencies`.",
-                "[WASI](/guide/wasi/): `platform: 'wasi'` builds and the `-standalone-wasi` command tools.",
-                "[Threading](/guide/threading/): `target.runtime: 'mt'` and worker mode.",
-                '[Filesystem](/guide/filesystem/): persistent OPFS storage in the browser.',
+                "[Executables](/guide/executables/): `platform: 'wasi'` builds and the `-standalone-wasi` command tools.",
+                "[Threads and workers](/guide/threading/): `target.runtime: 'mt'` and worker mode.",
+                '[Files](/guide/filesystem/): persistent OPFS storage in the browser.',
                 'Generated TypeScript types through `dts`, see [Configuration](/guide/configuration/).',
             ],
         },

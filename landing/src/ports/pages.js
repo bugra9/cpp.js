@@ -123,7 +123,7 @@ export const PORTS_INDEX = {
     href: PORTS_INDEX_HREF,
     eyebrow: { head: 'LIBRARIES', tail: '' },
     blocks: WASI_TOOL_PORTS.length
-        ? [{ type: 'p', text: `${WASI_TOOL_PORTS.length} of them also ship their command-line tools as npm executables that run on wasmtime; see [WASI commands](${guideHref('wasi')}).` }]
+        ? [{ type: 'p', text: `${WASI_TOOL_PORTS.length} of them also ship their command-line tools as npm executables that run on wasmtime; see [Executables](${guideHref('executables')}#tools).` }]
         : [],
 };
 

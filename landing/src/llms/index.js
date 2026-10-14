@@ -4,9 +4,8 @@ import {
     BRAND, DISCUSSIONS_URL, LICENSE_URL, REPO_URL, SITE, SKILL_COMMAND, V1_DOCS_URL,
 } from '../data.js';
 import { DEMOS } from '../demos.js';
-import { GUIDE_HOME, GUIDE_SECTIONS } from '../guide/nav.js';
+import { GUIDE_SECTIONS } from '../guide/nav.js';
 import AGENT_PAGE from '../pages/agent.js';
-import API_PAGE, { REFERENCE_DOCUMENTS } from '../pages/api.js';
 import EXAMPLES_PAGE, { EXAMPLES } from '../pages/examples.js';
 import { TUTORIAL_PAGES } from '../pages/tutorial.js';
 import { PORT_PAGES, PORTS_INDEX } from '../ports/pages.js';
@@ -34,6 +33,25 @@ const API_DOC_TITLES = {
     'troubleshooting.md': 'Troubleshooting',
     'lifecycle-and-types.md': 'Lifecycle and TypeScript',
 };
+
+const REFERENCE_DOCUMENTS = [
+    ['init.md', '`initNative(opts)` - the runtime entry point and the module helpers it returns.'],
+    ['crossbind-config.md', '`crossbind.config.js` field by field: dependencies, paths, targets, runtime flags.'],
+    ['crossbind-build.md', '`crossbind.build.js` lifecycle hooks for package authors.'],
+    ['build-state.md', 'the `state` and `target` shapes hooks receive, and the inventory of built-in build targets.'],
+    ['filesystem.md', 'OPFS, memfs, node-fs and edge filesystems, and the `useWorker` requirement.'],
+    ['threading.md', "`runtime: 'st' | 'mt'`, `useWorker`, COOP/COEP and edge-runtime limits."],
+    ['cpp-binding-rules.md', 'what the auto-binder accepts and the wrapper pattern for the rest.'],
+    ['rust.md', '`cargo:` crate imports, app-local `.rs` sources and `export.type: \'cargo\'` packages.'],
+    ['conan.md', '`conan:` imports of C and C++ packages from ConanCenter, `conanDependencies` and `conan.lock`.'],
+    ['wasi.md', "`platform: 'wasi'` command builds, `-wasi` prebuilts and `-standalone-wasi` tool packages."],
+    ['native.md', 'desktop platforms beyond Node.js addons: native executables and the prebuilt archives in your own C or C++ build.'],
+    ['swig-escape.md', 'hand-written SWIG `.i` files when generation is not enough.'],
+    ['overrides.md', 'every override mechanism, ordered from least to most invasive.'],
+    ['performance.md', 'the default Emscripten and CMake flags, and what is safe to change.'],
+    ['troubleshooting.md', 'common errors mapped to the right override.'],
+    ['lifecycle-and-types.md', 'why there is no JavaScript-side `delete()`, and TypeScript notes.'],
+];
 
 const SKILL_URL = `${REPO_URL}/blob/main/agents/skills/crossbind/SKILL.md`;
 const FULL_URL = `${SITE}/llms-full.txt`;
@@ -63,8 +81,6 @@ export function renderLlmsIndex() {
         ...ESSENTIALS.map((item) => `- ${item}`),
         '',
         '## Guide',
-        '',
-        entry(GUIDE_HOME),
         ...GUIDE_SECTIONS.flatMap((section) => ['', `### ${section.label}`, '', ...section.pages.map(entry)]),
         '',
         '## Tutorial',
@@ -73,7 +89,6 @@ export function renderLlmsIndex() {
         '',
         '## API reference',
         '',
-        entry(API_PAGE),
         ...REFERENCE_DOCUMENTS.map(([file, summary]) => `- [${file}](${apiDocUrl(file)}): ${summary}`),
         '',
         '## Libraries',
@@ -128,7 +143,6 @@ export function renderLlmsFull() {
         section(overviewDocument(), 'Project overview'),
         ...GUIDE_SECTIONS.flatMap((group) => group.pages).map((item) => page(item, `Guide: ${item.title}`)),
         ...TUTORIAL_PAGES.map((item) => page(item, `Tutorial: ${item.title}`)),
-        page(API_PAGE, 'API overview'),
         ...REFERENCE_DOCUMENTS.flatMap(([file]) => (apiDocs.has(file)
             ? [section(withPageLine(apiDocs.get(file)), `API: ${API_DOC_TITLES[file] ?? file}`)]
             : [])),
@@ -147,7 +161,7 @@ export function renderLlmsFull() {
         releaseLine(),
         '',
         `This file combines the ${sections.length} pages of ${SITE} in reading order: the overview, the guide, the API reference `
-            + 'and its documents, the library catalog, the verified examples, agent setup and the release history. Each section '
+            + 'documents, the library catalog, the verified examples, agent setup and the release history. Each section '
             + 'starts with a `Page:` line naming its canonical URL, where the same content is served as Markdown. Use '
             + `[llms.txt](${SITE}/llms.txt) to pick a page first; load this file when a task needs the whole picture.`,
         '',

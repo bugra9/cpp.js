@@ -1,6 +1,6 @@
 export default {
     slug: 'assets',
-    title: 'Assets and data files',
+    title: 'Data files',
     description: 'Ship the data files a native library needs, and point it at them on every platform.',
     lede: 'Plenty of C++ libraries refuse to work without their data: PROJ wants its coordinate database, GDAL its format tables, OpenSSL a CA bundle. Declare those files once in `targetSpecs` and they are copied to the right place on every platform, with the environment variables wired to match.',
     blocks: [
@@ -92,7 +92,7 @@ export default {
             type: 'callout',
             tone: 'note',
             title: 'WASI is the same declaration, different mechanics',
-            text: 'On `platform: \'wasi\'` the `data` and `env` entries double as the runtime contract for the command: data directories become `--dir` preopens and `env` becomes the guest environment, with `_CROSSBIND_DATA_PATH_` pointing at the mounted directory. See [WASI commands](/guide/wasi/).',
+            text: 'On `platform: \'wasi\'` the `data` and `env` entries double as the runtime contract of the prebuilt command-line tools: their launcher turns data directories into `--dir` preopens and `env` into the guest environment, with `_CROSSBIND_DATA_PATH_` pointing at the mounted directory. A command of your own gets a real `data/` folder beside it; pass `--dir` and `--env` to `wasmtime run` yourself. See [Executables](/guide/executables/#wasi).',
         },
 
         { type: 'h2', id: 'other-specs', text: 'What else targetSpecs carries' },

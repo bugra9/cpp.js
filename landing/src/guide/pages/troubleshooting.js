@@ -78,7 +78,7 @@ export default {
                 [
                     '`crossOriginIsolated is false`, `SharedArrayBuffer is not defined`',
                     'multithreaded build, production host not sending the isolation headers',
-                    'add COOP/COEP - see [Threading](/guide/threading/#coop-coep)',
+                    'add COOP/COEP - see [Threads and workers](/guide/threading/#coop-coep)',
                 ],
                 [
                     '`OPFS is only available inside a Worker scope`',

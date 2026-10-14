@@ -1,18 +1,19 @@
-import { SHOWCASE_COUNT } from '../../data.js';
+import { LIBRARIES_URL, SHOWCASE_COUNT } from '../../data.js';
+import { WASI_TOOL_PORTS } from '../../ports/catalog.js';
 import { RELEASE } from '../../release.js';
 
 const DIST_TAG_SUFFIX = RELEASE.distTagSuffix;
 
 export default {
     slug: 'libraries',
-    title: 'Libraries',
-    description: 'Use a prebuilt C++ library from npm, or publish your own the same way.',
-    lede: `Native libraries travel through npm like any other dependency. ${SHOWCASE_COUNT} are already published prebuilt - GDAL, OpenSSL, SQLite, GEOS, PROJ, libTIFF and more - and the same mechanism packages your own C++, whether it ships as binaries, as sources, as a CMake project or as a Rust crate.`,
+    title: 'crossbind ports',
+    description: 'Use a prebuilt C or C++ library from npm: install it per platform, list it, import its headers.',
+    lede: `${SHOWCASE_COUNT} native libraries are published as prebuilt npm packages - GDAL, OpenSSL, SQLite, GEOS, PROJ, libTIFF and more. Install the build for each platform you target, list it in \`crossbind.config.js\` and import the library's own headers; the library itself comes compiled.`,
     blocks: [
-        { type: 'h2', id: 'use', text: 'Using a prebuilt library' },
+        { type: 'h2', id: 'use', text: 'Install, list, import' },
         {
             type: 'p',
-            text: 'Install the variant for the platform you build, declare it as a dependency in `crossbind.config.js`, and import its header. The upstream binaries are in the package; your own code, the generated bindings and the final link still go through the build toolchain. A project that builds for several platforms lists one variant per platform, for example `-android` and `-ios` in a React Native app.',
+            text: 'Install the package for the platform you build and list its config in `dependencies`; your build then compiles the bindings for the headers you import and links the prebuilt library.',
         },
         { type: 'code', file: 'shell', code: `npm install @crossbind/port-gdal-wasm${DIST_TAG_SUFFIX}` },
         {
@@ -32,102 +33,84 @@ export default {
             code: `import { initNative, GDALVersionInfo } from '@crossbind/port-gdal/gdal.h';
 
 await initNative();
-console.log(GDALVersionInfo('RELEASE_NAME'));`,
+console.log(await GDALVersionInfo('RELEASE_NAME'));`,
         },
         {
             type: 'p',
-            text: "Headers live under the package's `dist/prebuilt/<target>/include`, and the import path is relative to that - `@crossbind/port-gdal/gdal.h` is GDAL's own `gdal.h`.",
+            text: "The import path after `@crossbind/port-gdal/` is relative to the library's include directory: `@crossbind/port-gdal/gdal.h` is GDAL's own `gdal.h`. The header binds its classes and enums whole, and a free function only when your code imports it by name - see [what a library header binds](/guide/bindings/#imports).",
         },
 
-        { type: 'h2', id: 'platform-split', text: 'Meta package, platform variants' },
+        { type: 'h2', id: 'platform-split', text: 'Meta package and platform variants' },
         {
             type: 'p',
-            text: "A package family is a thin meta package plus one package per platform, so you only download artifacts for the platforms you build. Every variant depends on `@crossbind/port-gdal`, which carries the family's shared build metadata and the `@crossbind/port-gdal/<header>.h` alias; you install `-wasm`, `-android`, `-ios`, `-darwin`, `-linux`, `-win32` or `-wasi` for the platforms you build and list each one in `dependencies`. Importing the meta package pulls in the right variant for the target.",
-        },
-        {
-            type: 'table',
-            head: ['Package', 'Carries'],
-            rows: [
-                ['`@crossbind/port-gdal`', 'the meta package: shared metadata and the header alias, pulled in by every variant'],
-                ['`@crossbind/port-gdal-wasm`', 'the WebAssembly prebuilt (browser, Node, edge)'],
-                ['`@crossbind/port-gdal-android` / `-ios`', 'the native mobile libraries'],
-                ['`@crossbind/port-gdal-darwin` / `-linux` / `-win32`', 'the macOS, Linux and Windows archives a native Node.js addon links (arm64 and x64)'],
-                ['`@crossbind/port-gdal-wasi`', 'the `wasm32-wasip3` prebuilt'],
-                ['`@crossbind/port-gdal-standalone-wasi`', 'the upstream CLI tools as npm commands'],
-            ],
-        },
-        {
-            type: 'p',
-            text: 'Those `-standalone-wasi` packages are prebuilt command-line tools - `gdalinfo-wasi`, `ogr2ogr-wasi`, `sqlite3-wasi` and friends. See [WASI commands](/guide/wasi/#tools).',
-        },
-        {
-            type: 'callout',
-            tone: 'note',
-            title: 'Auditable by construction',
-            text: 'Every upstream source is sha256-pinned, and each published package ships its third-party notices, a CycloneDX SBOM and a provenance block naming the sources, toolchain and environment that produced the binaries.',
-        },
-
-        { type: 'h2', id: 'types', text: 'The three package types' },
-        {
-            type: 'table',
-            head: ['Type', 'export.type', 'What consumers get'],
-            rows: [
-                ['Prebuilt', '`cmake` (default)', 'compiled libraries per platform - nothing to build'],
-                ['Source', '`source`', "raw C++ compiled during the consumer's build"],
-                ['CMake', '`cmake`', 'sources plus a `CMakeLists.txt` for custom build systems'],
-                ['Cargo', '`cargo`', 'a Rust crate built per platform - see [Rust](/guide/rust/#publish)'],
-            ],
-        },
-        {
-            type: 'p',
-            text: 'Prebuilt is the default and what almost every published package is. Source and CMake packages trade build time for control - the consumer compiles them, so platform-specific tweaks are possible.',
-        },
-
-        { type: 'h2', id: 'publish', text: 'Publishing your own' },
-        {
-            type: 'p',
-            text: 'Point the config at your sources, name the library, and declare where the build output goes. That is the whole contract:',
+            text: 'Each library is a family. The meta package, `@crossbind/port-gdal`, holds the build recipe and the licence metadata and gives the family the name you import headers by; every platform package depends on it. Install the platform packages you build for and list each one: crossbind links the one with libraries for the target being built and leaves the others out. A React Native app lists two:',
         },
         {
             type: 'code',
             file: 'crossbind.config.js',
+            code: `import gdalAndroid from '@crossbind/port-gdal-android/crossbind.config.js';
+import gdalIos from '@crossbind/port-gdal-ios/crossbind.config.js';
+
+export default {
+    dependencies: [gdalAndroid, gdalIos],
+    paths: { config: import.meta.url },
+};`,
+        },
+        {
+            type: 'table',
+            head: ['Package', 'Carries', 'For'],
+            rows: [
+                ['`@crossbind/port-gdal`', 'the recipe, the licence metadata and the header alias', 'installed with every variant'],
+                ['`-wasm`', 'wasm32 libraries, `st` and `mt`', 'the browser, Node.js and edge runtimes'],
+                ['`-android`', 'arm64-v8a and x86_64 libraries', '[React Native](/guide/react-native/)'],
+                ['`-ios`', 'device and simulator libraries, as an xcframework', '[React Native](/guide/react-native/)'],
+                ['`-darwin`, `-linux`, `-linuxmusl`, `-win32`', 'arm64 and x64 libraries', '[Node.js addons](/guide/node/#addon), [Electron](/guide/electron/) and [native executables](/guide/executables/#native)'],
+                ['`-wasi`', '`wasm32-wasip3` libraries', '[WASI](/guide/executables/#wasi) commands and components'],
+                ['`-standalone-napi`', 'prebuilt Node-API addons', 'Node.js, with nothing to build'],
+                ['`-standalone-wasi`', 'the upstream command-line tools', 'npm commands that run on wasmtime'],
+            ],
+        },
+        {
+            type: 'callout',
+            tone: 'note',
+            title: 'What a package carries',
+            text: "Every port pins its upstream source by URL and SHA-256 in its recipe, and its npm `license` field is the wrapped library's licence. A platform package ships the upstream licence text as `LICENSE` - GDAL's also the texts of the libraries it compiles in, under `dist/licenses/` - but no notices file or SBOM. Write those for what your build links with `crossbind licenses --notices --sbom`, which also flags copyleft licences such as the LGPL of GEOS and libiconv ([CLI](/guide/cli/#licenses)).",
+        },
+        {
+            type: 'p',
+            text: 'Your own library can ship the same way: see [Publishing packages](/guide/publishing/).',
+        },
+
+        { type: 'h2', id: 'catalog', text: 'The catalog' },
+        {
+            type: 'p',
+            text: `[The catalog](${LIBRARIES_URL}) lists every library with its upstream version and licence. Each library's page has the install commands for every platform and, where it has them, live apps that run in the browser, worked examples and command-line tools.`,
+        },
+
+        { type: 'h2', id: 'standalone', text: 'Nothing to build' },
+        {
+            type: 'p',
+            text: `Two kinds of package need no crossbind build at all. Every port has a \`-standalone-napi\` package for Node.js: npm installs the prebuilt addon for your machine, and the package root exports every function, class and constant of the public headers ([Node.js](/guide/node/#addon)). For ${WASI_TOOL_PORTS.length} of them, a \`-standalone-wasi\` package also publishes the upstream command-line tools as npm commands - \`gdalinfo-wasi\`, \`ogr2ogr-wasi\`, \`sqlite3-wasi\` - which run on wasmtime ([Executables](/guide/executables/#tools)). Both ship an SBOM and a \`license\` field derived from everything linked in.`,
+        },
+
+        { type: 'h2', id: 'rebuild', text: 'Rebuilding from source' },
+        {
+            type: 'p',
+            text: "Each port is built with its recipe's defaults. To change a version, a flag or a patch, add `crossbind.overrides.js` next to your config: crossbind then rebuilds that dependency from its pinned source into `.crossbind/deps/`, for each platform you build, and links the result in its place.",
+        },
+        {
+            type: 'code',
+            file: 'crossbind.overrides.js',
             code: `export default {
-    general: { name: 'mylib' },
-    paths: {
-        config: import.meta.url,
-        native: ['src/native'],
-        output: 'dist',
-    },
-    export: {
-        type: 'cmake',
-        libName: ['mylib'],
+    '@crossbind/port-zlib': { rebuild: true },
+    '@crossbind/port-proj': {
+        getBuildParams: (base, ...args) => [...base(...args), '-DENABLE_TIFF=OFF'],
     },
 };`,
         },
         {
             type: 'p',
-            text: 'Build once per platform and publish the result. The layout the CLI produces is what consumers rely on:',
-        },
-        {
-            type: 'code',
-            file: 'dist/',
-            code: `dist/
-├── mylib-wasm-wasm32-st-release.browser.js
-├── mylib-wasm-wasm32-st-release.browser.wasm
-└── prebuilt/
-    ├── wasm-wasm32-st-release/{include,lib}
-    ├── android-arm64-v8a-mt-release/{include,lib}
-    └── ios-iphoneos-mt-release/{include,lib}`,
-        },
-        {
-            type: 'p',
-            text: 'Wrapping an **external** project rather than your own sources? Add a `crossbind.build.js` next to the config: it fetches the upstream release, patches it if needed, and passes build parameters to cmake or configure. Every published library in the registry is built exactly that way.',
-        },
-        {
-            type: 'callout',
-            tone: 'warn',
-            title: 'Declare your C++ dependencies in package.json too',
-            text: 'Build order is derived from the npm dependency graph. A library that links against another package must list it in `dependencies`, or the linker will run before that package has been built.',
+            text: '`crossbind build --rebuild-deps <names>` rebuilds once without the file. iOS picks overrides up at `pod install`, so run it again after you change them.',
         },
     ],
 };

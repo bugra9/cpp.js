@@ -16,7 +16,7 @@ export const LIMITS = [
     "Browser multithread builds (`runtime: 'mt'`) need COOP/COEP headers in production, and the pthread pool defaults to two workers; the size and the exhaustion policy are configurable.",
     'Edge runtimes such as Cloudflare Workers run single-threaded with an in-memory filesystem: no workers, no OPFS.',
     'Android builds link whole archives; dead-code elimination is not implemented there.',
-    'iOS builds need a local Xcode and CocoaPods, Rust bindings need a local cargo, and WASI commands need wasmtime on PATH.',
+    'iOS and macOS builds need a local Xcode, iOS also CocoaPods, and Rust bindings for them a local cargo; WASI commands need wasmtime on PATH.',
     'There is no performance claim: a hand-written loop in JIT JavaScript can match the same algorithm in Wasm. The value is the libraries you would otherwise rewrite.',
     'The 2.0 line is a beta; prereleases carry no compatibility guarantee until the first stable train.',
 ];

@@ -1,15 +1,15 @@
 export default {
     slug: 'filesystem',
-    title: 'Filesystem',
+    title: 'Files',
     description: 'Where files live per runtime: OPFS, in-memory, the host disk - and how to mount user files.',
-    lede: 'C++ wants paths. What a path means depends on where the module runs: real disk in Node, an origin-private store or plain memory in the browser, per-invocation memory on the edge. This page maps every combination, including how a file from an `<input>` element becomes a path your C++ can open.',
+    lede: 'C++ wants paths. What a path means depends on where the module runs: real disk in Node, an origin-private store or plain memory in the browser, and nothing JavaScript can reach on the edge. This page maps every combination, including how a file from an `<input>` element becomes a path your C++ can open.',
     blocks: [
         { type: 'h2', id: 'roots', text: 'The two browser roots' },
         {
             type: 'table',
             head: ['Mount', 'Backed by', 'Survives a reload', 'Available when'],
             rows: [
-                ['`/opfs/<app>/`', 'the Origin Private File System', 'yes', '`useWorker: true`, `fs.opfs` not disabled, browser support'],
+                ['`/opfs/<app>/`', 'the Origin Private File System', 'yes', '`fs.opfs` on (the default in `mt` builds), the module in a worker, browser support'],
                 ['`/memfs/<app>/`', 'in-memory', 'no - tab session only', 'always'],
             ],
         },
@@ -27,8 +27,8 @@ export default {
             type: 'code',
             file: 'src/main.js',
             code: `const m = await initNative({
-    useWorker: true,      // mandatory for OPFS
-    fs: { opfs: true },   // the browser default, shown for clarity
+    useWorker: true,      // the browser default; OPFS needs it
+    fs: { opfs: true },   // the default in mt builds
 });
 
 // Anything under /opfs/<app>/ is still there after a reload.
@@ -106,10 +106,10 @@ imgEl.src = url;`,
             type: 'table',
             head: ['Runtime', '/opfs/...', '/memfs/...', 'Notes'],
             rows: [
-                ['Browser, no worker', 'throws', 'yes', 'tab-session memory only'],
-                ['Browser + `useWorker: true`', 'yes, or falls back to `/memfs/`', 'yes', 'the persistent option'],
+                ['Browser, `useWorker: false`', 'throws', 'yes', 'tab-session memory only'],
+                ['Browser, in a worker (the default)', 'in `mt` builds, or falls back to `/memfs/`', 'yes', 'the persistent option'],
                 ['Node.js', 'n/a', 'n/a', '`m.FS` reads and writes real disk'],
-                ['Cloudflare Workers / edge', 'n/a', 'yes', 'per-invocation memory, no persistence'],
+                ['Cloudflare Workers / edge', 'n/a', 'n/a', 'no `m.FS`: pass data to your functions'],
                 ['React Native', 'n/a', 'n/a', 'the app sandbox, through the platform APIs'],
             ],
         },
@@ -118,11 +118,11 @@ imgEl.src = url;`,
         {
             type: 'ul',
             items: [
-                '**Mounting `/opfs` without a worker** throws inside `getFinalPath()`. Either set `useWorker: true` or write under `/memfs/`.',
-                '**Setting `fs: { opfs: false }` and then using `/opfs/...`** throws too - it is disabled, not missing.',
+                '**Mounting `/opfs` without a worker** throws inside `getFinalPath()`. Keep the worker on - the browser default - or write under `/memfs/`.',
+                '**Using `/opfs/...` with OPFS off** - the default in `st` builds, or `fs: { opfs: false }` - throws too: it is disabled, not missing.',
                 '**Dropping the `<app>` segment.** Writes to `/memfs/foo` work but sit outside the tree that gets cleaned up on terminate.',
                 '**Expecting OPFS to cross origins.** It does not: files written by one origin are invisible to another.',
-                '**Needing durable files on the edge.** There is no persistent store there; read bytes from R2/KV/S3 and write them in.',
+                '**Expecting files on the edge.** The edge build exports no `m.FS`; read bytes from R2, KV or S3 in JavaScript and pass them to your functions.',
             ],
         },
     ],
