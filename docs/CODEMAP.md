@@ -71,9 +71,9 @@ Every consumer-facing field, every default, every constraint lives in [`docs/api
 - [`rust.md`](./api/rust.md) — Rust bindings: `cargo:` imports, app-local `.rs`, cargo-type packages.
 - [`conan.md`](./api/conan.md) — C/C++ packages from ConanCenter: `conan:` imports, `conanDependencies`, `conan.lock`.
 - [`native.md`](./api/native.md) — desktop platforms beyond Node.js addons: native executables and prebuilt archives in your own C/C++ build.
-- [`wasi.md`](./api/wasi.md) — `platform: 'wasi'` command builds + `-standalone-wasi` npm tool packages.
+- [`wasi.md`](./api/wasi.md) — `platform: 'wasi'` command builds, HTTP components (`-e http`) + `-standalone-wasi` npm tool packages.
 - [`swig-escape.md`](./api/swig-escape.md) — manual `.i` files for the rare cases auto-gen doesn't fit.
-- [`build-state.md`](./api/build-state.md) — `state` and `target` shapes + 30 built-in target inventory.
+- [`build-state.md`](./api/build-state.md) — `state` and `target` shapes + 32 built-in target inventory.
 - [`overrides.md`](./api/overrides.md) — 20 override mechanisms (least → most invasive).
 - [`troubleshooting.md`](./api/troubleshooting.md) — common errors mapped to fixes.
 - [`performance.md`](./api/performance.md) — default flag reference + safe-override guide.
@@ -117,7 +117,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | Node import hooks: the native imports of an app without a bundler (`dist/node/<format>.register.mjs`) | `src/actions/createImportedBridges.js`, `src/actions/writeRuntimeEntry.js`, `src/assets/node-import-hooks.mjs` |
 | `crossbind/node/dev`: build this machine's Node binary when its native inputs changed, then load those hooks | `src/node/dev.mjs`, `src/utils/nodeDevBuild.js` |
 | Archives of a final link and what stays whole (wasm and addon) | `src/actions/getLinkInputs.js` |
-| WASI command link (single .wasm) | `src/actions/buildWasiCommand.js` |
+| WASI command and HTTP component link (single .wasm) | `src/actions/buildWasiCommand.js` |
 | Rust crate build (`export.type: 'cargo'`) | `src/actions/buildCargo.js` |
 | Install and attach `conanDependencies` when a build starts | `src/actions/prepareConanDependencies.js` |
 | -bin tool derivations (commands, multicall, provenance, license) | `src/actions/buildBinTools.js` |
@@ -197,6 +197,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | System config schema | `src/utils/systemKeys.js` |
 | Target inventory single source (TARGETS, targetPathOf) | `src/utils/targets.js` |
 | wasi toolchain flags + sdk resolution | `src/utils/wasiToolchain.js` |
+| wasi:http/service runtime: handler export, wit-bindgen bindings, `crossbind/http.h` | `src/utils/wasiHttp.js`, `src/assets/wasi-runtime/http/` |
 | Bin map rendering (commands, npmignore, dispatcher) | `src/utils/binTools.js` |
 | K4 provenance block derivation | `src/utils/provenance.js` |
 | Family manifest resolution (license/provenance identity) | `src/utils/familyManifest.js` |

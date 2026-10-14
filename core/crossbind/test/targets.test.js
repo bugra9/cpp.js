@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import {
     TARGETS, OPT_IN_PLATFORMS, RUNTIME_ENVS, runtimeEnvsOf, selectRuntimeEnvs, targetPathOf, filterTargetSpecs, nodeAddonNamesOf,
-    nativeCommandNamesOf,
+    nativeCommandNamesOf, wasiNamesOf,
 } from '../src/utils/targets.js';
 
 describe('TARGETS', () => {
@@ -56,17 +56,19 @@ describe('TARGETS', () => {
         }
     });
 
-    // The runtime environment names the binary a build makes, so a wasi command needs one too.
-    test('a wasi command is asked for with the wasi runtime environment', () => {
-        for (const target of TARGETS.filter((t) => t.platform === 'wasi')) {
-            expect(target.runtimeEnv).toBe('wasi');
-        }
+    // The runtime environment names the binary a build makes: a command, or an HTTP component, of the same archives.
+    test('a wasi build makes a command or an http component', () => {
+        const pathsOf = (runtimeEnv) => TARGETS
+            .filter((t) => t.platform === 'wasi' && t.runtimeEnv === runtimeEnv).map(targetPathOf).sort();
+        expect(pathsOf('wasi')).toEqual(['wasi-wasm32-st-debug', 'wasi-wasm32-st-release']);
+        expect(pathsOf('http')).toEqual(pathsOf('wasi'));
+        expect(TARGETS.filter((t) => t.platform === 'wasi').every((t) => ['wasi', 'http'].includes(t.runtimeEnv))).toBe(true);
     });
 });
 
 describe('runtime environments', () => {
     test('RUNTIME_ENVS lists every binary a build can make', () => {
-        expect([...RUNTIME_ENVS].sort()).toEqual(['browser', 'edge', 'native', 'node', 'wasi']);
+        expect([...RUNTIME_ENVS].sort()).toEqual(['browser', 'edge', 'http', 'native', 'node', 'wasi']);
     });
 
     test('selectRuntimeEnvs takes -e first, then target.runtimeEnv, then nothing', () => {
@@ -77,9 +79,18 @@ describe('runtime environments', () => {
 
     test('runtimeEnvsOf lists the binaries of one platform', () => {
         expect(runtimeEnvsOf('wasm').sort()).toEqual(['browser', 'edge', 'node']);
-        expect(runtimeEnvsOf('wasi')).toEqual(['wasi']);
+        expect(runtimeEnvsOf('wasi')).toEqual(['wasi', 'http']);
         expect(runtimeEnvsOf('linux')).toEqual(['node', 'native']);
         expect(runtimeEnvsOf('android')).toEqual([]);
+    });
+});
+
+describe('wasiNamesOf', () => {
+    const wasi = (runtimeEnv) => TARGETS.find((t) => t.platform === 'wasi' && t.runtimeEnv === runtimeEnv && t.buildType === 'release');
+
+    test('names the command after the project and target, and the http component apart from it', () => {
+        expect(wasiNamesOf(wasi('wasi'), 'demo')).toEqual({ wasmName: 'demo-wasi-wasm32-st-release.wasm' });
+        expect(wasiNamesOf(wasi('http'), 'demo')).toEqual({ wasmName: 'demo-wasi-wasm32-st-release.http.wasm' });
     });
 });
 

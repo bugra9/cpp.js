@@ -7,14 +7,18 @@ import logger from '../utils/logger.js';
 import { getContentHash, getFilesFingerprint } from '../utils/hash.js';
 import { buildLinkLibArgs } from '../utils/linkLayout.js';
 import { wasiCxxFlags, WASI_LINK_LIBS } from '../utils/wasiToolchain.js';
+import { stageWasiHttpLink, wasiHttpFiles } from '../utils/wasiHttp.js';
 
 // Links a platform:'wasi' target into one command module: main() is the entry, deps are DCE'd, data lands as a real dir for --dir preopens.
+// An http target links into a wasi:http/service component instead, whose entry is crossbind's handler export.
 export default async function buildWasiCommand(target, options = {}) {
     const isProd = target.buildType === 'release';
     const buildType = isProd ? 'Release' : 'Debug';
+    const isHttp = target.runtimeEnv === 'http';
+    const step = isHttp ? 'wasi http' : 'wasi command';
 
     if (state.config.export?.type === 'cargo') {
-        logger.info(`[${target.path}] wasi command skipped (cargo packages have no cargo wasi triple)`);
+        logger.info(`[${target.path}] ${step} skipped (cargo packages have no cargo wasi triple)`);
         return false;
     }
 
@@ -52,17 +56,17 @@ export default async function buildWasiCommand(target, options = {}) {
             return { lib, size: stat ? stat.size : null, mtimeMs: stat ? stat.mtimeMs : null };
         }),
         data: getData('data', target),
-        runtime: getFilesFingerprint([stubs]),
+        runtime: getFilesFingerprint([stubs, ...(isHttp ? wasiHttpFiles(state.config.paths.cli) : [])]),
     }));
     const linkChanged = !fs.existsSync(linkFingerprintFile)
         || fs.readFileSync(linkFingerprintFile, { encoding: 'utf8' }) !== linkFingerprint;
 
     if (!options.force && !linkChanged && fs.existsSync(`${state.config.paths.build}/${target.wasmName}`)) {
-        logger.cachedStep(target, 'wasi command');
+        logger.cachedStep(target, step);
         return false;
     }
 
-    logger.startStep(target, 'wasi command');
+    logger.startStep(target, step);
     const t0 = performance.now();
     // stubs.c lives outside the docker mount (paths.cli); stage it next to the artifact.
     const stagedStubs = `${state.config.paths.build}/crossbind-wasi-stubs.c`;
@@ -71,6 +75,7 @@ export default async function buildWasiCommand(target, options = {}) {
     run(null, [
         'wasi-clang++',
         stagedStubs,
+        ...(isHttp ? stageWasiHttpLink(state.config.paths.cli, `${state.config.paths.build}/crossbind-wasi-http`) : []),
         ...wasiCxxFlags(),
         ...(isProd ? ['-O3'] : ['-O0']),
         ...wasiFlags,
@@ -79,7 +84,7 @@ export default async function buildWasiCommand(target, options = {}) {
         '-o', `${state.config.paths.build}/${target.wasmName}`,
     ], null, target);
     const ms = Math.round(performance.now() - t0);
-    logger.doneStep(target, 'wasi command', ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`);
+    logger.doneStep(target, step, ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`);
 
     // Dep data lands as a real folder next to the artifact for --dir preopens.
     Object.entries(getData('data', target)).forEach(([key, value]) => {

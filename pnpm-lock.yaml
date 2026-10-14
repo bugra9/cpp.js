@@ -403,6 +403,12 @@ importers:
         specifier: ^4.136.3
         version: 4.149.0(@types/node@24.19.1)
 
+  e2e/cloud-wasi-http:
+    devDependencies:
+      crossbind:
+        specifier: workspace:^
+        version: link:../../core/crossbind
+
   e2e/conformance: {}
 
   e2e/conformance-rust:

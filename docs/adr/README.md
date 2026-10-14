@@ -23,6 +23,7 @@ ADRs are **immutable**. When a decision is overturned, write a new ADR that supe
 | [0013](./0013-conan-import-scheme.md) | Build ConanCenter packages behind a `conan:` header scheme | Proposed | `getDependFilePath.js`, bundler plugins, `conanDependencies`, `base.Dockerfile`, `runConan.js` |
 | [0014](./0014-ready-made-node-packages.md) | Publish each port as a standalone Node-API package with an addon package per platform | Proposed | `ports/*/standalone-napi*`, `check-node-package.mjs`, `scripts/release/node-packages.mjs`, `release-crossbind.yml` |
 | [0015](./0015-runner-in-the-system-config.md) | Choose where steps run with `RUNNER` in the system config | Proposed | `selectRunner.js`, `systemKeys.js`, `run.js`, `runCargo.js`, `runConan.js`, `~/.crossbind.json` |
+| [0016](./0016-wasi-http-components.md) | Make WASI HTTP components with `-e http` and one C++ handler | Proposed | `targets.js`, `wasiHttp.js`, `buildWasiCommand.js`, `assets/wasi-runtime/http/`, `e2e/cloud-wasi-http` |
 
 ## Writing a new ADR
 

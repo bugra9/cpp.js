@@ -10,6 +10,7 @@ import triggerExtensions from './extensions.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
 import { WASI_EMULATION_LIBS, WASI_LINK_LIBS, wasiCFlags, wasiCxxFlags } from '../utils/wasiToolchain.js';
+import { stageWasiHttpInclude, wasiHttpHeader } from '../utils/wasiHttp.js';
 import { getFilesFingerprint, getContentHash } from '../utils/hash.js';
 import { withDependencyBridges } from '../utils/dependencyBridges.js';
 import { targetArchiveFlags } from '../utils/archiveFlags.js';
@@ -56,7 +57,12 @@ export default function createLib(target, fileType, options = {}) {
     const conanInputs = conanInputsOf(state.config);
     const compileInputs = compileOptions.length ? { emccFlags: configEmccFlags, compileOptions } : configEmccFlags;
     const flagsInputs = sourceReplacements.length ? { compileInputs, sourceReplacements } : compileInputs;
-    const flagsFingerprint = getContentHash(JSON.stringify(conanInputs ? [flagsInputs, conanInputs] : flagsInputs));
+    const keyInputs = conanInputs ? [flagsInputs, conanInputs] : flagsInputs;
+    // An app's wasi source compiles against <crossbind/http.h>, so a new one misses this cache too.
+    const httpHeader = target.platform === 'wasi' && !state.config.build.withBuildConfig
+        ? getFilesFingerprint([wasiHttpHeader(state.config.paths.cli)])
+        : null;
+    const flagsFingerprint = getContentHash(JSON.stringify(httpHeader ? [keyInputs, httpHeader] : keyInputs));
     const flagsChanged = !fs.existsSync(flagsFingerprintFile)
         || fs.readFileSync(flagsFingerprintFile, { encoding: 'utf8' }) !== flagsFingerprint;
 
@@ -142,7 +148,11 @@ export default function createLib(target, fileType, options = {}) {
             buildEnv.params.push('-e', e);
         });
     } else {
-        buildParams = getCmakeParameters(target, { ...options, nativeGlob });
+        // The source of an http build includes <crossbind/http.h>.
+        const headerDirs = target.platform === 'wasi'
+            ? [...(options.headerDirs ?? []), stageWasiHttpInclude(state.config.paths.cli, `${buildPath}/crossbind-wasi-http`)]
+            : options.headerDirs;
+        buildParams = getCmakeParameters(target, { ...options, nativeGlob, headerDirs });
 
         triggerExtensions('createLib', 'setFlagWithoutBuildConfig', [buildEnv]);
 
