@@ -39,6 +39,12 @@ test('every port family in the tree yields a catalog entry with canonical facts'
     assert.ok(gdal.targets.some((target) => target.target === NAPI_TARGET && target.package === '@crossbind/port-gdal-standalone-napi'));
 });
 
+test("a library whose wasi build brings data files or environment, its own or a dependency's, is marked", async () => {
+    const entries = await readPortsTree();
+    const marked = entries.filter((entry) => entry.hasWasiData).map((entry) => entry.family);
+    assert.deepEqual(marked.sort(), ['curl', 'gdal', 'geotiff', 'openssl', 'proj', 'spatialite']);
+});
+
 test('publication comes from the dist-tag npm serves, not from the directory existing', async () => {
     const entries = [
         {
