@@ -20,9 +20,7 @@ function blockText(block) {
             return `${block.title || ''} ${block.text}`;
         case 'table':
             return [...block.head, ...block.rows.flat()].join(' ');
-        // Code is skipped: matching on snippets buries the prose that explains them. Cards are
-        // skipped too - they repeat other pages' titles, so indexing them makes the hub match
-        // every term in the guide and outrank the page that actually answers the question.
+        // Code is skipped: matching on snippets buries the prose that explains them.
         default:
             return '';
     }

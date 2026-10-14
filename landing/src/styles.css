@@ -16,27 +16,6 @@
     --nav-h: 75px;
 }
 
-/* Shared by landing and guide cards. */
-.feat-card {
-    transition:
-        transform 0.18s ease,
-        box-shadow 0.18s ease;
-}
-
-.feat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
-}
-
-.feat-card:focus-visible {
-    outline: 2px solid currentColor;
-    outline-offset: 3px;
-}
-
-.feat-card:active {
-    transform: translateY(-1px);
-}
-
 /* WCAG 2.2 target size (2.5.8) is 24px; the mobile block below raises it to a thumb-sized 44. */
 .tap-target {
     min-height: 24px;
@@ -178,7 +157,79 @@
     }
 }
 
+/* The rows of the hub and the panels; the flow's boxes light their own border instead. */
+li > .map-link:hover {
+    background: rgba(127, 127, 127, 0.08);
+}
+
+.map-link:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+/* The panels clip their overflow, so a row's outline goes inside it. */
+.platform-map .map-link:focus-visible {
+    outline-offset: -2px;
+}
+
+/* The SQLite demo: its C++ beside the JavaScript that calls it, stacked once half the column is
+   narrower than the longer of the two. */
+.demo-code {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.demo-query:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+}
+
+/* The libraries on the home page: four across, two on tablets, one on phones. */
+.showcase-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: 32px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* An inline style cannot carry :hover, so the rule's colours come in as custom properties. */
+.showcase-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 0 24px;
+    border-top: 1px solid var(--rule);
+}
+
+.showcase-item:hover {
+    border-top-color: var(--rule-hover);
+}
+
+.showcase-item:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+@media (max-width: 1000px) {
+    .showcase-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .showcase-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 @media (max-width: 1240px) {
+    .demo-code {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .hero-grid {
         --hero-title: clamp(36px, 5vw, 56px);
         grid-template-columns: minmax(0, 1fr);

@@ -55,10 +55,6 @@ function callout({ tone, title, text }, resolveLink) {
     return `> **${label}:** ${links(text, resolveLink)}`;
 }
 
-const cards = (items, resolveLink) => items
-    .map((card) => `- [${card.title}](${resolveLink(card.href)}): ${card.desc}`)
-    .join('\n');
-
 function release({ channel, prerelease, publishedAt, npmUrl, githubReleaseUrl }) {
     const label = `${CHANNEL_LABEL[channel] ?? channel}${prerelease ? ' · prerelease' : ''}`;
     return `${label} · published ${formatPublishedAt(publishedAt)} · [npm](${npmUrl}) · [GitHub Release](${githubReleaseUrl})`;
@@ -91,7 +87,6 @@ const RENDERERS = {
     code: (block) => fence(block.code, block.file),
     callout,
     table,
-    cards: (block, resolveLink) => cards(block.items, resolveLink),
     release: (block) => release(block.release),
     example,
     // Markdown has no tabs: each panel becomes a heading of its own.

@@ -40,10 +40,8 @@ export const REPO_URL = 'https://github.com/crossbind/crossbind';
 export const DISCUSSIONS_URL = `${REPO_URL}/discussions`;
 export const LICENSE_URL = `${REPO_URL}/blob/main/LICENSE`;
 export const PRIVACY_EMAIL = 'privacy@crossbind.dev';
-export const API_URL = '/api/';
 export const AGENT_URL = '/agent/';
 export const LIBRARIES_URL = '/ports/';
-export const LLMS_URL = '/llms.txt';
 // Examples is in the navbar because three examples are proof-complete (src/pages/examples.js);
 // set it to null again if that page ever loses an entry.
 export const EXAMPLES_URL = '/examples/';
@@ -122,38 +120,39 @@ export const RUNTIMES = [
 
 // The platform map under the live demo: where native code comes from, what crossbind does with it
 // and what each platform gets back. Every row is a shipped capability; Apple targets build with the
-// host's Xcode, the rest in the pinned Docker images.
+// host's Xcode, the rest in the pinned Docker images. A row links to the page that explains it:
+// `guide` (+ `anchor`) as for FEATURES below, or `href`. Rows the site has no page for stay plain.
 export const PLATFORM_MAP = {
     title: 'From native source to every runtime.',
     lede: 'crossbind takes C++ and Rust from wherever they live, builds them for every target and hands each platform what it loads, packaged for npm.',
     sources: {
         label: 'YOUR SOURCES',
         rows: [
-            { chip: '.h', title: 'Your C++', note: 'Headers under src/native' },
-            { chip: '.rs', title: 'Your Rust', note: 'Files beside your C++' },
-            { chip: '@crossbind', title: 'crossbind ports', note: `${PORTS.length} prebuilt libraries` },
-            { chip: 'cargo:', title: 'crates.io', note: 'Rust crates' },
-            { chip: 'conan:', title: 'ConanCenter', note: 'C and C++ packages' },
+            { chip: '.h', title: 'Your C++', note: 'Headers under src/native', guide: 'bindings' },
+            { chip: '.rs', title: 'Your Rust', note: 'Files beside your C++', guide: 'rust' },
+            { chip: '@crossbind', title: 'crossbind ports', note: `${PORTS.length} prebuilt libraries`, href: LIBRARIES_URL },
+            { chip: 'cargo:', title: 'crates.io', note: 'Rust crates', guide: 'crates-io' },
+            { chip: 'conan:', title: 'ConanCenter', note: 'C and C++ packages', guide: 'conan' },
         ],
     },
     core: {
         rows: [
-            { title: 'Bindings and TypeScript types', note: 'Generated from your imports' },
-            { title: 'The dependency graph', note: 'Resolved, prebuilt first' },
-            { title: 'Every target', note: 'One crossbind build command' },
-            { title: 'Toolchains', note: 'Pinned Docker images; Xcode for Apple' },
-            { title: 'Runners', note: 'Local, remote or crossbind cloud' },
+            { title: 'Bindings and TypeScript types', note: 'Generated from your imports', guide: 'architecture', anchor: 'pipeline' },
+            { title: 'The dependency graph', note: 'Resolved, prebuilt first', guide: 'configuration', anchor: 'identity' },
+            { title: 'Every target', note: 'One crossbind build command', guide: 'architecture', anchor: 'targets' },
+            { title: 'Toolchains', note: 'Pinned Docker images; Xcode for Apple', guide: 'architecture', anchor: 'toolchain' },
+            { title: 'Runners', note: 'Local, remote or crossbind cloud', guide: 'remote-builds' },
         ],
     },
     outputs: {
         label: 'WHAT YOU SHIP',
         rows: [
-            { scene: 'browser', title: 'WebAssembly', note: 'Browsers, Node.js, Workers' },
-            { scene: 'cloud', title: 'Node-API addons', note: 'Node.js and Electron' },
-            { scene: 'phone', title: 'iOS & Android', note: 'Libraries for React Native' },
-            { scene: 'laptop', title: 'Executables', note: 'macOS, Linux, Windows' },
-            { scene: 'terminal', title: 'WASI', note: 'Commands and libraries' },
-            { scene: 'package', title: 'npm packages', note: 'Prebuilt per platform' },
+            { scene: 'browser', title: 'WebAssembly', note: 'Browsers, Node.js, Workers', guide: 'browser' },
+            { scene: 'cloud', title: 'Node-API addons', note: 'Node.js and Electron', guide: 'node', anchor: 'addon' },
+            { scene: 'phone', title: 'iOS & Android', note: 'Libraries for React Native', guide: 'react-native' },
+            { scene: 'laptop', title: 'Executables', note: 'macOS, Linux, Windows', guide: 'executables', anchor: 'native' },
+            { scene: 'terminal', title: 'WASI', note: 'Commands and libraries', guide: 'executables', anchor: 'wasi' },
+            { scene: 'package', title: 'npm packages', note: 'Prebuilt per platform', guide: 'publishing' },
         ],
     },
 };
@@ -227,7 +226,7 @@ export const FEATURES = [
         id: 'hmr',
         num: '05',
         group: 'write',
-        guide: 'bundlers',
+        guide: 'browser',
         title: 'Hot reload for C++ & Rust',
         summary: 'Save a header or a .rs file, watch the browser refresh. The edit-save-see loop web developers live in, now for native code.',
         tag: ['EDIT THE .H OR .RS', 'BROWSER REFRESHES'],
@@ -286,7 +285,7 @@ export const FEATURES = [
         id: 'build-hooks',
         num: '11',
         group: 'build',
-        guide: 'libraries',
+        guide: 'publishing',
         title: 'CMake, Autotools or your own runner',
         summary:
             'A package recipe can fetch or generate source, run CMake or configure + make, inject flags and environment variables, patch upstream files, copy assets or replace the build step entirely.',
@@ -316,7 +315,7 @@ export const FEATURES = [
         id: 'dce',
         num: '14',
         group: 'build',
-        guide: 'architecture',
+        guide: 'performance',
         title: 'Only what you use',
         summary:
             'Dead-code elimination on top of -O3, plus platform-split downloads: you ship what you call and what it reaches, not the whole library. Android is the exception — it links the whole library.',
@@ -336,7 +335,7 @@ export const FEATURES = [
         id: 'platforms',
         num: '16',
         group: 'run',
-        guide: 'runtimes',
+        guide: '',
         title: 'One codebase, every platform',
         summary:
             'WebAssembly in the browser, in Node and on the edge. Native machine code on iOS and Android through JSI. A wasip3 command for WASI, with its own entry point instead of initNative. One binding model for the JavaScript targets, in front of a 30-target build matrix.',
@@ -346,7 +345,7 @@ export const FEATURES = [
         id: 'ondevice',
         num: '17',
         group: 'run',
-        guide: 'runtimes',
+        guide: '',
         title: 'On-device by default',
         summary:
             'Your C++ and Rust run where your user is. No backend to build or pay for, no request latency, no data leaving the device. It even works offline.',
@@ -405,7 +404,7 @@ export const FEATURES = [
         id: 'wasi',
         num: '23',
         group: 'ship',
-        guide: 'wasi',
+        guide: 'executables',
         title: 'Ship a CLI, no JavaScript',
         summary: `platform: 'wasi' turns C++ into a single .wasm command with no JS glue. 68 classic tools already ship as <tool>-wasi npm commands — gdalinfo, sqlite3, openssl and friends. They run under wasmtime 47 or newer.`,
         tag: ['68 PREBUILT COMMANDS', 'WASIP3', 'WASMTIME 47+'],
@@ -434,7 +433,7 @@ export const FEATURES = [
         id: 'tested',
         num: '26',
         group: 'trust',
-        guide: 'introduction',
+        guide: '',
         title: 'Tested on the platforms it claims',
         summary:
             'The sample apps are built and driven in CI, not merely compiled: Playwright across React, Vue, Svelte, vanilla and a Cloudflare Worker; wasmtime for the WASI commands; Maestro on an Android emulator and an iOS simulator. Core unit tests run against coverage thresholds on Linux, macOS and Windows.',

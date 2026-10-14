@@ -1,7 +1,7 @@
 # @crossbind/landing
 
-The crossbind.dev site: the landing page, the `/guide/` docs, the `/api/` and `/agent/` reference
-pages, the `/ports/` library catalog, `/examples/` and the `/changelog/`. Plain Vite + React, no
+The crossbind.dev site: the landing page, the `/guide/` docs, the `/agent/` setup page, the
+`/ports/` library catalog, `/examples/` and the `/changelog/`. Plain Vite + React, no
 router and no CMS: the landing is one page built from a [Claude Design](https://claude.ai/design)
 mock, and every other page is prerendered to its own static HTML file, so links are plain
 `<a href>` and the browser does the navigating.
@@ -83,7 +83,7 @@ switch, and it is deliberately not automatic.
 | `src/release.js` | The verified release snapshot every version-dependent surface reads |
 | `src/data.js` | Every piece of copy, every figure, every outbound URL |
 | `src/site-pages.js` | Every page of the site in one list: routing, prerender, sitemap, llms.txt and search derive from it |
-| `src/pages/` | `/api/` and `/agent/` as page objects rendered in the guide shell; `/examples/` as a page object plus its own `ExamplesPage.jsx` |
+| `src/pages/` | `/agent/` as a page object rendered in the guide shell; `/examples/` as a page object plus its own `ExamplesPage.jsx` |
 | `src/demos.js` | The live demos manifest (`generated/example-demos.js`), keyed by example id |
 | `src/ports/` | `/ports/` and `/ports/<name>/` from the generated catalog, each with its own page component (`LibrariesPage.jsx`, `PortPage.jsx`) |
 | `src/changelog/` | `/changelog/`: the page object built from `generated/changelog.js`, its own `ChangelogPage.jsx` with a version rail, the anchor helper and the release row; reached from the navbar's version menu, not the docs sidebar |
@@ -94,7 +94,7 @@ switch, and it is deliberately not automatic.
 | `src/components/` | `Nav` and its `VersionMenu` (version, channel, changelog, GitHub and npm links), the `PlatformGlyph` SVG set, and the shared `ui.jsx` primitives |
 | `src/sections/` | One file per band of the page, composed in `src/App.jsx` |
 | `src/guide/pages/` | One file per guide page — content as data, no markup |
-| `src/guide/nav.js` | The order everything derives from: sidebar, prev/next, hub cards, routes |
+| `src/guide/nav.js` | The order everything derives from: sidebar, prev/next, routes |
 | `src/guide/` | `Guide.jsx` (the doc shell), `Article.jsx` (block renderer), ⌘K `Search.jsx` |
 
 Components take a resolved `tokens` object and style themselves from it, so light and dark come
@@ -133,12 +133,12 @@ Adding a page is three steps:
 
 1. Write `src/guide/pages/<slug>.js`, exporting `{ slug, title, description, lede, blocks }`.
 2. Import it in `src/guide/nav.js` and drop it into the section you want it in.
-3. Nothing else. The sidebar, reading order, hub cards, search index, prerendered routes and
+3. Nothing else. The sidebar, reading order, search index, prerendered routes and
    `dist/sitemap.xml` all derive from that array.
 
 Blocks are plain objects: `p`, `h2` (needs an `id`, which is what the page toc lists), `h3`, `ul`,
 `ol`, `code` (`{ file, code }`), `callout` (`{ tone: 'note' | 'warn', title, text }`), `table`
-(`{ head, rows }`) and `cards`. Anywhere prose is accepted, three inline tokens work:
+(`{ head, rows }`), `tabs` and `details`. Anywhere prose is accepted, three inline tokens work:
 `` `code` ``, `**bold**` and `[label](/guide/x/)`.
 
 Search is derived from those same objects at load — no crawler, no index to download, no build

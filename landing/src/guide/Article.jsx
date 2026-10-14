@@ -128,39 +128,6 @@ function Table({ tokens, head, rows }) {
     );
 }
 
-function Cards({ tokens, items }) {
-    return (
-        <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 210px), 1fr))',
-            gap: 14,
-            margin: '22px 0 8px',
-        }}
-        >
-            {items.map((card) => (
-                <a
-                    key={card.href}
-                    href={card.href}
-                    className="feat-card"
-                    style={{
-                        display: 'block',
-                        padding: 18,
-                        background: tokens.panel,
-                        border: `1px solid ${tokens.border}`,
-                        borderRadius: 12,
-                    }}
-                >
-                    <div style={{ fontFamily: tokens.mono, fontSize: 10, letterSpacing: 1.3, color: tokens.textMuted, marginBottom: 8 }}>
-                        {card.kicker}
-                    </div>
-                    <div style={{ fontSize: 16, fontWeight: 600, color: tokens.text, marginBottom: 6 }}>{card.title}</div>
-                    <div style={{ fontSize: 12.5, lineHeight: 1.55, color: tokens.textMuted }}>{card.desc}</div>
-                </a>
-            ))}
-        </div>
-    );
-}
-
 // Platform by platform: every panel is in the markup, so a reader without JavaScript and a crawler
 // see all of them; the buttons only choose which one is visible.
 function Tabs({ tokens, tabs }) {
@@ -221,8 +188,6 @@ export default function Article({ tokens, blocks }) {
                 return <Callout key={key} tokens={tokens} tone={block.tone} title={block.title} text={block.text} />;
             case 'table':
                 return <Table key={key} tokens={tokens} head={block.head} rows={block.rows} />;
-            case 'cards':
-                return <Cards key={key} tokens={tokens} items={block.items} />;
             case 'release':
                 return <ReleaseMeta key={key} tokens={tokens} release={block.release} />;
             case 'example':

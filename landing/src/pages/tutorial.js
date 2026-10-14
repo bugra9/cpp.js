@@ -1,6 +1,4 @@
-import {
-    API_URL, LIBRARIES_URL, PLAYGROUND_URL, TUTORIAL_URL,
-} from '../data.js';
+import { LIBRARIES_URL, PLAYGROUND_URL, TUTORIAL_URL } from '../data.js';
 import { guideHref } from '../guide/nav.js';
 
 // /tutorial/: crossbind in seven steps, one page per playground sample (src/playground/samples), each runnable in
@@ -94,8 +92,8 @@ const STEPS = [
                 items: [
                     `[Quick start](${guideHref('quick-start')}): crossbind in a project of your own.`,
                     `[Libraries](${LIBRARIES_URL}): ready-made C and C++ libraries, from SQLite to GDAL.`,
-                    `[Rust](${guideHref('rust')}): Rust files and crates import the same way.`,
-                    `[API reference](${API_URL}): \`initNative()\`, \`crossbind.config.js\` and the command line.`,
+                    `[Rust](${guideHref('rust')}) and [crates.io](${guideHref('crates-io')}): Rust files and crates import the same way.`,
+                    `[Runtime API](${guideHref('runtime-api')}), [Configuration](${guideHref('configuration')}) and [CLI](${guideHref('cli')}): \`initNative()\`, \`crossbind.config.js\` and the command line.`,
                     `[Playground](${PLAYGROUND_URL}): every sample, free to change.`,
                 ],
             },

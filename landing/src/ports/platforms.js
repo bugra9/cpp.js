@@ -1,4 +1,3 @@
-import { REPO_URL } from '../data.js';
 import { guideHref } from '../guide/nav.js';
 import { RELEASE } from '../release.js';
 import { httpComponentName, httpHandlerCode, spinManifestCode } from '../wasiHttp.js';
@@ -9,9 +8,6 @@ import { BIN_TARGET, NAPI_TARGET, publishedTarget } from './catalog.js';
 // only packages published on the release channel are named. Must stay importable from Node with no JSX.
 
 const suffix = RELEASE.distTagSuffix;
-const PLAYBOOKS = `${REPO_URL}/blob/main/docs/playbooks/integration`;
-const NATIVE_DOC = `${REPO_URL}/blob/main/docs/api/native.md`;
-const ELECTRON_EXAMPLE = `${REPO_URL}/tree/main/examples/desktop-electron`;
 
 export const PLATFORMS = [
     { target: 'wasm', label: 'WebAssembly', builds: '`wasm32`, single-threaded and multi-threaded' },
@@ -107,7 +103,7 @@ function browserBlocks(port, { headerImport }) {
         { type: 'code', file: 'shell', code: install([wasm.package]) },
         { type: 'code', file: 'crossbind.config.js', code: configCode(port, [wasm]) },
         ...(headerImport ? [{ type: 'code', file: 'main.js', code: headerCode(headerImport) }] : []),
-        { type: 'p', text: `crossbind itself comes with your bundler plugin; [Bundlers](${guideHref('bundlers')}) has Vite, Webpack, Rspack and Rollup.` },
+        { type: 'p', text: `crossbind itself comes with your bundler plugin; [Browser](${guideHref('browser')}) has Vite, Webpack, Rspack and Rollup.` },
     ];
 }
 
@@ -136,7 +132,7 @@ function nodeBlocks(port, { headerImport }) {
                   { type: 'code', file: 'crossbind.config.js', code: configCode(port, [wasm]) },
                   ...(headerImport ? [{ type: 'code', file: 'main.js', code: headerCode(headerImport) }] : []),
                   { type: 'code', file: 'shell', code: 'node --import crossbind/node/dev main.js' },
-                  { type: 'p', text: `The [Node.js playbook](${PLAYBOOKS}/nodejs.md#importing-headers-and-rust-directly) has the build a deployed app starts with.` },
+                  { type: 'p', text: `[Node.js](${guideHref('node')}#wasm) has the build a deployed app starts with.` },
               ]
             : []),
         ...(desktop.length
@@ -150,7 +146,7 @@ function nodeBlocks(port, { headerImport }) {
                   { type: 'code', file: 'crossbind.config.js', code: configCode(port, desktop) },
                   { type: 'code', file: 'shell', code: 'npx crossbind build -p host -e node -b release' },
                   desktopTable(desktop),
-                  { type: 'p', text: `\`-p host\` builds this machine's platform. The [Node.js playbook](${PLAYBOOKS}/nodejs.md#native-addon-node-api) has the whole flow.` },
+                  { type: 'p', text: `\`-p host\` builds this machine's platform. [Node.js](${guideHref('node')}#addon) has the whole flow.` },
               ]
             : []),
     ];
@@ -177,7 +173,7 @@ function edgeBlocks(port) {
                   { type: 'code', file: 'shell', code: 'npx wrangler dev\nnpx wrangler deploy' },
                   {
                       type: 'p',
-                      text: `A free Worker gets 10 ms of CPU a request, and every plan caps a Worker's size: check the library's \`.wasm\` against yours. The [Cloudflare Worker playbook](${PLAYBOOKS}/cloudflare-worker.md) has the rest.`,
+                      text: `A free Worker gets 10 ms of CPU a request, and every plan caps a Worker's size: check the library's \`.wasm\` against yours. [Edge](${guideHref('edge')}#cloudflare-workers) has the rest.`,
                   },
               ]
             : []),
@@ -194,7 +190,7 @@ function edgeBlocks(port) {
                   { type: 'code', file: 'shell', code: `npx crossbind build -p wasi -e http -b release\nwasmtime serve dist/${httpComponentName('my-service')}` },
                   { type: 'code', file: 'spin.toml', code: spinManifestCode('my-service') },
                   { type: 'code', file: 'shell', code: 'spin up' },
-                  { type: 'p', text: `The handler gets each request with its whole body. [HTTP components](${guideHref('wasi')}#http) has what it does and does not do yet.` },
+                  { type: 'p', text: `The handler gets each request with its whole body. [Edge](${guideHref('edge')}#http) has what it does and does not do yet.` },
               ]
             : []),
     ];
@@ -212,7 +208,7 @@ function electronBlocks(port) {
         { type: 'code', file: 'main.js', code: importCode(port, napi) },
         {
             type: 'p',
-            text: `A packaged app keeps the addon and its data outside the asar archive, where native code can read them: \`asarUnpack: ['node_modules/@crossbind/**']\` in electron-builder. [examples/desktop-electron](${ELECTRON_EXAMPLE}) is a whole app.`,
+            text: `A packaged app keeps the addon and its data outside the asar archive, where native code can read them: \`asarUnpack: ['node_modules/@crossbind/**']\` in electron-builder. [Electron](${guideHref('electron')}) has the whole setup.`,
         },
     ];
 }
@@ -226,11 +222,11 @@ function reactNativeBlocks(port) {
         {
             type: 'code',
             file: 'shell',
-            code: `${install(['@crossbind/plugin-react-native', '@crossbind/plugin-react-native-ios-helper', ...mobile.map((variant) => variant.package)], ['@crossbind/plugin-metro'])}${ios ? '\ncd ios && pod install' : ''}`,
+            code: `${install(['@crossbind/plugin-react-native', '@crossbind/plugin-react-native-ios-helper', '@crossbind/core-embind-jsi', ...mobile.map((variant) => variant.package)], ['@crossbind/plugin-metro'])}${ios ? '\ncd ios && pod install' : ''}`,
         },
         { type: 'code', file: 'crossbind.config.mjs', code: configCode(port, mobile) },
         { type: 'code', file: 'metro.config.js', code: METRO_CONFIG },
-        { type: 'p', text: `The whole flow, Expo included, is in the [React Native playbook](${PLAYBOOKS}/react-native-cli.md).` },
+        { type: 'p', text: `The whole flow, Expo included, is on the [React Native](${guideHref('react-native')}) page.` },
     ];
 }
 
@@ -251,7 +247,7 @@ function executableBlocks(port, { programId }) {
                   { type: 'h3', text: 'Prebuilt tools' },
                   {
                       type: 'p',
-                      text: `${commands.length === 1 ? 'One upstream command ships' : `${commands.length} upstream commands ship`} as npm executables built for \`wasm32-wasip3\`. They need \`wasmtime\` on \`PATH\` and no compiler - see [WASI commands](${guideHref('wasi')}).`,
+                      text: `${commands.length === 1 ? 'One upstream command ships' : `${commands.length} upstream commands ship`} as npm executables built for \`wasm32-wasip3\`. They need \`wasmtime\` on \`PATH\` and no compiler - see [Executables](${guideHref('executables')}#tools).`,
                   },
                   { type: 'code', file: 'shell', code: `npm install --global ${bin.package}${suffix}\n${commands[0]} --help` },
                   ...(commands.length > 1
@@ -282,7 +278,7 @@ function executableBlocks(port, { programId }) {
                   { type: 'h3', text: 'With your own build system' },
                   {
                       type: 'p',
-                      text: `Each platform package ships headers, static archives and pkg-config files under \`dist/prebuilt/<platform>-<arch>-mt-release\`: put its \`lib/pkgconfig\` on \`PKG_CONFIG_PATH\`, or the tree on \`CMAKE_PREFIX_PATH\` where upstream installs CMake configs. A C++ library, and anything that links one, needs clang with \`-stdlib=libc++\`. [Native platforms](${NATIVE_DOC}#prebuilt-archives-in-your-own-build) has the rules.`,
+                      text: `Each platform package ships headers, static archives and pkg-config files under \`dist/prebuilt/<platform>-<arch>-mt-release\`: put its \`lib/pkgconfig\` on \`PKG_CONFIG_PATH\`, or the tree on \`CMAKE_PREFIX_PATH\` where upstream installs CMake configs. A C++ library, and anything that links one, needs clang with \`-stdlib=libc++\`. [Executables](${guideHref('executables')}#archives) has the rules.`,
                   },
               ]
             : []),

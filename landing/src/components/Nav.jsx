@@ -5,7 +5,7 @@ import Logo from './Logo.jsx';
 import { isUnder, navLinkStyle } from './menu.jsx';
 import VersionMenu from './VersionMenu.jsx';
 
-const DOCS_PREFIXES = ['/guide', '/tutorial', '/examples', '/api'];
+const DOCS_PREFIXES = ['/guide', '/tutorial', '/examples', '/agent'];
 
 // The links after the Docs menu, in order. Why has no entry on purpose, it lives in the docs and README.
 const LINKS = [
@@ -13,8 +13,8 @@ const LINKS = [
     { id: 'playground', label: 'Playground', href: PLAYGROUND_URL, prefix: '/playground' },
 ];
 
-// Agent setup is deliberately not here: it is a site page (/agent/), reachable from the hero,
-// the footer and the guide sidebar, and the navbar never links straight into a GitHub blob.
+// Agent setup is deliberately not here: it is a site page (/agent/) in the guide sidebar, the hero's
+// agent button carries the same setup, and the navbar never links straight into a GitHub blob.
 void AGENT_URL;
 
 function GitHubMark() {

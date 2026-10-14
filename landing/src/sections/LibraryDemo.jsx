@@ -1,10 +1,8 @@
 import { useState } from 'react';
+import { CodeWindow, highlight, primaryButtonStyle } from '../components/ui.jsx';
 import { REPO_URL } from '../data.js';
-import { guideHref } from '../guide/nav.js';
-import { highlight } from '../components/ui.jsx';
 import { isLive, liveDemo, loadDemo } from '../live/runtime.js';
 import { createStatement, DEFAULT_QUERY, insertStatement, toTable } from '../live/sqlite.js';
-import { PORTS } from '../ports/catalog.js';
 
 // The page's one real-library demo: SQLite compiled from the published port, booted in the
 // visitor's browser and queried against this site's own catalog. Everything is click-gated - the
@@ -37,55 +35,29 @@ const rows = await db.query(yourQuery);`;
 
 const megabytes = (bytes) => `${Math.round((bytes / 1024 / 1024) * 10) / 10} MB`;
 
-function Label({ tokens, children }) {
-    return (
-        <div style={{ fontFamily: tokens.mono, fontSize: 10.5, letterSpacing: 1.2, color: tokens.textMuted, marginBottom: 8 }}>
-            {children}
-        </div>
-    );
+function statusText(state, bytes) {
+    if (!state.db) return `The first run downloads ${megabytes(bytes)} of WebAssembly.`;
+    if (!state.table) return `SQLite ${state.version}`;
+    const count = state.table.rows.length;
+    return `SQLite ${state.version} · ${count} ${count === 1 ? 'row' : 'rows'} in ${state.ms} ms`;
 }
 
-function Source({ tokens, file, code }) {
+// The highlighter emits one div per line, so the indentation only survives with `pre`.
+function Source({ tokens, title, code }) {
     return (
-        <div style={{ border: `1px solid ${tokens.border}`, borderRadius: 10, overflow: 'hidden', background: tokens.codeBg }}>
-            <div
-                style={{
-                    padding: '8px 12px',
-                    borderBottom: `1px solid ${tokens.border}`,
-                    background: tokens.codeSurface,
-                    fontFamily: tokens.mono,
-                    fontSize: 11.5,
-                    color: tokens.codeMuted,
-                }}
-            >
-                {file}
-            </div>
-            {/* The highlighter emits one div per line, so the indentation only survives with `pre`. */}
-            <div
-                style={{
-                    padding: 14,
-                    fontFamily: tokens.mono,
-                    fontSize: 12,
-                    lineHeight: 1.65,
-                    color: tokens.codeText,
-                    overflowX: 'auto',
-                    whiteSpace: 'pre',
-                }}
-            >
-                {highlight(code, tokens)}
-            </div>
-        </div>
+        <CodeWindow tokens={tokens} title={title}>
+            <div style={{ whiteSpace: 'pre' }}>{highlight(code, tokens)}</div>
+        </CodeWindow>
     );
 }
 
 function Results({ tokens, state }) {
     if (state.status === 'failed') {
-        return <div style={{ fontFamily: tokens.mono, fontSize: 12.5, color: tokens.warn, lineHeight: 1.6 }}>{state.message}</div>;
+        return <div style={{ marginTop: 20, fontFamily: tokens.mono, fontSize: 12.5, color: tokens.warn, lineHeight: 1.6 }}>{state.message}</div>;
     }
-    if (!state.table) return null;
-    if (!state.table.columns.length) return <div style={{ fontSize: 13, color: tokens.textMuted }}>No rows.</div>;
+    if (!state.table?.columns.length) return null;
     return (
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ marginTop: 20, overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                     <tr>
@@ -143,33 +115,29 @@ export default function LibraryDemo({ tokens }) {
 
     const run = async () => {
         setState((current) => ({ ...current, status: 'running' }));
+        let { db, version } = state;
         try {
-            const module = await loadDemo(DEMO_ID);
-            const db = state.db ?? (await new module.Database());
-            if (!state.db) {
-                await db.exec(createStatement());
-                await db.exec(insertStatement());
+            if (!db) {
+                const module = await loadDemo(DEMO_ID);
+                const fresh = await new module.Database();
+                await fresh.exec(createStatement());
+                await fresh.exec(insertStatement());
+                version = await fresh.version();
+                db = fresh;
             }
             const started = performance.now();
             const table = toTable(await db.query(sql));
-            setState({
-                status: 'ready',
-                db,
-                table,
-                version: state.version ?? (await db.version()),
-                ms: Math.round((performance.now() - started) * 100) / 100,
-            });
+            setState({ status: 'ready', db, version, table, ms: Math.round((performance.now() - started) * 100) / 100 });
         } catch (error) {
-            setState((current) => ({ ...current, status: 'failed', table: null, message: error?.message ?? String(error) }));
+            setState({ status: 'failed', db, version, table: null, message: error?.message ?? String(error) });
         }
     };
 
     const busy = state.status === 'running';
-    const booted = Boolean(state.db);
 
     return (
         <section style={{ padding: '80px var(--content-x) 80px' }}>
-            <div style={{ marginBottom: 26 }}>
+            <div style={{ marginBottom: 32 }}>
                 <h2 style={{ fontSize: 36, margin: '0 0 12px', fontWeight: 600, letterSpacing: -1, color: tokens.text }}>
                     Query a real C library, here.
                 </h2>
@@ -179,82 +147,62 @@ export default function LibraryDemo({ tokens }) {
                 </p>
             </div>
 
-            <div
-                style={{
-                    border: `1px solid ${tokens.borderStrong}`,
-                    borderRadius: 16,
-                    padding: 'clamp(16px, 2.5vw, 24px)',
-                    background: tokens.panel,
-                }}
-            >
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 330px), 1fr))', gap: 24 }}>
-                    <div style={{ minWidth: 0 }}>
-                        <Label tokens={tokens}>SQL</Label>
+            <div className="demo-code">
+                <Source
+                    tokens={tokens}
+                    code={WRAPPER}
+                    title={(
+                        <span style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                            src/native/database.h
+                            <a href={SOURCE_URL} target="_blank" rel="noreferrer" style={{ color: tokens.accentText }}>
+                                Full source ↗
+                            </a>
+                        </span>
+                    )}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+                    <Source tokens={tokens} title="src/main.js" code={USAGE} />
+                    <CodeWindow tokens={tokens} title="SQL" padded={false}>
                         <textarea
+                            className="demo-query"
                             value={sql}
                             onChange={(event) => setSql(event.target.value)}
                             spellCheck="false"
                             aria-label="SQL to run against the library catalog"
-                            rows={6}
+                            rows={DEFAULT_QUERY.split('\n').length}
                             style={{
+                                display: 'block',
                                 width: '100%',
                                 resize: 'vertical',
-                                background: tokens.codeBg,
+                                background: 'transparent',
                                 color: tokens.codeText,
-                                border: `1px solid ${tokens.border}`,
-                                borderRadius: 10,
-                                padding: 12,
+                                border: 'none',
+                                padding: 18,
                                 fontFamily: tokens.mono,
-                                fontSize: 12.5,
-                                lineHeight: 1.6,
+                                fontSize: 13,
+                                lineHeight: 1.7,
                             }}
                         />
-                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, margin: '12px 0 18px' }}>
-                            <button
-                                type="button"
-                                className="tap-target"
-                                onClick={run}
-                                disabled={busy}
-                                style={{
-                                    background: tokens.buttonBg,
-                                    color: tokens.buttonText,
-                                    border: 'none',
-                                    padding: '10px 18px',
-                                    borderRadius: 9,
-                                    fontWeight: 600,
-                                    fontSize: 14,
-                                    cursor: busy ? 'progress' : 'pointer',
-                                }}
-                            >
-                                {busy ? 'Running…' : 'Run the query'}
-                            </button>
-                            <span style={{ fontFamily: tokens.mono, fontSize: 11.5, color: tokens.textMuted }}>
-                                {booted
-                                    ? `sqlite ${state.version} · ${PORTS.length} rows · ${state.ms ?? 0} ms`
-                                    : `first run downloads ${megabytes(demo.bytes ?? 0)} of WebAssembly`}
-                            </span>
-                        </div>
-                        <Results tokens={tokens} state={state} />
-                    </div>
-
-                    <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                        <Source tokens={tokens} file="src/native/database.h" code={WRAPPER} />
-                        <Source tokens={tokens} file="src/main.js" code={USAGE} />
-                    </div>
+                    </CodeWindow>
                 </div>
             </div>
 
-            <p style={{ fontSize: 13, lineHeight: 1.6, color: tokens.textMuted, margin: '18px 0 0', maxWidth: 780 }}>
-                {'The database lives in this tab and nothing is uploaded. '}
-                <a href={SOURCE_URL} target="_blank" rel="noreferrer" style={{ color: tokens.accentText }}>
-                    The wrapper is forty lines
-                </a>
-                {'; the rest is upstream SQLite, precompiled. '}
-                <a href={guideHref('libraries')} style={{ color: tokens.accentText }}>
-                    Libraries
-                </a>
-                {' has the install flow.'}
-            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, marginTop: 16 }}>
+                <button
+                    type="button"
+                    className="tap-target"
+                    onClick={run}
+                    disabled={busy}
+                    style={{ ...primaryButtonStyle(tokens), padding: '10px 20px', fontSize: 14, cursor: busy ? 'progress' : 'pointer' }}
+                >
+                    {busy ? 'Running…' : 'Run'}
+                </button>
+                <span aria-live="polite" style={{ fontSize: 13, color: tokens.textDim }}>
+                    {statusText(state, demo.bytes ?? 0)}
+                </span>
+            </div>
+
+            <Results tokens={tokens} state={state} />
         </section>
     );
 }

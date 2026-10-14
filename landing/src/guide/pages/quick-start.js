@@ -13,7 +13,6 @@ const CREATOR = RELEASE.companions['create-crossbind'];
 export default {
     slug: 'quick-start',
     title: 'Quick start',
-    kicker: 'START HERE',
     description: 'Prerequisites, a new project or an existing one, and your first call into C++.',
     lede: `Two paths lead to the same place: scaffold a fresh project, or add ${BRAND} to an app you already have. Either way you end up with a bundler plugin, a \`crossbind.config.js\`, and a header you can import from JavaScript.`,
     blocks: [
@@ -30,11 +29,11 @@ export default {
         {
             type: 'ul',
             items: [
-                '**Docker** - runs the `web` image for WebAssembly and WASI and the `android` image for Android. Both are pulled automatically on the first build.',
+                '**Docker** - runs the `web` image for WebAssembly and WASI and the `android` image for Android. Both are pulled automatically on the first build. Without Docker, [Remote builds](/guide/remote-builds/) run the images on another machine.',
                 '**Node.js 24+**.',
                 '**CMake 3.28+** - mobile only.',
                 '**Xcode** and **CocoaPods** - iOS only, macOS only.',
-                '**A Rust toolchain** (`cargo` plus the platform targets) - only when you bind Rust. See [Rust](/guide/rust/).',
+                '**A Rust toolchain** (`cargo` plus the platform targets) - only to bind Rust for iOS or macOS, or with `RUNNER=LOCAL`; other builds run cargo in the image. See [Rust](/guide/rust/).',
                 '**wasmtime** - only to run `platform: \'wasi\'` output and the prebuilt `-standalone-wasi` tools.',
             ],
         },
@@ -100,7 +99,7 @@ npm run dev`,
         { type: 'h2', id: 'existing-project', text: 'An existing project' },
         {
             type: 'p',
-            text: 'Already have an app? Install the plugin for your bundler and register it. Vite is shown here; Webpack, Rspack, Rollup and Metro follow the same shape with their own plugin - see [Bundlers](/guide/bundlers/).',
+            text: 'Already have an app? Install the plugin for your bundler and register it. Vite is shown here; Webpack, Rspack and Rollup follow the same shape on the [Browser](/guide/browser/) page, Metro on [React Native](/guide/react-native/#metro).',
         },
         { type: 'code', file: 'shell', code: installCommand('@crossbind/plugin-vite') },
         {
@@ -165,7 +164,7 @@ public:
         },
         {
             type: 'p',
-            text: 'Now import that header from your app code and call it. `initNative()` is exported by the header module itself; one call boots every native module you imported.',
+            text: 'Now import that header from your app code and call it. `initNative()` is exported by the header module itself; one call boots every native module you imported. In a browser the module runs in a Web Worker by default, so each call returns a promise.',
         },
         {
             type: 'code',
@@ -173,7 +172,7 @@ public:
             code: `import { initNative, MySampleClass } from './native/MySampleClass.h';
 
 await initNative();
-console.log(MySampleClass.sample());`,
+console.log(await MySampleClass.sample());`,
         },
         {
             type: 'callout',
@@ -190,16 +189,16 @@ console.log(MySampleClass.sample());`,
         { type: 'code', file: 'shell', code: 'npm run build' },
         {
             type: 'p',
-            text: 'Targeting Node, Cloudflare Workers, React Native or WASI instead? Each one is a `crossbind build` flag combination - see [Runtimes](/guide/runtimes/).',
+            text: 'Building for another platform? Each one has its own page: [Node.js](/guide/node/), [Edge](/guide/edge/), [Electron](/guide/electron/), [React Native](/guide/react-native/) and [Executables](/guide/executables/).',
         },
 
         { type: 'h2', id: 'next', text: 'Where to next' },
         {
             type: 'ul',
             items: [
-                '[C++ bindings](/guide/bindings/) - what the auto-binder accepts, and the C++ ↔ JS type table.',
-                '[Libraries](/guide/libraries/) - use a prebuilt library instead of compiling one.',
-                '[Filesystem](/guide/filesystem/) - where files live in the browser, Node and on edge.',
+                '[C++](/guide/bindings/) - what the auto-binder accepts, and the C++ ↔ JS type table.',
+                '[crossbind ports](/guide/libraries/) - use a prebuilt library instead of compiling one.',
+                '[Files](/guide/filesystem/) - where files live in the browser, Node and on edge.',
                 '[Troubleshooting](/guide/troubleshooting/) - when the first build does not go to plan.',
             ],
         },

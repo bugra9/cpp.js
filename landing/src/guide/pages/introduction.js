@@ -2,11 +2,10 @@ import { BRAND, SHOWCASE_COUNT } from '../../data.js';
 import { LIMITS, WHY_POINTS } from '../../why.js';
 
 export default {
-    slug: 'introduction',
+    slug: '',
     title: 'Introduction',
-    kicker: 'START HERE',
     description: 'What crossbind does, what one import buys you, and where the output runs.',
-    lede: `${BRAND} compiles C++ and Rust into WebAssembly and native iOS and Android libraries, then hands the result to JavaScript as an ordinary module; a separate target turns C++ into WASI commands. You import a header; the bindings are generated from it.`,
+    lede: `${BRAND} compiles C++ and Rust into WebAssembly, Node-API addons and native iOS and Android libraries, then hands the result to JavaScript as an ordinary module; the same sources also build into executables that need no JavaScript at all. You import a header; the bindings are generated from it.`,
     blocks: [
         {
             type: 'p',
@@ -16,7 +15,7 @@ export default {
         { type: 'h2', id: 'one-import', text: 'One import, no glue' },
         {
             type: 'p',
-            text: 'Put your C++ under `src/native`, then import the header from JavaScript. `initNative()` boots the runtime once; after it resolves, every symbol the header exposes is callable.',
+            text: 'Put your C++ under `src/native`, then import the header from JavaScript. `initNative()` boots the runtime once; after it resolves, every symbol the header exposes is callable. In a browser the module runs in a Web Worker by default, so calls return promises.',
         },
         {
             type: 'code',
@@ -34,7 +33,7 @@ std::string getHelloWorldMessage() {
             code: `import { initNative, getHelloWorldMessage } from './native/helloWorld.h';
 
 await initNative();
-console.log(getHelloWorldMessage());`,
+console.log(await getHelloWorldMessage());`,
         },
         {
             type: 'p',
@@ -52,28 +51,33 @@ console.log(getHelloWorldMessage());`,
             code: `import { initNative, GDALVersionInfo } from '@crossbind/port-gdal/gdal.h';
 
 await initNative();
-console.log(GDALVersionInfo('RELEASE_NAME'));`,
+console.log(await GDALVersionInfo('RELEASE_NAME'));`,
         },
         {
             type: 'p',
-            text: 'One `initNative()` covers every module on the page: each imported header registers its bindings, the call boots the runtime and resolves all of them together. Full details in [Libraries](/guide/libraries/); every library is listed under [Libraries](/ports/).',
+            text: 'One `initNative()` covers every module on the page: each imported header registers its bindings, the call boots the runtime and resolves all of them together. Full details in [crossbind ports](/guide/libraries/); every library is listed under [Libraries](/ports/).',
+        },
+        {
+            type: 'p',
+            text: 'The same one-line import reaches two registries: a Rust crate from [crates.io](/guide/crates-io/) with `cargo:`, and a C or C++ package from [ConanCenter](/guide/conan/) with `conan:`.',
         },
 
         { type: 'h2', id: 'platforms', text: 'Where the output runs' },
         {
             type: 'table',
-            head: ['Target', 'What is produced', 'Guide'],
+            head: ['Platform', 'What is produced'],
             rows: [
-                ['Browser', 'WebAssembly + a JS loader', '[Runtimes](/guide/runtimes/)'],
-                ['Node.js', 'WebAssembly, host filesystem access', '[Runtimes](/guide/runtimes/)'],
-                ['Cloudflare Workers / edge', 'WebAssembly, single-threaded, in-memory fs', '[Runtimes](/guide/runtimes/)'],
-                ['iOS and Android', 'Native machine code over JSI - no wasm', '[Runtimes](/guide/runtimes/)'],
-                ['WASI (`wasm32-wasip3`)', 'One `.wasm` command, no JS host', '[WASI commands](/guide/wasi/)'],
+                ['[Browser](/guide/browser/)', 'WebAssembly and a JavaScript loader, through your bundler'],
+                ['[Node.js](/guide/node/)', 'WebAssembly, or a native Node-API addon'],
+                ['[Edge](/guide/edge/)', 'WebAssembly for Cloudflare Workers, or a `wasi:http` component'],
+                ['[Electron](/guide/electron/)', 'The Node-API addon, loaded in the main process'],
+                ['[React Native](/guide/react-native/)', 'Native iOS and Android code over JSI - no wasm'],
+                ['[Executables](/guide/executables/)', 'Native programs for macOS, Linux and Windows, or a WASI command'],
             ],
         },
         {
             type: 'p',
-            text: 'The JavaScript you write does not change between the four JavaScript targets; the build target does. WASI commands are a separate path with no JavaScript host.',
+            text: 'The JavaScript you write does not change between the JavaScript platforms; the build target does. Executables and `wasi:http` components run with no JavaScript host.',
         },
 
         { type: 'h2', id: 'bundle', text: 'What ends up in your bundle' },
@@ -87,6 +91,7 @@ console.log(GDALVersionInfo('RELEASE_NAME'));`,
             title: 'Android',
             text: 'Dead-code elimination is not implemented for Android builds; those link the full archive.',
         },
+        { type: 'p', text: '[Performance and size](/guide/performance/) has the rest: what you can tune and what to leave alone.' },
 
         { type: 'h2', id: 'two-ways', text: 'Two ways to use it' },
         {
@@ -112,7 +117,7 @@ console.log(GDALVersionInfo('RELEASE_NAME'));`,
         { type: 'ul', items: LIMITS },
         {
             type: 'p',
-            text: 'Browse the [Libraries](/ports/) that ship prebuilt, or read the [API reference](/api/) for every option and default.',
+            text: 'Every option and default is in [Configuration](/guide/configuration/), [Runtime API](/guide/runtime-api/) and [CLI](/guide/cli/).',
         },
 
         { type: 'h2', id: 'next', text: 'Where to next' },
@@ -120,8 +125,8 @@ console.log(GDALVersionInfo('RELEASE_NAME'));`,
             type: 'ul',
             items: [
                 '[Quick start](/guide/quick-start/) - from an empty directory to a running app.',
-                '[Bundlers](/guide/bundlers/) - Vite, Webpack, Rspack, Rollup, Metro, or no bundler at all.',
-                '[C++ bindings](/guide/bindings/) - the rules your headers have to follow, and the type table.',
+                '[Tutorial](/tutorial/) - short steps that run in your browser, with nothing to install.',
+                '[C++](/guide/bindings/) - the rules your headers have to follow, and the type table.',
                 '[Troubleshooting](/guide/troubleshooting/) - the errors people hit most, with the standard fix for each.',
             ],
         },

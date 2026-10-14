@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Logo from '../components/Logo.jsx';
 import PlatformScene from '../components/PlatformScene.jsx';
 import { BRAND, PLATFORM_MAP } from '../data.js';
+import { guideHref } from '../guide/nav.js';
 
 // The flow is drawn in a fixed space, x in thousandths of the width and y in pixels, so the curves
 // meet the nodes without measuring them and the prerendered page already shows them.
@@ -32,9 +33,21 @@ const outPath = (y, index, count) => {
 const accentLine = (tokens) => `color-mix(in srgb, ${tokens.accent} 45%, transparent)`;
 const percent = (thousandths) => `${thousandths / 10}%`;
 
+const rowHref = ({ href, guide, anchor }) => {
+    if (!guide) return href;
+    return anchor ? `${guideHref(guide)}#${anchor}` : guideHref(guide);
+};
+
+function RowLink({ row, style, children, ...events }) {
+    const href = rowHref(row);
+    if (!href) return <div style={style} {...events}>{children}</div>;
+    return <a href={href} className="map-link" style={style} {...events}>{children}</a>;
+}
+
 function FlowNode({ tokens, row, lead, active, onHover, left, width, centre }) {
     return (
-        <div
+        <RowLink
+            row={row}
             onMouseEnter={() => onHover(true)}
             onMouseLeave={() => onHover(false)}
             style={{
@@ -62,7 +75,7 @@ function FlowNode({ tokens, row, lead, active, onHover, left, width, centre }) {
                     {row.note}
                 </div>
             </div>
-        </div>
+        </RowLink>
     );
 }
 
@@ -137,9 +150,11 @@ function PlatformFlow({ tokens }) {
                 </div>
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                     {core.rows.map((row) => (
-                        <li key={row.title} style={{ padding: '9px 0', borderTop: `1px solid ${tokens.border}` }}>
-                            <div style={{ fontSize: 13.5, fontWeight: 600, color: tokens.text }}>{row.title}</div>
-                            <div style={{ fontSize: 12.5, color: tokens.textMuted }}>{row.note}</div>
+                        <li key={row.title} style={{ borderTop: `1px solid ${tokens.border}` }}>
+                            <RowLink row={row} style={{ display: 'block', padding: '9px 10px', margin: '0 -10px', borderRadius: 8 }}>
+                                <div style={{ fontSize: 13.5, fontWeight: 600, color: tokens.text }}>{row.title}</div>
+                                <div style={{ fontSize: 12.5, color: tokens.textMuted }}>{row.note}</div>
+                            </RowLink>
                         </li>
                     ))}
                 </ul>
@@ -201,9 +216,11 @@ function Panel({ tokens, heading, rows, highlight }) {
             </h3>
             <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                 {rows.map((row, index) => (
-                    <li key={row.title} style={{ padding: '11px 16px', borderTop: index ? `1px solid ${tokens.border}` : 'none' }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: tokens.text }}>{row.title}</div>
-                        <div style={{ marginTop: 2, fontSize: 13, color: tokens.textMuted }}>{row.note}</div>
+                    <li key={row.title} style={{ borderTop: index ? `1px solid ${tokens.border}` : 'none' }}>
+                        <RowLink row={row} style={{ display: 'block', padding: '11px 16px' }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: tokens.text }}>{row.title}</div>
+                            <div style={{ marginTop: 2, fontSize: 13, color: tokens.textMuted }}>{row.note}</div>
+                        </RowLink>
                     </li>
                 ))}
             </ul>
