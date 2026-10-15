@@ -165,6 +165,69 @@ describe('createInitCrossbind', () => {
         expect(files.get('/memfs/app/note.txt')).toBe('bye');
     });
 
+    test('FS.writeFile appends when the flags ask for it and replaces otherwise', async () => {
+        const files = new Map();
+        const FS = {
+            open: (path, flags) => {
+                if (flags === 'w') files.set(path, '');
+                return { path };
+            },
+            close: () => {},
+            writeFile: (path, data) => files.set(path, (files.get(path) ?? '') + data),
+        };
+        const initNative = createInitCrossbind({ Module: vi.fn(async () => ({ FS })), systemConfig: { useWorker: false }, adapter: {}, worker: workerStub() });
+        const m = await initNative();
+
+        m.FS.writeFile('/memfs/app/log.txt', 'one');
+        m.FS.writeFile('/memfs/app/log.txt', ' two', { flags: 'a' });
+        expect(files.get('/memfs/app/log.txt')).toBe('one two');
+
+        m.FS.writeFile('/memfs/app/log.txt', 'three', { flags: 'w' });
+        expect(files.get('/memfs/app/log.txt')).toBe('three');
+    });
+
+    test('FS.writeFile creates a new file with the mode it is given', async () => {
+        const modes = new Map();
+        const FS = {
+            open: (path, flags, mode = 0o666) => {
+                if (!modes.has(path)) modes.set(path, mode);
+                return { path };
+            },
+            close: () => {},
+            writeFile: () => {},
+        };
+        const initNative = createInitCrossbind({ Module: vi.fn(async () => ({ FS })), systemConfig: { useWorker: false }, adapter: {}, worker: workerStub() });
+        const m = await initNative();
+
+        m.FS.writeFile('/memfs/app/key.pem', 'secret', { mode: 0o600 });
+
+        expect(modes.get('/memfs/app/key.pem')).toBe(0o600);
+    });
+
+    // The classic FS of an edge build reads the flags itself.
+    test('FS.writeFile hands its flags to the classic FS', async () => {
+        const files = new Map([['/memfs/app/log.txt', 'one']]);
+        const options = [];
+        const FS = {
+            open: (path, flags) => {
+                if (flags === 'w') files.set(path, '');
+                return { path };
+            },
+            close: () => {},
+            writeFile: (path, data, opts = {}) => {
+                options.push(opts);
+                files.set(path, (opts.flags === 'a' ? files.get(path) : '') + data);
+            },
+        };
+        const initNative = createInitCrossbind({ Module: vi.fn(async () => ({ FS })), systemConfig: { useWorker: false }, adapter: {}, worker: workerStub() });
+        const m = await initNative();
+
+        m.FS.writeFile('/memfs/app/log.txt', ' two', { flags: 'a' });
+
+        expect(files.get('/memfs/app/log.txt')).toBe('one two');
+        expect(options).toEqual([{ flags: 'a' }]);
+    });
+
     test('does not delegate to a worker from inside the worker scope', async () => {
         const Module = moduleFactory();
         const worker = workerStub({ isWorkerScope: true });

@@ -74,12 +74,13 @@ function buildLocateFile(config, adapter) {
 }
 
 // WASMFS's FS.writeFile writes at the end of a file that exists (emsdk 6.0.9 js_api.cpp), where the classic FS
-// replaces it; opening the file for writing empties it first.
+// replaces it; opening the file for writing empties it first, unless the flags ask to append.
 function replaceOnWriteFile(FS) {
     const { writeFile } = FS;
-    FS.writeFile = (path, data) => {
-        FS.close(FS.open(path, 'w'));
-        return writeFile(path, data);
+    FS.writeFile = (path, data, opts) => {
+        const appends = typeof opts?.flags === 'string' && opts.flags.startsWith('a');
+        if (!appends) FS.close(FS.open(path, 'w', opts?.mode));
+        return writeFile(path, data, opts);
     };
 }
 
