@@ -9,7 +9,7 @@
     "scripts": {
         "build": "crossbind build -p wasm -e edge -r st",
         "dev": "wrangler dev",
-        "deploy": "wrangler dev",
+        "deploy": "wrangler deploy",
         "e2e:dev": "playwright test --config playwright.dev.config.cjs"
     },
     "files": [
