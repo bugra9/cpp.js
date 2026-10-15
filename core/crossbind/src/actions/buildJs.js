@@ -5,7 +5,7 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import virtual from '@rollup/plugin-virtual';
 import state from '../state/index.js';
-import getData from './getData.js';
+import getEnv from './getEnv.js';
 
 const SUPPRESSED_WARN_CODES = new Set([
     'MISSING_GLOBAL_NAME',
@@ -53,14 +53,7 @@ options.edge = options.browser;
 
 export default async function buildJS(target) {
     const entryJS = `${state.config.paths.cli}/assets/js-runtime/${target.runtimeEnv}.js`;
-    const rawEnv = getData('env', target);
-    const resolvedEnv = Object.fromEntries(
-        Object.entries(rawEnv).map(([key, value]) => [
-            key,
-            typeof value === 'function' ? value(state, target) : value,
-        ]),
-    );
-    const env = JSON.stringify(resolvedEnv);
+    const env = JSON.stringify(getEnv(target));
     const systemConfig = `export default {
         env: ${env},
         useWorker: !!globalThis.Worker,

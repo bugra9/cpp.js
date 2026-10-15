@@ -8,6 +8,7 @@ import virtual from '@rollup/plugin-virtual';
 import run from './run.js';
 import getLinkInputs from './getLinkInputs.js';
 import getData from './getData.js';
+import getEnv from './getEnv.js';
 import { suppressNodeBuiltinWarnings } from './buildJs.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
@@ -52,11 +53,6 @@ function linkInputs(target) {
     return { libs, linkArgs, extraSources };
 }
 
-function envOf(target) {
-    return Object.fromEntries(Object.entries(getData('env', target))
-        .map(([key, value]) => [key, typeof value === 'function' ? value(state, target) : value]));
-}
-
 // A package publishes its addons in <package>-<platform>-<arch> by listing them as optional
 // dependencies, which is also how npm learns to install only the one for its machine.
 function listsAddonPackage(target) {
@@ -82,7 +78,7 @@ export function nodeLoaderConfig(target) {
     const addonPackage = addonPackagePattern(served);
     const loaded = addonPackage ? served.filter(listsAddonPackage) : served;
     return {
-        env: Object.fromEntries(loaded.map((t) => [`${t.platform}-${t.arch}`, envOf(t)])),
+        env: Object.fromEntries(loaded.map((t) => [`${t.platform}-${t.arch}`, getEnv(t)])),
         general: { name: state.config.general.name },
         paths: { addon: target.addonPattern, ...(addonPackage ? { addonPackage } : {}) },
     };

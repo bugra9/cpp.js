@@ -3,11 +3,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { run, state, link } = vi.hoisted(() => ({ run: vi.fn(), state: { config: {} }, link: { rustLibs: [], emccFlags: [] } }));
+const { run, state, link } = vi.hoisted(() => ({ run: vi.fn(), state: { config: {} }, link: { rustLibs: [], emccFlags: [], env: {} } }));
 
 vi.mock('../src/actions/run.js', () => ({ default: run }));
 vi.mock('../src/actions/getDependLibs.js', () => ({ default: () => [] }));
-vi.mock('../src/actions/getData.js', () => ({ default: (kind) => (kind === 'binary' ? { emccFlags: [...link.emccFlags] } : {}) }));
+vi.mock('../src/actions/getData.js', () => ({
+    default: (kind) => ({ binary: { emccFlags: [...link.emccFlags] }, env: { ...link.env } }[kind] ?? {}),
+}));
 vi.mock('../src/actions/buildJs.js', () => ({ default: async () => {} }));
 vi.mock('../src/actions/extensions.js', () => ({ default: () => {} }));
 vi.mock('../src/utils/resolveEmbindRust.js', () => ({ default: () => '/embind-rust' }));
@@ -54,6 +56,7 @@ describe('buildWasm link step', () => {
         run.mockReset();
         link.rustLibs = [];
         link.emccFlags = ['-sCUSTOM_FLAG=1'];
+        link.env = {};
     });
 
     afterEach(() => {
@@ -119,6 +122,26 @@ describe('buildWasm link step', () => {
 
         expect(fs.readFileSync(`${work}/${target.rawJsName}`, 'utf8')).toBe('var invokerFn=function(...args){'
             + 'var argsWired=new Array(expectedArgCount);var invokerFuncArgs=[];var destructors=[];var thisWired;');
+    });
+
+    // The glue carries the env, so a changed value, a function's included, must not keep serving the old one.
+    test('relinks when the env changes', async () => {
+        const target = makeTarget('node');
+        let mode = 'a';
+        link.env = { STATIC: 'x', MODE: () => mode };
+        const linkOnce = async () => {
+            await buildWasm(target);
+            fs.writeFileSync(`${work}/${target.jsName}`, '');
+            fs.writeFileSync(`${work}/${target.wasmName}`, '');
+        };
+
+        await linkOnce();
+        await linkOnce();
+        expect(run).toHaveBeenCalledTimes(1);
+
+        mode = 'b';
+        await linkOnce();
+        expect(run).toHaveBeenCalledTimes(2);
     });
 
     test('a link without Rust keeps emscripten\'s own stack', async () => {
