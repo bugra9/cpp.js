@@ -76,6 +76,33 @@ describe('interfaceExtras', () => {
         });
     });
 
+    // SWIG turns a #define into a constant only when its value holds no name, so a cast keeps every one of these out.
+    test('carries a constant whose value casts to a number type to the bridge', () => {
+        const casts = parseMacroDump([
+            '#define XML_TRUE ((XML_Bool)1)',
+            '#define CURLAUTH_DIGEST_IE (((unsigned long)1)<<4)',
+            '#define CURLAUTH_ANY (~CURLAUTH_DIGEST_IE)',
+            '#define CURL_ZERO_TERMINATED ((size_t)-1)',
+            '#define SQLITE_TRANSIENT ((sqlite3_destructor_type)-1)',
+            '#define BUFFER_END ((char *)0)',
+            '#define MAX_WBITS 15',
+            '#define SIZE ((int)sizeof(z_stream))',
+        ].join('\n'));
+        const headerText = 'typedef unsigned char XML_Bool;\ntypedef void (*sqlite3_destructor_type)(void*);\n';
+        const names = ['XML_TRUE', 'CURLAUTH_ANY', 'CURL_ZERO_TERMINATED', 'SQLITE_TRANSIENT', 'BUFFER_END', 'MAX_WBITS', 'SIZE'];
+
+        expect(interfaceExtras(names, casts, headerText)).toEqual({
+            lines: [
+                '// crossbind:constant XML_TRUE',
+                '// crossbind:constant CURLAUTH_ANY',
+                '// crossbind:constant CURL_ZERO_TERMINATED',
+                '// crossbind:note SQLITE_TRANSIENT: a constant whose value has a cast binds only when every cast is to a number type the header declares; skipped.',
+                '// crossbind:note BUFFER_END: a constant whose value has a cast binds only when every cast is to a number type the header declares; skipped.',
+            ],
+            functions: [],
+        });
+    });
+
     test('adds nothing without names imported by name', () => {
         expect(interfaceExtras(ALL_NAMES, macros)).toEqual({ lines: [], functions: [] });
         expect(interfaceExtras([], macros)).toEqual({ lines: [], functions: [] });
@@ -189,6 +216,16 @@ describe('bridgeExtras', () => {
         expect(hash, 'the extras runtime changed: bump BRIDGE_FORMAT in actions/createInterface.js, then this hash').toBe('659b3bbad87b807c');
     });
 
+    test('binds a constant SWIG left out for its cast, and not one SWIG bound', () => {
+        const interfaceText = '// crossbind:constant XML_TRUE\n// crossbind:constant XML_MAJOR_VERSION\n\n';
+        const bridgeText = '  crossbind::bindConstant("XML_MAJOR_VERSION",\n#ifdef XML_MAJOR_VERSION\n    XML_MAJOR_VERSION\n';
+        const extras = bridgeExtras({ interfaceText, named: ['XML_TRUE', 'XML_MAJOR_VERSION'], bridgeText, module: 'EXPAT' });
+
+        expect(extras.code).toContain('  crossbind::bindConstant("XML_TRUE", XML_TRUE);');
+        expect(extras.code).not.toContain('crossbind::bindConstant("XML_MAJOR_VERSION", XML_MAJOR_VERSION);');
+        expect(extras.exports).toEqual(['XML_TRUE']);
+    });
+
     test('adds nothing when the app imports no such name', () => {
         expect(bridgeExtras({ interfaceText: '', named: ['compress'], warnings: [variadicWarning('gzprintf')], headerText: header, module: 'Z' }))
             .toMatchObject({ code: '', exports: [], notes: [] });
@@ -200,6 +237,7 @@ describe('withoutBridgeExtras', () => {
         const interfaceOf = (extras) => buildInterfaceContent({ moduleName: 'ICONV', headerPath: 'iconv.h', functions: ['iconv'], extras });
         const extended = withPointerRuntimeAnchor(interfaceOf([
             '// crossbind:alias iconv_open libiconv_open',
+            '// crossbind:constant ICONV_TRUE',
             '// crossbind:note iconv_close: a macro naming libiconv_close binds only when libiconv_close is one function the header binds; skipped.',
         ]));
 
