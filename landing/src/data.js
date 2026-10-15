@@ -76,15 +76,16 @@ Start with the crossbind documentation index at ${SITE}/llms.txt and follow the 
 
 Follow the repository's conventions and make the smallest complete integration. Ask for clarification only when missing information prevents a correct implementation.`;
 
-// The point of the page: this call is identical on every runtime. The boot call ships with the
-// header you already import, and one initNative() binds every module imported on the page. The
-// imports run from your own C++ and Rust to the three package sources: a crossbind port, a crate
-// (`cargo:`) and a Conan package (`conan:`), both declared in crossbind.config.js.
-// The port import shows the intended package contract (meta package, header imported from
-// JavaScript). The published beta.56 ports do not bind upstream headers yet; tracked as an
-// open item, not a site concern. The fold only shows this sample - the live proof is the SQLite
-// panel below it, which runs a published port rather than a snippet built for the page.
-export const UNIVERSAL_CODE = `import { initNative, Matrix } from './native/Matrix.h';
+// The point of the page: these calls are identical on every runtime. main.js imports your own C++
+// and Rust and one example of each package source the config declares: a crossbind port, a crate
+// and a Conan package. One initNative() boots them all, and each call is awaited because browsers
+// run the module in a worker by default. The fold only shows these files - the live proof is the
+// SQLite panel below it.
+export const HERO_FILES = [
+    {
+        id: 'main.js',
+        label: 'main.js',
+        code: `import { initNative, greet } from './native/greet.h';
 import { fibonacci } from './native/math.rs';
 import { GDALVersionInfo } from '@crossbind/port-gdal/gdal.h';
 import { Uuid } from 'cargo:uuid';
@@ -92,12 +93,50 @@ import { zlibVersion } from 'conan:zlib/zlib.h';
 
 await initNative();
 
-const a = new Matrix(1210000, 1);
-const result = a.multiple(new Matrix(1210000, 2));
+const id = await Uuid.newV4();
 
-console.log(result.get(0), fibonacci(90));
-console.log(Uuid.newV4().toString(), zlibVersion());
-console.log(GDALVersionInfo('RELEASE_NAME'));`;
+console.log(await greet('crossbind'), await fibonacci(90));
+console.log(await GDALVersionInfo('RELEASE_NAME'));
+console.log(await id.toString(), await zlibVersion());`,
+    },
+    {
+        id: 'greet.h',
+        label: 'greet.h',
+        code: `#pragma once
+#include <string>
+
+inline std::string greet(std::string name) {
+    return "Hello, " + name + "!";
+}`,
+    },
+    {
+        id: 'math.rs',
+        label: 'math.rs',
+        code: `pub fn fibonacci(n: i32) -> u64 {
+    let (mut a, mut b) = (0, 1);
+    for _ in 0..n {
+        (a, b) = (b, a + b);
+    }
+    a
+}`,
+    },
+    {
+        id: 'crossbind.config.js',
+        label: 'crossbind.config.js',
+        code: `import gdal from '@crossbind/port-gdal-wasm/crossbind.config.js';
+
+export default {
+    dependencies: [gdal],
+    cargoDependencies: {
+        uuid: '{ version = "1", features = ["v4"] }',
+    },
+    conanDependencies: {
+        zlib: '1.3.2',
+    },
+    paths: { config: import.meta.url },
+};`,
+    },
+];
 
 // The band under the hero: a drawing per kind of host (components/PlatformScene.jsx) with the
 // products named in text. Apple's and Microsoft's terms forbid their logos without a licence but
