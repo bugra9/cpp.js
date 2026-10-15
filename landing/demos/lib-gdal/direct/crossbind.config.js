@@ -16,6 +16,8 @@ export default {
                     OGR2OGR_USE_ARROW_API: 'NO',
                     OGR_GPKG_NUM_THREADS: '1',
                 },
+                // -Oz keeps the wasm, GEOS included, under the 25 MiB a file the site's host accepts.
+                binary: { emccFlags: ['-Oz'] },
             },
         },
     ],

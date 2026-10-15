@@ -12,36 +12,38 @@ export const imports = {
         'sqlite3_column_double',
         'sqlite3_finalize',
         'sqlite3_close',
+        'SQLITE_OK',
+        'SQLITE_ROW',
+        'SQLITE_NULL',
         'allocPointer',
         'readPointerAt',
         'writeNumberAt',
     ],
 };
-export const note = 'Each method of `measure.h` becomes a JavaScript function over the same calls, and the WKT stays a plain string, bound with `SQLITE_TRANSIENT` read from a slot holding -1. `SQLITE_NULL` is a macro as well, so the check for a shape SpatiaLite cannot measure spells out its value, 5.';
+export const note = 'Each method of `measure.h` becomes a JavaScript function over the same calls, and the WKT stays a plain string, bound with `SQLITE_TRANSIENT` read from a slot holding -1: its value is a pointer, so it has no binding. `SQLITE_NULL`, the column type of a shape SpatiaLite cannot measure, is imported by name like the result codes.';
 export const expected = ['0.000200 square degrees, 1868349 m²', '350462 m in UTM zone 35N, 350082 m on the ellipsoid'];
 
-export default async function example({ spatialite_alloc_connection, spatialite_init_ex, spatialite_cleanup_ex, sqlite3_open, sqlite3_exec, sqlite3_errmsg, sqlite3_prepare_v2, sqlite3_bind_text, sqlite3_bind_int, sqlite3_step, sqlite3_column_type, sqlite3_column_double, sqlite3_finalize, sqlite3_close, allocPointer, readPointerAt, writeNumberAt }, console) {
-    // sqlite3.h's constants are macros without bindings. SQLITE_TRANSIENT is ((sqlite3_destructor_type)-1):
-    // a pointer with the address -1, which a fresh pointer slot holding -1 reads back.
-    const SQLITE_OK = 0;
-    const SQLITE_ROW = 100;
-    const SQLITE_NULL = 5;
+export default async function example({ spatialite_alloc_connection, spatialite_init_ex, spatialite_cleanup_ex, sqlite3_open, sqlite3_exec, sqlite3_errmsg, sqlite3_prepare_v2, sqlite3_bind_text, sqlite3_bind_int, sqlite3_step, sqlite3_column_type, sqlite3_column_double, sqlite3_finalize, sqlite3_close, SQLITE_OK, SQLITE_ROW, SQLITE_NULL, allocPointer, readPointerAt, writeNumberAt }, console) {
+    const ok = await SQLITE_OK;
+    const row = await SQLITE_ROW;
+    // SQLITE_TRANSIENT, ((sqlite3_destructor_type)-1), has no binding because its value is a pointer:
+    // the address -1, which a fresh 4-byte pointer slot holding -1 reads back in wasm32.
     const minusOne = await allocPointer(1);
     await writeNumberAt(minusOne, 0, 'int32', -1);
     const SQLITE_TRANSIENT = await readPointerAt(minusOne, 0);
     const slot = await allocPointer(1);
-    if ((await sqlite3_open(':memory:', slot)) !== SQLITE_OK) throw new Error('cannot open the database');
+    if ((await sqlite3_open(':memory:', slot)) !== ok) throw new Error('cannot open the database');
     const db = await readPointerAt(slot, 0);
     const cache = await spatialite_alloc_connection();
     await spatialite_init_ex(db, cache, 0);
-    if ((await sqlite3_exec(db, "SELECT InitSpatialMetaData(1, 'WGS84')", null, null, null)) !== SQLITE_OK) throw new Error(await sqlite3_errmsg(db));
+    if ((await sqlite3_exec(db, "SELECT InitSpatialMetaData(1, 'WGS84')", null, null, null)) !== ok) throw new Error(await sqlite3_errmsg(db));
     const prepare = async (sql) => {
-        if ((await sqlite3_prepare_v2(db, sql, -1, slot, null)) !== SQLITE_OK) throw new Error(await sqlite3_errmsg(db));
+        if ((await sqlite3_prepare_v2(db, sql, -1, slot, null)) !== ok) throw new Error(await sqlite3_errmsg(db));
         return readPointerAt(slot, 0);
     };
     const number = async (statement) => {
-        if ((await sqlite3_step(statement)) !== SQLITE_ROW) throw new Error(await sqlite3_errmsg(db));
-        if ((await sqlite3_column_type(statement, 0)) === SQLITE_NULL) throw new Error('cannot measure: check the WKT and the SRID');
+        if ((await sqlite3_step(statement)) !== row) throw new Error(await sqlite3_errmsg(db));
+        if ((await sqlite3_column_type(statement, 0)) === (await SQLITE_NULL)) throw new Error('cannot measure: check the WKT and the SRID');
         const value = await sqlite3_column_double(statement, 0);
         await sqlite3_finalize(statement);
         return value;

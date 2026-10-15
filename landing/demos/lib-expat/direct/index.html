@@ -45,7 +45,8 @@
                 check(`example "${expectedOf(example)[0]}"`, printed, expectedOf(example));
             }
             const passed = checks.filter(Boolean).length;
-            show(`expat ${(await m.readCString(await m.XML_ExpatVersion())).replace('expat_', '')} => ${passed}/${checks.length} checks passed`);
+            const version = await m.XML_ExpatVersionInfo();
+            show(`expat ${version.major}.${version.minor}.${version.micro} => ${passed}/${checks.length} checks passed`);
         } catch (error) {
             show(`failed => ${error?.stack ?? error}`);
         }

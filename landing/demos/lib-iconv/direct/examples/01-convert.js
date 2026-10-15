@@ -1,8 +1,8 @@
 export const imports = {
     '@crossbind/port-iconv/iconv.h': [
-        'libiconv_open',
-        'libiconv',
-        'libiconv_close',
+        'iconv_open',
+        'iconv',
+        'iconv_close',
         'allocBuffer',
         'allocPointer',
         'writeBytes',
@@ -12,10 +12,10 @@ export const imports = {
         'readNumberAt',
     ],
 };
-export const note = '`iconv.h` defines `iconv_open`, `iconv` and `iconv_close` as macros, so they are bound as `libiconv_open`, `libiconv` and `libiconv_close`, and JavaScript builds their `char **` and `size_t *` arguments itself: a pointer slot from `allocPointer` for each buffer, a 4-byte `allocBuffer` for each counter. `errno` is not bound, so a failed call cannot say whether the output was full (`E2BIG`) or the input stopped (`EILSEQ`, `EINVAL`): the output buffer is sized so it never fills. A failed `iconv_open` returns `(iconv_t)-1` as an ordinary handle; its address shows only when it is written to a pointer slot and read back as a number.';
+export const note = 'The same `iconv_open`, `iconv` and `iconv_close` calls the C++ makes. JavaScript builds their `char **` and `size_t *` arguments itself: a pointer slot from `allocPointer` for each buffer, a 4-byte `allocBuffer` for each counter. `errno` is a macro for `(*__errno_location())`, which is not bound, so a failed call cannot say whether the output was full (`E2BIG`) or the input stopped (`EILSEQ`, `EINVAL`): the output buffer is sized so it never fills. A failed `iconv_open` returns `(iconv_t)-1` as an ordinary handle; its address shows only when it is written to a pointer slot and read back as a number.';
 export const expected = ['93 fa 96 7b 8c ea', '日本語', '1b 24 42 46 7c 4b 5c 38 6c 1b 28 42', 'cannot encode U+20AC at character 7 in ISO-8859-1'];
 
-export default async function example({ libiconv_open, libiconv, libiconv_close, allocBuffer, allocPointer, writeBytes, readBytes, writePointerAt, writeNumberAt, readNumberAt }, console) {
+export default async function example({ iconv_open, iconv, iconv_close, allocBuffer, allocPointer, writeBytes, readBytes, writePointerAt, writeNumberAt, readNumberAt }, console) {
     // Bytes travel as byte strings, one character (0-255) per byte.
     const utf8 = (text) => String.fromCharCode(...new TextEncoder().encode(text));
     const fromUtf8 = (bytes) => new TextDecoder().decode(Uint8Array.from(bytes, (c) => c.charCodeAt(0)));
@@ -23,7 +23,7 @@ export default async function example({ libiconv_open, libiconv, libiconv_close,
     const FAILED = 0xffffffff; // (size_t)-1 and (iconv_t)-1: both are 32-bit in wasm32
 
     const convert = async (input, from, to) => {
-        const cd = await libiconv_open(to, from);
+        const cd = await iconv_open(to, from);
         // A failed iconv_open returns (iconv_t)-1, which shows only as the address in a pointer slot.
         const slot = await allocPointer(1);
         await writePointerAt(slot, 0, cd);
@@ -40,10 +40,10 @@ export default async function example({ libiconv_open, libiconv, libiconv_close,
         const outbytesleft = await allocBuffer(4);
         await writeNumberAt(inbytesleft, 0, 'uint32', input.length);
         await writeNumberAt(outbytesleft, 0, 'uint32', room);
-        const status = await libiconv(cd, inbuf, inbytesleft, outbuf, outbytesleft);
+        const status = await iconv(cd, inbuf, inbytesleft, outbuf, outbytesleft);
         // A call without input ends a stateful encoding: ISO-2022-JP switches back to ASCII.
-        if (status !== FAILED) await libiconv(cd, null, null, outbuf, outbytesleft);
-        await libiconv_close(cd);
+        if (status !== FAILED) await iconv(cd, null, null, outbuf, outbytesleft);
+        await iconv_close(cd);
         return {
             failed: status === FAILED,
             at: input.length - (await readNumberAt(inbytesleft, 0, 'uint32')),

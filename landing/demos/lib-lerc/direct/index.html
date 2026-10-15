@@ -44,9 +44,7 @@
                 check(`example "${expectedOf(example)[0]}"`, printed, expectedOf(example));
             }
             const passed = checks.filter(Boolean).length;
-            // No version here: LERC's C API has no version call, only the LERC_VERSION_* macros, which
-            // the binding does not export.
-            show(`lerc => ${passed}/${checks.length} checks passed`);
+            show(`lerc ${await m.LERC_VERSION_MAJOR}.${await m.LERC_VERSION_MINOR}.${await m.LERC_VERSION_PATCH} => ${passed}/${checks.length} checks passed`);
         } catch (error) {
             show(`failed => ${error?.stack ?? error}`);
         }

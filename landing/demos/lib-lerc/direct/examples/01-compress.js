@@ -1,5 +1,8 @@
 export const imports = {
     '@crossbind/port-lerc/Lerc_c_api.h': [
+        'LERC_VERSION_MAJOR',
+        'LERC_VERSION_MINOR',
+        'LERC_VERSION_PATCH',
         'lerc_computeCompressedSize',
         'lerc_encode',
         'lerc_decode',
@@ -9,10 +12,10 @@ export const imports = {
         'readNumberAt',
     ],
 };
-export const note = 'The same `lerc_computeCompressedSize`, `lerc_encode` and `lerc_decode` calls the C++ codec makes. JavaScript now allocates every buffer, copies the float32 bytes in and out as one character per byte, reads the `unsigned int` blob size back with `readNumberAt` and works out the error bound, one float32 step under 1 cm, itself. LERC has its version only as the `LERC_VERSION_MAJOR`, `LERC_VERSION_MINOR` and `LERC_VERSION_PATCH` macros, which the binding does not export, so the first line has no version.';
-export const expected = ['LERC: 262144 B of float32 heights -> 94775 B', 'largest error 0.0099 m, within 1 cm: true'];
+export const note = 'The same `lerc_computeCompressedSize`, `lerc_encode` and `lerc_decode` calls the C++ codec makes. JavaScript now allocates every buffer, copies the float32 bytes in and out as one character per byte, reads the `unsigned int` blob size back with `readNumberAt` and works out the error bound, one float32 step under 1 cm, itself. The version macros `LERC_VERSION_MAJOR`, `LERC_VERSION_MINOR` and `LERC_VERSION_PATCH` are imported as numbers.';
+export const expected = ({ lerc }) => [`LERC ${lerc}: 262144 B of float32 heights -> 94775 B`, 'largest error 0.0099 m, within 1 cm: true'];
 
-export default async function example({ lerc_computeCompressedSize, lerc_encode, lerc_decode, allocBuffer, writeBytes, readBytes, readNumberAt }, console) {
+export default async function example({ LERC_VERSION_MAJOR, LERC_VERSION_MINOR, LERC_VERSION_PATCH, lerc_computeCompressedSize, lerc_encode, lerc_decode, allocBuffer, writeBytes, readBytes, readNumberAt }, console) {
     let seed = 42;
     const random = (n) => (seed = (seed * 48271) % 2147483647) % n;
     const width = 256;
@@ -49,6 +52,7 @@ export default async function example({ lerc_computeCompressedSize, lerc_encode,
     const decoded = new Float32Array(toBytes(await readBytes(values, heights.byteLength)).buffer);
     let worst = 0;
     for (let i = 0; i < heights.length; i += 1) worst = Math.max(worst, Math.abs(decoded[i] - heights[i]));
-    console.log(`LERC: ${heights.byteLength} B of float32 heights -> ${blobSize} B`);
+    const version = `${await LERC_VERSION_MAJOR}.${await LERC_VERSION_MINOR}.${await LERC_VERSION_PATCH}`;
+    console.log(`LERC ${version}: ${heights.byteLength} B of float32 heights -> ${blobSize} B`);
     console.log(`largest error ${worst.toFixed(4)} m, within 1 cm: ${worst <= 0.01}`);
 }

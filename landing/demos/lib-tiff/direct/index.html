@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>crossbind - libtiff from JavaScript only</title>
+    <script src="./dist/tiffdirect-wasm-wasm32-st-release.browser.js"></script>
+</head>
+
+<body>
+    <pre id="out">compiling ...</pre>
+    <script type="module">
+        // The "JavaScript only" versions of the usage examples on crossbind.dev/ports/tiff/: no C++,
+        // only libtiff's own headers as crossbind binds them. The demo build opens this page; every
+        // example that can work this way must print exactly its `expected`. One that cannot says why
+        // instead and has nothing to run.
+        import * as encodeDecode from './examples/01-encode-decode.js';
+        import * as pages from './examples/02-pages.js';
+        import * as samples from './examples/03-samples.js';
+        import * as tiles from './examples/04-tiles.js';
+        import * as openFile from './examples/05-open-file.js';
+        import nativeVersions from './native-versions.js';
+
+        const EXAMPLES = [encodeDecode, pages, samples, tiles, openFile].filter((example) => example.default);
+        const expectedOf = (example) => (typeof example.expected === 'function' ? example.expected(nativeVersions) : example.expected);
+
+        const out = document.querySelector('#out');
+        const lines = [];
+        const show = (text) => {
+            lines.push(text);
+            out.textContent = lines.join('\n');
+        };
+        const checks = [];
+        const check = (name, actual, expected) => {
+            const ok = JSON.stringify(actual) === JSON.stringify(expected);
+            checks.push(ok);
+            show(`${ok ? 'ok  ' : 'FAIL'} ${name}: ${JSON.stringify(actual)}${ok ? '' : ` (expected ${JSON.stringify(expected)})`}`);
+        };
+
+        try {
+            // On the page's thread, the way the site boots this module: TIFFClientOpen reads and writes the
+            // file through JavaScript callbacks, which only a module outside a worker can pass to C.
+            const m = await initNative({ path: './dist', useWorker: false });
+            for (const example of EXAMPLES) {
+                const printed = [];
+                await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });
+                check(`example "${expectedOf(example)[0]}"`, printed, expectedOf(example));
+            }
+            const passed = checks.filter(Boolean).length;
+            show(`tiff ${m.TIFFLIB_VERSION_STR_MAJ_MIN_MIC} => ${passed}/${checks.length} checks passed`);
+        } catch (error) {
+            show(`failed => ${error?.stack ?? error}`);
+        }
+    </script>
+</body>
+
+</html>

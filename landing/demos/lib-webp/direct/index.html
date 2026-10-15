@@ -37,7 +37,9 @@
         };
 
         try {
-            const m = await initNative({ path: './dist' });
+            // On the page's thread, the way the site boots this module: a WebPPicture's writer is a
+            // JavaScript function, which only a module outside a worker can pass to C.
+            const m = await initNative({ path: './dist', useWorker: false });
             for (const example of EXAMPLES) {
                 const printed = [];
                 await example.default(m, { log: (...values) => printed.push(values.map(String).join(' ')) });

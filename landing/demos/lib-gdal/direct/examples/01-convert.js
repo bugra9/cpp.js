@@ -1,5 +1,5 @@
 export const imports = {
-    '@crossbind/port-gdal/gdal.h': ['GDALAllRegister', 'GDALOpenEx', 'GDALClose', 'allocPointer', 'writePointerAt', 'cstring', 'readCString'],
+    '@crossbind/port-gdal/gdal.h': ['GDALAllRegister', 'GDALOpenEx', 'GDAL_OF_VECTOR', 'GDALClose', 'allocPointer', 'writePointerAt', 'cstring', 'readCString'],
     '@crossbind/port-gdal/gdal_utils.h': [
         'GDALVectorTranslateOptionsNew',
         'GDALVectorTranslateOptionsFree',
@@ -11,13 +11,13 @@ export const imports = {
     '@crossbind/port-gdal/cpl_vsi.h': ['VSIUnlink', 'VSIFree'],
     '@crossbind/port-gdal/cpl_error.h': ['CPLGetLastErrorMsg'],
 };
-export const note = 'The same `GDALVectorTranslate` and `GDALVectorInfo` calls the C++ makes. Their arguments are NULL-terminated string lists, which JavaScript builds with `allocPointer` and `cstring`, and flags that are macros, such as `GDAL_OF_VECTOR`, are written as numbers. The module is larger than the C++ one: binding `gdal.h` links `GDALAllRegister` and with it every driver, while the C++ version registers only the drivers it uses.';
+export const note = 'The same `GDALVectorTranslate` and `GDALVectorInfo` calls the C++ makes. Their arguments are NULL-terminated string lists, which JavaScript builds with `allocPointer` and `cstring`, and flag macros such as `GDAL_OF_VECTOR` are imported as numbers. The module is larger than the C++ one: binding `gdal.h` links `GDALAllRegister` and with it every driver, while the C++ version registers only the drivers it uses.';
 export const expected = [
     'GPKG: 3 features, EPSG:3857, extent 3021523 4639455 3657925 5013551',
     'ESRI Shapefile: 3 features, EPSG:32635, extent 512465 4252837 1000822 4541552',
 ];
 
-export default async function example({ GDALAllRegister, GDALOpenEx, GDALClose, allocPointer, writePointerAt, cstring, readCString, GDALVectorTranslateOptionsNew, GDALVectorTranslateOptionsFree, GDALVectorTranslate, GDALVectorInfoOptionsNew, GDALVectorInfoOptionsFree, GDALVectorInfo, VSIUnlink, VSIFree, CPLGetLastErrorMsg }, console) {
+export default async function example({ GDALAllRegister, GDALOpenEx, GDAL_OF_VECTOR, GDALClose, allocPointer, writePointerAt, cstring, readCString, GDALVectorTranslateOptionsNew, GDALVectorTranslateOptionsFree, GDALVectorTranslate, GDALVectorInfoOptionsNew, GDALVectorInfoOptionsFree, GDALVectorInfo, VSIUnlink, VSIFree, CPLGetLastErrorMsg }, console) {
     await GDALAllRegister();
     const cities = JSON.stringify({
         type: 'FeatureCollection',
@@ -27,8 +27,8 @@ export default async function example({ GDALAllRegister, GDALOpenEx, GDALClose, 
             ['Izmir', 27.1428, 38.4237],
         ].map(([name, lon, lat]) => ({ type: 'Feature', properties: { name }, geometry: { type: 'Point', coordinates: [lon, lat] } })),
     });
-    // The GeoJSON driver opens the text itself. 4 is GDAL_OF_VECTOR, a macro, so it has no binding.
-    const source = await GDALOpenEx(cities, 4, null, null, null);
+    // The GeoJSON driver opens the text itself.
+    const source = await GDALOpenEx(cities, await GDAL_OF_VECTOR, null, null, null);
     if (!source) throw new Error(await CPLGetLastErrorMsg());
     // A NULL-terminated list of strings, as GDAL's argv parameters take them.
     const list = async (items) => {

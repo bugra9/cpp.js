@@ -1,37 +1,81 @@
 export const imports = {
-    '@crossbind/port-zlib/zlib.h': ['gzopen', 'gzwrite', 'gzread', 'gzerror', 'gzclose', 'allocBuffer', 'writeBytes', 'readBytes'],
+    '@crossbind/port-zlib/zlib.h': [
+        'z_stream',
+        'gz_header',
+        'deflateInit2',
+        'deflateSetHeader',
+        'deflateBound',
+        'deflate',
+        'deflateEnd',
+        'inflateInit2',
+        'inflateGetHeader',
+        'inflate',
+        'inflateEnd',
+        'Z_OK',
+        'Z_STREAM_END',
+        'Z_DEFLATED',
+        'Z_DEFAULT_STRATEGY',
+        'Z_FINISH',
+        'Z_BLOCK',
+        'allocBuffer',
+        'writeBytes',
+        'readBytes',
+        'readCString',
+    ],
 };
-export const note = 'zlib\'s gz file calls write and read the .gz in `/memfs`, but `gzopen` writes a header with no name and a time of 0, and `deflateSetHeader` and `inflateGetHeader`, which fill and read those fields, need `gz_header` and `z_stream` fields that crossbind does not bind. So JavaScript writes the name and the time into the header and reads them back from the bytes; the file is byte for byte the one the C++ writes.';
+export const note = 'The same calls as the C++, macros and constants included: `z_stream` and `gz_header` cross with their fields, so JavaScript fills `name`, `time` and `os` for `deflateSetHeader`, and after `inflateGetHeader` reads `time`, `done` and the name zlib copied into the buffer `name` points at. A pointer field keeps only the address of the `allocBuffer` handle it is given, so the handles stay in variables while zlib works, and each buffer has one zero byte more to end a C string. One inflating stream reads the header with `Z_BLOCK` and then the data, where the C++ opens a second one.';
 export const expected = ['3115 B -> 747 B, starts 1f 8b', 'readings.csv 2026-01-01T00:00:00.000Z', 'true'];
 
-export default async function example(m, console) {
+export default async function example({ z_stream, gz_header, deflateInit2, deflateSetHeader, deflateBound, deflate, deflateEnd, inflateInit2, inflateGetHeader, inflate, inflateEnd, Z_OK, Z_STREAM_END, Z_DEFLATED, Z_DEFAULT_STRATEGY, Z_FINISH, Z_BLOCK, allocBuffer, writeBytes, readBytes, readCString }, console) {
     const rows = Array.from({ length: 200 }, (_, i) => `${i + 1},sensor-${i % 4},${18 + ((i * 7) % 9)}`);
     const csv = ['reading,sensor,celsius', ...rows].join('\n') + '\n';
-    const dir = await m.getRandomPath('/memfs');
-    const source = await m.allocBuffer(csv.length);
-    await m.writeBytes(source, csv);
-    const writer = await m.gzopen(`${dir}/bare.gz`, 'wb9');
-    await m.gzwrite(writer, source, csv.length);
-    await m.gzclose(writer);
+    const [ok, streamEnd] = [await Z_OK, await Z_STREAM_END];
+    const bytes = async (text) => {
+        const buffer = await allocBuffer(text.length + 1); // zero-filled, so the last byte ends a C string
+        await writeBytes(buffer, text);
+        return buffer;
+    };
 
-    // The 10-byte header: magic, method, flags (8: a name follows), the time in little-endian seconds,
-    // then XFL and OS, kept as zlib wrote them. gzopen leaves the flags and the time at 0.
-    const bare = await m.getFileBytes(`${dir}/bare.gz`);
-    const name = 'readings.csv';
-    const time = Date.UTC(2026, 0, 1) / 1000;
-    const header = [0x1f, 0x8b, 8, 8, time & 255, (time >>> 8) & 255, (time >>> 16) & 255, time >>> 24, bare[8], bare[9]];
-    const gz = Uint8Array.from([...header, ...Array.from(name, (c) => c.charCodeAt(0)), 0, ...bare.subarray(10)]);
-    console.log(`${csv.length} B -> ${gz.length} B, starts ${gz[0].toString(16)} ${gz[1].toString(16)}`);
-    const fileName = String.fromCharCode(...gz.subarray(10, gz.indexOf(0, 10)));
-    const modified = new DataView(gz.buffer).getUint32(4, true);
-    console.log(fileName, new Date(modified * 1000).toISOString());
+    const deflater = await new z_stream();
+    // windowBits 15 + 16: a 32 KiB window, and the gzip wrapper instead of the zlib one.
+    if ((await deflateInit2(deflater, 9, await Z_DEFLATED, 15 + 16, 8, await Z_DEFAULT_STRATEGY)) !== ok) throw new Error('level must be between -1 and 9');
+    const header = await new gz_header();
+    const name = await bytes('readings.csv');
+    header.name = name;
+    header.time = Date.UTC(2026, 0, 1) / 1000;
+    header.os = 3; // Unix
+    await deflateSetHeader(deflater, header);
+    const capacity = await deflateBound(deflater, csv.length);
+    const [input, output] = [await bytes(csv), await allocBuffer(capacity)];
+    deflater.next_in = input;
+    deflater.avail_in = csv.length;
+    deflater.next_out = output;
+    deflater.avail_out = capacity;
+    const packedStatus = await deflate(deflater, await Z_FINISH);
+    const gz = await readBytes(output, await deflater.total_out);
+    await deflateEnd(deflater);
+    if (packedStatus !== streamEnd) throw new Error('deflate did not finish');
+    console.log(`${csv.length} B -> ${gz.length} B, starts ${gz.charCodeAt(0).toString(16)} ${gz.charCodeAt(1).toString(16)}`);
 
-    await m.FS.writeFile(`${dir}/${name}.gz`, gz);
-    const reader = await m.gzopen(`${dir}/${name}.gz`, 'rb');
-    const copy = await m.allocBuffer(csv.length + 1);
-    const read = await m.gzread(reader, copy, csv.length + 1);
-    const error = await m.gzerror(reader, null);
-    await m.gzclose(reader);
-    if (error) throw new Error(error);
-    console.log((await m.readBytes(copy, read)) === csv);
+    const inflater = await new z_stream();
+    if ((await inflateInit2(inflater, 15 + 16)) !== ok) throw new Error('inflateInit2 failed'); // + 16: gzip only
+    const parsed = await new gz_header();
+    const nameBuffer = await allocBuffer(1024);
+    parsed.name = nameBuffer;
+    parsed.name_max = 1023;
+    await inflateGetHeader(inflater, parsed);
+    const [packed, copy] = [await bytes(gz), await allocBuffer(csv.length)];
+    inflater.next_in = packed;
+    inflater.avail_in = gz.length;
+    inflater.next_out = copy;
+    inflater.avail_out = csv.length;
+    // inflateGetHeader fills the fields while inflate reads the header; Z_BLOCK stops right after it.
+    const headerStatus = await inflate(inflater, await Z_BLOCK);
+    if ((headerStatus !== ok && headerStatus !== streamEnd) || (await parsed.done) !== 1) throw new Error('not a complete gzip header');
+    console.log(await readCString(nameBuffer), new Date((await parsed.time) * 1000).toISOString());
+    const dataStatus = await inflate(inflater, await Z_FINISH);
+    const text = await readBytes(copy, await inflater.total_out);
+    await inflateEnd(inflater);
+    if (dataStatus !== streamEnd) throw new Error('truncated or corrupt input');
+    console.log(text === csv);
 }

@@ -16,7 +16,7 @@ export const imports = {
         'releaseCallback',
     ],
 };
-export const note = 'The namespace separator is a C `char`, so it crosses as a number, `\'|\'.charCodeAt(0)`: the string `\'|\'` is accepted without an error but arrives as 0, and Expat then joins URI and local name with nothing between them. The handlers run on the page\'s thread as in the tree example, the default namespace\'s prefix arrives as `null`, and the text inside `hr` is read with `readBuffer` for the byte count Expat reports.';
+export const note = 'The namespace separator is a C `char`, which takes a one-character string, so `\'|\'` goes in as in C. The handlers run on the page\'s thread as in the tree example, the default namespace\'s prefix arrives as `null`, and the text inside `hr` is read with `readBuffer` for the byte count Expat reports.';
 export const expected = [
     'gpxtpx:hr 128 131',
     'ns3:hr 128 131',
@@ -56,8 +56,8 @@ export default async function example({ XML_ParserCreateNS, XML_SetElementHandle
         const onNamespace = (data, prefix, namespace) => {
             declared[prefix ?? ''] = namespace ?? '';
         };
-        // Expat hands every name over as "<namespace URI>|<local name>"; the separator is a C char, so a number here.
-        const parser = XML_ParserCreateNS(null, '|'.charCodeAt(0));
+        // Expat hands every name over as "<namespace URI>|<local name>".
+        const parser = XML_ParserCreateNS(null, '|');
         try {
             XML_SetElementHandler(parser, onStart, onEnd);
             XML_SetCharacterDataHandler(parser, onText);

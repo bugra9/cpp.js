@@ -3,6 +3,7 @@ export const imports = {
         'X509_get_subject_name',
         'X509_get_issuer_name',
         'X509_NAME_print_ex',
+        'XN_FLAG_RFC2253',
         'X509_get0_notBefore',
         'X509_get0_notAfter',
         'X509_get_ext_by_NID',
@@ -12,21 +13,24 @@ export const imports = {
         'X509_digest',
         'X509_free',
     ],
+    '@crossbind/port-openssl/openssl/obj_mac.h': ['NID_subject_alt_name'],
     '@crossbind/port-openssl/openssl/x509v3.h': ['X509V3_EXT_print', 'X509_check_host'],
     '@crossbind/port-openssl/openssl/pem.h': ['PEM_read_bio_X509'],
-    '@crossbind/port-openssl/openssl/bio.h': ['BIO_new', 'BIO_s_mem', 'BIO_puts', 'BIO_ctrl_pending', 'BIO_read', 'BIO_free'],
-    '@crossbind/port-openssl/openssl/asn1.h': ['ASN1_TIME_print_ex'],
+    '@crossbind/port-openssl/openssl/bio.h': ['BIO_new', 'BIO_s_mem', 'BIO_puts', 'BIO_get_mem_data', 'BIO_free'],
+    '@crossbind/port-openssl/openssl/asn1.h': ['ASN1_TIME_print_ex', 'ASN1_DTFLGS_ISO8601'],
     '@crossbind/port-openssl/openssl/evp.h': [
         'EVP_PKEY_get0_type_name',
         'EVP_PKEY_get_group_name',
         'EVP_PKEY_get_bits',
         'EVP_sha256',
         'allocBuffer',
+        'allocPointer',
+        'readPointerAt',
         'readBytes',
         'readCString',
     ],
 };
-export const note = 'The same OpenSSL calls the C++ makes, on `x509.h`, `x509v3.h`, `pem.h`, `bio.h`, `asn1.h` and `evp.h` as OpenSSL ships them. OpenSSL prints into a BIO, so JavaScript passes a memory BIO and reads the text back with `BIO_ctrl_pending` and `BIO_read`, because `BIO_get_mem_data` is a macro and has no binding. The flag and NID macros such as `XN_FLAG_RFC2253` have none either, so their values are written out.';
+export const note = 'The same OpenSSL calls the C++ makes, on `x509.h`, `x509v3.h`, `pem.h`, `bio.h`, `asn1.h` and `evp.h` as OpenSSL ships them, with the flag and NID macros such as `XN_FLAG_RFC2253` imported as numbers. OpenSSL prints into a memory BIO, and `BIO_get_mem_data`, a macro over `BIO_ctrl`, returns the length of what went in and writes its address into an `allocPointer` slot, read back with `readPointerAt` and `readBytes`.';
 export const expected = [
     'CN=shop.example.com,O=Example Shop,C=US',
     'issued by CN=Example Shop Test CA,O=Example Shop,C=US',
@@ -38,7 +42,7 @@ export const expected = [
     '68:2D:81:9E:75:7E:2C:15:C1:92:FB:84:3D:BE:AA:99:B4:54:58:D4:5F:A3:F3:3A:C8:13:1E:9D:03:9C:89:3C',
 ];
 
-export default async function example({ X509_get_subject_name, X509_get_issuer_name, X509_NAME_print_ex, X509_get0_notBefore, X509_get0_notAfter, X509_get_ext_by_NID, X509_get_ext, X509_get0_pubkey, X509_self_signed, X509_digest, X509_free, allocBuffer, readBytes, readCString, X509V3_EXT_print, X509_check_host, PEM_read_bio_X509, BIO_new, BIO_s_mem, BIO_puts, BIO_ctrl_pending, BIO_read, BIO_free, ASN1_TIME_print_ex, EVP_PKEY_get0_type_name, EVP_PKEY_get_group_name, EVP_PKEY_get_bits, EVP_sha256 }, console) {
+export default async function example({ X509_get_subject_name, X509_get_issuer_name, X509_NAME_print_ex, XN_FLAG_RFC2253, X509_get0_notBefore, X509_get0_notAfter, X509_get_ext_by_NID, NID_subject_alt_name, X509_get_ext, X509_get0_pubkey, X509_self_signed, X509_digest, X509_free, allocBuffer, allocPointer, readPointerAt, readBytes, readCString, X509V3_EXT_print, X509_check_host, PEM_read_bio_X509, BIO_new, BIO_s_mem, BIO_puts, BIO_get_mem_data, BIO_free, ASN1_TIME_print_ex, ASN1_DTFLGS_ISO8601, EVP_PKEY_get0_type_name, EVP_PKEY_get_group_name, EVP_PKEY_get_bits, EVP_sha256 }, console) {
     // A test certificate for shop.example.com, issued by a test CA.
     const pem = `-----BEGIN CERTIFICATE-----
     MIICIjCCAcigAwIBAgICEAEwCgYIKoZIzj0EAwIwQzELMAkGA1UEBhMCVVMxFTAT
@@ -54,10 +58,6 @@ export default async function example({ X509_get_subject_name, X509_get_issuer_n
     RQIgZtZXDYEsjrz91CjoZyFE5coj51aR5sZi/wKllD1qYq8CIQCOKkQWCapO2G/A
     p1aRCXKO+JxjPWGnkYe0B8RLljl9Pw==
     -----END CERTIFICATE-----`;
-    // Macros have no binding: their values from x509.h, asn1.h and obj_mac.h.
-    const XN_FLAG_RFC2253 = 0x1110317;
-    const ASN1_DTFLGS_ISO8601 = 0x01;
-    const NID_subject_alt_name = 85;
 
     // A memory BIO takes a copy of the text. PEM lines must start in the first column.
     const input = await BIO_new(await BIO_s_mem());
@@ -70,18 +70,18 @@ export default async function example({ X509_get_subject_name, X509_get_issuer_n
     const printed = async (print, ...args) => {
         const out = await BIO_new(await BIO_s_mem());
         await print(out, ...args);
-        const size = await BIO_ctrl_pending(out);
-        const text = await allocBuffer(size);
-        await BIO_read(out, text, size);
+        const data = await allocPointer(1);
+        const size = await BIO_get_mem_data(out, data);
+        const text = await readBytes(await readPointerAt(data, 0), size);
         await BIO_free(out);
-        return readBytes(text, size);
+        return text;
     };
-    console.log(await printed(X509_NAME_print_ex, await X509_get_subject_name(cert), 0, XN_FLAG_RFC2253));
-    console.log('issued by', await printed(X509_NAME_print_ex, await X509_get_issuer_name(cert), 0, XN_FLAG_RFC2253));
-    const notBefore = await printed(ASN1_TIME_print_ex, await X509_get0_notBefore(cert), ASN1_DTFLGS_ISO8601);
-    const notAfter = await printed(ASN1_TIME_print_ex, await X509_get0_notAfter(cert), ASN1_DTFLGS_ISO8601);
+    console.log(await printed(X509_NAME_print_ex, await X509_get_subject_name(cert), 0, await XN_FLAG_RFC2253));
+    console.log('issued by', await printed(X509_NAME_print_ex, await X509_get_issuer_name(cert), 0, await XN_FLAG_RFC2253));
+    const notBefore = await printed(ASN1_TIME_print_ex, await X509_get0_notBefore(cert), await ASN1_DTFLGS_ISO8601);
+    const notAfter = await printed(ASN1_TIME_print_ex, await X509_get0_notAfter(cert), await ASN1_DTFLGS_ISO8601);
     console.log('valid', notBefore, 'to', notAfter);
-    const altNames = await X509_get_ext(cert, await X509_get_ext_by_NID(cert, NID_subject_alt_name, -1));
+    const altNames = await X509_get_ext(cert, await X509_get_ext_by_NID(cert, await NID_subject_alt_name, -1));
     console.log(await printed(X509V3_EXT_print, altNames, 0, 0));
 
     const key = await X509_get0_pubkey(cert);

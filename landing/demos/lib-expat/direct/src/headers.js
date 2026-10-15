@@ -2,7 +2,7 @@
 // name that header does not export, so the import lines on the page are checked here.
 export {
     XML_ErrorString,
-    XML_ExpatVersion,
+    XML_ExpatVersionInfo,
     XML_GetBuffer,
     XML_GetCurrentColumnNumber,
     XML_GetCurrentLineNumber,
@@ -12,6 +12,8 @@ export {
     XML_ParserCreate,
     XML_ParserCreateNS,
     XML_ParserFree,
+    XML_SetBillionLaughsAttackProtectionActivationThreshold,
+    XML_SetBillionLaughsAttackProtectionMaximumAmplification,
     XML_SetCharacterDataHandler,
     XML_SetElementHandler,
     XML_SetStartElementHandler,

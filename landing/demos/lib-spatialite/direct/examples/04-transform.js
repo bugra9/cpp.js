@@ -11,6 +11,8 @@ export const imports = {
         'sqlite3_column_text',
         'sqlite3_finalize',
         'sqlite3_close',
+        'SQLITE_OK',
+        'SQLITE_ROW',
         'allocPointer',
         'readPointerAt',
         'writeNumberAt',
@@ -24,26 +26,26 @@ export const expected = [
     'back to WGS 84: POINT(28.9784 41.0082)',
 ];
 
-export default async function example({ spatialite_alloc_connection, spatialite_init_ex, spatialite_cleanup_ex, sqlite3_open, sqlite3_exec, sqlite3_errmsg, sqlite3_prepare_v2, sqlite3_bind_text, sqlite3_bind_int, sqlite3_step, sqlite3_column_text, sqlite3_finalize, sqlite3_close, allocPointer, readPointerAt, writeNumberAt, readCString }, console) {
-    // sqlite3.h's constants are macros without bindings. SQLITE_TRANSIENT is ((sqlite3_destructor_type)-1):
-    // a pointer with the address -1, which a fresh pointer slot holding -1 reads back.
-    const SQLITE_OK = 0;
-    const SQLITE_ROW = 100;
+export default async function example({ spatialite_alloc_connection, spatialite_init_ex, spatialite_cleanup_ex, sqlite3_open, sqlite3_exec, sqlite3_errmsg, sqlite3_prepare_v2, sqlite3_bind_text, sqlite3_bind_int, sqlite3_step, sqlite3_column_text, sqlite3_finalize, sqlite3_close, SQLITE_OK, SQLITE_ROW, allocPointer, readPointerAt, writeNumberAt, readCString }, console) {
+    const ok = await SQLITE_OK;
+    const row = await SQLITE_ROW;
+    // SQLITE_TRANSIENT, ((sqlite3_destructor_type)-1), has no binding because its value is a pointer:
+    // the address -1, which a fresh 4-byte pointer slot holding -1 reads back in wasm32.
     const minusOne = await allocPointer(1);
     await writeNumberAt(minusOne, 0, 'int32', -1);
     const SQLITE_TRANSIENT = await readPointerAt(minusOne, 0);
     const slot = await allocPointer(1);
-    if ((await sqlite3_open(':memory:', slot)) !== SQLITE_OK) throw new Error('cannot open the database');
+    if ((await sqlite3_open(':memory:', slot)) !== ok) throw new Error('cannot open the database');
     const db = await readPointerAt(slot, 0);
     const cache = await spatialite_alloc_connection();
     await spatialite_init_ex(db, cache, 0);
-    if ((await sqlite3_exec(db, 'SELECT InitSpatialMetaData(1)', null, null, null)) !== SQLITE_OK) throw new Error(await sqlite3_errmsg(db));
+    if ((await sqlite3_exec(db, 'SELECT InitSpatialMetaData(1)', null, null, null)) !== ok) throw new Error(await sqlite3_errmsg(db));
     const prepare = async (sql) => {
-        if ((await sqlite3_prepare_v2(db, sql, -1, slot, null)) !== SQLITE_OK) throw new Error(await sqlite3_errmsg(db));
+        if ((await sqlite3_prepare_v2(db, sql, -1, slot, null)) !== ok) throw new Error(await sqlite3_errmsg(db));
         return readPointerAt(slot, 0);
     };
     const text = async (statement, missing) => {
-        const value = (await sqlite3_step(statement)) === SQLITE_ROW ? await sqlite3_column_text(statement, 0) : null;
+        const value = (await sqlite3_step(statement)) === row ? await sqlite3_column_text(statement, 0) : null;
         const result = value === null ? null : await readCString(value);
         await sqlite3_finalize(statement);
         if (result === null) throw new Error(missing);

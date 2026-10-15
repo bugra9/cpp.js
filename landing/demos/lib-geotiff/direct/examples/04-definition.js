@@ -1,11 +1,29 @@
 export const imports = {
-    '@crossbind/port-geotiff/geotiff.h': ['GTIFNewSimpleTags', 'GTIFImport', 'GTIFKeyCode', 'GTIFKeyGetSHORT', 'GTIFValueNameEx', 'GTIFFree', 'allocBuffer', 'allocPointer', 'readPointerAt', 'readCString', 'readNumberAt', 'writeBytes', 'releaseCallback'],
-    '@crossbind/port-geotiff/geo_normalize.h': ['GTIFGetPCSInfo', 'GTIFGetProjTRFInfo', 'GTIFGetGCSInfo', 'GTIFGetDatumInfo', 'GTIFGetEllipsoidInfo', 'GTIFGetPMInfo', 'GTIFGetUOMLengthInfo', 'GTIFAllocDefn', 'GTIFGetDefn', 'GTIFGetProj4Defn', 'GTIFFreeDefn', 'GTIFFreeMemory'],
+    '@crossbind/port-geotiff/geotiff.h': ['GTIFNew', 'GTIFKeySet', 'GTIFWriteKeys', 'GTIFValueNameEx', 'GTIFFree', 'tagtype_t', 'allocBuffer', 'allocPointer', 'readBuffer', 'writeBuffer', 'readPointerAt', 'readCString', 'releaseCallback'],
+    '@crossbind/port-geotiff/geo_normalize.h': [
+        'GTIFAllocDefn',
+        'GTIFGetDefn',
+        'GTIFGetPCSInfo',
+        'GTIFGetProjTRFInfo',
+        'GTIFGetGCSInfo',
+        'GTIFGetDatumInfo',
+        'GTIFGetEllipsoidInfo',
+        'GTIFGetPMInfo',
+        'GTIFGetUOMLengthInfo',
+        'GTIFGetProj4Defn',
+        'GTIFFreeMemory',
+        'GTIFFreeDefn',
+    ],
+    '@crossbind/port-geotiff/geokeys.h': ['geokey_t'],
+    '@crossbind/port-geotiff/geovalues.h': ['modeltype_t', 'rastertype_t'],
+    '@crossbind/port-geotiff/xtiffio.h': ['XTIFFClientOpen', 'XTIFFClose', 'TIFFTAG_GEOTIEPOINTS', 'TIFFTAG_GEOPIXELSCALE'],
+    '@crossbind/port-tiff/tiffio.h': ['TIFFSetField', 'TIFFWriteScanline'],
+    '@crossbind/port-tiff/tiff.h': ['TIFFTAG_IMAGEWIDTH', 'TIFFTAG_IMAGELENGTH', 'TIFFTAG_BITSPERSAMPLE', 'TIFFTAG_SAMPLESPERPIXEL', 'TIFFTAG_PHOTOMETRIC', 'TIFFTAG_ROWSPERSTRIP', 'PHOTOMETRIC_MINISBLACK'],
 };
-export const note = '`GTIFGetDefn` fills a `GTIFDefn` that crossbind binds without its fields, so JavaScript walks the same EPSG lookups itself: `GTIFGetPCSInfo`, `GTIFGetProjTRFInfo`, `GTIFGetGCSInfo`, `GTIFGetDatumInfo`, `GTIFGetEllipsoidInfo`, `GTIFGetPMInfo` and `GTIFGetUOMLengthInfo`, each with its answers in out-parameters. Two things stay inside the definition: which GeoKey each projection parameter belongs to, so the parameters are missing, and the method\'s `CT_TransverseMercator` name, so it prints as its EPSG code, 9807. The keys go in as listgeo text through a callback, as in the first example.';
+export const note = '`GTIFGetDefn` fills a `GTIFDefn` whose number fields JavaScript reads as the C++ does (`defn.PCS`, `defn.CTProjection`, `defn.SemiMajor`), and the same lookups name each code. The projection parameters are missing: they sit in the arrays `ProjParm` and `ProjParmId`, and crossbind binds no array field, so the five lines that name each parameter\'s GeoKey are left out. The file is written as in the first example.';
 export const expected = [
     'ModelTypeProjected EPSG:27700 OSGB36 / British National Grid',
-    'projection 19916 British National Grid, EPSG method 9807',
+    'projection 19916 British National Grid, CT_TransverseMercator',
     'geographic 4277 OSGB36, datum 6277 Ordnance Survey of Great Britain 1936',
     'ellipsoid 7001 Airy 1830: 6377563.396 m, 6356256.909 m',
     'prime meridian 8901 Greenwich, unit 9001 metre (1 m)',
@@ -13,70 +31,93 @@ export const expected = [
 ];
 export const init = { useWorker: false };
 
-export default async function example({ GTIFNewSimpleTags, GTIFImport, GTIFKeyCode, GTIFKeyGetSHORT, GTIFValueNameEx, GTIFFree, allocBuffer, allocPointer, readPointerAt, readCString, readNumberAt, writeBytes, releaseCallback, GTIFGetPCSInfo, GTIFGetProjTRFInfo, GTIFGetGCSInfo, GTIFGetDatumInfo, GTIFGetEllipsoidInfo, GTIFGetPMInfo, GTIFGetUOMLengthInfo, GTIFAllocDefn, GTIFGetDefn, GTIFGetProj4Defn, GTIFFreeDefn, GTIFFreeMemory }, console) {
-    // A file that only says ProjectedCSTypeGeoKey = 27700, as listgeo prints its keys
-    const lines = `Geotiff_Information:
-        Version: 1
-        Key_Revision: 1.0
-        Tagged_Information:
-            End_Of_Tags.
-        Keyed_Information:
-            GTModelTypeGeoKey (Short,1): ModelTypeProjected
-            GTRasterTypeGeoKey (Short,1): RasterPixelIsArea
-            ProjectedCSTypeGeoKey (Short,1): Code-27700
-            End_Of_Keys.
-        End_Of_Geotiff.`.split('\n');
-    const readLine = (buffer) => {
-        writeBytes(buffer, `${lines.shift().trim()}\0`);
-        return 1;
+export default async function example({ GTIFNew, GTIFKeySet, GTIFWriteKeys, GTIFValueNameEx, GTIFFree, tagtype_t, allocBuffer, allocPointer, readBuffer, writeBuffer, readPointerAt, readCString, releaseCallback, GTIFAllocDefn, GTIFGetDefn, GTIFGetPCSInfo, GTIFGetProjTRFInfo, GTIFGetGCSInfo, GTIFGetDatumInfo, GTIFGetEllipsoidInfo, GTIFGetPMInfo, GTIFGetUOMLengthInfo, GTIFGetProj4Defn, GTIFFreeMemory, GTIFFreeDefn, geokey_t, modeltype_t, rastertype_t, XTIFFClientOpen, XTIFFClose, TIFFTAG_GEOTIEPOINTS, TIFFTAG_GEOPIXELSCALE, TIFFSetField, TIFFWriteScanline, TIFFTAG_IMAGEWIDTH, TIFFTAG_IMAGELENGTH, TIFFTAG_BITSPERSAMPLE, TIFFTAG_SAMPLESPERPIXEL, TIFFTAG_PHOTOMETRIC, TIFFTAG_ROWSPERSTRIP, PHOTOMETRIC_MINISBLACK }, console) {
+    // The file in memory: bytes that libtiff reads, writes and seeks through these callbacks.
+    let file = new Uint8Array(0);
+    let position = 0;
+    const read = (handle, buffer, count) => {
+        const bytes = file.subarray(position, position + count);
+        writeBuffer(buffer, bytes);
+        position += bytes.length;
+        return bytes.length;
     };
-    const gtif = await GTIFNewSimpleTags(await allocBuffer(16));
-    if (!(await GTIFImport(gtif, readLine, null))) throw new Error('GTIFImport could not read the text');
-    await releaseCallback(readLine);
+    const write = (handle, buffer, count) => {
+        if (position + count > file.length) {
+            const grown = new Uint8Array(position + count);
+            grown.set(file);
+            file = grown;
+        }
+        file.set(readBuffer(buffer, count), position);
+        position += count;
+        return count;
+    };
+    const seek = (handle, offset, whence) => (position = [0, position, file.length][whence] + Number(offset)); // SEEK_SET, SEEK_CUR, SEEK_END
+    const close = () => 0;
+    const fileSize = () => file.length;
+    const open = (name, mode) => {
+        if (mode === 'w') file = new Uint8Array(0);
+        position = 0;
+        return XTIFFClientOpen(name, mode, null, read, write, seek, close, fileSize, null, null);
+    };
 
-    // Every lookup answers through out-parameters: a C string, shorts and doubles.
+    // A file that only says ProjectedCSTypeGeoKey = 27700, written as in the first example
+    const [epsg, width, height, x, y, pixelSize] = [27700, 100, 100, 529000, 181000, 10];
+    let tif = await open('sample.tif', 'w');
+    await TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, width);
+    await TIFFSetField(tif, TIFFTAG_IMAGELENGTH, height);
+    await TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8);
+    await TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
+    await TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+    await TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, height);
+    const tiepoint = await allocBuffer(6 * 8);
+    await writeBuffer(tiepoint, new Float64Array([0, 0, 0, x, y, 0]));
+    const scale = await allocBuffer(3 * 8);
+    await writeBuffer(scale, new Float64Array([pixelSize, pixelSize, 0]));
+    await TIFFSetField(tif, TIFFTAG_GEOTIEPOINTS, 6, tiepoint);
+    await TIFFSetField(tif, TIFFTAG_GEOPIXELSCALE, 3, scale);
+    let gtif = await GTIFNew(tif);
+    await GTIFKeySet(gtif, geokey_t.GTModelTypeGeoKey, tagtype_t.TYPE_SHORT, 1, modeltype_t.ModelTypeProjected);
+    await GTIFKeySet(gtif, geokey_t.GTRasterTypeGeoKey, tagtype_t.TYPE_SHORT, 1, rastertype_t.RasterPixelIsArea);
+    await GTIFKeySet(gtif, geokey_t.ProjectedCSTypeGeoKey, tagtype_t.TYPE_SHORT, 1, epsg);
+    await GTIFWriteKeys(gtif);
+    await GTIFFree(gtif);
+    const row = await allocBuffer(width);
+    for (let line = 0; line < height; line += 1) {
+        if ((await TIFFWriteScanline(tif, row, line, 0)) < 0) throw new Error('libtiff could not write a row');
+    }
+    await XTIFFClose(tif);
+
+    // GTIFGetDefn expands the one code through PROJ's database; the GTIFGet...Info lookups name each part.
+    tif = await open('input.tif', 'r');
+    gtif = await GTIFNew(tif);
+    const defn = await GTIFAllocDefn();
+    if (!gtif || !(await GTIFGetDefn(gtif, defn))) throw new Error('no coordinate system in the GeoKeys');
     const name = await allocPointer(1);
-    const [a, b, c] = [await allocBuffer(2), await allocBuffer(2), await allocBuffer(2)];
-    const [first, second] = [await allocBuffer(8), await allocBuffer(8)];
-    const text = async () => {
-        const pointer = await readPointerAt(name, 0);
-        const value = await readCString(pointer);
-        await GTIFFreeMemory(pointer);
+    const taken = async () => {
+        const text = await readPointerAt(name, 0); // a C string the caller frees
+        const value = text ? await readCString(text) : '';
+        await GTIFFreeMemory(text);
         return value;
     };
-    const short = (buffer) => readNumberAt(buffer, 0, 'int16');
-    const double = (buffer) => readNumberAt(buffer, 0, 'float64');
-    const key = async (keyName) => ({ value: await GTIFKeyCode(keyName) });
-
-    const model = await key('GTModelTypeGeoKey');
-    await GTIFKeyGetSHORT(gtif, model, a, 0, 1);
-    const modelName = await GTIFValueNameEx(gtif, model, await short(a));
-    await GTIFKeyGetSHORT(gtif, await key('ProjectedCSTypeGeoKey'), a, 0, 1);
-    const pcs = await short(a);
-    await GTIFGetPCSInfo(pcs, name, a, b, c); // name, projection, length unit, geographic CRS
-    console.log(`${modelName} EPSG:${pcs} ${await text()}`);
-    const [projection, unit, gcs] = [await short(a), await short(b), await short(c)];
-    await GTIFGetProjTRFInfo(projection, name, a, await allocBuffer(7 * 8));
-    console.log(`projection ${projection} ${await text()}, EPSG method ${await short(a)}`);
-
-    await GTIFGetGCSInfo(gcs, name, a, b, null); // name, datum, prime meridian
-    const gcsName = await text();
-    const [datum, pm] = [await short(a), await short(b)];
-    await GTIFGetDatumInfo(datum, name, a); // name, ellipsoid
-    console.log(`geographic ${gcs} ${gcsName}, datum ${datum} ${await text()}`);
-    const ellipsoid = await short(a);
-    await GTIFGetEllipsoidInfo(ellipsoid, name, first, second);
-    console.log(`ellipsoid ${ellipsoid} ${await text()}: ${(await double(first)).toFixed(3)} m, ${(await double(second)).toFixed(3)} m`);
-    await GTIFGetPMInfo(pm, name, null);
-    const pmName = await text();
-    await GTIFGetUOMLengthInfo(unit, name, first);
-    console.log(`prime meridian ${pm} ${pmName}, unit ${unit} ${await text()} (${await double(first)} m)`);
-
-    const defn = await GTIFAllocDefn();
-    await GTIFGetDefn(gtif, defn);
-    const proj = await GTIFGetProj4Defn(defn); // a C string GTIFFreeMemory releases
+    await GTIFGetPCSInfo(await defn.PCS, name, null, null, null);
+    console.log(`${await GTIFValueNameEx(gtif, geokey_t.GTModelTypeGeoKey, await defn.Model)} EPSG:${await defn.PCS} ${await taken()}`);
+    await GTIFGetProjTRFInfo(await defn.ProjCode, name, null, null);
+    console.log(`projection ${await defn.ProjCode} ${await taken()}, ${await GTIFValueNameEx(gtif, geokey_t.ProjCoordTransGeoKey, await defn.CTProjection)}`);
+    await GTIFGetGCSInfo(await defn.GCS, name, null, null, null);
+    const geographic = await taken();
+    await GTIFGetDatumInfo(await defn.Datum, name, null);
+    console.log(`geographic ${await defn.GCS} ${geographic}, datum ${await defn.Datum} ${await taken()}`);
+    await GTIFGetEllipsoidInfo(await defn.Ellipsoid, name, null, null);
+    console.log(`ellipsoid ${await defn.Ellipsoid} ${await taken()}: ${(await defn.SemiMajor).toFixed(3)} m, ${(await defn.SemiMinor).toFixed(3)} m`);
+    await GTIFGetPMInfo(await defn.PM, name, null);
+    const primeMeridian = await taken();
+    await GTIFGetUOMLengthInfo(await defn.UOMLength, name, null);
+    console.log(`prime meridian ${await defn.PM} ${primeMeridian}, unit ${await defn.UOMLength} ${await taken()} (${await defn.UOMLengthInMeters} m)`);
+    const proj = await GTIFGetProj4Defn(defn);
     console.log((await readCString(proj)).trim());
     await GTIFFreeMemory(proj);
     await GTIFFreeDefn(defn);
     await GTIFFree(gtif);
+    await XTIFFClose(tif);
+    for (const proc of [read, write, seek, close, fileSize]) await releaseCallback(proc);
 }

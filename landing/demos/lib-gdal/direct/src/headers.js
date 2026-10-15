@@ -9,6 +9,7 @@ export {
     GDALCreate,
     GDALDataType,
     GDALDatasetCreateLayer,
+    GDALDatasetGetLayer,
     GDALGetBlockSize,
     GDALGetDataTypeName,
     GDALGetDatasetDriver,
@@ -33,11 +34,14 @@ export {
     GDALSetGeoTransform,
     GDALSetProjection,
     GDALVersionInfo,
+    GDAL_OF_RASTER,
+    GDAL_OF_VECTOR,
     allocBuffer,
     allocPointer,
     cstring,
     readCString,
     readNumberAt,
+    readPointerAt,
     writeBytes,
     writeNumberAt,
     writePointerAt,
@@ -61,10 +65,13 @@ export {
     GDALWarpAppOptionsNew,
 } from '@crossbind/port-gdal/gdal_utils.h';
 export {
+    VSIFCloseL,
+    VSIFileFromMemBuffer,
     VSIFree,
     VSIUnlink,
 } from '@crossbind/port-gdal/cpl_vsi.h';
 export {
+    CPLErr,
     CPLGetLastErrorMsg,
 } from '@crossbind/port-gdal/cpl_error.h';
 export {
@@ -72,17 +79,33 @@ export {
     GDALContourGenerateEx,
 } from '@crossbind/port-gdal/gdal_alg.h';
 export {
+    OGR_FD_GetFieldCount,
+    OGR_FD_GetFieldDefn,
     OGR_F_Destroy,
     OGR_F_GetFieldAsDouble,
+    OGR_F_GetFieldAsString,
+    OGR_F_GetFieldCount,
     OGR_F_GetGeometryRef,
     OGR_Fld_Create,
     OGR_Fld_Destroy,
+    OGR_Fld_GetNameRef,
+    OGR_Fld_GetType,
+    OGR_G_ExportToWkt,
     OGR_G_Length,
+    OGR_GetFieldTypeName,
     OGR_L_CreateField,
+    OGR_L_GetFeatureCount,
+    OGR_L_GetGeomType,
+    OGR_L_GetLayerDefn,
+    OGR_L_GetName,
     OGR_L_GetNextFeature,
     OGR_L_ResetReading,
+    OGR_L_SetAttributeFilter,
+    OGR_L_SetSpatialFilterRect,
 } from '@crossbind/port-gdal/ogr_api.h';
 export {
+    OGRERR_NONE,
     OGRFieldType,
+    OGRGeometryTypeToName,
     OGRwkbGeometryType,
 } from '@crossbind/port-gdal/ogr_core.h';

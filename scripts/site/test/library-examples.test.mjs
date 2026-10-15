@@ -434,14 +434,14 @@ test('a library where nothing runs from JavaScript alone has reasons and no modu
     });
 });
 
-test('zstd shows three examples from JavaScript only and says why streaming needs C++', async () => {
+test('zstd shows all four examples from JavaScript only', async () => {
     const { zstd } = await buildLibraryExamples();
     assert.deepEqual(zstd.direct, { demo: 'lib-zstd-direct', init: null, config: [] });
     assert.deepEqual(
         zstd.examples.map((item) => [item.id, item.direct.impossible ? 'impossible' : 'runs']),
         [
             ['01-compress', 'runs'],
-            ['02-stream', 'impossible'],
+            ['02-stream', 'runs'],
             ['03-parameters', 'runs'],
             ['04-dictionary', 'runs'],
         ],

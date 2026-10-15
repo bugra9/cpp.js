@@ -12,6 +12,9 @@ export const imports = {
         'sqlite3_column_int64',
         'sqlite3_finalize',
         'sqlite3_errmsg',
+        'SQLITE_OK',
+        'SQLITE_ROW',
+        'SQLITE_DONE',
         'allocPointer',
         'readPointerAt',
         'writeNumberAt',
@@ -26,20 +29,20 @@ export const expected = [
     'alice 13333, bob 13330, carol 13331',
 ];
 
-export default async function example({ sqlite3_open, sqlite3_close, sqlite3_exec, sqlite3_prepare_v2, sqlite3_bind_text, sqlite3_bind_int64, sqlite3_step, sqlite3_reset, sqlite3_column_text, sqlite3_column_int64, sqlite3_finalize, sqlite3_errmsg, allocPointer, readPointerAt, writeNumberAt, readCString }, console) {
-    // sqlite3.h's constants are macros without bindings. SQLITE_TRANSIENT is
-    // ((sqlite3_destructor_type)-1): a pointer with the address -1, which a slot holding -1 reads back.
-    const SQLITE_OK = 0, SQLITE_ROW = 100, SQLITE_DONE = 101;
+export default async function example({ sqlite3_open, sqlite3_close, sqlite3_exec, sqlite3_prepare_v2, sqlite3_bind_text, sqlite3_bind_int64, sqlite3_step, sqlite3_reset, sqlite3_column_text, sqlite3_column_int64, sqlite3_finalize, sqlite3_errmsg, SQLITE_OK, SQLITE_ROW, SQLITE_DONE, allocPointer, readPointerAt, writeNumberAt, readCString }, console) {
+    const ok = await SQLITE_OK, row = await SQLITE_ROW, done = await SQLITE_DONE;
+    // SQLITE_TRANSIENT, ((sqlite3_destructor_type)-1), has no binding because its value is a pointer:
+    // the address -1, which a 4-byte slot holding -1 reads back in wasm32.
     const minusOne = await allocPointer(1);
     await writeNumberAt(minusOne, 0, 'int32', -1);
     const SQLITE_TRANSIENT = await readPointerAt(minusOne, 0);
 
     // sqlite3_open and sqlite3_prepare_v2 hand back their handle through a pointer slot.
     const slot = await allocPointer(1);
-    if (await sqlite3_open(':memory:', slot) !== SQLITE_OK) throw new Error('cannot open the database');
+    if (await sqlite3_open(':memory:', slot) !== ok) throw new Error('cannot open the database');
     const db = await readPointerAt(slot, 0);
     const prepare = async (sql) => {
-        if (await sqlite3_prepare_v2(db, sql, -1, slot, null) !== SQLITE_OK) throw new Error(await sqlite3_errmsg(db));
+        if (await sqlite3_prepare_v2(db, sql, -1, slot, null) !== ok) throw new Error(await sqlite3_errmsg(db));
         return await readPointerAt(slot, 0);
     };
     await sqlite3_exec(db, 'create table balances(account text primary key, total integer not null check (total >= 0))', null, null, null);
@@ -51,7 +54,7 @@ export default async function example({ sqlite3_open, sqlite3_close, sqlite3_exe
         for (const [account, amount] of rows) {
             await sqlite3_bind_text(upsert, 1, account, -1, SQLITE_TRANSIENT);
             await sqlite3_bind_int64(upsert, 2, amount);
-            if (await sqlite3_step(upsert) !== SQLITE_DONE) {
+            if (await sqlite3_step(upsert) !== done) {
                 const reason = await sqlite3_errmsg(db);
                 await sqlite3_finalize(upsert);
                 await sqlite3_exec(db, 'rollback', null, null, null);
@@ -66,7 +69,7 @@ export default async function example({ sqlite3_open, sqlite3_close, sqlite3_exe
     const balances = async () => {
         const query = await prepare('select account, total from balances order by account');
         const parts = [];
-        while (await sqlite3_step(query) === SQLITE_ROW) {
+        while (await sqlite3_step(query) === row) {
             parts.push(`${await readCString(await sqlite3_column_text(query, 0))} ${await sqlite3_column_int64(query, 1)}`);
         }
         await sqlite3_finalize(query);

@@ -9,6 +9,7 @@ export const imports = {
         'EVP_DigestInit_ex2',
         'EVP_DigestUpdate',
         'EVP_DigestFinal_ex',
+        'EVP_MAX_MD_SIZE',
         'allocBuffer',
         'writeBytes',
         'readBytes',
@@ -24,7 +25,7 @@ export const expected = [
     'streamed SHA256 cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0',
 ];
 
-export default async function example({ EVP_Q_digest, EVP_Q_mac, EVP_MD_fetch, EVP_MD_free, EVP_MD_CTX_new, EVP_MD_CTX_free, EVP_DigestInit_ex2, EVP_DigestUpdate, EVP_DigestFinal_ex, allocBuffer, writeBytes, readBytes, readNumberAt }, console) {
+export default async function example({ EVP_Q_digest, EVP_Q_mac, EVP_MD_fetch, EVP_MD_free, EVP_MD_CTX_new, EVP_MD_CTX_free, EVP_DigestInit_ex2, EVP_DigestUpdate, EVP_DigestFinal_ex, EVP_MAX_MD_SIZE, allocBuffer, writeBytes, readBytes, readNumberAt }, console) {
     // Data goes in as a buffer, one character per byte.
     const bytes = async (text) => {
         const buffer = await allocBuffer(text.length);
@@ -32,7 +33,8 @@ export default async function example({ EVP_Q_digest, EVP_Q_mac, EVP_MD_fetch, E
         return buffer;
     };
     // Room for the longest digest, and for the length OpenSSL writes back (4 bytes in wasm32).
-    const digest = await allocBuffer(64);
+    const longest = await EVP_MAX_MD_SIZE;
+    const digest = await allocBuffer(longest);
     const size = await allocBuffer(4);
     const hex = async () => {
         const value = await readBytes(digest, await readNumberAt(size, 0, 'uint32'));
@@ -46,7 +48,7 @@ export default async function example({ EVP_Q_digest, EVP_Q_mac, EVP_MD_fetch, E
     }
     const key = 'Jefe';
     const data = 'what do ya want for nothing?';
-    await EVP_Q_mac(null, 'HMAC', null, 'SHA256', null, await bytes(key), key.length, await bytes(data), data.length, digest, 64, size);
+    await EVP_Q_mac(null, 'HMAC', null, 'SHA256', null, await bytes(key), key.length, await bytes(data), data.length, digest, longest, size);
     console.log('HMAC-SHA256', await hex());
 
     // A million "a" in ten pieces, the way a file arrives.

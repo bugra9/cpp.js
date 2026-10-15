@@ -2,6 +2,10 @@
 // name that header does not export, so the import lines on the page are checked here.
 export {
     CURLUPart,
+    CURLU_APPENDQUERY,
+    CURLU_DEFAULT_PORT,
+    CURLU_URLDECODE,
+    CURLU_URLENCODE,
     CURLUcode,
     curl_url,
     curl_url_cleanup,

@@ -11,6 +11,8 @@ export {
     EVP_CIPHER_free,
     EVP_CipherInit_ex2,
     EVP_CipherUpdate,
+    EVP_CTRL_AEAD_GET_TAG,
+    EVP_CTRL_AEAD_SET_TAG,
     EVP_DecryptFinal_ex,
     EVP_DecryptUpdate,
     EVP_DigestFinal_ex,
@@ -22,21 +24,18 @@ export {
     EVP_DigestVerifyInit_ex,
     EVP_EncryptFinal_ex,
     EVP_EncryptUpdate,
+    EVP_MAX_MD_SIZE,
     EVP_MD_CTX_free,
     EVP_MD_CTX_new,
     EVP_MD_fetch,
     EVP_MD_free,
-    EVP_PKEY_CTX_free,
-    EVP_PKEY_CTX_new_from_name,
-    EVP_PKEY_CTX_set_group_name,
     EVP_PKEY_free,
-    EVP_PKEY_generate,
     EVP_PKEY_get_bits,
     EVP_PKEY_get_group_name,
     EVP_PKEY_get_security_bits,
     EVP_PKEY_get_size,
     EVP_PKEY_get0_type_name,
-    EVP_PKEY_keygen_init,
+    EVP_PKEY_Q_keygen,
     EVP_Q_digest,
     EVP_Q_mac,
     EVP_sha256,
@@ -72,10 +71,13 @@ export {
     X509_set_subject_name,
     X509_set_version,
     X509_sign,
+    X509_VERSION_3,
+    XN_FLAG_RFC2253,
 } from '@crossbind/port-openssl/openssl/x509.h';
+export { NID_subject_alt_name, NID_subject_key_identifier } from '@crossbind/port-openssl/openssl/obj_mac.h';
 export { v3_ext_ctx, X509_check_host, X509V3_EXT_conf_nid, X509V3_EXT_print, X509V3_set_ctx } from '@crossbind/port-openssl/openssl/x509v3.h';
 export { PEM_read_bio_PUBKEY, PEM_read_bio_X509, PEM_write_bio_PUBKEY, PEM_write_bio_X509 } from '@crossbind/port-openssl/openssl/pem.h';
-export { BIO_ctrl_pending, BIO_free, BIO_new, BIO_puts, BIO_read, BIO_s_mem } from '@crossbind/port-openssl/openssl/bio.h';
-export { ASN1_TIME_print_ex, ASN1_TIME_set_string_X509, BN_to_ASN1_INTEGER } from '@crossbind/port-openssl/openssl/asn1.h';
-export { BN_free, BN_new, BN_rand } from '@crossbind/port-openssl/openssl/bn.h';
+export { BIO_free, BIO_get_mem_data, BIO_new, BIO_puts, BIO_s_mem } from '@crossbind/port-openssl/openssl/bio.h';
+export { ASN1_DTFLGS_ISO8601, ASN1_TIME_print_ex, ASN1_TIME_set_string_X509, BN_to_ASN1_INTEGER, MBSTRING_UTF8 } from '@crossbind/port-openssl/openssl/asn1.h';
+export { BN_free, BN_new, BN_rand, BN_RAND_BOTTOM_ANY, BN_RAND_TOP_ANY } from '@crossbind/port-openssl/openssl/bn.h';
 export { OPENSSL_cleanse, OpenSSL_version } from '@crossbind/port-openssl/openssl/crypto.h';

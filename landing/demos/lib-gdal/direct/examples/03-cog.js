@@ -11,6 +11,7 @@ export const imports = {
         'GDALRWFlag',
         'GDALClose',
         'GDALOpenEx',
+        'GDAL_OF_RASTER',
         'GDALGetRasterXSize',
         'GDALGetRasterYSize',
         'GDALGetGeoTransform',
@@ -46,7 +47,7 @@ export const expected = [
     'overviews 546 x 336, 273 x 168, 136 x 84',
 ];
 
-export default async function example({ GDALAllRegister, GDALGetDriverByName, GDALCreate, GDALDataType, GDALSetGeoTransform, GDALSetProjection, GDALGetRasterBand, GDALRasterIO, GDALRWFlag, GDALClose, GDALOpenEx, GDALGetRasterXSize, GDALGetRasterYSize, GDALGetGeoTransform, GDALGetBlockSize, GDALGetMetadataItem, GDALGetOverviewCount, GDALGetOverview, GDALGetRasterBandXSize, GDALGetRasterBandYSize, allocBuffer, allocPointer, writePointerAt, cstring, writeNumberAt, readNumberAt, writeBytes, GDALWarpAppOptionsNew, GDALWarpAppOptionsFree, GDALWarp, GDALTranslateOptionsNew, GDALTranslateOptionsFree, GDALTranslate, VSIUnlink, CPLGetLastErrorMsg }, console) {
+export default async function example({ GDALAllRegister, GDALGetDriverByName, GDALCreate, GDALDataType, GDALSetGeoTransform, GDALSetProjection, GDALGetRasterBand, GDALRasterIO, GDALRWFlag, GDALClose, GDALOpenEx, GDAL_OF_RASTER, GDALGetRasterXSize, GDALGetRasterYSize, GDALGetGeoTransform, GDALGetBlockSize, GDALGetMetadataItem, GDALGetOverviewCount, GDALGetOverview, GDALGetRasterBandXSize, GDALGetRasterBandYSize, allocBuffer, allocPointer, writePointerAt, cstring, writeNumberAt, readNumberAt, writeBytes, GDALWarpAppOptionsNew, GDALWarpAppOptionsFree, GDALWarp, GDALTranslateOptionsNew, GDALTranslateOptionsFree, GDALTranslate, VSIUnlink, CPLGetLastErrorMsg }, console) {
     await GDALAllRegister();
     // A NULL-terminated list of strings, as GDAL's option and argv parameters take them.
     const list = async (items) => {
@@ -70,7 +71,7 @@ export default async function example({ GDALAllRegister, GDALGetDriverByName, GD
     await GDALClose(created);
 
     // gdalwarp -of VRT: the reprojected raster stays virtual and is computed while the COG is written.
-    const input = await GDALOpenEx('/vsimem/utm.tif', 2, null, null, null); // 2 is GDAL_OF_RASTER
+    const input = await GDALOpenEx('/vsimem/utm.tif', await GDAL_OF_RASTER, null, null, null);
     const sources = await allocPointer(1);
     await writePointerAt(sources, 0, input);
     const warpOptions = await GDALWarpAppOptionsNew(await list(['-of', 'VRT', '-r', 'bilinear', '-t_srs', 'EPSG:4326']), null);
@@ -87,7 +88,7 @@ export default async function example({ GDALAllRegister, GDALGetDriverByName, GD
     await GDALClose(cog);
 
     // What a reader of the file sees.
-    const dataset = await GDALOpenEx('/vsimem/cog.tif', 2, null, null, null);
+    const dataset = await GDALOpenEx('/vsimem/cog.tif', await GDAL_OF_RASTER, null, null, null);
     const band = await GDALGetRasterBand(dataset, 1);
     await GDALGetGeoTransform(dataset, transform);
     const pixelWidth = await readNumberAt(transform, 1, 'float64');

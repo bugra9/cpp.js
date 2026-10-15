@@ -1,0 +1,46 @@
+// Every name the examples import, from the header the site says it comes from. The build fails on a
+// name that header does not export, so the import lines on the page are checked here.
+export {
+    J_COLOR_SPACE,
+    JPEG_APP0,
+    JPEG_COM,
+    jpeg_calc_output_dimensions,
+    jpeg_compress_struct,
+    jpeg_copy_critical_parameters,
+    jpeg_create_compress,
+    jpeg_create_decompress,
+    jpeg_decompress_struct,
+    jpeg_destroy_compress,
+    jpeg_destroy_decompress,
+    jpeg_error_mgr,
+    jpeg_finish_compress,
+    jpeg_finish_decompress,
+    jpeg_has_multiple_scans,
+    jpeg_mem_dest,
+    jpeg_mem_src,
+    jpeg_read_coefficients,
+    jpeg_read_header,
+    jpeg_read_scanlines,
+    jpeg_save_markers,
+    jpeg_set_defaults,
+    jpeg_set_quality,
+    jpeg_simple_progression,
+    jpeg_start_compress,
+    jpeg_start_decompress,
+    jpeg_write_coefficients,
+    jpeg_write_marker,
+    jpeg_write_scanlines,
+    allocBuffer,
+    allocPointer,
+    readBuffer,
+    readBytes,
+    readNumberAt,
+    readPointerAt,
+    writeBuffer,
+    writeBytes,
+    writePointerAt,
+} from '@crossbind/port-jpegturbo/jpeglib.h';
+export { LIBJPEG_TURBO_VERSION_NUMBER } from '@crossbind/port-jpegturbo/jconfig.h';
+export { TRUE } from '@crossbind/port-jpegturbo/jmorecfg.h';
+export { jpeg_throwing_error } from '@crossbind/port-jpegturbo/jpeglib_crossbind.h';
+export { tj3Free } from '@crossbind/port-jpegturbo/turbojpeg.h';

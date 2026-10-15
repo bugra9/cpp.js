@@ -1,6 +1,9 @@
 // Every name the examples import, from the header the site says it comes from. The build fails on a
 // name that header does not export, so the import lines on the page are checked here.
 export {
+    LERC_VERSION_MAJOR,
+    LERC_VERSION_MINOR,
+    LERC_VERSION_PATCH,
     lerc_computeCompressedSize,
     lerc_decode,
     lerc_encode,
