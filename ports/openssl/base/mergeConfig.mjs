@@ -1,3 +1,7 @@
+// The CA certificates ship as data. curl has none built in on these platforms; GDAL and the curl tool find them
+// through CURL_CA_BUNDLE.
+const CERTS = { data: { 'ssl/certs': 'certs' }, env: { CURL_CA_BUNDLE: '_CROSSBIND_DATA_PATH_/certs/cacert.pem' } };
+
 export default (newConfig = {}) => ({
     ...newConfig,
     general: {
@@ -30,13 +34,13 @@ export default (newConfig = {}) => ({
         ...(newConfig.paths || {}),
     },
     targetSpecs: [
-        { platform: 'android', specs: { libType: 'static', data: { 'ssl/certs': 'certs' } } },
-        { platform: 'ios', specs: { data: { 'ssl/certs': 'certs' } } },
-        { platform: 'darwin', specs: { data: { 'ssl/certs': 'certs' } } },
-        { platform: 'linux', specs: { data: { 'ssl/certs': 'certs' } } },
-        { platform: 'linuxmusl', specs: { data: { 'ssl/certs': 'certs' } } },
+        { platform: 'android', specs: { libType: 'static', ...CERTS } },
+        { platform: 'ios', specs: CERTS },
+        { platform: 'darwin', specs: CERTS },
+        { platform: 'linux', specs: CERTS },
+        { platform: 'linuxmusl', specs: CERTS },
         // The Winsock, GDI and CryptoAPI libraries OpenSSL's MinGW targets link.
-        { platform: 'win32', specs: { data: { 'ssl/certs': 'certs' }, binary: { addonFlags: ['-lws2_32', '-lgdi32', '-lcrypt32'] } } },
+        { platform: 'win32', specs: { ...CERTS, binary: { addonFlags: ['-lws2_32', '-lgdi32', '-lcrypt32'] } } },
         ...(newConfig.targetSpecs || []),
     ],
 });
