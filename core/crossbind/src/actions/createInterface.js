@@ -27,7 +27,7 @@ import run, { cxxPreprocessorFor } from './run.js';
 import isSourceCmakePackage from '../utils/isSourceCmakePackage.js';
 
 // Part of every interface hash, so interfaces cached by an older generator are rebuilt.
-const INTERFACE_FORMAT = 'swig-macros-3';
+const INTERFACE_FORMAT = 'swig-macros-4';
 // Part of every bridge hash: each bridge carries the SWIG fork's runtime and all bridges of a module must share it, so
 // bridges from a fork before field bindings and constants are rebuilt.
 const BRIDGE_FORMAT = 'swig-extras-1';

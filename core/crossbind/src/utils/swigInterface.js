@@ -75,8 +75,9 @@ export function buildInterfaceContent({
     // The marker keeps a preamble that starts with #define apart from the macro block the retry drops.
     const preambleBlock = preamble.length ? `// package preamble\n${preamble.join('\n')}\n\n` : '';
     const extraBlock = extras.length ? `${extras.join('\n')}\n\n` : '';
-    // Named constants are asked for ahead of the macros, which may define one. Every constant is asked for after them:
-    // SWIG binds an interface's own #define lines, and the prelude only carries other headers' values for the parse.
+    // Named constants and functions are asked for ahead of the macros, which may define an imported name. Every constant
+    // is asked for after them: SWIG binds an interface's own #define lines, and the prelude only carries other headers'
+    // values for the parse.
     const everyConstant = constants === ALL_NAMES;
     const module = moduleName.replace(/\W/g, '_');
     return `#ifndef _${module}_I
@@ -88,10 +89,10 @@ ${extraBlock}%{
 ${includes}
 %}
 
-${everyConstant ? '' : constantRequests(constants)}%feature("shared_ptr");
+${everyConstant ? '' : constantRequests(constants)}${functionRequests(functions)}%feature("shared_ptr");
 %feature("polymorphic_shared_ptr");
 
-${macros}${functionRequests(functions)}${ignores}${preambleBlock}${everyConstant ? constantRequests(constants) : ''}%include "${headerPath}"
+${macros}${ignores}${preambleBlock}${everyConstant ? constantRequests(constants) : ''}%include "${headerPath}"
 
 #endif
 `;
