@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import getData from '../actions/getData.js';
+import getEnv from '../actions/getEnv.js';
 import loadJson from '../utils/loadJson.js';
 import state from '../state/index.js';
 import { parseSurface, createRustBridgeCrate, createCrateImportBridge } from '../utils/rustBridgeGen.js';
@@ -110,7 +110,7 @@ function buildScript(target, symbols, base) {
     if (!target) {
         throw new Error('The target is not available!');
     }
-    const env = JSON.stringify(getData('env', target));
+    const env = JSON.stringify(getEnv(target));
     const getPlatformScript = target.platform === 'wasm' ? getWebScript : getReactNativeScript;
 
     let symbolExportDefineString = '';
@@ -178,7 +178,7 @@ function getReactNativeScript(env) {
         const RNJsiLib = TurboModuleRegistry.get('RNJsiLib');
 
         function setEnv() {
-            const env = JSON.parse('${env}');
+            const env = ${env};
             const CROSSBIND_DATA_PATH = Module.Crossbind.getEnv('CROSSBIND_DATA_PATH');
 
             Object.entries(env).forEach(([key, value]) => {

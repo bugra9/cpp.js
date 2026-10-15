@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import run from './run.js';
 import getLinkInputs from './getLinkInputs.js';
 import getData from './getData.js';
+import getEnv from './getEnv.js';
 import buildJs from './buildJs.js';
 import triggerExtensions from './extensions.js';
 import state from '../state/index.js';
@@ -173,6 +174,8 @@ export default async function buildWasm(target, options = {}) {
             return { lib, size: stat ? stat.size : null, mtimeMs: stat ? stat.mtimeMs : null };
         }),
         data: getData('data', target),
+        // The JS the link step writes carries the env.
+        env: getEnv(target),
         runtime: getFilesFingerprint(runtimeAssets),
         rustSources: getFilesFingerprint(rustSources),
     }));

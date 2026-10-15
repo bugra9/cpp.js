@@ -5,7 +5,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import vm from 'node:vm';
 import { describe, test, expect, vi, afterAll, afterEach, beforeEach } from 'vitest';
 
-vi.mock('../src/actions/getData.js', () => ({ default: () => ({}) }));
+const { env } = vi.hoisted(() => ({ env: {} }));
+
+vi.mock('../src/actions/getData.js', () => ({ default: (kind) => (kind === 'env' ? { ...env } : {}) }));
 vi.mock('../src/utils/loadJson.js', () => ({ default: () => ['VectorMatrix', 'Matrix'] }));
 vi.mock('../src/state/index.js', () => ({ default: { config: { paths: {}, ext: {} } } }));
 
@@ -107,6 +109,25 @@ describe('generated proxy modules', () => {
 });
 
 // Metro keeps a header's module as it first transformed it while the app's imports change.
+// React Native reads the env from the module text, so a value given as a function has to be resolved there.
+test('a proxy module carries the env with function values resolved', () => {
+    Object.assign(env, { STATIC: 'x', TAG: (state, target) => `${target.platform}-tag` });
+
+    const script = getCrossbindScript(TARGET, '/nonexistent/bridge');
+
+    Object.keys(env).forEach((key) => delete env[key]);
+    expect(script).toContain('{"STATIC":"x","TAG":"wasm-tag"}');
+});
+
+test('a React Native module keeps a quote or a backslash of an env value', () => {
+    Object.assign(env, { DIR: "C:\\it's" });
+
+    const script = getCrossbindScript({ platform: 'android' }, '/nonexistent/bridge');
+
+    Object.keys(env).forEach((key) => delete env[key]);
+    expect(JSON.parse(script.match(/const env = (\{.*\});/)?.[1] ?? 'null')).toEqual({ DIR: "C:\\it's" });
+});
+
 describe('a module Metro transformed for an earlier import list', () => {
     afterEach(() => {
         delete globalThis.__crossbindModule;
