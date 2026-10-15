@@ -167,7 +167,7 @@ export const PLATFORM_MAP = {
     sources: {
         label: 'YOUR SOURCES',
         rows: [
-            { chip: '.h', title: 'Your C++', note: 'Headers under src/native', guide: 'bindings' },
+            { chip: '.h', title: 'Your C++', note: 'Headers in src/native', guide: 'bindings' },
             { chip: '.rs', title: 'Your Rust', note: 'Files beside your C++', guide: 'rust' },
             { chip: '@crossbind', title: 'crossbind ports', note: `${PORTS.length} prebuilt libraries`, href: LIBRARIES_URL },
             { chip: 'cargo:', title: 'crates.io', note: 'Rust crates', guide: 'crates-io' },
