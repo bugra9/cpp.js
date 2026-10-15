@@ -234,7 +234,7 @@ export default {
           wasiFlags:   ['-Wl,--stack-first'],      // flags appended to the wasi command link (platform 'wasi' only; see wasi.md)
           addonFlags:  ['-lxml2'],                 // system libraries a native addon or executable link needs (platforms 'darwin', 'linux', 'linuxmusl', 'win32'); dependencies' flags add up
         },
-        env:           { GDAL_NUM_THREADS: '0' },  // env vars of the running module; a value may be a function of (state, target)
+        env:           { GDAL_NUM_THREADS: '0' },  // env vars of the running module; a value may be a function of (state, target); the app's value beats a dependency's
         data:          { 'share/myapp': 'myapp/data' },  // bundle data files into .data preload
           // On platform 'wasi', env/data double as the runtime contract for the
           // -bin command runner: data dirs become --dir preopens, env becomes

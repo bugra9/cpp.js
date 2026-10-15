@@ -30,7 +30,8 @@ function getRecursiveData(obj, config, dependency, field, target) {
                 obj[dKey] = [...(obj[dKey] || []), ...value];
             } else if (typeof value === 'object') {
                 obj[dKey] = { ...(obj[dKey] || {}), ...value };
-            } else {
+            } else if (!Object.hasOwn(obj, dKey)) {
+                // The app comes before its dependencies and a package before its own, so the nearest value stays.
                 obj[dKey] = value;
             }
         }
