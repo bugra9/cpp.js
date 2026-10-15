@@ -4241,7 +4241,8 @@ function toArray(vector) {
   return output;
 }
 
-function toVector(VectorClass, array = []) {
+function toVector(classOrName, array = []) {
+  const VectorClass = typeof classOrName === 'string' ? Module[classOrName] : classOrName;
   const vector = new VectorClass();
   array.forEach((item) => {
     vector.push_back(item);

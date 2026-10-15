@@ -18,6 +18,18 @@ function registerTypes() {
     return (id, value) => types[id].toWireType([], value);
 }
 
+// The wasm runtime takes a vector class by name, which is all code written for its worker can pass.
+test('embind-jsi toVector takes a vector class or its name', () => {
+    const context = vm.createContext({ console });
+    context.globalThis = context;
+    vm.runInContext(fs.readFileSync(runtime, 'utf8').replace(/^export default .*$/m, ''), context);
+    vm.runInContext('Module.VectorInt = class { constructor() { this.items = []; } push_back(v) { this.items.push(v); } };', context);
+    const { Module } = context;
+
+    expect([...Module.toVector('VectorInt', [1, 2]).items]).toEqual([1, 2]);
+    expect([...Module.toVector(Module.VectorInt, [3]).items]).toEqual([3]);
+});
+
 describe('embind-jsi conversions', () => {
     const toWire = registerTypes();
     const member = { value: 2 };
