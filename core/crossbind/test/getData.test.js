@@ -48,4 +48,20 @@ describe('getData', () => {
 
         expect(getData('data', target)).toEqual({ [`${wasm.paths.output}/prebuilt/${target.path}/share/proj`]: 'proj' });
     });
+
+    // @crossbind/port-openssl points CURL_CA_BUNDLE at its own bundle; an app that sets another has to keep it.
+    test('keeps the app\'s env value over a dependency\'s, and a package\'s over its own dependency\'s', () => {
+        const openssl = { targetSpecs: [{ specs: { env: { CURL_CA_BUNDLE: 'openssl', SSL_DIR: 'openssl' } } }], dependencies: [] };
+        const curl = { targetSpecs: [{ specs: { env: { SSL_DIR: 'curl' } } }], dependencies: [openssl] };
+        holder.config = { targetSpecs: [{ specs: { env: { CURL_CA_BUNDLE: 'app' } } }], dependencies: [curl] };
+
+        expect(getData('env', target)).toEqual({ CURL_CA_BUNDLE: 'app', SSL_DIR: 'curl' });
+    });
+
+    test('adds up flags, the app\'s first', () => {
+        const port = { targetSpecs: [{ specs: { binary: { emccFlags: ['-sPORT=1'] } } }], dependencies: [] };
+        holder.config = { targetSpecs: [{ specs: { binary: { emccFlags: ['-sAPP=1'] } } }], dependencies: [port] };
+
+        expect(getData('binary', target)).toEqual({ emccFlags: ['-sAPP=1', '-sPORT=1'] });
+    });
 });
