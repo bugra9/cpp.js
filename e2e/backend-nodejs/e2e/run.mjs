@@ -8,6 +8,7 @@ import { curlProbeMismatch, startCurlProbeServer } from '../../config/curl-probe
 const conformance = /^CONFORMANCE (\d+)\/\1\b.*$/m;
 // The lib-source and lib-cmake templates, which nothing else builds against.
 const templates = 'TEMPLATES this message comes from basic sample lib | this message comes from basic cmake sample lib';
+const fsync = /^FSYNC fsync=0 fdatasync=0 sqlite=kept$/m;
 
 const server = await startCurlProbeServer();
 const env = { ...process.env, CURL_PROBE_URL: server.url, CURL_PROBE_DEAD_URL: server.deadUrl };
@@ -34,7 +35,12 @@ execFile('node', ['--experimental-wasm-jspi', 'src/index.mjs'], { timeout: 12000
         console.error(`template libraries failed:\n${out}`);
         process.exit(1);
     }
+    if (!fsync.test(out)) {
+        console.error(`fsync on a host file failed:\n${out}`);
+        process.exit(1);
+    }
     console.log('ok: curl probe');
+    console.log('ok: fsync');
     console.log('ok: template libraries');
     console.log('ok:', out.match(conformance)[0]);
 });

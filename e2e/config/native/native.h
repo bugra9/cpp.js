@@ -12,6 +12,9 @@ public:
   static std::string getThreadResult();
 
   static std::vector<std::string> listVirtualFiles();
+
+  // fsync and fdatasync on a file in dir, then a SQLite commit there, which fsyncs too.
+  static std::string syncFiles(std::string dir);
 };
 
 // Instance-method coverage: statics never go through embind's `this`

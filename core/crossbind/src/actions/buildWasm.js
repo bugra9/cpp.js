@@ -295,6 +295,8 @@ export default async function buildWasm(target, options = {}) {
             // '-s', 'FETCH', '-sJSPI', '-pthread', '-sPTHREAD_POOL_SIZE=5',
             '-s', 'FORCE_FILESYSTEM=1',
             ...linkLibs, ...rustSources, `${state.config.paths.cli}/assets/cpp-runtime/node.cpp`,
+            // node.cpp answers fsync and fdatasync for host files.
+            '-Wl,--wrap=__wasi_fd_sync', '-Wl,--wrap=__syscall_fdatasync',
             '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
             '-s', 'RESERVED_FUNCTION_POINTERS=200', // '-s', 'DISABLE_EXCEPTION_CATCHING=0', '-s', 'FORCE_FILESYSTEM=1',
             '-s', 'ALLOW_MEMORY_GROWTH=1',

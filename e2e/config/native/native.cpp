@@ -7,7 +7,10 @@
 
 #include <arpa/inet.h>
 #include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
+#include <sqlite3.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,6 +46,27 @@ void Native::runOnThread() {
 }
 
 std::string Native::getThreadResult() { return threadResult; }
+
+std::string Native::syncFiles(std::string dir) {
+  int fd = open((dir + "/fsync.txt").c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+  if (fd < 0 || write(fd, "synced", 6) != 6) return "write errno=" + std::to_string(errno);
+  int fsyncError = fsync(fd) == 0 ? 0 : errno;
+  int fdatasyncError = fdatasync(fd) == 0 ? 0 : errno;
+  close(fd);
+
+  std::string kept = "none";
+  sqlite3 *db = nullptr;
+  sqlite3_stmt *statement = nullptr;
+  if (sqlite3_open((dir + "/fsync.sqlite").c_str(), &db) == SQLITE_OK &&
+      sqlite3_exec(db, "CREATE TABLE t(v TEXT); INSERT INTO t VALUES('kept');", nullptr, nullptr, nullptr) == SQLITE_OK &&
+      sqlite3_prepare_v2(db, "SELECT v FROM t", -1, &statement, nullptr) == SQLITE_OK &&
+      sqlite3_step(statement) == SQLITE_ROW) {
+    kept = reinterpret_cast<const char *>(sqlite3_column_text(statement, 0));
+  }
+  sqlite3_finalize(statement);
+  sqlite3_close(db);
+  return "fsync=" + std::to_string(fsyncError) + " fdatasync=" + std::to_string(fdatasyncError) + " sqlite=" + kept;
+}
 
 Counter::Counter(int start) : value(start) {}
 

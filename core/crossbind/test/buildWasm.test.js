@@ -124,6 +124,16 @@ describe('buildWasm link step', () => {
             + 'var argsWired=new Array(expectedArgCount);var invokerFuncArgs=[];var destructors=[];var thisWired;');
     });
 
+    // Emscripten's Node backend traps on fsync; node.cpp answers it for host files.
+    test('wraps fsync and fdatasync on the node link only', async () => {
+        await buildWasm(makeTarget('node'), { force: true });
+        await buildWasm(makeTarget('browser'), { force: true });
+
+        const [nodeArgs, browserArgs] = run.mock.calls.map((call) => call[1]);
+        expect(nodeArgs).toEqual(expect.arrayContaining(['-Wl,--wrap=__wasi_fd_sync', '-Wl,--wrap=__syscall_fdatasync']));
+        expect(browserArgs.some((arg) => String(arg).includes('--wrap'))).toBe(false);
+    });
+
     // The glue carries the env, so a changed value, a function's included, must not keep serving the old one.
     test('relinks when the env changes', async () => {
         const target = makeTarget('node');
