@@ -31,7 +31,7 @@ export function assertBinarySelection(config) {
 export default async function loadConfig(configDir = process.cwd(), configName = 'crossbind.config') {
     const config = await loadJs(configDir, configName) || {};
     if (config.excludedDependencies?.length) {
-        logger.info('crossbind: `excludedDependencies` in crossbind.config.js is no longer read — declare exclusions in crossbind.overrides.js as { <name>: false }.');
+        logger.info('crossbind: `excludedDependencies` in crossbind.config.js is no longer read — declare exclusions in crossbind.overrides.js as { <name>: { exclude: true } }.');
     }
     const overrides = await loadJs(configDir, 'crossbind.overrides');
     const exclude = resolveExcludedNames(overrides);
