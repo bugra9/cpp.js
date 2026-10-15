@@ -9,6 +9,7 @@ import run from './run.js';
 import getLinkInputs from './getLinkInputs.js';
 import getData from './getData.js';
 import getEnv from './getEnv.js';
+import resetCMakeCacheForSource from '../utils/resetCMakeCacheForSource.js';
 import { suppressNodeBuiltinWarnings } from './buildJs.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
@@ -158,6 +159,7 @@ export default async function buildNode(target, options = {}) {
 
     const platformPrefix = `Node-${buildType}`;
     logger.startStep(target, 'addon');
+    resetCMakeCacheForSource(`${build}/${platformPrefix}/${target.path}`, `${napiRoot}/cpp`, target);
     run(null, [
         'cmake', `${napiRoot}/cpp`,
         `-DCMAKE_BUILD_TYPE=${buildType}`,

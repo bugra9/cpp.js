@@ -98,6 +98,24 @@ describe('buildNode', () => {
         expect(run).not.toHaveBeenCalled();
     });
 
+    // An upgrade moves the addon project (node_modules/.pnpm/@crossbind+core-embind-napi@<version>/...), and CMake
+    // refuses a cache configured from another directory.
+    test('starts the addon tree afresh from a cache another source directory made', async () => {
+        const tree = `${work}/Node-Release/${target.path}`;
+        fs.mkdirSync(`${tree}/CMakeFiles`, { recursive: true });
+        fs.writeFileSync(`${tree}/CMakeCache.txt`, 'CMAKE_HOME_DIRECTORY:INTERNAL=/old-napi/cpp\n');
+        const build = run.getMockImplementation();
+        const cacheAtConfigure = [];
+        run.mockImplementation((program, args, ...rest) => {
+            if (args[0] === 'cmake' && args[1] === '/napi/cpp') cacheAtConfigure.push(fs.existsSync(`${tree}/CMakeCache.txt`));
+            return build(program, args, ...rest);
+        });
+
+        await buildNode(target, { force: true });
+
+        expect(cacheAtConfigure).toEqual([false]);
+    });
+
     test('configures the addon project with the bridge force-loaded, then builds it', async () => {
         const built = await buildNode(target, { force: true });
 

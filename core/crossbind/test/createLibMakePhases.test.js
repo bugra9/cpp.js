@@ -86,4 +86,22 @@ describe('createLib make phases', () => {
 
         expect(makeCalls()).toEqual([['make', JOBS, 'install']]);
     });
+
+    // An upgrade moves the CMake project crossbind ships (node_modules/.pnpm/crossbind@<version>/...), and CMake
+    // refuses a cache configured from another directory.
+    test('cmake builds start afresh from a cache another source directory made', () => {
+        state.config.build = {};
+        const buildPath = `${work}/build/Source-Release/${target.path}`;
+        fs.mkdirSync(`${buildPath}/CMakeFiles`, { recursive: true });
+        fs.writeFileSync(`${buildPath}/CMakeCache.txt`, 'CMAKE_HOME_DIRECTORY:INTERNAL=/old/crossbind/src/assets/cmake\n');
+        const cacheAtConfigure = [];
+        run.mockImplementation((program, params) => {
+            if (params[0] === 'cmake' && params[1] === `${work}/cmake`) cacheAtConfigure.push(fs.existsSync(`${buildPath}/CMakeCache.txt`));
+        });
+
+        createLib(target, 'Source', { buildSource: true });
+        run.mockReset();
+
+        expect(cacheAtConfigure).toEqual([false]);
+    });
 });
