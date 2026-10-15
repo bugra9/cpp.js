@@ -6,7 +6,7 @@ import Tabs from '../components/Tabs.jsx';
 import {
     CodeWindow, highlight, primaryButtonStyle, secondaryButtonStyle,
 } from '../components/ui.jsx';
-import { CREATE_COMMANDS, RUNTIMES, UNIVERSAL_CODE } from '../data.js';
+import { CREATE_COMMANDS, HERO_FILES, RUNTIMES } from '../data.js';
 import { guideHref } from '../guide/nav.js';
 
 // The band under the hero; the detail of each target is its tooltip.
@@ -42,11 +42,23 @@ function CreateCommand({ tokens }) {
     );
 }
 
-// The headline claims C++ and Rust, so the proof sits right beside it: one file imports both.
+// The headline claims C++ and Rust, so the proof sits right beside it: main.js imports both. Every
+// file stays in one grid cell, so switching tabs keeps the window at the tallest file's height.
 function UniversalCode({ tokens }) {
+    const [active, setActive] = useState(HERO_FILES[0].id);
+
     return (
-        <CodeWindow tokens={tokens} title="src/main.js">
-            {highlight(UNIVERSAL_CODE, tokens)}
+        <CodeWindow
+            tokens={tokens}
+            title={<Tabs tokens={tokens} label="Files" tabs={HERO_FILES} panelId="hero-file" active={active} onSelect={setActive} style={{ marginBottom: 0, flexWrap: 'wrap' }} />}
+        >
+            <div role="tabpanel" id="hero-file" aria-labelledby={`hero-file-${active}`} style={{ display: 'grid', whiteSpace: 'pre' }}>
+                {HERO_FILES.map((file) => (
+                    <div key={file.id} style={{ gridArea: '1 / 1', visibility: file.id === active ? 'visible' : 'hidden' }}>
+                        {highlight(file.code, tokens)}
+                    </div>
+                ))}
+            </div>
         </CodeWindow>
     );
 }
