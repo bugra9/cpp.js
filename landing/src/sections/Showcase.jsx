@@ -12,7 +12,7 @@ export default function Showcase({ tokens }) {
                 </a>
             </div>
 
-            <ul className="showcase-grid" style={{ '--rule': tokens.border, '--rule-hover': tokens.accent }}>
+            <ul className="showcase-grid" style={{ '--rule': tokens.border, '--box': tokens.accent }}>
                 {SHOWCASE.map((item) => (
                     <li key={item.name}>
                         <a href={item.href} className="showcase-item">

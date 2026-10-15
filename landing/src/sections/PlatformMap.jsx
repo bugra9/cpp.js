@@ -114,7 +114,8 @@ function PlatformFlow({ tokens }) {
                     active={active === `in-${index}`}
                     onHover={hover(`in-${index}`)}
                     lead={(
-                        <span style={{ flex: '0 0 76px' }}>
+                        // As wide as the widest chip, @crossbind, so every title starts at the same x.
+                        <span style={{ flex: '0 0 88px' }}>
                             <code style={{
                                 padding: '2px 6px',
                                 borderRadius: 6,
