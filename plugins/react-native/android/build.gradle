@@ -66,14 +66,23 @@ gradle.projectsEvaluated {
 }
 
 // The app's JavaScript bundle takes in this plugin's runtime, which a workspace link changes without any of the
-// app's own files changing, and those are all the bundle task's up-to-date check read.
-def crossbindRuntimeJs = new File(__crossbindAppRoot, 'node_modules/@crossbind/core-embind-jsi/js')
-gradle.projectsEvaluated {
-    rootProject.allprojects { p ->
-        p.tasks.matching { it.name ==~ /createBundle.+JsAndAssets/ }.configureEach {
-            inputs.dir(crossbindRuntimeJs).withPropertyName('crossbindRuntimeJs').optional()
+// app's own files changing, and those are all the bundle task's up-to-date check read. The runtime is where Node
+// finds it from this plugin's own directory, wherever the package manager put it.
+def crossbindRuntimeJs = null
+for (def dir = new File(projectDir, '..').canonicalFile; dir != null && crossbindRuntimeJs == null; dir = dir.parentFile) {
+    def candidate = new File(dir, 'node_modules/@crossbind/core-embind-jsi/js')
+    if (candidate.isDirectory()) crossbindRuntimeJs = candidate
+}
+if (crossbindRuntimeJs != null) {
+    gradle.projectsEvaluated {
+        rootProject.allprojects { p ->
+            p.tasks.matching { it.name ==~ /createBundle.+JsAndAssets/ }.configureEach {
+                inputs.dir(crossbindRuntimeJs).withPropertyName('crossbindRuntimeJs')
+            }
         }
     }
+} else {
+    logger.warn('crossbind: @crossbind/core-embind-jsi is not installed; add it to the app\'s dependencies, as the React Native guide says.')
 }
 
 android {
@@ -116,7 +125,7 @@ android {
     externalNativeBuild {
         cmake {
             path "../script/CMakeLists.txt"
-            version "3.25.0+"
+            version "3.28.0+"
         }
     }
 }
