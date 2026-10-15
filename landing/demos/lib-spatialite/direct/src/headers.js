@@ -7,6 +7,10 @@ export {
     spatialite_version,
 } from '@crossbind/port-spatialite/spatialite.h';
 export {
+    SQLITE_DONE,
+    SQLITE_NULL,
+    SQLITE_OK,
+    SQLITE_ROW,
     sqlite3_bind_double,
     sqlite3_bind_int,
     sqlite3_bind_text,

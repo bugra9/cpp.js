@@ -38,8 +38,8 @@
         };
 
         try {
-            // On the page's thread, the way the site boots this module: GTIFImport reads its text
-            // through a JavaScript callback, which only a module outside a worker can pass to C.
+            // On the page's thread, the way the site boots this module: XTIFFClientOpen reads and writes
+            // the file through JavaScript callbacks, which only a module outside a worker can pass to C.
             const m = await initNative({ path: './dist', useWorker: false });
             for (const example of EXAMPLES) {
                 const printed = [];
@@ -47,8 +47,7 @@
                 check(`example "${expectedOf(example)[0]}"`, printed, expectedOf(example));
             }
             const passed = checks.filter(Boolean).length;
-            // No version: libgeotiff has it only as the LIBGEOTIFF_VERSION macro, and macros are not bound.
-            show(`geotiff => ${passed}/${checks.length} checks passed`);
+            show(`geotiff ${m.LIBGEOTIFF_STRING_VERSION} => ${passed}/${checks.length} checks passed`);
         } catch (error) {
             show(`failed => ${error?.stack ?? error}`);
         }

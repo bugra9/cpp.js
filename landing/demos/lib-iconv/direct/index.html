@@ -46,8 +46,8 @@
                 check(`example "${expectedOf(example)[0]}"`, printed, expectedOf(example));
             }
             const passed = checks.filter(Boolean).length;
-            // No version: iconv.h declares it as a variable (_libiconv_version), and variables are not bound.
-            show(`iconv => ${passed}/${checks.length} checks passed`);
+            const version = await m.readNumberAt(m._libiconv_version, 0, 'int32');
+            show(`iconv ${version >> 8}.${version & 0xff} => ${passed}/${checks.length} checks passed`);
         } catch (error) {
             show(`failed => ${error?.stack ?? error}`);
         }

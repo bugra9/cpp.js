@@ -12,6 +12,7 @@ export const imports = {
         'GDALRWFlag',
         'GDALClose',
         'GDALOpenEx',
+        'GDAL_OF_RASTER',
         'GDALGetRasterXSize',
         'GDALGetRasterYSize',
         'GDALComputeRasterStatistics',
@@ -38,16 +39,16 @@ export const imports = {
         'OGR_G_Length',
     ],
     '@crossbind/port-gdal/ogr_core.h': ['OGRwkbGeometryType', 'OGRFieldType'],
-    '@crossbind/port-gdal/cpl_error.h': ['CPLGetLastErrorMsg'],
+    '@crossbind/port-gdal/cpl_error.h': ['CPLErr', 'CPLGetLastErrorMsg'],
 };
-export const note = '`GDALDEMProcessing` and `GDALContourGenerateEx` are called as in C++. The options are string lists built with `allocPointer` and `cstring`, the statistics come back through four 8-byte out-parameters, and `GDALContourGenerateEx` returns a `CPLErr` enum member, so its `.value` is what is compared with 0.';
+export const note = '`GDALDEMProcessing` and `GDALContourGenerateEx` are called as in C++. The options are string lists built with `allocPointer` and `cstring`, the statistics come back through four 8-byte out-parameters, and the `CPLErr` that `GDALContourGenerateEx` returns is compared with the member `CE_None`.';
 export const expected = [
     'hillshade: 12.00 to 255.00, mean 156.63, checksum 58516',
     'slope: 0.00 to 42.97, mean 27.46, checksum 54054',
     'contours every 100 m: 11 lines from 200 to 900 m, 46.9 km long',
 ];
 
-export default async function example({ GDALAllRegister, GDALGetDriverByName, GDALCreate, GDALDataType, GDALSetGeoTransform, GDALSetProjection, GDALGetSpatialRef, GDALGetRasterBand, GDALRasterIO, GDALRWFlag, GDALClose, GDALOpenEx, GDALGetRasterXSize, GDALGetRasterYSize, GDALComputeRasterStatistics, GDALDatasetCreateLayer, allocBuffer, allocPointer, writePointerAt, cstring, writeNumberAt, readNumberAt, writeBytes, GDALDEMProcessingOptionsNew, GDALDEMProcessingOptionsFree, GDALDEMProcessing, GDALChecksumImage, GDALContourGenerateEx, OGR_Fld_Create, OGR_Fld_Destroy, OGR_L_CreateField, OGR_L_ResetReading, OGR_L_GetNextFeature, OGR_F_GetFieldAsDouble, OGR_F_GetGeometryRef, OGR_F_Destroy, OGR_G_Length, OGRwkbGeometryType, OGRFieldType, CPLGetLastErrorMsg }, console) {
+export default async function example({ GDALAllRegister, GDALGetDriverByName, GDALCreate, GDALDataType, GDALSetGeoTransform, GDALSetProjection, GDALGetSpatialRef, GDALGetRasterBand, GDALRasterIO, GDALRWFlag, GDALClose, GDALOpenEx, GDAL_OF_RASTER, GDALGetRasterXSize, GDALGetRasterYSize, GDALComputeRasterStatistics, GDALDatasetCreateLayer, allocBuffer, allocPointer, writePointerAt, cstring, writeNumberAt, readNumberAt, writeBytes, GDALDEMProcessingOptionsNew, GDALDEMProcessingOptionsFree, GDALDEMProcessing, GDALChecksumImage, GDALContourGenerateEx, OGR_Fld_Create, OGR_Fld_Destroy, OGR_L_CreateField, OGR_L_ResetReading, OGR_L_GetNextFeature, OGR_F_GetFieldAsDouble, OGR_F_GetGeometryRef, OGR_F_Destroy, OGR_G_Length, OGRwkbGeometryType, OGRFieldType, CPLErr, CPLGetLastErrorMsg }, console) {
     await GDALAllRegister();
     // A NULL-terminated list of strings, as GDAL's option and argv parameters take them.
     const list = async (items) => {
@@ -76,7 +77,7 @@ export default async function example({ GDALAllRegister, GDALGetDriverByName, GD
     await GDALClose(created);
 
     // gdaldem hillshade and slope; with -compute_edges the border pixels get values too.
-    const hill = await GDALOpenEx('/vsimem/hill.tif', 2, null, null, null); // 2 is GDAL_OF_RASTER
+    const hill = await GDALOpenEx('/vsimem/hill.tif', await GDAL_OF_RASTER, null, null, null);
     for (const processing of ['hillshade', 'slope']) {
         const options = await GDALDEMProcessingOptionsNew(await list(['-compute_edges']), null);
         const result = await GDALDEMProcessing(`/vsimem/${processing}.tif`, hill, processing, null, options, null);
@@ -99,7 +100,7 @@ export default async function example({ GDALAllRegister, GDALGetDriverByName, GD
     await OGR_Fld_Destroy(field);
     const error = await GDALContourGenerateEx(await GDALGetRasterBand(hill, 1), layer, await list(['LEVEL_INTERVAL=100', 'ELEV_FIELD=0']), null, null);
     await GDALClose(hill);
-    if (error.value !== 0) throw new Error(await CPLGetLastErrorMsg());
+    if (error !== (await CPLErr.CE_None)) throw new Error(await CPLGetLastErrorMsg());
     let lines = 0;
     let lowest = 0;
     let highest = 0;

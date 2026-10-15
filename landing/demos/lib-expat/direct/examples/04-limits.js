@@ -1,6 +1,8 @@
 export const imports = {
     '@crossbind/port-expat/expat.h': [
         'XML_ParserCreate',
+        'XML_SetBillionLaughsAttackProtectionMaximumAmplification',
+        'XML_SetBillionLaughsAttackProtectionActivationThreshold',
         'XML_SetCharacterDataHandler',
         'XML_Parse',
         'XML_Status',
@@ -14,25 +16,30 @@ export const imports = {
         'releaseCallback',
     ],
 };
-export const note = '`XML_SetBillionLaughsAttackProtectionMaximumAmplification` and `...ActivationThreshold` are declared in `expat.h` only if `XML_DTD` is defined or `XML_GE` is 1, which the library\'s build sets in `expat_config.h`, a header the binding never reads, so importing either fails with `MISSING_EXPORT` although the library contains both. The protection still runs with the defaults the C++ passes (100 times, from 8 MiB), so the first three lines match and the 64 KiB threshold of the fourth cannot be set. Each piece of character data is a call into JavaScript that reads its `length` bytes with `readBuffer`, 867,703 of them before Expat stops the 9-level document, so this version runs about 10 times longer than the C++ one.';
+export const note = 'The same two limit setters the C++ calls. `expat.h` declares them only when `XML_DTD` or `XML_GE` is set, and the port binds it after `expat_config.h`, which sets both; the threshold is an `unsigned long long` and takes a Number. Each piece of character data is a call into JavaScript that reads its `length` bytes with `readBuffer`, 867,703 of them before Expat stops the 9-level document, so this version runs about 10 times longer than the C++ one.';
 export const expected = [
     'crossbind parses crossbind',
     '5 levels: 300000 characters',
     '9 levels: limit on input amplification factor (from DTD and entities) breached at line 14, column 6',
+    '5 levels, 64 KiB threshold: limit on input amplification factor (from DTD and entities) breached at line 10, column 6',
 ];
 export const init = { useWorker: false };
 
-export default async function example({ XML_ParserCreate, XML_SetCharacterDataHandler, XML_Parse, XML_Status, XML_GetErrorCode, XML_ErrorString, XML_GetCurrentLineNumber, XML_GetCurrentColumnNumber, XML_ParserFree, readCString, readBuffer, releaseCallback }, console) {
+export default async function example({ XML_ParserCreate, XML_SetBillionLaughsAttackProtectionMaximumAmplification, XML_SetBillionLaughsAttackProtectionActivationThreshold, XML_SetCharacterDataHandler, XML_Parse, XML_Status, XML_GetErrorCode, XML_ErrorString, XML_GetCurrentLineNumber, XML_GetCurrentColumnNumber, XML_ParserFree, readCString, readBuffer, releaseCallback }, console) {
+    const MAX_AMPLIFICATION = 100; // Expat's defaults
+    const THRESHOLD = 8 * 1024 * 1024;
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
-    // The document's character data, entities expanded under Expat's default limits.
-    const text = (xml) => {
+    // The document's character data, entities expanded under these limits.
+    const text = (xml, maxAmplification, activationBytes) => {
         let result = '';
         const onText = (data, chunk, length) => {
             result += decoder.decode(readBuffer(chunk, length));
         };
         const parser = XML_ParserCreate(null);
         try {
+            XML_SetBillionLaughsAttackProtectionMaximumAmplification(parser, maxAmplification);
+            XML_SetBillionLaughsAttackProtectionActivationThreshold(parser, activationBytes);
             XML_SetCharacterDataHandler(parser, onText);
             if (XML_Parse(parser, xml, encoder.encode(xml).length, 1) !== XML_Status.XML_STATUS_OK) {
                 throw new Error(`${readCString(XML_ErrorString(XML_GetErrorCode(parser)))} at line ${XML_GetCurrentLineNumber(parser)}, column ${XML_GetCurrentColumnNumber(parser)}`);
@@ -43,7 +50,7 @@ export default async function example({ XML_ParserCreate, XML_SetCharacterDataHa
             releaseCallback(onText);
         }
     };
-    console.log(text('<!DOCTYPE note [<!ENTITY product "crossbind">]><note>&product; parses &product;</note>'));
+    console.log(text('<!DOCTYPE note [<!ENTITY product "crossbind">]><note>&product; parses &product;</note>', MAX_AMPLIFICATION, THRESHOLD));
 
     // Each level repeats the one below ten times: 9 levels would expand to 3 GB.
     const laughs = (levels) => {
@@ -51,10 +58,15 @@ export default async function example({ XML_ParserCreate, XML_SetCharacterDataHa
         for (let level = 1; level <= levels; level += 1) entities.push(`<!ENTITY lol${level} "${`&lol${level - 1};`.repeat(10)}">`);
         return `<?xml version="1.0"?>\n<!DOCTYPE lolz [\n${entities.join('\n')}\n]>\n<lolz>&lol${levels};</lolz>`;
     };
-    console.log('5 levels:', text(laughs(5)).length, 'characters');
+    console.log('5 levels:', text(laughs(5), MAX_AMPLIFICATION, THRESHOLD).length, 'characters');
     try {
-        text(laughs(9));
+        text(laughs(9), MAX_AMPLIFICATION, THRESHOLD);
     } catch (error) {
         console.log('9 levels:', error.message);
+    }
+    try {
+        text(laughs(5), MAX_AMPLIFICATION, 64 * 1024);
+    } catch (error) {
+        console.log('5 levels, 64 KiB threshold:', error.message);
     }
 }

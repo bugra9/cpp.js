@@ -11,6 +11,7 @@ export const imports = {
         'GDALRWFlag',
         'GDALClose',
         'GDALOpenEx',
+        'GDAL_OF_RASTER',
         'GDALGetDriverShortName',
         'GDALGetDatasetDriver',
         'GDALGetRasterXSize',
@@ -34,7 +35,7 @@ export const imports = {
     '@crossbind/port-gdal/cpl_vsi.h': ['VSIFree'],
     '@crossbind/port-gdal/cpl_error.h': ['CPLGetLastErrorMsg'],
 };
-export const note = 'JavaScript writes the pixels and the six geotransform numbers into `allocBuffer` memory and reads the transform and the value range back the same way. `GDALSetProjection` takes `EPSG:32635` as text, and `GDAL_OF_RASTER` is a macro, so the open flag is written as 2.';
+export const note = 'JavaScript writes the pixels and the six geotransform numbers into `allocBuffer` memory and reads the transform and the value range back the same way. `GDALSetProjection` takes `EPSG:32635` as text.';
 export const expected = [
     'GTiff, 200 x 150 pixels, 1 band of Float32',
     'origin 500000, 4450000; pixel size 30 x -30',
@@ -44,7 +45,7 @@ export const expected = [
     'Lower Right (  506000.000, 4445500.000) ( 27d 4\'13.64"E, 40d 9\'35.41"N)',
 ];
 
-export default async function example({ GDALAllRegister, GDALGetDriverByName, GDALCreate, GDALDataType, GDALSetGeoTransform, GDALSetProjection, GDALGetRasterBand, GDALRasterIO, GDALRWFlag, GDALClose, GDALOpenEx, GDALGetDriverShortName, GDALGetDatasetDriver, GDALGetRasterXSize, GDALGetRasterYSize, GDALGetRasterCount, GDALGetDataTypeName, GDALGetRasterDataType, GDALGetGeoTransform, GDALGetProjectionRef, GDALComputeRasterMinMax, allocBuffer, allocPointer, writePointerAt, cstring, writeNumberAt, readNumberAt, writeBytes, readCString, GDALInfo, VSIFree, CPLGetLastErrorMsg }, console) {
+export default async function example({ GDALAllRegister, GDALGetDriverByName, GDALCreate, GDALDataType, GDALSetGeoTransform, GDALSetProjection, GDALGetRasterBand, GDALRasterIO, GDALRWFlag, GDALClose, GDALOpenEx, GDAL_OF_RASTER, GDALGetDriverShortName, GDALGetDatasetDriver, GDALGetRasterXSize, GDALGetRasterYSize, GDALGetRasterCount, GDALGetDataTypeName, GDALGetRasterDataType, GDALGetGeoTransform, GDALGetProjectionRef, GDALComputeRasterMinMax, allocBuffer, allocPointer, writePointerAt, cstring, writeNumberAt, readNumberAt, writeBytes, readCString, GDALInfo, VSIFree, CPLGetLastErrorMsg }, console) {
     await GDALAllRegister();
     // 200 x 150 pixels of 30 m, the top left corner at 500000 E 4450000 N in UTM zone 35N
     const [width, height] = [200, 150];
@@ -64,7 +65,7 @@ export default async function example({ GDALAllRegister, GDALGetDriverByName, GD
     await GDALRasterIO(await GDALGetRasterBand(created, 1), await GDALRWFlag.GF_Write, 0, 0, width, height, pixels, width, height, float32, 0, 0);
     await GDALClose(created);
 
-    const dataset = await GDALOpenEx('/vsimem/dem.tif', 2, null, null, null); // 2 is GDAL_OF_RASTER
+    const dataset = await GDALOpenEx('/vsimem/dem.tif', await GDAL_OF_RASTER, null, null, null);
     const band = await GDALGetRasterBand(dataset, 1);
     const driver = await GDALGetDriverShortName(await GDALGetDatasetDriver(dataset));
     const type = await GDALGetDataTypeName(await GDALGetRasterDataType(band));

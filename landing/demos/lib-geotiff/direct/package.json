@@ -6,7 +6,8 @@
         "build": "vite build"
     },
     "dependencies": {
-        "@crossbind/port-geotiff-wasm": "beta"
+        "@crossbind/port-geotiff-wasm": "beta",
+        "@crossbind/port-tiff-wasm": "beta"
     },
     "devDependencies": {
         "@crossbind/plugin-vite": "beta",

@@ -3,7 +3,7 @@ export const imports = {
     '@crossbind/port-webp/webp/decode.h': ['WebPGetFeatures', 'WebPBitstreamFeatures', 'VP8StatusCode'],
     '@crossbind/port-webp/webp/types.h': ['WebPFree'],
 };
-export const note = '`WebPGetFeatures` fills a `WebPBitstreamFeatures`, and its fields read back from JavaScript (`format` is 1 for lossy, 2 for lossless, 0 for mixed). The thumbnail and the region are missing: `WebPDecode` scales and crops by `config.options`, and crossbind binds `WebPDecoderConfig` without fields (`options` reads back undefined, and an `allocBuffer` block in its place is refused). The `WebPDecoderOptions` class it does bind has `use_scaling` but no `scaled_width` or `crop_left`, because libwebp declares those two to a line (`int crop_left, crop_top;`).';
+export const note = '`WebPGetFeatures` fills a `WebPBitstreamFeatures`, and its fields read back from JavaScript (`format` is 1 for lossy, 2 for lossless, 0 for mixed). The thumbnail and the region are missing: `WebPDecode` scales and crops by `config.options`, a `WebPDecoderOptions` held inside the `WebPDecoderConfig`, and crossbind binds no field whose type is a struct, so `options`, `output` and `input` read back undefined. A `WebPDecoderOptions` of its own has every field, `scaled_width` and `crop_left` included, but `WebPDecode` takes only the whole config, and an `allocBuffer` block in its place is refused.';
 export const expected = ['256x256 lossy, alpha: false, animated: false', '256x256 lossless, alpha: false, animated: false'];
 
 export default async function example({ WebPEncodeRGBA, WebPEncodeLosslessRGBA, allocBuffer, allocPointer, readPointerAt, writeBytes, WebPGetFeatures, WebPBitstreamFeatures, VP8StatusCode, WebPFree }, console) {

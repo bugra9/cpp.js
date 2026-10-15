@@ -9,6 +9,8 @@ export const imports = {
         'sqlite3_column_text',
         'sqlite3_finalize',
         'sqlite3_errmsg',
+        'SQLITE_OK',
+        'SQLITE_ROW',
         'allocPointer',
         'readPointerAt',
         'writeNumberAt',
@@ -24,20 +26,20 @@ export const expected = [
     'tag NEAR/2 text -> …start tag, end [tag] and [text] run as…',
 ];
 
-export default async function example({ sqlite3_open, sqlite3_close, sqlite3_exec, sqlite3_prepare_v2, sqlite3_bind_text, sqlite3_step, sqlite3_column_text, sqlite3_finalize, sqlite3_errmsg, allocPointer, readPointerAt, writeNumberAt, readCString }, console) {
-    // sqlite3.h's constants are macros without bindings. SQLITE_TRANSIENT is
-    // ((sqlite3_destructor_type)-1): a pointer with the address -1, which a slot holding -1 reads back.
-    const SQLITE_OK = 0, SQLITE_ROW = 100;
+export default async function example({ sqlite3_open, sqlite3_close, sqlite3_exec, sqlite3_prepare_v2, sqlite3_bind_text, sqlite3_step, sqlite3_column_text, sqlite3_finalize, sqlite3_errmsg, SQLITE_OK, SQLITE_ROW, allocPointer, readPointerAt, writeNumberAt, readCString }, console) {
+    const ok = await SQLITE_OK, row = await SQLITE_ROW;
+    // SQLITE_TRANSIENT, ((sqlite3_destructor_type)-1), has no binding because its value is a pointer:
+    // the address -1, which a 4-byte slot holding -1 reads back in wasm32.
     const minusOne = await allocPointer(1);
     await writeNumberAt(minusOne, 0, 'int32', -1);
     const SQLITE_TRANSIENT = await readPointerAt(minusOne, 0);
 
     // sqlite3_open and sqlite3_prepare_v2 hand back their handle through a pointer slot.
     const slot = await allocPointer(1);
-    if (await sqlite3_open(':memory:', slot) !== SQLITE_OK) throw new Error('cannot open the database');
+    if (await sqlite3_open(':memory:', slot) !== ok) throw new Error('cannot open the database');
     const db = await readPointerAt(slot, 0);
     const prepare = async (sql) => {
-        if (await sqlite3_prepare_v2(db, sql, -1, slot, null) !== SQLITE_OK) throw new Error(await sqlite3_errmsg(db));
+        if (await sqlite3_prepare_v2(db, sql, -1, slot, null) !== ok) throw new Error(await sqlite3_errmsg(db));
         return await readPointerAt(slot, 0);
     };
     // The porter tokenizer reduces English words to their stems: "parse" also finds "parses" and "parsing".
@@ -48,15 +50,15 @@ export default async function example({ sqlite3_open, sqlite3_close, sqlite3_exe
         await sqlite3_bind_text(insert, 1, title, -1, SQLITE_TRANSIENT);
         await sqlite3_bind_text(insert, 2, body, -1, SQLITE_TRANSIENT);
         await sqlite3_step(insert);
-        if (await sqlite3_finalize(insert) !== SQLITE_OK) throw new Error(await sqlite3_errmsg(db));
+        if (await sqlite3_finalize(insert) !== ok) throw new Error(await sqlite3_errmsg(db));
     };
     // A snippet of every matching document with the hits in [brackets], joined by " | ".
     const search = async (query) => {
         const select = await prepare("select snippet(docs, '[', ']', '…', -1, 8) from docs where docs match ?1 order by docid");
         await sqlite3_bind_text(select, 1, query, -1, SQLITE_TRANSIENT);
         const snippets = [];
-        while (await sqlite3_step(select) === SQLITE_ROW) snippets.push(await readCString(await sqlite3_column_text(select, 0)));
-        if (await sqlite3_finalize(select) !== SQLITE_OK) throw new Error(await sqlite3_errmsg(db));
+        while (await sqlite3_step(select) === row) snippets.push(await readCString(await sqlite3_column_text(select, 0)));
+        if (await sqlite3_finalize(select) !== ok) throw new Error(await sqlite3_errmsg(db));
         return snippets.join(' | ');
     };
 

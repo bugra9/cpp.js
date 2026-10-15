@@ -1,42 +1,90 @@
 export const imports = {
-    '@crossbind/port-zlib/zlib.h': ['gzopen', 'gzread', 'gzwrite', 'gzerror', 'gzclose', 'allocBuffer'],
+    '@crossbind/port-zlib/zlib.h': [
+        'z_stream',
+        'deflateInit2',
+        'deflate',
+        'deflateEnd',
+        'inflateInit2',
+        'inflate',
+        'inflateReset',
+        'inflateEnd',
+        'Z_OK',
+        'Z_STREAM_END',
+        'Z_DEFLATED',
+        'Z_DEFAULT_STRATEGY',
+        'Z_NO_FLUSH',
+        'Z_FINISH',
+        'Z_NEED_DICT',
+        'Z_DATA_ERROR',
+        'Z_MEM_ERROR',
+        'allocBuffer',
+        'writeBytes',
+        'readBytes',
+        'readCString',
+    ],
 };
-export const note = 'The `deflate()` and `inflate()` loops cannot run from JavaScript: they read and advance the `next_in`, `avail_in`, `next_out` and `avail_out` fields of `z_stream`, which crossbind does not bind, so `deflate` returns -2 (`Z_STREAM_ERROR`). zlib\'s gz file calls stream instead, in the same 64 KiB steps and with the same sizes.';
+export const note = 'The same `deflate()` and `inflate()` loops on a `z_stream`, whose fields cross: `next_in` and `next_out` take `allocBuffer` handles and `avail_in` and `avail_out` count down as zlib reads and writes. `fread` and `fwrite` are not in `zlib.h`, so the log stays a JavaScript string: each step copies the next 64 KB slice into the input buffer and reads what zlib wrote out of the output buffer.';
 export const expected = ['2537578 B -> 363636 B -> 2537578 B', 'true'];
 
-export default async function example(m, console) {
+export default async function example({ z_stream, deflateInit2, deflate, deflateEnd, inflateInit2, inflate, inflateReset, inflateEnd, Z_OK, Z_STREAM_END, Z_DEFLATED, Z_DEFAULT_STRATEGY, Z_NO_FLUSH, Z_FINISH, Z_NEED_DICT, Z_DATA_ERROR, Z_MEM_ERROR, allocBuffer, writeBytes, readBytes, readCString }, console) {
     let seed = 42;
     const random = (n) => (seed = (seed * 48271) % 2147483647) % n;
     const lines = Array.from({ length: 50000 }, (_, i) => `2026-09-24T12:00:${String(i % 60).padStart(2, '0')}Z GET /api/items/${random(9000)} ${random(10) ? 200 : 404} ${random(900)}ms`);
-    // m.FS.writeFile adds to a file that already exists, so every run gets a fresh directory.
-    const dir = await m.getRandomPath('/memfs');
-    await m.FS.writeFile(`${dir}/access.log`, lines.join('\n'));
+    const log = lines.join('\n');
+    const CHUNK = 64 << 10;
+    const [source, target] = [await allocBuffer(CHUNK), await allocBuffer(CHUNK)];
+    const [ok, streamEnd, noFlush, finish] = [await Z_OK, await Z_STREAM_END, await Z_NO_FLUSH, await Z_FINISH];
 
-    // gzread reads a file that is not gzip as it is, and mode 'wbT' writes without gzip,
-    // so the same loop runs in both directions.
-    const chunk = await m.allocBuffer(64 << 10);
-    const pipe = async (from, to, mode) => {
-        const input = await m.gzopen(from, 'rb');
-        const output = await m.gzopen(to, mode);
-        let total = 0;
-        for (;;) {
-            const read = await m.gzread(input, chunk, 64 << 10);
-            // gzread returns what it got before an error; gzerror says whether there was one.
-            const error = await m.gzerror(input, null);
-            if (error) throw new Error(error);
-            if (read === 0) break;
-            await m.gzwrite(output, chunk, read);
-            total += read;
-        }
-        await m.gzclose(input);
-        await m.gzclose(output);
-        return total;
-    };
-    await pipe(`${dir}/access.log`, `${dir}/access.log.gz`, 'wb6');
-    const unpacked = await pipe(`${dir}/access.log.gz`, `${dir}/access.copy.log`, 'wbT');
-    const packed = (await m.getFileBytes(`${dir}/access.log.gz`)).length;
-    const original = await m.getFileBytes(`${dir}/access.log`);
-    const copy = await m.getFileBytes(`${dir}/access.copy.log`);
-    console.log(`${original.length} B -> ${packed} B -> ${unpacked} B`);
-    console.log(copy.length === original.length && copy.every((byte, i) => byte === original[i]));
+    const deflater = await new z_stream();
+    if ((await deflateInit2(deflater, 6, await Z_DEFLATED, 15 + 16, 8, await Z_DEFAULT_STRATEGY)) !== ok) throw new Error('level must be between -1 and 9');
+    let packed = '';
+    for (let offset = 0, flush = noFlush; flush !== finish; offset += CHUNK) {
+        const slice = log.slice(offset, offset + CHUNK);
+        flush = slice.length < CHUNK ? finish : noFlush;
+        await writeBytes(source, slice);
+        deflater.avail_in = slice.length;
+        deflater.next_in = source;
+        let room = 0;
+        do {
+            deflater.avail_out = CHUNK;
+            deflater.next_out = target;
+            await deflate(deflater, flush);
+            room = await deflater.avail_out;
+            packed += await readBytes(target, CHUNK - room);
+        } while (room === 0);
+    }
+    await deflateEnd(deflater);
+
+    // + 32: gzip or zlib, from the header. Every member of a concatenated .gz is read, as gunzip does.
+    const inflater = await new z_stream();
+    if ((await inflateInit2(inflater, 15 + 32)) !== ok) throw new Error('inflateInit2 failed');
+    const fatal = [await Z_NEED_DICT, await Z_DATA_ERROR, await Z_MEM_ERROR];
+    let copy = '';
+    let status = ok;
+    for (let offset = 0; offset < packed.length; offset += CHUNK) {
+        const slice = packed.slice(offset, offset + CHUNK);
+        await writeBytes(source, slice);
+        inflater.avail_in = slice.length;
+        inflater.next_in = source;
+        let room = 0;
+        do {
+            if (status === streamEnd) {
+                if ((await inflater.avail_in) === 0) break;
+                await inflateReset(inflater); // another member follows
+            }
+            inflater.avail_out = CHUNK;
+            inflater.next_out = target;
+            status = await inflate(inflater, noFlush);
+            if (fatal.includes(status)) {
+                const reason = await inflater.msg;
+                throw new Error(reason ? await readCString(reason) : 'corrupt input');
+            }
+            room = await inflater.avail_out;
+            copy += await readBytes(target, CHUNK - room);
+        } while (room === 0 || (status === streamEnd && (await inflater.avail_in) > 0));
+    }
+    await inflateEnd(inflater);
+    if (status !== streamEnd) throw new Error('the input ends in the middle of a gzip member');
+    console.log(`${log.length} B -> ${packed.length} B -> ${copy.length} B`);
+    console.log(copy === log);
 }

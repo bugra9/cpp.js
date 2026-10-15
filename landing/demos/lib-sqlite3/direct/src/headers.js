@@ -1,6 +1,11 @@
 // Every name the examples import, from the header the site says it comes from. The build fails on a
 // name that header does not export, so the import lines on the page are checked here.
 export {
+    SQLITE_DESERIALIZE_FREEONCLOSE,
+    SQLITE_DESERIALIZE_RESIZEABLE,
+    SQLITE_DONE,
+    SQLITE_OK,
+    SQLITE_ROW,
     sqlite3_bind_int64,
     sqlite3_bind_text,
     sqlite3_close,

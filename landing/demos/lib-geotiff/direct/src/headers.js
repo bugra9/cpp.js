@@ -4,22 +4,27 @@ export {
     GTIFDirectoryInfo,
     GTIFFree,
     GTIFImageToPCS,
-    GTIFImport,
-    GTIFKeyCode,
     GTIFKeyGetASCII,
     GTIFKeyGetSHORT,
     GTIFKeyInfo,
-    GTIFNewSimpleTags,
+    GTIFKeyName,
+    GTIFKeySet,
+    GTIFNew,
     GTIFPCSToImage,
+    GTIFPrint,
     GTIFTypeName,
     GTIFValueNameEx,
+    GTIFWriteKeys,
+    LIBGEOTIFF_STRING_VERSION,
     allocBuffer,
     allocPointer,
+    readBuffer,
     readCString,
     readNumberAt,
     readPointerAt,
     releaseCallback,
-    writeBytes,
+    tagtype_t,
+    writeBuffer,
     writeNumberAt,
 } from '@crossbind/port-geotiff/geotiff.h';
 export {
@@ -38,3 +43,20 @@ export {
     GTIFProj4FromLatLong,
     GTIFProj4ToLatLong,
 } from '@crossbind/port-geotiff/geo_normalize.h';
+export { geokey_t } from '@crossbind/port-geotiff/geokeys.h';
+export { geographic_t, geounits_t, modeltype_t, rastertype_t } from '@crossbind/port-geotiff/geovalues.h';
+export { TIFFTAG_GEOPIXELSCALE, TIFFTAG_GEOTIEPOINTS, XTIFFClientOpen, XTIFFClose } from '@crossbind/port-geotiff/xtiffio.h';
+export { TIFFGetField, TIFFSetField, TIFFWriteScanline } from '@crossbind/port-tiff/tiffio.h';
+export {
+    COMPRESSION_ADOBE_DEFLATE,
+    PHOTOMETRIC_MINISBLACK,
+    PREDICTOR_HORIZONTAL,
+    TIFFTAG_BITSPERSAMPLE,
+    TIFFTAG_COMPRESSION,
+    TIFFTAG_IMAGELENGTH,
+    TIFFTAG_IMAGEWIDTH,
+    TIFFTAG_PHOTOMETRIC,
+    TIFFTAG_PREDICTOR,
+    TIFFTAG_ROWSPERSTRIP,
+    TIFFTAG_SAMPLESPERPIXEL,
+} from '@crossbind/port-tiff/tiff.h';

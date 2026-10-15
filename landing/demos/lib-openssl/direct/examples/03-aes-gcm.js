@@ -11,13 +11,15 @@ export const imports = {
         'EVP_DecryptUpdate',
         'EVP_DecryptFinal_ex',
         'EVP_CIPHER_CTX_ctrl',
+        'EVP_CTRL_AEAD_GET_TAG',
+        'EVP_CTRL_AEAD_SET_TAG',
         'allocBuffer',
         'writeBytes',
         'readBytes',
     ],
     '@crossbind/port-openssl/openssl/crypto.h': ['OPENSSL_cleanse'],
 };
-export const note = 'The same `EVP_Cipher*` calls as the C++. `EVP_CTRL_AEAD_GET_TAG` and `EVP_CTRL_AEAD_SET_TAG` are macros and have no binding, so their values are written out. There is no C++ exception to catch: JavaScript throws its own `Error` when `EVP_DecryptFinal_ex` refuses the tag, so the last line loses the `std::runtime_error: ` prefix the C++ version prints.';
+export const note = 'The same `EVP_Cipher*` calls as the C++, with the `EVP_CTRL_AEAD_GET_TAG` and `EVP_CTRL_AEAD_SET_TAG` macros imported as numbers. There is no C++ exception to catch: JavaScript throws its own `Error` when `EVP_DecryptFinal_ex` refuses the tag, so the last line loses the `std::runtime_error: ` prefix the C++ version prints.';
 export const expected = [
     'ciphertext 78b3da886495443e7a46341982c948837dbf7b3510d774e5072034',
     'tag 4f8c8f6e9e6177f201ed83f957fbe6d7',
@@ -25,10 +27,7 @@ export const expected = [
     'refused: authentication failed: wrong key, nonce or AAD, or the data was changed',
 ];
 
-export default async function example({ EVP_CIPHER_fetch, EVP_CIPHER_free, EVP_CIPHER_CTX_new, EVP_CIPHER_CTX_free, EVP_CipherInit_ex2, EVP_CipherUpdate, EVP_EncryptUpdate, EVP_EncryptFinal_ex, EVP_DecryptUpdate, EVP_DecryptFinal_ex, EVP_CIPHER_CTX_ctrl, allocBuffer, writeBytes, readBytes, OPENSSL_cleanse }, console) {
-    // Macros in evp.h have no binding; these are their values.
-    const EVP_CTRL_AEAD_GET_TAG = 0x10;
-    const EVP_CTRL_AEAD_SET_TAG = 0x11;
+export default async function example({ EVP_CIPHER_fetch, EVP_CIPHER_free, EVP_CIPHER_CTX_new, EVP_CIPHER_CTX_free, EVP_CipherInit_ex2, EVP_CipherUpdate, EVP_EncryptUpdate, EVP_EncryptFinal_ex, EVP_DecryptUpdate, EVP_DecryptFinal_ex, EVP_CIPHER_CTX_ctrl, EVP_CTRL_AEAD_GET_TAG, EVP_CTRL_AEAD_SET_TAG, allocBuffer, writeBytes, readBytes, OPENSSL_cleanse }, console) {
     const bytes = async (text) => {
         const buffer = await allocBuffer(text.length);
         await writeBytes(buffer, text);
@@ -59,7 +58,7 @@ export default async function example({ EVP_CIPHER_fetch, EVP_CIPHER_free, EVP_C
     const encryption = await start(1, 'message-1');
     await EVP_EncryptUpdate(encryption, ciphertext, written, await bytes(message), message.length);
     await EVP_EncryptFinal_ex(encryption, ciphertext, written);
-    await EVP_CIPHER_CTX_ctrl(encryption, EVP_CTRL_AEAD_GET_TAG, 16, tag);
+    await EVP_CIPHER_CTX_ctrl(encryption, await EVP_CTRL_AEAD_GET_TAG, 16, tag);
     await EVP_CIPHER_CTX_free(encryption);
     console.log('ciphertext', toHex(await readBytes(ciphertext, message.length)));
     console.log('tag', toHex(await readBytes(tag, 16)));
@@ -69,7 +68,7 @@ export default async function example({ EVP_CIPHER_fetch, EVP_CIPHER_free, EVP_C
         const plaintext = await allocBuffer(message.length);
         const decryption = await start(0, aad);
         await EVP_DecryptUpdate(decryption, plaintext, written, ciphertext, message.length);
-        await EVP_CIPHER_CTX_ctrl(decryption, EVP_CTRL_AEAD_SET_TAG, 16, tag);
+        await EVP_CIPHER_CTX_ctrl(decryption, await EVP_CTRL_AEAD_SET_TAG, 16, tag);
         const authentic = (await EVP_DecryptFinal_ex(decryption, plaintext, written)) === 1;
         await EVP_CIPHER_CTX_free(decryption);
         if (!authentic) {

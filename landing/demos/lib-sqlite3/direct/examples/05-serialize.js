@@ -14,6 +14,10 @@ export const imports = {
         'sqlite3_column_int64',
         'sqlite3_finalize',
         'sqlite3_errmsg',
+        'SQLITE_OK',
+        'SQLITE_ROW',
+        'SQLITE_DESERIALIZE_FREEONCLOSE',
+        'SQLITE_DESERIALIZE_RESIZEABLE',
         'allocBuffer',
         'allocPointer',
         'readPointerAt',
@@ -24,14 +28,13 @@ export const imports = {
         'readCString',
     ],
 };
-export const note = 'The memory handling the C++ wrapper hid is written out: `sqlite3_serialize` returns a handle to memory that JavaScript copies with `readBytes` and frees with `sqlite3_free`, and writes the size through a `sqlite3_int64 *`, here an 8-byte `allocBuffer` read as `int64`. `sqlite3_deserialize` takes its bytes in memory from `sqlite3_malloc64`, which SQLite frees with the connection; the `SQLITE_DESERIALIZE_*` flags are macros, so their values are written out.';
+export const note = 'The memory handling the C++ wrapper hid is written out: `sqlite3_serialize` returns a handle to memory that JavaScript copies with `readBytes` and frees with `sqlite3_free`, and writes the size through a `sqlite3_int64 *`, here an 8-byte `allocBuffer` read as `int64`. `sqlite3_deserialize` takes its bytes in memory from `sqlite3_malloc64`, which SQLite frees with the connection, and its `SQLITE_DESERIALIZE_*` flags are imported by name like the result codes.';
 export const expected = ['8192 B, starts with "SQLite format 3"', 'readings(sensor TEXT, celsius REAL): 3 rows'];
 
-export default async function example({ sqlite3_open, sqlite3_close, sqlite3_exec, sqlite3_serialize, sqlite3_deserialize, sqlite3_malloc64, sqlite3_free, sqlite3_prepare_v2, sqlite3_bind_text, sqlite3_step, sqlite3_column_text, sqlite3_column_int64, sqlite3_finalize, sqlite3_errmsg, allocBuffer, allocPointer, readPointerAt, readNumberAt, writeNumberAt, readBytes, writeBytes, readCString }, console) {
-    // sqlite3.h's constants are macros without bindings. SQLITE_TRANSIENT is
-    // ((sqlite3_destructor_type)-1): a pointer with the address -1, which a slot holding -1 reads back.
-    const SQLITE_OK = 0, SQLITE_ROW = 100;
-    const SQLITE_DESERIALIZE_FREEONCLOSE = 1, SQLITE_DESERIALIZE_RESIZEABLE = 2;
+export default async function example({ sqlite3_open, sqlite3_close, sqlite3_exec, sqlite3_serialize, sqlite3_deserialize, sqlite3_malloc64, sqlite3_free, sqlite3_prepare_v2, sqlite3_bind_text, sqlite3_step, sqlite3_column_text, sqlite3_column_int64, sqlite3_finalize, sqlite3_errmsg, SQLITE_OK, SQLITE_ROW, SQLITE_DESERIALIZE_FREEONCLOSE, SQLITE_DESERIALIZE_RESIZEABLE, allocBuffer, allocPointer, readPointerAt, readNumberAt, writeNumberAt, readBytes, writeBytes, readCString }, console) {
+    const ok = await SQLITE_OK, row = await SQLITE_ROW;
+    // SQLITE_TRANSIENT, ((sqlite3_destructor_type)-1), has no binding because its value is a pointer:
+    // the address -1, which a 4-byte slot holding -1 reads back in wasm32.
     const minusOne = await allocPointer(1);
     await writeNumberAt(minusOne, 0, 'int32', -1);
     const SQLITE_TRANSIENT = await readPointerAt(minusOne, 0);
@@ -39,11 +42,11 @@ export default async function example({ sqlite3_open, sqlite3_close, sqlite3_exe
     // sqlite3_open and sqlite3_prepare_v2 hand back their handle through a pointer slot.
     const slot = await allocPointer(1);
     const open = async () => {
-        if (await sqlite3_open(':memory:', slot) !== SQLITE_OK) throw new Error('cannot open the database');
+        if (await sqlite3_open(':memory:', slot) !== ok) throw new Error('cannot open the database');
         return await readPointerAt(slot, 0);
     };
     const prepare = async (db, sql) => {
-        if (await sqlite3_prepare_v2(db, sql, -1, slot, null) !== SQLITE_OK) throw new Error(await sqlite3_errmsg(db));
+        if (await sqlite3_prepare_v2(db, sql, -1, slot, null) !== ok) throw new Error(await sqlite3_errmsg(db));
         return await readPointerAt(slot, 0);
     };
 
@@ -62,18 +65,18 @@ export default async function example({ sqlite3_open, sqlite3_close, sqlite3_exe
     // SQLite owns this memory from here on: it frees it with the connection, or at once if the call fails.
     const bytes = await sqlite3_malloc64(image.length);
     await writeBytes(bytes, image);
-    const flags = SQLITE_DESERIALIZE_FREEONCLOSE | SQLITE_DESERIALIZE_RESIZEABLE;
-    if (await sqlite3_deserialize(copy, 'main', bytes, image.length, image.length, flags) !== SQLITE_OK) throw new Error(await sqlite3_errmsg(copy));
+    const flags = (await SQLITE_DESERIALIZE_FREEONCLOSE) | (await SQLITE_DESERIALIZE_RESIZEABLE);
+    if (await sqlite3_deserialize(copy, 'main', bytes, image.length, image.length, flags) !== ok) throw new Error(await sqlite3_errmsg(copy));
 
     // Each table as "name(column TYPE, ...): N rows".
     const lines = [];
     const tables = await prepare(copy, "select name from sqlite_schema where type = 'table' and name not like 'sqlite_%' order by name");
-    while (await sqlite3_step(tables) === SQLITE_ROW) {
+    while (await sqlite3_step(tables) === row) {
         const table = await readCString(await sqlite3_column_text(tables, 0));
         const columns = await prepare(copy, 'select name, type from pragma_table_info(?1)');
         await sqlite3_bind_text(columns, 1, table, -1, SQLITE_TRANSIENT);
         const described = [];
-        while (await sqlite3_step(columns) === SQLITE_ROW) {
+        while (await sqlite3_step(columns) === row) {
             described.push(`${await readCString(await sqlite3_column_text(columns, 0))} ${await readCString(await sqlite3_column_text(columns, 1))}`);
         }
         await sqlite3_finalize(columns);

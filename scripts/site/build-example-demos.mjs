@@ -39,7 +39,7 @@ export const DEMOS = [
     { id: 'lib-zstd', kind: 'source', expect: '=> 9/9 checks passed' },
     // The same examples with no C++: the library's own headers imported from JavaScript and bound by
     // the Vite plugin. Built from lib-<family>/direct; its page runs the examples that can work so.
-    { id: 'lib-zstd-direct', kind: 'source', source: 'lib-zstd/direct', expect: '=> 3/3 checks passed' },
+    { id: 'lib-zstd-direct', kind: 'source', source: 'lib-zstd/direct', expect: '=> 4/4 checks passed' },
     { id: 'lib-geos', kind: 'source', expect: '=> 15/15 checks passed' },
     { id: 'lib-geos-direct', kind: 'source', source: 'lib-geos/direct', expect: '=> 5/5 checks passed' },
     { id: 'lib-lerc', kind: 'source', expect: '=> 14/14 checks passed' },
@@ -49,13 +49,15 @@ export const DEMOS = [
     { id: 'lib-sqlite3', kind: 'source', expect: '=> 31/31 checks passed' },
     { id: 'lib-sqlite3-direct', kind: 'source', source: 'lib-sqlite3/direct', expect: '=> 5/5 checks passed' },
     { id: 'lib-zlib', kind: 'source', expect: '=> 14/14 checks passed' },
-    { id: 'lib-zlib-direct', kind: 'source', source: 'lib-zlib/direct', expect: '=> 4/4 checks passed' },
+    { id: 'lib-zlib-direct', kind: 'source', source: 'lib-zlib/direct', expect: '=> 5/5 checks passed' },
     { id: 'lib-iconv', kind: 'source', expect: '=> 21/21 checks passed' },
     { id: 'lib-iconv-direct', kind: 'source', source: 'lib-iconv/direct', expect: '=> 4/4 checks passed' },
     { id: 'lib-jpegturbo', kind: 'source', expect: '=> 12/12 checks passed' },
+    { id: 'lib-jpegturbo-direct', kind: 'source', source: 'lib-jpegturbo/direct', expect: '=> 5/5 checks passed' },
     { id: 'lib-webp', kind: 'source', expect: '=> 9/9 checks passed' },
-    { id: 'lib-webp-direct', kind: 'source', source: 'lib-webp/direct', expect: '=> 2/2 checks passed' },
+    { id: 'lib-webp-direct', kind: 'source', source: 'lib-webp/direct', expect: '=> 4/4 checks passed' },
     { id: 'lib-tiff', kind: 'source', expect: '=> 12/12 checks passed' },
+    { id: 'lib-tiff-direct', kind: 'source', source: 'lib-tiff/direct', expect: '=> 4/4 checks passed' },
     { id: 'lib-proj', kind: 'source', expect: '=> 21/21 checks passed' },
     { id: 'lib-proj-direct', kind: 'source', source: 'lib-proj/direct', expect: '=> 5/5 checks passed' },
     { id: 'lib-curl', kind: 'source', expect: '=> 11/11 checks passed' },
@@ -63,11 +65,11 @@ export const DEMOS = [
     { id: 'lib-spatialite', kind: 'source', expect: '=> 39/39 checks passed' },
     { id: 'lib-spatialite-direct', kind: 'source', source: 'lib-spatialite/direct', expect: '=> 5/5 checks passed' },
     { id: 'lib-geotiff', kind: 'source', expect: '=> 19/19 checks passed' },
-    { id: 'lib-geotiff-direct', kind: 'source', source: 'lib-geotiff/direct', expect: '=> 4/4 checks passed' },
+    { id: 'lib-geotiff-direct', kind: 'source', source: 'lib-geotiff/direct', expect: '=> 5/5 checks passed' },
     { id: 'lib-openssl', kind: 'source', expect: '=> 25/25 checks passed' },
     { id: 'lib-openssl-direct', kind: 'source', source: 'lib-openssl/direct', expect: '=> 5/5 checks passed' },
     { id: 'lib-gdal', kind: 'source', expect: '=> 21/21 checks passed' },
-    { id: 'lib-gdal-direct', kind: 'source', source: 'lib-gdal/direct', expect: '=> 4/4 checks passed' },
+    { id: 'lib-gdal-direct', kind: 'source', source: 'lib-gdal/direct', expect: '=> 5/5 checks passed' },
     // The playground's samples (landing/src/playground/samples), built ahead of time so an unedited one runs in the
     // tutorial and the playground without a compile. `sample-<name>` builds landing/demos/sample with that sample's
     // C++, and its page runs the sample's main.js.

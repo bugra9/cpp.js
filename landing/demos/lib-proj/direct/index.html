@@ -45,9 +45,8 @@
                 check(`example "${expectedOf(example)[0]}"`, printed, expectedOf(example));
             }
             const passed = checks.filter(Boolean).length;
-            // PJ_INFO's version string is a `const char *` field, which crossbind does not bind; its numbers are.
             const info = await m.proj_info();
-            show(`proj ${await info.major}.${await info.minor}.${await info.patch} => ${passed}/${checks.length} checks passed`);
+            show(`proj ${await m.readCString(await info.version)} => ${passed}/${checks.length} checks passed`);
         } catch (error) {
             show(`failed => ${error?.stack ?? error}`);
         }

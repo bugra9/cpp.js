@@ -24,7 +24,7 @@ export const imports = {
         'readCString',
     ],
 };
-export const note = '`GEOSMakeValidParams_setMethod_r` takes an `enum GEOSMakeValidMethods`, so pass the member itself: a plain number crosses as 0, `GEOS_MAKE_VALID_LINEWORK`, and the call still returns 1. `GEOSisValid_r` returns a C `char` (1, 0, or 2 when GEOS failed), and the reason is a `char *` to read with `readCString` and return to `GEOSFree_r`.';
+export const note = '`GEOSMakeValidParams_setMethod_r` takes an `enum GEOSMakeValidMethods`, as a member or its number. `GEOSisValid_r` returns a C `char` (1, 0, or 2 when GEOS failed), and the reason is a `char *` to read with `readCString` and return to `GEOSFree_r`.';
 export const expected = [
     'false Self-intersection[5 5]',
     'MULTIPOLYGON (((5 5, 10 10, 10 0, 5 5)), ((0 0, 0 10, 5 5, 0 0))) true 50',
