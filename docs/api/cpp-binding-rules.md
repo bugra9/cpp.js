@@ -175,7 +175,9 @@ import { deflateInit2_, Z_DEFLATED, MAX_WBITS, ZLIB_VERSION } from '@crossbind/p
 ```
 
 - Numbers of every width arrive as Numbers, exact up to 2^53; a `char` arrives as its code (`'A'` is 65), a string as a string, `true` and `false` as booleans.
+- In a worker, the browser default, a constant arrives like every name of the module: read it with `await` (`const ok = await Z_OK`). Unread, it is a proxy, so `code === Z_OK` is false and `A | B` is 0.
 - A macro the header takes from another header imports through it, as in C: zlib's `MAX_WBITS` comes from `zconf.h`.
+- A value with a cast, as in Expat's `#define XML_TRUE ((XML_Bool)1)` or curl's `(((unsigned long)1) << 4)`, binds when the app imports it by name and every cast is to a number type: a built-in one, a standard typedef such as `size_t`, or a typedef of one that the header declares. SWIG itself drops such a `#define`, so `import * as` does not bind it.
 - Each platform's compiler reads the macro itself, so a value inside `#if` follows the target.
 - `import * as zlib from '@crossbind/port-zlib/zlib.h'` binds every constant SWIG sees in the header, as do `import()`, `import 'x.h'` and `require`, which hand the app the whole module too.
 - Macros whose value is a pointer and arrays other than a single string stay unbound: Vite and Rollup reject the import as a missing export, and elsewhere the name is `undefined`. Function-like macros and globals that are not `const` bind as rule 10 describes.

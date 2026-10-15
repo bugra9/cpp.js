@@ -188,7 +188,7 @@ function createInterfaceFile(headerOrModuleFilePath, target, sourceDir, { consta
     const fileName = interfaceName(headerOrModuleFilePath, filePathWithoutExt.split('/').at(-1));
 
     const macros = collectSwigMacros(headerOrModuleFilePath, interfaceIncludes(headerPath, prelude), fileName, target, sourceDir, constants);
-    const extras = interfaceExtras(named, macros.table);
+    const extras = interfaceExtras(named, macros.table, fs.readFileSync(headerOrModuleFilePath, 'utf8'));
     const content = buildInterfaceContent({
         moduleName: fileName.toUpperCase(),
         headerPath,

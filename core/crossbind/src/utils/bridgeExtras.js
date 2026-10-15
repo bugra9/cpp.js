@@ -4,14 +4,16 @@ import { parseMacroDump, stripComments, declaresAtFileScope } from './swigInterf
 // SWIG binds no function-like macro, variadic function or mutable global. crossbind binds them for the names an app
 // imports by name: a function-like macro takes the parameter types of the one function it calls, a macro naming a
 // function binds that function under its own name, a variadic function takes its extra arguments by their JavaScript
-// type, and a mutable global binds as a handle to its address. A macro binds only through a function SWIG bound, the
-// one place that proves the name is a single declared function.
+// type, a mutable global binds as a handle to its address, and a constant SWIG drops for a cast in its value binds as
+// the number the compiler makes of it. A macro binds only through a function SWIG bound, the one place that proves the
+// name is a single declared function.
 
 const C_IDENTIFIER = /^[A-Za-z_]\w*$/;
 const MACRO_LINE = /^\/\/ crossbind:macro ([A-Za-z_]\w*) (#define .*)$/gm;
 const ALIAS_LINE = /^\/\/ crossbind:alias ([A-Za-z_]\w*) ([A-Za-z_]\w*)$/gm;
+const CONSTANT_LINE = /^\/\/ crossbind:constant ([A-Za-z_]\w*)$/gm;
 const NOTE_MARKER = '// crossbind:note ';
-const EXTRA_LINES = /^(?:\/\/ crossbind:(?:macro|alias|note) .*\n)+\n/m;
+const EXTRA_LINES = /^(?:\/\/ crossbind:(?:macro|alias|constant|note) .*\n)+\n/m;
 // The arguments one call may add to a variadic function: each registration count dispatches over 2^n argument kinds.
 const MAX_VARIADIC_ARGUMENTS = 6;
 const VARIADIC_WARNING = /^Variable length arguments are not supported by embind, (\S+) skipped\.$/;
@@ -90,9 +92,66 @@ export function macroCall(macro) {
 // The identifier an object-like macro stands for, as in `#define iconv_open libiconv_open`.
 const identifierOf = (macro) => (macro && !macro.params && C_IDENTIFIER.test(macro.body) ? macro.body : null);
 
+const NUMBER_TYPE_WORDS = new Set(['unsigned', 'signed', 'short', 'long', 'int', 'char', 'float', 'double', 'bool', '_Bool']);
+const NUMBER_TYPEDEFS = new Set([
+    'size_t', 'ssize_t', 'ptrdiff_t', 'intptr_t', 'uintptr_t', 'intmax_t', 'uintmax_t', 'off_t', 'wchar_t',
+    'int8_t', 'uint8_t', 'int16_t', 'uint16_t', 'int32_t', 'uint32_t', 'int64_t', 'uint64_t',
+]);
+const VALUE_TOKEN = /0[xX][\dA-Fa-f]+[uUlL]*|\d+(?:\.\d*)?(?:[eE][-+]?\d+)?[uUlLfF]*|'(?:\\.|[^'\\])+'|[A-Za-z_]\w*|<<|>>|\S/g;
+const OPERATOR = /^(?:<<|>>|[-+*/%&|^~!()<>=?:])$/;
+const LITERAL = /^(?:\d|')/;
+const CAST_OPERAND = /^(?:\d|'|[-+~!(])/;
+
+// A type named by number words, a standard number typedef, or a typedef of one that the header declares.
+function isNumberType(words, headerText, depth = 0) {
+    if (words.every((word) => NUMBER_TYPE_WORDS.has(word))) return true;
+    if (words.length !== 1 || depth > 3) return false;
+    if (NUMBER_TYPEDEFS.has(words[0])) return true;
+    const declared = stripComments(headerText).match(new RegExp(`\\btypedef\\s+([A-Za-z_][\\w\\s]*?)\\s+${words[0]}\\s*;`));
+    return Boolean(declared) && isNumberType(declared[1].trim().split(/\s+/), headerText, depth + 1);
+}
+
+// The tokens of an object-like macro's value with the object-like macros in it spelled out; null for anything else.
+function expandedTokens(name, macros, depth = 0) {
+    const macro = macros.get(name);
+    if (!macro || macro.params || depth > 16) return null;
+    const tokens = [];
+    for (const token of macro.body.match(VALUE_TOKEN) ?? []) {
+        if (!C_IDENTIFIER.test(token) || !macros.has(token)) {
+            tokens.push(token);
+            continue;
+        }
+        const inner = expandedTokens(token, macros, depth + 1);
+        if (!inner) return null;
+        tokens.push('(', ...inner, ')');
+    }
+    return tokens;
+}
+
+// SWIG drops a #define whose value holds a name, so every cast. A value of numbers, operators and casts binds through
+// the compiler when every cast is to a number type: { numbers }, or null for a value with no cast or with other names.
+function castConstant(name, macros, headerText) {
+    const tokens = expandedTokens(name, macros);
+    if (!tokens) return null;
+    let casts = 0;
+    let numbers = true;
+    for (let at = 0; at < tokens.length; at += 1) {
+        if (LITERAL.test(tokens[at]) || OPERATOR.test(tokens[at])) continue;
+        const close = tokens.indexOf(')', at);
+        const words = tokens.slice(at, close);
+        const isCast = tokens[at - 1] === '(' && close > at && CAST_OPERAND.test(tokens[close + 1] ?? '')
+            && words.every((word) => word === '*' || C_IDENTIFIER.test(word));
+        if (!isCast) return null;
+        casts += 1;
+        numbers &&= !words.includes('*') && isNumberType(words, headerText);
+        at = close;
+    }
+    return casts ? { numbers } : null;
+}
+
 // What the interface carries for the names an app imports by name, read by the bridge once SWIG has run: their
 // function-like macros and their macros naming a function, and the functions they reach, which SWIG has to bind.
-export function interfaceExtras(names, macros) {
+export function interfaceExtras(names, macros, headerText = '') {
     if (names === ALL_NAMES || !names.length) return { lines: [], functions: [] };
     const lines = [];
     const functions = [];
@@ -104,6 +163,10 @@ export function interfaceExtras(names, macros) {
             if (target && target !== name && !macros.has(target) && !C_KEYWORDS.has(target)) {
                 lines.push(`// crossbind:alias ${name} ${target}`);
                 functions.push(target);
+            } else {
+                const constant = castConstant(name, macros, headerText);
+                if (constant?.numbers) lines.push(`// crossbind:constant ${name}`);
+                else if (constant) lines.push(`${NOTE_MARKER}${name}: a constant whose value has a cast binds only when every cast is to a number type the header declares; skipped.`);
             }
             continue;
         }
@@ -168,7 +231,8 @@ export function bridgeExtras({ interfaceText = '', named = [], bridgeText = '', 
     const globalWarnings = warningsAbout(warnings, GLOBAL_WARNING, imported);
     const globals = [...globalWarnings.keys()].filter((name) => declaresAtFileScope(headerText, name));
     const answered = new Set([...variadics.map((name) => variadicWarnings.get(name)), ...globals.map((name) => globalWarnings.get(name))]);
-    if (!macros.length && !aliases.length && !variadics.length && !globals.length) return { code: '', exports: [], answered, notes };
+    const constants = [...interfaceText.matchAll(CONSTANT_LINE)].map(([, name]) => name).filter((name) => !bridgeText.includes(`bindConstant("${name}"`));
+    if (!macros.length && !aliases.length && !variadics.length && !globals.length && !constants.length) return { code: '', exports: [], answered, notes };
 
     // The macros register ahead of the fallbacks below, which would make a function a variadic shares its name with an
     // overload set.
@@ -184,10 +248,13 @@ export function bridgeExtras({ interfaceText = '', named = [], bridgeText = '', 
         `EMSCRIPTEN_BINDINGS(CrossbindExtras_${module}) {`,
         ...variadics.map((name) => `  { using F = decltype(crossbind::variadicType(&${name}, 0)); crossbind::bindVariadic<F, static_cast<F>(&${name}), ${MAX_VARIADIC_ARGUMENTS}>("${name}"); }`),
         ...globals.map((name) => `  crossbind::bindGlobal("${name}", &${name});`),
+        ...constants.map((name) => `  crossbind::bindConstant("${name}", ${name});`),
         '}',
         '',
     ].join('\n');
-    const exports = [...macros.map(({ name }) => name), ...aliases.map(({ name }) => name), ...variadics, ...globals, ...(variadics.length ? ['vaDouble'] : [])];
+    const exports = [
+        ...macros.map(({ name }) => name), ...aliases.map(({ name }) => name), ...variadics, ...globals, ...constants, ...(variadics.length ? ['vaDouble'] : []),
+    ];
     return { code, exports, answered, notes };
 }
 
