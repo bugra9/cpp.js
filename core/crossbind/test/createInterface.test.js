@@ -506,7 +506,7 @@ describe('free functions of a dependency header', () => {
 
         createBridgeFile(libHeader, target);
 
-        expect(interfaceOf(libHeader)).toContain(`${IGNORE_FUNCTIONS}\n%rename("%s") one;\n\n%include "lib.h"`);
+        expect(interfaceOf(libHeader)).toContain(`${IGNORE_FUNCTIONS}\n%rename("%s") one;\n\n%feature("shared_ptr");`);
     });
 
     test.each([
@@ -531,7 +531,7 @@ describe('free functions of a dependency header', () => {
 
         createBridgeFile(libHeader, target);
 
-        expect(interfaceOf(libHeader)).toContain(`${IGNORE_FUNCTIONS}\n%rename("%s") one;\n\n%include "lib.h"`);
+        expect(interfaceOf(libHeader)).toContain(`${IGNORE_FUNCTIONS}\n%rename("%s") one;\n\n%feature("shared_ptr");`);
     });
 
     // A package's own .i says what the header binds.
@@ -587,7 +587,7 @@ describe('free functions of a dependency header', () => {
         const bridge = createBridgeFile(libHeader, target);
 
         expect(fs.readFileSync(`${bridge}.deps`, 'utf8')).toContain('box.i.cpp');
-        expect(interfaceOf(boxHeader)).toContain(`${IGNORE_FUNCTIONS}\n\n%include "box.h"`);
+        expect(interfaceOf(boxHeader)).toContain(`${IGNORE_FUNCTIONS}\n\n%feature("shared_ptr");`);
     });
 
     // A package that imports the header in its own JavaScript sits in node_modules, which the scan of the app skips.
@@ -599,7 +599,7 @@ describe('free functions of a dependency header', () => {
         createBridgeFile(libHeader, target);
 
         expect(warn.mock.calls.filter(([message]) => message.includes('lib.h'))).toHaveLength(1);
-        expect(interfaceOf(libHeader)).toContain(`${IGNORE_FUNCTIONS}\n\n%include "lib.h"`);
+        expect(interfaceOf(libHeader)).toContain(`${IGNORE_FUNCTIONS}\n\n%feature("shared_ptr");`);
     });
 });
 
@@ -696,7 +696,7 @@ describe('a dependency built after the process loaded', () => {
 
         createBridgeFile(libHeader, target);
 
-        expect(fs.readFileSync(cachedInterface(libHeader), 'utf8')).toContain('%rename("%s") one;\n\n%include "lib.h"');
+        expect(fs.readFileSync(cachedInterface(libHeader), 'utf8')).toContain('%rename("%s") one;\n\n%feature("shared_ptr");');
     });
 });
 

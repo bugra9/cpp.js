@@ -299,14 +299,14 @@ describe('buildInterfaceContent', () => {
     });
 
     // Class members, enums and constants are untouched: only declarations of free functions are ignored.
-    test('binds only the listed free functions, right before the header', () => {
+    test('binds only the listed free functions', () => {
         const content = buildInterfaceContent({ moduleName: 'ZLIB', headerPath: 'zlib.h', functions: ['deflate', 'crc32'] });
-        expect(content).toContain('%rename($ignore, %$isfunction, %$isglobal) "";\n%rename("%s") crc32;\n%rename("%s") deflate;\n\n%include "zlib.h"');
+        expect(content).toContain('%rename($ignore, %$isfunction, %$isglobal) "";\n%rename("%s") crc32;\n%rename("%s") deflate;\n\n%feature("shared_ptr");');
     });
 
     test('binds no free function when the list is empty', () => {
         const content = buildInterfaceContent({ moduleName: 'ZCONF', headerPath: 'zconf.h', functions: [] });
-        expect(content).toContain('%rename($ignore, %$isfunction, %$isglobal) "";\n\n%include "zconf.h"');
+        expect(content).toContain('%rename($ignore, %$isfunction, %$isglobal) "";\n\n%feature("shared_ptr");');
         expect(content).not.toContain('%rename("%s")');
     });
 
@@ -318,6 +318,14 @@ describe('buildInterfaceContent', () => {
     test('keeps a declaration its package ignores out, even when the app imports it', () => {
         const content = buildInterfaceContent({ moduleName: 'GDAL', headerPath: 'gdal.h', functions: ['GDALExtractRPCInfoV1'], ignored: ['GDALExtractRPCInfoV1'] });
         expect(content.indexOf('%ignore GDALExtractRPCInfoV1;')).toBeGreaterThan(content.indexOf('%rename("%s") GDALExtractRPCInfoV1;'));
+    });
+
+    // zlib.h takes MAX_WBITS from zconf.h, so its #define is in the macro block; a request after it read `%rename("%s") 15;`.
+    test('asks for an imported name ahead of the macro that defines it', () => {
+        const content = buildInterfaceContent({
+            moduleName: 'ZLIB', headerPath: 'zlib.h', swigMacros: ['#define MAX_WBITS 15'], constants: ['MAX_WBITS'], functions: ['MAX_WBITS', 'zlibVersion'],
+        });
+        expect(content.indexOf('%rename("%s") MAX_WBITS;')).toBeLessThan(content.indexOf('#define MAX_WBITS 15'));
     });
 
     test('keeps the function list when the SWIG-only macro block is dropped', () => {
