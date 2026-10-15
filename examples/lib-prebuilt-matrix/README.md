@@ -58,7 +58,7 @@ console.log(result.get(0));
 
 ### Usage in JavaScript Code (web, without plugin)
 ```js
-import 'node_modules/@crossbind/example-lib-prebuilt-matrix/dist/crossbind-example-lib-prebuilt-matrix.browser.js';
+import 'node_modules/@crossbind/example-lib-prebuilt-matrix/dist/crossbind-example-lib-prebuilt-matrix-wasm-wasm32-st-release.browser.js';
 
 initNative({ path: 'node_modules/@crossbind/example-lib-prebuilt-matrix/dist' }).then(({ Matrix }) => {
     const a = new Matrix(1210000, 1);

@@ -70,7 +70,7 @@ export default {
                     'at most two pthread workers; asking for more aborts',
                 ],
                 ['Function table', '`RESERVED_FUNCTION_POINTERS=200`', 'raise it on `Cannot enlarge function table`'],
-                ['Filesystem', '`WASMFS` and `FORCE_FILESYSTEM=1` in browser and Node.js builds', '`m.FS`, OPFS and data files rely on them'],
+                ['Filesystem', '`FORCE_FILESYSTEM=1` in every build, `WASMFS` in browser and Node.js builds', '`m.FS`, OPFS and data files rely on them'],
                 ['No eval', '`DYNAMIC_EXECUTION=0`', 'the module runs under a strict Content Security Policy'],
                 [
                     'Array buffers',

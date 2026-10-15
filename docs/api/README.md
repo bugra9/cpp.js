@@ -25,7 +25,7 @@ C++ binding & build authoring:
 - [`native.md`](./native.md) — Desktop platforms beyond Node.js addons: native executables (`-e native`) and the `darwin`, `linux`, `linuxmusl` and `win32` prebuilt archives in your own C or C++ build.
 - [`swig-escape.md`](./swig-escape.md) — Manual SWIG `.i` files when auto-generation isn't enough.
 - [`build-state.md`](./build-state.md) — `state` and `target` object shapes passed to `crossbind.build.js` hooks; full inventory of 32 built-in build targets.
-- [`overrides.md`](./overrides.md) — Catalog of 20 override mechanisms ordered least → most invasive.
+- [`overrides.md`](./overrides.md) — Catalog of 17 override points ordered least → most invasive.
 - [`troubleshooting.md`](./troubleshooting.md) — Common errors mapped to the right override; tribal-knowledge gotchas from real packages.
 - [`performance.md`](./performance.md) — Default Emscripten + CMake flags reference; what's safe to override and what to leave alone.
 - [`lifecycle-and-types.md`](./lifecycle-and-types.md) — Why JS-side `m.delete()` isn't a thing in crossbind + TypeScript `.d.ts` notes.
@@ -53,7 +53,7 @@ C++ binding & build authoring:
 │  ┌────────────────────────────────────────────────────────┐│
 │  │ const m = await initNative({                            ││
 │  │   useWorker: true,    // for OPFS persistent storage   ││
-│  │   fs: { opfs: true }, // browser default               ││
+│  │   fs: { opfs: true }, // default in mt browser builds  ││
 │  │   env: { ... },                                        ││
 │  │   onRuntimeInitialized: (m) => {...},                  ││
 │  │ })                                                     ││

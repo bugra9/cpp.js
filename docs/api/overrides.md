@@ -1,6 +1,6 @@
 # Override mechanisms catalog
 
-> crossbind picks sane defaults for every build flag, env var, path, and toolchain. When a default doesn't fit your case, there are **18 documented override points**. This doc lists them in order of preference: **start with the least invasive that solves your problem**.
+> crossbind picks sane defaults for every build flag, env var, path, and toolchain. When a default doesn't fit your case, there are **17 documented override points**. This doc lists them in order of preference: **start with the least invasive that solves your problem**.
 
 ## Why "least invasive first"
 
@@ -9,13 +9,12 @@ Every override point exists for a reason — but each adds a layer of "this buil
 Order of preference, from least to most invasive:
 
 1. Don't override — restate the constraint as a target filter.
-2. `targetSpecs[].specs.*` for declarative per-target tweaks.
-3. `crossbind.config.js` `env: {}` for runtime env vars.
-4. `crossbind.build.js` hooks (package authors only) for source-acquisition / build-step logic.
-5. `extensions[]` for cross-cutting plugin behavior.
-6. `~/.crossbind.json` for system-wide environment defaults.
+2. `targetSpecs[].specs.*` for declarative per-target tweaks, runtime env vars included.
+3. `crossbind.build.js` hooks (package authors only) for source-acquisition / build-step logic.
+4. `extensions[]` for cross-cutting plugin behavior.
+5. `~/.crossbind.json` for system-wide environment defaults.
 
-## The 18 override points
+## The 17 override points
 
 ### Layer 1 — Target filter (narrow the build matrix)
 
@@ -33,7 +32,7 @@ When to reach for this **first**: shipping faster (don't build iOS for an intern
 
 #### 2. `targetSpecs[].specs.cmake.compileOptions`
 
-Add compiler flags to the sources crossbind compiles with its own CMakeLists (your native sources and the generated bindings) for matching targets. Entries from dependencies are added too. CMake configure flags (`-D…`) for an upstream library belong in its recipe's `getBuildParams` (#12); an array under `specs.cmake` is rejected.
+Add compiler flags to the sources crossbind compiles with its own CMakeLists (your native sources and the generated bindings) for matching targets. Entries from dependencies are added too. CMake configure flags (`-D…`) for an upstream library belong in its recipe's `getBuildParams` (#11); an array under `specs.cmake` is rejected.
 
 ```js
 targetSpecs: [{
@@ -55,12 +54,18 @@ targetSpecs: [{
 
 #### 4. `targetSpecs[].specs.env`
 
-Inject env vars into the running Wasm process (and into compiler env at build).
+Env vars for the running module. A value can be a function of `(state, target)` — keep it pure, crossbind calls it wherever it reads the env; see [ADR-0003](../adr/0003-function-typed-env-values.md) — and `_CROSSBIND_DATA_PATH_` in a value becomes the runtime data path. `crossbind.config.js` has no top-level `env`.
 
 ```js
 targetSpecs: [{
     runtime: 'st',
-    specs: { env: { GDAL_NUM_THREADS: '0' } },
+    specs: {
+        env: {
+            GDAL_NUM_THREADS: '0',
+            DATA_DIR: (state, target) => `${state.config.paths.build}/data`,
+            CERT_PATH: '_CROSSBIND_DATA_PATH_/certs/cacert.pem',
+        },
+    },
 }]
 ```
 
@@ -88,19 +93,7 @@ targetSpecs: [{
 
 ### Layer 3 — `crossbind.config.js` global
 
-#### 7. `env: { KEY: 'value' | ((state, target) => string) }`
-
-Env vars passed to Wasm at runtime. Function values resolved lazily — see [ADR-0003](../adr/0003-function-typed-env-values.md).
-
-```js
-env: {
-    APP_MODE: 'production',
-    DATA_DIR: (state, target) => `${state.config.paths.build}/data`,
-    CERT_PATH: '_CROSSBIND_DATA_PATH_/certs/cacert.pem',  // _CROSSBIND_DATA_PATH_ replaced at runtime
-}
-```
-
-#### 8. `functions.isEnabled: (target) => boolean`
+#### 7. `functions.isEnabled: (target) => boolean`
 
 Override the default "is this target buildable?" check (default: returns true if the target's output binary already exists). Useful for skipping heavy targets in CI subsets.
 
@@ -110,11 +103,11 @@ functions: {
 }
 ```
 
-#### 9. `dependencies: [...]`
+#### 8. `dependencies: [...]`
 
 Each entry is another resolved crossbind config. Affects build order (pnpm topological per ADR-0002), and the dep's `target.runtime: 'mt'` auto-promotes you to `mt`.
 
-#### 10. `paths.cmake`
+#### 9. `paths.cmake`
 
 Point at a custom `CMakeLists.txt` instead of the project default. Rare — crossbind's bundled CMakeLists works for almost every project.
 
@@ -122,21 +115,21 @@ Point at a custom `CMakeLists.txt` instead of the project default. Rare — cros
 
 > These are for `ports/*` authors wrapping an upstream library. Consumer apps don't write `crossbind.build.js`.
 
-#### 11. `getURL: (version) => string`
+#### 10. `getURL: (version) => string`
 
 Source acquisition: the CLI downloads the tarball at this URL and extracts it.
 
-#### 12. `getBuildParams: (target, depPaths, ext, buildPath) => string[]`
+#### 11. `getBuildParams: (target, depPaths, ext, buildPath) => string[]`
 
 Returns flags appended to `cmake configure` (or `configureProgram`, default `./configure`, if `buildType: 'configure'`). Receives the current `target`, this target's dependency paths (`depPaths.<libName>.header`, `.lib`), the library extension (`'so'` on Android, `'a'` elsewhere) and the target's build directory.
 
-#### 13. `getExtraLibs: (target) => string[]`
+#### 12. `getExtraLibs: (target) => string[]`
 
 Returns extra libs to add to the link line beyond what `dependencies` already wires up.
 
-#### 14. `env: ((target) => string[]) | string[]`
+#### 13. `env: ((target) => string[]) | string[]`
 
-Build-time env vars (CFLAGS, CXXFLAGS, LDFLAGS as string literals). Different from `crossbind.config.js` `env` which is runtime.
+Build-time env vars (CFLAGS, CXXFLAGS, LDFLAGS as string literals). Different from `targetSpecs[].specs.env` (#4), which is runtime.
 
 ```js
 env: (target) => [
@@ -145,7 +138,7 @@ env: (target) => [
 ]
 ```
 
-#### 15. `replaceList: [{regex, replacement, paths}]` or `sourceReplaceList: (target, depPaths) => Array<...>`
+#### 14. `replaceList: [{regex, replacement, paths}]` or `sourceReplaceList: (target, depPaths) => Array<...>`
 
 Patch upstream source via regex. Use when the upstream lib has CPU intrinsics, raw pointers, or platform-specific assembly that doesn't compile for your target.
 
@@ -161,11 +154,11 @@ Real example: gdal-wasm uses this to gate CPU intrinsics; curl-wasm uses it to s
 
 `replaceList` patches the extracted source once, for every target. `sourceReplaceList` runs per target in a `configure` build, on the target's copy of the source.
 
-#### 16. `beforeRun: (cmakeDir) => Array<{program, parameters}>`
+#### 15. `beforeRun: (cmakeDir) => Array<{program, parameters}>`
 
 Run shell commands before cmake configure (e.g. `autoreconf -fi` for autotools projects).
 
-#### 17. `copyToSource` / `copyToDist: { 'src': ['dest', ...] }`
+#### 16. `copyToSource` / `copyToDist: { 'src': ['dest', ...] }`
 
 `copyToSource` injects files into the build dir before configure (gdal's empty.cpp linker hint). `copyToDist` ships extra files alongside artifacts (openssl's cacert.pem).
 
@@ -175,7 +168,7 @@ copyToDist: { 'assets/cacert.pem': ['ssl/certs/cacert.pem'] }
 
 ### Layer 5 — Cross-cutting plugin
 
-#### 18. `extensions: [Extension]`
+#### 17. `extensions: [Extension]`
 
 Plugin objects with hooks at config-load and build-step boundaries:
 
@@ -214,14 +207,14 @@ Want to change something for ALL builds?
 Want to change something for ONE platform / runtime / buildType?
 └── targetSpecs[] with the right filter. (Layer 2)
 
-Need an env var passed to the running Wasm?
-└── env: {} in crossbind.config.js. Use function form if it depends on state. (Layer 3)
+Need an env var passed to the running module?
+└── targetSpecs[].specs.env. Use function form if it depends on state. (Layer 2 #4)
 
 Are you wrapping an upstream library that needs source patching?
-└── crossbind.build.js replaceList or sourceReplaceList (Layer 4 #15).
+└── crossbind.build.js replaceList or sourceReplaceList (Layer 4 #14).
 
 Need to share an override across packages?
-└── extensions[] (Layer 5 #18).
+└── extensions[] (Layer 5 #17).
 
 Need to set XCODE team or pick a non-Docker runner?
 └── ~/.crossbind.json (Layer 6).

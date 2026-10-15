@@ -135,7 +135,7 @@ flowchart TD
     Filter -->|"Just narrow which targets build"| L1["Layer 1: target.{platform,arch,runtime,buildType}"]
     Filter -->|"Change defaults too"| Spec{"Per-target tweak?"}
     Spec -->|"Yes, declarative"| L2["Layer 2: targetSpecs[].specs.{cmake,binary.emccFlags,env,data,ignoreLibName}"]
-    Spec -->|"Project-wide"| L3a["Layer 3: crossbind.config.js env / functions.isEnabled / dependencies"]
+    Spec -->|"Project-wide"| L3a["Layer 3: crossbind.config.js functions.isEnabled / dependencies / paths.cmake"]
     Spec -->|"Authoring a package?"| L4["Layer 4: crossbind.build.js hooks (getURL, getBuildParams, replaceList, env, copyToSource, copyToDist, beforeRun, getExtraLibs, setState)"]
     Spec -->|"Cross-package plugin"| L5["Layer 5: extensions[] (loadConfig.after, buildWasm.beforeBuild*, createLib.setFlag*)"]
     Spec -->|"Machine-wide"| L6["Layer 6: ~/.crossbind.json (RUNNER, XCODE_DEVELOPMENT_TEAM)"]

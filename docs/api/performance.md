@@ -25,8 +25,9 @@ The rule: **if your build runs and your app works, the defaults are fine**. Only
 | `-sDYNAMIC_EXECUTION=0` | always | Disable eval / new Function | 🔒 Required for CSP-strict environments |
 | `-sRESERVED_FUNCTION_POINTERS=200` | always | Function table size | ⚠️ Increase if "Cannot enlarge function table" error |
 | `-sALLOW_MEMORY_GROWTH=1` | always | Heap can grow at runtime | 🔒 Don't disable |
-| `-sFORCE_FILESYSTEM=1` | browser, node | Always include FS | 🔒 crossbind fs adapters depend on this |
+| `-sFORCE_FILESYSTEM=1` | always | Always include FS | 🔒 crossbind fs adapters depend on this |
 | `-sWASMFS` | browser, node | New filesystem backend | 🔒 OPFS depends on this |
+| `-Wl,--wrap=__wasi_fd_sync`, `-Wl,--wrap=__syscall_fdatasync` | node | `fsync` and `fdatasync` on a host file succeed instead of trapping in WasmFS's Node backend | 🔒 Don't touch |
 | `-sEXPORT_NAME=Module2` | always | JS namespace name | 🔒 crossbind bundling depends on this |
 
 Emscripten 6.0.9 enables WebAssembly BigInt integration for every supported engine. Crossbind
@@ -38,7 +39,7 @@ therefore relies on that toolchain default instead of passing the deprecated `WA
 | runtimeEnv | `-sENVIRONMENT` | `-sEXPORTED_RUNTIME_METHODS` |
 |------------|---|---|
 | browser | `web,webview,worker` | `["FS", "ENV"]` |
-| edge | `web` | `["ENV"]` |
+| edge | `web` | `["FS", "ENV"]` |
 | node | `node` | `["FS", "ENV"]` |
 
 ### CMake flags (set by `getCmakeParameters.js`)

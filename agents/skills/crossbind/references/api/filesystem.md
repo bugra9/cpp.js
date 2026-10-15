@@ -23,7 +23,7 @@ Are you on the browser?
     ├── Need persistence across page reloads?
     │   ├── No  → fs: { opfs: false }  → mount under /memfs/<app>/
     │   │
-    │   └── Yes → REQUIRES useWorker: true  → mount under /opfs/<app>/
+    │   └── Yes → REQUIRES useWorker: true and fs.opfs (on by default in mt builds)  → mount under /opfs/<app>/
     │             ├── Browser supports OPFS? (Chrome 86+, FF 111+, Safari 15.2+)
     │             │   ├── Yes → runtime preflight: getDirectory() actually works?
     │             │   │   ├── Yes → real persistence
@@ -44,7 +44,7 @@ crossbind mounts two namespaces under the Wasm filesystem root:
 
 | Mount | Backed by | Persistence | Available when |
 |-------|-----------|-------------|----------------|
-| `/opfs/<app>/` | Browser's Origin Private File System | Survives page reloads, browser restarts | `useWorker: true` + `fs.opfs !== false` + browser support |
+| `/opfs/<app>/` | Browser's Origin Private File System | Survives page reloads, browser restarts | `useWorker: true` + `fs.opfs` (the default in `mt` builds) + browser support |
 | `/memfs/<app>/` | In-memory (Emscripten MEMFS) | Tab session only | Always |
 
 `<app>` is `general.name` from `crossbind.config.js` (the same name the CLI uses for `lib<name>.a`).
@@ -114,7 +114,7 @@ imgEl.src = url
 2. **Forgetting the `<app>` prefix** → crossbind auto-creates `/memfs/<app>/automounted` at startup. If you write to `/memfs/foo` (no `<app>`) it works but won't be cleaned up on `terminate`.
 3. **Assuming OPFS persists across origins** — it doesn't. Files written from `app.example.com` are invisible to `other.example.com`. Standard origin isolation.
 4. **Using `m.FS` from before `onRuntimeInitialized`** — `m.FS` is undefined until init completes. Use the `onRuntimeInitialized: (m) => {…}` hook or await the `initNative(...)` promise first.
-5. **Calling `fs:{ opfs: false }` and then mounting `/opfs/...`** → throws: "OPFS is disabled. Enable fs.opfs in config to mount under /opfs/."
+5. **Mounting `/opfs/...` with OPFS off**, by `fs: { opfs: false }` or in an `st` build that does not set `fs: { opfs: true }` → throws: "OPFS is disabled. Enable fs.opfs in config to mount under /opfs/."
 
 ## Per-runtime cheat sheet
 
@@ -122,7 +122,7 @@ imgEl.src = url
 |---------|-------------|-------------|--------------|-------|
 | Browser (no worker) | n/a | ❌ throws | ✅ | Tab-session memory only |
 | Browser + `useWorker: true` | ✅ | ✅ if browser supports OPFS, else fallback to `/memfs/` | ✅ | Persistent option |
-| Node.js | n/a | n/a | n/a (uses host fs) | `m.FS` reads real disk via fs-node adapter |
+| Node.js | n/a | n/a | n/a (uses host fs) | `m.FS` reads real disk via fs-node adapter; `fsync` on a host file returns once the OS has the data, without forcing it to disk |
 | Cloudflare Worker / edge | ❌ unavailable | ❌ unavailable | ✅ in-memory equivalent | No persistence; per-invocation memory |
 | React Native (CLI / Expo) | n/a (uses JSI bridge) | n/a | n/a | App's sandbox storage via React Native APIs |
 
