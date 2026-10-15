@@ -30,7 +30,7 @@ import isSourceCmakePackage from '../utils/isSourceCmakePackage.js';
 const INTERFACE_FORMAT = 'swig-macros-4';
 // Part of every bridge hash: each bridge carries the SWIG fork's runtime and all bridges of a module must share it, so
 // bridges from a fork before field bindings and constants are rebuilt.
-const BRIDGE_FORMAT = 'swig-extras-1';
+const BRIDGE_FORMAT = 'swig-extras-2';
 const predefinedMacros = new Map();
 const typeDefinitions = new Map();
 

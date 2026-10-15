@@ -261,6 +261,7 @@ template<typename R> constexpr bool isJsResult = std::is_void_v<R> || isJsArgume
 template<typename T> auto argumentFromJs(const emscripten::val &value) {
   using U = std::remove_cv_t<T>;
   if constexpr (std::is_same_v<U, const char *>) return fromJsCString<const char>(value);
+  else if constexpr (isFunctionPointer<U>) return fromJsCallback<U>(value);
   else if constexpr (std::is_pointer_v<U>) return fieldFromJs<U>(value);
   else if constexpr (std::is_same_v<U, bool>) {
     double number = 0;
