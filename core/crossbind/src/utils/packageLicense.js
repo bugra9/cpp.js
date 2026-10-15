@@ -74,9 +74,11 @@ export function nodePackageLicense({ name, version, repository, projectPath, add
 
 export function setManifestLicense(dir, expression) {
     const file = path.join(dir, 'package.json');
-    const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const text = fs.readFileSync(file, 'utf8');
+    const manifest = JSON.parse(text);
     if (manifest.license === expression) return;
-    fs.writeFileSync(file, `${JSON.stringify({ ...manifest, license: expression }, null, 4)}\n`);
+    const indent = text.match(/^[ \t]+(?=")/m)?.[0] ?? 4;
+    fs.writeFileSync(file, `${JSON.stringify({ ...manifest, license: expression }, null, indent)}\n`);
 }
 
 export function writeNodePackageLicense(dir, meta) {
