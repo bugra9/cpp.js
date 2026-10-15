@@ -124,6 +124,14 @@ describe('buildWasm link step', () => {
             + 'var argsWired=new Array(expectedArgCount);var invokerFuncArgs=[];var destructors=[];var thisWired;');
     });
 
+    test.each(Object.keys(ENVIRONMENTS))('exports FS from the %s link', async (runtimeEnv) => {
+        await buildWasm(makeTarget(runtimeEnv), { force: true });
+
+        const [, args] = run.mock.calls[0];
+        expect(args[args.indexOf('FORCE_FILESYSTEM=1') - 1]).toBe('-s');
+        expect(args[args.indexOf('EXPORTED_RUNTIME_METHODS=["FS", "ENV", "getExceptionMessage"]') - 1]).toBe('-s');
+    });
+
     // Emscripten's Node backend traps on fsync; node.cpp answers it for host files.
     test('wraps fsync and fdatasync on the node link only', async () => {
         await buildWasm(makeTarget('node'), { force: true });
