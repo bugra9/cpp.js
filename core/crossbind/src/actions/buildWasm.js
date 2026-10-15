@@ -260,12 +260,13 @@ export default async function buildWasm(target, options = {}) {
             // it any linked Rust package archive fails with undefined crossbind_* symbols.
             ...linkLibs, ...rustSources,
             '-s', 'WASM=1', '-s', 'MODULARIZE=1', '-s', 'DYNAMIC_EXECUTION=0',
-            '-s', 'RESERVED_FUNCTION_POINTERS=200', // '-s', 'FORCE_FILESYSTEM=1',
+            '-s', 'RESERVED_FUNCTION_POINTERS=200',
             '-s', 'ALLOW_MEMORY_GROWTH=1',
             // See the GROWABLE_ARRAYBUFFERS note in the browser block (Firefox/WebKit TextDecoder).
             '-s', 'GROWABLE_ARRAYBUFFERS=0',
+            '-s', 'FORCE_FILESYSTEM=1',
             '-s', 'ENVIRONMENT=web',
-            '-s', 'EXPORTED_RUNTIME_METHODS=["ENV", "getExceptionMessage"]',
+            '-s', 'EXPORTED_RUNTIME_METHODS=["FS", "ENV", "getExceptionMessage"]',
             '-fwasm-exceptions',
             '-sEXPORT_EXCEPTION_HANDLING_HELPERS',
             '-o', `${state.config.paths.build}/${target.rawJsName}`,
