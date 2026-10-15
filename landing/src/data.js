@@ -8,7 +8,7 @@
 // generated module.
 //
 // Content note (15 Aug 2026): every figure below is now measured or counted from this repo -
-// 16 library recipes, 68 wasi commands, 30 build targets, 20 override points, one portable
+// 16 library recipes, 68 wasi commands, 30 build targets, 17 override points, one portable
 // agent skill, 12 templates, the pinned upstream versions in SHOWCASE, live GitHub counters, and
 // the real release notes. The performance section is gone entirely - see the note below
 // RUNTIMES for the measurements that retired it.
@@ -367,8 +367,8 @@ export const FEATURES = [
         guide: 'configuration',
         title: 'Override anything',
         summary:
-            'Twenty documented override points: swap flags per target, patch sources, drop a dependency from the graph, or rebuild any prebuilt from source.',
-        tag: ['20 OVERRIDE POINTS', 'REBUILD FROM SOURCE'],
+            'Seventeen documented override points: swap flags per target, patch sources, drop a dependency from the graph, or rebuild any prebuilt from source.',
+        tag: ['17 OVERRIDE POINTS', 'REBUILD FROM SOURCE'],
     },
     {
         id: 'platforms',

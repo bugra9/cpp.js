@@ -82,7 +82,7 @@ export default {
     'LDFLAGS="-Wl,--no-undefined"',
   ],
     // Function form receives target; can also be a plain string array.
-    // DIFFERENT from crossbind.config.js `env: {}` which is RUNTIME env.
+    // DIFFERENT from crossbind.config.js `targetSpecs[].specs.env`, which is RUNTIME env.
 
   // ─────────────────────────────────────────────────────────────
   // Extra link libraries

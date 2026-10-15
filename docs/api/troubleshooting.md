@@ -153,9 +153,9 @@ You mounted `/opfs/...` but didn't set `useWorker: true` on `initNative(opts)`.
 
 ### `Path /opfs/... but OPFS is disabled. Enable fs.opfs in config`
 
-You explicitly set `fs: { opfs: false }` and then tried to use `/opfs/...`.
+OPFS is off, as `fs: { opfs: false }` or a single-threaded build leaves it, and you tried to use `/opfs/...`.
 
-- **Fix:** either remove the `opfs: false` (it's true by default) or mount under `/memfs/...`.
+- **Fix:** either set `fs: { opfs: true }` (the default only in `mt` builds) or mount under `/memfs/...`.
 
 ### `RuntimeError: out of memory` (Wasm runtime)
 

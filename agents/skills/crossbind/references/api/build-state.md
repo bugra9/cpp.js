@@ -255,7 +255,7 @@ type TargetSpec = {
             emccFlags?: string[],                // extra -s/-O flags appended to emcc command
             wasiFlags?: string[],                // extra link flags for wasi command builds (see wasi.md)
         },
-        env?:           Record<string, string>,  // env vars passed to Wasm process at runtime (or via CFLAGS/LDFLAGS at build)
+        env?:           Record<string, string>,  // env vars of the running module; a value may be a function of (state, target)
         data?:          Record<string, string>,  // bundle data files: { 'src-dir': 'dest-dir' }
         ignoreLibName?: string[],                // suppress specific .a names from being linked
     },
@@ -314,7 +314,7 @@ Used internally by built-in extensions (e.g. for OpenSSL Android cert injection)
 | Add a CMake configure flag (`-D…`) to a recipe build | `getBuildParams` return value |
 | Add a compiler flag to the sources crossbind compiles itself | `targetSpecs[].specs.cmake.compileOptions` |
 | Add an emcc flag | `targetSpecs[].specs.binary.emccFlags` |
-| Inject env to the running Wasm | `targetSpecs[].specs.env` or `crossbind.config.js` `env: {}` |
+| Inject env to the running Wasm | `targetSpecs[].specs.env` |
 | Patch upstream source | `crossbind.build.js` `replaceList` or `sourceReplaceList(target, depPaths)` hook |
 | Bundle data files into the .data preload | `targetSpecs[].specs.data` or platform-variant `data: {}` |
 | Run something before cmake | `crossbind.build.js` `beforeRun(cmakeDir)` |

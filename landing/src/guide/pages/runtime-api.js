@@ -118,8 +118,8 @@ console.log(Native.sample());`,
             head: ['Member', 'Available on', 'Does'],
             rows: [
                 ['`toArray(vector)`', 'every runtime', 'returns a bound `std::vector` as an array'],
-                ['`toVector(Vector, array)`', 'every runtime', 'returns an array as a bound vector; wasm builds also take the class name as a string'],
-                ['`FS`', 'browser and Node.js wasm builds', 'the Emscripten virtual filesystem'],
+                ['`toVector(Vector, array)`', 'every runtime', 'returns an array as a bound vector; takes the class or its name as a string'],
+                ['`FS`', 'wasm builds: browser, Node.js and edge', 'the Emscripten virtual filesystem, in memory on the edge'],
                 ['`getFileBytes(path)`, `getFileList(start?)`', 'browser and Node.js wasm builds', 'a file as a `Uint8Array`; a recursive `[{ path, size }]` listing'],
                 [
                     '`getDefaultPath()`, `getFinalPath(path)`, `getRandomPath(start?)`, `autoMountFiles(files, parent?)`',

@@ -89,7 +89,7 @@ export default {
             items: [
                 'Narrow which targets build: `target.{platform, arch, runtime, buildType}`.',
                 'Per-target flags and data, declaratively: `targetSpecs[].specs.{cmake.compileOptions, binary.emccFlags, env, data, ignoreLibName, binary.wasiFlags}`.',
-                'Project-wide: `dependencies`, `env`, `functions.isEnabled`.',
+                'Project-wide: `dependencies`, `functions.isEnabled`, `paths.cmake`.',
                 'Package authoring: `crossbind.build.js` hooks - source fetch, patches, build parameters, extra libs.',
                 'Cross-package plugins: `extensions[]` hooks at config-load and build-step boundaries.',
                 'Machine-wide: `~/.crossbind.json` (runner, Xcode team, local wasi-sdk).',

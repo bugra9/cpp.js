@@ -75,7 +75,7 @@ npx wrangler deploy`,
             type: 'ul',
             items: [
                 '**Single-threaded only.** `-r mt` and `useWorker` need Web Workers, which an isolate does not have.',
-                '**No filesystem for JavaScript.** The edge build exports no `m.FS` and has no OPFS. Keep durable data in a store such as R2 or KV, read it in JavaScript and pass it to your bound functions.',
+                '**Files live in memory.** `m.FS` keeps them only as long as the isolate, and there is no OPFS. Keep durable data in a store such as R2 or KV, read it in JavaScript and write it to `m.FS` or pass it to your bound functions.',
                 '**No header constants.** `#define` and `const` values bind only for names an app imports, and a Worker imports no header.',
                 '**Platform caps.** A free Worker gets 10 ms of CPU per request, and every plan caps a Worker\'s size: check your `.wasm` against yours.',
             ],

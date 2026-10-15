@@ -115,7 +115,7 @@ console.log(typeof SharedArrayBuffer);  // must be 'function'`,
         {
             type: 'ul',
             items: [
-                '**Edge runtimes** (Cloudflare Workers, Deno Deploy, Vercel Edge) have no Worker constructor and no `SharedArrayBuffer`: `st` only, and no filesystem for JavaScript.',
+                '**Edge runtimes** (Cloudflare Workers, Deno Deploy, Vercel Edge) have no Worker constructor and no `SharedArrayBuffer`: `st` only, with `m.FS` in memory.',
                 '**React Native** builds are always `mt`: the threads are the device\'s own, so there are no headers and no isolation, and `useWorker` does not apply.',
                 '**Node.js** runs `mt` without any host configuration.',
             ],

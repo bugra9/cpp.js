@@ -73,7 +73,8 @@ initNative.terminate(): void   // browser-only when useWorker:true
   // ─────────────────────────────────────────────────────────────
   fs: {
     opfs: true,
-      // Browser default true. When false, only memfs is mounted.
+      // Browser default: true for a multithreaded build (runtime: 'mt'),
+      // false for a single-threaded one. When false, only memfs is mounted.
       // Has no effect outside the browser.
       //
       // Even when true, OPFS only activates if:
@@ -90,15 +91,16 @@ initNative.terminate(): void   // browser-only when useWorker:true
   // ─────────────────────────────────────────────────────────────
   env: {
     SOME_VAR: 'static-string',
-    DYNAMIC_VAR: (state, target) => `${state.config.paths.build}/data`,
-      // Values can be strings OR functions of (state, target).
-      // Functions resolve lazily at the point of use (build-time
-      // env wiring) and produce a string for the runtime.
-      // See ADR-0003.
+    DATA_VAR: '_CROSSBIND_DATA_PATH_/myapp',
+      // String values. They join the build-time env (targetSpecs[].specs.env
+      // in crossbind.config.js, whose values may also be functions of
+      // (state, target), see ADR-0003) and win over it key by key.
       //
       // Token replacement: the literal string `_CROSSBIND_DATA_PATH_`
-      // inside any value is replaced with the runtime data path
-      // (e.g. /opfs/<app> in browser, host fs path in Node).
+      // inside any value is replaced with the runtime data path:
+      // /crossbind in the browser and on the edge (the preloaded data),
+      // the data directory next to the module in Node.js (`dataPath`
+      // overrides it for a Node-API build).
   },
 
   // ─────────────────────────────────────────────────────────────
@@ -193,7 +195,7 @@ console.log(m.add(2, 3))  // an embind-exported function
 ```js
 const m = await initNative({
   useWorker: true,           // mandatory for OPFS
-  fs: { opfs: true },        // default, shown for clarity
+  fs: { opfs: true },        // the default in mt builds; st builds need it
 })
 
 // Files written under /opfs/<appName>/ survive page reloads.
