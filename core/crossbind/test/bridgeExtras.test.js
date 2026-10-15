@@ -174,11 +174,19 @@ describe('bridgeExtras', () => {
         ]);
     });
 
+    // iconv.h's `#define iconvlist libiconvlist`: SWIG's own binding takes a JavaScript function for the callback, so the alias must too.
+    test('passes a JavaScript function to a function pointer parameter as a callback', () => {
+        const callback = EXTRAS_RUNTIME.indexOf('else if constexpr (isFunctionPointer<U>) return fromJsCallback<U>(value);');
+
+        expect(callback).toBeGreaterThan(-1);
+        expect(callback).toBeLessThan(EXTRAS_RUNTIME.indexOf('else if constexpr (std::is_pointer_v<U>) return fieldFromJs<U>(value);'));
+    });
+
     // Every bridge carrying the runtime registers through it, and bridges of one module must agree on it.
     test('keeps the C++ runtime the bridge format names', () => {
         const hash = crypto.createHash('sha256').update(EXTRAS_RUNTIME).digest('hex').slice(0, 16);
 
-        expect(hash, 'the extras runtime changed: bump BRIDGE_FORMAT in actions/createInterface.js, then this hash').toBe('251c523d8c879d8b');
+        expect(hash, 'the extras runtime changed: bump BRIDGE_FORMAT in actions/createInterface.js, then this hash').toBe('659b3bbad87b807c');
     });
 
     test('adds nothing when the app imports no such name', () => {
