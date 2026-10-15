@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import initNative from '../dist/crossbind-example-backend-nodejs-wasm-wasm-wasm32-st-release.node.js';
 
 function wait(ms, fn) {
@@ -14,6 +17,11 @@ import { trackExports } from '@crossbind/conformance/spec/coverage.mjs';
 
 initNative().then(async (m) => {
     console.log(`TEMPLATES ${m.TemplateLibs.source()} | ${m.TemplateLibs.cmake()}`);
+
+    // An fsync on a host file aborted the module until node.cpp answered it; SQLite calls one on every commit.
+    const fsyncDir = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-fsync-'));
+    console.log(`FSYNC ${m.Native.syncFiles(fsyncDir)}`);
+    fs.rmSync(fsyncDir, { recursive: true, force: true });
 
     // e2e/run.mjs starts the server the curl cases talk to; a plain `pnpm start` has none.
     if (process.env.CURL_PROBE_URL) {

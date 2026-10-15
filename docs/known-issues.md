@@ -27,3 +27,14 @@ C++, which this tree binds when imported by name (`docs/api/cpp-binding-rules.md
 - Seen: 2026-09-25
 - Check: `grep -c NOT_IN_THIS_BUILD landing/demos/lib-sqlite3/direct/crossbind.config.js` prints 2.
 - Remove when the demos build against a release with these fixes and the workarounds and texts are updated.
+
+## fsync in a Node.js wasm build does not reach the disk
+
+Emscripten's WasmFS Node backend has no `NodeFile::flush`, so an `fsync` or `fdatasync` on a host file used to
+trap and abort the module; SQLite's unix VFS calls one on every commit. `core/crossbind/src/assets/cpp-runtime/node.cpp`
+answers both for host files without the backend, as NODERAWFS does: the data has reached the operating system, but
+nothing forces it to disk.
+
+- Seen: 2026-10-15
+- Check: `docker run --rm --entrypoint grep "ghcr.io/crossbind/web@$(node -p "require('./core/crossbind/src/assets/toolchain-digests.json').images.web.index")" -c 'implement NodeFile::flush' /emsdk/upstream/emscripten/system/lib/wasmfs/backends/node_backend.cpp` prints 1.
+- Remove when the pinned emsdk implements `NodeFile::flush`; then drop the `--wrap` pair from `buildWasm.js` and `node.cpp`.

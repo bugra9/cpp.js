@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import initNative from '../dist/crossbind-example-backend-nodejs-wasm-wasm-wasm32-mt-release.node.js';
 import { runConformance } from '@crossbind/conformance/spec/run.mjs';
 import { kitExports } from '@crossbind/conformance/spec/bridgeExports.mjs';
@@ -13,6 +16,12 @@ function wait(ms, fn) {
 
 initNative().then(async (m) => {
     const { Native } = m;
+
+    // An fsync on a host file aborted the module until node.cpp answered it; SQLite calls one on every commit.
+    const fsyncDir = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-fsync-'));
+    console.log(`FSYNC ${Native.syncFiles(fsyncDir)}`);
+    fs.rmSync(fsyncDir, { recursive: true, force: true });
+
     try {
         Native.runOnThread();
         const threadResult = await wait(5000, () => Native.getThreadResult());

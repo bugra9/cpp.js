@@ -6,6 +6,7 @@ import { execFile } from 'node:child_process';
 import { curlProbeMismatch, startCurlProbeServer } from '../../config/curl-probe-server.mjs';
 
 const expected = /hello from thread/;
+const fsync = /^FSYNC fsync=0 fdatasync=0 sqlite=kept$/m;
 // Shared conformance list: pass must equal run (backreference); skips are explicit lines.
 const conformance = /^CONFORMANCE (\d+)\/\1\b.*$/m;
 
@@ -34,7 +35,12 @@ execFile('node', ['--experimental-wasm-jspi', 'src/index.mjs'], { timeout: 12000
         console.error(`conformance failed:\n${out}`);
         process.exit(1);
     }
-    console.log('ok:', stdout.trim().split('\n')[0]);
+    if (!fsync.test(out)) {
+        console.error(`fsync on a host file failed:\n${out}`);
+        process.exit(1);
+    }
+    console.log('ok:', stdout.trim().split('\n').find((line) => expected.test(line)));
     console.log('ok: curl probe');
+    console.log('ok: fsync');
     console.log('ok:', out.match(conformance)[0]);
 });
