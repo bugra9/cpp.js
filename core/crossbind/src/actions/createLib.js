@@ -16,6 +16,7 @@ import { withDependencyBridges } from '../utils/dependencyBridges.js';
 import { targetArchiveFlags } from '../utils/archiveFlags.js';
 import { conanInputsOf } from '../utils/conanDependencies.js';
 import { nativeSourceStampChanged, writeNativeSourceStamp } from '../utils/nativeSourceStamp.js';
+import resetCMakeCacheForSource from '../utils/resetCMakeCacheForSource.js';
 
 const cpuCount = Math.max(1, os.cpus().length - 1);
 const sharedPlatforms = ['android'];
@@ -239,6 +240,7 @@ export default function createLib(target, fileType, options = {}) {
                 stageWasiStubs();
                 buildParams.push(`-DCMAKE_EXE_LINKER_FLAGS=${[...wasiCxxFlags(), wasiStubObj, ...WASI_LINK_LIBS].join(' ')}`);
             }
+            resetCMakeCacheForSource(buildPath, cmakeDir, target);
             run(null, [
                 target.platform === 'ios' && state.config.build?.useIOSCMake ? 'ios-cmake' : 'cmake', cmakeDir,
                 `-DCMAKE_BUILD_TYPE=${buildType}`,
