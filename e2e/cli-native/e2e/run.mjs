@@ -13,7 +13,7 @@ const PE_HEADER_OFFSET = 0x3c;
 const PE_MACHINE = { x64: 0x8664, arm64: 0xaa64 };
 const GLIBC_IMAGE = 'debian:10';
 const MUSL_IMAGES = ['alpine:3.21', 'debian:trixie'];
-const SYSTEM_LIBRARY = /^(linux-vdso|libdl|libpthread|libm|libc|libgcc_s|librt|\/lib\/ld-linux|\/lib64\/ld-linux)/;
+const SYSTEM_LIBRARY = /^(linux-vdso|libdl|libpthread|libm|libc|libgcc_s|librt)\.so|^\/lib(64)?\/ld-linux/;
 
 const dist = resolve(import.meta.dirname, '../dist');
 const arch = process.arch === 'arm64' ? 'arm64' : 'x64';
@@ -105,6 +105,9 @@ checkWindows();
 if (isDockerAvailable()) {
     checkGlibc();
     checkMusl();
+} else if (process.env.CI) {
+    console.error('FAIL: docker not available - CI has to run the Linux executables.');
+    process.exit(1);
 } else {
     console.log('SKIP: docker not available - the Linux executables were not run.');
 }
