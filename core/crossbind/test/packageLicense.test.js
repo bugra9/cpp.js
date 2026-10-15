@@ -96,6 +96,24 @@ describe('writeNodePackageLicense', () => {
         expect(sbom.components.map((component) => component.name).sort()).toEqual(gdalRows.map((entry) => entry.name).sort());
     });
 
+    test.each([['two spaces', '  '], ['a tab', '\t']])('keeps a manifest indented with %s as it is', (_, indent) => {
+        const file = path.join(work, 'package.json');
+        fs.writeFileSync(file, `${JSON.stringify({ name: 'x', license: 'MIT', os: ['linux'] }, null, indent)}\n`);
+
+        setManifestLicense(work, 'MIT AND Zlib');
+
+        expect(fs.readFileSync(file, 'utf8')).toBe(`${JSON.stringify({ name: 'x', license: 'MIT AND Zlib', os: ['linux'] }, null, indent)}\n`);
+    });
+
+    test('indents a manifest that has no indentation of its own with four spaces', () => {
+        const file = path.join(work, 'package.json');
+        fs.writeFileSync(file, '{"name":"x","license":"MIT"}');
+
+        setManifestLicense(work, 'MIT AND Zlib');
+
+        expect(fs.readFileSync(file, 'utf8')).toBe(`${JSON.stringify({ name: 'x', license: 'MIT AND Zlib' }, null, 4)}\n`);
+    });
+
     test('leaves package.json untouched when its license is already the derived one', () => {
         const file = path.join(work, 'package.json');
         fs.writeFileSync(file, '{"name":"x","license":"MIT AND Zlib"}');
