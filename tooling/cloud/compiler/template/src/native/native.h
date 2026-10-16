@@ -2,7 +2,8 @@
 
 #include <string>
 
-// Everything this header declares can be called from JavaScript.
+// Every public function and class declared here can be called
+// from JavaScript.
 std::string greet(const std::string &name);
 
 class Counter {

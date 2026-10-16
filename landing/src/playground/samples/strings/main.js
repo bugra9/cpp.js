@@ -9,5 +9,4 @@ console.log(shout('hello'));
 const colors = split('red,green,blue', ',');
 console.log(colors.size(), 'parts:', m.toArray(colors));
 
-const numbers = m.toVector('VectorInt', [1, 2, 3, 4]);
-console.log('total:', total(numbers));
+console.log('total:', total([1, 2, 3, 4]));

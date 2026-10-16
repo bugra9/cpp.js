@@ -19,7 +19,7 @@ export default {
         {
             type: 'callout',
             title: 'Rather try it first?',
-            text: `The [tutorial](${TUTORIAL_URL}) runs in your browser with nothing to install: seven short steps from a first function to C++ exceptions.`,
+            text: `The [tutorial](${TUTORIAL_URL}) runs in your browser with nothing to install: nine short steps from a first function to Rust and packages.`,
         },
         { type: 'h2', id: 'prerequisites', text: 'Prerequisites' },
         {

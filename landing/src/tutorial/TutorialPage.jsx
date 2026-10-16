@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { configSource } from '../../../tooling/cloud/compiler/packages.js';
 import PrevNext from '../components/PrevNext.jsx';
 import Tabs from '../components/Tabs.jsx';
 import { CodeWindow } from '../components/ui.jsx';
+import { PLAYGROUND_URL } from '../data.js';
 import Article from '../guide/Article.jsx';
 import { inline } from '../guide/inline.jsx';
 import { TUTORIAL_PAGES } from '../pages/tutorial.js';
@@ -13,6 +15,7 @@ import {
     Console, Notice, Toolbar, linkButtonStyle,
 } from '../playground/parts.jsx';
 import { MAIN, setFile } from '../playground/project.js';
+import { CONFIG } from '../playground/ProjectPanel.jsx';
 import { SAMPLES, findSample } from '../playground/samples.js';
 import { canRunPrebuilt, useRunner } from '../playground/useRunner.js';
 
@@ -24,16 +27,21 @@ const DRAFT_KEY = 'crossbind.tutorial.project';
 const RESET_QUESTION = 'Discard your changes to this step?';
 const MIN_EDITOR_HEIGHT = 320;
 
-// The header first, as each lesson reads, then the rest of the C++, then main.js.
+// The header first, as most lessons read, then the rest of the native files, then main.js, and last the config the
+// compiler writes from the packages, read-only as in the playground.
 const isHeader = (name) => /\.(?:h|hh|hpp|hxx)$/.test(name);
-const filesOf = (project) => Object.keys(project.files)
-    .sort((a, b) => Number(a === MAIN) - Number(b === MAIN) || Number(isHeader(b)) - Number(isHeader(a)) || a.localeCompare(b))
-    .map((name) => ({ id: name, label: name.replace(/^native\//, '') }));
+const filesOf = (project) => [
+    ...Object.keys(project.files)
+        .sort((a, b) => Number(a === MAIN) - Number(b === MAIN) || Number(isHeader(b)) - Number(isHeader(a)) || a.localeCompare(b))
+        .map((name) => ({ id: name, label: name.replace(/^native\//, '') })),
+    ...(project.packages.length ? [{ id: CONFIG, label: CONFIG }] : []),
+];
+const configOf = (project) => (project.packages.length ? configSource([...project.packages].sort()) : '');
 
 export default function TutorialPage({ tokens, page }) {
     const sample = findSample(page.sample);
     const files = filesOf(sample.project);
-    const [file, setOpenFile] = useState(files[0].id);
+    const [file, setOpenFile] = useState(page.open ?? files[0].id);
     const [drafts, setDrafts] = useState({});
     const [restored, setRestored] = useState(false);
     const runner = useRunner({ lazy: true });
@@ -41,8 +49,13 @@ export default function TutorialPage({ tokens, page }) {
     const project = projectOf(sample, drafts[sample.id]);
     const prebuilt = canRunPrebuilt(sample.id, project, sample.project);
     const index = TUTORIAL_PAGES.findIndex((step) => step.path === page.path);
+    // The last step's "where to go next" sits with the links to the other steps, so it follows the code once the
+    // columns stack.
+    const onwardAt = page.blocks.findIndex((block) => block.id === 'next');
+    const lesson = onwardAt === -1 ? page.blocks : page.blocks.slice(0, onwardAt);
+    const onward = onwardAt === -1 ? [] : page.blocks.slice(onwardAt);
     // As tall as the sample's longest file, so switching files never moves the console.
-    const editorHeight = Math.max(MIN_EDITOR_HEIGHT, ...Object.values(sample.project.files).map(fitHeight));
+    const editorHeight = Math.max(MIN_EDITOR_HEIGHT, ...[...Object.values(sample.project.files), configOf(sample.project)].map(fitHeight));
 
     useEffect(() => {
         setDrafts(readDrafts(DRAFT_KEY, SAMPLES).drafts);
@@ -90,8 +103,7 @@ export default function TutorialPage({ tokens, page }) {
                     {page.title}
                 </h1>
                 <p style={{ fontSize: 16.5, lineHeight: 1.65, color: tokens.textDim, margin: '0 0 24px' }}>{inline(page.lede, tokens)}</p>
-                <Article tokens={tokens} blocks={page.blocks} />
-                <PrevNext tokens={tokens} label="Tutorial steps" prev={TUTORIAL_PAGES[index - 1]} next={TUTORIAL_PAGES[index + 1]} />
+                <Article tokens={tokens} blocks={lesson} />
             </article>
 
             <section aria-label="Code" onKeyDown={onKeyDown} style={{ minWidth: 0 }}>
@@ -99,10 +111,14 @@ export default function TutorialPage({ tokens, page }) {
                     <CodeWindow
                         tokens={tokens}
                         padded={false}
-                        title={<Tabs tokens={tokens} label="Files" tabs={files} panelId="tutorial-file" active={file} onSelect={setOpenFile} style={{ marginBottom: 0 }} />}
+                        title={<Tabs tokens={tokens} label="Files" tabs={files} panelId="tutorial-file" active={file} onSelect={setOpenFile} style={{ marginBottom: 0, flexWrap: 'wrap' }} />}
                     >
                         <div role="tabpanel" id="tutorial-file" aria-labelledby={`tutorial-file-${file}`}>
-                            <Editor key={`${sample.id}/${file}`} tokens={tokens} label={file} value={project.files[file] ?? ''} onChange={edit} minHeight={editorHeight} />
+                            {file === CONFIG ? (
+                                <Editor key={`${sample.id}/${CONFIG}`} tokens={tokens} label={`${CONFIG}, written from the packages`} value={configOf(project)} onChange={() => {}} minHeight={editorHeight} readOnly />
+                            ) : (
+                                <Editor key={`${sample.id}/${file}`} tokens={tokens} label={file} value={project.files[file] ?? ''} onChange={edit} minHeight={editorHeight} />
+                            )}
                         </div>
                     </CodeWindow>
                 </div>
@@ -118,6 +134,9 @@ export default function TutorialPage({ tokens, page }) {
                     onSignOut={runner.leave}
                     onDeleteAccount={runner.removeAccount}
                 >
+                    <a href={`${PLAYGROUND_URL}?sample=${sample.id}`} className="tap-target" style={{ ...linkButtonStyle(tokens), fontSize: 13, textDecoration: 'none' }}>
+                        Open in playground
+                    </a>
                     {drafts[sample.id] && (
                         <button type="button" onClick={reset} disabled={runner.phase !== 'idle'} className="tap-target" style={{ ...linkButtonStyle(tokens), fontSize: 13 }}>
                             Reset
@@ -130,6 +149,11 @@ export default function TutorialPage({ tokens, page }) {
                     <Console tokens={tokens} lines={runner.lines} buildLog={runner.buildLog} lastRun={runner.lastRun} />
                 </div>
             </section>
+
+            <div style={{ minWidth: 0 }}>
+                {onward.length > 0 && <Article tokens={tokens} blocks={onward} />}
+                <PrevNext tokens={tokens} label="Tutorial steps" prev={TUTORIAL_PAGES[index - 1]} next={TUTORIAL_PAGES[index + 1]} />
+            </div>
         </main>
     );
 }

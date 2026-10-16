@@ -8,5 +8,7 @@ export const SAMPLE_LIST = Object.freeze([
     { id: 'inheritance', title: 'Inheritance', packages: [] },
     { id: 'callbacks', title: 'Callbacks', packages: [] },
     { id: 'errors', title: 'Exceptions', packages: [] },
+    { id: 'rust', title: 'Rust', packages: [] },
+    { id: 'packages', title: 'Packages', packages: ['port:sqlite3', 'crate:semver', 'conan:nlohmann_json'] },
     { id: 'hero', title: 'Five imports', packages: ['port:sqlite3', 'crate:uuid', 'conan:zlib'] },
 ].map((sample) => Object.freeze({ ...sample, packages: Object.freeze(sample.packages) })));
