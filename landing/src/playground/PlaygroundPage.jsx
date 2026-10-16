@@ -6,18 +6,23 @@ import {
 import ModernWorkspace from './ModernWorkspace.jsx';
 import PackageDialog from './PackageDialog.jsx';
 import { CONFIG } from './ProjectPanel.jsx';
+import TurboBar from './TurboBar.jsx';
+import TurboWorkspace from './TurboWorkspace.jsx';
 import { Notice, Toolbar, linkButtonStyle } from './parts.jsx';
 import {
     MAIN, addFile, addPackage, removeFile, removePackage, setFile,
 } from './project.js';
 import { DEFAULT_SAMPLE, SAMPLES, findSample } from './samples.js';
+import {
+    SKIN_PARAM, readSkin, storeSkin,
+} from './skin.js';
 import { canRunPrebuilt, useRunner } from './useRunner.js';
 import { shortName } from './workspace.jsx';
 
 // /playground/: a project of files and packages, the open file and the console. useRunner.js runs main.js against
 // the sample's prebuilt module, or against one the playground compiler (tooling/cloud) builds from the edited
-// project. The first render matches the prerendered page: the drafts, the linked sample, the sign-in result and the
-// session load afterwards.
+// project. All of it lives here once; the modern and the Turbo look only draw it. The first render matches the
+// prerendered page: the drafts, the linked sample, the look, the sign-in result and the session load afterwards.
 
 const DRAFT_KEY = 'crossbind.playground.project';
 const SAMPLE_PARAM = 'sample';
@@ -87,6 +92,7 @@ export default function PlaygroundPage({ tokens, page }) {
     const [sampleId, setSampleId] = useState(DEFAULT_SAMPLE.id);
     const [drafts, setDrafts] = useState({});
     const [restored, setRestored] = useState(false);
+    const [skin, setSkin] = useState('modern');
     const [active, setActive] = useState(MAIN);
     const [view, setView] = useState('code');
     // 0 while closed; each request for a new file counts up, so the form takes focus again when asked again.
@@ -109,12 +115,20 @@ export default function PlaygroundPage({ tokens, page }) {
         const id = linked ?? stored.sample ?? DEFAULT_SAMPLE.id;
         setDrafts(stored.drafts);
         setSampleId(id);
+        setSkin(readSkin(location.search));
         setRestored(true);
         // A sample restored from an earlier visit goes into the address too, so a copied link keeps it.
         if (!linked && id !== DEFAULT_SAMPLE.id) setParam(SAMPLE_PARAM, id);
         const loginNotice = takeLoginResult();
         if (loginNotice) runner.setNotice({ text: loginNotice });
     }, []);
+
+    // The pre-paint script in index.html hides the modern look from a Turbo visitor until this has run.
+    useEffect(() => {
+        if (!restored) return undefined;
+        document.documentElement.dataset.playgroundSkin = skin;
+        return () => delete document.documentElement.dataset.playgroundSkin;
+    }, [restored, skin]);
 
     // Applied to the project as each copy holds it, so a second tab's edits to the same sample survive.
     const change = (edit) => {
@@ -127,6 +141,15 @@ export default function PlaygroundPage({ tokens, page }) {
         runner.run({ sampleId, project, original: sample.project });
     };
 
+    // A choice made here is the visitor's own: it is stored, and a ?skin= the visit came with no longer applies. The
+    // mark changes at once, or the look being left would hide the one coming until the effect above runs.
+    function chooseSkin(next) {
+        document.documentElement.dataset.playgroundSkin = next;
+        setSkin(next);
+        storeSkin(next);
+        setParam(SKIN_PARAM, null);
+    }
+
     function selectSample(id) {
         setSampleId(id);
         setActive(MAIN);
@@ -136,13 +159,13 @@ export default function PlaygroundPage({ tokens, page }) {
         runner.clear();
     }
 
-    // The Reset link goes with the draft, so focus moves to the picker beside it.
+    // The Reset link goes with the draft, so focus moves to the picker beside it; Turbo's File menu keeps its own.
     function resetSample() {
         if (!window.confirm(RESET_QUESTION)) return;
         setDrafts((current) => without(current, sampleId));
         updateDrafts(DRAFT_KEY, SAMPLES, (store) => ({ ...store, drafts: without(store.drafts, sampleId) }));
         setActive(MAIN);
-        document.getElementById('playground-sample')?.focus();
+        if (skin === 'modern') document.getElementById('playground-sample')?.focus();
     }
 
     function open(name) {
@@ -199,27 +222,60 @@ export default function PlaygroundPage({ tokens, page }) {
 
     return (
         <main id="content">
-            <section className="playground-app" aria-label="Playground" onKeyDown={onKeyDown} style={{ borderBottom: `1px solid ${tokens.border}` }}>
-                <Toolbar
-                    tokens={tokens}
-                    phase={runner.phase}
-                    session={runner.session}
-                    ready={ready}
-                    prebuilt={prebuilt}
-                    onRun={run}
-                    onStop={runner.stop}
-                    onSignOut={runner.leave}
-                    onDeleteAccount={runner.removeAccount}
-                    style={{ margin: 0, padding: '10px var(--playground-x)', borderBottom: `1px solid ${tokens.border}` }}
-                >
-                    <h1 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: tokens.text }}>{page.title}</h1>
-                    <SamplePicker tokens={tokens} sampleId={sampleId} edited={edited} disabled={busy} onSelect={selectSample} onReset={resetSample} />
-                </Toolbar>
+            <section className="playground-app" data-skin={skin} aria-label="Playground" onKeyDown={onKeyDown} style={{ borderBottom: `1px solid ${tokens.border}` }}>
+                {skin === 'turbo' ? (
+                    <TurboBar
+                        tokens={tokens}
+                        phase={runner.phase}
+                        session={runner.session}
+                        ready={ready}
+                        prebuilt={prebuilt}
+                        samples={SAMPLES}
+                        sampleId={sampleId}
+                        edited={edited}
+                        onRun={run}
+                        onStop={runner.stop}
+                        onSelectSample={selectSample}
+                        onNewFile={() => workspace.onCreating(true)}
+                        onReset={resetSample}
+                        onAddPackage={() => setAdding(true)}
+                        onModern={() => chooseSkin('modern')}
+                        onSignOut={runner.leave}
+                        onDeleteAccount={runner.removeAccount}
+                    />
+                ) : (
+                    <Toolbar
+                        tokens={tokens}
+                        phase={runner.phase}
+                        session={runner.session}
+                        ready={ready}
+                        prebuilt={prebuilt}
+                        onRun={run}
+                        onStop={runner.stop}
+                        onSignOut={runner.leave}
+                        onDeleteAccount={runner.removeAccount}
+                        style={{ margin: 0, padding: '10px var(--playground-x)', borderBottom: `1px solid ${tokens.border}` }}
+                    >
+                        <h1 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: tokens.text }}>{page.title}</h1>
+                        <SamplePicker tokens={tokens} sampleId={sampleId} edited={edited} disabled={busy} onSelect={selectSample} onReset={resetSample} />
+                        <button
+                            type="button"
+                            onClick={() => chooseSkin('turbo')}
+                            className="tap-target"
+                            title="Turbo C++ look"
+                            style={{
+                                fontSize: 12.5, fontFamily: tokens.mono, padding: '5px 12px', borderRadius: 8, cursor: 'pointer', color: tokens.textDim, background: 'transparent', border: `1px solid ${tokens.borderStrong}`,
+                            }}
+                        >
+                            Turbo
+                        </button>
+                    </Toolbar>
+                )}
                 <div ref={runner.check} />
                 {runner.notice && (
                     <Notice tokens={tokens} notice={runner.notice} canSignIn={Boolean(runner.session?.canSignIn)} style={{ margin: '10px var(--playground-x)' }} />
                 )}
-                <ModernWorkspace {...workspace} />
+                {skin === 'turbo' ? <TurboWorkspace {...workspace} /> : <ModernWorkspace {...workspace} />}
             </section>
 
             <section style={{ padding: '40px var(--content-x) 80px' }}>
@@ -235,6 +291,7 @@ export default function PlaygroundPage({ tokens, page }) {
 
             <PackageDialog
                 tokens={tokens}
+                turbo={skin === 'turbo'}
                 open={adding}
                 project={project}
                 onAdd={(id) => change((current) => addPackage(current, id))}

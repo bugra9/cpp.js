@@ -3,7 +3,8 @@ import {
     MAIN, fileNames, newFileError, packageOf,
 } from './project.js';
 
-// The project's files with the config the compiler writes for it, and its packages: the playground's side panel.
+// The project's files with the config the compiler writes for it, and its packages: the modern look's side panel, and
+// the lists both looks share.
 
 export const CONFIG = 'crossbind.config.js';
 export const SOURCE_LABELS = Object.freeze({ port: 'crossbind port', crate: 'crates.io', conan: 'ConanCenter' });
@@ -28,14 +29,15 @@ function Heading({
     );
 }
 
-// A row nothing can open is text, not a button.
+// A selected row takes rowActiveBg and rowActiveText where a look has them (Turbo's cyan bar). A row nothing can open
+// is text, not a button.
 function Row({
     tokens, label, note, active, onSelect, onRemove, removeLabel, disabled,
 }) {
     const Item = onSelect ? 'button' : 'span';
     return (
         <li style={{
-            display: 'flex', alignItems: 'center', borderRadius: 6, background: active ? tokens.pillBg : 'transparent',
+            display: 'flex', alignItems: 'center', borderRadius: tokens.rowRadius ?? 6, background: active ? (tokens.rowActiveBg ?? tokens.pillBg) : 'transparent',
         }}
         >
             <Item
@@ -47,17 +49,17 @@ function Row({
                     display: 'flex',
                     justifyContent: 'space-between',
                     gap: 8,
-                    padding: '6px 10px',
+                    padding: tokens.rowPadding ?? '6px 10px',
                     textAlign: 'left',
-                    color: active ? tokens.text : tokens.textDim,
+                    color: active ? (tokens.rowActiveText ?? tokens.text) : tokens.textDim,
                     cursor: onSelect ? 'pointer' : 'default',
                 }}
             >
                 <span style={{ fontFamily: tokens.mono, fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
-                <span style={{ fontSize: 11.5, color: tokens.textMuted, whiteSpace: 'nowrap' }}>{note}</span>
+                <span style={{ fontSize: 11.5, color: active ? (tokens.rowActiveText ?? tokens.textMuted) : tokens.textMuted, whiteSpace: 'nowrap' }}>{note}</span>
             </Item>
             {onRemove && (
-                <button type="button" onClick={onRemove} disabled={disabled} aria-label={removeLabel} title={removeLabel} style={{ ...plainButton, padding: '4px 8px', color: tokens.textMuted }}>
+                <button type="button" onClick={onRemove} disabled={disabled} aria-label={removeLabel} title={removeLabel} style={{ ...plainButton, padding: '4px 8px', color: active ? (tokens.rowActiveText ?? tokens.textMuted) : tokens.textMuted }}>
                     ×
                 </button>
             )}
@@ -101,7 +103,7 @@ function NewFile({
                     spellcheck={false}
                     autocapitalize="off"
                     style={{
-                        flex: 1, minWidth: 0, padding: '5px 8px', font: 'inherit', color: tokens.text, background: tokens.panel, border: `1px solid ${tokens.borderStrong}`, borderRadius: 6,
+                        flex: 1, minWidth: 0, padding: '5px 8px', font: 'inherit', color: tokens.inputText ?? tokens.text, background: tokens.inputBg ?? tokens.panel, border: `1px solid ${tokens.borderStrong}`, borderRadius: tokens.rowRadius ?? 6,
                     }}
                 />
             </label>

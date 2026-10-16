@@ -82,6 +82,50 @@
     display: none;
 }
 
+/* The Turbo look's desktop: the project and packages windows over each other beside the editor, the output across
+   the bottom. index.html's pre-paint script marks a Turbo visit, so the prerendered modern look stays hidden until the
+   page has drawn the Turbo one. */
+.turbo-body {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 270px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) 170px;
+    grid-template-areas: 'project editor' 'packages editor' 'output output';
+    gap: 18px 10px;
+    padding: 18px 10px 10px;
+}
+
+.turbo-project {
+    grid-area: project;
+}
+
+.turbo-packages {
+    grid-area: packages;
+}
+
+.turbo-editor {
+    grid-area: editor;
+}
+
+.turbo-output {
+    grid-area: output;
+}
+
+html[data-playground-skin='turbo'] .playground-app[data-skin='modern'] {
+    visibility: hidden;
+}
+
+.turbo-bar button {
+    background: none;
+}
+
+@media (hover: hover) {
+    .turbo-bar button:hover:not(:disabled) {
+        background: #00aa00;
+    }
+}
+
 /* A tutorial step: the lesson beside its code where both fit, the lesson first below that. */
 .tutorial-grid {
     display: grid;
@@ -293,6 +337,18 @@ li > .map-link:hover {
 
     .playground-body {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .turbo-body {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: none;
+        grid-auto-rows: minmax(0, 1fr);
+        grid-template-areas: none;
+        padding: 18px 8px 8px;
+    }
+
+    .turbo-body > * {
+        grid-area: auto;
     }
 
     .playground-pane[data-shown='false'] {

@@ -6,7 +6,7 @@ import {
     OpenFile, ViewSwitch, shortName,
 } from './workspace.jsx';
 
-// The project beside the open file and the console, in the site's theme.
+// The modern look: the project beside the open file and the console, in the site's theme.
 export default function ModernWorkspace({
     tokens, project, sampleId, shown, view, busy, creating, lines, buildLog, lastRun,
     onView, onOpen, onSelectFile, onCreating, onCreateFile, onRemoveFile, onAddPackage, onRemovePackage, onEdit,

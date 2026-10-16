@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { PACKAGES } from '../../../tooling/cloud/compiler/packages.js';
 import { MAX_PACKAGES } from '../../../tooling/cloud/compiler/validate.js';
 import Tabs from '../components/Tabs.jsx';
+import { TURBO, TitlePart, turboTokens } from '../components/turbo.jsx';
 import { highlight } from '../components/ui.jsx';
 import { PORTS } from '../ports/catalog.js';
 import { SOURCE_LABELS } from './ProjectPanel.jsx';
@@ -9,13 +10,17 @@ import { canAddPackage, usageOf } from './project.js';
 
 // The packages a project may use (tooling/cloud/compiler/packages.js), by where they come from. Adding one that
 // main.js imports writes its import into main.js; one the C++ includes shows the #include to copy. A package leaves
-// the project from the side panel.
+// the project from the side panel. The Turbo look draws this as a Turbo Vision dialog; what it does is the same.
 
 const SOURCES = Object.freeze([
     { id: 'port', label: 'crossbind ports' },
     { id: 'crate', label: 'crates.io' },
     { id: 'conan', label: 'ConanCenter' },
 ]);
+
+const HIDDEN = {
+    position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap',
+};
 
 const matches = (pkg, query) => `${pkg.name} ${pkg.summary}`.toLowerCase().includes(query.trim().toLowerCase());
 
@@ -47,6 +52,31 @@ function modernLook(tokens) {
     };
 }
 
+function turboLook(tokens) {
+    return {
+        code: turboTokens(tokens),
+        dialog: {
+            border: `3px double ${TURBO.white}`, borderRadius: 0, background: TURBO.gray, boxShadow: `16px 16px 0 ${TURBO.black}`, color: TURBO.black, fontFamily: tokens.mono, overflow: 'visible',
+        },
+        input: {
+            color: TURBO.white, background: TURBO.blue, border: 'none', borderRadius: 0,
+        },
+        list: { background: TURBO.cyan, margin: '0 20px' },
+        row: () => ({ background: 'transparent' }),
+        dim: TURBO.black,
+        muted: TURBO.black,
+        link: TURBO.black,
+        tab: () => ({
+            background: 'none', border: 'none', borderRadius: 0, padding: '0 12px 0 0', color: TURBO.black,
+        }),
+        tabLabel: (label, count, selected) => `${selected ? '(•)' : '( )'} ${label} ${count}`,
+        add: (added) => ({ label: added ? '[X]' : '[ ]', style: { border: 'none', borderRadius: 0, color: TURBO.black } }),
+        usage: {
+            background: TURBO.blue, border: 'none', borderRadius: 0, color: TURBO.yellow,
+        },
+    };
+}
+
 function Usage({ look, pkg }) {
     const [copied, setCopied] = useState(false);
     const { inMain, line } = usageOf(pkg);
@@ -73,13 +103,13 @@ function Usage({ look, pkg }) {
 }
 
 export default function PackageDialog({
-    tokens, open, project, onAdd, onClose,
+    tokens, turbo = false, open, project, onAdd, onClose,
 }) {
     const ref = useRef(null);
     const [query, setQuery] = useState('');
     const [source, setSource] = useState(SOURCES[0].id);
     const [chosen, setChosen] = useState(null);
-    const look = modernLook(tokens);
+    const look = turbo ? turboLook(tokens) : modernLook(tokens);
 
     // Native <dialog>, so the focus trap, Escape and inertness come from the platform, as PromptModal does.
     useEffect(() => {
@@ -109,12 +139,18 @@ export default function PackageDialog({
             }}
         >
             <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', maxHeight: 'inherit' }}>
-                <div style={{ display: 'flex', alignItems: 'center', padding: '18px 20px 12px' }}>
-                    <h2 id="package-dialog-title" style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
+                {turbo && (
+                    <>
+                        <TitlePart background={TURBO.gray} color={TURBO.white} style={{ left: 8, top: -14 }}>[<span style={{ color: TURBO.green }}>■</span>]</TitlePart>
+                        <TitlePart background={TURBO.gray} color={TURBO.white} style={{ left: '50%', top: -14, transform: 'translateX(-50%)' }}>Add package</TitlePart>
+                    </>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', padding: turbo ? '18px 20px 10px' : '18px 20px 12px' }}>
+                    <h2 id="package-dialog-title" style={{ margin: 0, fontSize: 16, fontWeight: 600, ...(turbo ? HIDDEN : {}) }}>
                         Add a package
                     </h2>
-                    <span style={{ flex: 1 }} />
-                    <button type="button" onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', padding: 4, fontSize: 18, color: look.dim, cursor: 'pointer' }}>×</button>
+                    {!turbo && <span style={{ flex: 1 }} />}
+                    {!turbo && <button type="button" onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', padding: 4, fontSize: 18, color: look.dim, cursor: 'pointer' }}>×</button>}
                 </div>
                 <div style={{ padding: '0 20px' }}>
                     <input
@@ -147,20 +183,21 @@ export default function PackageDialog({
                                 onFocus={() => setChosen(pkg.id)}
                                 onMouseEnter={() => setChosen(pkg.id)}
                                 style={{
-                                    display: 'grid', gridTemplateColumns: '120px minmax(0, 1fr) auto', gap: 12, alignItems: 'center', padding: '9px 20px', ...look.row(added),
+                                    display: 'grid', gridTemplateColumns: turbo ? 'auto 120px minmax(0, 1fr)' : '120px minmax(0, 1fr) auto', gap: 12, alignItems: 'center', padding: turbo ? '2px 8px' : '9px 20px', ...look.row(added),
                                 }}
                             >
-                                <span style={{ fontFamily: tokens.mono, fontSize: 13, fontWeight: 600 }}>{pkg.name}</span>
-                                <span style={{ fontSize: 13, color: look.dim }}>
+                                <span style={{ fontFamily: tokens.mono, fontSize: 13, fontWeight: turbo ? 400 : 600, order: turbo ? 1 : 0 }}>{pkg.name}</span>
+                                <span style={{ fontSize: 13, color: look.dim, order: turbo ? 2 : 0 }}>
                                     {pkg.summary}
                                     <span style={{ color: look.muted, fontSize: 12 }}>{` · ${versionOf(pkg)}`}</span>
                                 </span>
                                 {added ? (
                                     <span style={{
-                                        fontSize: 12.5, padding: '4px 12px', ...add.style, border: 'none',
+                                        fontSize: 12.5, fontFamily: turbo ? tokens.mono : 'inherit', padding: turbo ? 0 : '4px 12px', ...add.style, border: 'none',
                                     }}
                                     >
-                                        {add.label}
+                                        <span aria-hidden={turbo}>{add.label}</span>
+                                        {turbo && <span style={HIDDEN}>Added</span>}
                                     </span>
                                 ) : (
                                     <button
@@ -173,7 +210,7 @@ export default function PackageDialog({
                                         }}
                                         className="tap-target"
                                         style={{
-                                            fontSize: 12.5, fontFamily: 'inherit', padding: '4px 12px', background: 'transparent', cursor: full ? 'default' : 'pointer', opacity: full ? 0.55 : 1, ...add.style,
+                                            fontSize: 12.5, fontFamily: turbo ? tokens.mono : 'inherit', padding: turbo ? 0 : '4px 12px', background: 'transparent', cursor: full ? 'default' : 'pointer', opacity: full ? 0.55 : 1, ...add.style,
                                         }}
                                     >
                                         {add.label}
@@ -186,6 +223,16 @@ export default function PackageDialog({
                 </ul>
                 {full && <p style={{ margin: 0, padding: '10px 20px 0', fontSize: 12.5, color: look.muted }}>{`A project uses ${MAX_PACKAGES} packages at most.`}</p>}
                 {focused && <Usage key={focused.id} look={look} pkg={focused} />}
+                {turbo && (
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '0 20px 18px' }}>
+                        <button type="button" onClick={onClose} style={{
+                            fontFamily: tokens.mono, fontSize: 13, padding: '0 18px', border: 'none', background: TURBO.green, color: TURBO.black, boxShadow: `6px 6px 0 ${TURBO.black}`, cursor: 'pointer',
+                        }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                )}
             </div>
         </dialog>
     );

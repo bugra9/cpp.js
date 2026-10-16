@@ -2,8 +2,8 @@ import { configSource } from '../../../tooling/cloud/compiler/packages.js';
 import Editor from './Editor.jsx';
 import { CONFIG } from './ProjectPanel.jsx';
 
-// The open file, and on narrow screens the switch between the files, the code and the console, of which one shows at a
-// time (styles.css).
+// What the playground's two looks (ModernWorkspace.jsx, TurboWorkspace.jsx) share: the open file, and on narrow
+// screens the switch between the files, the code and the console, of which one shows at a time (styles.css).
 
 const VIEWS = Object.freeze([{ id: 'files', label: 'Files' }, { id: 'code', label: 'Code' }, { id: 'console', label: 'Console' }]);
 
