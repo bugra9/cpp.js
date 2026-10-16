@@ -1,6 +1,6 @@
 // A row of tabs over one panel: tab `${panelId}-${id}` controls the panel `panelId`, which names the active tab with
 // aria-labelledby. Arrow keys move along the row, as a screen-reader user expects once it announces as a tablist.
-export default function Tabs({ tokens, label, tabs, panelId, active, onSelect, style }) {
+export default function Tabs({ tokens, label, tabs, panelId, active, onSelect, style, tabStyle }) {
     const onKeyDown = (event) => {
         const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key];
         if (!step) return;
@@ -34,6 +34,7 @@ export default function Tabs({ tokens, label, tabs, panelId, active, onSelect, s
                         fontSize: 12.5,
                         fontFamily: tokens.mono,
                         cursor: 'pointer',
+                        ...tabStyle?.(tab.id === active),
                     }}
                 >
                     {tab.label}

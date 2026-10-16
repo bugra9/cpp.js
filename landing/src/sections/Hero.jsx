@@ -3,9 +3,7 @@ import CommandChip from '../components/CommandChip.jsx';
 import PlatformScene from '../components/PlatformScene.jsx';
 import PromptModal from '../components/PromptModal.jsx';
 import Tabs from '../components/Tabs.jsx';
-import {
-    CodeWindow, highlight, primaryButtonStyle, secondaryButtonStyle,
-} from '../components/ui.jsx';
+import { highlight, primaryButtonStyle, secondaryButtonStyle } from '../components/ui.jsx';
 import { CREATE_COMMANDS, HERO_FILES, RUNTIMES } from '../data.js';
 import { guideHref } from '../guide/nav.js';
 
@@ -42,24 +40,89 @@ function CreateCommand({ tokens }) {
     );
 }
 
-// The headline claims C++ and Rust, so the proof sits right beside it: main.js imports both. Every
-// file stays in one grid cell, so switching tabs keeps the window at the tallest file's height.
+// Borland's CGA palette, its blue a shade deeper than #0000aa so it doesn't outshout the headline
+// on the white page. A DOS screen looks the same in both themes.
+const TURBO = {
+    blue: '#00009a',
+    gray: '#aaaaaa',
+    green: '#00aa00',
+    white: '#ffffff',
+    yellow: '#ffff55',
+    cyan: '#55ffff',
+    lime: '#55ff55',
+};
+// Its editor's colours: reserved words white, literals cyan, comments gray, everything else yellow.
+const TURBO_SYNTAX = { codeKey: TURBO.white, codeStr: TURBO.cyan, codeAccent: TURBO.cyan, codeMuted: TURBO.gray };
+
+// Each part of the window title sits on the double top border, its blue breaking the line.
+function TitlePart({ style, children }) {
+    return (
+        <span aria-hidden="true" style={{ position: 'absolute', top: -11.5, padding: '0 4px', background: TURBO.blue, color: TURBO.white, ...style }}>
+            {children}
+        </span>
+    );
+}
+
+// The headline claims C++ and Rust, so the proof sits right beside it: main.js imports both, shown
+// in Turbo C++, the IDE a generation first wrote C++ in: the files are its menu, the code is in its
+// editor window. Every file stays in one grid cell, so switching keeps the window's height.
 function UniversalCode({ tokens }) {
     const [active, setActive] = useState(HERO_FILES[0].id);
+    const syntax = { ...tokens, ...TURBO_SYNTAX };
 
     return (
-        <CodeWindow
-            tokens={tokens}
-            title={<Tabs tokens={tokens} label="Files" tabs={HERO_FILES} panelId="hero-file" active={active} onSelect={setActive} style={{ marginBottom: 0, flexWrap: 'wrap' }} />}
+        <div style={{
+            borderRadius: 4,
+            overflow: 'hidden',
+            background: TURBO.blue,
+            color: TURBO.yellow,
+            fontFamily: tokens.mono,
+            fontSize: 13,
+            lineHeight: '20px',
+        }}
         >
-            <div role="tabpanel" id="hero-file" aria-labelledby={`hero-file-${active}`} style={{ display: 'grid', whiteSpace: 'pre' }}>
-                {HERO_FILES.map((file) => (
-                    <div key={file.id} style={{ gridArea: '1 / 1', visibility: file.id === active ? 'visible' : 'hidden' }}>
-                        {highlight(file.code, tokens)}
-                    </div>
-                ))}
+            <div className="turbo-menu" style={{ display: 'flex', alignItems: 'flex-start', padding: '0 4px', background: TURBO.gray, color: '#000', '--hover': TURBO.white }}>
+                {/* Sized like a tab, so it stays on the first row when the menu wraps on a phone. */}
+                <span aria-hidden="true" className="tap-target" style={{ padding: '0 8px' }}>≡</span>
+                <Tabs
+                    tokens={tokens}
+                    label="Files"
+                    tabs={HERO_FILES}
+                    panelId="hero-file"
+                    active={active}
+                    onSelect={setActive}
+                    style={{ flexWrap: 'wrap', gap: 0, marginBottom: 0 }}
+                    tabStyle={(selected) => ({
+                        // Unset unless selected: .turbo-menu in styles.css owns it, so a hover can light it.
+                        background: selected ? TURBO.green : undefined,
+                        border: 'none',
+                        borderRadius: 0,
+                        color: '#000',
+                        padding: '0 8px',
+                        fontSize: 13,
+                    })}
+                />
             </div>
-        </CodeWindow>
+            <div style={{ padding: '14px 6px 6px' }}>
+                <div style={{ position: 'relative', border: `3px double ${TURBO.white}` }}>
+                    <TitlePart style={{ left: 8 }}>[<span style={{ color: TURBO.lime }}>■</span>]</TitlePart>
+                    <TitlePart style={{ left: '50%', transform: 'translateX(-50%)' }}>{active}</TitlePart>
+                    <TitlePart style={{ right: 8 }}>1</TitlePart>
+                    <div
+                        role="tabpanel"
+                        id="hero-file"
+                        aria-labelledby={`hero-file-${active}`}
+                        style={{ display: 'grid', overflowX: 'auto', padding: '10px 14px', whiteSpace: 'pre' }}
+                    >
+                        {HERO_FILES.map((file) => (
+                            <div key={file.id} style={{ gridArea: '1 / 1', visibility: file.id === active ? 'visible' : 'hidden' }}>
+                                {highlight(file.code, syntax)}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }
 

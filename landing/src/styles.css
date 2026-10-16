@@ -97,6 +97,18 @@
     align-content: center;
 }
 
+/* The hero's Turbo C++ menu: a tab has no inline background unless it is selected, so a hovered
+   one can light up. The colour comes in as a custom property. */
+.turbo-menu [role="tab"] {
+    background: transparent;
+}
+
+@media (hover: hover) {
+    .turbo-menu [role="tab"]:hover {
+        background: var(--hover);
+    }
+}
+
 /* The platform band under the hero: a drawing per kind of host with its names under it, spread
    across the column, in centred rows once they no longer fit on one line. */
 .runs-on-list {
