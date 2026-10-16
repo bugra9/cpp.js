@@ -71,7 +71,7 @@ export default function PromptModal({ tokens, open, onClose }) {
                     <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.55, color: tokens.textDim }}>
                         Paste this into Claude Code, Codex, Cursor, Copilot or any coding agent:
                     </p>
-                    <CommandChip tokens={tokens} command={SETUP_LINE} />
+                    <CommandChip tokens={tokens} command={SETUP_LINE} primary />
                     <p style={{ margin: '12px 0 0', fontSize: 12.5, lineHeight: 1.55, color: tokens.textMuted }}>
                         It installs the crossbind skill, adds crossbind to the project and checks one call from JavaScript.
                         {' '}

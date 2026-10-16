@@ -2,7 +2,9 @@ import { useState } from 'react';
 
 // One command or line with a copy button: the install line on a library page, the create line on
 // an example, the line an agent is given. Sized to sit in a row with links, not a full code block.
-export default function CommandChip({ tokens, command, label = 'Copy' }) {
+// `primary` is for a chip whose copy is the main action where it stands, like the Agent setup window's:
+// the copy segment then takes the main buttons' colors instead of reading as a label.
+export default function CommandChip({ tokens, command, label = 'Copy', primary = false }) {
     const [copied, setCopied] = useState(false);
 
     const copy = async () => {
@@ -14,6 +16,11 @@ export default function CommandChip({ tokens, command, label = 'Copy' }) {
             // Clipboard is blocked outside a secure context; the text stays selectable.
         }
     };
+
+    const look = primary
+        ? { background: tokens.buttonBg, color: tokens.buttonText, fontFamily: tokens.sans, fontSize: 13.5, fontWeight: 600, padding: '0 18px' }
+        : { background: tokens.codeSurface, color: tokens.textDim, fontFamily: tokens.mono, fontSize: 11, letterSpacing: 0.8, padding: '0 14px' };
+    const [idle, done] = primary ? [label, 'Copied'] : [label.toUpperCase(), 'COPIED'];
 
     return (
         <div
@@ -48,20 +55,15 @@ export default function CommandChip({ tokens, command, label = 'Copy' }) {
                 style={{
                     border: 0,
                     borderLeft: `1px solid ${tokens.borderStrong}`,
-                    background: tokens.codeSurface,
-                    color: tokens.textDim,
-                    fontFamily: tokens.mono,
-                    fontSize: 11,
-                    letterSpacing: 0.8,
-                    padding: '0 14px',
                     cursor: 'pointer',
                     flexShrink: 0,
+                    ...look,
                 }}
             >
                 {/* Both labels share one cell, so the button keeps the wider one's width and the line beside it never re-wraps. */}
                 <span aria-live="polite" style={{ display: 'grid' }}>
-                    <span style={{ gridArea: '1 / 1', visibility: copied ? 'hidden' : 'visible' }}>{label.toUpperCase()}</span>
-                    <span style={{ gridArea: '1 / 1', visibility: copied ? 'visible' : 'hidden' }}>COPIED</span>
+                    <span style={{ gridArea: '1 / 1', visibility: copied ? 'hidden' : 'visible' }}>{idle}</span>
+                    <span style={{ gridArea: '1 / 1', visibility: copied ? 'visible' : 'hidden' }}>{done}</span>
                 </span>
             </button>
         </div>
