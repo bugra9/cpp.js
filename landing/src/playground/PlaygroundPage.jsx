@@ -251,7 +251,8 @@ export default function PlaygroundPage({ tokens, page }) {
                         onStop={runner.stop}
                         onSignOut={runner.leave}
                         onDeleteAccount={runner.removeAccount}
-                        style={{ margin: 0, padding: '10px var(--playground-x)', borderBottom: `1px solid ${tokens.border}` }}
+                        // On the files pane's surface, so the toolbar reads as the editor's and not as a second navbar.
+                        style={{ margin: 0, padding: '10px var(--playground-x)', background: tokens.panelAlt, borderBottom: `1px solid ${tokens.border}` }}
                     >
                         <h1 style={visuallyHidden}>{page.title}</h1>
                         <SamplePicker tokens={tokens} sampleId={sampleId} edited={edited} disabled={busy} onSelect={selectSample} onReset={resetSample} />
