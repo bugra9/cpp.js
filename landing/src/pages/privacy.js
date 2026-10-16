@@ -18,7 +18,7 @@ export default {
         { type: 'h2', id: 'site', text: 'This site' },
         {
             type: 'p',
-            text: 'The pages are static files served by Cloudflare. Your browser keeps your theme, the look you picked for the playground and your edits to the samples in the playground and the tutorial in its local storage; none of it leaves your browser.',
+            text: 'The pages are static files served by Cloudflare. Your browser keeps your theme and your edits to the samples in the playground and the tutorial in its local storage; none of it leaves your browser.',
         },
 
         { type: 'h2', id: 'playground', text: 'The playground' },
