@@ -166,6 +166,18 @@ test('reports a failed build with its log, workspace paths shortened to the file
     assert.deepEqual(result, { ok: false, reason: 'compile', log: "native.cpp:1:5: error: expected ';'" });
 });
 
+test('keeps the separator where CMake names an object file after its source path', async () => {
+    const result = await compile(request,{
+        paths,
+        run: fakeRun(() => {}, {
+            code: 1,
+            output: `Building CXX object CMakeFiles/playground.dir${paths.work}/src/native/native.cpp.o\nBuilding CXX object CMakeFiles/playground.dir${paths.cli}/node_modules/crossbind/src/empty.cpp.o\n`,
+        }),
+    });
+
+    assert.equal(result.log, 'Building CXX object CMakeFiles/playground.dir/native.cpp.o\nBuilding CXX object CMakeFiles/playground.dir/crossbind/src/empty.cpp.o');
+});
+
 test('reports a build that ran out of time', async () => {
     const result = await compile(request,{ paths, run: fakeRun(() => {}, { code: null, signal: 'SIGKILL', timedOut: true }) });
 

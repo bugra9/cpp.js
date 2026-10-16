@@ -113,12 +113,11 @@ function writeProject(workDir, { files, packages }) {
     }
 }
 
+// CMake names an object file after its source's whole path (CMakeFiles/<target>.dir/<path>.o), so there the path goes
+// but its separator stays.
 function cleanLog(output, paths) {
-    return output
-        .replaceAll(`${paths.work}/src/native/`, '')
-        .replaceAll(`${paths.work}/`, '')
-        .replaceAll(`${paths.cli}/node_modules/`, '')
-        .trim();
+    const prefixes = [`${paths.work}/src/native/`, `${paths.work}/`, `${paths.cli}/node_modules/`];
+    return prefixes.reduce((log, prefix) => log.replaceAll(`.dir${prefix}`, '.dir/').replaceAll(prefix, ''), output).trim();
 }
 
 function readRegularFile(file, maxBytes) {
