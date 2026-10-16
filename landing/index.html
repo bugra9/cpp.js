@@ -36,6 +36,15 @@
             document.documentElement.style.background = t === 'light' ? '#ffffff' : '#22262e';
             document.documentElement.style.colorScheme = t;
         } catch (e) { /* private mode blocks storage; the default stands */ }
+        // The playground's Turbo look: marked here so the prerendered modern look never shows first. Mirrors
+        // src/playground/skin.js (SKIN_PARAM, SKIN_KEY, readSkin).
+        try {
+            if (location.pathname.indexOf('/playground') === 0) {
+                var s = new URLSearchParams(location.search).get('skin');
+                if (s !== 'modern' && s !== 'turbo') s = localStorage.getItem('crossbind.playground.skin');
+                if (s === 'turbo') document.documentElement.setAttribute('data-playground-skin', 'turbo');
+            }
+        } catch (e) { /* private mode blocks storage; the link alone decides */ }
     </script>
 </head>
 <body>

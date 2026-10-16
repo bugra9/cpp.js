@@ -3,6 +3,7 @@ import CommandChip from '../components/CommandChip.jsx';
 import PlatformScene from '../components/PlatformScene.jsx';
 import PromptModal from '../components/PromptModal.jsx';
 import Tabs from '../components/Tabs.jsx';
+import { TURBO, TURBO_SYNTAX, TitlePart } from '../components/turbo.jsx';
 import { highlight, primaryButtonStyle, secondaryButtonStyle } from '../components/ui.jsx';
 import { CREATE_COMMANDS, HERO_FILES, RUNTIMES } from '../data.js';
 import { guideHref } from '../guide/nav.js';
@@ -37,29 +38,6 @@ function CreateCommand({ tokens }) {
                 <CommandChip tokens={tokens} command={command} />
             </div>
         </>
-    );
-}
-
-// Borland's CGA palette, its blue a shade deeper than #0000aa so it doesn't outshout the headline
-// on the white page. A DOS screen looks the same in both themes.
-const TURBO = {
-    blue: '#00009a',
-    gray: '#aaaaaa',
-    green: '#00aa00',
-    white: '#ffffff',
-    yellow: '#ffff55',
-    cyan: '#55ffff',
-    lime: '#55ff55',
-};
-// Its editor's colours: reserved words white, literals cyan, comments gray, everything else yellow.
-const TURBO_SYNTAX = { codeKey: TURBO.white, codeStr: TURBO.cyan, codeAccent: TURBO.cyan, codeMuted: TURBO.gray };
-
-// Each part of the window title sits on the double top border, its blue breaking the line.
-function TitlePart({ style, children }) {
-    return (
-        <span aria-hidden="true" style={{ position: 'absolute', top: -11.5, padding: '0 4px', background: TURBO.blue, color: TURBO.white, ...style }}>
-            {children}
-        </span>
     );
 }
 

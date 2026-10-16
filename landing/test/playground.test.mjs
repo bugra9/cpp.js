@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { SITE_ROUTES } from '../src/site-pages.js';
 import PLAYGROUND_PAGE from '../src/pages/playground.js';
+import { SKIN_KEY, SKIN_PARAM, readSkin } from '../src/playground/skin.js';
 import { LIMITS } from '../../tooling/cloud/compiler/sandbox.js';
 
 const html = readFileSync(new URL('../public/playground/sandbox.html', import.meta.url), 'utf8');
@@ -40,4 +41,19 @@ test('the page names the time and memory a compile gets in the sandbox', () => {
     const text = JSON.stringify(PLAYGROUND_PAGE);
     assert.ok(text.includes(`${LIMITS.wallMs / 1000} seconds`));
     assert.ok(text.includes(`${LIMITS.dataBytes / 1024 ** 3} GB of memory`));
+});
+
+const storage = (value) => () => ({ getItem: (key) => (key === SKIN_KEY ? value : null) });
+
+test('a linked look applies to the visit; otherwise the stored choice, else the modern look', () => {
+    assert.equal(readSkin(`?${SKIN_PARAM}=turbo`, storage('modern')), 'turbo');
+    assert.equal(readSkin('?sample=hero', storage('turbo')), 'turbo');
+    assert.equal(readSkin(`?${SKIN_PARAM}=neon`, storage('elsewhere')), 'modern');
+    assert.equal(readSkin('', () => { throw new Error('blocked'); }), 'modern');
+});
+
+test('the pre-paint script reads the look by the same key and parameter', () => {
+    const page = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+    assert.ok(page.includes(`localStorage.getItem('${SKIN_KEY}')`));
+    assert.ok(page.includes(`.get('${SKIN_PARAM}')`));
 });
