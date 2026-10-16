@@ -129,20 +129,29 @@ export function packagesFor(ids) {
     });
 }
 
+const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
+export const bindingOf = (name) => name.replace(/\W/g, '_');
+const keyOf = (name) => (IDENTIFIER.test(name) ? name : `'${name}'`);
+const quoted = (text) => `'${text.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`;
+
 // The project's crossbind.config.js, written by the compiler and never sent by a visitor: a config is JavaScript the
-// build would run.
+// build would run. The playground shows it as it is, so it reads like one a person wrote.
 export function configSource(ids) {
     const chosen = packagesFor(ids);
     const ports = chosen.filter(({ source }) => source === 'port');
-    const pinned = (source, value) => Object.fromEntries(chosen.filter((pkg) => pkg.source === source).map((pkg) => [pkg.name, value(pkg)]));
+    const table = (field, source, value) => {
+        const entries = chosen.filter((pkg) => pkg.source === source);
+        if (!entries.length) return [];
+        return [`    ${field}: {`, ...entries.map((pkg) => `        ${keyOf(pkg.name)}: ${quoted(value(pkg))},`), '    },'];
+    };
     return [
-        ...ports.map((pkg, i) => `import port${i} from '${pkg.package}/crossbind.config.js';`),
+        ...ports.map((pkg) => `import ${bindingOf(pkg.name)} from '${pkg.package}/crossbind.config.js';`),
         ...(ports.length ? [''] : []),
         'export default {',
         "    general: { name: 'playground' },",
-        `    dependencies: [${ports.map((_, i) => `port${i}`).join(', ')}],`,
-        `    cargoDependencies: ${JSON.stringify(pinned('crate', ({ spec }) => spec))},`,
-        `    conanDependencies: ${JSON.stringify(pinned('conan', ({ version }) => version))},`,
+        ...(ports.length ? [`    dependencies: [${ports.map((pkg) => bindingOf(pkg.name)).join(', ')}],`] : []),
+        ...table('cargoDependencies', 'crate', ({ spec }) => spec),
+        ...table('conanDependencies', 'conan', ({ version }) => version),
         '    paths: { config: import.meta.url },',
         '};',
         '',

@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { PACKAGES, configSource, packagesFor } from '../compiler/packages.js';
+import {
+    PACKAGES, bindingOf, configSource, packagesFor,
+} from '../compiler/packages.js';
 
 test('every package has a unique id, a source and one way to be used', () => {
     const ids = PACKAGES.map(({ id }) => id);
@@ -26,21 +28,28 @@ test('looks packages up by id and refuses one the image does not carry', () => {
 });
 
 test('the config declares the chosen packages only: ports through their own config, crates and Conan pinned', () => {
-    const source = configSource(['port:sqlite3', 'crate:uuid', 'conan:zlib']);
-
-    assert.match(source, /^import port0 from '@crossbind\/port-sqlite3-wasm\/crossbind\.config\.js';$/m);
-    assert.match(source, /dependencies: \[port0\]/);
-    assert.match(source, /cargoDependencies: \{"uuid":"\{ version = \\"=1\.28\.0\\", features = \[\\"v4\\"\] \}"\}/);
-    assert.match(source, /conanDependencies: \{"zlib":"1\.3\.2"\}/);
-    assert.match(source, /paths: \{ config: import\.meta\.url \}/);
-    assert.doesNotMatch(source, /semver|regex|cjson/);
+    assert.equal(configSource(['port:sqlite3', 'crate:uuid', 'conan:zlib']), [
+        "import sqlite3 from '@crossbind/port-sqlite3-wasm/crossbind.config.js';",
+        '',
+        'export default {',
+        "    general: { name: 'playground' },",
+        '    dependencies: [sqlite3],',
+        '    cargoDependencies: {',
+        '        uuid: \'{ version = "=1.28.0", features = ["v4"] }\',',
+        '    },',
+        '    conanDependencies: {',
+        "        zlib: '1.3.2',",
+        '    },',
+        '    paths: { config: import.meta.url },',
+        '};',
+        '',
+    ].join('\n'));
 });
 
 test('the config of a project without packages declares none', () => {
-    const source = configSource([]);
+    assert.equal(configSource([]), "export default {\n    general: { name: 'playground' },\n    paths: { config: import.meta.url },\n};\n");
+});
 
-    assert.doesNotMatch(source, /^import /m);
-    assert.match(source, /dependencies: \[\]/);
-    assert.match(source, /cargoDependencies: \{\}/);
-    assert.match(source, /conanDependencies: \{\}/);
+test('every port imports its config under a name JavaScript accepts', () => {
+    PACKAGES.filter(({ source }) => source === 'port').forEach(({ name }) => assert.match(bindingOf(name), /^[A-Za-z_$][\w$]*$/, name));
 });
