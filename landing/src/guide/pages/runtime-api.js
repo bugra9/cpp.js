@@ -199,7 +199,7 @@ console.log(await result.get(0));`,
         { type: 'h2', id: 'lifecycle', text: 'Object lifetime' },
         {
             type: 'p',
-            text: "You never call `delete()` on what crossbind hands you. Values cross by copy, containers convert at the boundary, and `shared_ptr` objects are reference-counted: JavaScript's reference goes when the garbage collector reclaims its handle, at a time you do not control. When a C++ object holds a file, a socket or a GPU buffer, give its class a `close()` method and call it. Memory a library returns through a raw pointer stays the library's: free it with the library's own function.",
+            text: "What crossbind hands you is freed when the garbage collector reclaims its handle, at a time you do not control: in the browser, on the page thread and in a worker, and in Node.js. `.delete()` frees it at once, so call it when a C++ object holds a file, a socket or a lot of memory, and on objects made in a loop. On React Native it is the only way: Hermes has no `FinalizationRegistry` yet. Memory a library returns through a raw pointer stays the library's: free it with the library's own function.",
         },
         {
             type: 'p',

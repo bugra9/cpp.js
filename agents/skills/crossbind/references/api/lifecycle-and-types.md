@@ -4,28 +4,27 @@
 
 > Two short topics in one doc, because each is small enough not to deserve its own.
 
-## Memory & object lifecycle: there's nothing to manage in JS
+## Memory & object lifecycle
 
-crossbind hands objects to JS by value or through `shared_ptr`, and raw pointers as `NativePointer` handles (see [`cpp-binding-rules.md`](./cpp-binding-rules.md) Rule 1). In every case, **you don't call `m.delete()` or release any C++ object from JS**. The lifecycle is entirely C++-side:
+An object crossbind hands to JavaScript is freed when the garbage collector reclaims its last handle, and `.delete()` frees it at once.
 
-- Objects passed by value to JS get copied; the C++ original is destroyed normally.
-- Objects returned as `std::shared_ptr<T>` are reference-counted. JS holds a strong reference; when JS-side reference goes out of scope (garbage collected), the shared_ptr count drops, and C++ destructor runs when the count hits zero.
-- `std::vector<T>`, `std::string`, `std::map<K,V>` and similar containers are converted to JS-side equivalents on the boundary; their C++ memory is reclaimed at conversion time.
-- Embind objects (when JS holds a vector/struct proxy) are auto-released when the JS reference is GC'd. You don't track them.
+Wherever the runtime has `FinalizationRegistry` (browsers, on the page thread and in a worker, and Node.js, in a wasm build and in a Node-API addon), the collector frees:
 
-### Things you do NOT do
+- an instance of a C++ class made with `new`, which C++ holds through a `std::shared_ptr`;
+- a value a function or a method returns, a struct, a class or a `std::vector`, which crosses as a copy;
+- a vector `toVector` builds, and an instance of a Rust struct made with `new`;
+- in worker mode, the worker's object behind each handle the main thread lets go of. A vector the worker returns arrives as a plain array, and its C++ copy is freed as it crosses.
 
-```js
-const v = m.someFunc()    // returns a vector
-const arr = m.toArray(v)
-v.delete()                 // ❌ NOT a thing in crossbind
-```
+The collector runs when it chooses, and it weighs only a handle's small JavaScript object, not the C++ memory behind it. Call `.delete()` on an object that holds a lot of memory or a resource, and on objects made in a loop; the handle cannot be used after it. React Native's Hermes engine has no `FinalizationRegistry` yet, so there `.delete()` is the only way to free an object.
 
-The auto-binder doesn't expose `.delete()` because there's no raw pointer to clean up. If you see `.delete()` patterns in stock embind tutorials, ignore them — those are for raw embind, not crossbind.
+What stays C++'s:
+
+- An object a function returns through a raw pointer (`T *`): the instance points at it and frees nothing, and nor does a `NativePointer` handle for memory a library returns (see [`cpp-binding-rules.md`](./cpp-binding-rules.md) Rule 1). Free that memory with the library's own function. A handle does free what crossbind allocated for it (`allocBuffer`, `allocPointer`, `allocString`, `cstring`).
+- An object C++ keeps: a C++ function that stores an object it gets from JavaScript takes it as a `std::shared_ptr`, or the object goes when JavaScript lets go of it.
 
 ### When C++ has a long-lived resource
 
-If your C++ class wraps a file handle, GPU buffer, network socket, etc., model it C++-side with RAII:
+If your C++ class wraps a file handle, GPU buffer, network socket, etc., release it in the destructor (RAII), so `.delete()` closes it:
 
 ```cpp
 class FileReader {
@@ -43,10 +42,8 @@ JS:
 ```js
 const reader = new m.FileReader('/memfs/myapp/data.txt')
 const text = reader.readAll()
-// reader is GC'd later → C++ destructor runs → fclose runs.
+reader.delete()   // ~FileReader runs now and closes the file
 ```
-
-If you need deterministic close (don't wait for GC), expose an explicit `close()` method on the C++ class and call it from JS. That's the binding-friendly pattern.
 
 ### Reference cycles
 

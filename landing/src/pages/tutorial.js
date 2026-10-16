@@ -16,6 +16,7 @@ const STEPS = [
         blocks: [
             { type: 'p', text: '`native.h` declares a function, `greet`, and a class, `Counter`; `native.cpp` defines them. Press **Run**: `main.js` imports both from the header.' },
             { type: 'p', text: 'A `std::string` crosses as a JavaScript string and an `int` as a number. The class arrives as a JavaScript class: `new Counter(41)` runs the C++ constructor, and its public methods are ordinary methods.' },
+            { type: 'p', text: 'The C++ object goes when the garbage collector reclaims `counter`. `counter.delete()` frees it at once, which suits an object holding a lot of memory, or many made in a loop.' },
             { type: 'p', text: `\`await initNative()\` loads the module once, and every imported name works after it. A project imports the header the same way; the [quick start](${guideHref('quick-start')}) sets that up.` },
             { type: 'p', text: `The playground runs the module on the page's own thread, so a call returns its result. In a browser app, \`initNative()\` starts it in a [Web Worker](${guideHref('runtime-api')}#worker) by default, where every call returns a promise to \`await\`; \`initNative({ useWorker: false })\` runs it the way these steps do.` },
             tryIt('Add `int add(int a, int b);` to `native.h`, define it in `native.cpp`, import `add` in `main.js` and call `add(2, 3)`. Changing the C++ or the imports makes **Run** compile on the playground server; until then, a change to the rest of `main.js` runs at once.'),
