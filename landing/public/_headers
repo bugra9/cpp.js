@@ -6,6 +6,11 @@
 
 # The playground runs visitors' code here, in a frame with an opaque origin: no network, no forms, no other
 # scripts, and a sandbox even when the page is opened on its own. The hash is the page's one inline script.
+# Cloudflare Pages redirects sandbox.html to /playground/sandbox and serves the page there, so both paths carry it.
 /playground/sandbox.html
-  Content-Security-Policy: sandbox allow-scripts; default-src 'none'; script-src 'sha256-IzVbKkezRJPIWtzDrsvAl9/DrEja11v674tLwwJJASc=' blob: 'unsafe-eval' 'wasm-unsafe-eval'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
+  Content-Security-Policy: sandbox allow-scripts; default-src 'none'; script-src 'sha256-ehCD/xSCVPn9glXJnV3+LrIsh9r4CmIlx6EKY3DSrWY=' blob: 'unsafe-eval' 'wasm-unsafe-eval'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
+  Cache-Control: no-cache
+
+/playground/sandbox
+  Content-Security-Policy: sandbox allow-scripts; default-src 'none'; script-src 'sha256-ehCD/xSCVPn9glXJnV3+LrIsh9r4CmIlx6EKY3DSrWY=' blob: 'unsafe-eval' 'wasm-unsafe-eval'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
   Cache-Control: no-cache

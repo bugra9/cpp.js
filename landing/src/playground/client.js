@@ -12,10 +12,10 @@ async function call(path, init = {}) {
 
 export const fetchSession = () => call('/session');
 
-export const requestCompile = (files, turnstile) => call('/compile', {
+export const requestCompile = ({ files, packages }, turnstile) => call('/compile', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ files, turnstile }),
+    body: JSON.stringify({ files, packages, turnstile }),
 });
 
 export const signOut = () => fetch(`${API_URL}/logout`, { method: 'POST', credentials: 'include' });

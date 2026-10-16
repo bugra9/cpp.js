@@ -9,7 +9,7 @@ export default {
     title: 'Privacy',
     kicker: 'PRIVACY',
     description: 'What crossbind.dev, the playground and crossbind cloud keep about you, for how long, and how to delete it.',
-    lede: 'crossbind.dev has no analytics and sets no tracking cookies. The playground and crossbind cloud keep what they need to run and to stop abuse: your GitHub id and name once you sign in, and how much you used. No email, no GitHub token, nothing to pay with. Last changed 13 October 2026.',
+    lede: 'crossbind.dev has no analytics and sets no tracking cookies. The playground and crossbind cloud keep what they need to run and to stop abuse: your GitHub id and name once you sign in, and how much you used. No email, no GitHub token, nothing to pay with. Last changed 16 October 2026.',
     section: 'Privacy',
     path: '/privacy',
     href: '/privacy/',
@@ -25,10 +25,10 @@ export default {
         {
             type: 'ul',
             items: [
-                'An unedited sample runs a module built along with this site and sends nothing. Once you edit its C++, Run sends `native.h` and `native.cpp` to the playground compiler, which builds them in a sandbox without network access and deletes them afterwards. The result, the module with its build log, is cached for up to a week under a hash of the sources, so the same code compiles once.',
+                'An unedited sample runs a module built along with this site and sends nothing. Once its native files, packages or imports change, Run sends the project to the playground compiler: `main.js`, the files under `native/` and the names of its packages. It builds them in a sandbox without network access, reads `main.js` only for its imports, and deletes them afterwards. The result, the module with its build log, is cached under a hash of the project for up to a week, or ten minutes when the build failed, so the same code compiles once.',
                 'Compiles count per network (your IP address, or the /64 an IPv6 address belongs to) or per account, for the day. Without an account, Cloudflare Turnstile checks your browser before a compile.',
                 'Signing in with GitHub asks for no permission. It records your GitHub id and name, and sets a cookie that keeps you signed in for 30 days or until you sign out.',
-                'The code your `main.js` runs stays in your browser, in a sandboxed frame.',
+                '`main.js` runs only in your browser, in a sandboxed frame.',
             ],
         },
 

@@ -1,6 +1,12 @@
-const shapes = [new Module.Circle(1), new Module.Square(2)];
+import {
+    initNative, Circle, Square, Shape, describe,
+} from './native/native.h';
+
+await initNative();
+
+const shapes = [new Circle(1), new Square(2)];
 
 for (const shape of shapes) {
-    console.log(Module.describe(shape));
+    console.log(describe(shape));
 }
-console.log('is a Shape:', shapes[0] instanceof Module.Shape);
+console.log('is a Shape:', shapes[0] instanceof Shape);

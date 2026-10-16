@@ -3,6 +3,7 @@ import {
     deleteAccount, fetchSession, requestCompile, signOut, turnstileToken,
 } from './client.js';
 import { hasPrebuilt, loadPrebuilt } from './prebuilt.js';
+import { MAIN, servesProject } from './project.js';
 import { runInSandbox } from './sandbox.js';
 
 const MAX_LINES = 500;
@@ -15,20 +16,20 @@ const FAILURE_NOTICES = Object.freeze({
     output: 'The build printed too much or left no module.',
 });
 
-// Whether the C++ is still the sample's own, so its prebuilt module can stand in for a compile.
-export const isPristine = (sources, original) => sources['native.h'] === original['native.h'] && sources['native.cpp'] === original['native.cpp'];
+// The sample's prebuilt module stands in for a compile while it serves the project (project.js).
+export const canRunPrebuilt = (sampleId, project, original) => servesProject(project, original) && hasPrebuilt(sampleId);
 
-export const canRunPrebuilt = (sampleId, sources, original) => isPristine(sources, original) && hasPrebuilt(sampleId);
-
-// Runs a sample's main.js in the sandboxed frame (sandbox.js) against a module: the prebuilt one while the C++ is
-// unedited, otherwise one the playground server compiles. Also holds the session that compiles count against, which
-// a `lazy` page asks the server for only once it calls `connect`, when its C++ first needs a compile.
+// Runs a project's main.js in the sandboxed frame (sandbox.js) against a module: the sample's prebuilt one while it
+// serves the project, otherwise one the playground server compiles. Also holds the session that compiles count
+// against, which a `lazy` page asks the server for only once it calls `connect`, when its project first needs a
+// compile.
 export function useRunner({ lazy = false } = {}) {
     const [session, setSession] = useState(null);
     const [phase, setPhase] = useState('idle');
     const [notice, setNotice] = useState(null);
     const [lines, setLines] = useState([]);
     const [buildLog, setBuildLog] = useState('');
+    const [lastRun, setLastRun] = useState(null);
     const check = useRef(null);
     const stopRun = useRef(null);
     const connected = useRef(false);
@@ -50,11 +51,12 @@ export function useRunner({ lazy = false } = {}) {
         setLines([]);
         setBuildLog('');
         setNotice(null);
+        setLastRun(null);
     }
 
-    async function compile(sources) {
+    async function compile(project) {
         const turnstile = session.user ? undefined : await turnstileToken(check.current, session.turnstileSiteKey);
-        const result = await requestCompile({ 'native.h': sources['native.h'], 'native.cpp': sources['native.cpp'] }, turnstile);
+        const result = await requestCompile(project, turnstile);
         if (typeof result.remaining === 'number') setSession((current) => ({ ...current, remaining: result.remaining }));
         if (result.status !== 200) {
             setNotice({ text: result.error ?? `The playground answered ${result.status}.`, login: Boolean(result.login) });
@@ -68,18 +70,24 @@ export function useRunner({ lazy = false } = {}) {
         return result;
     }
 
-    async function run({ sampleId, sources, original }) {
-        const prebuilt = canRunPrebuilt(sampleId, sources, original);
+    async function run({ sampleId, project, original }) {
+        const prebuilt = canRunPrebuilt(sampleId, project, original);
         if (phase !== 'idle' || !(prebuilt || canCompile)) return;
         clear();
+        const started = performance.now();
         setPhase(prebuilt ? 'loading' : 'compiling');
         try {
-            const module = prebuilt ? await loadPrebuilt(sampleId) : await compile(sources);
+            const module = prebuilt ? await loadPrebuilt(sampleId) : await compile(project);
             if (!module) return;
             setPhase('running');
-            const runner = runInSandbox({ js: module.js, wasm: module.wasm, code: sources['main.js'], onOutput: print });
+            const runner = runInSandbox({
+                js: module.js, wasm: module.wasm, imports: module.imports, code: project.files[MAIN] ?? '', onOutput: print,
+            });
             stopRun.current = runner.stop;
-            await runner.done;
+            if (await runner.done === 'done') {
+                print({ stream: 'done', text: '=> done' });
+                setLastRun({ prebuilt, seconds: (performance.now() - started) / 1000 });
+            }
         } catch (error) {
             setNotice({ text: error.message || UNREACHABLE });
         } finally {
@@ -101,6 +109,6 @@ export function useRunner({ lazy = false } = {}) {
     }
 
     return {
-        session, phase, notice, setNotice, lines, buildLog, check, canCompile, connect, run, clear, stop: () => stopRun.current?.(), leave, removeAccount,
+        session, phase, notice, setNotice, lines, buildLog, lastRun, check, canCompile, connect, run, clear, stop: () => stopRun.current?.(), leave, removeAccount,
     };
 }

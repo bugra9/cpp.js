@@ -1,6 +1,9 @@
-// Module holds everything native.h declares.
-console.log(Module.greet('crossbind'));
+import { initNative, greet, Counter } from './native/native.h';
 
-const counter = new Module.Counter(41);
+await initNative();
+
+console.log(greet('crossbind'));
+
+const counter = new Counter(41);
 counter.increment();
 console.log('the counter is at', counter.value());

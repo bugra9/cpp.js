@@ -1,32 +1,56 @@
-// Edits kept per sample in this browser, one storage key per page. A draft holds only the files that differ from its
-// sample, so a later fix to a sample's other files still reaches whoever edited one of them. Every change is applied
-// to what is stored at that moment rather than to the page's own copy, so two open tabs keep each other's drafts.
-// Storage can be blocked, as in private windows; a page then starts from the samples. No Vite-only imports, so the
-// tests can load this file.
+import { FILE_NAME } from '../../../tooling/cloud/compiler/validate.js';
+import { MAIN, packageOf, samePackages } from './project.js';
 
-const FILE_NAMES = Object.freeze(['native.h', 'native.cpp', 'main.js']);
+// Edits kept per sample in this browser, one storage key per page. A draft holds only what differs from its sample:
+// the files edited or added, the sample's files deleted, and the package list once it changed. So a later fix to a
+// sample's other files still reaches whoever edited one of them. Every change is applied to what is stored at that
+// moment rather than to the page's own copy, so two open tabs keep each other's drafts. Storage can be blocked, as in
+// private windows; a page then starts from the samples. No Vite-only imports, so the tests can load this file.
 
-const isObject = (value) => typeof value === 'object' && value !== null;
+const isObject = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
 
 export const without = (object, key) => Object.fromEntries(Object.entries(object).filter(([name]) => name !== key));
 
-// The files in `files` that differ from the sample's own `original`; empty when there are none.
-export function overlayOf(files, original) {
-    return Object.fromEntries(Object.entries(files).filter(([name, text]) => FILE_NAMES.includes(name) && typeof text === 'string' && text !== original[name]));
+// The draft that turns `sample`'s project into `project`, or null when the two are the same.
+export function draftOf(project, sample) {
+    const original = sample.project;
+    const files = Object.fromEntries(Object.entries(project.files).filter(([name, text]) => text !== original.files[name]));
+    const removed = Object.keys(original.files).filter((name) => !(name in project.files));
+    const draft = {
+        ...(Object.keys(files).length ? { files } : {}),
+        ...(removed.length ? { removed } : {}),
+        ...(samePackages(project.packages, original.packages) ? {} : { packages: [...project.packages] }),
+    };
+    return Object.keys(draft).length ? draft : null;
 }
 
-// What a stored value holds for `samples`: the drafts that still apply, each cut down to its edited files, and the
-// sample shown last. A draft saved before there were samples is the first sample's three files.
+export function projectOf(sample, draft) {
+    const original = sample.project;
+    if (!draft) return original;
+    const removed = new Set(draft.removed ?? []);
+    const kept = Object.fromEntries(Object.entries(original.files).filter(([name]) => !removed.has(name)));
+    return { files: { ...kept, ...draft.files }, packages: draft.packages ?? original.packages };
+}
+
+// The part of a stored draft the page can use: text files under names the compiler takes, and packages it knows.
+function parseDraft(value, sample) {
+    if (!isObject(value)) return null;
+    const files = Object.fromEntries(Object.entries(isObject(value.files) ? value.files : {})
+        .filter(([name, text]) => FILE_NAME.test(name) && typeof text === 'string'));
+    const removed = Array.isArray(value.removed) ? value.removed.filter((name) => name !== MAIN && Object.hasOwn(sample.project.files, name)) : [];
+    const packages = Array.isArray(value.packages) ? [...new Set(value.packages.filter((id) => typeof id === 'string' && packageOf(id)))] : null;
+    return draftOf(projectOf(sample, { files, removed, ...(packages ? { packages } : {}) }), sample);
+}
+
+// What a stored value holds for `samples`: the drafts that still apply and the sample shown last.
 export function parseDrafts(stored, samples) {
     const find = (id) => samples.find((sample) => sample.id === id);
-    const legacy = isObject(stored) && FILE_NAMES.every((name) => typeof stored[name] === 'string');
-    const store = legacy ? { sample: samples[0].id, drafts: { [samples[0].id]: stored } } : stored;
-    const entries = Object.entries(isObject(store?.drafts) ? store.drafts : {}).flatMap(([id, draft]) => {
+    const entries = Object.entries(isObject(stored?.drafts) ? stored.drafts : {}).flatMap(([id, value]) => {
         const sample = find(id);
-        const overlay = sample && isObject(draft) ? overlayOf(draft, sample.files) : {};
-        return Object.keys(overlay).length ? [[id, overlay]] : [];
+        const draft = sample ? parseDraft(value, sample) : null;
+        return draft ? [[id, draft]] : [];
     });
-    return { sample: find(store?.sample)?.id, drafts: Object.fromEntries(entries) };
+    return { sample: find(stored?.sample)?.id, drafts: Object.fromEntries(entries) };
 }
 
 export function readDrafts(storageKey, samples) {
@@ -45,8 +69,9 @@ export function updateDrafts(storageKey, samples, change) {
     }
 }
 
-// One file's new text applied to a sample's drafts: the draft keeps what still differs, and goes once nothing does.
-export function editDraft(drafts, sample, name, text) {
-    const overlay = overlayOf({ ...(drafts[sample.id] ?? {}), [name]: text }, sample.files);
-    return Object.keys(overlay).length ? { ...drafts, [sample.id]: overlay } : without(drafts, sample.id);
+// `change` applied to `sample`'s project as `drafts` hold it: the draft keeps what then differs, and goes once
+// nothing does.
+export function editDraft(drafts, sample, change) {
+    const draft = draftOf(change(projectOf(sample, drafts[sample.id])), sample);
+    return draft ? { ...drafts, [sample.id]: draft } : without(drafts, sample.id);
 }

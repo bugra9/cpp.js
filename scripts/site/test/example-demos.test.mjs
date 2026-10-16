@@ -64,7 +64,16 @@ test('demos built from another crossbind version are refused as stale', () => {
     );
 });
 
-test('a playground sample whose C++ changed after its build is refused by name', () => {
+test('playground samples are built from this repository, so their crossbind may be ahead of the published one', () => {
+    const manifest = manifestFor(snapshot.version);
+    const ahead = {
+        ...manifest,
+        demos: manifest.demos.map((demo) => (demo.id.startsWith('sample-') ? { ...demo, crossbind: '2.0.0-beta.57' } : demo)),
+    };
+    assert.doesNotThrow(() => assertDemosMatchSnapshot(ahead, snapshot));
+});
+
+test('a playground sample whose project changed after its build is refused by name', () => {
     const manifest = manifestFor(snapshot.version);
     const changed = {
         ...manifest,

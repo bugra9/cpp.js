@@ -4,27 +4,44 @@
 <head>
     <meta charset="utf-8">
     <title>crossbind - playground sample</title>
-    <script src="./dist/sample-wasm-wasm32-st-release.browser.js"></script>
 </head>
 
 <body>
     <pre id="out"></pre>
-    <script>
-        // The tutorial and the playground run this module for an unedited sample; this page is what
-        // the demo build opens to prove it runs the sample's main.js as the playground would, which
-        // boots it on the page's own thread.
+    <script type="module">
+        // The tutorial and the playground run this module for an unedited sample; this page is what the demo build
+        // opens to prove it runs the sample's main.js the way they do, through the playground's own sandbox and the
+        // runner the build copies beside it.
+        import { runInSandbox } from './sandbox.js';
+
         const out = document.querySelector('#out');
-        const describe = (value) => (typeof value === 'string' ? value : JSON.stringify(value, (key, item) => (typeof item === 'bigint' ? `${item}n` : item)));
-        const print = (...values) => {
-            out.textContent += `${values.map(describe).join(' ')}\n`;
+        const print = (text) => {
+            out.textContent += `${text}\n`;
         };
-        const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
-        Promise.all([initNative({ path: './dist', useWorker: false }), fetch('./main.js').then((response) => response.text())])
-            .then(async ([Module, code]) => {
-                await new AsyncFunction('Module', 'console', code)(Module, { log: print, info: print, warn: print, error: print });
-                print('=> done');
-            })
-            .catch((error) => print(`failed => ${error && error.message ? error.message : error}`));
+        const fetchOk = async (url) => {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`${url} answered ${response.status}`);
+            return response;
+        };
+        const toBase64 = (bytes) => {
+            let binary = '';
+            for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+            return btoa(binary);
+        };
+
+        try {
+            const [js, wasm, imports, code] = await Promise.all([
+                fetchOk('./dist/sample.js').then((response) => response.text()),
+                fetchOk('./dist/sample.wasm').then((response) => response.arrayBuffer()),
+                fetchOk('./dist/imports.json').then((response) => response.json()),
+                fetchOk('./main.js').then((response) => response.text()),
+            ]);
+            const { done } = runInSandbox({ js, wasm: toBase64(new Uint8Array(wasm)), imports, code, onOutput: ({ text }) => print(text) });
+            const outcome = await done;
+            print(outcome === 'done' ? '=> done' : `failed => ${outcome}`);
+        } catch (error) {
+            print(`failed => ${error.message}`);
+        }
     </script>
 </body>
 

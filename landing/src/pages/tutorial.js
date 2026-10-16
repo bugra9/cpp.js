@@ -14,10 +14,10 @@ const STEPS = [
         description: 'Declare a function and a class in a C++ header and call both from JavaScript.',
         lede: 'crossbind reads your C++ header and binds everything it declares. There is no glue code and no binding file: the header is the interface.',
         blocks: [
-            { type: 'p', text: '`native.h` declares a function, `greet`, and a class, `Counter`; `native.cpp` defines them. Press **Run**: `main.js` finds both on `Module`.' },
-            { type: 'p', text: 'A `std::string` crosses as a JavaScript string and an `int` as a number. The class arrives as a JavaScript class: `new Module.Counter(41)` runs the C++ constructor, and its methods are ordinary methods.' },
-            { type: 'p', text: `In a project you import the same names from the header itself and call \`initNative()\` once; the [quick start](${guideHref('quick-start')}) sets that up. Here the page does it for you and hands \`main.js\` the module as \`Module\`.` },
-            tryIt('Add `int add(int a, int b);` to `native.h`, define it in `native.cpp` and call `Module.add(2, 3)` from `main.js`. A change to the C++ compiles on the playground server; a change to `main.js` alone runs right away.'),
+            { type: 'p', text: '`native.h` declares a function, `greet`, and a class, `Counter`; `native.cpp` defines them. Press **Run**: `main.js` imports both from the header.' },
+            { type: 'p', text: 'A `std::string` crosses as a JavaScript string and an `int` as a number. The class arrives as a JavaScript class: `new Counter(41)` runs the C++ constructor, and its methods are ordinary methods.' },
+            { type: 'p', text: `\`await initNative()\` loads the module once, and every imported name works after it. A project imports the header the same way; the [quick start](${guideHref('quick-start')}) sets that up.` },
+            tryIt('Add `int add(int a, int b);` to `native.h`, define it in `native.cpp`, import `add` in `main.js` and call `add(2, 3)`. A change to the C++ or to the imports compiles on the playground server; any other change to `main.js` runs right away.'),
         ],
     },
     {
@@ -37,10 +37,10 @@ const STEPS = [
         description: 'Strings and std::vector between C++ and JavaScript.',
         lede: 'A `std::string` is a JavaScript string. A `std::vector` is a vector object, with two helpers that turn it into an array and back.',
         blocks: [
-            { type: 'p', text: '`split` returns a `std::vector<std::string>`, which arrives as a vector object: `size()` and `get(i)` read it, and `Module.toArray(vector)` copies it into an array.' },
-            { type: 'p', text: "`total` takes a `std::vector<int>`, so it needs a vector object too. `Module.toVector('VectorInt', [1, 2, 3, 4])` builds one from an array; the first argument names the vector type." },
+            { type: 'p', text: '`split` returns a `std::vector<std::string>`, which arrives as a vector object: `size()` and `get(i)` read it, and `m.toArray(vector)` copies it into an array. `m` is the module `initNative()` resolves to, which carries the helpers.' },
+            { type: 'p', text: "`total` takes a `std::vector<int>`, so it needs a vector object too. `m.toVector('VectorInt', [1, 2, 3, 4])` builds one from an array; the first argument names the vector type." },
             { type: 'p', text: 'In an app, `initNative()` runs the module in a Web Worker by default. Every call returns a promise there, and plain arrays are converted for you. The playground runs the module without a worker, so calls return their results directly and vectors take the helpers.' },
-            tryIt('Add `std::vector<int> range(int from, int to);` and print `Module.toArray(Module.range(1, 5))`.'),
+            tryIt('Add `std::vector<int> range(int from, int to);`, import it and print `m.toArray(range(1, 5))`.'),
         ],
     },
     {
@@ -49,8 +49,8 @@ const STEPS = [
         description: 'Structs with public fields and scoped enums, used from JavaScript.',
         lede: 'The public fields of a struct become properties, and every member of an enum is there by name.',
         blocks: [
-            { type: 'p', text: '`new Module.Point()` creates a `Point`, whose `x` and `y` read and write like any property. `step` takes the point by value, so C++ works on a copy and returns a new point.' },
-            { type: 'p', text: 'The members of `enum class Direction` are `Module.Direction.North`, `Module.Direction.East` and so on. They pass straight into C++, and a member that comes back is the same object, so `===` compares them.' },
+            { type: 'p', text: '`new Point()` creates a `Point`, whose `x` and `y` read and write like any property. `step` takes the point by value, so C++ works on a copy and returns a new point.' },
+            { type: 'p', text: 'The members of `enum class Direction` are `Direction.North`, `Direction.East` and so on. They pass straight into C++, and a member that comes back is the same object, so `===` compares them.' },
             { type: 'p', text: 'Only public members bind; whatever is private stays inside C++.' },
             tryIt('Add `Direction turnLeft(Direction direction);` and walk the square the other way round.'),
         ],
@@ -62,7 +62,7 @@ const STEPS = [
         lede: 'A class hierarchy keeps its shape in JavaScript: a derived object goes wherever its base class is expected.',
         blocks: [
             { type: 'p', text: '`Circle` and `Square` derive from `Shape`, whose methods are virtual. `describe` takes a `const Shape &`; handed a `Circle`, its call to `area()` runs `Circle::area()`, as it would in C++.' },
-            { type: 'p', text: '`instanceof` follows the hierarchy too: a `Circle` is a `Module.Shape`. Single inheritance with virtual methods binds; multiple inheritance does not.' },
+            { type: 'p', text: '`instanceof` follows the hierarchy too: a `Circle` is a `Shape`. Single inheritance with virtual methods binds; multiple inheritance does not.' },
             tryIt('Add a `Triangle` with a base and a height, and describe one from `main.js`.'),
         ],
     },
@@ -73,7 +73,7 @@ const STEPS = [
         lede: 'A function pointer parameter takes a JavaScript function, and C++ calls it like any other.',
         blocks: [
             { type: 'p', text: '`countdown` calls its `Visitor` once for every number, and each call runs the arrow function from `main.js`. `applyTwice` uses what its `Transform` returns.' },
-            { type: 'p', text: 'Each JavaScript function handed to C++ holds a slot in the module until `Module.releaseCallback(fn)` frees it, so release a function once C++ no longer needs it.' },
+            { type: 'p', text: 'Each JavaScript function handed to C++ holds a slot in the module until `m.releaseCallback(fn)` frees it, so release a function once C++ no longer needs it.' },
             tryIt('Pass `applyTwice` a function that squares its argument and check the result.'),
         ],
     },
@@ -85,7 +85,7 @@ const STEPS = [
         blocks: [
             { type: 'p', text: '`parsePercent` throws `std::out_of_range` for a number outside 0 to 100, and `std::stoi` throws `std::invalid_argument` for text that is not a number. Both arrive in `main.js` as an `Error`.' },
             { type: 'p', text: 'In a WebAssembly build the message reads `<type>: <what()>`, and the two parts are also on `error.cppType` and `error.cppMessage`. Throwing is the binding-friendly way to report a failure: there are no status codes or out-parameters to check.' },
-            tryIt('Call `Module.squareRoot(-1)` outside the `try` block and see how an uncaught exception shows up.'),
+            tryIt('Call `squareRoot(-1)` outside the `try` block and see how an uncaught exception shows up.'),
             { type: 'h2', id: 'next', text: 'Where to go next' },
             {
                 type: 'ul',

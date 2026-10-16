@@ -11,6 +11,7 @@ const headers = readFileSync(new URL('../public/_headers', import.meta.url), 'ut
 const script = html.slice(html.indexOf('<script>') + '<script>'.length, html.indexOf('</script>'));
 const scriptHash = `'sha256-${createHash('sha256').update(script, 'utf8').digest('base64')}'`;
 const headerPolicy = headers.split('\n').map((line) => line.trim()).find((line) => line.startsWith('Content-Security-Policy: sandbox'));
+const ruleOf = (path) => headers.match(new RegExp(`^${path.replaceAll('.', '\\.')}\\n((?: {2}.+\\n?)+)`, 'm'))?.[1].trim();
 
 test('the sandbox page runs its one inline script by hash, in its own policy and in the header', () => {
     assert.equal(html.match(/<script/g).length, 1);
@@ -24,6 +25,11 @@ test('the sandbox header keeps visitor code in an opaque origin with no way out,
     assert.match(headerPolicy, /default-src 'none'/);
     assert.doesNotMatch(headerPolicy, /connect-src|img-src|frame-src/);
     assert.match(headerPolicy, /frame-ancestors 'self'/);
+});
+
+test('Cloudflare Pages serves the sandbox page at /playground/sandbox, so that path has the same headers', () => {
+    assert.ok(ruleOf('/playground/sandbox.html').includes(headerPolicy));
+    assert.equal(ruleOf('/playground/sandbox'), ruleOf('/playground/sandbox.html'));
 });
 
 test('the playground is a page of the site, so it is prerendered and in the sitemap', () => {
