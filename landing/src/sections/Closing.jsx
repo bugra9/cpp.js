@@ -1,10 +1,10 @@
+import LICENSE_PAGE from '../pages/license.js';
 import PRIVACY_PAGE from '../pages/privacy.js';
-import { LICENSE_URL } from '../data.js';
 
 // Docs, Libraries, the changelog (version menu) and GitHub sit in the navbar on every page, so the
 // footer keeps only what the navbar lacks.
 const LINKS = [
-    { label: 'MIT License', href: LICENSE_URL, external: true },
+    { label: 'MIT License', href: LICENSE_PAGE.href },
     { label: 'Privacy', href: PRIVACY_PAGE.href },
 ];
 
@@ -33,8 +33,6 @@ export default function Closing({ tokens }) {
                         key={link.href}
                         href={link.href}
                         className="tap-target"
-                        target={link.external ? '_blank' : undefined}
-                        rel={link.external ? 'noreferrer' : undefined}
                         style={{ color: tokens.textDim }}
                     >
                         {link.label}

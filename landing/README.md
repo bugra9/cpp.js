@@ -84,7 +84,7 @@ switch, and it is deliberately not automatic.
 | `src/release.js` | The verified release snapshot every version-dependent surface reads |
 | `src/data.js` | Every piece of copy, every figure, every outbound URL |
 | `src/site-pages.js` | Every page of the site in one list: routing, prerender, sitemap, llms.txt and search derive from it |
-| `src/pages/` | `/agent/` as a page object rendered in the guide shell; `/examples/` as a page object plus its own `ExamplesPage.jsx`: every create-crossbind template's command, then every library app with its captured picture |
+| `src/pages/` | `/agent/` as a page object rendered in the guide shell; `/examples/` as a page object plus its own `ExamplesPage.jsx`: every create-crossbind template's command, then every library app with its captured picture; `/privacy/` and `/license/` as page objects in `DocumentPage.jsx`'s single column, the license text being the repository's `LICENSE`, which `prepare-site.mjs` writes to `generated/license.js` |
 | `src/demos.js` | The live demos manifest (`generated/example-demos.js`), keyed by example id |
 | `src/ports/` | `/ports/` and `/ports/<name>/` from the generated catalog, each with its own page component (`LibrariesPage.jsx`, `PortPage.jsx`) |
 | `src/changelog/` | `/changelog/`: the page object built from `generated/changelog.js`, its own `ChangelogPage.jsx` with a version rail, the anchor helper and the release row; reached from the navbar's version menu, not the docs sidebar |

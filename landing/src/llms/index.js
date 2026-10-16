@@ -1,12 +1,13 @@
 import { CHANGELOG_PAGE } from '../changelog/page.js';
 import { changelogHref } from '../changelog/route.js';
 import {
-    BRAND, DISCUSSIONS_URL, LICENSE_URL, REPO_URL, SITE, SKILL_COMMAND, V1_DOCS_URL,
+    BRAND, DISCUSSIONS_URL, REPO_URL, SITE, SKILL_COMMAND, V1_DOCS_URL,
 } from '../data.js';
 import { DEMOS } from '../demos.js';
 import { GUIDE_SECTIONS } from '../guide/nav.js';
 import AGENT_PAGE from '../pages/agent.js';
 import EXAMPLES_PAGE, { TEMPLATE_GROUPS } from '../pages/examples.js';
+import LICENSE_PAGE from '../pages/license.js';
 import { TUTORIAL_PAGES } from '../pages/tutorial.js';
 import { PORT_PAGES, PORTS_INDEX } from '../ports/pages.js';
 import { RELEASE } from '../release.js';
@@ -117,7 +118,7 @@ export function renderLlmsIndex() {
         `- [Sitemap](${SITE}/sitemap.xml)`,
         `- [GitHub](${REPO_URL}): source, issues and releases`,
         `- [Discussions](${DISCUSSIONS_URL})`,
-        `- [MIT licence](${LICENSE_URL})`,
+        `- [MIT license](${twinUrl(LICENSE_PAGE.path)})`,
         `- [cpp.js 1.x documentation](${V1_DOCS_URL}): the frozen documentation of the previous major`,
         '',
     ].join('\n');

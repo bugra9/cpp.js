@@ -1,10 +1,11 @@
-import { DISCUSSIONS_URL, LICENSE_URL, PRIVACY_EMAIL } from '../data.js';
+import { DISCUSSIONS_URL, PRIVACY_EMAIL } from '../data.js';
+import LICENSE_PAGE from './license.js';
 
 // /privacy/: what crossbind.dev, the playground and crossbind cloud (tooling/cloud) keep, for how long, and how to
 // delete it. Every period here is one the code enforces; change them together.
 
 export default {
-    kind: 'site',
+    kind: 'document',
     slug: 'privacy',
     title: 'Privacy',
     kicker: 'PRIVACY',
@@ -73,7 +74,7 @@ export default {
         { type: 'h2', id: 'no-warranty', text: 'No warranty' },
         {
             type: 'p',
-            text: `crossbind is an open-source project, free under the [MIT license](${LICENSE_URL}). crossbind.dev, the playground and crossbind cloud are provided as they are, without warranty of any kind, and may change, pause or stop at any time without notice. To the extent the law allows, the crossbind project is not liable for any loss that comes from using them. You are responsible for the code you send and for what you do with what comes back: keep your own copies, and do not rely on these services where an outage or a wrong result would cause harm.`,
+            text: `crossbind is an open-source project, free under the [MIT license](${LICENSE_PAGE.href}). crossbind.dev, the playground and crossbind cloud are provided as they are, without warranty of any kind, and may change, pause or stop at any time without notice. To the extent the law allows, the crossbind project is not liable for any loss that comes from using them. You are responsible for the code you send and for what you do with what comes back: keep your own copies, and do not rely on these services where an outage or a wrong result would cause harm.`,
         },
 
         { type: 'h2', id: 'who', text: 'Who runs it' },
