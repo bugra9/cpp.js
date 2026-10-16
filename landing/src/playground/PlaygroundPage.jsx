@@ -13,9 +13,7 @@ import {
     MAIN, addFile, addPackage, removeFile, removePackage, setFile,
 } from './project.js';
 import { DEFAULT_SAMPLE, SAMPLES, findSample } from './samples.js';
-import {
-    SKIN_PARAM, readSkin, storeSkin,
-} from './skin.js';
+import { SKIN_PARAM, readSkin } from './skin.js';
 import { canRunPrebuilt, useRunner } from './useRunner.js';
 import { shortName } from './workspace.jsx';
 
@@ -141,12 +139,11 @@ export default function PlaygroundPage({ tokens, page }) {
         runner.run({ sampleId, project, original: sample.project });
     };
 
-    // A choice made here is the visitor's own: it is stored, and a ?skin= the visit came with no longer applies. The
-    // mark changes at once, or the look being left would hide the one coming until the effect above runs.
-    function chooseSkin(next) {
-        document.documentElement.dataset.playgroundSkin = next;
-        setSkin(next);
-        storeSkin(next);
+    // Leaving the Turbo look drops the ?skin= the visit came with, so a reload opens the modern look too. The mark
+    // changes at once, or the Turbo look would hide the modern one until the effect above runs.
+    function showModern() {
+        document.documentElement.dataset.playgroundSkin = 'modern';
+        setSkin('modern');
         setParam(SKIN_PARAM, null);
     }
 
@@ -239,7 +236,7 @@ export default function PlaygroundPage({ tokens, page }) {
                         onNewFile={() => workspace.onCreating(true)}
                         onReset={resetSample}
                         onAddPackage={() => setAdding(true)}
-                        onModern={() => chooseSkin('modern')}
+                        onModern={showModern}
                         onSignOut={runner.leave}
                         onDeleteAccount={runner.removeAccount}
                     />
@@ -258,17 +255,6 @@ export default function PlaygroundPage({ tokens, page }) {
                     >
                         <h1 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: tokens.text }}>{page.title}</h1>
                         <SamplePicker tokens={tokens} sampleId={sampleId} edited={edited} disabled={busy} onSelect={selectSample} onReset={resetSample} />
-                        <button
-                            type="button"
-                            onClick={() => chooseSkin('turbo')}
-                            className="tap-target"
-                            title="Turbo C++ look"
-                            style={{
-                                fontSize: 12.5, fontFamily: tokens.mono, padding: '5px 12px', borderRadius: 8, cursor: 'pointer', color: tokens.textDim, background: 'transparent', border: `1px solid ${tokens.borderStrong}`,
-                            }}
-                        >
-                            Turbo
-                        </button>
                     </Toolbar>
                 )}
                 <div ref={runner.check} />

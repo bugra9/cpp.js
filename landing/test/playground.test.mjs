@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { SITE_ROUTES } from '../src/site-pages.js';
 import PLAYGROUND_PAGE from '../src/pages/playground.js';
 import { HERO_CONFIG } from '../src/data.js';
-import { SKIN_KEY, SKIN_PARAM, readSkin } from '../src/playground/skin.js';
+import { SKIN_PARAM, readSkin } from '../src/playground/skin.js';
 import { LIMITS } from '../../tooling/cloud/compiler/sandbox.js';
 import { packagesFor } from '../../tooling/cloud/compiler/packages.js';
 import { sampleProject } from '../../scripts/site/build-example-demos.mjs';
@@ -46,19 +46,31 @@ test('the page names the time and memory a compile gets in the sandbox', () => {
     assert.ok(text.includes(`${LIMITS.dataBytes / 1024 ** 3} GB of memory`));
 });
 
-const storage = (value) => () => ({ getItem: (key) => (key === SKIN_KEY ? value : null) });
+// A visitor who picked the Turbo look back when the choice was stored.
+function withStoredTurbo(check) {
+    const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: { getItem: () => 'turbo' } });
+    try {
+        check();
+    } finally {
+        if (descriptor) Object.defineProperty(globalThis, 'localStorage', descriptor);
+        else delete globalThis.localStorage;
+    }
+}
 
-test('a linked look applies to the visit; otherwise the stored choice, else the modern look', () => {
-    assert.equal(readSkin(`?${SKIN_PARAM}=turbo`, storage('modern')), 'turbo');
-    assert.equal(readSkin('?sample=hero', storage('turbo')), 'turbo');
-    assert.equal(readSkin(`?${SKIN_PARAM}=neon`, storage('elsewhere')), 'modern');
-    assert.equal(readSkin('', () => { throw new Error('blocked'); }), 'modern');
+test('only the link a visit came with opens the Turbo look; every other visit opens the modern one', () => {
+    withStoredTurbo(() => {
+        assert.equal(readSkin(`?sample=hero&${SKIN_PARAM}=turbo`), 'turbo');
+        assert.equal(readSkin('?sample=hero'), 'modern');
+        assert.equal(readSkin(`?${SKIN_PARAM}=neon`), 'modern');
+        assert.equal(readSkin(''), 'modern');
+    });
 });
 
-test('the pre-paint script reads the look by the same key and parameter', () => {
+test('the pre-paint script reads the look from the same parameter and stores nothing', () => {
     const page = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-    assert.ok(page.includes(`localStorage.getItem('${SKIN_KEY}')`));
     assert.ok(page.includes(`.get('${SKIN_PARAM}')`));
+    assert.ok(!page.includes('crossbind.playground.skin'));
 });
 
 test('the hero shows the hero sample in the 66 characters its code column holds, its config declaring the sample\'s packages', () => {
