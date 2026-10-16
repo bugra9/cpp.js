@@ -204,7 +204,7 @@ export const FEATURES = [
         guide: 'bindings',
         title: 'Bindings you never write',
         summary:
-            'Import a header and what it exposes is already bound — classes, inheritance, overloads, vectors, maps, enums. C++ exceptions arrive as JS exceptions, and there is no .delete() to remember: shared_ptr owns the objects.',
+            'Import a header and what it exposes is already bound: classes, inheritance, overloads, vectors, maps, enums. C++ exceptions arrive as JS exceptions, and there is no .delete() to remember: shared_ptr owns the objects.',
         tag: ['C++ HEADERS', 'EXCEPTIONS', 'NO .delete()'],
     },
     {
@@ -252,7 +252,7 @@ export const FEATURES = [
         guide: 'libraries',
         title: 'The whole native graph, resolved',
         summary:
-            'Install the package you asked for. crossbind expands its transitive native dependencies, orders prerequisites before dependents and carries the same graph through library, app and WASI builds — no hand-sorted linker list.',
+            'Install the package you asked for. crossbind expands its transitive native dependencies, orders prerequisites before dependents and carries the same graph through library, app and WASI builds. No hand-sorted linker list.',
         tag: ['TRANSITIVE GRAPH', 'DEPENDENCY-ORDERED'],
     },
     {
@@ -292,7 +292,7 @@ export const FEATURES = [
         guide: 'configuration',
         title: 'One command, the full build matrix',
         summary:
-            'crossbind build spans every valid target by default, with wasm64 kept opt-in, and makes binaries only for the runtime environments it is given. Platform, architecture, runtime, release/debug and runtime-environment options compose — each accepts comma-separated values when a release needs only part of the matrix.',
+            'crossbind build spans every valid target by default, with wasm64 kept opt-in, and makes binaries only for the runtime environments it is given. Platform, architecture, runtime, release/debug and runtime-environment options compose, and each accepts comma-separated values when a release needs only part of the matrix.',
         tag: ['5 COMPOSABLE FILTERS', '30 BUILD TARGETS'],
     },
     {
@@ -312,7 +312,7 @@ export const FEATURES = [
         guide: 'quick-start',
         title: 'No toolchain to install',
         summary:
-            'emscripten and wasi-sdk ship in the digest-pinned web Docker image, the Android NDK in the android one — nothing to set up, identical builds on any machine. iOS still goes through local Xcode, and Rust through your own cargo.',
+            'emscripten and wasi-sdk ship in the digest-pinned web Docker image, the Android NDK in the android one. Nothing to set up, identical builds on any machine. iOS still goes through local Xcode, and Rust through your own cargo.',
         tag: ['JUST DOCKER FOR WASM · ANDROID · WASI'],
     },
     {
@@ -332,7 +332,7 @@ export const FEATURES = [
         guide: 'performance',
         title: 'Only what you use',
         summary:
-            'Dead-code elimination on top of -O3, plus platform-split downloads: you ship what you call and what it reaches, not the whole library. Android is the exception — it links the whole library.',
+            'Dead-code elimination on top of -O3, plus platform-split downloads: you ship what you call and what it reaches, not the whole library. Android is the exception: it links the whole library.',
         tag: ['DCE + -O3', 'PLATFORM-SPLIT DOWNLOADS'],
     },
     {
@@ -371,7 +371,7 @@ export const FEATURES = [
         group: 'run',
         guide: 'threading',
         title: 'Off the main thread',
-        summary: `SIMD is on for every wasm build. runtime: 'mt' adds a warm pool of two pthread workers by default in the browser — iOS and Android get real OS threads — and useWorker: true moves the module off the main thread entirely, so even new returns a Promise. Production needs the two COOP/COEP headers; the dev server already sends them.`,
+        summary: `SIMD is on for every wasm build. runtime: 'mt' adds a warm pool of two pthread workers by default in the browser (iOS and Android get real OS threads), and useWorker: true moves the module off the main thread entirely, so even new returns a Promise. Production needs the two COOP/COEP headers; the dev server already sends them.`,
         tag: ['SIMD', '2-WORKER WASM POOL', 'NATIVE THREADS ON DEVICE'],
     },
     {
@@ -381,7 +381,7 @@ export const FEATURES = [
         guide: 'filesystem',
         title: 'Big files, browser and Node',
         summary:
-            'Multi-gigabyte files through OPFS: they persist across reloads and never need to fit in one upload. Mount straight from an <input type=file> — with useWorker: true, because OPFS is worker-only. On Node the same code reads real paths on your disk.',
+            'Multi-gigabyte files through OPFS: they persist across reloads and never need to fit in one upload. Mount straight from an <input type=file>. That needs useWorker: true, because OPFS is worker-only. On Node the same code reads real paths on your disk.',
         tag: ['OPFS · NEEDS useWorker', 'NODE REAL PATHS'],
     },
     {
@@ -401,7 +401,7 @@ export const FEATURES = [
         guide: 'libraries',
         title: 'Libraries as npm dependencies',
         summary:
-            'GDAL, OpenSSL, SQLite, GEOS, PROJ and 11 more, precompiled from the real upstream sources at pinned versions. Or publish your own — prebuilt binaries, C++ sources, a CMake project or a Rust crate. Either way you install one variant per platform you build, and the build resolves its native dependencies.',
+            'GDAL, OpenSSL, SQLite, GEOS, PROJ and 11 more, precompiled from the real upstream sources at pinned versions. Or publish your own: prebuilt binaries, C++ sources, a CMake project or a Rust crate. Either way you install one variant per platform you build, and the build resolves its native dependencies.',
         tag: ['16 PREBUILT', '4 PACKAGE TYPES'],
     },
     {
@@ -411,7 +411,7 @@ export const FEATURES = [
         guide: 'assets',
         title: 'Data files, auto-wired',
         summary:
-            'Coordinate databases, format tables — declare them once. crossbind ships the files to every platform and wires the env vars for you.',
+            'Declare coordinate databases and format tables once. crossbind ships the files to every platform and wires the env vars for you.',
         tag: ['ASSETS', 'ENV VARS', 'EVERY PLATFORM'],
     },
     {
@@ -420,7 +420,7 @@ export const FEATURES = [
         group: 'ship',
         guide: 'executables',
         title: 'Ship a CLI, no JavaScript',
-        summary: `platform: 'wasi' turns C++ into a single .wasm command with no JS glue. 68 classic tools already ship as <tool>-wasi npm commands — gdalinfo, sqlite3, openssl and friends. They run under wasmtime 47 or newer.`,
+        summary: `platform: 'wasi' turns C++ into a single .wasm command with no JS glue. 68 classic tools already ship as <tool>-wasi npm commands: gdalinfo, sqlite3, openssl and friends. They run under wasmtime 47 or newer.`,
         tag: ['68 PREBUILT COMMANDS', 'WASIP3', 'WASMTIME 47+'],
     },
     {
@@ -474,11 +474,11 @@ export const FEATURE_EXTRAS = [
 // from the generated ports catalog (each recipe's nativeVersion), so they cannot go stale; only
 // the one-line pitch is written here. A family missing from the catalog drops off the grid.
 const SHOWCASE_PITCH = {
-    gdal: 'The geospatial stack — 200+ raster and vector formats',
+    gdal: 'The geospatial stack, 200+ raster and vector formats',
     openssl: 'TLS and crypto, real https from a WASI command',
     sqlite3: 'The database, in the browser and on device',
     proj: 'Coordinate transforms with the EPSG database',
-    geos: 'Planar geometry — buffers, overlays, predicates',
+    geos: 'Planar geometry: buffers, overlays, predicates',
     tiff: 'TIFF read/write with JPEG, ZSTD and LERC codecs',
     webp: 'WebP encode and decode anywhere',
     spatialite: 'Spatial SQL on top of SQLite',
