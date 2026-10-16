@@ -124,6 +124,7 @@ export default function Nav({ tokens, path = '/', onToggleTheme, onOpenSearch })
                 zIndex: 5,
                 background: tokens.bg,
                 borderBottom: `1px solid ${tokens.border}`,
+                '--nav-shade': tokens.isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)',
             }}
         >
             <a
@@ -166,7 +167,7 @@ export default function Nav({ tokens, path = '/', onToggleTheme, onOpenSearch })
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
                 <button
                     type="button"
-                    className="tap-target"
+                    className="tap-target nav-button"
                     onClick={onOpenSearch}
                     aria-label="Search the site"
                     title="Search (⌘K)"
@@ -176,7 +177,7 @@ export default function Nav({ tokens, path = '/', onToggleTheme, onOpenSearch })
                 </button>
                 <button
                     type="button"
-                    className="tap-target"
+                    className="tap-target nav-button"
                     onClick={onToggleTheme}
                     aria-label={tokens.isLight ? 'Switch to dark mode' : 'Switch to light mode'}
                     style={iconButton(tokens)}
@@ -185,7 +186,7 @@ export default function Nav({ tokens, path = '/', onToggleTheme, onOpenSearch })
                 </button>
                 <button
                     type="button"
-                    className="tap-target nav-menu-btn"
+                    className="tap-target nav-menu-btn nav-button"
                     onClick={() => setMenuOpen((current) => !current)}
                     aria-expanded={menuOpen}
                     aria-controls="site-nav"
@@ -198,7 +199,7 @@ export default function Nav({ tokens, path = '/', onToggleTheme, onOpenSearch })
                     repeating it on the same screen splits one click two ways. */}
                 <a
                     href={REPO_URL}
-                    className="tap-target"
+                    className="tap-target nav-button"
                     style={{
                         background: tokens.pillBg,
                         border: `1px solid ${tokens.borderStrong}`,
