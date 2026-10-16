@@ -2,17 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ehCD/xSCVPn9glXJnV3+LrIsh9r4CmIlx6EKY3DSrWY=' blob: 'unsafe-eval' 'wasm-unsafe-eval'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-6ueMHMAPndT2H8rXtZmr1FBIEmzhoKkXFAMOPhgfA+I=' blob: 'unsafe-eval' 'wasm-unsafe-eval'; base-uri 'none'; form-action 'none'">
 <title>crossbind playground sandbox</title>
 <script>
 (() => {
     'use strict';
     const MAX_TEXT = 4000;
     const post = (message) => parent.postMessage({ channel: 'crossbind-playground', ...message }, '*');
+    let mainUrl = '';
+    // Only Chrome starts a stack with the error's message, and the frames outside main.js are crossbind's loader and
+    // the generated modules, under blob URLs: an error reads as its message and the lines of main.js it came through.
+    const mainFrames = (stack) => String(stack ?? '').split('\n')
+        .filter((line) => mainUrl && line.includes(mainUrl))
+        .map((line) => line.replaceAll(mainUrl, 'main.js'));
     const describe = (value) => {
         if (typeof value === 'string') return value;
         if (typeof value === 'bigint') return `${value}n`;
-        if (value instanceof Error) return value.stack || String(value);
+        if (value instanceof Error) return [String(value), ...mainFrames(value.stack)].join('\n');
         try {
             return JSON.stringify(value, (key, item) => (typeof item === 'bigint' ? `${item}n` : item)) ?? String(value);
         } catch {
@@ -52,7 +58,8 @@
         const urls = [];
         modules.forEach((source) => urls.push(blobUrl(String(source).replace(reference, (match, index) => urls[Number(index)] ?? match))));
         globalThis.console = sandboxConsole;
-        await import(urls[urls.length - 1]);
+        mainUrl = urls[urls.length - 1];
+        await import(mainUrl);
     }
 
     let started = false;
