@@ -366,7 +366,7 @@ export default {
 
 - [`init.md`](./init.md) — runtime API. `crossbind.config.js` produces the artifacts that `initNative(opts)` loads.
 - [`crossbind-build.md`](./crossbind-build.md) — sibling file used by package authors only.
-- [`rust.md`](./rust.md) — Rust bindings: `cargo:` imports, app-local `.rs`, `export.type: 'cargo'` packages.
+- [`rust.md`](./rust.md) — Rust bindings: `cargo:` imports, app-local `.rs`, `export.type: 'cargo'` packages and `crossbind.cargo.lock`.
 - [`conan.md`](./conan.md) — C and C++ packages from ConanCenter: `conan:` imports and `conan.lock`.
 - [`wasi.md`](./wasi.md) — `platform: 'wasi'` command builds + `-standalone-wasi` tool packages.
 - [`threading.md`](./threading.md) — `target.runtime: 'mt'` requirements.

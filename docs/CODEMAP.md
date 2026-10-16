@@ -68,7 +68,7 @@ Every consumer-facing field, every default, every constraint lives in [`docs/api
 - [`threading.md`](./api/threading.md) — `runtime: 'st' | 'mt'`, `useWorker`, COOP/COEP, edge-runtime limits.
 - [`remote-runner.md`](./api/remote-runner.md) — `RUNNER=REMOTE` builds on remote runners at `REMOTE_URL_<IMAGE>` / `REMOTE_URL`; `crossbind runner start`, `runner init fly|cloudflare|cloudrun|azure`.
 - [`cpp-binding-rules.md`](./api/cpp-binding-rules.md) — what auto-binding handles + wrapper / SWIG escape patterns.
-- [`rust.md`](./api/rust.md) — Rust bindings: `cargo:` imports, app-local `.rs`, cargo-type packages.
+- [`rust.md`](./api/rust.md) — Rust bindings: `cargo:` imports, app-local `.rs`, cargo-type packages, `crossbind.cargo.lock`.
 - [`conan.md`](./api/conan.md) — C/C++ packages from ConanCenter: `conan:` imports, `conanDependencies`, `conan.lock`.
 - [`native.md`](./api/native.md) — desktop platforms beyond Node.js addons: native executables and prebuilt archives in your own C/C++ build.
 - [`wasi.md`](./api/wasi.md) — `platform: 'wasi'` command builds, HTTP components (`-e http`) + `-standalone-wasi` npm tool packages.
@@ -205,6 +205,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | crossbind target → cargo triple | `src/utils/cargoTarget.js` |
 | Rust bridge generation (crate surface parsing, dts) | `src/utils/rustBridgeGen.js` |
 | `cargo:` specifiers, import markers, app-source scan for module imports | `src/utils/cargoImport.js` |
+| `crossbind.cargo.lock`: the app's crate versions, followed before cargo resolves and recorded after a build | `src/utils/cargoLock.js` |
 | Flags every wasm archive shares (exceptions, SIMD, threads, memory64) | `src/utils/archiveFlags.js` |
 | The android image's NDK and the API level every Android archive is built against | `src/utils/androidToolchain.js` |
 | The Xcode and the deployment target every iOS archive is built with | `src/utils/iosToolchain.js` |

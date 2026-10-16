@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import state from '../state/index.js';
+import { followCargoLock, recordCargoLock } from './cargoLock.js';
 import { cargoTripleFor } from './cargoTarget.js';
 import { isMtWasm, assertMtRustToolchain, cargoTargetDirFor, cargoBuildInvocation } from './rustMt.js';
 import runCargo from './runCargo.js';
@@ -110,6 +112,7 @@ export default function buildAppRustCrates(target, cacheDir, cargoDependencies =
         manifestPath: `${superDir}/Cargo.toml`,
         sysroot,
     });
+    followCargoLock(state.config.paths.project, superDir);
     const build = runCargo(args, {
         rustflags, panic, allowUnstable, target,
     });
@@ -118,5 +121,6 @@ export default function buildAppRustCrates(target, cacheDir, cargoDependencies =
     }
     const libFile = `${targetDir}/${triple}/release/libcrossbind_app_super.a`;
     if (!fs.existsSync(libFile)) throw new Error(`crossbind: expected cargo output ${libFile} not found`);
+    recordCargoLock(state.config.paths.project, superDir);
     return [libFile];
 }

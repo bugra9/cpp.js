@@ -66,7 +66,7 @@ export default {
         },
         {
             type: 'p',
-            text: '**Touches:** under the default `RUNNER`, it pulls the pinned toolchain images and runs a container for each step ([Remote builds](/guide/remote-builds/) moves the steps elsewhere); `ios` and `darwin` compile with Xcode on the Mac. It writes the cache in `.crossbind/`, the output folder (`paths.output`, `.crossbind/build` unless the config names another) and shared caches under `~/.crossbind/`, and downloads crates, Conan packages and sources a build needs.',
+            text: '**Touches:** under the default `RUNNER`, it pulls the pinned toolchain images and runs a container for each step ([Remote builds](/guide/remote-builds/) moves the steps elsewhere); `ios` and `darwin` compile with Xcode on the Mac. It writes the cache in `.crossbind/`, the output folder (`paths.output`, `.crossbind/build` unless the config names another), `conan.lock` and `crossbind.cargo.lock` next to the config for a project with Conan packages or crates, and shared caches under `~/.crossbind/`, and downloads crates, Conan packages and sources a build needs.',
         },
 
         { type: 'h2', id: 'licenses', text: 'licenses' },

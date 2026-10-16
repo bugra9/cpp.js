@@ -14,7 +14,7 @@
     {
       "source": "docs/api/README.md",
       "output": "api/README.md",
-      "sha256": "a93f682212e94de8a0c60b7312feac27603b4fb8abc3064883c6f26efdea7efc"
+      "sha256": "650ad26e8c43850e2e4bddf8f6fe28b9620fb243b76327633b82525f13108c79"
     },
     {
       "source": "docs/api/build-state.md",
@@ -39,7 +39,7 @@
     {
       "source": "docs/api/crossbind-config.md",
       "output": "api/crossbind-config.md",
-      "sha256": "4592192a61bd07793a7d9b953bd400b8fd572c5edfafdc2231c10730aa09fdc7"
+      "sha256": "8e55a630b98150a2c2d5706128619ebdcdd14a661c35188d93ce31e6e8ffe922"
     },
     {
       "source": "docs/api/filesystem.md",
@@ -79,7 +79,7 @@
     {
       "source": "docs/api/rust.md",
       "output": "api/rust.md",
-      "sha256": "3e1b6f93baadacb09883ec1d9e9553cf9f89460780d48a2152efbf24dc954806"
+      "sha256": "077f9f1c76cf9122d2da2d7fb637886e9b818546347e716dfa81a9e26501fe07"
     },
     {
       "source": "docs/api/swig-escape.md",

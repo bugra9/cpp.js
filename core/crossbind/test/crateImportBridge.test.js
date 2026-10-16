@@ -34,18 +34,23 @@ afterEach(() => {
     fs.rmSync(work, { recursive: true, force: true });
 });
 
-async function bridgeFor(modulePath) {
+async function bridgeFor(modulePath, { onCargo = () => {} } = {}) {
     vi.resetModules();
     const { default: runCargo } = await import('../src/utils/runCargo.js');
-    runCargo.mockReturnValue({
-        status: 0,
-        stdout: JSON.stringify({
-            packages: [{ name: 'fixture', id: 'fixture-id', manifest_path: path.join(crateDir, 'Cargo.toml') }],
-            resolve: { nodes: [{ id: 'fixture-id', features: [] }] },
-        }),
+    runCargo.mockImplementation((args) => {
+        onCargo(args);
+        return {
+            status: 0,
+            stdout: JSON.stringify({
+                packages: [{ name: 'fixture', id: 'fixture-id', manifest_path: path.join(crateDir, 'Cargo.toml') }],
+                resolve: { nodes: [{ id: 'fixture-id', features: [] }] },
+            }),
+        };
     });
     const { createCrateImportBridge } = await import('../src/utils/rustBridgeGen.js');
-    return createCrateImportBridge({ crateName: 'fixture', modulePath, spec: '0.1', cacheDir, log: () => {} });
+    return createCrateImportBridge({
+        crateName: 'fixture', modulePath, spec: '0.1', cacheDir, projectDir: path.dirname(cacheDir), log: () => {},
+    });
 }
 
 const writeLib = (lines) => fs.writeFileSync(path.join(crateDir, 'src/lib.rs'), `${lines.join('\n')}\n`);
@@ -55,6 +60,18 @@ const addMarker = (name) => {
 };
 
 describe('createCrateImportBridge', () => {
+    test("cargo metadata resolves the crate with the versions the project's crossbind.cargo.lock pins", async () => {
+        fs.mkdirSync(path.dirname(cacheDir), { recursive: true });
+        fs.writeFileSync(path.join(path.dirname(cacheDir), 'crossbind.cargo.lock'), '# pinned by the project\n');
+        const seen = [];
+
+        await bridgeFor([], {
+            onCargo: (args) => seen.push(fs.readFileSync(path.join(path.dirname(args[args.indexOf('--manifest-path') + 1]), 'Cargo.lock'), 'utf8')),
+        });
+
+        expect(seen).toEqual(['# pinned by the project\n']);
+    });
+
     test("a module import binds that module through its path, in the crate's one bridge", async () => {
         const { bridgeDir, exports, model } = await bridgeFor(['fast']);
 

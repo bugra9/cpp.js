@@ -70,6 +70,7 @@ export function getRustSymbols(rsFile) {
             modulePath,
             spec: cargoDeps[crateName],
             cacheDir: state.config.paths.cache,
+            projectDir: state.config.paths.project,
             dtsMode: state.config.dts,
             log: () => {},
         });

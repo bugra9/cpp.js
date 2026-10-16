@@ -13,6 +13,8 @@ vi.mock('../src/state/index.js', () => ({ default: { config: { paths: {}, system
 
 const WASM = { platform: 'wasm', arch: 'wasm32' };
 const TRIPLE = 'wasm32-unknown-emscripten';
+const PINNED_LOCK = '# pinned by the project\n';
+const RESOLVED_LOCK = '# resolved by cargo\n';
 
 let work;
 let cacheDir;
@@ -20,6 +22,8 @@ let cacheDir;
 async function importFresh() {
     vi.resetModules();
     const { spawnSync } = await import('node:child_process');
+    const { default: state } = await import('../src/state/index.js');
+    state.config.paths.project = work;
     const { default: buildAppRustCrates } = await import('../src/utils/appRustCrates.js');
     return { buildAppRustCrates, spawnSync };
 }
@@ -33,10 +37,13 @@ function addCrate(name, userFile = null) {
     fs.writeFileSync(path.join(dir, 'src/lib.rs'), lib);
 }
 
+// What a cargo build leaves: the archive, and the Cargo.lock it resolved beside the manifest.
 function fakeCargoOutput(targetDirName = 'target') {
-    const lib = path.join(cacheDir, 'rust-bridges/_app_super', targetDirName, TRIPLE, 'release/libcrossbind_app_super.a');
+    const superDir = path.join(cacheDir, 'rust-bridges/_app_super');
+    const lib = path.join(superDir, targetDirName, TRIPLE, 'release/libcrossbind_app_super.a');
     fs.mkdirSync(path.dirname(lib), { recursive: true });
     fs.writeFileSync(lib, '');
+    fs.writeFileSync(path.join(superDir, 'Cargo.lock'), RESOLVED_LOCK);
     return lib;
 }
 
@@ -128,6 +135,37 @@ describe('buildAppRustCrates', () => {
         const { buildAppRustCrates, spawnSync } = await importFresh();
         spawnSync.mockReturnValue({ status: 0 });
         expect(() => buildAppRustCrates(WASM, cacheDir)).toThrow(/not found/);
+    });
+
+    test("cargo resolves against the project's crossbind.cargo.lock, and the build records what it resolved", async () => {
+        addCrate('counter');
+        fs.writeFileSync(path.join(work, 'crossbind.cargo.lock'), PINNED_LOCK);
+        const { buildAppRustCrates, spawnSync } = await importFresh();
+        let seen;
+        spawnSync.mockImplementation(() => {
+            seen = fs.readFileSync(path.join(cacheDir, 'rust-bridges/_app_super/Cargo.lock'), 'utf8');
+            fakeCargoOutput();
+            return { status: 0 };
+        });
+
+        buildAppRustCrates(WASM, cacheDir);
+
+        expect(seen).toBe(PINNED_LOCK);
+        expect(fs.readFileSync(path.join(work, 'crossbind.cargo.lock'), 'utf8')).toBe(RESOLVED_LOCK);
+    });
+
+    test('the first build writes crossbind.cargo.lock, and a failed one leaves it as it was', async () => {
+        addCrate('counter');
+        const first = await importFresh();
+        first.spawnSync.mockImplementation(() => { fakeCargoOutput(); return { status: 0 }; });
+        first.buildAppRustCrates(WASM, cacheDir);
+        const written = fs.readFileSync(path.join(work, 'crossbind.cargo.lock'), 'utf8');
+        fs.writeFileSync(path.join(work, 'crossbind.cargo.lock'), PINNED_LOCK);
+        const failing = await importFresh();
+        failing.spawnSync.mockImplementation(() => { fakeCargoOutput(); return { status: 101 }; });
+
+        expect(() => failing.buildAppRustCrates(WASM, cacheDir)).toThrow(/cargo build failed/);
+        expect([written, fs.readFileSync(path.join(work, 'crossbind.cargo.lock'), 'utf8')]).toEqual([RESOLVED_LOCK, PINNED_LOCK]);
     });
 
     test('prunes an app-local bridge whose .rs file is gone', async () => {
