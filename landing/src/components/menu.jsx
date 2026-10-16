@@ -64,6 +64,42 @@ function useMenu() {
     return root;
 }
 
+// A mouse opens a floating menu by hovering it; a click, a tap and the keyboard still work the <details>. Under
+// 1100px the menus open in place in the folded column, where opening on hover would shift the links around.
+const HOVER_MENUS = '(hover: hover) and (pointer: fine) and (min-width: 1101px)';
+const HOVER_CLOSE_MS = 150;
+
+function useHoverOpen(root) {
+    const closing = useRef(0);
+    const pointer = useRef('');
+    const hovers = (type) => type === 'mouse' && matchMedia(HOVER_MENUS).matches;
+    const setOpen = (open) => {
+        if (root.current) root.current.open = open;
+    };
+
+    return {
+        onPointerEnter: (event) => {
+            if (!hovers(event.pointerType)) return;
+            clearTimeout(closing.current);
+            setOpen(true);
+        },
+        // The delay carries the pointer across the gap between the trigger and the panel.
+        onPointerLeave: (event) => {
+            if (hovers(event.pointerType)) closing.current = setTimeout(() => setOpen(false), HOVER_CLOSE_MS);
+        },
+        trigger: {
+            onPointerDown: (event) => {
+                pointer.current = event.pointerType;
+            },
+            // Hovering has already opened it, so a mouse click on the trigger would only close it again. A click the
+            // keyboard makes has no detail and still toggles.
+            onClick: (event) => {
+                if (event.detail > 0 && hovers(pointer.current)) event.preventDefault();
+            },
+        },
+    };
+}
+
 const menuPanelStyle = (tokens) => ({
     position: 'absolute',
     top: 'calc(100% + 8px)',
@@ -94,10 +130,11 @@ const menuItemStyle = (tokens, current) => ({
 // Whether it is open lives on the element alone, so no state can fall behind a click.
 export function NavMenu({ tokens, label, active, items, className = '', style, panelStyle }) {
     const root = useMenu();
+    const { trigger, ...hover } = useHoverOpen(root);
 
     return (
-        <details ref={root} className={`nav-dropdown ${className}`.trim()} style={{ position: 'relative', ...style }}>
-            <summary className="tap-target nav-link" style={{ ...navLinkStyle(tokens, active), gap: 6, cursor: 'pointer', listStyle: 'none' }}>
+        <details ref={root} {...hover} className={`nav-dropdown ${className}`.trim()} style={{ position: 'relative', ...style }}>
+            <summary {...trigger} className="tap-target nav-link" style={{ ...navLinkStyle(tokens, active), gap: 6, cursor: 'pointer', listStyle: 'none' }}>
                 {label}
                 <Chevron />
             </summary>
