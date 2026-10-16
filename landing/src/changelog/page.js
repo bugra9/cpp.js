@@ -17,7 +17,6 @@ export const CHANGELOG_PAGE = {
     slug: '',
     title: 'Changelog',
     description: 'Every crossbind release on one page, newest first. Released versions carry their verified npm and GitHub links.',
-    lede: 'Newest first. A release row under a version means that release was verified against npm and its GitHub Release at the exact commit that shipped, and the notes are the ones published with it.',
     section: 'Changelog',
     path: CHANGELOG_INDEX_PATH,
     href: CHANGELOG_INDEX_HREF,

@@ -19,7 +19,6 @@ export default {
     section: 'Agents',
     path: '/agent',
     href: '/agent/',
-    eyebrow: { head: 'AGENTS', tail: ' · SETUP' },
     blocks: [
         { type: 'h2', id: 'install', text: 'Install the skill' },
         { type: 'p', text: 'The skill installs with the Skills CLI, straight from the repository tree:' },

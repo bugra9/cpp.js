@@ -113,9 +113,8 @@ export default function ExamplesPage({ tokens, page }) {
 
             {APP_GROUPS.map((group) => (
                 <section key={group.id} aria-labelledby={group.id}>
-                    <h2 id={group.id} style={{ display: 'flex', alignItems: 'baseline', gap: 12, fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', margin: '44px 0 18px', color: tokens.text, scrollMarginTop: 90 }}>
+                    <h2 id={group.id} style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', margin: '44px 0 18px', color: tokens.text, scrollMarginTop: 90 }}>
                         {group.label}
-                        <span style={{ fontFamily: tokens.mono, fontSize: 12.5, fontWeight: 400, letterSpacing: 0, color: tokens.textMuted }}>{`${group.apps.length} apps`}</span>
                     </h2>
                     <div className="examples-grid" style={{ '--rule': tokens.border, '--lit': tokens.accent, '--card': tokens.panel }}>
                         {group.apps.map((app) => <AppTile key={app.id} tokens={tokens} app={app} />)}

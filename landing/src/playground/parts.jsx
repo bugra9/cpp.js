@@ -6,6 +6,11 @@ import { LOGIN_URL } from './client.js';
 
 const ERROR_STREAMS = new Set(['stderr', 'warn', 'error']);
 
+// The page's h1, for screen readers only: the navbar's Playground already names the page on screen.
+export const visuallyHidden = {
+    position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap',
+};
+
 export const linkButtonStyle = (tokens, color = tokens.accentText) => ({
     background: 'none', border: 'none', padding: 0, color, cursor: 'pointer', font: 'inherit',
 });

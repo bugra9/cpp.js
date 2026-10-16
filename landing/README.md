@@ -104,8 +104,8 @@ from one source. The theme lives in `localStorage` under `crossbind.landing.them
 ## Guide
 
 The structure is lifted from [gdal3.js](https://gdal3.js.org/docs/)'s docs: a grouped sidebar, the
-article, and an "on this page" rail, with a breadcrumb eyebrow, filename-barred code blocks and
-prev/next at the foot. What differs is the plumbing — pages are data rather than HTML files, and
+article, and an "on this page" rail, with filename-barred code blocks and prev/next at the foot.
+A page names itself once, in its title: no eyebrow above it repeats the title or the section. What differs is the plumbing — pages are data rather than HTML files, and
 they render through the landing's own tokens, so the theme toggle keeps working.
 
 `/examples/` is derived, so it does not go stale: a command for every template in create-crossbind's

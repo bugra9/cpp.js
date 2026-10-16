@@ -15,7 +15,6 @@ export default {
     section: 'Playground',
     path: '/playground',
     href: '/playground/',
-    eyebrow: { head: 'PLAYGROUND', tail: '' },
     blocks: [
         { type: 'h2', id: 'how-it-works', text: 'How it works' },
         {

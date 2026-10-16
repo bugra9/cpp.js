@@ -14,7 +14,6 @@ export default {
     section: 'Privacy',
     path: '/privacy',
     href: '/privacy/',
-    eyebrow: { head: 'PRIVACY', tail: '' },
     blocks: [
         { type: 'h2', id: 'site', text: 'This site' },
         {
