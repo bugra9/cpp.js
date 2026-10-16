@@ -76,57 +76,13 @@ Start with the crossbind documentation index at ${SITE}/llms.txt and follow the 
 
 Follow the repository's conventions and make the smallest complete integration. Ask for clarification only when missing information prevents a correct implementation.`;
 
-// The point of the page: these calls are identical on every runtime. main.js imports your own C++
-// and Rust and one example of each package source the config declares: a crossbind port, a crate
-// and a Conan package. One initNative() boots them all, and each call is awaited because browsers
-// run the module in a worker by default. The fold only shows these files - the live proof is the
-// SQLite panel below it.
-export const HERO_FILES = [
-    {
-        id: 'main.js',
-        label: 'main.js',
-        code: `import { initNative, greet } from './native/greet.h';
-import { fibonacci } from './native/math.rs';
-import { GDALVersionInfo } from '@crossbind/port-gdal/gdal.h';
-import { Uuid } from 'cargo:uuid';
-import { zlibVersion } from 'conan:zlib/zlib.h';
-
-await initNative();
-
-const id = await Uuid.newV4();
-
-console.log(await greet('crossbind'), await fibonacci(90));
-console.log(await GDALVersionInfo('RELEASE_NAME'));
-console.log(await id.toString(), await zlibVersion());`,
-    },
-    {
-        id: 'greet.h',
-        label: 'greet.h',
-        code: `#pragma once
-#include <string>
-
-inline std::string greet(std::string name) {
-    return "Hello, " + name + "!";
-}`,
-    },
-    {
-        id: 'math.rs',
-        label: 'math.rs',
-        code: `pub fn fibonacci(n: i32) -> u64 {
-    let (mut a, mut b) = (0, 1);
-    for _ in 0..n {
-        (a, b) = (b, a + b);
-    }
-    a
-}`,
-    },
-    {
-        id: 'crossbind.config.js',
-        label: 'crossbind.config.js',
-        code: `import gdal from '@crossbind/port-gdal-wasm/crossbind.config.js';
+// The hero's config tab: the one a project of your own would carry for the playground's hero sample
+// (src/playground/samples/hero), whose files the other tabs show. The binding is `db` so the import
+// stays within the 66 characters the code column holds.
+export const HERO_CONFIG = `import db from '@crossbind/port-sqlite3-wasm/crossbind.config.js';
 
 export default {
-    dependencies: [gdal],
+    dependencies: [db],
     cargoDependencies: {
         uuid: '{ version = "1", features = ["v4"] }',
     },
@@ -134,9 +90,7 @@ export default {
         zlib: '1.3.2',
     },
     paths: { config: import.meta.url },
-};`,
-    },
-];
+};`;
 
 // The band under the hero: a drawing per kind of host (components/PlatformScene.jsx) with the
 // products named in text. Apple's and Microsoft's terms forbid their logos without a licence but

@@ -5,7 +5,12 @@ import PromptModal from '../components/PromptModal.jsx';
 import Tabs from '../components/Tabs.jsx';
 import { TURBO, TURBO_SYNTAX, TitlePart } from '../components/turbo.jsx';
 import { highlight, primaryButtonStyle, secondaryButtonStyle } from '../components/ui.jsx';
-import { CREATE_COMMANDS, HERO_FILES, RUNTIMES } from '../data.js';
+import {
+    CREATE_COMMANDS, HERO_CONFIG, PLAYGROUND_URL, RUNTIMES,
+} from '../data.js';
+import heroMain from '../playground/samples/hero/main.js?raw';
+import heroGreet from '../playground/samples/hero/native/greet.h?raw';
+import heroMath from '../playground/samples/hero/native/math.rs?raw';
 import { guideHref } from '../guide/nav.js';
 
 // The band under the hero; the detail of each target is its tooltip.
@@ -40,6 +45,17 @@ function CreateCommand({ tokens }) {
         </>
     );
 }
+
+// The playground's hero sample, which Run opens in the playground's Turbo look: main.js imports the
+// sample's own C++ and Rust and one package of each source (a crossbind port, a crate, a Conan
+// package), and each call is awaited because browsers run the module in a worker by default.
+const HERO_FILES = Object.freeze([
+    { id: 'main.js', label: 'main.js', code: heroMain.trimEnd() },
+    { id: 'greet.h', label: 'greet.h', code: heroGreet.trimEnd() },
+    { id: 'math.rs', label: 'math.rs', code: heroMath.trimEnd() },
+    { id: 'crossbind.config.js', label: 'crossbind.config.js', code: HERO_CONFIG },
+]);
+const HERO_RUN = `${PLAYGROUND_URL}?sample=hero&skin=turbo`;
 
 // The headline claims C++ and Rust, so the proof sits right beside it: main.js imports both, shown
 // in Turbo C++, the IDE a generation first wrote C++ in: the files are its menu, the code is in its
@@ -80,6 +96,10 @@ function UniversalCode({ tokens }) {
                         fontSize: 13,
                     })}
                 />
+                <a href={HERO_RUN} aria-label="Run in the playground" className="tap-target" style={{ marginLeft: 'auto', padding: '0 8px', color: '#000', textDecoration: 'none' }}>
+                    <span style={{ color: TURBO.red }}>R</span>
+                    un
+                </a>
             </div>
             <div style={{ padding: '14px 6px 6px' }}>
                 <div style={{ position: 'relative', border: `3px double ${TURBO.white}` }}>
