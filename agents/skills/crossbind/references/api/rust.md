@@ -228,6 +228,14 @@ wasm stack overflow overwrites memory instead of trapping. Debug builds also add
 targetSpecs: [{ platform: 'wasm', specs: { binary: { emccFlags: ['-sSTACK_SIZE=4MB'] } } }],
 ```
 
+## `crossbind.cargo.lock`
+
+The first build that links the app's Rust writes `crossbind.cargo.lock` next to
+`crossbind.config.js`. It pins the exact version of every crate the build links, the ones in
+`cargoDependencies` and the ones they depend on, so commit it. Later builds follow it and add any
+crate it does not list yet; delete it to resolve every version again. It is not called
+`Cargo.lock`, which a package whose crate sits at the project root already has.
+
 ## Editor types
 
 Generated declarations never live in your source tree — everything sits under

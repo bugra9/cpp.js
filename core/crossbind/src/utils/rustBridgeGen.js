@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { followCargoLock } from './cargoLock.js';
 import resolveEmbindRustRoot, { embindRustVersion } from './resolveEmbindRust.js';
 import runCargo, { toHostPath } from './runCargo.js';
 import writeIfChanged from './writeIfChanged.js';
@@ -303,7 +304,9 @@ export function createRustBridgeCrate({ rsFile, cacheDir, projectPath, vectors =
 // through the root and through a module registers once and is the same JS class for both.
 const crateSourceCache = new Map();
 const crateModelCache = new Map();
-export function createCrateImportBridge({ crateName, modulePath = [], spec, cacheDir, dtsMode = 'sync', log = console.log }) {
+export function createCrateImportBridge({
+    crateName, modulePath = [], spec, cacheDir, projectDir, dtsMode = 'sync', log = console.log,
+}) {
     const importName = [crateName, ...modulePath].join('/');
     const crateIdent = crateName.replaceAll('-', '_');
     const stem = `crate_${crateName.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase()}`;
@@ -343,7 +346,9 @@ export function createCrateImportBridge({ crateName, modulePath = [], spec, cach
     // cargo metadata needs a resolvable lib target before the real bridge exists.
     if (!fs.existsSync(`${dir}/src/lib.rs`)) writeIfChanged(`${dir}/src/lib.rs`, '// crossbind placeholder\n');
 
-    const { srcDir, features } = crateSource({ dir, depLine, crateName, importName });
+    const { srcDir, features } = crateSource({
+        dir, depLine, crateName, importName, projectDir,
+    });
     const ownKey = modulePath.join('::');
     const imports = [];
     for (const importPath of crateImports(cacheDir, crateName, modulePath)) {
@@ -385,10 +390,14 @@ export function createCrateImportBridge({ crateName, modulePath = [], spec, cach
 }
 
 // cargo metadata locates the crate's source and the feature set it resolves to (fetching the crate
-// on first use); both hold for every import of the crate.
-function crateSource({ dir, depLine, crateName, importName }) {
+// on first use); both hold for every import of the crate. It resolves with the project's pins, so
+// the bridge is made from the version the app links.
+function crateSource({
+    dir, depLine, crateName, importName, projectDir,
+}) {
     const cacheKey = `${dir}|${depLine}`;
     if (crateSourceCache.has(cacheKey)) return crateSourceCache.get(cacheKey);
+    followCargoLock(projectDir, dir);
     let meta;
     try {
         const probe = runCargo(['metadata', '--format-version', '1', '--manifest-path', `${dir}/Cargo.toml`], {

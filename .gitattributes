@@ -1,2 +1,4 @@
 core/crossbind/src/assets/wasi-runtime/http/bindings/** linguist-generated
 core/crossbind/src/assets/wasi-runtime/http/wit/deps/** linguist-generated
+**/crossbind.cargo.lock linguist-generated
+**/conan.lock linguist-generated

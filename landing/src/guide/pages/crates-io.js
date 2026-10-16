@@ -106,7 +106,7 @@ const digest = xxh364(new TextEncoder().encode('crossbind'));`,
         },
         {
             type: 'p',
-            text: "Nothing pins those versions in your project the way `conan.lock` does for [ConanCenter](/guide/conan/): the generated crates, and the `Cargo.lock` cargo writes for them, live under `.crossbind/`. A fresh checkout or a cleared cache resolves every requirement again and may pick a newer release; write an exact requirement such as `'=1.4.0'` where two machines must build the same code.",
+            text: 'The first build writes `crossbind.cargo.lock` next to `crossbind.config.js`. It pins the exact version of every crate the build links, the ones you declare and the ones they depend on, so commit it. Later builds follow it and add any crate it does not list yet; delete it to resolve every version again.',
         },
 
         { type: 'h2', id: 'typescript', text: 'TypeScript' },
