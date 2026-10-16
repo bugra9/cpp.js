@@ -54,7 +54,7 @@
     outline-offset: 2px;
 }
 
-/* A hovered navbar link, menu entry or button takes the shade the header sets for its theme. The inline styles own the
+/* A hovered navbar link, menu entry or button takes the shade the page sets for its theme. The inline styles own the
    backgrounds, so the shade is an inset shadow, which also keeps the current page's pill under it. */
 @media (hover: hover) {
     .nav-link:hover,
@@ -462,8 +462,8 @@ li > .map-link:hover {
         display: grid !important;
     }
 
-    /* In the folded column the menus open in place, their links indented under them. */
-    .nav-dropdown-panel {
+    /* In the folded column the navbar's menus open in place, their links indented under them. */
+    .nav-links .nav-dropdown-panel {
         position: static !important;
         min-width: 0 !important;
         padding: 0 0 0 14px !important;

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { configSource } from '../../../tooling/cloud/compiler/packages.js';
 import PrevNext from '../components/PrevNext.jsx';
 import Tabs from '../components/Tabs.jsx';
+import { NavMenu } from '../components/menu.jsx';
 import { CodeWindow } from '../components/ui.jsx';
 import { PLAYGROUND_URL } from '../data.js';
 import Article from '../guide/Article.jsx';
@@ -96,9 +97,15 @@ export default function TutorialPage({ tokens, page }) {
     return (
         <main id="content" className="tutorial-grid" style={{ padding: '48px var(--content-x) 80px' }}>
             <article style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: tokens.mono, fontSize: 11, letterSpacing: 1.2, color: tokens.textMuted, marginBottom: 14 }}>
-                    {`TUTORIAL · STEP ${index + 1} OF ${TUTORIAL_PAGES.length}`}
-                </div>
+                <NavMenu
+                    tokens={tokens}
+                    label={`TUTORIAL · STEP ${index + 1} OF ${TUTORIAL_PAGES.length}`}
+                    items={TUTORIAL_PAGES.map((step, at) => ({ label: `${at + 1}. ${step.title}`, href: step.href, current: at === index }))}
+                    style={{ width: 'fit-content', margin: '-4px 0 10px -8px' }}
+                    summaryStyle={{ padding: '4px 8px', fontFamily: tokens.mono, fontSize: 11, letterSpacing: 1.2, color: tokens.textMuted }}
+                    // Under the sticky header (z-index 5), so a page scrolled with the list open slides it beneath.
+                    panelStyle={{ minWidth: 240, zIndex: 4 }}
+                />
                 <h1 style={{ fontSize: 'clamp(30px, 3.4vw, 42px)', fontWeight: 600, letterSpacing: -1.2, lineHeight: 1.08, margin: '0 0 16px', color: tokens.text }}>
                     {page.title}
                 </h1>

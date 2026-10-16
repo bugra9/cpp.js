@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-// What the navbar's link row and its two menus share, so the Docs menu and the version menu
+// What the navbar's link row and the menus share, so the Docs menu, the version menu and the tutorial's step menu
 // cannot drift apart.
 
 export const isUnder = (path, prefix) => path === prefix || path.startsWith(`${prefix}/`);
@@ -128,13 +128,13 @@ const menuItemStyle = (tokens, current) => ({
 
 // A <details> opens without JavaScript too, so the links stay one click away before the page hydrates and without it.
 // Whether it is open lives on the element alone, so no state can fall behind a click.
-export function NavMenu({ tokens, label, active, items, className = '', style, panelStyle }) {
+export function NavMenu({ tokens, label, active, items, className = '', style, summaryStyle, panelStyle }) {
     const root = useMenu();
     const { trigger, ...hover } = useHoverOpen(root);
 
     return (
         <details ref={root} {...hover} className={`nav-dropdown ${className}`.trim()} style={{ position: 'relative', ...style }}>
-            <summary {...trigger} className="tap-target nav-link" style={{ ...navLinkStyle(tokens, active), gap: 6, cursor: 'pointer', listStyle: 'none' }}>
+            <summary {...trigger} className="tap-target nav-link" style={{ ...navLinkStyle(tokens, active), gap: 6, cursor: 'pointer', listStyle: 'none', ...summaryStyle }}>
                 {label}
                 <Chevron />
             </summary>
