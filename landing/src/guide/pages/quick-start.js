@@ -1,6 +1,6 @@
 import { changelogHref } from '../../changelog/route.js';
 import {
-    BRAND, CREATE_COMMAND, installCommand, SETUP_PROMPT, SKILL_COMMAND, TUTORIAL_URL,
+    AGENT_PROMPT_PATH, BRAND, CREATE_COMMAND, installCommand, SETUP_LINE, TUTORIAL_URL,
 } from '../../data.js';
 import { RELEASE, WEB_IMAGE } from '../../release.js';
 
@@ -54,14 +54,9 @@ docker pull ${WEB_IMAGE}   # optional: the first build pulls it anyway`,
         { type: 'h2', id: 'ai', text: 'Set it up with a coding agent' },
         {
             type: 'p',
-            text: `Using Claude Code, Cursor, Copilot or similar? Install the skill once - your agent then carries the project inspector, the current port catalog and the per-framework playbooks, and you can ask it to add ${BRAND} without pasting anything.`,
+            text: `Using Claude Code, Codex, Cursor, Copilot or similar? Paste this line into it: the agent installs the ${BRAND} skill, adds ${BRAND} to the project and checks one call from JavaScript, following [these instructions](${AGENT_PROMPT_PATH}).`,
         },
-        { type: 'code', file: 'shell', code: SKILL_COMMAND },
-        {
-            type: 'p',
-            text: 'Drop `--global` to install it into this project only. Without the skill, hand over this prompt instead - it sends the agent to the Markdown docs, inspects the repo, installs the right packages, writes the config and wires your bundler or build script:',
-        },
-        { type: 'code', file: 'prompt', code: SETUP_PROMPT },
+        { type: 'code', file: 'prompt', code: SETUP_LINE },
         { type: 'p', text: 'Prefer to do it yourself? Keep going.' },
 
         { type: 'h2', id: 'new-project', text: 'A new project' },

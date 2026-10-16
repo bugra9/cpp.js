@@ -14,6 +14,7 @@ export const REQUIRED_ROUTES = [
     '/guide/quick-start/',
     '/ports/',
     '/agent/',
+    '/agent/prompt.md',
     '/api/init.md',
     '/changelog/',
     '/llms.txt',

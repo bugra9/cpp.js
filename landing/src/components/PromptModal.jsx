@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { SETUP_PROMPT, SKILL_COMMAND } from '../data.js';
-import { Pill } from './ui.jsx';
+import { AGENT_PROMPT_PATH, SETUP_LINE } from '../data.js';
 
-function CopyButton({
-    tokens, text, label, style,
-}) {
+function CopyButton({ tokens, text, label }) {
     const [copied, setCopied] = useState(false);
 
     const copy = async () => {
@@ -31,7 +28,6 @@ function CopyButton({
                 fontSize: 13.5,
                 cursor: 'pointer',
                 flexShrink: 0,
-                ...style,
             }}
         >
             <span aria-live="polite">{copied ? 'Copied ✓' : label}</span>
@@ -39,37 +35,9 @@ function CopyButton({
     );
 }
 
-function Step({
-    tokens, n, title, badge, children,
-}) {
-    return (
-        <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                <span style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 999,
-                    display: 'grid',
-                    placeItems: 'center',
-                    background: `${tokens.violet}1a`,
-                    color: tokens.violet,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    flexShrink: 0,
-                }}
-                >
-                    {n}
-                </span>
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>{title}</h3>
-                {badge ? <Pill tokens={tokens} color={tokens.violet}>{badge}</Pill> : null}
-            </div>
-            {children}
-        </div>
-    );
-}
-
 // Native <dialog> so the focus trap, Escape handling and inertness come from the platform
-// rather than from hand-rolled key listeners.
+// rather than from hand-rolled key listeners. One line to paste: the instructions it points at do
+// the rest, the skill first and the integration after it.
 export default function PromptModal({ tokens, open, onClose }) {
     const ref = useRef(null);
 
@@ -79,24 +47,6 @@ export default function PromptModal({ tokens, open, onClose }) {
         if (open && !el.open) el.showModal();
         if (!open && el.open) el.close();
     }, [open]);
-
-    const codeBox = {
-        margin: 0,
-        padding: '12px 14px',
-        borderRadius: 10,
-        background: tokens.codeBg,
-        border: `1px solid ${tokens.border}`,
-        color: tokens.codeText,
-        fontFamily: tokens.mono,
-        fontSize: 12.5,
-        lineHeight: 1.65,
-        whiteSpace: 'pre-wrap',
-        // The install URL is one unbreakable token; without this it overflows the box.
-        overflowWrap: 'anywhere',
-    };
-    const note = {
-        margin: '0 0 12px', fontSize: 13.5, lineHeight: 1.55, color: tokens.textDim,
-    };
 
     return (
         <dialog
@@ -151,52 +101,36 @@ export default function PromptModal({ tokens, open, onClose }) {
 
                 {/* minHeight:0 lets this flex child scroll instead of stretching the dialog past its cap. */}
                 <div style={{ overflow: 'auto', minHeight: 0, padding: 20 }}>
-                    <Step tokens={tokens} n="1" title="Install the skill" badge="RECOMMENDED">
-                        <p style={note}>
-                            Your agent gets the project inspector, the current port catalog and the
-                            per-framework playbooks. Then you ask for crossbind in plain words; there is
-                            nothing to paste.
-                        </p>
-                        <div style={{
-                            display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10,
+                    <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.55, color: tokens.textDim }}>
+                        Paste this into Claude Code, Codex, Cursor, Copilot or any coding agent:
+                    </p>
+                    <div style={{
+                        display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10,
+                    }}
+                    >
+                        <code style={{
+                            flex: '1 1 260px',
+                            padding: '12px 14px',
+                            borderRadius: 10,
+                            background: tokens.codeBg,
+                            border: `1px solid ${tokens.border}`,
+                            color: tokens.codeText,
+                            fontFamily: tokens.mono,
+                            fontSize: 12.5,
+                            lineHeight: 1.65,
+                            // The URL is one unbreakable token; without this it overflows the box.
+                            overflowWrap: 'anywhere',
                         }}
                         >
-                            <code style={{ ...codeBox, flex: '1 1 260px' }}>{SKILL_COMMAND}</code>
-                            <CopyButton tokens={tokens} text={SKILL_COMMAND} label="Copy" />
-                        </div>
-                        <p style={{
-                            ...note, margin: '10px 0 0', fontSize: 12.5, color: tokens.textMuted,
-                        }}
-                        >
-                            Drop
-                            {' '}
-                            <code style={{ fontFamily: tokens.mono }}>--global</code>
-                            {' '}
-                            to install it into this project only.
-                        </p>
-                    </Step>
-
-                    <hr style={{ border: 0, borderTop: `1px solid ${tokens.border}`, margin: '22px 0' }} />
-
-                    <Step tokens={tokens} n="2" title="Or paste this prompt">
-                        <p style={note}>
-                            No skill installed? Paste this one-off prompt into Claude Code, Cursor, Copilot or any
-                            other agent; it points them at the Markdown docs and walks through the setup.
-                        </p>
-                        <pre style={{ ...codeBox, maxHeight: 240, overflow: 'auto' }}>{SETUP_PROMPT}</pre>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
-                            <CopyButton
-                                tokens={tokens}
-                                text={SETUP_PROMPT}
-                                label="Copy prompt"
-                                style={{
-                                    background: tokens.pillBg,
-                                    color: tokens.text,
-                                    border: `1px solid ${tokens.borderStrong}`,
-                                }}
-                            />
-                        </div>
-                    </Step>
+                            {SETUP_LINE}
+                        </code>
+                        <CopyButton tokens={tokens} text={SETUP_LINE} label="Copy" />
+                    </div>
+                    <p style={{ margin: '12px 0 0', fontSize: 12.5, lineHeight: 1.55, color: tokens.textMuted }}>
+                        It installs the crossbind skill, adds crossbind to the project and checks one call from JavaScript.
+                        {' '}
+                        <a href={AGENT_PROMPT_PATH} style={{ color: tokens.accentText }}>Read the instructions</a>
+                    </p>
                 </div>
             </div>
         </dialog>
