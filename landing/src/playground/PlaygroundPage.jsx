@@ -1,22 +1,25 @@
-import { useEffect, useState } from 'react';
-import { CodeWindow } from '../components/ui.jsx';
+import { useEffect, useRef, useState } from 'react';
 import { inline } from '../guide/inline.jsx';
 import {
-    editDraft, readDrafts, updateDrafts, without,
+    editDraft, projectOf, readDrafts, updateDrafts, without,
 } from './drafts.js';
-import Editor, { fitHeight } from './Editor.jsx';
+import ModernWorkspace from './ModernWorkspace.jsx';
+import PackageDialog from './PackageDialog.jsx';
+import { CONFIG } from './ProjectPanel.jsx';
+import { Notice, Toolbar, linkButtonStyle } from './parts.jsx';
 import {
-    Console, Notice, Toolbar, linkButtonStyle,
-} from './parts.jsx';
+    MAIN, addFile, addPackage, removeFile, removePackage, setFile,
+} from './project.js';
 import { DEFAULT_SAMPLE, SAMPLES, findSample } from './samples.js';
 import { canRunPrebuilt, useRunner } from './useRunner.js';
+import { shortName } from './workspace.jsx';
 
-// /playground/: a sample picker, three editors, a Run button and a console. useRunner.js runs main.js against the
-// sample's prebuilt module, or against one the playground compiler (tooling/cloud) builds from edited C++. The first
-// render matches the prerendered page: the drafts, the linked sample, the sign-in result and the session load
-// afterwards.
+// /playground/: a project of files and packages, the open file and the console. useRunner.js runs main.js against
+// the sample's prebuilt module, or against one the playground compiler (tooling/cloud) builds from the edited
+// project. The first render matches the prerendered page: the drafts, the linked sample, the sign-in result and the
+// session load afterwards.
 
-const DRAFT_KEY = 'crossbind.playground.draft';
+const DRAFT_KEY = 'crossbind.playground.project';
 const SAMPLE_PARAM = 'sample';
 const RESET_QUESTION = 'Discard your changes to this sample?';
 const LOGIN_NOTICES = Object.freeze({
@@ -30,9 +33,10 @@ const LOGIN_NOTICES = Object.freeze({
 // ?sample=<id> opens that sample, and the address follows the picker, so every sample can be linked to.
 const linkedSample = () => findSample(new URLSearchParams(location.search).get(SAMPLE_PARAM))?.id;
 
-function linkSample(id) {
+function setParam(name, value) {
     const url = new URL(location.href);
-    url.searchParams.set(SAMPLE_PARAM, id);
+    if (value === null) url.searchParams.delete(name);
+    else url.searchParams.set(name, value);
     history.replaceState(null, '', url);
 }
 
@@ -40,7 +44,7 @@ function takeLoginResult() {
     const result = new URLSearchParams(location.hash.slice(1)).get('login');
     if (!result) return null;
     history.replaceState(null, '', location.pathname + location.search);
-    return LOGIN_NOTICES[result] ?? null;
+    return Object.hasOwn(LOGIN_NOTICES, result) ? LOGIN_NOTICES[result] : null;
 }
 
 function SamplePicker({
@@ -56,8 +60,8 @@ function SamplePicker({
                 onChange={(event) => onSelect(event.target.value)}
                 className="tap-target"
                 style={{
-                    padding: '9px 12px',
-                    fontSize: 14,
+                    padding: '7px 10px',
+                    fontSize: 13.5,
                     fontFamily: 'inherit',
                     color: tokens.text,
                     background: tokens.panel,
@@ -79,28 +83,25 @@ function SamplePicker({
     );
 }
 
-// Never shorter than these, and tall enough for the sample without a scrollbar; the editors still grow by their
-// resize handle.
-const EDITOR_HEIGHTS = Object.freeze({ 'native.h': 400, 'native.cpp': 400, 'main.js': 240 });
-
-function EditorWindow({
-    tokens, name, value, original, onChange,
-}) {
-    return (
-        <CodeWindow tokens={tokens} title={name} padded={false}>
-            <Editor tokens={tokens} label={name} value={value} onChange={onChange} minHeight={Math.max(EDITOR_HEIGHTS[name], fitHeight(original))} />
-        </CodeWindow>
-    );
-}
-
 export default function PlaygroundPage({ tokens, page }) {
     const [sampleId, setSampleId] = useState(DEFAULT_SAMPLE.id);
     const [drafts, setDrafts] = useState({});
     const [restored, setRestored] = useState(false);
+    const [active, setActive] = useState(MAIN);
+    const [view, setView] = useState('code');
+    // 0 while closed; each request for a new file counts up, so the form takes focus again when asked again.
+    const [creating, setCreating] = useState(0);
+    const [adding, setAdding] = useState(false);
+    const creatingRequests = useRef(0);
+    const returnFocus = useRef(null);
     const runner = useRunner();
     const sample = findSample(sampleId);
-    const sources = { ...sample.files, ...drafts[sampleId] };
-    const prebuilt = canRunPrebuilt(sampleId, sources, sample.files);
+    const project = projectOf(sample, drafts[sampleId]);
+    const prebuilt = canRunPrebuilt(sampleId, project, sample.project);
+    const shown = active === CONFIG || active in project.files ? active : MAIN;
+    const busy = runner.phase !== 'idle';
+    const edited = Boolean(drafts[sampleId]);
+    const ready = restored && !busy && (prebuilt || runner.canCompile);
 
     useEffect(() => {
         const stored = readDrafts(DRAFT_KEY, SAMPLES);
@@ -110,85 +111,120 @@ export default function PlaygroundPage({ tokens, page }) {
         setSampleId(id);
         setRestored(true);
         // A sample restored from an earlier visit goes into the address too, so a copied link keeps it.
-        if (!linked && id !== DEFAULT_SAMPLE.id) linkSample(id);
+        if (!linked && id !== DEFAULT_SAMPLE.id) setParam(SAMPLE_PARAM, id);
         const loginNotice = takeLoginResult();
         if (loginNotice) runner.setNotice({ text: loginNotice });
     }, []);
 
-    const edit = (name) => (text) => {
-        setDrafts((current) => editDraft(current, sample, name, text));
-        updateDrafts(DRAFT_KEY, SAMPLES, (store) => ({ ...store, drafts: editDraft(store.drafts, sample, name, text) }));
+    // Applied to the project as each copy holds it, so a second tab's edits to the same sample survive.
+    const change = (edit) => {
+        setDrafts((current) => editDraft(current, sample, edit));
+        updateDrafts(DRAFT_KEY, SAMPLES, (store) => ({ ...store, drafts: editDraft(store.drafts, sample, edit) }));
     };
-    const run = () => runner.run({ sampleId, sources, original: sample.files });
+
+    const run = () => {
+        setView('console');
+        runner.run({ sampleId, project, original: sample.project });
+    };
 
     function selectSample(id) {
         setSampleId(id);
-        linkSample(id);
+        setActive(MAIN);
+        setCreating(0);
+        setParam(SAMPLE_PARAM, id);
         updateDrafts(DRAFT_KEY, SAMPLES, (store) => ({ ...store, sample: id }));
         runner.clear();
     }
 
+    // The Reset link goes with the draft, so focus moves to the picker beside it.
     function resetSample() {
         if (!window.confirm(RESET_QUESTION)) return;
         setDrafts((current) => without(current, sampleId));
         updateDrafts(DRAFT_KEY, SAMPLES, (store) => ({ ...store, drafts: without(store.drafts, sampleId) }));
-        // The button goes with the draft, so focus moves to the picker beside it.
+        setActive(MAIN);
         document.getElementById('playground-sample')?.focus();
+    }
+
+    function open(name) {
+        setActive(name);
+        setView('code');
     }
 
     const onKeyDown = (event) => {
         if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
             event.preventDefault();
-            run();
+            if (ready) run();
         }
     };
 
-    // Keyed by the sample, so switching starts each editor at the top and at its own height.
-    const editor = (name) => (
-        <EditorWindow key={`${sampleId}/${name}`} tokens={tokens} name={name} value={sources[name]} original={sample.files[name]} onChange={edit(name)} />
-    );
+    const workspace = {
+        tokens,
+        project,
+        sampleId,
+        shown,
+        view,
+        busy,
+        creating,
+        lines: runner.lines,
+        buildLog: runner.buildLog,
+        lastRun: runner.lastRun,
+        onView: setView,
+        onOpen: open,
+        onSelectFile: setActive,
+        // Focus goes back to whatever asked for the form once it closes.
+        onCreating: (on) => {
+            if (on) {
+                returnFocus.current = document.activeElement;
+                creatingRequests.current += 1;
+                setCreating(creatingRequests.current);
+                setView('files');
+                return;
+            }
+            setCreating(0);
+            requestAnimationFrame(() => {
+                if (returnFocus.current?.isConnected) returnFocus.current.focus();
+            });
+        },
+        onCreateFile: (name) => {
+            change((current) => addFile(current, name));
+            open(`native/${name}`);
+        },
+        onRemoveFile: (name) => {
+            if (window.confirm(`Delete ${shortName(name)}?`)) change((current) => removeFile(current, name));
+        },
+        onAddPackage: () => setAdding(true),
+        onRemovePackage: (id) => change((current) => removePackage(current, id)),
+        onEdit: (text) => change((current) => setFile(current, shown, text)),
+    };
 
     return (
         <main id="content">
-            <section style={{ padding: '52px var(--content-x) 24px' }}>
-                <div style={{ maxWidth: 880 }}>
-                    <h1 style={{ fontSize: 'clamp(36px, 5vw, 54px)', fontWeight: 600, letterSpacing: -2, lineHeight: 1.02, margin: '0 0 16px', color: tokens.text }}>
-                        {page.title}
-                    </h1>
-                    <p style={{ fontSize: 17, lineHeight: 1.65, color: tokens.textDim, margin: 0 }}>{inline(page.lede, tokens)}</p>
-                </div>
-            </section>
-
-            <section style={{ padding: '0 var(--content-x) 32px' }} onKeyDown={onKeyDown}>
+            <section className="playground-app" aria-label="Playground" onKeyDown={onKeyDown} style={{ borderBottom: `1px solid ${tokens.border}` }}>
                 <Toolbar
                     tokens={tokens}
                     phase={runner.phase}
                     session={runner.session}
-                    ready={restored && runner.phase === 'idle' && (prebuilt || runner.canCompile)}
+                    ready={ready}
                     prebuilt={prebuilt}
                     onRun={run}
                     onStop={runner.stop}
                     onSignOut={runner.leave}
                     onDeleteAccount={runner.removeAccount}
+                    style={{ margin: 0, padding: '10px var(--playground-x)', borderBottom: `1px solid ${tokens.border}` }}
                 >
-                    <SamplePicker tokens={tokens} sampleId={sampleId} edited={Boolean(drafts[sampleId])} disabled={runner.phase !== 'idle'} onSelect={selectSample} onReset={resetSample} />
+                    <h1 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: tokens.text }}>{page.title}</h1>
+                    <SamplePicker tokens={tokens} sampleId={sampleId} edited={edited} disabled={busy} onSelect={selectSample} onReset={resetSample} />
                 </Toolbar>
                 <div ref={runner.check} />
-                {runner.notice && <Notice tokens={tokens} notice={runner.notice} canSignIn={Boolean(runner.session?.canSignIn)} />}
-                <div className="playground-grid">
-                    <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
-                        {editor('native.h')}
-                        {editor('native.cpp')}
-                    </div>
-                    <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
-                        {editor('main.js')}
-                        <Console tokens={tokens} lines={runner.lines} buildLog={runner.buildLog} />
-                    </div>
-                </div>
+                {runner.notice && (
+                    <Notice tokens={tokens} notice={runner.notice} canSignIn={Boolean(runner.session?.canSignIn)} style={{ margin: '10px var(--playground-x)' }} />
+                )}
+                <ModernWorkspace {...workspace} />
             </section>
 
-            <section style={{ padding: '0 var(--content-x) 80px' }}>
+            <section style={{ padding: '40px var(--content-x) 80px' }}>
                 <div style={{ maxWidth: 880 }}>
+                    <p style={{ fontSize: 17, lineHeight: 1.65, color: tokens.textDim, margin: 0 }}>{inline(page.lede, tokens)}</p>
                     {page.blocks.map((block) => (block.type === 'h2' ? (
                         <h2 key={block.id} id={block.id} style={{ fontSize: 22, fontWeight: 600, letterSpacing: -0.5, margin: '32px 0 10px', color: tokens.text }}>{block.text}</h2>
                     ) : (
@@ -196,6 +232,14 @@ export default function PlaygroundPage({ tokens, page }) {
                     )))}
                 </div>
             </section>
+
+            <PackageDialog
+                tokens={tokens}
+                open={adding}
+                project={project}
+                onAdd={(id) => change((current) => addPackage(current, id))}
+                onClose={() => setAdding(false)}
+            />
         </main>
     );
 }

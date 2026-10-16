@@ -8,7 +8,8 @@ const BASE64_CHUNK = 0x8000;
 
 const prebuiltOf = (sampleId) => DEMOS.get(`sample-${sampleId}`);
 
-export const hasPrebuilt = (sampleId) => Boolean(prebuiltOf(sampleId)?.wasm);
+// A module built before the samples imported their natives has no import list, so its sample compiles instead.
+export const hasPrebuilt = (sampleId) => Boolean(prebuiltOf(sampleId)?.imports);
 
 function toBase64(bytes) {
     let binary = '';
@@ -22,9 +23,14 @@ async function fetchOk(url) {
     return response;
 }
 
-// The loader and the wasm in the shape the playground compiler answers with: text, and the bytes as base64.
+// The loader, the wasm and the import list in the shape the playground compiler answers with: text, the bytes as
+// base64, and the list as parsed JSON.
 export async function loadPrebuilt(sampleId) {
-    const { script, wasm } = prebuiltOf(sampleId);
-    const [js, bytes] = await Promise.all([fetchOk(script).then((response) => response.text()), fetchOk(wasm).then((response) => response.arrayBuffer())]);
-    return { js, wasm: toBase64(new Uint8Array(bytes)) };
+    const { script, wasm, imports } = prebuiltOf(sampleId);
+    const [js, bytes, list] = await Promise.all([
+        fetchOk(script).then((response) => response.text()),
+        fetchOk(wasm).then((response) => response.arrayBuffer()),
+        fetchOk(imports).then((response) => response.json()),
+    ]);
+    return { js, wasm: toBase64(new Uint8Array(bytes)), imports: list };
 }

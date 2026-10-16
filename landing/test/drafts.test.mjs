@@ -1,40 +1,73 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { editDraft, overlayOf, parseDrafts } from '../src/playground/drafts.js';
+import {
+    draftOf, editDraft, parseDrafts, projectOf,
+} from '../src/playground/drafts.js';
+import {
+    addFile, addPackage, removeFile, setFile,
+} from '../src/playground/project.js';
 
 const SAMPLES = [
-    { id: 'hello', files: { 'native.h': 'h', 'native.cpp': 'cpp', 'main.js': 'js' } },
-    { id: 'numbers', files: { 'native.h': 'nh', 'native.cpp': 'ncpp', 'main.js': 'njs' } },
+    { id: 'hello', project: { files: { 'main.js': 'js', 'native/native.h': 'h', 'native/native.cpp': 'cpp' }, packages: [] } },
+    { id: 'hero', project: { files: { 'main.js': 'hjs', 'native/greet.h': 'g' }, packages: ['port:sqlite3', 'crate:uuid'] } },
 ];
-const [HELLO] = SAMPLES;
+const [HELLO, HERO] = SAMPLES;
 
-test('a draft keeps only the files that differ from its sample', () => {
-    assert.deepEqual(overlayOf({ 'native.h': 'h', 'main.js': 'edited' }, HELLO.files), { 'main.js': 'edited' });
+test('a draft holds only what differs from its sample: edited and added files, deleted ones, a changed package list', () => {
+    const project = addPackage(removeFile(addFile(setFile(HELLO.project, 'main.js', 'edited'), 'more.rs'), 'native/native.cpp'), 'port:zlib');
+    assert.deepEqual(draftOf(project, HELLO), {
+        files: { 'main.js': 'edited', 'native/more.rs': '' },
+        removed: ['native/native.cpp'],
+        packages: ['port:zlib'],
+    });
+    assert.deepEqual(projectOf(HELLO, draftOf(project, HELLO)), project);
 });
 
-test('a draft saved before there were samples becomes the first sample\'s, down to its edited files', () => {
-    const parsed = parseDrafts({ 'native.h': 'h', 'native.cpp': 'cpp', 'main.js': 'edited' }, SAMPLES);
-    assert.deepEqual(parsed, { sample: 'hello', drafts: { hello: { 'main.js': 'edited' } } });
+test('packages in another order are the same list', () => {
+    assert.equal(draftOf({ ...HERO.project, packages: ['crate:uuid', 'port:sqlite3'] }, HERO), null);
 });
 
-test('drafts of unknown samples, unknown files and values that are not text are dropped', () => {
-    const stored = { sample: 'gone', drafts: { gone: { 'main.js': 'x' }, numbers: { 'main.js': 1, 'notes.txt': 'x', 'native.h': 'changed' } } };
-    assert.deepEqual(parseDrafts(stored, SAMPLES), { sample: undefined, drafts: { numbers: { 'native.h': 'changed' } } });
+test('drafts of unknown samples, names the compiler refuses, values that are not text and unknown packages are dropped', () => {
+    const stored = {
+        sample: 'gone',
+        drafts: {
+            gone: { files: { 'main.js': 'x' } },
+            hello: {
+                files: { 'main.js': 1, 'notes.txt': 'x', '../x.h': 'x', 'native/native.h': 'changed' },
+                removed: ['main.js', 'native/missing.h'],
+                packages: ['port:gdal', 'crate:uuid', 7],
+            },
+        },
+    };
+    assert.deepEqual(parseDrafts(stored, SAMPLES), {
+        sample: undefined,
+        drafts: { hello: { files: { 'native/native.h': 'changed' }, packages: ['crate:uuid'] } },
+    });
 });
 
-test('anything stored that is not a set of drafts gives none', () => {
-    for (const stored of [null, 42, 'text', [], { drafts: 'x' }]) {
+test('anything stored that is not a set of drafts gives none, the first playground\'s three files among them', () => {
+    for (const stored of [null, 42, 'text', [], { drafts: 'x' }, { 'native.h': 'h', 'native.cpp': 'cpp', 'main.js': 'js' }]) {
         assert.deepEqual(parseDrafts(stored, SAMPLES), { sample: undefined, drafts: {} });
     }
 });
 
 test('undoing the last change removes the draft', () => {
-    const edited = editDraft({}, HELLO, 'main.js', 'edited');
-    assert.deepEqual(edited, { hello: { 'main.js': 'edited' } });
-    assert.deepEqual(editDraft(edited, HELLO, 'main.js', 'js'), {});
+    const edited = editDraft({}, HELLO, (project) => setFile(project, 'main.js', 'edited'));
+    assert.deepEqual(edited, { hello: { files: { 'main.js': 'edited' } } });
+    assert.deepEqual(editDraft(edited, HELLO, (project) => setFile(project, 'main.js', 'js')), {});
+});
+
+test('a change applies to the draft as stored, so another tab\'s edit to the same sample stays', () => {
+    const stored = { hello: { files: { 'native/native.h': 'from the other tab' } } };
+    assert.deepEqual(editDraft(stored, HELLO, (project) => setFile(project, 'main.js', 'mine')), {
+        hello: { files: { 'native/native.h': 'from the other tab', 'main.js': 'mine' } },
+    });
 });
 
 test('an edit leaves the other samples\' drafts alone', () => {
-    const drafts = { numbers: { 'main.js': 'kept' } };
-    assert.deepEqual(editDraft(drafts, HELLO, 'native.h', 'changed'), { numbers: { 'main.js': 'kept' }, hello: { 'native.h': 'changed' } });
+    const drafts = { hero: { files: { 'main.js': 'kept' } } };
+    assert.deepEqual(editDraft(drafts, HELLO, (project) => setFile(project, 'native/native.h', 'changed')), {
+        hero: { files: { 'main.js': 'kept' } },
+        hello: { files: { 'native/native.h': 'changed' } },
+    });
 });

@@ -6,12 +6,13 @@ import Article from '../guide/Article.jsx';
 import { inline } from '../guide/inline.jsx';
 import { TUTORIAL_PAGES } from '../pages/tutorial.js';
 import {
-    editDraft, readDrafts, updateDrafts, without,
+    editDraft, projectOf, readDrafts, updateDrafts, without,
 } from '../playground/drafts.js';
 import Editor, { fitHeight } from '../playground/Editor.jsx';
 import {
     Console, Notice, Toolbar, linkButtonStyle,
 } from '../playground/parts.jsx';
+import { MAIN, setFile } from '../playground/project.js';
 import { SAMPLES, findSample } from '../playground/samples.js';
 import { canRunPrebuilt, useRunner } from '../playground/useRunner.js';
 
@@ -19,46 +20,49 @@ import { canRunPrebuilt, useRunner } from '../playground/useRunner.js';
 // controls and the console. Edits are kept per step in this browser; useRunner.js runs an unedited step's prebuilt
 // module, so reading through the tutorial never needs a compile.
 
-const DRAFT_KEY = 'crossbind.tutorial.draft';
+const DRAFT_KEY = 'crossbind.tutorial.project';
 const RESET_QUESTION = 'Discard your changes to this step?';
-const FILES = Object.freeze([
-    { id: 'native.h', label: 'native.h' },
-    { id: 'native.cpp', label: 'native.cpp' },
-    { id: 'main.js', label: 'main.js' },
-]);
 const MIN_EDITOR_HEIGHT = 320;
+
+// The header first, as each lesson reads, then the rest of the C++, then main.js.
+const isHeader = (name) => /\.(?:h|hh|hpp|hxx)$/.test(name);
+const filesOf = (project) => Object.keys(project.files)
+    .sort((a, b) => Number(a === MAIN) - Number(b === MAIN) || Number(isHeader(b)) - Number(isHeader(a)) || a.localeCompare(b))
+    .map((name) => ({ id: name, label: name.replace(/^native\//, '') }));
 
 export default function TutorialPage({ tokens, page }) {
     const sample = findSample(page.sample);
-    const [file, setFile] = useState(FILES[0].id);
+    const files = filesOf(sample.project);
+    const [file, setOpenFile] = useState(files[0].id);
     const [drafts, setDrafts] = useState({});
     const [restored, setRestored] = useState(false);
     const runner = useRunner({ lazy: true });
     const output = useRef(null);
-    const sources = { ...sample.files, ...drafts[sample.id] };
-    const prebuilt = canRunPrebuilt(sample.id, sources, sample.files);
+    const project = projectOf(sample, drafts[sample.id]);
+    const prebuilt = canRunPrebuilt(sample.id, project, sample.project);
     const index = TUTORIAL_PAGES.findIndex((step) => step.path === page.path);
     // As tall as the sample's longest file, so switching files never moves the console.
-    const editorHeight = Math.max(MIN_EDITOR_HEIGHT, ...FILES.map(({ id }) => fitHeight(sample.files[id])));
+    const editorHeight = Math.max(MIN_EDITOR_HEIGHT, ...Object.values(sample.project.files).map(fitHeight));
 
     useEffect(() => {
         setDrafts(readDrafts(DRAFT_KEY, SAMPLES).drafts);
         setRestored(true);
     }, []);
 
-    // An unedited step runs its prebuilt module, so the session loads only once the C++ needs a compile.
+    // An unedited step runs its prebuilt module, so the session loads only once the project needs a compile.
     useEffect(() => {
         if (restored && !prebuilt) runner.connect();
     }, [restored, prebuilt]);
 
     const edit = (text) => {
-        setDrafts((current) => editDraft(current, sample, file, text));
-        updateDrafts(DRAFT_KEY, SAMPLES, (store) => ({ ...store, drafts: editDraft(store.drafts, sample, file, text) }));
+        const change = (current) => setFile(current, file, text);
+        setDrafts((current) => editDraft(current, sample, change));
+        updateDrafts(DRAFT_KEY, SAMPLES, (store) => ({ ...store, drafts: editDraft(store.drafts, sample, change) }));
     };
     // A long sample pushes the console below the fold, so a run brings it into view.
     const run = () => {
         output.current?.scrollIntoView({ block: 'nearest' });
-        runner.run({ sampleId: sample.id, sources, original: sample.files });
+        runner.run({ sampleId: sample.id, project, original: sample.project });
     };
 
     function reset() {
@@ -95,10 +99,10 @@ export default function TutorialPage({ tokens, page }) {
                     <CodeWindow
                         tokens={tokens}
                         padded={false}
-                        title={<Tabs tokens={tokens} label="Files" tabs={FILES} panelId="tutorial-file" active={file} onSelect={setFile} style={{ marginBottom: 0 }} />}
+                        title={<Tabs tokens={tokens} label="Files" tabs={files} panelId="tutorial-file" active={file} onSelect={setOpenFile} style={{ marginBottom: 0 }} />}
                     >
                         <div role="tabpanel" id="tutorial-file" aria-labelledby={`tutorial-file-${file}`}>
-                            <Editor key={`${sample.id}/${file}`} tokens={tokens} label={file} value={sources[file]} onChange={edit} minHeight={editorHeight} />
+                            <Editor key={`${sample.id}/${file}`} tokens={tokens} label={file} value={project.files[file] ?? ''} onChange={edit} minHeight={editorHeight} />
                         </div>
                     </CodeWindow>
                 </div>
@@ -123,7 +127,7 @@ export default function TutorialPage({ tokens, page }) {
                 <div ref={runner.check} />
                 {runner.notice && <Notice tokens={tokens} notice={runner.notice} canSignIn={Boolean(runner.session?.canSignIn)} away />}
                 <div ref={output}>
-                    <Console tokens={tokens} lines={runner.lines} buildLog={runner.buildLog} />
+                    <Console tokens={tokens} lines={runner.lines} buildLog={runner.buildLog} lastRun={runner.lastRun} />
                 </div>
             </section>
         </main>

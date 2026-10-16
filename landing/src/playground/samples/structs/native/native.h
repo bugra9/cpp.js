@@ -8,7 +8,7 @@ struct Point {
     double y;
 };
 
-// Members arrive as Module.Direction.North, .East and so on.
+// Members arrive as Direction.North, .East and so on.
 enum class Direction { North, East, South, West };
 
 Point step(Point point, Direction direction, double distance);

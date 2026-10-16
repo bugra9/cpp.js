@@ -1,9 +1,13 @@
+import { initNative, countdown, applyTwice } from './native/native.h';
+
+const m = await initNative();
+
 const tick = (value) => console.log('tick', value);
 const timesTen = (value) => value * 10;
 
-Module.countdown(3, tick);
-console.log('applied twice:', Module.applyTwice(timesTen, 4));
+countdown(3, tick);
+console.log('applied twice:', applyTwice(timesTen, 4));
 
 // Each function passed to C++ holds a slot until it is released.
-Module.releaseCallback(tick);
-Module.releaseCallback(timesTen);
+m.releaseCallback(tick);
+m.releaseCallback(timesTen);

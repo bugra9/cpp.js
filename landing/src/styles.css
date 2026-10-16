@@ -54,12 +54,32 @@
     outline-offset: 2px;
 }
 
-/* The playground's editors: the C++ pair beside main.js and the console, one column on narrow screens.
-   min-width: 0 lets a long line scroll inside its editor instead of widening the page. */
-.playground-grid {
+/* The playground fills the first screen under the navbar: the project's files and packages, the open file and the
+   console, under its toolbar. Below 1000px one of the three shows at a time, picked by .playground-views. */
+.playground-app {
+    --playground-x: 20px;
+    display: flex;
+    flex-direction: column;
+    height: calc(100svh - var(--nav-h));
+    min-height: 520px;
+}
+
+.playground-body {
+    flex: 1;
+    min-height: 0;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: 260px minmax(0, 1fr) minmax(280px, 380px);
+}
+
+.playground-pane {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+.playground-views {
+    display: none;
 }
 
 /* A tutorial step: the lesson beside its code where both fit, the lesson first below that. */
@@ -262,9 +282,21 @@ li > .map-link:hover {
 }
 
 
-@media (max-width: 950px) {
-    .playground-grid {
+@media (max-width: 1000px) {
+    .playground-app {
+        --playground-x: 16px;
+    }
+
+    .playground-views {
+        display: flex;
+    }
+
+    .playground-body {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .playground-pane[data-shown='false'] {
+        display: none;
     }
 }
 

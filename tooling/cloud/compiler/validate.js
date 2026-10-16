@@ -9,7 +9,7 @@ export const MAX_BODY_BYTES = 2 * MAX_SOURCE_BYTES + 4 * 1024;
 
 // main.js, read for its imports and never run here, and native sources one folder deep, named like C identifiers: no
 // name can climb out of the workspace or be read by the build as anything but a source.
-const FILE_NAME = /^(?:main\.js|native\/[A-Za-z_][A-Za-z0-9_]{0,47}\.(?:h|hpp|cpp|cc|rs))$/;
+export const FILE_NAME = /^(?:main\.js|native\/[A-Za-z_][A-Za-z0-9_]{0,47}\.(?:h|hpp|cpp|cc|rs))$/;
 // The first playground's two names.
 const LEGACY_NAMES = new Map([['native.h', 'native/native.h'], ['native.cpp', 'native/native.cpp']]);
 const BINDS = /\.(?:h|hpp|rs)$/;

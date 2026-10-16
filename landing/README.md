@@ -10,7 +10,7 @@ mock, and every other page is prerendered to its own static HTML file, so links 
 pnpm --filter @crossbind/landing dev      # http://localhost:5173
 pnpm --filter @crossbind/landing build    # → landing/dist
 pnpm --filter @crossbind/landing preview
-pnpm --filter @crossbind/landing demos    # build the /examples/ live demos from the published packages
+pnpm --filter @crossbind/landing demos    # build the /examples/ live demos and the playground samples
 pnpm --filter @crossbind/landing check:deploy   # everything deploy does except the upload
 pnpm --filter @crossbind/landing deploy   # build, verify the release snapshot and demos, wrangler pages deploy
 ```
@@ -122,11 +122,14 @@ checks the on-screen C++ result before writing `public/examples/demos.json`. Bot
 `prepare-site.mjs` turns the manifest into `generated/example-demos.js`; the page shows a frame for
 a demo that is present and nothing for one that is not, so a fixture or CI build has no frames.
 Add `-- --only web-vanilla,web-react-rspack` to rebuild some of them.
+The playground's samples (`sample-<name>`) are built from this repository instead: its crossbind, with
+the playground compiler's template and packages, so an unedited sample runs the module a compile would make.
 In `dev`, a small middleware in `vite.config.js` maps `/examples/<id>/` to that directory's
 `index.html`, which Vite's public-file serving does not do by itself; the static build needs nothing.
 
-The deploy gate reads `dist/examples/demos.json` and refuses to deploy unless every demo is present
-and was built with the crossbind version the site resolved. Run `demos` once per release, before
+The deploy gate reads `dist/examples/demos.json` and refuses to deploy unless every demo is present,
+every example was built with the crossbind version the site resolved and every playground sample
+from the sources now in the tree. Run `demos` once per release, before
 `deploy`; needs Docker and the Playwright browsers from `e2e/web-vite`.
 
 Adding a page is three steps:

@@ -12,7 +12,10 @@ export const fitHeight = (text) => Math.ceil(text.split('\n').length * FONT_SIZE
 // support, in the site's code colours. Both layers share font, padding and scroll position, so the caret sits on
 // the coloured glyphs. Tab is left to move focus, so the keyboard never gets stuck in the editor; the focus ring is
 // drawn around the whole editor, since the textarea's own would sit under the highlighted layer.
-export default function Editor({ tokens, label, value, onChange, minHeight = 220 }) {
+// `fill` makes it as tall as its container instead of growing with a resize handle.
+export default function Editor({
+    tokens, label, value, onChange, minHeight = 220, fill = false, readOnly = false,
+}) {
     const highlighted = useRef(null);
     const [focused, setFocused] = useState(false);
     const layer = {
@@ -31,13 +34,17 @@ export default function Editor({ tokens, label, value, onChange, minHeight = 220
         highlighted.current.scrollLeft = event.target.scrollLeft;
     };
     return (
-        <div style={{ position: 'relative', minHeight, background: tokens.codeBg, outline: focused ? `2px solid ${tokens.accent}` : 'none', outlineOffset: -2 }}>
+        <div style={{
+            position: 'relative', ...(fill ? { height: '100%' } : { minHeight }), background: tokens.codeBg, outline: focused ? `2px solid ${tokens.accent}` : 'none', outlineOffset: -2,
+        }}
+        >
             <div ref={highlighted} aria-hidden="true" style={{ ...layer, position: 'absolute', inset: 0, overflow: 'hidden', color: tokens.codeText, pointerEvents: 'none' }}>
                 {highlight(`${value}\n`, tokens)}
             </div>
             <textarea
                 aria-label={label}
                 value={value}
+                readOnly={readOnly}
                 onInput={(event) => onChange(event.target.value)}
                 onScroll={follow}
                 onFocus={() => setFocused(true)}
@@ -47,11 +54,9 @@ export default function Editor({ tokens, label, value, onChange, minHeight = 220
                 autocomplete="off"
                 style={{
                     ...layer,
-                    position: 'relative',
+                    ...(fill ? { position: 'absolute', inset: 0, height: '100%', resize: 'none' } : { position: 'relative', minHeight, resize: 'vertical' }),
                     display: 'block',
                     width: '100%',
-                    minHeight,
-                    resize: 'vertical',
                     overflow: 'auto',
                     border: 'none',
                     outline: 'none',

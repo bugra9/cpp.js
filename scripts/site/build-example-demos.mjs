@@ -5,6 +5,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { SAMPLE_LIST } from '../../landing/src/playground/sampleList.js';
+import { configSource, packagesFor } from '../../tooling/cloud/compiler/packages.js';
+import { deployCli, packModules } from '../../tooling/cloud/scripts/node-modules.mjs';
 import { channelDistTag, distTagSuffix } from '../release/resolve-site-release.mjs';
 import { readNativeVersions } from './native-versions.mjs';
 
@@ -71,8 +74,8 @@ export const DEMOS = [
     { id: 'lib-gdal', kind: 'source', expect: '=> 21/21 checks passed' },
     { id: 'lib-gdal-direct', kind: 'source', source: 'lib-gdal/direct', expect: '=> 5/5 checks passed' },
     // The playground's samples (landing/src/playground/samples), built ahead of time so an unedited one runs in the
-    // tutorial and the playground without a compile. `sample-<name>` builds landing/demos/sample with that sample's
-    // C++, and its page runs the sample's main.js.
+    // tutorial and the playground without a compile. `sample-<name>` builds that sample as the playground compiler
+    // would, and its page (landing/demos/sample) runs the sample's main.js in the playground's sandbox.
     { id: 'sample-hello', kind: 'sample', expect: 'the counter is at 42' },
     { id: 'sample-numbers', kind: 'sample', expect: 'fibonacci(90) = 2880067194370816120' },
     { id: 'sample-strings', kind: 'sample', expect: 'total: 10' },
@@ -190,38 +193,107 @@ async function buildSource(project, id, out) {
 }
 
 const SAMPLES_ROOT = path.join(REPOSITORY_ROOT, 'landing', 'src', 'playground', 'samples');
-// A sample without C++ of its own uses the playground compiler's template, as landing/src/playground/samples.js does.
-const TEMPLATE_NATIVE = path.join(REPOSITORY_ROOT, 'tooling', 'cloud', 'compiler', 'template', 'src', 'native');
-
-const NATIVE_FILES = ['native.h', 'native.cpp'];
+// The playground compiler's template: what every compile starts from, with the locks that pin its Conan recipes and
+// crates. A sample without native files of its own runs the template's, as landing/src/playground/samples.js does.
+const COMPILER_TEMPLATE = path.join(REPOSITORY_ROOT, 'tooling', 'cloud', 'compiler', 'template');
+const SAMPLE_PAGE = path.join(REPOSITORY_ROOT, 'landing', 'demos', 'sample', 'index.html');
+// The playground's own runner, beside each sample's page, so the page runs the sample as the playground does.
+const PLAYGROUND_RUNNER = ['sandbox.js', 'modules.js'].map((name) => path.join(REPOSITORY_ROOT, 'landing', 'src', 'playground', name));
 
 const sampleOf = (demo) => demo.id.replace(/^sample-/, '');
 
-const hashFiles = (files) => files.reduce((hash, file) => hash.update(fs.readFileSync(file)), crypto.createHash('sha256')).digest('hex');
-
-const sampleSources = (sample) =>
-    NATIVE_FILES.map((name) => {
-        const own = path.join(SAMPLES_ROOT, sample, name);
-        return fs.existsSync(own) ? own : path.join(TEMPLATE_NATIVE, name);
-    });
-
-// Recorded with the build and compared before a deploy, so a sample whose C++ changed never ships its old module.
-export const sampleSourceHash = (sample) => hashFiles(sampleSources(sample));
-
-function copySample(sample, project) {
-    const native = path.join(project, 'src', 'native');
-    fs.mkdirSync(native, { recursive: true });
-    for (const file of sampleSources(sample)) fs.copyFileSync(file, path.join(native, path.basename(file)));
-    fs.copyFileSync(path.join(SAMPLES_ROOT, sample, 'main.js'), path.join(project, 'main.js'));
+// Dotfiles such as .DS_Store stay out, as they do from the page's import.meta.glob.
+function filesUnder(dir, prefix = '') {
+    return fs
+        .readdirSync(dir, { withFileTypes: true })
+        .filter((entry) => !entry.name.startsWith('.'))
+        .flatMap((entry) =>
+            entry.isDirectory()
+                ? filesUnder(path.join(dir, entry.name), `${prefix}${entry.name}/`)
+                : [[`${prefix}${entry.name}`, fs.readFileSync(path.join(dir, entry.name), 'utf8')]],
+        );
 }
 
-// A playground sample: the source build, plus the main.js its page runs, where its wasm lies (the playground's
-// sandbox takes it as bytes) and which C++ it was built from.
+// A sample as the playground holds it: main.js, its native files and the ids of its packages.
+export function sampleProject(sample) {
+    const own = Object.fromEntries(filesUnder(path.join(SAMPLES_ROOT, sample)));
+    const native = Object.keys(own).some((name) => name.startsWith('native/'))
+        ? {}
+        : Object.fromEntries(filesUnder(path.join(COMPILER_TEMPLATE, 'src', 'native'), 'native/'));
+    const { packages } = SAMPLE_LIST.find(({ id }) => id === sample);
+    return { files: { ...own, ...native }, packages: [...packages] };
+}
+
+const TEMPLATE_LOCKS = ['conan.lock', 'crossbind.cargo.lock'].map((name) => path.join(COMPILER_TEMPLATE, name));
+
+// Recorded with the build and compared before a deploy, so a sample never ships a module older than what goes into
+// it: its files, its packages as the catalog pins them, the config the compiler writes and the template's locks.
+export function sampleSourceHash(sample) {
+    const { files, packages } = sampleProject(sample);
+    const ids = [...packages].sort();
+    const hash = crypto.createHash('sha256');
+    Object.keys(files)
+        .sort()
+        .forEach((name) => hash.update(`${name}\0${files[name]}\0`));
+    hash.update(`${JSON.stringify(packagesFor(ids))}\0${configSource(ids)}\0`);
+    TEMPLATE_LOCKS.forEach((file) => hash.update(fs.readFileSync(file)));
+    return hash.digest('hex');
+}
+
+// The sample in the compiler's template as a compile writes it (tooling/cloud/compiler/compile.js), with crossbind and
+// the packages in node_modules: inside the project, which is all a build's container sees.
+function writeSampleProject(sample, project, { cli, modules }) {
+    const { files, packages } = sampleProject(sample);
+    copyDir(COMPILER_TEMPLATE, project);
+    fs.cpSync(modules, path.join(project, 'node_modules'), { recursive: true, verbatimSymlinks: true });
+    fs.cpSync(cli, path.join(project, 'node_modules', 'crossbind'), { recursive: true, verbatimSymlinks: true });
+    fs.rmSync(path.join(project, 'src', 'native'), { recursive: true, force: true });
+    Object.entries(files).forEach(([name, text]) => {
+        const file = path.join(project, 'src', name);
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, text);
+    });
+    fs.writeFileSync(path.join(project, 'crossbind.config.js'), configSource([...packages].sort()));
+}
+
+// crossbind and every package the compiler image carries, set up once for all the samples; a port's config reaches
+// the ports it depends on, so they come as the image has them.
+function sampleModules(workspace) {
+    const cli = path.join(workspace, 'crossbind');
+    const modules = path.join(workspace, 'node_modules');
+    deployCli(cli);
+    packModules(modules);
+    return { cli, modules };
+}
+
+// A playground sample, built with this repository's crossbind as the playground compiler builds it, with the list of
+// what main.js imports. Its page runs main.js in the playground's sandbox.
 async function buildSample(project, id, out) {
-    const artifact = await buildSource(project, id, out);
-    fs.copyFileSync(path.join(project, 'main.js'), path.join(out, 'main.js'));
-    const sources = hashFiles(NATIVE_FILES.map((name) => path.join(project, 'src', 'native', name)));
-    return { ...artifact, wasm: artifact.script.replace(/\.js$/, '.wasm'), sources };
+    const cli = path.join(project, 'node_modules', 'crossbind', 'src', 'bin.js');
+    await run(
+        process.execPath,
+        [cli, 'build', '-p', 'wasm', '-a', 'wasm32', '-r', 'st', '-e', 'browser', '-b', 'release', '--bind-imports'],
+        project,
+    );
+    const build = path.join(project, '.crossbind', 'build');
+    const dist = path.join(out, 'dist');
+    fs.mkdirSync(dist, { recursive: true });
+    fs.copyFileSync(path.join(build, 'playground-wasm-wasm32-st-release.browser.js'), path.join(dist, 'sample.js'));
+    fs.copyFileSync(path.join(build, 'playground-wasm-wasm32-st-release.browser.wasm'), path.join(dist, 'sample.wasm'));
+    fs.copyFileSync(path.join(build, 'browser', 'imports.json'), path.join(dist, 'imports.json'));
+    fs.copyFileSync(path.join(project, 'src', 'main.js'), path.join(out, 'main.js'));
+    fs.copyFileSync(SAMPLE_PAGE, path.join(out, 'index.html'));
+    PLAYGROUND_RUNNER.forEach((file) => fs.copyFileSync(file, path.join(out, path.basename(file))));
+    const base = `/examples/${id}/dist`;
+    const bytes = ['sample.js', 'sample.wasm'].reduce((total, name) => total + fs.statSync(path.join(dist, name)).size, 0);
+    return {
+        script: `${base}/sample.js`,
+        wasm: `${base}/sample.wasm`,
+        imports: `${base}/imports.json`,
+        path: base,
+        bytes,
+        sources: sampleSourceHash(sampleOf({ id })),
+    };
 }
 
 const BUILDERS = { vite: buildVite, vanilla: buildVanilla, rspack: buildRspack, source: buildSource, sample: buildSample };
@@ -255,10 +327,11 @@ async function verifyDemo(id) {
         '.svg': 'image/svg+xml',
         '.txt': 'text/plain',
     };
+    // Only this machine's browser asks it, and only for files under root.
     const server = http.createServer((request, response) => {
         let file = path.join(root, decodeURIComponent(request.url.split('?')[0]));
         if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
-        if (!fs.existsSync(file)) {
+        if (!file.startsWith(`${root}${path.sep}`) || !fs.existsSync(file)) {
             response.writeHead(404);
             response.end('404');
             return;
@@ -266,7 +339,7 @@ async function verifyDemo(id) {
         response.writeHead(200, { 'content-type': types[path.extname(file)] ?? 'application/octet-stream' });
         fs.createReadStream(file).pipe(response);
     });
-    await new Promise((resolve) => server.listen(0, resolve));
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
     const port = server.address().port;
     // Playwright's own browser download is absent on a machine that never ran `playwright
     // install`; the system Chrome answers the only question this check asks, which is whether the
@@ -279,7 +352,7 @@ async function verifyDemo(id) {
         page.on('response', (response) => {
             if (response.status() >= 400) failed.push(`${response.status()} ${response.url()}`);
         });
-        await page.goto(`http://localhost:${port}/examples/${id}/`, { waitUntil: 'networkidle' });
+        await page.goto(`http://127.0.0.1:${port}/examples/${id}/`, { waitUntil: 'networkidle' });
         await page.waitForFunction(() => document.body.innerText.includes('=>'), null, { timeout: 30000 }).catch(() => {});
         const text = await page.evaluate(() => document.body.innerText.replace(/\s+/g, ' ').trim());
         if (failed.length) throw new Error(`${id}: requests failed under the subpath: ${failed.join(', ')}`);
@@ -293,14 +366,18 @@ async function verifyDemo(id) {
 
 // Deploy-time check: the page's live frames must be the same crossbind version the site says it
 // is, and every demo the builder knows must be present, so a partial `--only` run or a stale
-// public/examples/ never ships. `distRoot` is the built site; the demo pages live under it.
+// public/examples/ never ships. `distRoot` is the built site; the demo pages live under it. The
+// playground's samples are built from this repository, as the playground compiler is, so their
+// sources hash keeps them current instead of the published version.
 export function assertDemosMatchSnapshot(manifest, snapshot, { distRoot = null } = {}) {
     const demos = Array.isArray(manifest?.demos) ? manifest.demos : null;
     if (!demos) throw new Error(`no live demos manifest; run \`pnpm --filter @crossbind/landing demos\` before deploying.`);
     const byId = new Map(demos.map((demo) => [demo.id, demo]));
     const missing = DEMOS.map((demo) => demo.id).filter((id) => !byId.has(id));
     if (missing.length) throw new Error(`live demos missing: ${missing.join(', ')}; rerun the demo build.`);
-    const stale = DEMOS.map((demo) => byId.get(demo.id)).filter((demo) => demo.crossbind !== snapshot.version);
+    const stale = DEMOS.filter((demo) => demo.kind !== 'sample')
+        .map((demo) => byId.get(demo.id))
+        .filter((demo) => demo.crossbind !== snapshot.version);
     if (stale.length) {
         throw new Error(
             `live demos built with crossbind ${stale.map((demo) => `${demo.id}@${demo.crossbind}`).join(', ')} but the site resolved ${snapshot.version}; rerun the demo build.`,
@@ -324,6 +401,7 @@ export async function buildExampleDemos({ channel, only = null } = {}) {
     const suffix = distTagSuffix(channel);
     const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-demos-'));
     const built = [];
+    let samples = null;
     for (const demo of DEMOS.filter((entry) => !only || only.includes(entry.id))) {
         const project = path.join(workspace, demo.id);
         if (demo.kind === 'source') {
@@ -332,15 +410,14 @@ export async function buildExampleDemos({ channel, only = null } = {}) {
             copyDir(path.join(REPOSITORY_ROOT, 'landing', 'demos', source), project);
             pinDependencies(path.join(project, 'package.json'), distTag);
         } else if (demo.kind === 'sample') {
-            log(`${demo.id}: building a playground sample against npm ${distTag}`);
-            copyDir(path.join(REPOSITORY_ROOT, 'landing', 'demos', 'sample'), project);
-            copySample(sampleOf(demo), project);
-            pinDependencies(path.join(project, 'package.json'), distTag);
+            log(`${demo.id}: building a playground sample with this repository's crossbind`);
+            samples ??= sampleModules(workspace);
+            writeSampleProject(sampleOf(demo), project, samples);
         } else {
             log(`${demo.id}: npm create crossbind${suffix} -- ${demo.id} ${demo.args.join(' ')}`);
             await run('npm', ['create', `crossbind${suffix}`, '--', demo.id, ...demo.args], workspace);
         }
-        await run('npm', ['install', '--no-audit', '--no-fund'], project);
+        if (demo.kind !== 'sample') await run('npm', ['install', '--no-audit', '--no-fund'], project);
         // crossbind is usually a transitive dependency (through the bundler plugin), so read the
         // installed package directly instead of asking npm ls, which exits non-zero for those.
         const installed = path.join(project, 'node_modules', 'crossbind', 'package.json');

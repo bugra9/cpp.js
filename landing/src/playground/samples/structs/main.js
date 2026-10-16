@@ -1,4 +1,8 @@
-const { Direction, Point, nameOf, step, turnRight } = Module;
+import {
+    initNative, Direction, Point, nameOf, step, turnRight,
+} from './native/native.h';
+
+await initNative();
 
 let here = new Point();
 here.x = 0;
