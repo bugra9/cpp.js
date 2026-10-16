@@ -6,7 +6,7 @@
 # in a digest-pinned upstream image; the point-release Docker tag can lag the Rust release itself.
 # The runtime layout - PATH, Node version, CARGO_HOME, cache permissions - is ours to guarantee.
 
-ARG RUST_VERSION=1.99.0
+ARG RUST_VERSION=1.99.1
 
 FROM node:24.22.0-trixie-slim@sha256:7f486cabe892bff8fef04c0f7da8dba84a560be3e4e2740b7a86afc57ebec315 AS node
 FROM rust:1.98.1-slim@sha256:4cd829461bd5c4d511c32e269da9cb8929223b666519d8004e35fc8d1d771ab7 AS rust
