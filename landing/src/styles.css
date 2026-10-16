@@ -54,6 +54,16 @@
     outline-offset: 2px;
 }
 
+/* A hovered navbar link, menu entry or button takes the shade the header sets for its theme. The inline styles own the
+   backgrounds, so the shade is an inset shadow, which also keeps the current page's pill under it. */
+@media (hover: hover) {
+    .nav-link:hover,
+    .menu-item:hover,
+    .nav-button:hover {
+        box-shadow: inset 0 0 0 100vmax var(--nav-shade);
+    }
+}
+
 /* The playground fills the first screen under the navbar: the project's files and packages, the open file and the
    console, under its toolbar. Below 1000px one of the three shows at a time, picked by .playground-views. */
 .playground-app {
