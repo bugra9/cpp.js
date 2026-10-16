@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { versionOf } from '../ports/catalog.js';
 import AppCard, { Failure, fieldStyle, Label, RunButton, useNativeTask } from './AppCard.jsx';
 import { download, FileButton, grouped, Hint, Meta, Placeholder, SecondaryButton, Select, Stat, Toggle } from './controls.jsx';
 
@@ -247,7 +248,7 @@ export function WebpStudio({ tokens, index, load }) {
             title="See what each WebP quality costs, and what it gives away"
             pitch={
                 <>
-                    Encode the test card or your own image with libwebp 1.6.0, then compare the result with the original next to its size, PSNR and SSIM. A canvas can only be given a type and a quality, and Safari cannot encode WebP from a canvas at all (
+                    Encode the test card or your own image with libwebp {versionOf('webp')}, then compare the result with the original next to its size, PSNR and SSIM. A canvas can only be given a type and a quality, and Safari cannot encode WebP from a canvas at all (
                     <Link tokens={tokens} href={CANIUSE_WEBP_ENCODE}>caniuse</Link>
                     ). Here you also get lossless, near-lossless, content presets, effort and sharp YUV.
                 </>
