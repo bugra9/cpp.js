@@ -2434,7 +2434,13 @@ var MIN_INT53 = -9007199254740992;
 function bigintToI53Checked(num) {
   return (num < MIN_INT53 || num > MAX_INT53) ? NaN : Number(num);
 }
+// A value C++ returns by copy crosses through the converter `isReference` marks, though the handle it makes is
+// typed as a pointer to the object's own class: JavaScript owns that copy (ownHandle).
 function RegisteredPointer_fromWireType(ptr) {
+  var handle = handleFromWire.call(this, ptr);
+  return this.isReference && handle ? ownHandle(handle) : handle;
+}
+function handleFromWire(ptr) {
   //console.log('RegisteredPointer_fromWireType', ptr);
   // ptr is a raw pointer (or a raw smartpointer)
   // ptr = bigintToI53Checked(ptr);
@@ -2531,22 +2537,33 @@ function attachFinalizer(handle) {
   // https://github.com/tc39/proposal-weakrefs), then attach finalizers
   // for class handles.  We check for the presence of FinalizationRegistry
   // at run-time, not build-time.
-  // A collected handle is released without the warning upstream prints under ASSERTIONS, as a release wasm build
-  // does: JavaScript never has to call .delete() on what crossbind hands it.
+  // A collected handle is released without the warning upstream prints under ASSERTIONS: it is freed by design.
   finalizationRegistry = new FinalizationRegistry((info) => {
     releaseClassHandle(info.$$);
   });
   attachFinalizer = (handle) => {
     var $$ = handle.$$;
     var hasSmartPtr = !!$$.smartPtr;
-    if (hasSmartPtr) {
-      // We should not call the destructor on raw pointers in case other code expects the pointee to live
+    // JavaScript owns an object behind a smart pointer, and one ownHandle marked on the count a handle shares with
+    // its clones, as the wasm glue does after utils/embindObjectLifetime.js. A raw pointer stays its library's:
+    // other code may expect the pointee to live.
+    if (hasSmartPtr || $$.count.owned) {
       finalizationRegistry.register(handle, { $$: $$ }, handle);
     }
     return handle;
   };
   detachFinalizer = (handle) => finalizationRegistry.unregister(handle);
   return attachFinalizer(handle);
+}
+// A copy embind made of a returned value and an object JavaScript constructed through a raw constructor (a vector,
+// a Rust class) are released as one behind a smart pointer is.
+function ownHandle(handle) {
+  var $$ = handle.$$;
+  if (!$$.smartPtr && !$$.count.owned) {
+    $$.count.owned = true;
+    if (finalizationRegistry) finalizationRegistry.register(handle, { $$: $$ }, handle);
+  }
+  return handle;
 }
 function ClassHandle_clone() {
   if (!this.$$.ptr) {
@@ -2945,7 +2962,7 @@ function __embind_register_class(rawType,
         if (undefined === body) {
           throw new BindingError(`Tried to invoke ctor of ${name} with invalid number of parameters (${arguments.length}) - expected (${Object.keys(registeredClass.constructor_body).toString()}) parameters instead!`);
         }
-        return body.apply(this, arguments);
+        return ownHandle(body.apply(this, arguments));
       });
 
       var instancePrototype = Object.create(basePrototype, {

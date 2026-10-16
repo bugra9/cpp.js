@@ -24,10 +24,42 @@ let nextEmbindId = 1;
 const HANDLES = '__crossbindHandles';
 let remoteModule = null;
 
+// How many ids name each object, as a raw pointer handed out twice is one object.
+const holders = new WeakMap();
+
 function registerEmbindObject(obj) {
     const id = nextEmbindId++;
     embindRegistry.set(id, obj);
+    holders.set(obj, (holders.get(obj) ?? 0) + 1);
     return id;
+}
+
+// What JavaScript owns: an object behind a smart pointer, or a copy embind made of a returned value or an object
+// JavaScript constructed, which utils/embindObjectLifetime.js marks. A raw pointer stays its library's.
+const ownsObject = (obj) => {
+    const $$ = obj?.$$;
+    return Boolean($$ && ($$.smartPtr || $$.count?.owned));
+};
+
+const freeIfOwned = (obj) => {
+    if (ownsObject(obj) && !obj.isDeleted()) obj.delete();
+};
+
+// The worker side of a handle the main thread no longer reaches: its id goes, and the object with the last id.
+const RELEASE = '__crossbindRelease';
+
+function releaseEmbindObjects(ids) {
+    for (const id of ids) {
+        const obj = embindRegistry.get(id);
+        if (!embindRegistry.delete(id)) continue;
+        const left = holders.get(obj) - 1;
+        if (left > 0) {
+            holders.set(obj, left);
+        } else {
+            holders.delete(obj);
+            freeIfOwned(obj);
+        }
+    }
 }
 
 // Comlink answers every member with a remote one: JSON.stringify and String() called toJSON and Symbol.toPrimitive
@@ -39,11 +71,27 @@ const LOCAL_MEMBERS = {
     [Symbol.toPrimitive]: (hint) => (hint === 'number' ? NaN : '[object Object]'),
 };
 
+// The main thread side: once a handle is collected, the worker lets go of its object, the ids collected in one task
+// in one message.
+const collected = [];
+
+function releaseLater(id) {
+    collected.push(id);
+    if (collected.length > 1) return;
+    setTimeout(() => {
+        const ids = collected.splice(0);
+        Promise.resolve(remoteModule?.[RELEASE](ids)).catch(() => {});
+    }, 0);
+}
+
+const handleWatcher = typeof FinalizationRegistry === 'function' ? new FinalizationRegistry(releaseLater) : null;
+
 function handleFor(id) {
     const handle = new Proxy(remoteModule[HANDLES][id], {
         get: (target, prop) => (Object.hasOwn(LOCAL_MEMBERS, prop) ? LOCAL_MEMBERS[prop] : target[prop]),
     });
     embindProxyIds.set(handle, id);
+    handleWatcher?.register(handle, id);
     return handle;
 }
 
@@ -126,6 +174,8 @@ Comlink.transferHandlers.set('embindVector', {
                 ? { __comlinkProxy: true, __embindId: registerEmbindObject(elem) }
                 : elem;
         }
+        // The main thread gets the array alone, so nothing can reach a vector the call handed over any more.
+        freeIfOwned(unwrapCoercionProxy(obj));
         return [elements, []];
     },
     deserialize(elements) {
@@ -246,6 +296,7 @@ export function moduleRoot(m) {
         value: new Proxy({}, { get: (_, id) => embindRegistry.get(Number(id)) }),
         configurable: true,
     });
+    Object.defineProperty(m, RELEASE, { value: releaseEmbindObjects, configurable: true });
     return wrapWithVectorCoercion(m);
 }
 
