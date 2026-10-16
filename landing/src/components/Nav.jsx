@@ -124,7 +124,6 @@ export default function Nav({ tokens, path = '/', onToggleTheme, onOpenSearch })
                 zIndex: 5,
                 background: tokens.bg,
                 borderBottom: `1px solid ${tokens.border}`,
-                '--nav-shade': tokens.isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)',
             }}
         >
             <a

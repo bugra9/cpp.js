@@ -57,6 +57,8 @@ export default function App({ url }) {
                 color: tokens.text,
                 fontFamily: tokens.sans,
                 minHeight: '100vh',
+                // The shade a hovered menu link takes (styles.css), set on the page so menus outside the navbar get it too.
+                '--nav-shade': tokens.isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)',
             }}
         >
             <a href="#content" className="skip-link tap-target">
