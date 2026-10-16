@@ -124,15 +124,15 @@ function WktBox({ tokens, wkt }) {
     );
 }
 
-// Serving GEOS in this page conveys it, so every app links its LGPL source and licence.
-function LicenceNote({ tokens }) {
+// Serving GEOS in this page conveys it, so every app links its LGPL source and license.
+function LicenseNote({ tokens }) {
     const external = { target: '_blank', rel: 'noreferrer', style: { color: tokens.accentText, textDecoration: 'underline', textUnderlineOffset: 3 } };
     return (
         <span>
             {'Runs GEOS, which is LGPL-2.1: '}
             <a href="https://github.com/libgeos/geos" {...external}>source</a>
             {' · '}
-            <a href="https://github.com/libgeos/geos/blob/main/COPYING" {...external}>licence</a>
+            <a href="https://github.com/libgeos/geos/blob/main/COPYING" {...external}>license</a>
             {' · '}
             <a href={`${REPO_URL}/tree/main/ports/geos`} {...external}>build recipe</a>
         </span>
@@ -279,7 +279,7 @@ export function GeometryLab({ tokens, index, load }) {
             index={index}
             status={state.status}
             pitch="Pick two shapes or type your own as WKT, then run an overlay, a buffer, a hull, a triangulation or a repair. The result is drawn over the inputs with its measurements, next to the DE-9IM matrix of how the two shapes relate. This is the engine PostGIS, QGIS, GDAL and Shapely call, built from the same C++."
-            note={<LicenceNote tokens={tokens} />}
+            note={<LicenseNote tokens={tokens} />}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
                     <Select tokens={tokens} label="SHAPES" value={preset} onChange={pickPreset}>
@@ -430,7 +430,7 @@ export function ValidityDoctor({ tokens, index, load }) {
             index={index}
             status={state.status}
             pitch="Invalid polygons break overlays and spatial joins. GEOS names the problem and marks where it is, then repairs the shape with either of its two methods: one rebuilds the shape from all of its edges, the other keeps shells as shells and holes as holes. They agree on some shapes and not on others. jsts 2.12.1, the JavaScript port of the same Java library, has no GeometryFixer, the class behind the second method."
-            note={<LicenceNote tokens={tokens} />}
+            note={<LicenseNote tokens={tokens} />}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
                     <Select tokens={tokens} label="BROKEN SHAPE" value={sample} onChange={pickSample}>
@@ -546,7 +546,7 @@ export function CoverageSimplifier({ tokens, index, load }) {
             index={index}
             status={state.status}
             pitch="Simplify each region of a map on its own and neighbours stop agreeing on their borders: slivers of gap and overlap open along every edge they share. GEOS can simplify the map as one coverage instead, so each border is simplified once and stays shared. jsts 2.12.1, the JavaScript port of the same Java library, has no coverage package."
-            note={<LicenceNote tokens={tokens} />}
+            note={<LicenseNote tokens={tokens} />}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
                     <Select tokens={tokens} label="TOLERANCE" value={tolerance} onChange={setTolerance}>

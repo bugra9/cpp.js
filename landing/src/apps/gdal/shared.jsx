@@ -61,7 +61,7 @@ export function Segmented({ tokens, label, value, options, onChange, disabled })
 }
 
 // Serving this module conveys GEOS and libiconv, which it links statically, so every app links their sources.
-export function LicenceNote({ tokens }) {
+export function LicenseNote({ tokens }) {
     const external = { target: '_blank', rel: 'noreferrer', style: { color: tokens.accentText, textDecoration: 'underline', textUnderlineOffset: 3 } };
     return (
         <span>

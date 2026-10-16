@@ -21,15 +21,15 @@ export function Stats({ children }) {
 }
 
 // Serving SpatiaLite in this page conveys it and the LGPL libraries linked with it, so every app
-// links their sources and licences.
-export function LicenceNote({ tokens }) {
+// links their sources and licenses.
+export function LicenseNote({ tokens }) {
     const external = { target: '_blank', rel: 'noreferrer', style: { color: tokens.accentText, textDecoration: 'underline', textUnderlineOffset: 3 } };
     return (
         <span>
             {'Runs SpatiaLite, licensed MPL-1.1, GPL-2.0+ or LGPL-2.1+ at your choice, with GEOS and GNU libiconv under the LGPL: '}
             <a href="https://www.gaia-gis.it/fossil/libspatialite/index" {...external}>source</a>
             {' · '}
-            <a href={`${REPO_URL}/blob/main/ports/spatialite/base/LICENSE`} {...external}>licence</a>
+            <a href={`${REPO_URL}/blob/main/ports/spatialite/base/LICENSE`} {...external}>license</a>
             {' · '}
             <a href={`${REPO_URL}/tree/main/ports/spatialite`} {...external}>build recipe</a>
         </span>

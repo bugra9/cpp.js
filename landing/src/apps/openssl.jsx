@@ -121,7 +121,7 @@ function Block({ tokens, label, text, file, maxHeight }) {
     );
 }
 
-function LicenceNote({ tokens }) {
+function LicenseNote({ tokens }) {
     const external = { target: '_blank', rel: 'noreferrer', style: { color: tokens.accentText, textDecoration: 'underline', textUnderlineOffset: 3 } };
     return (
         <span>
@@ -232,7 +232,7 @@ export function CertificateStudio({ tokens, index, load }) {
             index={index}
             status={state.status}
             pitch="Generate an RSA, ECDSA, Ed25519 or post-quantum ML-DSA key, then a self-signed certificate or a certificate signing request for it, and read back what OpenSSL wrote, the way openssl x509 -text prints it. Paste a certificate, a chain, a request or a key to inspect it instead. WebCrypto makes keys but reads no certificates: here OpenSSL itself runs in the tab, and the private key is never sent anywhere."
-            note={<LicenceNote tokens={tokens} />}
+            note={<LicenseNote tokens={tokens} />}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
                     <div>
@@ -389,7 +389,7 @@ export function TlsLabApp({ tokens, index, load }) {
             index={index}
             status={state.status}
             pitch="An OpenSSL 4 client and server shake hands over memory buffers while this page carries every byte between them and lists every message. See the hybrid post-quantum key exchange OpenSSL picks by default, hide the server's name with Encrypted Client Hello, or flip one bit on the wire and watch the client refuse it. A web page cannot open its own TLS connections, so both ends run here; this page's own HTTPS is the browser's TLS, not OpenSSL's."
-            note={<LicenceNote tokens={tokens} />}
+            note={<LicenseNote tokens={tokens} />}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
                     <Select tokens={tokens} label="SERVER CERTIFICATE" value={certificate} onChange={setCertificate}>
@@ -525,7 +525,7 @@ export function PfxUnpacker({ tokens, index, load }) {
             index={index}
             status={state.status}
             pitch="Choose a .p12 or .pfx file and type its password: the key, the certificate and the chain come out as PEM, with the cipher and MAC that protect each part, named as openssl pkcs12 -info names them. Files written by OpenSSL 1.1.1 and other older tools use RC2-40 and 3DES, which OpenSSL 3 and later keep in a legacy provider; this build carries it and loads it only for such files. The file is read in this tab and not uploaded."
-            note={<LicenceNote tokens={tokens} />}
+            note={<LicenseNote tokens={tokens} />}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>

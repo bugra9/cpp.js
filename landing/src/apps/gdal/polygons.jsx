@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import AppCard, { Failure, Label, RunButton, useNativeTask } from '../AppCard.jsx';
 import { download, grouped, Meta, Placeholder, SecondaryButton, Select, Stat } from '../controls.jsx';
-import { freshFolder, LicenceNote, plainly, Segmented, size } from './shared.jsx';
+import { freshFolder, LicenseNote, plainly, Segmented, size } from './shared.jsx';
 
 const CANVAS_SIZE = 128;
 
@@ -127,7 +127,7 @@ export function PixelsToPolygonsApp({ tokens, index, load }) {
             index={index}
             status={traced.status}
             pitch="Paint on the grid, or keep the sample. GDAL removes the specks below a size you pick, traces every region of ink into a polygon with its holes, simplifies the staircase edges and saves the result as GeoJSON, GeoPackage, Shapefile or DXF. The same calls turn classified satellite images and scanned maps into vector layers."
-            note={<LicenceNote tokens={tokens} />}
+            note={<LicenseNote tokens={tokens} />}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'flex-end' }}>

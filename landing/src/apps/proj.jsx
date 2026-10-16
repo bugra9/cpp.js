@@ -34,7 +34,7 @@ function TextBox({ tokens, text, maxHeight = 150 }) {
     );
 }
 
-function LicenceNote({ tokens }) {
+function LicenseNote({ tokens }) {
     const external = { target: '_blank', rel: 'noreferrer', style: { color: tokens.accentText, textDecoration: 'underline', textUnderlineOffset: 3 } };
     return (
         <span>
@@ -183,7 +183,7 @@ export function ProjectionAtlas({ tokens, index, load }) {
             index={index}
             status={state.status}
             pitch="Pick a world map, or any projected CRS by its EPSG or ESRI code, WKT or PROJ string. PROJ draws its graticule and a grid of circles that are all the same size on the ground, over the area the CRS is defined for, so the shapes the circles take show what the projection stretches. Click the map to measure the distortion at that point."
-            note={<LicenceNote tokens={tokens} />}
+            note={<LicenseNote tokens={tokens} />}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
                     <Select tokens={tokens} label="PROJECTION" value={preset} onChange={pickPreset}>
@@ -496,7 +496,7 @@ export function CrsDetective({ tokens, index, load }) {
             index={index}
             status={state.status}
             pitch="A shapefile's .prj names no EPSG code. Paste one, or any WKT, PROJJSON, PROJ string or code, and PROJ matches it against its copy of the EPSG registry: the code, where the CRS applies, its axis order, the same CRS in four formats, and every transformation path to a second CRS with its accuracy. proj4js, the JavaScript port, knows only the CRSs you define with proj4.defs() and the few it predefines, so it has no registry to match a .prj against."
-            note={<LicenceNote tokens={tokens} />}
+            note={<LicenseNote tokens={tokens} />}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
                     <Select tokens={tokens} label="SAMPLES" value={sample} onChange={pickSample}>
@@ -655,7 +655,7 @@ export function FlightPaths({ tokens, index, load }) {
             index={index}
             status={state.status}
             pitch="The shortest route between two cities is a geodesic on the ellipsoid. On Mercator it bends toward the pole, while the straight line there is the route that keeps one compass heading, and that one is longer. Pick two cities: PROJ measures both routes on the WGS 84 ellipsoid and draws them on three maps."
-            note={<LicenceNote tokens={tokens} />}
+            note={<LicenseNote tokens={tokens} />}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
                     <Select tokens={tokens} label="FROM" value={from} onChange={setFrom}>

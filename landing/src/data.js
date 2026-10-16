@@ -90,7 +90,7 @@ export default {
 };`;
 
 // The band under the hero: a drawing per kind of host (components/PlatformScene.jsx) with the
-// products named in text. Apple's and Microsoft's terms forbid their logos without a licence but
+// products named in text. Apple's and Microsoft's terms forbid their logos without a license but
 // allow their product names for stating compatibility. `detail` (the tooltip and the llms.txt line)
 // is what each target is built as, per docs/playbooks/integration/nodejs.md and the WASI and
 // architecture guides.

@@ -145,7 +145,7 @@ crossbind build -p darwin,linux,linuxmusl,win32`,
                 ['`copyToSource`, `copyToDist`', "add a file to the source before the build, or ship one in each target's folder"],
                 ['`beforeRun(cmakeDir)`', 'run commands first, such as `autoreconf -fi`'],
                 ['`getExtraLibs(target)`', 'add link libraries the dependencies do not bring'],
-                ['`bundled`', 'declare third-party code the upstream compiles in, per platform, so its licence is listed and shipped'],
+                ['`bundled`', 'declare third-party code the upstream compiles in, per platform, so its license is listed and shipped'],
             ],
         },
         {
@@ -216,23 +216,23 @@ export default mergeConfig({
             text: "Apps import the package by its name - `import { initNative, RustyCounter } from '@crossbind/embind-rust-demo'` - with types mapped as on the [Rust](/guide/rust/#mapping) page. An app that finds no prebuilt for its target, or one built against another embind-rs, builds it in the package's own folder first, with the toolchain any Rust build needs ([Rust](/guide/rust/#setup)).",
         },
 
-        { type: 'h2', id: 'licences', text: 'Licences' },
+        { type: 'h2', id: 'licenses', text: 'Licenses' },
         {
             type: 'p',
-            text: 'An app that ships your package takes on its licence and those of everything linked in, so make that checkable, as the ports do:',
+            text: 'An app that ships your package takes on its license and those of everything linked in, so make that checkable, as the ports do:',
         },
         {
             type: 'ul',
             items: [
                 'Pin the upstream source with `sha256` in the recipe. A mismatch refuses the build; without a pin the download is not checked.',
-                "Ship the upstream licence text as `LICENSE` in every package that carries binaries, and set the npm `license` field to the wrapped library's licence as an SPDX expression.",
-                "In a family, record the upstream licence once, in the meta package's `package.json` under `crossbind.upstream.license`: `declared`, `selected` for your pick of an `OR` expression, `files` and `copyright`. `crossbind licenses` reads it there; a package outside a family it lists from its `license` field and `LICENSE` file.",
-                'Declare third-party code the upstream compiles in under `bundled` in the recipe. The build copies its licence texts to `dist/licenses/<name>/`, and `crossbind licenses --platform <platform>` lists it.',
+                "Ship the upstream license text as `LICENSE` in every package that carries binaries, and set the npm `license` field to the wrapped library's license as an SPDX expression.",
+                "In a family, record the upstream license once, in the meta package's `package.json` under `crossbind.upstream.license`: `declared`, `selected` for your pick of an `OR` expression, `files` and `copyright`. `crossbind licenses` reads it there; a package outside a family it lists from its `license` field and `LICENSE` file.",
+                'Declare third-party code the upstream compiles in under `bundled` in the recipe. The build copies its license texts to `dist/licenses/<name>/`, and `crossbind licenses --platform <platform>` lists it.',
             ],
         },
         {
             type: 'p',
-            text: 'Run `crossbind licenses --check` in each platform package before you publish; it fails when a licence field it lists is missing or not valid SPDX. Apps then write notices and a CycloneDX SBOM for everything they link with `--notices` and `--sbom` ([CLI](/guide/cli/#licenses)).',
+            text: 'Run `crossbind licenses --check` in each platform package before you publish; it fails when a license field it lists is missing or not valid SPDX. Apps then write notices and a CycloneDX SBOM for everything they link with `--notices` and `--sbom` ([CLI](/guide/cli/#licenses)).',
         },
     ],
 };

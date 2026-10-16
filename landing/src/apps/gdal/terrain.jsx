@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import AppCard, { Failure, Label, RunButton, useNativeTask } from '../AppCard.jsx';
 import { download, grouped, Hint, Meta, Placeholder, SecondaryButton, Select, Stat } from '../controls.jsx';
-import { freshFolder, LicenceNote, plainly, Segmented } from './shared.jsx';
+import { freshFolder, LicenseNote, plainly, Segmented } from './shared.jsx';
 
 const TERRAIN_SIZE = 512;
 
@@ -167,7 +167,7 @@ export function TerrainStudioApp({ tokens, index, load }) {
             index={index}
             status={terrain.status}
             pitch="The module generates a 15 km landscape and GDAL analyses it in the page: the gdaldem products, contour lines at the interval you pick, and a viewshed from any point you click, with the Earth's curvature. Every product downloads as a georeferenced GeoTIFF."
-            note={<LicenceNote tokens={tokens} />}
+            note={<LicenseNote tokens={tokens} />}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>

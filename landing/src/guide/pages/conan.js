@@ -137,10 +137,10 @@ console.log(await Text.price(3.14159));`,
             text: "Each `conan:` import is typed by an ambient module, `declare module 'conan:zlib/zlib.h'`, under `.crossbind/conan/types/`, which `@crossbind/typescript-config` includes; a tsconfig with its own `include` needs `.crossbind/conan/types/**/*.d.ts` in it. The declarations list every bindable function of the header, even before you import it, but only the imported ones enter the compiled bridge.",
         },
 
-        { type: 'h2', id: 'licences', text: 'Licences' },
+        { type: 'h2', id: 'licenses', text: 'Licenses' },
         {
             type: 'p',
-            text: '`crossbind licenses` lists every Conan package of the build with the licence its recipe declares, the source URL and SHA-256 the recipe downloads, and the licence texts the package ships; in the SBOM a package is `pkg:conan/<package>@<version>`. It reads what the last build installed, so on a fresh checkout it stops with an error until you build ([CLI](/guide/cli/#licenses)).',
+            text: '`crossbind licenses` lists every Conan package of the build with the license its recipe declares, the source URL and SHA-256 the recipe downloads, and the license texts the package ships; in the SBOM a package is `pkg:conan/<package>@<version>`. It reads what the last build installed, so on a fresh checkout it stops with an error until you build ([CLI](/guide/cli/#licenses)).',
         },
 
         { type: 'h2', id: 'limits', text: 'Limits' },
