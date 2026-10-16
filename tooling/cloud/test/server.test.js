@@ -1,6 +1,7 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { createCompileServer, MAX_BODY_BYTES } from '../compiler/server.js';
+import { createCompileServer } from '../compiler/server.js';
+import { MAX_BODY_BYTES } from '../compiler/validate.js';
 import { WorkspaceError } from '../compiler/compile.js';
 
 const servers = [];
@@ -37,10 +38,10 @@ test('compiles the validated files and returns the result', async () => {
 
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), { ok: true, js: 'x' });
-    assert.deepEqual(received, { 'native.h': 'int answer();', 'native.cpp': '' });
+    assert.deepEqual(received, { files: { 'native/native.h': 'int answer();' }, packages: [] });
 });
 
-test('refuses a body that is not JSON or not two sources, before it takes a place in the queue', async () => {
+test('refuses a body that is not JSON or not a playground project, before it takes a place in the queue', async () => {
     let calls = 0;
     const { compileRequest } = await start({ compileFiles: async () => { calls += 1; return { ok: true }; } });
 
@@ -50,7 +51,7 @@ test('refuses a body that is not JSON or not two sources, before it takes a plac
     assert.equal(notJson.status, 400);
     assert.match((await notJson.json()).error, /not JSON/);
     assert.equal(wrongFile.status, 400);
-    assert.match((await wrongFile.json()).error, /Only native\.h and native\.cpp compile/);
+    assert.match((await wrongFile.json()).error, /"build\.sh" does not compile/);
     assert.equal(calls, 0);
 });
 

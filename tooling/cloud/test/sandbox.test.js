@@ -61,6 +61,14 @@ test('lays a throwaway overlay over a read-only folder that the toolchain insist
     assert.ok(argv.indexOf('--overlay-src') > argv.lastIndexOf('/emsdk'), 'the overlay goes over the read-only toolchain');
 });
 
+test('lays a writable store over a path under /tmp, after /tmp is mounted', () => {
+    const argv = sandboxArgv({ ...spec, stores: [{ from: '/opt/store/cargo', to: '/tmp/home/.cache' }] });
+    const at = argv.indexOf('/opt/store/cargo');
+
+    assert.deepEqual(argv.slice(at - 1, at + 3), ['--overlay-src', '/opt/store/cargo', '--tmp-overlay', '/tmp/home/.cache']);
+    assert.ok(at > argv.indexOf('--tmpfs'), 'mounted after /tmp, which would cover it');
+});
+
 test('returns the exit code and the output of both streams', async () => {
     const run = await runSandboxed(['sh', '-c', 'echo out; echo err >&2; exit 3'], options);
 

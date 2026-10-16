@@ -1,4 +1,4 @@
-import { validateRequest, InvalidRequest } from '../compiler/validate.js';
+import { validateRequest, InvalidRequest, MAX_BODY_BYTES } from '../compiler/validate.js';
 import { handleAccountRequest } from './account-api.js';
 import { userKey } from './accounts.js';
 import {
@@ -10,11 +10,13 @@ import { readSession, clearCookie, SESSION_COOKIE } from './session.js';
 import { settingsOf } from './settings.js';
 
 const PREFIX = 'playground';
-const MAX_BODY_BYTES = 80 * 1024;
 const MAX_TURNSTILE_TOKEN_LENGTH = 2048;
 const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 const CACHE_ORIGIN = 'https://playground-cache.invalid';
 const CACHE_SECONDS = 7 * 24 * 3600;
+// A container that started badly fails compiles too, so a failure is kept only long enough to spare a visitor who
+// runs the same code again.
+const FAILURE_CACHE_SECONDS = 10 * 60;
 // The compiler caps its outputs well below this (compiler/compile.js OUTPUT_LIMITS).
 const MAX_COMPILER_ANSWER_BYTES = 12 * 1024 * 1024;
 
@@ -40,8 +42,9 @@ async function verifyTurnstile(token, { secret, ip, hostnames, fetcher }) {
     return outcome.success === true && (outcome.action === 'compile' || isTestAnswer) && hostnames.includes(outcome.hostname);
 }
 
-async function cacheUrl(version, files) {
-    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([version, files['native.h'], files['native.cpp']])));
+// project is validateRequest's answer, its files and packages sorted, so one project always gives one key.
+async function cacheUrl(version, project) {
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([version, project])));
     return `${CACHE_ORIGIN}/${[...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')}`;
 }
 
@@ -61,7 +64,7 @@ async function readCompileBody(request, respond) {
     if (!(request.headers.get('content-type') ?? '').startsWith('application/json')) return { error: respond(415, { error: 'Send JSON.' }) };
     try {
         const body = JSON.parse(await readLimited(request, MAX_BODY_BYTES));
-        return { files: validateRequest({ files: body?.files }), turnstile: body?.turnstile };
+        return { project: validateRequest({ files: body?.files, packages: body?.packages }), turnstile: body?.turnstile };
     } catch (error) {
         if (error instanceof BodyTooLarge) return { error: respond(413, { error: `The body is over ${MAX_BODY_BYTES} bytes.` }) };
         if (error instanceof SyntaxError) return { error: respond(400, { error: 'The body is not JSON.' }) };
@@ -70,11 +73,11 @@ async function readCompileBody(request, respond) {
     }
 }
 
-async function runCompile({ files, caller, cacheRequest, reservation }, { deps, respond }) {
+async function runCompile({ project, caller, cacheRequest, reservation }, { deps, respond }) {
     let response;
     try {
         response = await deps.compiler.fetch(new Request('http://compiler/compile', {
-            method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ files }),
+            method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(project),
         }));
     } catch (error) {
         // The container went away during the compile, which the compile itself may have caused: it stays counted.
@@ -100,7 +103,8 @@ async function runCompile({ files, caller, cacheRequest, reservation }, { deps, 
     }
     log({ event: 'compile', who: caller.key, ok: result.ok, reason: result.reason, ms: result.ms });
     if (isCacheable(result)) {
-        deps.waitUntil(deps.cache?.put(cacheRequest, Response.json(result, { headers: { 'cache-control': `public, max-age=${CACHE_SECONDS}` } })));
+        const seconds = result.ok ? CACHE_SECONDS : FAILURE_CACHE_SECONDS;
+        deps.waitUntil(deps.cache?.put(cacheRequest, Response.json(result, { headers: { 'cache-control': `public, max-age=${seconds}` } })));
     }
     return respond(200, { ...result, remaining: reservation.remaining });
 }
@@ -110,7 +114,7 @@ async function compileRoute(context) {
     const { request, env, deps, settings, corsOrigin, respond } = context;
     if (!settings.enabled) return respond(503, { error: 'The playground is paused; the examples on this page still run.' });
     if (!corsOrigin) return respond(403, { error: 'Compiles are accepted from the playground page only.' });
-    const { files, turnstile, error } = await readCompileBody(request, respond);
+    const { project, turnstile, error } = await readCompileBody(request, respond);
     if (error) return error;
     const caller = await callerOf(context);
     // Accounts are blocked in D1; a blocked network still compiles for whoever signs in, who can be blocked in turn.
@@ -120,7 +124,7 @@ async function compileRoute(context) {
     if (!caller.user && !(await verifyTurnstile(turnstile, { secret: env.TURNSTILE_SECRET, ip: caller.ip, hostnames: settings.turnstileHostnames, fetcher: deps.fetcher }))) {
         return respond(403, { error: 'The browser check did not pass; reload the page and try again.', turnstile: true });
     }
-    const cacheRequest = new Request(await cacheUrl(settings.compilerVersion, files));
+    const cacheRequest = new Request(await cacheUrl(settings.compilerVersion, project));
     const cached = await deps.cache?.match(cacheRequest);
     if (cached) return respond(200, { ...(await cached.json()), cached: true, remaining: await deps.quota.remaining({ key: caller.key, limit: caller.limit }) });
     const reservation = await deps.quota.reserve({ key: caller.key, limit: caller.limit, globalLimit: settings.globalDaily });
@@ -132,7 +136,7 @@ async function compileRoute(context) {
             login: ownLimit && !caller.user,
         });
     }
-    return runCompile({ files, caller, cacheRequest, reservation }, context);
+    return runCompile({ project, caller, cacheRequest, reservation }, context);
 }
 
 async function sessionRoute(context) {

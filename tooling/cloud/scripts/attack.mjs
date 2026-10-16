@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { MAX_BODY_BYTES, MAX_SOURCE_BYTES } from '../compiler/validate.js';
 
 const TEMPLATE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../compiler/template/src/native');
 const CONTAINER = 'crossbind-playground-attack';
@@ -33,6 +34,30 @@ const embedding = (file) => ({
     'native.cpp': `#include "native.h"\nstatic const unsigned char embedded[] = {\n#embed "${file}"\n};\nint embedded_byte(int i) { return embedded[i]; }\n`,
 });
 
+// A private function keeps the probe off the bridge; answer() is what main.js imports.
+const inRust = (body) => ({
+    'main.js': "import { answer } from './native/probe.rs';\n",
+    'native/probe.rs': `${body}\n\npub fn answer() -> i32 {\n    42\n}\n`,
+});
+
+// The landing's hero: the app's own C++ and Rust beside a port, a crate and a Conan package.
+const HERO = {
+    files: {
+        'main.js': [
+            "import { greet } from './native/greet.h';",
+            "import { fibonacci } from './native/math.rs';",
+            "import { sqlite3_libversion } from '@crossbind/port-sqlite3/sqlite3.h';",
+            "import { Uuid } from 'cargo:uuid';",
+            "import { zlibVersion } from 'conan:zlib/zlib.h';",
+            '',
+        ].join('\n'),
+        'native/greet.h': '#pragma once\n#include <string>\n\ninline std::string greet(std::string name) {\n    return "Hello, " + name + "!";\n}\n',
+        'native/math.rs': 'pub fn fibonacci(n: i32) -> u64 {\n    let (mut a, mut b) = (0, 1);\n    for _ in 0..n {\n        (a, b) = (b, a + b);\n    }\n    a\n}\n',
+    },
+    packages: ['port:sqlite3', 'crate:uuid', 'conan:zlib'],
+};
+const boundNames = (r) => (r.body.imports?.natives ?? []).flatMap(({ names }) => names.map((name) => name.local ?? name));
+
 const wasmText = (r) => Buffer.from(r.body.wasm ?? '', 'base64').toString('latin1');
 const isWasm = (r) => wasmText(r).startsWith('\0asm');
 // Failed for the expected reason, and nothing of the hidden file came back.
@@ -40,6 +65,11 @@ const failsWith = (reason, secret = null) => (r) => r.status === 200 && r.body.o
 
 const COMPILES = [
     { name: 'the sample compiles to a wasm module and its loader', files: sample, check: (r) => r.body.ok === true && isWasm(r) && r.body.js.length > 0 },
+    {
+        name: 'the hero compiles offline with its packages and lists what main.js imports',
+        ...HERO,
+        check: (r) => r.body.ok === true && isWasm(r) && ['greet', 'fibonacci', 'sqlite3_libversion', 'Uuid', 'zlibVersion'].every((name) => boundNames(r).includes(name)),
+    },
     { name: 'a syntax error is a compile error naming the file', files: inSource('int broken('), check: (r) => r.body.reason === 'compile' && /native\.cpp:\d+/.test(r.body.log) },
     { name: '#include "/etc/passwd" finds nothing', files: inHeader('#include "/etc/passwd"'), check: failsWith(/'\/etc\/passwd' file not found/, /root:x:0:0/) },
     {
@@ -67,6 +97,21 @@ const COMPILES = [
         name: '#embed of the template, hidden from the sandbox, takes in nothing',
         files: embedding('/srv/playground/template/src/native/native.cpp'),
         check: (r) => !wasmText(r).includes('Counter::increment'),
+    },
+    {
+        name: 'include_bytes! of /etc/passwd finds nothing',
+        files: inRust('fn leaked() -> usize {\n    include_bytes!("/etc/passwd").len()\n}'),
+        check: failsWith(/couldn't read `?\/etc\/passwd/, /root:x:0:0/),
+    },
+    {
+        name: 'include_str! of the server code finds nothing',
+        files: inRust('const LEAKED: &str = include_str!("/opt/playground/compiler/server.js");'),
+        check: failsWith(/couldn't read `?\/opt\/playground\/compiler\/server\.js/, /createCompileServer/),
+    },
+    {
+        name: 'a never-ending const evaluation in Rust is stopped',
+        files: inRust('const _: u64 = {\n    let mut i: u64 = 0;\n    while i < u64::MAX {\n        i += 1;\n    }\n    i\n};'),
+        check: (r) => r.body.ok === false && (/taking a long time/.test(r.body.log) || r.body.reason === 'timeout') && r.ms < WALL_LIMIT_MS + 10_000,
     },
     {
         name: 'a never-ending constexpr loop stops at the step limit',
@@ -101,12 +146,13 @@ async function request(route, init) {
     return { status: response.status, body, ms: Date.now() - started };
 }
 
-const compileRequest = (files) => request('/compile', { method: 'POST', body: JSON.stringify({ files }) });
+const compileRequest = (files, packages) => request('/compile', { method: 'POST', body: JSON.stringify({ files, packages }) });
 
 const REQUESTS = [
-    { name: 'a file other than the two sources is refused', run: () => compileRequest({ 'native.h': '', 'CMakeLists.txt': 'execute_process(COMMAND id)' }), check: (r) => r.status === 400 },
-    { name: 'sources over 32 KB are refused', run: () => compileRequest({ 'native.h': 'x'.repeat(33 * 1024) }), check: (r) => r.status === 400 },
-    { name: 'a body over the limit is refused', run: () => request('/compile', { method: 'POST', body: 'x'.repeat(70 * 1024) }), check: (r) => r.status === 413 },
+    { name: 'a file other than main.js and native sources is refused', run: () => compileRequest({ 'native.h': '', 'CMakeLists.txt': 'execute_process(COMMAND id)' }), check: (r) => r.status === 400 },
+    { name: 'a package the image does not carry is refused', run: () => compileRequest(sample, ['port:gdal']), check: (r) => r.status === 400 },
+    { name: `sources over ${MAX_SOURCE_BYTES / 1024} KB are refused`, run: () => compileRequest({ 'native.h': 'x'.repeat(MAX_SOURCE_BYTES + 1) }), check: (r) => r.status === 400 },
+    { name: 'a body over the limit is refused', run: () => request('/compile', { method: 'POST', body: 'x'.repeat(MAX_BODY_BYTES + 1) }), check: (r) => r.status === 413 },
     { name: 'the runner protocol is not served', run: () => request('/v1/exec', { method: 'POST', body: '{}' }), check: (r) => r.status === 404 },
     {
         name: 'a third compile at once is turned away',
@@ -153,8 +199,8 @@ async function main() {
     const rows = [];
     try {
         await waitForHealth();
-        for (const { name, files, check } of COMPILES) {
-            const result = await compileRequest(files);
+        for (const { name, files, packages, check } of COMPILES) {
+            const result = await compileRequest(files, packages);
             rows.push({ name, ok: check(result), detail: describe(result) });
         }
         for (const { name, run, check } of REQUESTS) {

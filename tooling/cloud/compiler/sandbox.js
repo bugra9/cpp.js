@@ -29,7 +29,9 @@ const MERGED_USR = ['--symlink', 'usr/bin', '/bin', '--symlink', 'usr/sbin', '/s
 // seccomp program on `seccompFd` filters its syscalls, `masks` cover kernel files of /proc, and an overlay folder
 // takes writes that vanish with the sandbox. Memory is the watchdog's job (runSandboxed): a sandbox can reset its
 // own OOM score and fill tmpfs mounts that no size limit covers.
-export function sandboxArgv({ workDir, readOnly, overlays = [], files, masks = [], seccompFd, env, command }, limits = LIMITS) {
+export function sandboxArgv({
+    workDir, readOnly, overlays = [], files, stores = [], masks = [], seccompFd, env, command,
+}, limits = LIMITS) {
     return [
         'choom', '-n', '1000', '--',
         'prlimit', `--cpu=${limits.cpuSeconds}`, `--data=${limits.dataBytes}`, `--fsize=${limits.fileBytes}`,
@@ -44,6 +46,8 @@ export function sandboxArgv({ workDir, readOnly, overlays = [], files, masks = [
         ...masks.flatMap((file) => ['--ro-bind', '/dev/null', file]),
         '--size', String(limits.tmpBytes), '--tmpfs', '/tmp',
         ...Object.entries(files).flatMap(([to, from]) => ['--ro-bind', from, to]),
+        // A read-only tree the build writes to, at a path of its own under /tmp, so mounted after it.
+        ...stores.flatMap(({ from, to }) => ['--overlay-src', from, '--tmp-overlay', to]),
         '--bind', workDir, workDir, '--chdir', workDir,
         '--', ...command,
     ];

@@ -18,11 +18,11 @@ const envAt = process.argv.indexOf('--env');
 const envArgs = ['--env', envAt === -1 ? '' : process.argv[envAt + 1]];
 const isStaging = envArgs[1] === 'staging';
 
-// Production ships exactly what is committed: crossbind and the compiler as in git, with the dependencies the lockfile
-// pins. Staging is where changes are tried before they are committed, so it takes the working tree and says so. Both
-// run on the image crossbind pins.
+// Production ships exactly what is committed: crossbind, the Rust binding layer the template carries and the compiler
+// as in git, with the dependencies the lockfile pins. Staging is where changes are tried before they are committed, so
+// it takes the working tree and says so. Both run on the image crossbind pins.
 if (!isDev) {
-    const committed = ['core/crossbind', 'tooling/cloud', 'pnpm-lock.yaml', 'pnpm-workspace.yaml'];
+    const committed = ['core/crossbind', 'core/embind-rust', 'tooling/cloud', 'pnpm-lock.yaml', 'pnpm-workspace.yaml'];
     const dirty = execFileSync('git', ['status', '--porcelain', '--', ...committed], { cwd: path.resolve(PACKAGE_DIR, '../..'), encoding: 'utf8' }).trim();
     if (dirty && !isStaging) throw new Error(`commit or stash these changes before deploying:\n${dirty}`);
     if (dirty) process.stdout.write(`staging takes the working tree, uncommitted changes included:\n${dirty}\n`);

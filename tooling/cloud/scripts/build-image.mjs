@@ -10,6 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getDockerImage } from '../../../core/crossbind/src/utils/pullDockerImage.js';
+import { PACKAGES } from '../compiler/packages.js';
 import { RUNNER_IMAGES } from '../worker/runner-api.js';
 
 const PACKAGE_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -22,6 +23,8 @@ const RUNNER_TEMPLATE = path.join(PACKAGE_DIR, 'runner');
 const RUNNER_SOURCE = path.join(CLI_DIR, 'src', 'runner');
 const DEFAULT_TAG = 'crossbind-playground-compiler:dev';
 const CLI_CONTEXT = path.join(CONTEXT, 'crossbind');
+const MODULES_CONTEXT = path.join(CONTEXT, 'compiler', 'template', 'node_modules');
+const EMBIND_RUST_DIR = path.join(REPO_DIR, 'core', 'embind-rust');
 // What pnpm records of an install, with timestamps: the image needs none of it, and the hash must not move with it.
 const PNPM_STATE = ['.modules.yaml', '.pnpm-workspace-state-v1.json'];
 
@@ -59,6 +62,36 @@ function deployCli(target) {
     PNPM_STATE.forEach((file) => fs.rmSync(path.join(target, 'node_modules', file), { force: true }));
 }
 
+// The template's node_modules: the ports a compile may use (compiler/packages.js), packed from npm at their pinned
+// version and refused unless npm's integrity is the one the catalog pins, and @crossbind/core-embind-rust from this
+// repository, which a build without a bundler needs for Rust. Unpacked here, so the image build fetches none of them.
+function packModules(target) {
+    const packs = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-packs-'));
+    const pack = (args, cwd) => JSON.parse(execFileSync('npm', ['pack', ...args, '--json', '--ignore-scripts', '--pack-destination', packs], { cwd, encoding: 'utf8' }))[0];
+    const unpack = (tarball, name) => {
+        const dir = path.join(target, name);
+        fs.mkdirSync(dir, { recursive: true });
+        execFileSync('tar', ['-xzf', path.join(packs, tarball), '-C', dir, '--strip-components=1']);
+    };
+    try {
+        const tarballs = PACKAGES.flatMap(({ version, tarballs: own = [] }) => own.map((tarball) => ({ ...tarball, version })));
+        tarballs.forEach(({ name, version, integrity }) => {
+            const packed = pack([`${name}@${version}`]);
+            if (packed.integrity !== integrity) throw new Error(`${name}@${version} is ${packed.integrity}; compiler/packages.js pins ${integrity}.`);
+            unpack(packed.filename, name);
+        });
+        // A port's config imports the configs of the ports it depends on.
+        const packed = new Set(tarballs.map(({ name }) => name));
+        const missing = [...packed]
+            .flatMap((name) => Object.keys(JSON.parse(fs.readFileSync(path.join(target, name, 'package.json'), 'utf8')).dependencies ?? {}))
+            .filter((dependency) => dependency.startsWith('@crossbind/port-') && !packed.has(dependency));
+        if (missing.length) throw new Error(`compiler/packages.js lacks ${[...new Set(missing)].join(', ')}, which a port it lists depends on.`);
+        unpack(pack([], EMBIND_RUST_DIR).filename, '@crossbind/core-embind-rust');
+    } finally {
+        fs.rmSync(packs, { recursive: true, force: true });
+    }
+}
+
 fs.rmSync(CONTEXT, { recursive: true, force: true });
 fs.mkdirSync(CONTEXT, { recursive: true });
 // wrangler passes no build arguments, so the base image is written into the Dockerfile itself.
@@ -66,6 +99,7 @@ const dockerfile = fs.readFileSync(path.join(PACKAGE_DIR, 'Dockerfile'), 'utf8')
 fs.writeFileSync(path.join(CONTEXT, 'Dockerfile'), dockerfile);
 fs.cpSync(path.join(PACKAGE_DIR, 'compiler'), path.join(CONTEXT, 'compiler'), { recursive: true });
 deployCli(CLI_CONTEXT);
+packModules(MODULES_CONTEXT);
 
 const hash = crypto.createHash('sha256');
 filesBelow(CONTEXT).forEach((file) => hash.update(path.relative(CONTEXT, file)).update(fs.readFileSync(file)));
