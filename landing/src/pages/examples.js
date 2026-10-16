@@ -57,14 +57,12 @@ export const TEMPLATE_GROUPS = GROUP_LABELS.map(([group, label]) => ({
 // The template the page opens on: the most common start.
 export const DEFAULT_TEMPLATE = 'web-react-vite';
 
-const heading = 'C and C++ libraries, running in your browser';
 const lede = `${APP_COUNT} apps on ${LIBRARY_COUNT} open-source libraries, from GDAL and OpenSSL to SQLite, compiled to WebAssembly by crossbind. Open one with your own files, and read the C++ and JavaScript behind it.`;
 
 export default {
     kind: 'examples',
     slug: 'examples',
     title: 'Examples',
-    heading,
     description: `${APP_COUNT} apps on ${LIBRARY_COUNT} open-source C and C++ libraries running in the browser, each with its code, and a start for every create-crossbind template: web, Node.js, mobile, desktop, edge, executables and libraries.`,
     lede,
     section: 'Examples',

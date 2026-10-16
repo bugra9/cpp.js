@@ -94,9 +94,8 @@ function AppTile({ tokens, app }) {
 export default function ExamplesPage({ tokens, page }) {
     return (
         <main id="content" style={{ padding: '52px var(--content-x) 96px' }}>
-            <div style={{ fontFamily: tokens.mono, fontSize: 11, letterSpacing: 1.2, color: tokens.textMuted, marginBottom: 14 }}>EXAMPLES</div>
             <h1 style={{ fontSize: 'clamp(34px, 4.6vw, 52px)', fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1.06, margin: '0 0 18px', color: tokens.text, maxWidth: 900 }}>
-                {page.heading}
+                {page.title}
             </h1>
             <p style={{ fontSize: 18, lineHeight: 1.6, color: tokens.textDim, maxWidth: 760, margin: '0 0 36px' }}>{page.lede}</p>
 
