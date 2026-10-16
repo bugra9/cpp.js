@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { REPO_URL } from '../data.js';
-import { versionOf } from '../ports/catalog.js';
+import { licenseUrlOf, versionOf } from '../ports/catalog.js';
 import AppCard, { Failure, fieldStyle, Label, RunButton, useNativeTask } from './AppCard.jsx';
 import { FileButton, Hint, Meta, Placeholder, SecondaryButton, Select, Stat } from './controls.jsx';
 
@@ -40,6 +40,8 @@ function LicenseNote({ tokens }) {
         <span>
             {`Runs PROJ ${versionOf('proj')}, which is MIT-licensed: `}
             <a href="https://github.com/OSGeo/PROJ" {...external}>source</a>
+            {' · '}
+            <a href={licenseUrlOf('proj')} {...external}>license</a>
             {' · '}
             <a href={`${REPO_URL}/tree/main/ports/proj`} {...external}>build recipe</a>
         </span>

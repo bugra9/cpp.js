@@ -1,4 +1,5 @@
 import { REPO_URL } from '../../data.js';
+import { licenseUrlOf } from '../../ports/catalog.js';
 import { grouped } from '../controls.jsx';
 
 export const MAX_ROWS = 2000;
@@ -29,7 +30,7 @@ export function LicenseNote({ tokens }) {
             {'Runs SpatiaLite, licensed MPL-1.1, GPL-2.0+ or LGPL-2.1+ at your choice, with GEOS and GNU libiconv under the LGPL: '}
             <a href="https://www.gaia-gis.it/fossil/libspatialite/index" {...external}>source</a>
             {' · '}
-            <a href={`${REPO_URL}/blob/main/ports/spatialite/base/LICENSE`} {...external}>license</a>
+            <a href={licenseUrlOf('spatialite')} {...external}>license</a>
             {' · '}
             <a href={`${REPO_URL}/tree/main/ports/spatialite`} {...external}>build recipe</a>
         </span>

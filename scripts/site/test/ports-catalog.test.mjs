@@ -24,6 +24,8 @@ test('every port family in the tree yields a catalog entry with canonical facts'
         assert.ok(entry.license, `${entry.family} lacks a license`);
         assert.match(entry.upstreamSource ?? '', /^https:\/\//, `${entry.family} lacks an upstream source URL`);
         assert.equal(entry.repositoryUrl, `https://github.com/crossbind/crossbind/tree/main/ports/${entry.family}`);
+        // The license text the library's packages ship, which the site links wherever it names the license.
+        assert.equal(entry.licenseUrl, `https://github.com/crossbind/crossbind/blob/main/ports/${entry.family}/wasm/LICENSE`);
         for (const target of entry.targets) assert.equal(target.package, `${entry.npm}-${target.target}`);
         // Command tools come only from the standalone-wasi package, never from a web or wasi library build.
         const hasBin = entry.targets.some((target) => target.target === BIN_TARGET);

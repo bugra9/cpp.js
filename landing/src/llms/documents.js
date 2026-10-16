@@ -38,7 +38,7 @@ function portFacts(page) {
             items: [
                 `Upstream: ${port.name} ${port.nativeVersion} (${CATEGORY_LABELS[port.category] ?? port.category})`,
                 `npm: ${npmCell(port)}`,
-                `License: \`${port.license}\``,
+                `License: [\`${port.license}\`](${port.licenseUrl})`,
                 `Targets: ${targetsCell(port)}`,
                 `WASI commands: ${commandsCell(port)}`,
             ],

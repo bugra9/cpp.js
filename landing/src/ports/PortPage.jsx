@@ -6,11 +6,18 @@ import { PORTS_INDEX_HREF } from './pages.js';
 // /ports/<name>/: what the library is, how to install it on each platform, its live apps, its
 // examples and its command-line tools, in that order.
 
-function Fact({ tokens, label, value }) {
+// A fact with a page of its own, like the license, links it the way the row's other links do.
+function Fact({ tokens, label, value, href }) {
+    const shown = <code style={{ fontFamily: tokens.mono, fontSize: 12.5, color: href ? tokens.accentText : tokens.text }}>{value}</code>;
     return (
         <span>
             {`${label} `}
-            <code style={{ fontFamily: tokens.mono, fontSize: 12.5, color: tokens.text }}>{value}</code>
+            {href ? (
+                <a href={href} target="_blank" rel="noreferrer" className="tap-target" style={{ gap: 4, color: tokens.accentText }}>
+                    {shown}
+                    ↗
+                </a>
+            ) : shown}
         </span>
     );
 }
@@ -42,7 +49,7 @@ export default function PortPage({ tokens, page }) {
                     <p style={{ fontSize: 17, lineHeight: 1.65, color: tokens.textDim, margin: '0 0 14px', maxWidth: 760 }}>{inline(page.lede, tokens)}</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '6px 20px', fontSize: 13.5, color: tokens.textMuted }}>
                         <Fact tokens={tokens} label="Version" value={port.nativeVersion} />
-                        <Fact tokens={tokens} label="License" value={port.license} />
+                        <Fact tokens={tokens} label="License" value={port.license} href={port.licenseUrl} />
                         {page.links.map((link) => (
                             <a key={link.href} href={link.href} target="_blank" rel="noreferrer" className="tap-target" style={{ color: tokens.accentText }}>
                                 {`${link.label} ↗`}

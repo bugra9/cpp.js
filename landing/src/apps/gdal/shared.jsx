@@ -1,4 +1,5 @@
 import { REPO_URL } from '../../data.js';
+import { licenseUrlOf } from '../../ports/catalog.js';
 import { Label } from '../AppCard.jsx';
 import { grouped } from '../controls.jsx';
 
@@ -66,6 +67,8 @@ export function LicenseNote({ tokens }) {
     return (
         <span>
             {'GDAL is MIT; this module also links GEOS and libiconv, which are LGPL: '}
+            <a href={licenseUrlOf('gdal')} {...external}>license</a>
+            {' · '}
             <a href="https://github.com/libgeos/geos" {...external}>GEOS source</a>
             {' · '}
             <a href="https://www.gnu.org/software/libiconv/" {...external}>libiconv source</a>
