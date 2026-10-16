@@ -66,6 +66,13 @@ async function hasWasiData(root, family) {
     return carries(config);
 }
 
+// The license text the library's packages ship: every port keeps it in its wasm variant, upstream's own file or, for
+// a library without one such as SQLite, its statement.
+function licenseUrl(root, family) {
+    if (!fs.existsSync(path.join(portDir(root, family, 'wasm'), 'LICENSE'))) throw new Error(`${portName(family, 'wasm')} ships no LICENSE.`);
+    return `${REPOSITORY_URL}/blob/main/ports/${family}/wasm/LICENSE`;
+}
+
 // Everything the repository knows about its ports, before asking npm anything.
 export async function readPortsTree(root = REPOSITORY_ROOT) {
     const curated = readJson(path.join(root, 'ports', 'catalog.json'));
@@ -95,6 +102,7 @@ export async function readPortsTree(root = REPOSITORY_ROOT) {
             upstreamLicense: base.crossbind?.upstream?.license?.declared ?? null,
             upstreamSource: await upstreamSource(root, family, base.nativeVersion),
             repositoryUrl: `${REPOSITORY_URL}/tree/main/ports/${family}`,
+            licenseUrl: licenseUrl(root, family),
             targets,
             binCommands,
             hasWasiData: await hasWasiData(root, family),

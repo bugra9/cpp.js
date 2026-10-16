@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { REPO_URL } from '../data.js';
+import { licenseUrlOf } from '../ports/catalog.js';
 import AppCard, { Failure, fieldStyle, Label, RunButton, useNativeTask } from './AppCard.jsx';
 import { Hint, Meta, Placeholder, Select, Stat, Toggle } from './controls.jsx';
 
@@ -132,7 +133,7 @@ function LicenseNote({ tokens }) {
             {'Runs GEOS, which is LGPL-2.1: '}
             <a href="https://github.com/libgeos/geos" {...external}>source</a>
             {' · '}
-            <a href="https://github.com/libgeos/geos/blob/main/COPYING" {...external}>license</a>
+            <a href={licenseUrlOf('geos')} {...external}>license</a>
             {' · '}
             <a href={`${REPO_URL}/tree/main/ports/geos`} {...external}>build recipe</a>
         </span>

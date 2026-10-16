@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { REPO_URL } from '../data.js';
-import { versionOf } from '../ports/catalog.js';
+import { licenseUrlOf, versionOf } from '../ports/catalog.js';
 import AppCard, { Failure, fieldStyle, Label, RunButton, useNativeTask } from './AppCard.jsx';
 import { download, FileButton, Hint, Meta, Placeholder, SecondaryButton, Select, Stat, Toggle } from './controls.jsx';
 
@@ -127,6 +127,8 @@ function LicenseNote({ tokens }) {
         <span>
             {`Runs OpenSSL ${versionOf('openssl')}, which is Apache-2.0: `}
             <a href="https://github.com/openssl/openssl" {...external}>source</a>
+            {' · '}
+            <a href={licenseUrlOf('openssl')} {...external}>license</a>
             {' · '}
             <a href={`${REPO_URL}/tree/main/ports/openssl`} {...external}>build recipe</a>
         </span>
