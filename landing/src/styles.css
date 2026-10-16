@@ -158,6 +158,57 @@ html[data-playground-skin='turbo'] .playground-app[data-skin='modern'] {
     }
 }
 
+/* /examples/: three app cards a row where they fit, two on tablets, one on phones. A card lights its border on hover,
+   and its picture keeps the 16:10 the capture writes. */
+.examples-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+@media (max-width: 1100px) {
+    .examples-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .examples-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.example-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--card);
+    text-decoration: none;
+}
+
+.example-card:hover,
+.example-card:focus-visible {
+    border-color: var(--lit);
+}
+
+.example-card-picture {
+    display: block;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-bottom: 1px solid var(--rule);
+}
+
+.example-card-picture img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+
 /* The hero fills the first screen under the header, as cpp.js.org's did: copy and the create
    command beside the code, centred in the height the runtime strip leaves them. 560px holds the
    longest sample line without wrapping, so the columns stack once it no longer fits. The title
@@ -540,13 +591,6 @@ button {
     grid-area: license;
 }
 
-.example-card {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-    gap: 28px;
-    align-items: start;
-}
-
 .changelog-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 200px;
@@ -561,13 +605,7 @@ button {
     overflow-y: auto;
 }
 
-.filter-chip:focus-visible {
-    outline: 2px solid currentColor;
-    outline-offset: 2px;
-}
-
 @media (max-width: 900px) {
-    .example-card,
     .changelog-layout {
         grid-template-columns: minmax(0, 1fr);
     }

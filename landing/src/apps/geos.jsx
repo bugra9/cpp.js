@@ -278,7 +278,6 @@ export function GeometryLab({ tokens, index, load }) {
             id="geos-lab"
             index={index}
             status={state.status}
-            title="Fifteen geometry operations on shapes you can edit"
             pitch="Pick two shapes or type your own as WKT, then run an overlay, a buffer, a hull, a triangulation or a repair. The result is drawn over the inputs with its measurements, next to the DE-9IM matrix of how the two shapes relate. This is the engine PostGIS, QGIS, GDAL and Shapely call, built from the same C++."
             note={<LicenceNote tokens={tokens} />}
             controls={
@@ -430,7 +429,6 @@ export function ValidityDoctor({ tokens, index, load }) {
             id="geos-doctor"
             index={index}
             status={state.status}
-            title="Find out why a polygon is invalid, then repair it two ways"
             pitch="Invalid polygons break overlays and spatial joins. GEOS names the problem and marks where it is, then repairs the shape with either of its two methods: one rebuilds the shape from all of its edges, the other keeps shells as shells and holes as holes. They agree on some shapes and not on others. jsts 2.12.1, the JavaScript port of the same Java library, has no GeometryFixer, the class behind the second method."
             note={<LicenceNote tokens={tokens} />}
             controls={
@@ -547,7 +545,6 @@ export function CoverageSimplifier({ tokens, index, load }) {
             id="geos-coverage"
             index={index}
             status={state.status}
-            title="Simplify a map without opening gaps between regions"
             pitch="Simplify each region of a map on its own and neighbours stop agreeing on their borders: slivers of gap and overlap open along every edge they share. GEOS can simplify the map as one coverage instead, so each border is simplified once and stays shared. jsts 2.12.1, the JavaScript port of the same Java library, has no coverage package."
             note={<LicenceNote tokens={tokens} />}
             controls={

@@ -104,7 +104,6 @@ export function DictionaryTrainer({ tokens, index, load }) {
             id="zstd-dictionary"
             index={index}
             status={state.status}
-            title="Teach zstd your data, then watch small messages shrink"
             pitch="A single JSON record barely compresses: there is too little of it to learn from. Train a dictionary on a thousand records and every new record compresses about four times further. The training runs here, in this tab; none of the JavaScript zstd packages we checked can train one."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -225,7 +224,6 @@ export function DeltaShipper({ tokens, index, load }) {
             id="zstd-delta"
             index={index}
             status={state.status}
-            title="Send a 1 MB update in about 1 KB"
             pitch="Version two of a 1 MB dataset changes a few numbers and adds twenty records. zstd compresses it with version one as its dictionary, and the page wraps the result in RFC 9842 dcz framing: the Compression Dictionary Transport format Chrome decodes natively over HTTP."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -331,7 +329,6 @@ export function ZstOpenerApp({ tokens, index, load }) {
             id="zstd-opener"
             index={index}
             status={state.status}
-            title="Look inside a .tar.zst without unpacking it"
             pitch="Open a Linux package, a backup or a dataset archive and list what is inside. zstd streams the file in 128 KB steps while the tar headers are read as they pass, so nothing is unpacked, and windows up to 1 GiB decode, far past the 32 MB that fzstd, the popular pure-JavaScript decoder, supports."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>

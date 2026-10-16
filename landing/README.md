@@ -11,6 +11,7 @@ pnpm --filter @crossbind/landing dev      # http://localhost:5173
 pnpm --filter @crossbind/landing build    # → landing/dist
 pnpm --filter @crossbind/landing preview
 pnpm --filter @crossbind/landing demos    # build the /examples/ live demos and the playground samples
+pnpm --filter @crossbind/landing previews # capture the /examples/ app pictures, after demos
 pnpm --filter @crossbind/landing check:deploy   # everything deploy does except the upload
 pnpm --filter @crossbind/landing deploy   # build, verify the release snapshot and demos, wrangler pages deploy
 ```
@@ -83,7 +84,7 @@ switch, and it is deliberately not automatic.
 | `src/release.js` | The verified release snapshot every version-dependent surface reads |
 | `src/data.js` | Every piece of copy, every figure, every outbound URL |
 | `src/site-pages.js` | Every page of the site in one list: routing, prerender, sitemap, llms.txt and search derive from it |
-| `src/pages/` | `/agent/` as a page object rendered in the guide shell; `/examples/` as a page object plus its own `ExamplesPage.jsx` |
+| `src/pages/` | `/agent/` as a page object rendered in the guide shell; `/examples/` as a page object plus its own `ExamplesPage.jsx`: every create-crossbind template's command, then every library app with its captured picture |
 | `src/demos.js` | The live demos manifest (`generated/example-demos.js`), keyed by example id |
 | `src/ports/` | `/ports/` and `/ports/<name>/` from the generated catalog, each with its own page component (`LibrariesPage.jsx`, `PortPage.jsx`) |
 | `src/changelog/` | `/changelog/`: the page object built from `generated/changelog.js`, its own `ChangelogPage.jsx` with a version rail, the anchor helper and the release row; reached from the navbar's version menu, not the docs sidebar |
@@ -91,7 +92,7 @@ switch, and it is deliberately not automatic.
 | `src/llms/` | Renders `/llms.txt`, `/llms-full.txt` and the Markdown twin of every page (its path plus `.md`; the reference documents under `/api/`) at build time from the snapshot, the catalog and the page list; `pnpm test` covers the block renderer and the link rewriting |
 | `public/_redirects` | 301s for the retired Docusaurus routes; checked by `scripts/site/check-site-links.mjs` |
 | `src/theme.js` | Palettes, the light/dark token tables, and the persisted theme hook |
-| `src/components/` | `Nav` and its `VersionMenu` (version, channel, changelog, GitHub and npm links), the `PlatformGlyph` SVG set, and the shared `ui.jsx` primitives |
+| `src/components/` | `Nav` and its `VersionMenu` (version, channel, changelog, GitHub and npm links), and the shared `ui.jsx` primitives |
 | `src/sections/` | One file per band of the page, composed in `src/App.jsx` |
 | `src/guide/pages/` | One file per guide page — content as data, no markup |
 | `src/guide/nav.js` | The order everything derives from: sidebar, prev/next, routes |
@@ -107,20 +108,22 @@ article, and an "on this page" rail, with a breadcrumb eyebrow, filename-barred 
 prev/next at the foot. What differs is the plumbing — pages are data rather than HTML files, and
 they render through the landing's own tokens, so the theme toggle keeps working.
 
-`/examples/` lists only examples that were run end to end from the published packages; the
-navbar shows Examples while `EXAMPLES_URL` in `src/data.js` is set. After a build,
+`/examples/` is derived, so it does not go stale: a command for every template in create-crossbind's
+`tooling/create-app/src/manifest.json`, then every library app in `src/apps/appList.js` whose library's
+module is built into the site, grouped by the catalog's categories and shown by a picture of it at work.
+After a build,
 `node scripts/site/check-site-links.mjs` verifies every internal link and anchor, the redirect
 targets and the required routes; CI runs it on the fixture build.
 
 ## Live demos
 
-The web examples run inside the page. `pnpm --filter @crossbind/landing demos`
+The web templates and the library apps run on the site. `pnpm --filter @crossbind/landing demos`
 (`scripts/site/build-example-demos.mjs`) scaffolds each web template with `npm create crossbind`
 on the site's channel, installs it from the registry, builds it and copies the output to
 `public/examples/<id>/`, rewritten to load from that subpath, then opens every one in Chromium and
 checks the on-screen C++ result before writing `public/examples/demos.json`. Both are gitignored.
-`prepare-site.mjs` turns the manifest into `generated/example-demos.js`; the page shows a frame for
-a demo that is present and nothing for one that is not, so a fixture or CI build has no frames.
+`prepare-site.mjs` turns the manifest into `generated/example-demos.js`; a page shows only the demos
+that are present, so a fixture or CI build has no "See it run" links and no library apps.
 Add `-- --only web-vanilla,web-react-rspack` to rebuild some of them.
 The playground's samples (`sample-<name>`) are built from this repository instead: its crossbind, with
 the playground compiler's template and packages, so an unedited sample runs the module a compile would make.
@@ -131,6 +134,13 @@ The deploy gate reads `dist/examples/demos.json` and refuses to deploy unless ev
 every example was built with the crossbind version the site resolved and every playground sample
 from the sources now in the tree. Run `demos` once per release, before
 `deploy`; needs Docker and the Playwright browsers from `e2e/web-vite`.
+
+The pictures on `/examples/` come from the apps themselves. `pnpm --filter @crossbind/landing previews`
+(`scripts/site/capture-app-previews.mjs`) starts the dev server, presses every library app's run button
+on its library's page, in the light and the dark theme, and writes the output as
+`public/examples/apps/<id>-<theme>.webp` (gitignored). The apps load the modules `demos` builds, so run
+it after `demos`; add `-- --only <app ids>` to recapture some. The deploy gate refuses a site without a
+picture of every app; a build without them shows empty frames.
 
 Adding a page is three steps:
 

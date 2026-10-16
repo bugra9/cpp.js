@@ -209,7 +209,6 @@ export function JpegPrivacy({ tokens, index, load }) {
             id="jpegturbo-privacy"
             index={index}
             status={cleaned.status === 'idle' ? opened.status : cleaned.status}
-            title="See what a photo gives away, then remove it without re-encoding"
             pitch="A phone photo can carry where it was taken, the camera's serial number and a preview image of its own. This reads every segment and shows what they reveal, then writes a copy without them. The image data is copied coefficient by coefficient, not re-encoded, so every pixel of the copy is the same, and the page proves it by decoding both."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -368,7 +367,6 @@ export function JpegEncoderLab({ tokens, index, load }) {
             id="jpegturbo-lab"
             index={index}
             status={state.status}
-            title="The JPEG settings canvas.toBlob does not give you"
             pitch="canvas.toBlob('image/jpeg', quality) takes one number, and each browser maps it to its own encoder. Here the same pixels go through libjpeg-turbo with every setting yours: quality, chroma subsampling, progressive scans, optimised Huffman tables and arithmetic coding. Each result is measured in bytes and PSNR, next to what this browser's toBlob makes at the same quality."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -495,7 +493,6 @@ export function JpegThumbnails({ tokens, index, load }) {
             id="jpegturbo-thumbnails"
             index={index}
             status={state.status}
-            title="Decode a 12 MP photo straight to a thumbnail"
             pitch="Set scale_denom before decoding and libjpeg-turbo runs a smaller inverse DCT on every 8×8 block, so a 1/8 thumbnail is decoded at its own size instead of shrunk from a full decode. Every number here is measured in this tab: the same file at 1/1, 1/2, 1/4 and 1/8. Entropy decoding costs the same at every scale, so how much a thumbnail saves depends on the file."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>

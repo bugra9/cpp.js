@@ -166,7 +166,6 @@ export function TerrainStudioApp({ tokens, index, load }) {
             id="gdal-terrain"
             index={index}
             status={terrain.status}
-            title="A terrain studio: hillshade, slope, contour lines and what is seen from where you click"
             pitch="The module generates a 15 km landscape and GDAL analyses it in the page: the gdaldem products, contour lines at the interval you pick, and a viewshed from any point you click, with the Earth's curvature. Every product downloads as a georeferenced GeoTIFF."
             note={<LicenceNote tokens={tokens} />}
             controls={

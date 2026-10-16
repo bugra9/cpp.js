@@ -207,7 +207,6 @@ export function TerrainSqueeze({ tokens, index, load }) {
             id="lerc-squeeze"
             index={index}
             status={state.status}
-            title="Shrink an elevation model to the error you can accept"
             pitch="LERC stores a raster so that no value moves by more than the error you choose. Here a 512 × 512 elevation model is encoded at six budgets, from lossless to 5 m, then every height is decoded and compared with the original. Esri's own lerc package on npm and loaders.gl only decode it; this is Esri's C++ library, compiled by crossbind, encoding in your tab."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -337,7 +336,6 @@ export function LercInspectorApp({ tokens, index, load }) {
             id="lerc-inspector"
             index={index}
             status={state.status}
-            title="Look inside a LERC tile before you decode it"
             pitch="ArcGIS elevation services send each tile as a LERC blob. Open one to read its header without decoding: size, data type, bands, how many pixels hold a value, the value range and the error it was stored with. Then decode a band and draw it. Legacy Lerc1 tiles, the kind ArcGIS Terrain 3D serves, open too."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -464,7 +462,6 @@ export function LercVersusGzip({ tokens, index, load }) {
             id="lerc-vs-gzip"
             index={index}
             status={state.status}
-            title="Where LERC beats gzip, and where it does not"
             pitch="gzip sees a float32 raster as bytes; LERC sees the values. Four 512 × 512 rasters go through this browser's own gzip and through LERC, losslessly and within a stated tolerance. Terrain and measurements come out smaller with LERC; a map of whole-number classes is where gzip wins."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>

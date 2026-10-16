@@ -6,7 +6,7 @@ import {
 import { DEMOS } from '../demos.js';
 import { GUIDE_SECTIONS } from '../guide/nav.js';
 import AGENT_PAGE from '../pages/agent.js';
-import EXAMPLES_PAGE, { EXAMPLES } from '../pages/examples.js';
+import EXAMPLES_PAGE, { TEMPLATE_GROUPS } from '../pages/examples.js';
 import { TUTORIAL_PAGES } from '../pages/tutorial.js';
 import { PORT_PAGES, PORTS_INDEX } from '../ports/pages.js';
 import { RELEASE } from '../release.js';
@@ -59,10 +59,9 @@ const FULL_URL = `${SITE}/llms-full.txt`;
 const entry = (page) => `- [${page.title}](${twinUrl(page.path)}): ${page.description}`;
 const apiDocUrl = (file) => `${SITE}${API_DOCS_BASE}/${file}`;
 
-const exampleEntries = () => EXAMPLES.flatMap((example) => (example.variants ?? [example]).map((shown) => {
-    const label = example.variants ? `${example.title} · ${shown.label}` : example.title;
-    const demo = DEMOS.get(shown.id);
-    return `- [${label}](${shown.source}): \`${shown.create}\`${demo ? `; live at ${SITE}${demo.href}` : ''}`;
+const exampleEntries = () => TEMPLATE_GROUPS.flatMap((group) => group.templates.map((template) => {
+    const demo = DEMOS.get(template.key);
+    return `- [${template.title}](${template.source}): \`${template.command}\`${demo ? `; live at ${SITE}${demo.href}` : ''}`;
 }));
 
 // /llms.txt: the index. A title, a one-line summary, the facts an agent needs before it reads
@@ -161,12 +160,9 @@ export function renderLlmsFull() {
         releaseLine(),
         '',
         `This file combines the ${sections.length} pages of ${SITE} in reading order: the overview, the guide, the API reference `
-            + 'documents, the library catalog, the verified examples, agent setup and the release history. Each section '
+            + 'documents, the library catalog, the examples, agent setup and the release history. Each section '
             + 'starts with a `Page:` line naming its canonical URL, where the same content is served as Markdown. Use '
             + `[llms.txt](${SITE}/llms.txt) to pick a page first; load this file when a task needs the whole picture.`,
-        '',
-        'Example verification statements apply to the package versions and dates the project recorded; they do not imply that '
-            + 'every later install from a moving npm tag has been retested.',
         '',
         '## Essential distinctions',
         '',

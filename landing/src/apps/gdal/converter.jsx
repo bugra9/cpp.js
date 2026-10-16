@@ -259,7 +259,6 @@ export function VectorConverterApp({ tokens, index, load }) {
             id="gdal-converter"
             index={index}
             status={opened.status}
-            title="Open twenty vector formats and write seventeen, reprojected, in the page"
             pitch="Drop a Shapefile (its parts or a zip), a GeoPackage, KML, GPX, GeoJSON, FlatGeobuf, DXF, CSV, an Excel or OpenDocument sheet, MapInfo TAB, GML, PMTiles or an Esri File Geodatabase, and take it away as another of them, in another coordinate system, filtered by a SQL condition. GDAL does what its ogr2ogr tool does, on this device; the file is never uploaded."
             note={<LicenceNote tokens={tokens} />}
             controls={

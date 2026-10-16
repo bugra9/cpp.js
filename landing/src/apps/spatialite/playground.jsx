@@ -166,7 +166,6 @@ export function SqlPlayground({ tokens, index, load }) {
             id="spatialite-playground"
             index={index}
             status={state.status}
-            title="Spatial SQL, with the answer drawn as a map"
             pitch="PostGIS-style SQL in a SpatiaLite database inside this tab, over 2,000 points of interest generated around twelve Turkish cities. Pick a query or write your own: a spatial join through the R*Tree index, nearest neighbours with KNN2, buffers merged with ST_Union, Voronoi cells, a transform to UTM. Every geometry the query returns is drawn above its rows."
             note={<LicenceNote tokens={tokens} />}
             controls={

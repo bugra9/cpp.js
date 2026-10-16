@@ -68,5 +68,6 @@ docs/research/
 # resolved release snapshot, regenerated before every landing dev/build run
 landing/generated/
 
-# live example demos, built from the published packages by `pnpm --filter @crossbind/landing demos`
+# live example demos, built from the published packages by `pnpm --filter @crossbind/landing demos`, and the
+# Examples page's app pictures, captured by `pnpm --filter @crossbind/landing previews`
 landing/public/examples/

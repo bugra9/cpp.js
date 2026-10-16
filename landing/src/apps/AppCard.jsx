@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { highlight } from '../components/ui.jsx';
+import { appOf } from './appList.js';
 
 // The chrome every library app shares: what it does, the controls, one run button, the result,
 // and the code that produced it. Nothing native loads until the visitor presses run; the first
@@ -78,12 +79,15 @@ export function Failure({ tokens, message }) {
     return <div style={{ fontFamily: tokens.mono, fontSize: 12.5, color: tokens.warn, lineHeight: 1.6, overflowWrap: 'anywhere' }}>{message}</div>;
 }
 
-export default function AppCard({ tokens, id, index, title, pitch, status, note, controls, output, code }) {
+// Its id is the anchor the Examples page links to; its title comes from appList.js.
+export default function AppCard({ tokens, id, index, pitch, status, note, controls, output, code }) {
+    const { title } = appOf(id);
     return (
         <article
+            id={id}
             data-app={id}
             data-status={status}
-            style={{ border: `1px solid ${tokens.borderStrong}`, borderRadius: 16, background: tokens.panel, padding: 'clamp(16px, 2.5vw, 24px)', minWidth: 0 }}
+            style={{ border: `1px solid ${tokens.borderStrong}`, borderRadius: 16, background: tokens.panel, padding: 'clamp(16px, 2.5vw, 24px)', minWidth: 0, scrollMarginTop: 90 }}
         >
             <div style={{ fontFamily: tokens.mono, fontSize: 10.5, letterSpacing: 1.4, color: tokens.textMuted, marginBottom: 10 }}>{`APP ${String(index + 1).padStart(2, '0')}`}</div>
             <h3 style={{ fontSize: 21, fontWeight: 600, letterSpacing: -0.4, margin: '0 0 8px', color: tokens.text }}>{title}</h3>

@@ -113,7 +113,6 @@ export function MojibakeDoctorApp({ tokens, index, load }) {
             id="iconv-mojibake"
             index={index}
             status={state.status}
-            title="Repair text that was opened with the wrong encoding"
             pitch="Ã©tÃ© is été whose UTF-8 bytes were read as Windows-1252. The doctor turns garbled text back into the bytes it came from, which takes a legacy encoder browsers do not have, then reads those bytes in every likely encoding and ranks what comes out. Repairs through UTF-8 are close to certain; for older code pages it shows the three likeliest readings."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -272,7 +271,6 @@ export function LegacyExporter({ tokens, index, load }) {
             id="iconv-export"
             index={index}
             status={state.status}
-            title="Write the exact bytes a legacy system imports"
             pitch="Banks, ERPs and government systems still import Shift_JIS, GB18030, Big5, EUC-KR or Windows-125x files, and TextEncoder only writes UTF-8. This exporter writes them byte for byte in this tab, names every character the target cannot hold, and pads fixed-width fields by bytes without splitting a character."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -433,7 +431,6 @@ export function LegacyDecoder({ tokens, index, load }) {
             id="iconv-decode"
             index={index}
             status={gallery.status === 'running' || scan.status === 'running' ? 'running' : rows || opened ? 'ready' : gallery.status}
-            title="Read the encodings TextDecoder refuses"
             pitch="TextDecoder reads the Encoding Standard's list and throws a RangeError for anything else, including ISO-2022-KR, ISO-2022-CN and HZ, which the standard maps to its replacement encoding on purpose. libiconv reads those too, plus UTF-7, UTF-32, EUC-TW and old DOS and Mac code pages, strictly, with the byte where decoding stops."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>

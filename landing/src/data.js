@@ -42,8 +42,6 @@ export const LICENSE_URL = `${REPO_URL}/blob/main/LICENSE`;
 export const PRIVACY_EMAIL = 'privacy@crossbind.dev';
 export const AGENT_URL = '/agent/';
 export const LIBRARIES_URL = '/ports/';
-// Examples is in the navbar because three examples are proof-complete (src/pages/examples.js);
-// set it to null again if that page ever loses an entry.
 export const EXAMPLES_URL = '/examples/';
 export const PLAYGROUND_URL = '/playground/';
 export const TUTORIAL_URL = '/tutorial/';

@@ -126,7 +126,6 @@ export function PixelsToPolygonsApp({ tokens, index, load }) {
             id="gdal-polygons"
             index={index}
             status={traced.status}
-            title="Pixels to polygons: paint, and GDAL traces the shapes"
             pitch="Paint on the grid, or keep the sample. GDAL removes the specks below a size you pick, traces every region of ink into a polygon with its holes, simplifies the staircase edges and saves the result as GeoJSON, GeoPackage, Shapefile or DXF. The same calls turn classified satellite images and scanned maps into vector layers."
             note={<LicenceNote tokens={tokens} />}
             controls={

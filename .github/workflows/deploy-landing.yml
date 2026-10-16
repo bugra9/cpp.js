@@ -52,6 +52,12 @@ jobs:
             # The demos are gitignored and the deploy gate refuses a snapshot without them.
             - name: Build the live example demos
               run: pnpm --filter @crossbind/landing run demos
+            # The Examples page shows every library app at work, captured from the demos just built; the gate
+            # refuses a site without those pictures too.
+            - name: Capture the app pictures
+              run: pnpm --filter @crossbind/landing run previews
+              env:
+                  GH_TOKEN: ${{ github.token }}
             - name: Build and gate the site
               run: pnpm --filter @crossbind/landing run check:deploy
               env:
@@ -79,6 +85,10 @@ jobs:
               run: pnpm exec playwright install --with-deps chromium
             - name: Build the live example demos
               run: pnpm --filter @crossbind/landing run demos
+            - name: Capture the app pictures
+              run: pnpm --filter @crossbind/landing run previews
+              env:
+                  GH_TOKEN: ${{ github.token }}
             - name: Build, gate and deploy
               run: pnpm --filter @crossbind/landing run deploy
               env:

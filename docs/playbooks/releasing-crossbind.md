@@ -228,12 +228,13 @@ overlap.
 8. Refresh the lockfile of every registry-pinned sample the version step reported (`npm install`
    in that directory) and commit it. The versions it pins only exist once this train has
    published, so the lockfile cannot be prepared with the version bump.
-9. If `crossbind` was in the train, rebuild the live example demos from the published packages and
-   redeploy the site so its version menu, changelog, Quick Start and `/examples/` pick up the new version
-   (see [Site-consumer contract](#site-consumer-contract)):
+9. If `crossbind` was in the train, rebuild the live example demos from the published packages,
+   capture the app pictures from them and redeploy the site so its version menu, changelog, Quick
+   Start and `/examples/` pick up the new version (see [Site-consumer contract](#site-consumer-contract)):
 
     ```bash
     pnpm --filter @crossbind/landing demos
+    pnpm --filter @crossbind/landing previews
     pnpm --filter @crossbind/landing deploy
     ```
 
@@ -312,11 +313,13 @@ another channel, fixture or older version: a missing or inconsistent piece of me
 build, and a failed build never reaches `wrangler pages deploy`.
 
 The site is not deployed by this workflow. After a train that included `crossbind`, run
-`pnpm --filter @crossbind/landing demos` and then `pnpm --filter @crossbind/landing deploy` once:
-the first builds the `/examples/` live demos from the published packages
-(`scripts/site/build-example-demos.mjs`), the second refuses to deploy unless those demos exist and
-carry the version the site resolved. Moving the site from beta to stable is one deliberate change:
-set `channel: 'stable'` in `landing/release.config.js`, rebuild the demos and deploy. An offline
+`pnpm --filter @crossbind/landing demos`, `pnpm --filter @crossbind/landing previews` and then
+`pnpm --filter @crossbind/landing deploy` once: the first builds the `/examples/` live demos from the
+published packages (`scripts/site/build-example-demos.mjs`), the second captures every library app's
+picture from them (`scripts/site/capture-app-previews.mjs`), and the third refuses to deploy unless
+those demos exist and carry the version the site resolved, and every app has its picture. Moving the
+site from beta to stable is one deliberate change: set `channel: 'stable'` in
+`landing/release.config.js`, rebuild the demos and their pictures and deploy. An offline
 fixture build (`CROSSBIND_SITE_RELEASE_FIXTURE`) is marked as such and refused by the deploy step.
 
 Toolchain image versions and digests remain canonical only in

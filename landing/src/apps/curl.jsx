@@ -115,7 +115,6 @@ export function FilterCheck({ tokens, index, load }) {
             id="curl-filter"
             index={index}
             status={state.status}
-            title="Test a URL allowlist against libcurl's own parser"
             pitch={`A server that checks a URL with JavaScript's URL parser and then fetches it with libcurl runs two parsers. Where they disagree, a URL can pass the check and send libcurl to a host the check never saw. Enter the host your check allows and one it must keep out: each URL below is parsed by libcurl ${versionOf('curl')}, with the flags curl_easy_perform uses, beside this browser's URL.`}
             note={NOTE}
             controls={
@@ -326,7 +325,6 @@ export function UrlLab({ tokens, index, load }) {
             id="curl-url-lab"
             index={index}
             status={state.status}
-            title="Take a URL apart the way libcurl does, beside your browser"
             pitch="Paste a URL, and a Location header to follow if you like, to see every part libcurl reads next to what this browser's URL reads. Parts that differ are marked. The examples are known differences: backslashes, capitals and default ports, host names in other scripts, IPv4 shorthand, zone ids and redirects."
             note={NOTE}
             controls={
@@ -457,7 +455,6 @@ export function DateLab({ tokens, index, load }) {
             id="curl-dates"
             index={index}
             status={state.status}
-            title="Read HTTP dates the way curl does"
             pitch="curl_getdate is how libcurl reads Last-Modified, Expires and cookie dates. Paste dates, one per line, to see what it makes of each next to this browser's Date.parse. They part ways on dates without a zone, on two-digit years such as 70, on zone names Date.parse does not know, and on ISO 8601."
             note={NOTE}
             controls={
