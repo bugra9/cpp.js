@@ -22,6 +22,8 @@ if (typeof document !== 'undefined') {
     if (root.firstChild) {
         hydrate(tree(), root);
     } else {
+        // The dev server serves index.html for every route, so the page's own title is only written here.
+        document.title = headFor(findSitePage(location.pathname)).title;
         render(tree(), root);
     }
 }
