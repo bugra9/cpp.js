@@ -30,7 +30,7 @@ export const SITE = 'https://crossbind.dev';
 // The landing page's own title and description. index.html carries the same title as the
 // dev-server fallback; the build's prerender step writes these into every page's <head>
 // (see main.jsx), so keep the two titles in step.
-export const SITE_TITLE = `${BRAND} — import C++ and Rust like JavaScript modules`;
+export const SITE_TITLE = `${BRAND} · import C++ and Rust like JavaScript modules`;
 export const SITE_DESCRIPTION =
     'No bindings, no glue, no second build system. One import runs in the browser, on iOS and Android, in Node and on Workers, and builds to a WASI command too.';
 
