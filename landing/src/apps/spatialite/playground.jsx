@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import AppCard, { Failure, fieldStyle, Label, RunButton, useNativeTask } from '../AppCard.jsx';
 import { grouped, Meta, Placeholder, Stat } from '../controls.jsx';
-import { BACKDROP, boundsOf, counted, GeoMap, LicenceNote, makeView, MAX_ROWS, once, PRESETS, Stats, withPlainErrors } from './shared.jsx';
+import { BACKDROP, boundsOf, counted, GeoMap, LicenseNote, makeView, MAX_ROWS, once, PRESETS, Stats, withPlainErrors } from './shared.jsx';
 
 const TABLE_ROWS = 50;
 
@@ -167,7 +167,7 @@ export function SqlPlayground({ tokens, index, load }) {
             index={index}
             status={state.status}
             pitch="PostGIS-style SQL in a SpatiaLite database inside this tab, over 2,000 points of interest generated around twelve Turkish cities. Pick a query or write your own: a spatial join through the R*Tree index, nearest neighbours with KNN2, buffers merged with ST_Union, Voronoi cells, a transform to UTM. Every geometry the query returns is drawn above its rows."
-            note={<LicenceNote tokens={tokens} />}
+            note={<LicenseNote tokens={tokens} />}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
                     <div>

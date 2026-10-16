@@ -553,7 +553,7 @@ button {
 
 /* Libraries (/ports/) and its detail pages, and Examples: full-width pages of their own. Grids and
    breakpoints live here for the same reason as the guide's. */
-/* One library per row: name, what it does, version and licence, under one heading row that labels
+/* One library per row: name, what it does, version and license, under one heading row that labels
    the last two columns. Up to 900px the name and version share the first line and the rest follow
    underneath. */
 .lib-row,

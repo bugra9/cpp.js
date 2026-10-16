@@ -13,7 +13,7 @@ const GROUPS = [...new Set([...CATEGORY_ORDER, ...PORTS.map((port) => port.categ
     .filter(([, ports]) => ports.length);
 
 // An SPDX expression breaks only between its terms, never inside `GPL-2.0-or-later`.
-const licence = (expression) =>
+const license = (expression) =>
     expression.split(' ').map((term, index) => (
         <Fragment key={index}>
             {index ? ' ' : ''}
@@ -28,7 +28,7 @@ function LibraryRow({ tokens, port }) {
                 <span className="lib-name" style={{ color: tokens.text, fontWeight: 600, fontSize: 15 }}>{port.name}</span>
                 <span className="lib-summary">{port.summary}</span>
                 <span className="lib-version" style={{ fontFamily: tokens.mono, fontSize: 12.5 }}>{port.nativeVersion}</span>
-                <span className="lib-license" style={{ fontFamily: tokens.mono, fontSize: 12.5 }}>{licence(port.license)}</span>
+                <span className="lib-license" style={{ fontFamily: tokens.mono, fontSize: 12.5 }}>{license(port.license)}</span>
             </a>
         </li>
     );
@@ -62,7 +62,7 @@ export default function LibrariesPage({ tokens, page }) {
                                 {index === 0 ? (
                                     <>
                                         <span className="lib-version lib-label" aria-hidden="true">Version</span>
-                                        <span className="lib-license lib-label" aria-hidden="true">Licence</span>
+                                        <span className="lib-license lib-label" aria-hidden="true">License</span>
                                     </>
                                 ) : null}
                             </div>

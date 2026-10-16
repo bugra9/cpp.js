@@ -43,7 +43,7 @@ console.log(await GDALVersionInfo('RELEASE_NAME'));`,
         { type: 'h2', id: 'platform-split', text: 'Meta package and platform variants' },
         {
             type: 'p',
-            text: 'Each library is a family. The meta package, `@crossbind/port-gdal`, holds the build recipe and the licence metadata and gives the family the name you import headers by; every platform package depends on it. Install the platform packages you build for and list each one: crossbind links the one with libraries for the target being built and leaves the others out. A React Native app lists two:',
+            text: 'Each library is a family. The meta package, `@crossbind/port-gdal`, holds the build recipe and the license metadata and gives the family the name you import headers by; every platform package depends on it. Install the platform packages you build for and list each one: crossbind links the one with libraries for the target being built and leaves the others out. A React Native app lists two:',
         },
         {
             type: 'code',
@@ -60,7 +60,7 @@ export default {
             type: 'table',
             head: ['Package', 'Carries', 'For'],
             rows: [
-                ['`@crossbind/port-gdal`', 'the recipe, the licence metadata and the header alias', 'installed with every variant'],
+                ['`@crossbind/port-gdal`', 'the recipe, the license metadata and the header alias', 'installed with every variant'],
                 ['`-wasm`', 'wasm32 libraries, `st` and `mt`', 'the browser, Node.js and edge runtimes'],
                 ['`-android`', 'arm64-v8a and x86_64 libraries', '[React Native](/guide/react-native/)'],
                 ['`-ios`', 'device and simulator libraries, as an xcframework', '[React Native](/guide/react-native/)'],
@@ -74,7 +74,7 @@ export default {
             type: 'callout',
             tone: 'note',
             title: 'What a package carries',
-            text: "Every port pins its upstream source by URL and SHA-256 in its recipe, and its npm `license` field is the wrapped library's licence. A platform package ships the upstream licence text as `LICENSE` - GDAL's also the texts of the libraries it compiles in, under `dist/licenses/` - but no notices file or SBOM. Write those for what your build links with `crossbind licenses --notices --sbom`, which also flags copyleft licences such as the LGPL of GEOS and libiconv ([CLI](/guide/cli/#licenses)).",
+            text: "Every port pins its upstream source by URL and SHA-256 in its recipe, and its npm `license` field is the wrapped library's license. A platform package ships the upstream license text as `LICENSE` - GDAL's also the texts of the libraries it compiles in, under `dist/licenses/` - but no notices file or SBOM. Write those for what your build links with `crossbind licenses --notices --sbom`, which also flags copyleft licenses such as the LGPL of GEOS and libiconv ([CLI](/guide/cli/#licenses)).",
         },
         {
             type: 'p',
@@ -84,7 +84,7 @@ export default {
         { type: 'h2', id: 'catalog', text: 'The catalog' },
         {
             type: 'p',
-            text: `[The catalog](${LIBRARIES_URL}) lists every library with its upstream version and licence. Each library's page has the install commands for every platform and, where it has them, live apps that run in the browser, worked examples and command-line tools.`,
+            text: `[The catalog](${LIBRARIES_URL}) lists every library with its upstream version and license. Each library's page has the install commands for every platform and, where it has them, live apps that run in the browser, worked examples and command-line tools.`,
         },
 
         { type: 'h2', id: 'standalone', text: 'Nothing to build' },

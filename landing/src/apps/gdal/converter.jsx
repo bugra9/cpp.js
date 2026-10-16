@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import AppCard, { Failure, fieldStyle, Label, RunButton, useNativeTask } from '../AppCard.jsx';
 import { download, FileButton, grouped, Hint, Meta, Placeholder, SecondaryButton, Select } from '../controls.jsx';
-import { freshFolder, LicenceNote, plainly, size } from './shared.jsx';
+import { freshFolder, LicenseNote, plainly, size } from './shared.jsx';
 
 const PREVIEW_LIMIT = 2000;
 
@@ -260,7 +260,7 @@ export function VectorConverterApp({ tokens, index, load }) {
             index={index}
             status={opened.status}
             pitch="Drop a Shapefile (its parts or a zip), a GeoPackage, KML, GPX, GeoJSON, FlatGeobuf, DXF, CSV, an Excel or OpenDocument sheet, MapInfo TAB, GML, PMTiles or an Esri File Geodatabase, and take it away as another of them, in another coordinate system, filtered by a SQL condition. GDAL does what its ogr2ogr tool does, on this device; the file is never uploaded."
-            note={<LicenceNote tokens={tokens} />}
+            note={<LicenseNote tokens={tokens} />}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
                     <div

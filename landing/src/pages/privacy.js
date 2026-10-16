@@ -8,7 +8,6 @@ export default {
     kind: 'document',
     slug: 'privacy',
     title: 'Privacy',
-    kicker: 'PRIVACY',
     description: 'What crossbind.dev, the playground and crossbind cloud keep about you, for how long, and how to delete it.',
     lede: 'crossbind.dev has no analytics and sets no tracking cookies. The playground and crossbind cloud keep what they need to run and to stop abuse: your GitHub id and name once you sign in, and how much you used. No email, no GitHub token, nothing to pay with. Last changed 16 October 2026.',
     section: 'Privacy',

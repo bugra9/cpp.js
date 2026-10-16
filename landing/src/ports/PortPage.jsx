@@ -42,7 +42,7 @@ export default function PortPage({ tokens, page }) {
                     <p style={{ fontSize: 17, lineHeight: 1.65, color: tokens.textDim, margin: '0 0 14px', maxWidth: 760 }}>{inline(page.lede, tokens)}</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '6px 20px', fontSize: 13.5, color: tokens.textMuted }}>
                         <Fact tokens={tokens} label="Version" value={port.nativeVersion} />
-                        <Fact tokens={tokens} label="Licence" value={port.license} />
+                        <Fact tokens={tokens} label="License" value={port.license} />
                         {page.links.map((link) => (
                             <a key={link.href} href={link.href} target="_blank" rel="noreferrer" className="tap-target" style={{ color: tokens.accentText }}>
                                 {`${link.label} ↗`}

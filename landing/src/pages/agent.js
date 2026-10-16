@@ -13,7 +13,6 @@ export default {
     kind: 'site',
     slug: 'agent',
     title: 'Agent setup',
-    kicker: 'AGENTS',
     description: 'Install the crossbind skill into a coding agent, verify it, or use the zero-install rule and prompt when a client cannot install skills.',
     lede: 'crossbind ships one portable skill for coding agents. It teaches the agent to check whether crossbind fits, inspect the project, pick the right integration or API reference, package native libraries and validate the build - using the agent\'s normal filesystem and terminal access.',
     section: 'Agents',

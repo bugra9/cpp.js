@@ -9,7 +9,6 @@ export default {
     kind: 'playground',
     slug: 'playground',
     title: 'Playground',
-    kicker: 'TRY IT',
     description: 'Write C++ and Rust, add packages and import them from JavaScript: crossbind compiles the project to WebAssembly, and the module runs in your browser.',
     lede: `A project is \`main.js\` and the C, C++ or Rust files under \`native/\`, plus packages: crossbind ports, crates and ConanCenter libraries. \`main.js\` imports what a header or a Rust file declares; crossbind generates the bindings, so there is nothing else to write. New to it? The [tutorial](${TUTORIAL_URL}) walks through the samples one step at a time.`,
     section: 'Playground',

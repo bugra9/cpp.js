@@ -38,7 +38,7 @@ function portFacts(page) {
             items: [
                 `Upstream: ${port.name} ${port.nativeVersion} (${CATEGORY_LABELS[port.category] ?? port.category})`,
                 `npm: ${npmCell(port)}`,
-                `Licence: \`${port.license}\``,
+                `License: \`${port.license}\``,
                 `Targets: ${targetsCell(port)}`,
                 `WASI commands: ${commandsCell(port)}`,
             ],
@@ -51,7 +51,7 @@ function portFacts(page) {
 function portsTable() {
     return render([{
         type: 'table',
-        head: ['Library', 'Version', 'Category', 'Licence', 'npm', 'Published targets', 'WASI commands'],
+        head: ['Library', 'Version', 'Category', 'License', 'npm', 'Published targets', 'WASI commands'],
         rows: PORTS.map((port) => [
             `[${port.name}](${portHref(port.family)})`,
             port.nativeVersion,

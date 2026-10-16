@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import AppCard, { Failure, fieldStyle, Label, RunButton, useNativeTask } from '../AppCard.jsx';
 import { download, grouped, Meta, Placeholder, SecondaryButton, Stat, Toggle } from '../controls.jsx';
-import { BACKDROP, boundsOf, counted, GeoMap, LicenceNote, makeView, MAX_ROWS, once, PRESETS, Stats, withPlainErrors } from './shared.jsx';
+import { BACKDROP, boundsOf, counted, GeoMap, LicenseNote, makeView, MAX_ROWS, once, PRESETS, Stats, withPlainErrors } from './shared.jsx';
 
 const idText = (value) => String.fromCharCode((value >>> 24) & 255, (value >>> 16) & 255, (value >>> 8) & 255, value & 255);
 const coordinate = (value) => Math.round(value * 1e5) / 1e5;
@@ -65,7 +65,7 @@ export function GeoPackageExport({ tokens, index, load }) {
             index={index}
             status={state.status}
             pitch="GeoPackage is the OGC's one-file format for vector data, which GDAL and QGIS open as it is. This writes one with SpatiaLite's gpkg functions, from the generated points, their count per hexagon and the pins you drop on the map, then opens the file again to check it. GDAL's validate_gpkg.py passes the files it writes. Nothing leaves the tab until you download."
-            note={<LicenceNote tokens={tokens} />}
+            note={<LicenseNote tokens={tokens} />}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
                     <div style={{ display: 'grid', gap: 8 }}>

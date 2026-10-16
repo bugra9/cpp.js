@@ -5,7 +5,7 @@
 export const WHY_POINTS = [
     ['Target-aware distribution', 'a package family carries WebAssembly, iOS, Android and WASI variants, and each build consumes only the artifact valid for its platform, architecture, runtime and build type.'],
     ['Native dependency resolution', 'package manifests and crossbind configs carry the transitive native graph, so prerequisites are built and linked in the right order.'],
-    ['A reproducible package contract', 'port recipes record upstream versions, source integrity, licences, dependencies and target-specific artifacts.'],
+    ['A reproducible package contract', 'port recipes record upstream versions, source integrity, licenses, dependencies and target-specific artifacts.'],
     ['No hand-written binding glue', 'public functions, classes, methods, enums, containers and the supported standard-library types are generated from the header you already own.'],
     ['C++ and Rust', 'import local native sources, a `cargo:` crate or a reusable native package through the same project.'],
     ['First-party integrations and ports', 'bundler plugins give incremental builds, and version-pinned ports make GDAL, SQLite, OpenSSL, GEOS, PROJ and more available without rebuilding upstream.'],

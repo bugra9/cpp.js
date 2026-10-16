@@ -21,7 +21,7 @@ test('every port family in the tree yields a catalog entry with canonical facts'
         assert.match(entry.npm, /^@crossbind\/port-[a-z0-9]+$/);
         assert.ok(entry.name && entry.category && entry.summary, `${entry.family} lacks name/category/summary`);
         assert.match(entry.nativeVersion, /^\d+\.\d+(?:\.\d+)?$/);
-        assert.ok(entry.license, `${entry.family} lacks a licence`);
+        assert.ok(entry.license, `${entry.family} lacks a license`);
         assert.match(entry.upstreamSource ?? '', /^https:\/\//, `${entry.family} lacks an upstream source URL`);
         assert.equal(entry.repositoryUrl, `https://github.com/crossbind/crossbind/tree/main/ports/${entry.family}`);
         for (const target of entry.targets) assert.equal(target.package, `${entry.npm}-${target.target}`);
