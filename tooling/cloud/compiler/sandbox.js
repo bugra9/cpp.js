@@ -96,6 +96,9 @@ export function runSandboxed(argv, {
         const started = Date.now();
         const stdio = seccomp ? ['ignore', 'pipe', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'];
         const child = spawn(argv[0], argv.slice(1), { env: { PATH: '/usr/bin:/bin' }, detached: true, stdio });
+        // A sandbox that dies before it reads its seccomp program, or with data left in a pipe, breaks that pipe. Its
+        // exit status reports the failure, so the pipes' own errors must not escape and take the server down.
+        child.stdio.forEach((stream) => stream?.on('error', () => {}));
         const kept = [];
         let keptBytes = 0;
         let seenBytes = 0;

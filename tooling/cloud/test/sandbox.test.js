@@ -116,3 +116,9 @@ test('hands the seccomp program to the sandbox on descriptor 3', async () => {
 
     assert.equal(run.output.trim(), '24');
 });
+
+test('reports a sandbox that dies before it reads its seccomp program instead of failing with the pipe', async () => {
+    const run = await runSandboxed(['sh', '-c', 'exit 7'], { ...options, seccomp: Buffer.alloc(8 * 1024 * 1024) });
+
+    assert.equal(run.code, 7);
+});
