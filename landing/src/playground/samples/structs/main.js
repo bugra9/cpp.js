@@ -5,8 +5,8 @@ import {
 await initNative();
 
 let here = new Point();
-here.x = 0;
-here.y = 0;
+here.x = 1;
+here.y = 1;
 
 let facing = Direction.North;
 for (let turn = 0; turn < 4; turn++) {

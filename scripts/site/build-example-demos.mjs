@@ -83,6 +83,8 @@ export const DEMOS = [
     { id: 'sample-inheritance', kind: 'sample', expect: 'is a Shape: true' },
     { id: 'sample-callbacks', kind: 'sample', expect: 'applied twice: 400' },
     { id: 'sample-errors', kind: 'sample', expect: 'std::out_of_range: not between 0 and 100' },
+    { id: 'sample-rust', kind: 'sample', expect: 'in a new tally: null' },
+    { id: 'sample-packages', kind: 'sample', expect: '1.4.2 true' },
     { id: 'sample-hero', kind: 'sample', expect: 'Hello, crossbind! 2880067194370816120n' },
 ];
 

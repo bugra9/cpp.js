@@ -10,6 +10,5 @@ std::string shout(const std::string &text);
 // size() and get(i) read it; the module's toArray makes an array.
 std::vector<std::string> split(std::string text, char separator);
 
-// A std::vector parameter takes a vector object;
-// the module's toVector builds one from an array.
+// A function's std::vector parameter takes a plain array.
 int total(const std::vector<int> &values);

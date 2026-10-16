@@ -130,18 +130,31 @@ html[data-playground-skin='turbo'] .playground-app[data-skin='modern'] {
     }
 }
 
-/* A tutorial step: the lesson beside its code where both fit, the lesson first below that. */
+/* A tutorial step: the lesson beside its code where both fit, the lesson first below that. The way on to the
+   next step closes the lesson's column, and below that the page, after the code. */
 .tutorial-grid {
     display: grid;
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    gap: 48px;
+    grid-template-rows: auto 1fr;
+    column-gap: 48px;
     align-items: start;
+}
+
+.tutorial-grid > section {
+    grid-column: 2;
+    grid-row: 1 / span 2;
 }
 
 @media (max-width: 1100px) {
     .tutorial-grid {
         grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: none;
         gap: 32px;
+    }
+
+    .tutorial-grid > section {
+        grid-column: auto;
+        grid-row: auto;
     }
 }
 
