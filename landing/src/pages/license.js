@@ -14,6 +14,5 @@ export default {
     section: 'License',
     path: '/license',
     href: '/license/',
-    eyebrow: { head: 'LICENSE', tail: '' },
     blocks: paragraphs.map((text) => ({ type: 'p', text })),
 };

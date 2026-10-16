@@ -55,7 +55,6 @@ export default function ChangelogPage({ tokens, page }) {
                     >
                         {page.title}
                     </h1>
-                    <p style={{ fontSize: 17, lineHeight: 1.65, color: tokens.textDim, margin: 0 }}>{page.lede}</p>
                 </div>
             </section>
             <section className="changelog-layout" style={{ padding: '0 var(--content-x) 80px' }}>

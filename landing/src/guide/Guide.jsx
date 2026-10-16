@@ -113,8 +113,6 @@ export default function Guide({ tokens, page }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const headings = page.blocks.filter((block) => block.type === 'h2' && block.id);
     const active = useActiveHeading(headings);
-    // Pages outside the guide bring their own eyebrow; guide breadcrumbs are shouted.
-    const eyebrow = page.eyebrow ?? { head: `GUIDE · ${page.section}`.toUpperCase(), tail: ` · ${page.title.toUpperCase()}` };
 
     return (
         <div className="doc-grid" style={{ padding: '32px var(--content-x) 80px' }}>
@@ -139,7 +137,7 @@ export default function Guide({ tokens, page }) {
                     marginBottom: 4,
                 }}
             >
-                {page.title}
+                Guide
                 <span style={{ display: 'inline-flex', marginLeft: 8, transition: 'transform 0.15s', transform: menuOpen ? 'rotate(180deg)' : 'none' }}>
                     <Chevron />
                 </span>
@@ -148,11 +146,6 @@ export default function Guide({ tokens, page }) {
             <Sidebar tokens={tokens} page={page} open={menuOpen} />
 
             <main id="content" className="doc-main">
-                <div style={{ fontFamily: tokens.mono, fontSize: 11, letterSpacing: 1.5, color: tokens.textMuted, marginBottom: 14 }}>
-                    {eyebrow.head}
-                    {eyebrow.tail ? <span style={{ color: tokens.accentText }}>{eyebrow.tail}</span> : null}
-                </div>
-
                 <h1
                     style={{
                         fontSize: 'clamp(30px, 4.5vw, 44px)',

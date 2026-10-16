@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { TURBO } from '../components/turbo.jsx';
-import { Account, statusText } from './parts.jsx';
+import { Account, statusText, visuallyHidden } from './parts.jsx';
 
 // The Turbo look's menu bar in place of the modern toolbar, with the same actions: Run, the samples, packages, a new
 // file, and the switch back to the modern look under ≡. A menu is a button that shows a list of buttons; the
@@ -9,10 +9,6 @@ import { Account, statusText } from './parts.jsx';
 const item = (mono) => ({
     border: 'none', padding: '0 8px', font: 'inherit', fontFamily: mono, color: TURBO.black, cursor: 'pointer', whiteSpace: 'pre',
 });
-
-const hidden = {
-    position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap',
-};
 
 // Turbo C++ drew each menu's first letter in red. The letter's own span splits the name a screen reader computes, so
 // each of these buttons carries its word as aria-label.
@@ -101,7 +97,7 @@ export default function TurboBar({
             display: 'flex', flexWrap: 'wrap', alignItems: 'center', background: TURBO.gray, color: TURBO.black, fontFamily: mono, fontSize: 13, lineHeight: '22px', padding: '0 4px',
         }}
         >
-            <h1 style={hidden}>Playground</h1>
+            <h1 style={visuallyHidden}>Playground</h1>
             <Menu mono={mono} label="≡" title="System" items={[{ label: 'Modern view', onSelect: onModern }]} />
             <Menu
                 id="turbo-file-menu"

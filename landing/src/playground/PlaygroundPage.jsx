@@ -8,7 +8,7 @@ import PackageDialog from './PackageDialog.jsx';
 import { CONFIG } from './ProjectPanel.jsx';
 import TurboBar from './TurboBar.jsx';
 import TurboWorkspace from './TurboWorkspace.jsx';
-import { Notice, Toolbar, linkButtonStyle } from './parts.jsx';
+import { Notice, Toolbar, linkButtonStyle, visuallyHidden } from './parts.jsx';
 import {
     MAIN, addFile, addPackage, removeFile, removePackage, setFile,
 } from './project.js';
@@ -253,7 +253,7 @@ export default function PlaygroundPage({ tokens, page }) {
                         onDeleteAccount={runner.removeAccount}
                         style={{ margin: 0, padding: '10px var(--playground-x)', borderBottom: `1px solid ${tokens.border}` }}
                     >
-                        <h1 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: tokens.text }}>{page.title}</h1>
+                        <h1 style={visuallyHidden}>{page.title}</h1>
                         <SamplePicker tokens={tokens} sampleId={sampleId} edited={edited} disabled={busy} onSelect={selectSample} onReset={resetSample} />
                     </Toolbar>
                 )}
