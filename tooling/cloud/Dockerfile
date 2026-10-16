@@ -19,14 +19,24 @@ RUN mkdir -p /opt/playground/home /srv/playground \
 
 COPY compiler /opt/playground/compiler
 
-# Built once at the path every compile reuses, so cmake's cache and emscripten's library cache start warm.
+# Built once at the path every compile reuses, so cmake's cache and emscripten's library cache start warm. warm.js
+# has the build use every package a compile may (compiler/packages.js); the crates and Conan builds it leaves under
+# HOME become the store each compile works from offline (compiler/compile.js). The template's conan.lock and
+# crossbind.cargo.lock pin the Conan recipes and the crates: a build that resolved others stops at the diff, which
+# shows the lock to commit.
 USER crossbind
 RUN cp -R /opt/playground/compiler/template /srv/playground/work \
+    && node /opt/playground/compiler/warm.js /srv/playground/work \
     && mkdir -p /tmp/home \
     && cp /opt/playground/home/.crossbind.json /tmp/home/ \
     && cd /srv/playground/work \
-    && HOME=/tmp/home node /opt/playground/cli/node_modules/crossbind/src/bin.js build -p wasm -a wasm32 -r st -e browser -b debug \
+    && HOME=/tmp/home node /opt/playground/cli/node_modules/crossbind/src/bin.js build -p wasm -a wasm32 -r st -e browser -b debug --bind-imports \
+    && diff -u /opt/playground/compiler/template/conan.lock conan.lock \
+    && diff -u /opt/playground/compiler/template/crossbind.cargo.lock crossbind.cargo.lock \
     && cp -a /srv/playground/work /srv/playground/template \
+    && mkdir /srv/playground/store \
+    && mv /tmp/home/.crossbind/cargo /srv/playground/store/cargo \
+    && mv /tmp/home/.crossbind/conan-local /srv/playground/store/conan \
     && rm -rf /srv/playground/work /tmp/home
 
 # The server copies the template for every compile but cannot change it.

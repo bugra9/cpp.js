@@ -10,6 +10,9 @@ const paths = { ...PATHS, work: '/srv/playground/selftest' };
 const MiB = 1024 * 1024;
 const python = (code) => `python3 -c '${code}'`;
 const rssGrowth = { before: 0 };
+const STORE_DB = `${paths.store}/conan/store/cache.sqlite3`;
+const storeDbSize = () => fs.statSync(STORE_DB, { throwIfNoEntry: false })?.size;
+const storeDb = { size: undefined };
 
 const PROBES = [
     {
@@ -19,8 +22,8 @@ const PROBES = [
     },
     { name: 'no name resolution', script: "node -e \"require('dns').lookup('example.com', (error) => process.exit(error ? 7 : 0))\"", succeeds: false },
     {
-        name: 'no server code, template, passwd or root home',
-        script: 'test ! -e /opt/playground/compiler && test ! -e /srv/playground/template && test ! -e /etc/passwd && test ! -e /root',
+        name: 'no server code, template, store, passwd or root home',
+        script: `test ! -e /opt/playground/compiler && test ! -e /srv/playground/template && test ! -e ${paths.store} && test ! -e /etc/passwd && test ! -e /root`,
         succeeds: true,
     },
     {
@@ -36,6 +39,17 @@ const PROBES = [
         script: 'touch /emsdk/upstream/emscripten/cache/selftest-probe',
         succeeds: true,
         after: () => !fs.existsSync('/emsdk/upstream/emscripten/cache/selftest-probe'),
+    },
+    {
+        name: 'the package store and the Rust toolchain are there, and writes to the store vanish with the sandbox',
+        script: [
+            'test -d /tmp/home/.crossbind/cargo/registry/src && test -d /tmp/home/.crossbind/conan-local/store',
+            'test -x /usr/local/cargo/bin/cargo && test -d /opt/crossbind/rust/current',
+            'touch /tmp/home/.crossbind/cargo/selftest-probe && printf x >> /tmp/home/.crossbind/conan-local/store/cache.sqlite3',
+        ].join(' && '),
+        succeeds: true,
+        before: () => { storeDb.size = storeDbSize(); },
+        after: () => !fs.existsSync(`${paths.store}/cargo/selftest-probe`) && storeDbSize() === storeDb.size,
     },
     { name: 'no further user namespaces', script: 'unshare --user true 2>/dev/null', succeeds: false },
     { name: '/tmp stops at its size limit', script: 'dd if=/dev/zero of=/tmp/fill bs=1M count=300 2>/dev/null', succeeds: false },

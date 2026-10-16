@@ -1,16 +1,13 @@
 import http from 'node:http';
 import { pathToFileURL } from 'node:url';
 import { compile, WorkspaceError } from './compile.js';
-import { validateRequest, InvalidRequest, MAX_SOURCE_BYTES } from './validate.js';
+import { validateRequest, InvalidRequest, MAX_BODY_BYTES } from './validate.js';
 
 const PORT = 8080;
 const MAX_IN_FLIGHT = 2;
 // A fresh microVM after this many compiles, failed ones included, so nothing one compile managed to leave
 // behind lasts long.
 const RECYCLE_AFTER = 200;
-
-// JSON escaping can double the size of the sources.
-export const MAX_BODY_BYTES = 2 * MAX_SOURCE_BYTES + 1024;
 
 class BodyTooLarge extends Error {}
 
@@ -75,16 +72,16 @@ export function createCompileServer({
     let recycling = false;
     let recycled = false;
 
-    const runCompile = (files) => {
-        const job = queue.then(() => compileFiles(files));
+    const runCompile = (request) => {
+        const job = queue.then(() => compileFiles(request));
         queue = job.then(() => {}, () => {});
         return job;
     };
 
     async function handleCompile(req, res) {
-        let files;
+        let request;
         try {
-            files = validateRequest(parseJson(await readBody(req, MAX_BODY_BYTES)));
+            request = validateRequest(parseJson(await readBody(req, MAX_BODY_BYTES)));
         } catch (error) {
             if (error instanceof BodyTooLarge) return send(res, 413, { error: `The body is over ${MAX_BODY_BYTES} bytes.` });
             if (error instanceof InvalidRequest) return send(res, 400, { error: error.message });
@@ -94,7 +91,7 @@ export function createCompileServer({
         inFlight += 1;
         try {
             const started = Date.now();
-            const result = await runCompile(files);
+            const result = await runCompile(request);
             compiles += 1;
             log(JSON.stringify({ event: 'compile', ok: result.ok, reason: result.reason, ms: Date.now() - started }));
             return send(res, 200, result);

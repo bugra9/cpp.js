@@ -1,12 +1,12 @@
 # @crossbind/cloud
 
-crossbind cloud on `api.crossbind.dev`: the compile service behind the playground on crossbind.dev, and the accounts that the playground page and `crossbind login` sign in to. A visitor's `native.h` and `native.cpp` are built with crossbind into a wasm module and its loader; the page then runs them in the visitor's own browser.
+crossbind cloud on `api.crossbind.dev`: the compile service behind the playground on crossbind.dev, and the accounts that the playground page and `crossbind login` sign in to. A visitor's project, a `main.js` and C, C++ or Rust sources with packages from the playground's list, is built with crossbind into a wasm module, its loader and the list of what `main.js` imports from it; the page then runs them in the visitor's own browser.
 
 ## A compile
 
-- Only the Worker in front reaches `compiler/server.js`: `POST /compile` with `{"files": {"native.h": "...", "native.cpp": "..."}}`, at most 32 KB of sources. One compile runs at a time, one more may wait, the rest get 503.
-- Every compile starts from a copy of `compiler/template`, built once when the image is built at the same path, so cmake's and emscripten's caches are warm. The copy is removed afterwards.
-- `crossbind build -p wasm -a wasm32 -r st -e browser -b debug` runs in the sandbox below; the server returns the loader, the wasm (base64) and the build log with workspace paths shortened.
+- Only the Worker in front reaches `compiler/server.js`: `POST /compile` with `{"files": {"main.js": "...", "native/greet.h": "..."}, "packages": ["port:sqlite3"]}`. Files are `main.js` and sources under `native/` named like C identifiers (`.h`, `.hpp`, `.cpp`, `.cc`, `.rs`), at most 16 of them and 64 KB in all; packages are ids from `compiler/packages.js`, at most 8. The compiler writes `crossbind.config.js` itself. One compile runs at a time, one more may wait, the rest get 503.
+- Every compile starts from a copy of `compiler/template`, built once when the image is built at the same path, so cmake's and emscripten's caches are warm. The copy is removed afterwards. That build uses every package (`compiler/warm.js`) and leaves the store: the crates and Conan builds each compile works from without a network. `compiler/template/conan.lock` and `crossbind.cargo.lock` pin the Conan recipes and every crate, and an image build that resolves others stops with the diff to commit.
+- `crossbind build -p wasm -a wasm32 -r st -e browser -b debug --bind-imports` runs in the sandbox below; the server returns the loader, the wasm (base64), the list of what `main.js` imports (`imports.json`) and the build log with workspace paths shortened.
 
 ## Sandbox
 
@@ -14,10 +14,10 @@ The compiler is treated as compromised:
 
 - **Namespaces** (bubblewrap): user, pid, network, ipc, uts and cgroup. No network, not even loopback to the server; no further user namespaces.
 - **Syscalls** (seccomp, `compiler/seccomp.js`): io_uring, bpf, keyctl, perf events, userfaultfd, ptrace, process_vm and module loading fail; sockets open for the unix and internet families only, which keeps out vsock (the microVM's channel to its host), netlink and raw packets.
-- **Files**: `/usr`, `/emsdk` and the CLI read-only, emscripten's cache behind a throwaway overlay, the workspace and a 256 MB `/tmp` writable, `/proc/cmdline` and other kernel files covered. The server code, the template and `/etc/passwd` are not there.
+- **Files**: `/usr`, `/emsdk`, the Rust and Conan toolchains and the CLI read-only, emscripten's cache and the package store behind throwaway overlays, the workspace and a 256 MB `/tmp` writable, `/proc/cmdline` and other kernel files covered. The server code, the template, the store's own folder and `/etc/passwd` are not there.
 - **Limits**: 60 s of CPU, 2 GiB of data (the CLI's own node maps about 1.8 GiB, mostly untouched), 128 MiB per file, 64 processes, 1024 open files, 45 s of wall clock and 8 MiB of output. A watchdog stops the compile when the machine (or its cgroup) gets under 256 MiB free, since a sandbox can reset its own OOM score and fill tmpfs mounts no size limit covers.
 - **Environment**: the toolchain variables only.
-- **Outputs** are read after the sandbox is gone, as regular files through real folders only: no links, FIFOs or oversized files (2 MiB of loader, 6 MiB of wasm).
+- **Outputs** are read after the sandbox is gone, as regular files through real folders only: no links, FIFOs or oversized files (2 MiB of loader, 6 MiB of wasm, 1 MiB of import list, whose names must be identifiers).
 - **Workspace**: removed with `chmod -R` and `rm -rf`, which walk trees deeper than a path can name. One that cannot be removed answers 500 and recycles the server.
 - **Recycling**: after 200 compiles, failed ones included, the server takes no new work, answers what it holds and exits; the next compile starts a fresh container. tini is PID 1 and reaps what the sandboxes leave.
 
@@ -28,7 +28,7 @@ On Cloudflare every container is its own Firecracker microVM, started without in
 `worker/` is the API on `api.crossbind.dev`. The playground page talks to it under `/playground`:
 
 - `GET /session`: who is signed in, the day's limit and what is left of it, whether GitHub sign-in is set up, and the Turnstile site key.
-- `POST /compile`: from the playground page's origin only. An anonymous visitor passes Turnstile first. A compile seen before comes from the cache without counting; otherwise it counts against the visitor's network (an IPv6 /64 is one network) or their account, and against the day's total for everyone.
+- `POST /compile`: from the playground page's origin only. An anonymous visitor passes Turnstile first. A compile seen before comes from the cache without counting (a week for a module, ten minutes for a compile error); otherwise it counts against the visitor's network (an IPv6 /64 is one network) or their account, and against the day's total for everyone.
 - `GET /login/github` and `/callback/github`: GitHub sign-in that asks for no scope; accounts younger than 30 days are turned away. The account is recorded (below), and the session is an HMAC-signed, host-only cookie holding its GitHub id and name.
 - `POST /logout`, and `POST /delete-account`, which deletes the signed-in account as `crossbind account delete` does.
 
@@ -72,8 +72,8 @@ GitHub sign-in needs a GitHub OAuth app with its callback at `https://api.crossb
 ## Commands
 
 - `pnpm test`: unit tests.
-- `pnpm build:image [--amd64]`: builds the compiler image from this repository's crossbind with the dependencies the lockfile pins (`pnpm deploy`, so building the image fetches nothing from npm), on the web toolchain image that crossbind pins, and writes the runner contexts beside it (`docker build .build/runner-web` builds one).
-- `pnpm attack`: runs the image with Docker and checks hostile compiles (file reads through `#include`, `#embed`, `.incbin` and SWIG, compile-time bombs) and the sandbox from inside. bubblewrap needs Docker's seccomp filter and `/proc` masking lifted; a Cloudflare microVM allows it as it is.
+- `pnpm build:image [--amd64]`: builds the compiler image from this repository's crossbind with the dependencies the lockfile pins (`pnpm deploy`), on the web toolchain image that crossbind pins, and writes the runner contexts beside it (`docker build .build/runner-web` builds one). The ports of `compiler/packages.js` come from npm, refused unless their integrity is the one pinned there; the template's build in the image fetches the crates and Conan packages.
+- `pnpm attack`: runs the image with Docker and checks hostile compiles (file reads through `#include`, `#embed`, `.incbin`, SWIG and Rust's `include_bytes!`, compile-time bombs) and the sandbox from inside. bubblewrap needs Docker's seccomp filter and `/proc` masking lifted; a Cloudflare microVM allows it as it is.
 - `pnpm run local`: the API on `localhost:8686` for the landing's dev server (`VITE_PLAYGROUND_API=http://localhost:8686/playground pnpm --filter @crossbind/landing dev`): the Worker's request handling in front of the image in Docker, quota, cache and accounts in memory. `wrangler dev` cannot run the compiler, since bubblewrap needs Docker's seccomp filter and `/proc` masking lifted. With `--github-client-id <id>` of an OAuth app whose device flow is enabled, `CROSSBIND_CLOUD_URL=http://localhost:8686 crossbind login` signs in for real.
 - `pnpm run dev`: `wrangler dev` with the staging settings, for the Worker alone, on a local D1 the migrations are applied to first.
 - `pnpm run deploy:staging`, `pnpm run deploy`: assemble the image contexts, deploy (wrangler builds the compiler and the four runner images for linux/amd64 with the local Docker and pushes them), and apply the D1 migrations the database lacks. The first deploy creates the database under its `database_name`, by which later deploys find it. A migration only ever adds, since the code it ships with runs a moment before it does. `deploy` refuses uncommitted changes to crossbind, this package or the lockfile, which staging takes as they are, to try them before a commit; both refuse an overridden toolchain image.

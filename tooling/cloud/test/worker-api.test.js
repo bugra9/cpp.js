@@ -79,7 +79,8 @@ test('compiles for an anonymous visitor who passed the browser check, counting i
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), { ...compiled, remaining: 4 });
     assert.deepEqual(calls.reserve, [{ key: 'ip:203.0.113.7', limit: 5, globalLimit: 1000 }]);
-    assert.deepEqual(calls.compile, [{ files }]);
+    // The first playground's names reach the compiler as the project they mean.
+    assert.deepEqual(calls.compile, [{ files: { 'native/native.cpp': files['native.cpp'], 'native/native.h': files['native.h'] }, packages: [] }]);
     assert.deepEqual(calls.siteverify[0].body, { secret: 'turnstile-secret', response: 'token', remoteip: '203.0.113.7' });
     assert.equal(response.headers.get('access-control-allow-origin'), PAGE);
     assert.equal(response.headers.get('access-control-allow-credentials'), 'true');
@@ -149,7 +150,7 @@ test('refuses a body that is not JSON, too large or not the two sources, before 
     const statuses = [
         (await handleRequest(compileRequest({ contentType: 'text/plain' }), env, deps)).status,
         (await handleRequest(compileRequest({ body: '{"files":' }), env, deps)).status,
-        (await handleRequest(compileRequest({ body: { files: { 'native.h': 'x'.repeat(90 * 1024) } } }), env, deps)).status,
+        (await handleRequest(compileRequest({ body: { files: { 'native.h': 'x'.repeat(140 * 1024) } } }), env, deps)).status,
         (await handleRequest(compileRequest({ body: { files: { 'native.h': '', 'CMakeLists.txt': '' }, turnstile: 'token' } }), env, deps)).status,
     ];
 
@@ -200,6 +201,17 @@ test('serves a compile it has seen before from the cache without spending quota,
     assert.deepEqual(await again.json(), { ...compiled, cached: true, remaining: 4 });
     assert.equal(seen.calls.reserve.length, 1);
     assert.equal(timedOut.store.size, 0);
+});
+
+test('keeps a compile error for minutes only, since the container rather than the sources may have caused it', async () => {
+    const succeeded = setup();
+    const failed = setup({ compilerResult: { ok: false, reason: 'compile', log: 'native.cpp:1: error' } });
+
+    await handleRequest(compileRequest(), env, succeeded.deps);
+    await handleRequest(compileRequest(), env, failed.deps);
+
+    const cacheControl = ({ store }) => [...store.values()][0].headers.get('cache-control');
+    assert.deepEqual([cacheControl(succeeded), cacheControl(failed)], ['public, max-age=604800', 'public, max-age=600']);
 });
 
 test('answers 429 to a network over its rate before any other work, on every route', async () => {
