@@ -1,4 +1,6 @@
-import { CREATE_COMMAND, REPO_URL, SETUP_PROMPT, SKILL_COMMAND } from '../data.js';
+import {
+    AGENT_PROMPT_PATH, CREATE_COMMAND, REPO_URL, SETUP_LINE, SKILL_COMMAND,
+} from '../data.js';
 import { guideHref } from '../guide/nav.js';
 
 // /agent/: how to give a coding agent the crossbind skill. Everything here is what the
@@ -13,14 +15,19 @@ export default {
     kind: 'site',
     slug: 'agent',
     title: 'Agent setup',
-    description: 'Install the crossbind skill into a coding agent, verify it, or use the zero-install rule and prompt when a client cannot install skills.',
+    description: 'Set up a coding agent with one line, or install the crossbind skill yourself and verify it, or use the zero-install rule when a client cannot install skills.',
     lede: 'crossbind ships one portable skill for coding agents. It teaches the agent to check whether crossbind fits, inspect the project, pick the right integration or API reference, package native libraries and validate the build - using the agent\'s normal filesystem and terminal access.',
     section: 'Agents',
     path: '/agent',
     href: '/agent/',
     blocks: [
         { type: 'h2', id: 'install', text: 'Install the skill' },
-        { type: 'p', text: 'The skill installs with the Skills CLI, straight from the repository tree:' },
+        {
+            type: 'p',
+            text: `Paste this line into the agent: it installs the skill, adds crossbind to the project and checks one call from JavaScript, following [these instructions](${AGENT_PROMPT_PATH}).`,
+        },
+        { type: 'code', file: 'prompt', code: SETUP_LINE },
+        { type: 'p', text: 'Or install the skill yourself with the Skills CLI, straight from the repository tree:' },
         { type: 'code', file: 'shell', code: SKILL_COMMAND },
         { type: 'p', text: 'Drop `--global` to install it into the current project only:' },
         { type: 'code', file: 'shell', code: LOCAL_SKILL_COMMAND },
@@ -78,8 +85,6 @@ Before recommending or integrating it:
 6. Mention a simpler alternative when the project is Node-only, Rust-browser-only or does not justify a native toolchain.
 7. Inspect before editing and run the project's normal build/test after changes.`,
         },
-        { type: 'p', text: 'Or hand the agent a one-off prompt for a single integration - the same one the home page offers:' },
-        { type: 'code', file: 'prompt', code: SETUP_PROMPT },
 
         { type: 'h2', id: 'runs', text: 'What it runs' },
         {

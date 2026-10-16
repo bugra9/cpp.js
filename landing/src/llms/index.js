@@ -1,7 +1,7 @@
 import { CHANGELOG_PAGE } from '../changelog/page.js';
 import { changelogHref } from '../changelog/route.js';
 import {
-    BRAND, DISCUSSIONS_URL, REPO_URL, SITE, SKILL_COMMAND, V1_DOCS_URL,
+    AGENT_PROMPT, AGENT_PROMPT_PATH, BRAND, DISCUSSIONS_URL, REPO_URL, SITE, SKILL_COMMAND, V1_DOCS_URL,
 } from '../data.js';
 import { DEMOS } from '../demos.js';
 import { GUIDE_SECTIONS } from '../guide/nav.js';
@@ -106,6 +106,7 @@ export function renderLlmsIndex() {
         entry(AGENT_PAGE),
         `- [SKILL.md](${SKILL_URL}): the skill's entry point: routing, product-fit and safety rules.`,
         `- Install the skill: \`${SKILL_COMMAND}\``,
+        `- [Setup instructions](${SITE}${AGENT_PROMPT_PATH}): install the skill, then add ${BRAND} to the project in the current directory and verify one call.`,
         '',
         '## Changelog',
         '',
@@ -183,5 +184,7 @@ export function markdownPages() {
         overviewDocument(),
         ...siteDocuments(),
         ...readApiDocs(),
+        // What the home page's one line sends an agent to.
+        { path: AGENT_PROMPT_PATH, markdown: AGENT_PROMPT },
     ].map(({ path, markdown }) => ({ path, markdown }));
 }

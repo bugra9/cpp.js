@@ -60,19 +60,42 @@ export const installCommand = (packageName) => `npm install -D ${packageName}${R
 // rather than restating the host. Dropping --global installs into the current project only.
 export const SKILL_COMMAND = `npx skills add ${REPO_URL}/tree/main/agents/skills --global --yes`;
 
-// Handed to a coding agent rather than typed. The install step carries the release channel's
-// dist-tag suffix for the same reason CREATE_COMMAND does - see TODO(rename) above.
-export const SETUP_PROMPT = `Add crossbind to this project so I can call C++ or Rust from JavaScript/TypeScript. Inspect the repository, implement the integration, and verify it.
+// The instructions a coding agent fetches and follows: the skill first, then the integration, which works from the
+// documentation alone when the skill cannot be installed. They are built with the site, so the one line a visitor
+// pastes stays the same while what it leads to follows the release; the install step carries the release channel's
+// dist-tag for the same reason CREATE_COMMAND does - see TODO(rename) above.
+export const AGENT_PROMPT_PATH = '/agent/prompt.md';
+export const SETUP_LINE = `Fetch and follow the instructions at ${SITE}${AGENT_PROMPT_PATH} to add crossbind to this project.`;
+export const AGENT_PROMPT = `# Set up crossbind
 
-Start with the crossbind documentation index at ${SITE}/llms.txt and follow the links relevant to this project. If the crossbind skill is already available, use it.
+These instructions add crossbind to the project in the current directory, so it can call C++ or Rust from JavaScript or TypeScript. Run the commands yourself.
+
+## 1. Install the crossbind skill
+
+The skill carries the project inspector, the current port catalog and the per-framework playbooks:
+
+\`\`\`shell
+${SKILL_COMMAND}
+\`\`\`
+
+If the command is unavailable or fails, go on without it: the documentation index at ${SITE}/llms.txt covers the same ground.
+
+## 2. Add crossbind to the project
+
+If the current directory holds no project, report that the skill is installed and stop. Otherwise use the skill, or start from ${SITE}/llms.txt and follow the links relevant to this project:
 
 1. Identify the package manager, framework or bundler, target runtimes, existing native sources, and any crossbind configuration.
 2. Choose the integration, compatible package versions, release channel, and platform variants from the documentation. Prefer supported prebuilt ports and generated bindings.${RELEASE.distTagSuffix ? ` Install every crossbind package, ports included, from the npm \`${RELEASE.distTag}\` tag; the default tag is older.` : ''}
 3. Reuse existing native code. If none exists, add a minimal C++ example and call it from the application.
 4. Configure the build and runtime initialization for the detected targets. Reuse existing configuration and dependency entries, preserve unrelated behavior, and apply platform requirements where relevant.
-5. Run the relevant build and verify at least one JavaScript-to-native call. Report the changes, commands run, results, and anything you could not verify. Include the Wasm artifact size when one is produced.
+5. Run the relevant build and verify at least one JavaScript-to-native call.
 
-Follow the repository's conventions and make the smallest complete integration. Ask for clarification only when missing information prevents a correct implementation.`;
+Follow the repository's conventions and make the smallest complete integration. Ask the user only when missing information prevents a correct implementation.
+
+## 3. Report
+
+Tell the user what you installed and changed, the commands you ran and their results, and anything you could not verify. Include the Wasm artifact size when one is produced. If you installed the skill, say that a new session may be needed before it loads.
+`;
 
 // The hero's config tab: the one a project of your own would carry for the playground's hero sample
 // (src/playground/samples/hero), whose files the other tabs show. The binding is `db` so the import
