@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 
 // One argv per flag: runCargo joins these with cargo's 0x1F separator, so a flag must not
@@ -38,6 +39,10 @@ export function cargoTargetDirFor(baseDir, target) {
 // global, so build scripts and proc-macros compiled for the host resolve there too. `current`
 // points at whatever version that image pinned, so the CLI carries no version of its own.
 const CONTAINER_SYSROOT = '/opt/crossbind/rust/current';
+
+// True only inside the toolchain image. A CLI running there with RUNNER=LOCAL (the playground
+// compiler) has these trees, but not rustup's stock wasm target.
+export const hasContainerSysroot = () => fs.existsSync(CONTAINER_SYSROOT);
 
 export function cargoBuildInvocation({
     target, triple, targetDir, manifestPath, sysroot = false,
