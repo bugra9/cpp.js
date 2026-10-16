@@ -134,7 +134,7 @@ function AgentSetup({ tokens, onOpen }) {
             aria-haspopup="dialog"
             style={{ ...secondaryButtonStyle(tokens), cursor: 'pointer' }}
         >
-            Set up with an AI agent
+            Agent setup
         </button>
     );
 }
