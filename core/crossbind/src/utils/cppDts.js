@@ -225,6 +225,8 @@ export function emitCppDts(model, exportNames, mode = 'sync') {
         for (const method of cls.methods) {
             out.push(`    ${method.isStatic ? 'static ' : ''}${method.name}(${method.args.map((a) => `${a.name}: ${a.type}`).join(', ')}): ${wrap(method.ret)};`);
         }
+        // Frees the object now instead of when the garbage collector reclaims the handle (lifecycle-and-types.md).
+        out.push(`    delete(): ${wrap('void')};`);
         out.push('}');
     }
     for (const name of exportNames) {

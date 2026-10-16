@@ -171,7 +171,7 @@ describe('emitCppDts', () => {
         expect(dts).toContain('export declare function initNative');
         expect(dts).not.toContain('rawPointer');
         const matrixBlock = dts.slice(dts.indexOf('export declare class Matrix'));
-        expect(matrixBlock).not.toContain('delete()');
+        expect(matrixBlock).toContain('    delete(): void;');
     });
 
     test('promise mode wraps method returns but never constructors', () => {
@@ -181,6 +181,7 @@ describe('emitCppDts', () => {
         expect(dts).toContain('multiple(b: Matrix): Promise<Matrix | null>;');
         expect(dts).toContain('get(index: number): Promise<T>;');
         expect(dts).toContain('static describe(name: string, verbose: boolean): Promise<string>;');
+        expect(dts.slice(dts.indexOf('export declare class Matrix'))).toContain('    delete(): Promise<void>;');
         expect(dts).not.toContain('Promise<Promise');
     });
 
