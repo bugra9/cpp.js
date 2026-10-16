@@ -16,8 +16,8 @@ import buildExternal from './actions/buildExternal.js';
 import buildPackageTypes from './actions/buildTypes.js';
 import buildLib from './actions/buildLib.js';
 import buildDependencies from './actions/buildDependencies.js';
-import writeRuntimeEntry, { removeImportHooks, writeImportHooks } from './actions/writeRuntimeEntry.js';
-import { createImportedBridges, findAppNativeImports } from './actions/createImportedBridges.js';
+import writeRuntimeEntry, { removeImportHooks, writeImportHooks, writeImportManifest } from './actions/writeRuntimeEntry.js';
+import { bindsAppImports, createImportedBridges, findAppNativeImports } from './actions/createImportedBridges.js';
 import { nativeExtensions } from './utils/nativeImports.js';
 import getDependFilePath from './integration/getDependFilePath.js';
 import { boundHeaderSpecifiers, bridgeTargets, nodeBridgeTarget, resolveBoundHeaders } from './utils/boundHeaders.js';
@@ -61,8 +61,9 @@ program.command('build')
     .addOption(new Option('-b, --build-type <buildType>', 'target build type').argParser(createListParser(buildTypes)))
     .addOption(new Option('-e, --runtime-env <runtimeEnv>', 'binaries to make, by runtime environment (without it, only the archives are built)').argParser(createListParser(runtimeEnvs)))
     .option('--rebuild-deps [list]', 'rebuild dependencies from source instead of using prebuilt (all, or a comma-separated list of names)')
+    .option('--bind-imports', "also bind what the app's JavaScript imports into browser binaries (node binaries always do), for a page that resolves those imports itself")
     .action((options) => {
-        const { rebuildDeps, ...rest } = options;
+        const { rebuildDeps, bindImports, ...rest } = options;
         const targetParams = { ...rest };
 
         if (!targetParams.arch) {
@@ -83,7 +84,7 @@ program.command('build')
         if (state.config.build.withBuildConfig) {
             buildExternal(targetParams);
         } else {
-            build(targetParams, rebuildDeps, binaryRuntimeEnvs);
+            build(targetParams, rebuildDeps, binaryRuntimeEnvs, { bindImports });
         }
     });
 
@@ -305,7 +306,7 @@ function onlyLoadsPackagedAddons(binaryParams) {
     return targets.every((target) => target.runtimeEnv === 'node' && target.platform !== 'wasm') && addonsInPackages();
 }
 
-async function build(targetParams, rebuildOption, binaryRuntimeEnvs) {
+async function build(targetParams, rebuildOption, binaryRuntimeEnvs, wasmOptions = {}) {
     await buildDependencies({ targetParams, rebuildOption });
     const binaryParams = { ...targetParams, runtimeEnv: binaryRuntimeEnvs };
     if (!onlyLoadsPackagedAddons(binaryParams)) {
@@ -314,7 +315,7 @@ async function build(targetParams, rebuildOption, binaryRuntimeEnvs) {
     if (binaryRuntimeEnvs.length === 0) {
         logger.info(`crossbind: no runtime environment was selected, so only the archives were built - pass -e (${runtimeEnvs.join(', ')}) for a binary.`);
     } else {
-        await createWasmJs(binaryParams);
+        await createWasmJs(binaryParams, wasmOptions);
         await createNodeAddons(binaryParams);
         await createNativeCommands(binaryParams);
         await createWasiCommands(binaryParams);
@@ -437,16 +438,15 @@ function scopeOutputToCommonJs() {
     }
 }
 
-async function createWasmJs(targetParams) {
+async function createWasmJs(targetParams, wasmOptions = {}) {
     const targets = getFilteredBuildTargets(targetParams, { platform: 'wasm' });
     if (targets.length === 0) {
         return;
     }
     const headers = createBridges();
-    // A Node app imports what it uses through the module hooks, so a Node binary binds those imports too.
-    const isNode = (target) => target.runtimeEnv === 'node';
-    const imports = targets.some(isNode) ? findAppNativeImports([state.targets.find((t) => t.platform === 'wasm')]) : new Map();
-    const nodeHeaders = [...headers, ...createImportedBridges(headers, imports)];
+    const bindsImports = (target) => bindsAppImports(target, wasmOptions);
+    const imports = targets.some(bindsImports) ? findAppNativeImports([state.targets.find((t) => t.platform === 'wasm')]) : new Map();
+    const appHeaders = [...headers, ...createImportedBridges(headers, imports)];
     const optOf = (bridged) => ({
         buildSource: false,
         nativeGlob: [
@@ -463,7 +463,7 @@ async function createWasmJs(targetParams) {
         // link and the copy step below moved build/data away on the last run.
         const distComplete = fs.existsSync(`${state.config.paths.output}/${target.jsName}`)
             && fs.existsSync(`${state.config.paths.output}/${target.wasmName}`);
-        createLib(target, 'Bridge', optOf(isNode(target) ? nodeHeaders : headers));
+        createLib(target, 'Bridge', optOf(bindsImports(target) ? appHeaders : headers));
         const built = await buildWasm(target, { force: !distComplete });
         if (!built) {
             continue;
@@ -484,15 +484,21 @@ async function createWasmJs(targetParams) {
     if (targets.some((target) => ['node', 'edge'].includes(target.runtimeEnv))) {
         scopeOutputToCommonJs();
     }
+    // The list a page that maps the app's imports itself reads; a build without --bind-imports is not for one.
+    if (targets.some((target) => target.runtimeEnv === 'browser')) {
+        const manifest = `${state.config.paths.output}/browser/imports.json`;
+        if (wasmOptions.bindImports) writeImportManifest(manifest, appHeaders, imports, state.config.paths.project);
+        else fs.rmSync(manifest, { force: true });
+    }
     // A runtime's entry loads its single-thread wasm32 release build.
     const entryTargetOf = (runtimeEnv) => targets.find((target) => target.runtimeEnv === runtimeEnv && target.arch === 'wasm32'
         && target.runtime === 'st' && target.buildType === 'release' && fs.existsSync(`${state.config.paths.output}/${target.jsName}`));
     const nodeTarget = entryTargetOf('node');
     const edgeTarget = entryTargetOf('edge');
-    if (nodeHeaders.length && nodeTarget) {
+    if (appHeaders.length && nodeTarget) {
         const entry = `${state.config.paths.output}/node/wasm.mjs`;
-        writeRuntimeEntry(entry, nodeHeaders, ENTRY_RUNTIMES.node(nodeTarget.jsName));
-        if (imports.size) writeImportHooks(entry, nodeHeaders, imports, nativeExtensions(state.config.ext));
+        writeRuntimeEntry(entry, appHeaders, ENTRY_RUNTIMES.node(nodeTarget.jsName));
+        if (imports.size) writeImportHooks(entry, appHeaders, imports, nativeExtensions(state.config.ext));
         else removeImportHooks(entry);
     }
     if (headers.length && edgeTarget) {
