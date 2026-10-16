@@ -14,7 +14,7 @@
     {
       "source": "docs/api/README.md",
       "output": "api/README.md",
-      "sha256": "650ad26e8c43850e2e4bddf8f6fe28b9620fb243b76327633b82525f13108c79"
+      "sha256": "17f4903c2a09705c5df26caa03881663fc9d02bb2bf0d36c1210f3ffe0738d1f"
     },
     {
       "source": "docs/api/build-state.md",
@@ -29,7 +29,7 @@
     {
       "source": "docs/api/cpp-binding-rules.md",
       "output": "api/cpp-binding-rules.md",
-      "sha256": "f5e5b76311f3f211118fd3dd175ae6a3dcaffccdfc4d6cbe3ce3ac35647cd4cb"
+      "sha256": "ee9159b3e9cab94ad6f41de3cc2988d8b40ebb9bf42be51822b4ed4174f642d8"
     },
     {
       "source": "docs/api/crossbind-build.md",
@@ -54,7 +54,7 @@
     {
       "source": "docs/api/lifecycle-and-types.md",
       "output": "api/lifecycle-and-types.md",
-      "sha256": "2b093f14d42d9a56888f494a809e513f4ed34c7a77f5bfad63b67241473cc172"
+      "sha256": "abb8a17fd8c9dce92106631cab4e42e4a40555d85a0a1385adb2b0d668967509"
     },
     {
       "source": "docs/api/native.md",

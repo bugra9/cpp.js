@@ -67,12 +67,13 @@ Build defaults assume modern C++. Use:
 - `std::optional<T>` (C++17), `std::variant<...>` (C++17) — supported via website type table
 - Range-based for, `auto`, lambdas, `nullptr`
 
-Runtime notes from the cross-runtime conformance suite: vector PARAMETERS take a vector
-instance on direct runtimes (build one from a method returning `std::vector`); plain JS
-arrays are coerced only by the worker proxy. By-value `std::vector` RETURNS are real vector
-proxies on direct runtimes (wasm and jsi) and arrive as plain JS arrays on worker-backed
-runtimes - that array conversion is the worker contract (`Module.toArray` accepts both
-shapes). `std::optional<T>` binds on every leg (the jsi fork registers optionals alongside
+Runtime notes from the cross-runtime conformance suite: a vector PARAMETER takes a vector
+instance, which `Module.toVector` builds. A wasm build also takes a plain JS array: for every
+vector parameter in worker mode, and for a module function's or constructor's in direct mode.
+By-value `std::vector` RETURNS are real vector proxies on direct runtimes (wasm and jsi), freed
+like any value JS owns (`lifecycle-and-types.md`), and arrive as plain JS arrays on
+worker-backed runtimes - that array conversion is the worker contract (`Module.toArray`
+accepts both shapes). `std::optional<T>` binds on every leg (the jsi fork registers optionals alongside
 each `register_vector<T>`, mirroring upstream embind).
 
 Avoid:
@@ -135,9 +136,9 @@ template class Buffer<float>;
 
 The auto-binder needs concrete types. Add `template class Buffer<T>;` declarations for every instantiation you want to expose.
 
-### 6. Memory + lifecycle is C++-side
+### 6. The garbage collector frees what JS owns; `.delete()` frees it now
 
-You **don't** call `m.delete()` in JS. C++ destructors and `shared_ptr` reference counting handle instances, and a handle releases what crossbind allocated for it (`allocBuffer`, `allocPointer`, `allocString`, `cstring`) when it goes away. Memory a library returns through a raw pointer stays the library's: free it through the library's own function. See `lifecycle-and-types.md`.
+An instance made with `new`, a value a call returns and a vector `toVector` builds are freed when the garbage collector reclaims their handle, on every runtime with `FinalizationRegistry`; `.delete()` frees one at once, and is the only way on Hermes. A handle releases what crossbind allocated for it (`allocBuffer`, `allocPointer`, `allocString`, `cstring`) when it goes away. An object reached through a raw pointer, and memory a library returns through one, stay the library's: free it through the library's own function. See `lifecycle-and-types.md`.
 
 ### 7. Exceptions: thrown C++ exceptions become JS exceptions
 
@@ -352,6 +353,6 @@ Three escape hatches, in order of preference:
 ## See also
 
 - [`swig-escape.md`](./swig-escape.md) — when and how to write a manual SWIG `.i` file.
-- [`lifecycle-and-types.md`](./lifecycle-and-types.md) — why JS-side `m.delete()` isn't a thing in crossbind.
+- [`lifecycle-and-types.md`](./lifecycle-and-types.md) — what the garbage collector frees and when to call `.delete()`.
 - [`crossbind-config.md`](./crossbind-config.md) — `targetSpecs[]` for emccFlags overrides like `-sJSPI`.
 - Website: [Type table](https://crossbind.dev/docs/api/cpp-bindings/data-types), [Classes & functions](https://crossbind.dev/docs/api/cpp-bindings/overview).

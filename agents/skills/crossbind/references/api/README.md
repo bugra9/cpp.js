@@ -30,7 +30,7 @@ C++ binding & build authoring:
 - [`overrides.md`](./overrides.md) — Catalog of 17 override points ordered least → most invasive.
 - [`troubleshooting.md`](./troubleshooting.md) — Common errors mapped to the right override; tribal-knowledge gotchas from real packages.
 - [`performance.md`](./performance.md) — Default Emscripten + CMake flags reference; what's safe to override and what to leave alone.
-- [`lifecycle-and-types.md`](./lifecycle-and-types.md) — Why JS-side `m.delete()` isn't a thing in crossbind + TypeScript `.d.ts` notes.
+- [`lifecycle-and-types.md`](./lifecycle-and-types.md) — What the garbage collector frees and when to call `.delete()` + TypeScript `.d.ts` notes.
 
 ## The 30-second mental model
 

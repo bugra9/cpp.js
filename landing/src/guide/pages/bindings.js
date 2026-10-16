@@ -211,7 +211,7 @@ const bytes = readBuffer(out, encode(out, 1024));`,
         { type: 'h2', id: 'memory', text: 'Memory' },
         {
             type: 'p',
-            text: 'There is no `.delete()` to call. Destructors and `shared_ptr` reference counting free the objects you hand to JavaScript once the last reference goes away, and a handle frees what crossbind allocated for it. Memory a library returns through a raw pointer stays the library\'s: free it with the library\'s own function.',
+            text: 'An instance made with `new`, a struct or vector a call returns and a vector `toVector` builds are freed when the garbage collector reclaims their handle, and `.delete()` frees one at once: call it on an object that holds a lot of memory, and on objects made in a loop. React Native\'s Hermes has no `FinalizationRegistry` yet, so there `.delete()` is the only way. A handle frees what crossbind allocated for it. An object a function returns through a raw pointer, and memory a library returns through one, stay the library\'s: free them with the library\'s own function.',
         },
 
         { type: 'h2', id: 'wrapper', text: 'Wrapping what does not fit' },
