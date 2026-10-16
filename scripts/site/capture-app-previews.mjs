@@ -21,6 +21,8 @@ const QUALITY = 0.82;
 const ATTEMPTS = 2;
 // The site's sticky header would cover the top of an output in the screenshot.
 const STATIC_HEADER = 'header { position: static !important; }';
+// landing/src/theme.js's THEME_KEY; that module imports Preact, so Node cannot load it.
+const THEME_KEY = 'crossbind.landing.theme';
 
 const log = (message) => process.stderr.write(`${message}\n`);
 const firstLine = (error) => error.message.split('\n')[0];
@@ -147,9 +149,11 @@ async function captureWithRetry(page, converter, siteUrl, app, theme) {
     return false;
 }
 
-// The site follows the system theme until a visitor picks one, so each theme is a page of its own.
+// The site opens light unless a visitor chose dark, which it keeps in local storage, so each theme is a page of its
+// own with that choice made.
 async function captureTheme(browser, converter, siteUrl, apps, theme) {
-    const page = await browser.newPage({ viewport: VIEWPORT, deviceScaleFactor: PIXEL_RATIO, colorScheme: theme });
+    const page = await browser.newPage({ viewport: VIEWPORT, deviceScaleFactor: PIXEL_RATIO });
+    await page.addInitScript(([key, choice]) => localStorage.setItem(key, choice), [THEME_KEY, theme]);
     const failed = [];
     for (const family of new Set(apps.map((app) => app.family))) {
         const members = apps.filter((app) => app.family === family);

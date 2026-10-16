@@ -107,8 +107,6 @@ function readStoredTheme() {
     }
 }
 
-const systemTheme = () => (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-
 export function useTheme(fallback = 'light') {
     // Hydration has to start on the theme the prerender baked in. Preact's hydrate() does not
     // write props onto existing DOM, so if the first client render already used the stored
@@ -119,7 +117,7 @@ export function useTheme(fallback = 'light') {
     const [theme, setTheme] = useState(fallback);
 
     useEffect(() => {
-        setTheme(readStoredTheme() ?? systemTheme());
+        setTheme(readStoredTheme() ?? fallback);
     }, []);
 
     useEffect(() => {
@@ -128,9 +126,10 @@ export function useTheme(fallback = 'light') {
         document.documentElement.style.background = bg;
         document.documentElement.style.colorScheme = theme;
         document.body.style.background = bg;
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg);
     }, [theme]);
 
-    // Only an explicit toggle is stored, so a visitor who never touched it keeps following the OS.
+    // Only an explicit toggle is stored; a visitor who never touched it gets the light theme.
     const toggleTheme = useCallback(() => {
         const next = theme === 'light' ? 'dark' : 'light';
         try {
