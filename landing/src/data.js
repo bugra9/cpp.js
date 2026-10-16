@@ -38,7 +38,6 @@ export const SITE_DESCRIPTION =
 // 301s in public/_redirects. Nothing here may point at a /docs/ path.
 export const REPO_URL = 'https://github.com/crossbind/crossbind';
 export const DISCUSSIONS_URL = `${REPO_URL}/discussions`;
-export const LICENSE_URL = `${REPO_URL}/blob/main/LICENSE`;
 export const PRIVACY_EMAIL = 'privacy@crossbind.dev';
 export const AGENT_URL = '/agent/';
 export const LIBRARIES_URL = '/ports/';
