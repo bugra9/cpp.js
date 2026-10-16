@@ -10,8 +10,7 @@
          itself onto all sixteen pages. The title below is the dev-server fallback and mirrors
          SITE_TITLE in src/data.js. -->
     <title>crossbind — import C++ and Rust like JavaScript modules</title>
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#22262e" />
+    <meta name="theme-color" content="#ffffff" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="crossbind" />
@@ -24,18 +23,17 @@
     <meta name="twitter:image" content="https://crossbind.dev/og.png" />
 
     <script>
-        // The prerendered markup carries the light default, so a dark-theme visitor would see a
-        // light flash until hydration. Painting the canvas here, before first paint, softens it.
-        // Mirrors src/theme.js: THEME_KEY, systemTheme(), lightTokens().bg and darkTokens().bg. An
-        // inline script cannot import them, so change them together (plus <meta name="theme-color"> above).
+        // The site opens light; only a visitor who chose dark gets dark. The prerendered markup carries
+        // the light default, so that visitor would see a light flash until hydration: painting the
+        // canvas and the browser's bar here, before first paint, softens it. Mirrors src/theme.js:
+        // THEME_KEY and darkTokens().bg. An inline script cannot import them, so change them together.
         try {
-            var t = localStorage.getItem('crossbind.landing.theme');
-            if (t !== 'light' && t !== 'dark') {
-                t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            if (localStorage.getItem('crossbind.landing.theme') === 'dark') {
+                document.documentElement.style.background = '#22262e';
+                document.documentElement.style.colorScheme = 'dark';
+                document.querySelector('meta[name="theme-color"]').setAttribute('content', '#22262e');
             }
-            document.documentElement.style.background = t === 'light' ? '#ffffff' : '#22262e';
-            document.documentElement.style.colorScheme = t;
-        } catch (e) { /* private mode blocks storage; the default stands */ }
+        } catch (e) { /* private mode blocks storage; the light default stands */ }
         // The playground's Turbo look: marked here so the prerendered modern look never shows first. Mirrors
         // src/playground/skin.js (SKIN_PARAM, readSkin).
         if (location.pathname.indexOf('/playground') === 0 && new URLSearchParams(location.search).get('skin') === 'turbo') {
