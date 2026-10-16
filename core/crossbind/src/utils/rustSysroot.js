@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import withDirLock from './dirLock.js';
 import fetchOciLayer from './ociArtifact.js';
 import { cargoRunner } from './runCargo.js';
-import { isMtWasm } from './rustMt.js';
+import { hasContainerSysroot, isMtWasm } from './rustMt.js';
 import PIN from './rustSysrootPin.js';
 
 // The second consumption channel for the Rust sysroots. A containerized build gets them as an image
@@ -149,7 +149,7 @@ let resolved = null;
 // Called from buildDependencies, the one async step every build path awaits before the sync work
 // starts. Only downloads when a target will actually consume it.
 export async function prepareRustSysroot(targets, log = console.log) {
-    if (resolved || !PIN) return resolved;
+    if (resolved || !PIN || hasContainerSysroot()) return resolved;
     if (!targets.some((target) => isMtWasm(target) && cargoRunner(target) === 'LOCAL')) return null;
     try {
         resolved = await ensureRustSysroot({ image: PIN.image, index: PIN.index });
@@ -161,11 +161,13 @@ export async function prepareRustSysroot(targets, log = console.log) {
     return resolved;
 }
 
-// What cargoBuildInvocation takes for `sysroot`: true where the image carries the trees, an
-// absolute path where a downloaded artifact answers, false where mt must rebuild std on nightly.
-// st needs nothing - rustup's stock std is already correct for it.
+// What cargoBuildInvocation takes for `sysroot`: true where the image carries the trees (also a
+// LOCAL build running inside the image), an absolute path where a downloaded artifact answers,
+// false where mt must rebuild std on nightly. st needs nothing - rustup's stock std is already
+// correct for it.
 export function sysrootFor(target) {
     if (cargoRunner(target) !== 'LOCAL') return true;
+    if (target.platform === 'wasm' && hasContainerSysroot()) return true;
     if (!isMtWasm(target)) return false;
     return resolved ?? false;
 }

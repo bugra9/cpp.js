@@ -16,6 +16,14 @@ vi.mock('../src/utils/rustSysrootPin.js', () => ({ get default() { return pin.cu
 const ensure = vi.fn();
 vi.mock('../src/utils/ociArtifact.js', () => ({ default: (...a) => ensure(...a) }));
 
+// Whether this process runs inside the toolchain image, which carries the sysroot trees on disk.
+const container = { present: false };
+vi.mock('node:fs', async (importOriginal) => {
+    const fs = await importOriginal();
+    const existsSync = (p) => (p === '/opt/crossbind/rust/current' ? container.present : fs.existsSync(p));
+    return { ...fs, existsSync, default: { ...fs.default, existsSync } };
+});
+
 const MT = { platform: 'wasm', arch: 'wasm32', runtime: 'mt' };
 const ST = { platform: 'wasm', arch: 'wasm32', runtime: 'st' };
 const IOS = { platform: 'ios', arch: 'iphoneos', runtime: 'st' };
@@ -28,6 +36,7 @@ async function importFresh() {
 beforeEach(() => {
     holder.config = { paths: { base: '/repo' }, system: { RUNNER: 'LOCAL' } };
     pin.current = null;
+    container.present = false;
     ensure.mockReset();
 });
 
@@ -49,6 +58,16 @@ describe('sysrootFor', () => {
         expect(sysrootFor(MT)).toBe(false);
     });
 
+    test('a LOCAL build inside the toolchain image takes the trees on its disk', async () => {
+        // The playground compiler runs the CLI in the image with RUNNER=LOCAL; rustup's stock wasm
+        // target is not installed there, so st has no std unless the image tree answers.
+        container.present = true;
+        const { sysrootFor } = await importFresh();
+        expect(sysrootFor(ST)).toBe(true);
+        expect(sysrootFor(MT)).toBe(true);
+        expect(sysrootFor(IOS)).toBe(false);
+    });
+
     test('ios never consumes a wasm sysroot even though it runs on the host', async () => {
         holder.config.system.RUNNER = 'DOCKER_RUN';
         const { sysrootFor } = await importFresh();
@@ -67,6 +86,16 @@ describe('prepareRustSysroot', () => {
     });
 
     test('downloads nothing while the artifact is unpinned', async () => {
+        const { prepareRustSysroot } = await importFresh();
+
+        await expect(prepareRustSysroot([MT])).resolves.toBe(null);
+        expect(ensure).not.toHaveBeenCalled();
+    });
+
+    test('downloads nothing inside the toolchain image, which already has the trees', async () => {
+        // The image may also run with no network at all (the playground compiler).
+        pin.current = { image: 'registry.test/ns/rust-sysroot', index: `sha256:${'a'.repeat(64)}` };
+        container.present = true;
         const { prepareRustSysroot } = await importFresh();
 
         await expect(prepareRustSysroot([MT])).resolves.toBe(null);
