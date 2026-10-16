@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-// One shell command with a copy button: the install line on a library page, the create line on
-// an example. Sized to sit in a row with links, not a full code block.
+// One command or line with a copy button: the install line on a library page, the create line on
+// an example, the line an agent is given. Sized to sit in a row with links, not a full code block.
 export default function CommandChip({ tokens, command, label = 'Copy' }) {
     const [copied, setCopied] = useState(false);
 
@@ -58,7 +58,11 @@ export default function CommandChip({ tokens, command, label = 'Copy' }) {
                     flexShrink: 0,
                 }}
             >
-                <span aria-live="polite">{copied ? 'COPIED' : label.toUpperCase()}</span>
+                {/* Both labels share one cell, so the button keeps the wider one's width and the line beside it never re-wraps. */}
+                <span aria-live="polite" style={{ display: 'grid' }}>
+                    <span style={{ gridArea: '1 / 1', visibility: copied ? 'hidden' : 'visible' }}>{label.toUpperCase()}</span>
+                    <span style={{ gridArea: '1 / 1', visibility: copied ? 'visible' : 'hidden' }}>COPIED</span>
+                </span>
             </button>
         </div>
     );
