@@ -542,7 +542,7 @@ does; a minor bump would still require the whole set, because a caret range does
 ## 2.0.0-beta.50
 
 The first release published under the crossbind name. cpp.js shipped to npm; crossbind has not, so
-this is where the new name starts — and every package in the workspace is pinned to this one
+this is where the new name starts, and every package in the workspace is pinned to this one
 version rather than carrying whatever number its own history had reached. From here the numbers
 move together.
 
