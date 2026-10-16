@@ -160,7 +160,6 @@ export function SqlRouting({ tokens, index, load }) {
             id="spatialite-routing"
             index={index}
             status={state.status}
-            title="Shortest paths in SQL, around the streets you close"
             pitch="CreateRouting turns a table of streets into a routing network, and a SELECT on it returns the shortest path. This grid has 400 intersections and 718 two-way streets that take 1 to 2 minutes each; the darker a street, the slower. Click two intersections to route between them, click a street to close it: SpatiaLite rebuilds the network and the query runs again, all inside SQLite in this tab."
             note={<LicenceNote tokens={tokens} />}
             controls={

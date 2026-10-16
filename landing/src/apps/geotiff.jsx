@@ -226,7 +226,6 @@ export function GeoTiffInspectorApp({ tokens, index, load }) {
             id="geotiff-inspector"
             index={index}
             status={state.status}
-            title="Where is this GeoTIFF?"
             pitch="Drop a satellite scene, an elevation tile or a drone map and see its coordinate system by name, its corners in degrees and its footprint on the map, with listgeo's full report. geotiff.js, the most used JavaScript GeoTIFF reader, returns the raw GeoKeys; libgeotiff names the system they describe through PROJ's EPSG database."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -438,7 +437,6 @@ export function GeoreferencerApp({ tokens, index, load }) {
             id="geotiff-georeferencer"
             index={index}
             status={state.status}
-            title="Georeference any picture"
             pitch="Give a scanned map, a screenshot or a render its place on Earth: a longitude and latitude box, or a corner and a pixel size in any projected EPSG system. The module writes it as a GeoTIFF in five compressions that GDAL places where you said, and reads it back with libgeotiff to show it. geotiff.js's writer stores pixels uncompressed."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -650,7 +648,6 @@ export function ElevationProbe({ tokens, index, load }) {
             id="geotiff-elevation"
             index={index}
             status={state.status}
-            title="Read heights and degrees off an elevation model"
             pitch="Open an elevation GeoTIFF and move over its relief: libgeotiff turns the position under the cursor into longitude and latitude, next to the height stored there. Then save the model again, losslessly or with LERC within an error you choose, and compare the sizes. A cloud-optimized file is read from the smallest overview that still fills the view."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>

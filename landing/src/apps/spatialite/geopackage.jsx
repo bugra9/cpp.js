@@ -64,7 +64,6 @@ export function GeoPackageExport({ tokens, index, load }) {
             id="spatialite-geopackage"
             index={index}
             status={state.status}
-            title="A GeoPackage that QGIS and GDAL open, written in this tab"
             pitch="GeoPackage is the OGC's one-file format for vector data, which GDAL and QGIS open as it is. This writes one with SpatiaLite's gpkg functions, from the generated points, their count per hexagon and the pins you drop on the map, then opens the file again to check it. GDAL's validate_gpkg.py passes the files it writes. Nothing leaves the tab until you download."
             note={<LicenceNote tokens={tokens} />}
             controls={

@@ -11,7 +11,7 @@ import { deployCli, packModules } from '../../tooling/cloud/scripts/node-modules
 import { channelDistTag, distTagSuffix } from '../release/resolve-site-release.mjs';
 import { readNativeVersions } from './native-versions.mjs';
 
-// Builds the live demos the Examples page embeds: each web example is scaffolded with the same
+// Builds the live demos the Examples page links to: each web example is scaffolded with the same
 // `npm create crossbind@<tag>` command the page shows, installed from npm, built for its subpath
 // and copied under landing/public/examples/<id>/. Every demo is then loaded in a browser from
 // that subpath before it is accepted. Needs the network, Docker (the toolchain image) and the

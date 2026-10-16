@@ -245,7 +245,6 @@ export function WebpStudio({ tokens, index, load }) {
             id="webp-studio"
             index={index}
             status={state.status}
-            title="See what each WebP quality costs, and what it gives away"
             pitch={
                 <>
                     Encode the test card or your own image with libwebp {versionOf('webp')}, then compare the result with the original next to its size, PSNR and SSIM. A canvas can only be given a type and a quality, and Safari cannot encode WebP from a canvas at all (
@@ -425,7 +424,6 @@ export function StickerMakerApp({ tokens, index, load }) {
             id="webp-sticker"
             index={index}
             status={state.status}
-            title="Turn any picture into a sticker that fits the limit"
             pitch={
                 <>
                     WhatsApp asks for stickers that are WebP, exactly 512 × 512 and at most 100 KB, and recommends an 8 px white outline (
@@ -594,7 +592,6 @@ export function WebpStreamApp({ tokens, index, load }) {
             id="webp-stream"
             index={index}
             status={state.status}
-            title="Watch a WebP arrive, row by row"
             pitch="On a slow connection an image fills in from the top. libwebp's incremental decoder does this for WebP: give it the bytes that have arrived and it returns every row it can already finish. Play the download, or drag through the file byte by byte."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>

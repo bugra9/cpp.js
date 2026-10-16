@@ -163,7 +163,6 @@ export function SiteSearch({ tokens, index, load }) {
             id="sqlite3-search"
             index={index}
             status={state.status}
-            title="Search this site as you type"
             pitch="Every guide, reference, library and changelog page of crossbind.dev, split into its sections, goes into a SQLite FTS4 index in this tab. It matches word stems, phrases, prefixes, NEAR and NOT, and a BM25 function written in C++ ranks the results, because FTS4 has no ranking of its own."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -432,7 +431,6 @@ export function BoxQuery({ tokens, index, load }) {
             id="sqlite3-rtree"
             index={index}
             status={state.status}
-            title="Ask 50,000 points what is inside a box"
             pitch="Drag a box across the points. SQLite's R*Tree finds them through its spatial index; the same query then runs against a B-tree index on x and against a table with no index at all, each timed here in your tab, next to the plan SQLite chose for it."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -678,7 +676,6 @@ export function DatabaseExplorer({ tokens, index, load }) {
             id="sqlite3-explorer"
             index={index}
             status={state.status}
-            title="Open any SQLite file, privately"
             pitch="Open a .sqlite or .db file, a GeoPackage or an MBTiles tile set to see its tables, run SQL on it and export the result as CSV. SQLite opens it read-only as an immutable database, so it never writes to your file, and a WAL-mode file opens without its -wal and -shm companions. Or generate a log of 100,000 API requests and ask it for p95 latency with SQLite's percentile()."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>

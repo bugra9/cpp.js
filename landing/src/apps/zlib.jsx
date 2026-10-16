@@ -162,7 +162,6 @@ export function SeekableGzipApp({ tokens, index, load }) {
             id="zlib-seek"
             index={index}
             status={state.status}
-            title="Jump into the middle of a big .gz without unzipping it"
             pitch="gzip has no index, so every reader, the browser's DecompressionStream included, decompresses from the first byte to reach the middle. zlib can start at any deflate block if it gets the block's position, down to the bit, and the 32 KB of text before it. One pass records that about every megabyte, and after it any line is a few milliseconds away. It is the technique of zran.c, an example that ships with zlib; pako, the JavaScript port of zlib, leaves out inflatePrime, the call it rests on."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -346,7 +345,6 @@ export function PngSqueezerApp({ tokens, index, load }) {
             id="zlib-png"
             index={index}
             status={state.status}
-            title="Make a PNG smaller without changing a pixel"
             pitch="A PNG's pixels are zlib data: each row is filtered, predicted from the rows around it, and the rows are deflated. This tries the file's own filters and five others at zlib's maximum level, keeps the smallest, and copies every other chunk as it was. The browser gives you no such control: canvas.toBlob takes a quality only for formats with variable quality, such as JPEG, so a PNG comes out however its encoder writes it. The result is decoded again and compared, row by row in C++ and pixel by pixel by this browser."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -503,7 +501,6 @@ export function ZipInspectorApp({ tokens, index, load }) {
             id="zlib-zip"
             index={index}
             status={state.status}
-            title="Look inside a .zip, .docx or .xlsx without unpacking it"
             pitch="A ZIP is a row of deflate streams with a table of contents at the end, and Word, Excel, EPUB and Java files are ZIPs too. zlib has no ZIP API, and its contrib/minizip is not in this build, but it has the two parts that matter: raw inflate and CRC-32. A few hundred lines of C++ on top read the table of contents, inflate one entry on demand and check every checksum, the way unzip -t does."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>

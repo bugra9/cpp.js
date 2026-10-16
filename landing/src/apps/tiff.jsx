@@ -181,7 +181,6 @@ export function TiffViewerApp({ tokens, index, load }) {
             id="tiff-viewer"
             index={index}
             status={opened.status}
-            title="Open any TIFF, in any browser"
             pitch={
                 <>
                     Scans, faxes, 16-bit microscope images, float elevation models and camera TIFFs, every page with its tags. MDN lists Safari as the only browser that shows TIFF images by itself (
@@ -371,7 +370,6 @@ export function ScanArchiveApp({ tokens, index, load }) {
             id="tiff-scans"
             index={index}
             status={state.status}
-            title="Turn page photos into one archival TIFF"
             pitch="Photograph a few pages, or use the two sample photos, and get one multi-page TIFF: each page is turned black and white with Otsu's threshold, then stored with CCITT Group 4, the coding of Group 4 fax. The two sample A4 pages take 19.6 KB in all, and nothing leaves this tab."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -519,7 +517,6 @@ export function CompressionLabApp({ tokens, index, load }) {
             id="tiff-lab"
             index={index}
             status={state.status}
-            title="Compare every codec on 16-bit and float rasters"
             pitch="There is no best TIFF codec for scientific rasters, only a best one for each dataset. The module writes one raster with every codec in this build, reads each file back and compares every sample: here the floating-point predictor makes the elevation model 40% smaller with Deflate, while the horizontal predictor makes the noisy cells bigger."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>

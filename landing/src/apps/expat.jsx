@@ -176,7 +176,6 @@ export function FirehoseApp({ tokens, index, load }) {
             id="expat-firehose"
             index={index}
             status={state.status}
-            title="Parse a gigabyte of XML without holding it"
             pitch="Expat reads XML as a stream: a piece goes in, callbacks come out, and nothing piles up. Here it parses an OpenStreetMap-style document that is generated as it goes, up to 1.07 GB, inside the Web Worker the module runs in, and its memory stays the same size from start to finish. DOMParser needs the whole document as one string, which Chrome caps at 536,870,888 characters, and Workers do not have it at all."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -314,7 +313,6 @@ export function AttackLabApp({ tokens, index, load }) {
             id="expat-attacks"
             index={index}
             status={state.status}
-            title="Billion laughs, blocked at a line and column"
             pitch="Four classic attacks on XML parsers, run against Expat in this tab. Entity bombs hit Expat's amplification limit, which you can loosen or tighten here. External entities reach your code as a callback and are never fetched. Expat has no nesting limit of its own, so the lab adds one from a start handler."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -485,7 +483,6 @@ export function GpxApp({ tokens, index, load }) {
             id="expat-gpx"
             index={index}
             status={state.status}
-            title="Read a GPS track, heart rate and all"
             pitch="GPX files keep heart rate and cadence in extension namespaces, under whatever prefix the exporting app chose. Expat's namespace mode resolves every prefix to its URI before the handlers see a name, so this reader finds the heart rates under any spelling. It streams the file in 64 KiB reads, draws the track, totals the climb and writes GeoJSON."
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>

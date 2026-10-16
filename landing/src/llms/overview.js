@@ -119,7 +119,7 @@ export const OVERVIEW_PAGE = {
         },
         { type: 'ul', items: SHOWCASE.map((item) => `[${item.name}](${item.href}) - ${item.desc} (${item.tag})`) },
 
-        { type: 'h2', text: 'Verified examples' },
+        { type: 'h2', text: 'Examples' },
         { type: 'p', text: `${EXAMPLES_PAGE.description} See [Examples](${EXAMPLES_URL}).` },
     ],
 };
