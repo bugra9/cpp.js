@@ -199,6 +199,7 @@ export default function Nav({ tokens, path = '/', onToggleTheme, onOpenSearch })
                 <a
                     href={REPO_URL}
                     className="tap-target nav-button"
+                    aria-label="GitHub"
                     style={{
                         background: tokens.pillBg,
                         border: `1px solid ${tokens.borderStrong}`,
@@ -211,7 +212,7 @@ export default function Nav({ tokens, path = '/', onToggleTheme, onOpenSearch })
                     }}
                 >
                     <GitHubMark />
-                    GitHub
+                    <span className="nav-github-label">GitHub</span>
                 </a>
             </div>
         </header>

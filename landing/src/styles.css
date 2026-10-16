@@ -498,6 +498,22 @@ li > .map-link:hover {
     }
 }
 
+/* With its label the GitHub button pushes the controls under the logo below 393px, a second row --nav-h does not
+   count, so phones show the mark alone and the header stays one row down to 341px. */
+@media (max-width: 480px) {
+    .nav-github-label {
+        display: none;
+    }
+}
+
+/* Narrower still, the controls wrap under the logo anyway: two 44px rows, the 12px gap between them, the padding
+   and the border. */
+@media (max-width: 340px) {
+    :root {
+        --nav-h: 121px;
+    }
+}
+
 html,
 body {
     margin: 0;
