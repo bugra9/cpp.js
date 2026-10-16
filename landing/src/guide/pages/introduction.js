@@ -4,6 +4,8 @@ import { LIMITS, WHY_POINTS } from '../../why.js';
 export default {
     slug: '',
     title: 'Introduction',
+    // /guide/ is what the Docs menu calls Guide, so its tab says so.
+    headTitle: 'Guide',
     description: 'What crossbind does, what one import buys you, and where the output runs.',
     lede: `${BRAND} compiles C++ and Rust into WebAssembly, Node-API addons and native iOS and Android libraries, then hands the result to JavaScript as an ordinary module; the same sources also build into executables that need no JavaScript at all. You import a header; the bindings are generated from it.`,
     blocks: [
