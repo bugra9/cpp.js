@@ -6,27 +6,21 @@
 import { execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getDockerImage } from '../../../core/crossbind/src/utils/pullDockerImage.js';
-import { PACKAGES } from '../compiler/packages.js';
 import { RUNNER_IMAGES } from '../worker/runner-api.js';
+import { IMAGE_PLATFORMS, deployCli, packModules } from './node-modules.mjs';
 
 const PACKAGE_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_DIR = path.resolve(PACKAGE_DIR, '../..');
 const CLI_DIR = path.join(REPO_DIR, 'core', 'crossbind');
-// The lockfile and the settings it was resolved under: the overrides and the release-age policy.
-const WORKSPACE_FILES = ['package.json', 'pnpm-workspace.yaml', 'pnpm-lock.yaml'];
 const CONTEXT = path.join(PACKAGE_DIR, '.build');
 const RUNNER_TEMPLATE = path.join(PACKAGE_DIR, 'runner');
 const RUNNER_SOURCE = path.join(CLI_DIR, 'src', 'runner');
 const DEFAULT_TAG = 'crossbind-playground-compiler:dev';
 const CLI_CONTEXT = path.join(CONTEXT, 'crossbind');
 const MODULES_CONTEXT = path.join(CONTEXT, 'compiler', 'template', 'node_modules');
-const EMBIND_RUST_DIR = path.join(REPO_DIR, 'core', 'embind-rust');
-// What pnpm records of an install, with timestamps: the image needs none of it, and the hash must not move with it.
-const PNPM_STATE = ['.modules.yaml', '.pnpm-workspace-state-v1.json'];
 
 const argValue = (name, fallback) => {
     const at = process.argv.indexOf(name);
@@ -41,64 +35,14 @@ const filesBelow = (dir) => fs.readdirSync(dir, { recursive: true, withFileTypes
     .map((entry) => path.join(entry.parentPath, entry.name))
     .sort();
 
-// crossbind with every version the workspace lockfile pins, for linux on either CPU, so the image build fetches nothing
-// and runs no install script; hoisted lays the packages out as npm does. pnpm deploys from a lockfile only with
-// injected workspace packages, of which crossbind has none. It records its settings as the install state of the
-// workspace it runs in, after which pnpm would reinstall that workspace before running a script, so it runs in a copy
-// holding the lockfile, its settings and crossbind alone.
-function deployCli(target) {
-    const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-cli-'));
-    const cli = path.join(workspace, path.relative(REPO_DIR, CLI_DIR));
-    try {
-        WORKSPACE_FILES.forEach((file) => fs.copyFileSync(path.join(REPO_DIR, file), path.join(workspace, file)));
-        fs.cpSync(CLI_DIR, cli, { recursive: true, filter: (source) => path.basename(source) !== 'node_modules' });
-        execFileSync('pnpm', [
-            '--silent', '--filter', 'crossbind', 'deploy', '--prod', '--frozen-lockfile', '--ignore-scripts',
-            '--config.inject-workspace-packages=true', '--config.node-linker=hoisted', '--os', 'linux', '--cpu', 'x64', '--cpu', 'arm64', target,
-        ], { cwd: cli, stdio: 'inherit' });
-    } finally {
-        fs.rmSync(workspace, { recursive: true, force: true });
-    }
-    PNPM_STATE.forEach((file) => fs.rmSync(path.join(target, 'node_modules', file), { force: true }));
-}
-
-// The template's node_modules: the ports a compile may use (compiler/packages.js), packed from npm at their pinned
-// version and refused unless npm's integrity is the one the catalog pins, and @crossbind/core-embind-rust from this
-// repository, which a build without a bundler needs for Rust. Unpacked here, so the image build fetches none of them.
-function packModules(target) {
-    const packs = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-packs-'));
-    const pack = (args, cwd) => JSON.parse(execFileSync('npm', ['pack', ...args, '--json', '--ignore-scripts', '--pack-destination', packs], { cwd, encoding: 'utf8' }))[0];
-    const unpack = (tarball, name) => {
-        const dir = path.join(target, name);
-        fs.mkdirSync(dir, { recursive: true });
-        execFileSync('tar', ['-xzf', path.join(packs, tarball), '-C', dir, '--strip-components=1']);
-    };
-    try {
-        const tarballs = PACKAGES.flatMap(({ version, tarballs: own = [] }) => own.map((tarball) => ({ ...tarball, version })));
-        tarballs.forEach(({ name, version, integrity }) => {
-            const packed = pack([`${name}@${version}`]);
-            if (packed.integrity !== integrity) throw new Error(`${name}@${version} is ${packed.integrity}; compiler/packages.js pins ${integrity}.`);
-            unpack(packed.filename, name);
-        });
-        // A port's config imports the configs of the ports it depends on.
-        const packed = new Set(tarballs.map(({ name }) => name));
-        const missing = [...packed]
-            .flatMap((name) => Object.keys(JSON.parse(fs.readFileSync(path.join(target, name, 'package.json'), 'utf8')).dependencies ?? {}))
-            .filter((dependency) => dependency.startsWith('@crossbind/port-') && !packed.has(dependency));
-        if (missing.length) throw new Error(`compiler/packages.js lacks ${[...new Set(missing)].join(', ')}, which a port it lists depends on.`);
-        unpack(pack([], EMBIND_RUST_DIR).filename, '@crossbind/core-embind-rust');
-    } finally {
-        fs.rmSync(packs, { recursive: true, force: true });
-    }
-}
-
 fs.rmSync(CONTEXT, { recursive: true, force: true });
 fs.mkdirSync(CONTEXT, { recursive: true });
 // wrangler passes no build arguments, so the base image is written into the Dockerfile itself.
 const dockerfile = fs.readFileSync(path.join(PACKAGE_DIR, 'Dockerfile'), 'utf8').replace(/^ARG BASE_IMAGE$/m, `ARG BASE_IMAGE=${baseImage}`);
 fs.writeFileSync(path.join(CONTEXT, 'Dockerfile'), dockerfile);
 fs.cpSync(path.join(PACKAGE_DIR, 'compiler'), path.join(CONTEXT, 'compiler'), { recursive: true });
-deployCli(CLI_CONTEXT);
+// Both unpacked here, so the image build fetches nothing and runs no install script.
+deployCli(CLI_CONTEXT, IMAGE_PLATFORMS);
 packModules(MODULES_CONTEXT);
 
 const hash = crypto.createHash('sha256');
