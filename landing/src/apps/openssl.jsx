@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { REPO_URL } from '../data.js';
+import { versionOf } from '../ports/catalog.js';
 import AppCard, { Failure, fieldStyle, Label, RunButton, useNativeTask } from './AppCard.jsx';
 import { download, FileButton, Hint, Meta, Placeholder, SecondaryButton, Select, Stat, Toggle } from './controls.jsx';
 
@@ -124,7 +125,7 @@ function LicenceNote({ tokens }) {
     const external = { target: '_blank', rel: 'noreferrer', style: { color: tokens.accentText, textDecoration: 'underline', textUnderlineOffset: 3 } };
     return (
         <span>
-            {'Runs OpenSSL 4.0.2, which is Apache-2.0: '}
+            {`Runs OpenSSL ${versionOf('openssl')}, which is Apache-2.0: `}
             <a href="https://github.com/openssl/openssl" {...external}>source</a>
             {' · '}
             <a href={`${REPO_URL}/tree/main/ports/openssl`} {...external}>build recipe</a>

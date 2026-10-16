@@ -137,7 +137,7 @@ export function GeoPackageExport({ tokens, index, load }) {
                                 ))}
                             </div>
                             <Meta tokens={tokens} flush>
-                                {`CheckGeoPackageMetaData() returned ${done.report.check}. The header says ${idText(done.report.applicationId)}: SpatiaLite 5.1.0 writes GeoPackage 1.0, which GDAL reads, and QGIS through GDAL.`}
+                                {`CheckGeoPackageMetaData() returned ${done.report.check}. The header says ${idText(done.report.applicationId)}, the GeoPackage version SpatiaLite writes: GDAL reads it, and QGIS through GDAL.`}
                             </Meta>
                             <div>
                                 <SecondaryButton tokens={tokens} onClick={() => download(done.bytes, 'field.gpkg', 'application/geopackage+sqlite3')}>

@@ -5,6 +5,13 @@ import catalog from '../../generated/ports-catalog.js';
 // dist-tag. Only a published variant counts as supported.
 export const PORTS = [...catalog.ports].sort((left, right) => left.name.localeCompare(right.name, 'en'));
 
+// The version of the library a port carries, for a sentence that names it: written out by hand, it went stale.
+export function versionOf(family) {
+    const port = PORTS.find((entry) => entry.family === family);
+    if (!port) throw new Error(`There is no port ${family}.`);
+    return port.nativeVersion;
+}
+
 export const BIN_TARGET = 'standalone-wasi';
 export const NAPI_TARGET = 'standalone-napi';
 

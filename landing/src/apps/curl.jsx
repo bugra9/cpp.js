@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { versionOf } from '../ports/catalog.js';
 import AppCard, { Failure, fieldStyle, Label, RunButton, useNativeTask } from './AppCard.jsx';
 import { Hint, Meta, Placeholder, Select, Stat } from './controls.jsx';
 
@@ -7,7 +8,7 @@ import { Hint, Meta, Placeholder, Select, Stat } from './controls.jsx';
 // None of them opens a connection: in a browser this port hands transfers to fetch, so the apps use
 // the parts of libcurl that need no network, beside the browser's own parsers.
 
-const NOTE = 'No request is made: these are libcurl 8.22.0 parsers running in this tab.';
+const NOTE = `No request is made: these are libcurl ${versionOf('curl')} parsers running in this tab.`;
 const DEFAULT_PORTS = { 'http:': '80', 'https:': '443', 'ftp:': '21', 'ws:': '80', 'wss:': '443' };
 
 // This browser's reading of a URL, in the shape UrlLab returns. Runs only in event handlers.
@@ -115,7 +116,7 @@ export function FilterCheck({ tokens, index, load }) {
             index={index}
             status={state.status}
             title="Test a URL allowlist against libcurl's own parser"
-            pitch="A server that checks a URL with JavaScript's URL parser and then fetches it with libcurl runs two parsers. Where they disagree, a URL can pass the check and send libcurl to a host the check never saw. Enter the host your check allows and one it must keep out: each URL below is parsed by libcurl 8.22.0, with the flags curl_easy_perform uses, beside this browser's URL."
+            pitch={`A server that checks a URL with JavaScript's URL parser and then fetches it with libcurl runs two parsers. Where they disagree, a URL can pass the check and send libcurl to a host the check never saw. Enter the host your check allows and one it must keep out: each URL below is parsed by libcurl ${versionOf('curl')}, with the flags curl_easy_perform uses, beside this browser's URL.`}
             note={NOTE}
             controls={
                 <div style={{ display: 'grid', gap: 14 }}>
