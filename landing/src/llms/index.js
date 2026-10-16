@@ -50,7 +50,7 @@ const REFERENCE_DOCUMENTS = [
     ['overrides.md', 'every override mechanism, ordered from least to most invasive.'],
     ['performance.md', 'the default Emscripten and CMake flags, and what is safe to change.'],
     ['troubleshooting.md', 'common errors mapped to the right override.'],
-    ['lifecycle-and-types.md', 'why there is no JavaScript-side `delete()`, and TypeScript notes.'],
+    ['lifecycle-and-types.md', 'what the garbage collector frees and when to call `delete()`, and TypeScript notes.'],
 ];
 
 const SKILL_URL = `${REPO_URL}/blob/main/agents/skills/crossbind/SKILL.md`;
