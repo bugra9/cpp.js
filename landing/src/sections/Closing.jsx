@@ -1,3 +1,4 @@
+import { AUTHOR_URL } from '../data.js';
 import LICENSE_PAGE from '../pages/license.js';
 import PRIVACY_PAGE from '../pages/privacy.js';
 
@@ -24,7 +25,10 @@ export default function Closing({ tokens }) {
         >
             <span>
                 {/* Keeps the name with the year; the line breaks at "and" instead. */}
-                <span style={{ whiteSpace: 'nowrap' }}>© 2026 Buğra Sarı</span>
+                <span style={{ whiteSpace: 'nowrap' }}>
+                    {'© 2026 '}
+                    <a href={AUTHOR_URL} style={{ color: tokens.textDim }}>Buğra Sarı</a>
+                </span>
                 {' and crossbind contributors'}
             </span>
             <nav aria-label="Footer" style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
