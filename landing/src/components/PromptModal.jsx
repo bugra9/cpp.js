@@ -104,7 +104,7 @@ export default function PromptModal({ tokens, open, onClose }) {
             onClose={onClose}
             // A backdrop click lands on the dialog element itself, not on its children.
             onClick={(e) => { if (e.target === ref.current) onClose(); }}
-            aria-label="Set up with an AI agent"
+            aria-label="Agent setup"
             className="prompt-dialog"
             style={{
                 width: 'min(760px, calc(100vw - 32px))',
@@ -129,7 +129,7 @@ export default function PromptModal({ tokens, open, onClose }) {
                     borderBottom: `1px solid ${tokens.border}`,
                 }}
                 >
-                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Set up with an AI agent</h2>
+                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Agent setup</h2>
                     <div style={{ flex: 1 }} />
                     <button
                         type="button"
