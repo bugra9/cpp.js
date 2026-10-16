@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import upath from 'upath';
 import { ENTRY_RUNTIMES } from '../src/utils/runtimeEntries.js';
-import writeRuntimeEntry, { removeImportHooks, writeImportHooks } from '../src/actions/writeRuntimeEntry.js';
+import writeRuntimeEntry, { removeImportHooks, writeImportHooks, writeImportManifest } from '../src/actions/writeRuntimeEntry.js';
 
 const EXTENSIONS = ['h', 'hpp', 'hxx', 'hh', 'i', 'rs'];
 
@@ -51,6 +51,30 @@ function runApp(app, out = 'dist') {
     const { stdout, stderr, status } = spawnSync(process.execPath, ['--import', register, upath.join(work, app)], { encoding: 'utf8' });
     return { stdout: stdout.trim(), stderr, status };
 }
+
+describe('writeImportManifest', () => {
+    test('lists each bound file by its path in the project, the bare specifiers that name it and its names', () => {
+        // What a page that resolves the imports itself (the playground) maps main.js's specifiers with.
+        write('src/native/greet.h');
+        write('pkg/include/sqlite3.h');
+        const crate = { file: write('.crossbind/rust-crates/uuid.rs'), names: [{ local: 'Uuid', wire: 'uuid_Uuid' }] };
+        const headers = [bound('src/native/greet.h', ['greet']), bound('pkg/include/sqlite3.h', ['sqlite3_libversion']), crate];
+        const imports = new Map([
+            [upath.join(work, 'pkg/include/sqlite3.h'), { specifiers: ['@crossbind/port-sqlite3/sqlite3.h'] }],
+            [crate.file, { specifiers: ['cargo:uuid'] }],
+        ]);
+
+        writeImportManifest(upath.join(work, 'dist/browser/imports.json'), headers, imports, work);
+
+        expect(JSON.parse(fs.readFileSync(upath.join(work, 'dist/browser/imports.json'), 'utf8'))).toEqual({
+            natives: [
+                { file: 'src/native/greet.h', specifiers: [], names: ['greet'] },
+                { file: 'pkg/include/sqlite3.h', specifiers: ['@crossbind/port-sqlite3/sqlite3.h'], names: ['sqlite3_libversion'] },
+                { file: '.crossbind/rust-crates/uuid.rs', specifiers: ['cargo:uuid'], names: [{ local: 'Uuid', wire: 'uuid_Uuid' }] },
+            ],
+        });
+    });
+});
 
 describe('writeImportHooks', () => {
     test('lets an app import a header by relative path and a package header by its specifier', () => {

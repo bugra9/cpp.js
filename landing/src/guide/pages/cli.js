@@ -45,6 +45,7 @@ export default {
                 ['`-b, --build-type`', '`release`, `debug`', '`release`'],
                 ['`-e, --runtime-env`', '`browser`, `edge`, `node`, `native`, `wasi`, `http`', '`target.runtimeEnv` from `crossbind.config.js`; with neither, only the archives'],
                 ['`--rebuild-deps [list]`', '`all`, or dependency names separated by commas', 'prebuilt dependencies'],
+                ['`--bind-imports`', 'none', 'a `browser` module binds only the headers in `paths.native`'],
             ],
         },
         {
@@ -58,6 +59,10 @@ export default {
         {
             type: 'p',
             text: '`--rebuild-deps` builds the named dependencies from source into `.crossbind/deps/` instead of using their prebuilt archives; `CROSSBIND_REBUILD_DEPS` does the same from the environment. In a port with a `crossbind.build.js` recipe, `build` downloads the pinned upstream source, checks it against the SHA-256 the recipe pins and builds the archives.',
+        },
+        {
+            type: 'p',
+            text: "`--bind-imports` also binds what the app's JavaScript imports (own headers and `.rs` files, port headers, `cargo:` and `conan:`) into a `browser` module, as a `node` module always does, and writes `browser/imports.json` beside it: each bound file, the bare specifiers that name it and its names. It is for a page that resolves those imports itself, as the playground does; with a bundler the plugin binds what it transforms. Rust without a bundler needs `@crossbind/core-embind-rust` among the app's dependencies.",
         },
         {
             type: 'p',

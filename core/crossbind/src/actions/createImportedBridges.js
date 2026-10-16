@@ -34,6 +34,13 @@ function resolveImport(specifier, importer, targets) {
     return null;
 }
 
+// Whether a binary binds what the app's own sources import. A Node binary does: its module hooks resolve those
+// imports. A browser binary only with --bind-imports: without a bundler a page cannot resolve a header import
+// unless it maps the specifiers itself, as the playground's sandbox does. Nothing on an edge runtime resolves one.
+export function bindsAppImports(target, { bindImports = false } = {}) {
+    return target.runtimeEnv === 'node' || (bindImports && target.runtimeEnv === 'browser');
+}
+
 // The native files the app's own sources import, by real path, each under the first target whose packages ship it
 // and with the bare specifiers that name it, which Node cannot resolve on its own.
 export function findAppNativeImports(targets) {

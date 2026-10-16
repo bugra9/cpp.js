@@ -15,7 +15,7 @@ vi.mock('../src/actions/createInterface.js', () => ({ default: createBridgeFile 
 vi.mock('../src/integration/getCrossbindScript.js', () => ({ getRustSymbols }));
 vi.mock('../src/integration/getDependFilePath.js', () => ({ default: getDependFilePath }));
 
-const { findAppNativeImports, createImportedBridges } = await import('../src/actions/createImportedBridges.js');
+const { findAppNativeImports, createImportedBridges, bindsAppImports } = await import('../src/actions/createImportedBridges.js');
 
 const TARGET = { platform: 'linux', path: 'linux-x64-mt-release' };
 // What getDependFilePath does with a crate the config does not declare.
@@ -76,6 +76,22 @@ describe('findAppNativeImports', () => {
         expect(findAppNativeImports([TARGET]).size).toBe(0);
         expect(warn).toHaveBeenCalledWith(expect.stringContaining('imports @missing/pkg/x.h, which no dependency ships'));
         warn.mockRestore();
+    });
+});
+
+describe('bindsAppImports', () => {
+    test('a node binary binds what the app imports, flag or not: the module hooks resolve those imports', () => {
+        expect(bindsAppImports({ runtimeEnv: 'node' })).toBe(true);
+        expect(bindsAppImports({ runtimeEnv: 'node' }, { bindImports: false })).toBe(true);
+    });
+
+    test('a browser binary binds them only when asked: without a bundler the page has to map them itself', () => {
+        expect(bindsAppImports({ runtimeEnv: 'browser' })).toBe(false);
+        expect(bindsAppImports({ runtimeEnv: 'browser' }, { bindImports: true })).toBe(true);
+    });
+
+    test('an edge binary never does: nothing on an edge runtime resolves a header import', () => {
+        expect(bindsAppImports({ runtimeEnv: 'edge' }, { bindImports: true })).toBe(false);
     });
 });
 
