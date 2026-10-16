@@ -83,6 +83,7 @@ export const DEMOS = [
     { id: 'sample-inheritance', kind: 'sample', expect: 'is a Shape: true' },
     { id: 'sample-callbacks', kind: 'sample', expect: 'applied twice: 400' },
     { id: 'sample-errors', kind: 'sample', expect: 'std::out_of_range: not between 0 and 100' },
+    { id: 'sample-hero', kind: 'sample', expect: 'Hello, crossbind! 2880067194370816120n' },
 ];
 
 const log = (message) => process.stderr.write(`${message}\n`);

@@ -124,6 +124,10 @@ html[data-playground-skin='turbo'] .playground-app[data-skin='modern'] {
     .turbo-bar button:hover:not(:disabled) {
         background: #00aa00;
     }
+
+    .turbo-menu a:hover {
+        background: var(--hover);
+    }
 }
 
 /* A tutorial step: the lesson beside its code where both fit, the lesson first below that. */

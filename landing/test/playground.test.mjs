@@ -4,8 +4,11 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { SITE_ROUTES } from '../src/site-pages.js';
 import PLAYGROUND_PAGE from '../src/pages/playground.js';
+import { HERO_CONFIG } from '../src/data.js';
 import { SKIN_KEY, SKIN_PARAM, readSkin } from '../src/playground/skin.js';
 import { LIMITS } from '../../tooling/cloud/compiler/sandbox.js';
+import { packagesFor } from '../../tooling/cloud/compiler/packages.js';
+import { sampleProject } from '../../scripts/site/build-example-demos.mjs';
 
 const html = readFileSync(new URL('../public/playground/sandbox.html', import.meta.url), 'utf8');
 const headers = readFileSync(new URL('../public/_headers', import.meta.url), 'utf8');
@@ -56,4 +59,11 @@ test('the pre-paint script reads the look by the same key and parameter', () => 
     const page = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
     assert.ok(page.includes(`localStorage.getItem('${SKIN_KEY}')`));
     assert.ok(page.includes(`.get('${SKIN_PARAM}')`));
+});
+
+test('the hero shows the hero sample in the 66 characters its code column holds, its config declaring the sample\'s packages', () => {
+    const { files, packages } = sampleProject('hero');
+    [files['main.js'], files['native/greet.h'], files['native/math.rs'], HERO_CONFIG].join('\n').split('\n')
+        .forEach((line) => assert.ok(line.length <= 66, line));
+    packagesFor(packages).forEach(({ source, name, package: npm }) => assert.ok(HERO_CONFIG.includes(source === 'port' ? npm : `${name}:`), name));
 });
