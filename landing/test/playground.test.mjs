@@ -46,6 +46,13 @@ test('the page names the time and memory a compile gets in the sandbox', () => {
     assert.ok(text.includes(`${LIMITS.dataBytes / 1024 ** 3} GB of memory`));
 });
 
+test('until the first run the console says what a compile gets and links Privacy', () => {
+    const intro = PLAYGROUND_PAGE.intro.join(' ');
+    assert.ok(intro.includes(`${LIMITS.wallMs / 1000} seconds`));
+    assert.ok(intro.includes(`${LIMITS.dataBytes / 1024 ** 3} GB of memory`));
+    assert.ok(intro.includes('](/privacy/)'));
+});
+
 // A visitor who picked the Turbo look back when the choice was stored.
 function withStoredTurbo(check) {
     const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');

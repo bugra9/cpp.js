@@ -73,7 +73,8 @@ export default function App({ url }) {
                     <Showcase tokens={tokens} />
                 </main>
             )}
-            <Closing tokens={tokens} />
+            {/* The playground is one screen; its console links Privacy. */}
+            {page?.kind === 'playground' ? null : <Closing tokens={tokens} />}
             <Search tokens={tokens} open={searchOpen} onOpen={openSearch} onClose={closeSearch} />
         </div>
     );
