@@ -16,7 +16,7 @@ function AddButton({ tokens, onClick, disabled, children }) {
 }
 
 export default function TurboWorkspace({
-    tokens, project, sampleId, shown, view, busy, creating, lines, buildLog, lastRun,
+    tokens, project, sampleId, shown, view, busy, creating, lines, buildLog, lastRun, intro,
     onView, onOpen, onCreating, onCreateFile, onRemoveFile, onAddPackage, onRemovePackage, onEdit,
 }) {
     const turbo = turboTokens(tokens);
@@ -59,7 +59,7 @@ export default function TurboWorkspace({
                 </TurboWindow>
                 <TurboWindow title="Output" number={runInfo(lastRun) || null} background={TURBO.black} className="playground-pane turbo-output" data-shown={view === 'console'}>
                     <div style={{ ...content, padding: '10px 14px' }}>
-                        <ConsoleLines tokens={output} lines={lines} buildLog={buildLog} />
+                        <ConsoleLines tokens={output} lines={lines} buildLog={buildLog} intro={intro} />
                     </div>
                 </TurboWindow>
             </div>

@@ -8,7 +8,7 @@ import {
 
 // The modern look: the project beside the open file and the console, in the site's theme.
 export default function ModernWorkspace({
-    tokens, project, sampleId, shown, view, busy, creating, lines, buildLog, lastRun,
+    tokens, project, sampleId, shown, view, busy, creating, lines, buildLog, lastRun, intro,
     onView, onOpen, onSelectFile, onCreating, onCreateFile, onRemoveFile, onAddPackage, onRemovePackage, onEdit,
 }) {
     const fileTabs = [...fileNames(project), CONFIG].map((name) => ({ id: name, label: shortName(name) }));
@@ -73,7 +73,7 @@ export default function ModernWorkspace({
                         flex: 1, minHeight: 0, overflowY: 'auto', padding: 16, fontFamily: tokens.mono, fontSize: 12.5, lineHeight: 1.8,
                     }}
                     >
-                        <ConsoleLines tokens={tokens} lines={lines} buildLog={buildLog} />
+                        <ConsoleLines tokens={tokens} lines={lines} buildLog={buildLog} intro={intro} />
                     </div>
                 </div>
             </div>

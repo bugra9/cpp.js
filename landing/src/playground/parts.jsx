@@ -1,5 +1,6 @@
 import { CodeWindow, primaryButtonStyle, secondaryButtonStyle } from '../components/ui.jsx';
 import { PLAYGROUND_URL } from '../data.js';
+import { inline } from '../guide/inline.jsx';
 import { LOGIN_URL } from './client.js';
 
 // The run controls and the console the playground and the tutorial share; useRunner.js holds their state.
@@ -107,7 +108,8 @@ export function Notice({
     );
 }
 
-export function ConsoleLines({ tokens, lines, buildLog }) {
+// `intro` is what the playground says until the first run; the tutorial's steps explain themselves and pass none.
+export function ConsoleLines({ tokens, lines, buildLog, intro }) {
     const colorOf = ({ stream }) => {
         if (stream === 'done') return tokens.codeMuted;
         return ERROR_STREAMS.has(stream) ? tokens.warn : tokens.codeText;
@@ -119,7 +121,16 @@ export function ConsoleLines({ tokens, lines, buildLog }) {
             {lines.map((line, index) => (
                 <div key={index} style={{ color: colorOf(line) }}>{line.text}</div>
             ))}
-            {!buildLog && lines.length === 0 && <span style={{ color: tokens.codeMuted }}>Press Run, or Ctrl+Enter, to run main.js.</span>}
+            {!buildLog && lines.length === 0 && (
+                <>
+                    <span style={{ color: tokens.codeMuted }}>Press Run, or Ctrl+Enter, to run main.js.</span>
+                    {intro?.map((text) => (
+                        <p key={text} style={{ margin: '12px 0 0', fontFamily: tokens.sans, fontSize: 13, lineHeight: 1.65, color: tokens.textDim, whiteSpace: 'normal' }}>
+                            {inline(text, tokens)}
+                        </p>
+                    ))}
+                </>
+            )}
         </div>
     );
 }

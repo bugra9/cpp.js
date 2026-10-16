@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { inline } from '../guide/inline.jsx';
 import {
     editDraft, projectOf, readDrafts, updateDrafts, without,
 } from './drafts.js';
@@ -188,6 +187,7 @@ export default function PlaygroundPage({ tokens, page }) {
         lines: runner.lines,
         buildLog: runner.buildLog,
         lastRun: runner.lastRun,
+        intro: page.intro,
         onView: setView,
         onOpen: open,
         onSelectFile: setActive,
@@ -262,17 +262,6 @@ export default function PlaygroundPage({ tokens, page }) {
                     <Notice tokens={tokens} notice={runner.notice} canSignIn={Boolean(runner.session?.canSignIn)} style={{ margin: '10px var(--playground-x)' }} />
                 )}
                 {skin === 'turbo' ? <TurboWorkspace {...workspace} /> : <ModernWorkspace {...workspace} />}
-            </section>
-
-            <section style={{ padding: '40px var(--content-x) 80px' }}>
-                <div style={{ maxWidth: 880 }}>
-                    <p style={{ fontSize: 17, lineHeight: 1.65, color: tokens.textDim, margin: 0 }}>{inline(page.lede, tokens)}</p>
-                    {page.blocks.map((block) => (block.type === 'h2' ? (
-                        <h2 key={block.id} id={block.id} style={{ fontSize: 22, fontWeight: 600, letterSpacing: -0.5, margin: '32px 0 10px', color: tokens.text }}>{block.text}</h2>
-                    ) : (
-                        <p key={block.text} style={{ fontSize: 15, lineHeight: 1.7, color: tokens.textDim, margin: 0 }}>{inline(block.text, tokens)}</p>
-                    )))}
-                </div>
             </section>
 
             <PackageDialog
