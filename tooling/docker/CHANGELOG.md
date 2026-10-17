@@ -1,5 +1,18 @@
 # @crossbind/docker
 
+## Unreleased — image family 1.0.13
+
+### Patch Changes
+
+- Updated Node.js to 24.22.0 in `base` and every image built on it. Its bundled npm is 11.19.1, the
+  release the image already installed in place of the bundled one, so npm and its patched
+  brace-expansion and undici are unchanged.
+- Updated Rust to 1.99.1 in the `base` and `rust-sysroot` images. The bootstrap image stays
+  `rust:1.98.1-slim` at the same digest; its rustup installs exactly 1.99.1.
+- Rebuilding brings the Debian packages up to date: curl 8.14.1-2+deb13u7 fixes CVE-2026-8286,
+  CVE-2026-8927 and CVE-2026-92392 (HIGH), which the daily scan has found in every published 1.0.12
+  image built on `base` since 14 October.
+
 ## Image family 1.0.12
 
 ### Patch Changes
