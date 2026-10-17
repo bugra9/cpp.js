@@ -56,7 +56,8 @@ RUN set -eu; \
 
 # Alpine keeps every release on its mirrors. Every package is checked against the SHA-256 recorded
 # in linuxmusl-sysroot.txt; gcc gives up only its startup files and runtime libraries. The packages
-# carry no license texts, so those come from the exact upstream revisions.
+# carry no license texts, so those come from the exact upstream revisions. musl's server is slow and
+# now and then answers with an error, so its text is fetched with retries.
 ARG ALPINE_MIRROR=https://dl-cdn.alpinelinux.org/alpine
 COPY linuxmusl-sysroot.txt /tmp/linuxmusl-sysroot.txt
 RUN set -eu; \
@@ -75,7 +76,7 @@ RUN set -eu; \
     done; \
     mkdir -p /opt/licenses/linux-sysroot/musl; \
     cd /opt/licenses/linux-sysroot/musl; \
-    wget -q "https://git.musl-libc.org/cgit/musl/plain/COPYRIGHT?h=v1.2.5" -O musl-COPYRIGHT; \
+    wget -q --tries=5 --retry-on-http-error=429,500,502,503,504 "https://git.musl-libc.org/cgit/musl/plain/COPYRIGHT?h=v1.2.5" -O musl-COPYRIGHT; \
     wget -q "https://raw.githubusercontent.com/gcc-mirror/gcc/releases/gcc-15.2.0/COPYING3" -O gcc-COPYING3; \
     wget -q "https://raw.githubusercontent.com/gcc-mirror/gcc/releases/gcc-15.2.0/COPYING.RUNTIME" -O gcc-COPYING.RUNTIME; \
     wget -q "https://raw.githubusercontent.com/torvalds/linux/v6.16/COPYING" -O linux-COPYING; \
