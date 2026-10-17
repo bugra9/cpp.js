@@ -8,14 +8,14 @@
 
 An object crossbind hands to JavaScript is freed when the garbage collector reclaims its last handle, and `.delete()` frees it at once.
 
-Wherever the runtime has `FinalizationRegistry` (browsers, on the page thread and in a worker, and Node.js, in a wasm build and in a Node-API addon), the collector frees:
+Wherever the runtime has `FinalizationRegistry` (browsers, on the page thread and in a worker, Node.js, in a wasm build and in a Node-API addon, and React Native 0.88 and later), the collector frees:
 
 - an instance of a C++ class made with `new`, which C++ holds through a `std::shared_ptr`;
 - a value a function or a method returns, a struct, a class or a `std::vector`, which crosses as a copy;
 - a vector `toVector` builds, and an instance of a Rust struct made with `new`;
 - in worker mode, the worker's object behind each handle the main thread lets go of. A vector the worker returns arrives as a plain array, and its C++ copy is freed as it crosses.
 
-The collector runs when it chooses, and it weighs only a handle's small JavaScript object, not the C++ memory behind it. Call `.delete()` on an object that holds a lot of memory or a resource, and on objects made in a loop; the handle cannot be used after it. React Native's Hermes engine has no `FinalizationRegistry` yet, so there `.delete()` is the only way to free an object.
+The collector runs when it chooses, and it weighs only a handle's small JavaScript object, not the C++ memory behind it. Call `.delete()` on an object that holds a lot of memory or a resource, and on objects made in a loop; the handle cannot be used after it. On React Native before 0.88, whose Hermes engine has no `FinalizationRegistry`, `.delete()` is the only way to free an object.
 
 What stays C++'s:
 

@@ -199,7 +199,7 @@ console.log(await result.get(0));`,
         { type: 'h2', id: 'lifecycle', text: 'Object lifetime' },
         {
             type: 'p',
-            text: "What crossbind hands you is freed when the garbage collector reclaims its handle, at a time you do not control: in the browser, on the page thread and in a worker, and in Node.js. `.delete()` frees it at once, so call it when a C++ object holds a file, a socket or a lot of memory, and on objects made in a loop. On React Native it is the only way: Hermes has no `FinalizationRegistry` yet. Memory a library returns through a raw pointer stays the library's: free it with the library's own function.",
+            text: "What crossbind hands you is freed when the garbage collector reclaims its handle, at a time you do not control: in the browser, on the page thread and in a worker, in Node.js, and in React Native 0.88 and later. `.delete()` frees it at once, so call it when a C++ object holds a file, a socket or a lot of memory, and on objects made in a loop. On React Native before 0.88 it is the only way, since its Hermes has no `FinalizationRegistry`. Memory a library returns through a raw pointer stays the library's: free it with the library's own function.",
         },
         {
             type: 'p',
