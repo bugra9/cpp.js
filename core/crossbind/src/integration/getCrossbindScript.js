@@ -112,7 +112,9 @@ function buildScript(target, symbols, base) {
         throw new Error('The target is not available!');
     }
     const env = JSON.stringify(getEnv(target));
-    const getPlatformScript = target.platform === 'wasm' ? getWebScript : getReactNativeScript;
+    let getPlatformScript = getReactNativeScript;
+    if (target.platform === 'wasm') getPlatformScript = getWebScript;
+    else if (target.runtimeEnv === 'app') getPlatformScript = getAppScript;
 
     let symbolExportDefineString = '';
     let symbolExportAssignString = '';
@@ -196,6 +198,18 @@ function getReactNativeScript(env) {
             await RNJsiLib.start();
             setEnv();
             return Module;
+        }
+    `;
+}
+
+// An app's page loads the runtime the app serves as crossbind.js, which asks the app's host for the module. The build's
+// env is the host's own, so the page passes on only what initNative() is given.
+function getAppScript(env, base) {
+    return `
+        function __crossbindBoot(config) {
+            const base = new URL((typeof __webpack_public_path__ === 'string' ? __webpack_public_path__ : ${JSON.stringify(base)}) || './', document.baseURI).href;
+            return import(/* webpackIgnore: true */ /* @vite-ignore */ base + 'crossbind.js')
+                .then(() => window.Crossbind.initNative(config));
         }
     `;
 }

@@ -1,13 +1,17 @@
 
 import {
     state, createLib, createBridgeFile, buildWasm, buildDependencies, getTargetParams, getFilteredBuildTargets, isSourceNewer, getRustJsScript,
-    isAppSource, getFileHash,
+    isAppSource, getFileHash, buildProjectApp,
 } from 'crossbind';
 import rollupCrossbindPlugin from '@crossbind/plugin-rollup';
 
 import fs from 'node:fs';
+import { spawn } from 'node:child_process';
 
-const targetParams = getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
+const isApp = state.config.target.runtimeEnv === 'app';
+const targetParams = isApp
+    ? getTargetParams({ platform: [process.platform], arch: [process.arch], runtime: ['mt'], runtimeEnv: ['app'] }, true)
+    : getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
 let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
 let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
 
@@ -19,7 +23,99 @@ if (!buildTargetDebug) {
     buildTargetDebug = buildTargetRelease;
 }
 
+// During development an app opens on the dev server. Its host is built for this machine first, and built and reopened
+// whenever the native code or the native imports of the page change; the page itself reloads as any Vite page does.
+// Closing the window ends the session.
+function appDevPlugin() {
+    let isServe = false;
+    let server = null;
+    let appUrl = null;
+    let app = null;
+    let building = Promise.resolve(false);
+    const nativeRegex = new RegExp(`\\.(${[...state.config.ext.header, ...state.config.ext.source, 'rs'].join('|')})$`);
+
+    async function build() {
+        await buildDependencies({ targetParams: { ...targetParams, buildType: [buildTargetDebug.buildType] } });
+        return buildProjectApp(buildTargetDebug);
+    }
+
+    // The session ends with the app, as the app ended.
+    function end(status) {
+        server.close().then(() => process.exit(status));
+    }
+
+    function launch() {
+        const executable = `${state.config.paths.build}/${buildTargetDebug.appName}/Contents/MacOS/${state.config.general.name}`;
+        const child = spawn(executable, [], { stdio: 'inherit', env: { ...process.env, CROSSBIND_APP_URL: appUrl } });
+        app = child;
+        child.once('error', (error) => {
+            server.config.logger.error(`crossbind: the app did not start: ${error.message}`);
+            if (app === child) end(1);
+        });
+        child.once('exit', (code) => {
+            if (app === child) end(code ?? 1);
+        });
+    }
+
+    function stop() {
+        const running = app;
+        app = null;
+        running?.kill();
+    }
+
+    // One build at a time, so an edit during a build waits for it. The window keeps running until a new host is ready,
+    // and a build that changed nothing leaves it alone. Resolves to whether the app opened anew.
+    function refresh({ always = false } = {}) {
+        const next = building.catch(() => {}).then(build);
+        building = next;
+        return next.then((changed) => {
+            if (!changed && !always) return false;
+            // A new host may bind other names, so its page transforms the header modules again.
+            server.moduleGraph.invalidateAll();
+            stop();
+            launch();
+            return true;
+        });
+    }
+
+    return {
+        name: 'vite-plugin-crossbind-app',
+        configResolved(config) {
+            isServe = config.command === 'serve';
+        },
+        async load(source) {
+            if (!isServe || source !== '/crossbind.js') return null;
+            await building;
+            return fs.readFileSync(`${state.config.paths.build}/${buildTargetDebug.appJsName}`, { encoding: 'utf8' });
+        },
+        configureServer(devServer) {
+            server = devServer;
+            devServer.httpServer?.once('listening', () => {
+                appUrl = `http://localhost:${devServer.httpServer.address().port}${devServer.config.base}`;
+                refresh({ always: true }).catch((error) => devServer.config.logger.error(error.message));
+            });
+            devServer.httpServer?.once('close', stop);
+            process.once('exit', stop);
+        },
+        async handleHotUpdate({ file }) {
+            if (file.startsWith(state.config.paths.build) || file.startsWith(state.config.paths.cache)) return undefined;
+            const isNative = nativeRegex.test(file);
+            if (!isNative && !isAppSource(state.config.paths.project, file)) return undefined;
+            try {
+                // An app opened anew loads its page anew.
+                if (await refresh()) return [];
+            } catch (error) {
+                server.config.logger.error(error.message);
+            }
+            return isNative ? [] : undefined;
+        },
+    };
+}
+
 const viteCrossbindPlugin = (options) => {
+    if (isApp) {
+        return [rollupCrossbindPlugin(options), appDevPlugin()];
+    }
     let isServe = false;
     let base = '/';
     // The middleware invalidates /crossbind.js on every request so a request that raced ahead

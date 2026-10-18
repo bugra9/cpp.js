@@ -7,6 +7,8 @@ on:
         paths:
             - core/**
             - examples/**
+            - plugins/vite/**
+            - plugins/rollup/**
             - .nvmrc
             - .github/workflows/test-node-native-sample.yml
     pull_request:
@@ -16,10 +18,15 @@ on:
             - core/crossbind/**
             - core/embind-jsi/**
             - core/embind-napi/**
+            - core/app-host/**
+            - plugins/vite/**
+            - plugins/rollup/**
             - examples/lib-prebuilt-matrix/**
             - examples/backend-nodejs-native/**
             - examples/native-executable/**
             - examples/desktop-electron/**
+            - examples/desktop-app/**
+            - examples/mobile-reactnative-cli/ci/**
             - .nvmrc
             - .github/workflows/test-node-native-sample.yml
 
@@ -41,13 +48,16 @@ jobs:
             - name: Restore cached bridge files
               # A macOS runner has no Docker and cannot run SWIG, so the bridges come from committed
               # snapshots; regenerate them when the headers or the SWIG fork change. desktop-electron
-              # binds the same native.h as backend-nodejs-native, so it takes that snapshot under its paths.
+              # binds the same native.h as backend-nodejs-native, and desktop-app imports Native from it by
+              # name as mobile-reactnative-cli does, so each takes that example's snapshot under its paths.
               run: |
-                  mkdir -p ./examples/lib-prebuilt-matrix/.crossbind ./examples/backend-nodejs-native/.crossbind ./examples/desktop-electron/.crossbind
+                  mkdir -p ./examples/lib-prebuilt-matrix/.crossbind ./examples/backend-nodejs-native/.crossbind ./examples/desktop-electron/.crossbind ./examples/desktop-app/.crossbind
                   cp -r ./examples/backend-nodejs-native/ci/lib-prebuilt-matrix-snapshot/. ./examples/lib-prebuilt-matrix/.crossbind/
                   cp -r ./examples/backend-nodejs-native/ci/crossbind-snapshot/. ./examples/backend-nodejs-native/.crossbind/
                   cp -r ./examples/backend-nodejs-native/ci/crossbind-snapshot/. ./examples/desktop-electron/.crossbind/
+                  cp -r ./examples/mobile-reactnative-cli/ci/crossbind-snapshot/. ./examples/desktop-app/.crossbind/
                   sed -i '' 's#/examples/backend-nodejs-native/#/examples/desktop-electron/#g' ./examples/desktop-electron/.crossbind/cache.json
+                  sed -i '' 's#/examples/mobile-reactnative-cli/#/examples/desktop-app/#g' ./examples/desktop-app/.crossbind/cache.json
             - name: Build examples/lib-prebuilt-matrix
               run: pnpm --filter=@crossbind/example-lib-prebuilt-matrix run build:darwin
             - name: Build examples/backend-nodejs-native
@@ -64,6 +74,10 @@ jobs:
                   pnpm --filter=@crossbind/example-desktop-electron run build
                   pnpm --filter=@crossbind/example-desktop-electron run e2e:dev
                   pnpm --filter=@crossbind/example-desktop-electron run e2e:prod
+            - name: Build examples/desktop-app and run the packaged app
+              run: |
+                  pnpm --filter=@crossbind/example-desktop-app run build
+                  pnpm --filter=@crossbind/example-desktop-app run e2e:prod
     windows-addons:
         # A hosted Windows runner cannot run the Linux image the win32 addons build in, so this
         # runner builds the ones the Windows runners load.

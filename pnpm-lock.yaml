@@ -70,6 +70,12 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
 
+  core/app-host:
+    dependencies:
+      '@crossbind/core-embind-jsi':
+        specifier: workspace:^
+        version: link:../embind-jsi
+
   core/crossbind:
     dependencies:
       '@rollup/plugin-commonjs':
@@ -419,6 +425,34 @@ importers:
       crossbind:
         specifier: workspace:^
         version: link:../../core/crossbind
+
+  e2e/desktop-app:
+    dependencies:
+      '@crossbind/conformance':
+        specifier: workspace:^
+        version: link:../conformance
+      '@crossbind/conformance-rust':
+        specifier: workspace:^
+        version: link:../conformance-rust
+      '@crossbind/embind-rust-demo':
+        specifier: workspace:^
+        version: link:../../core/embind-rust/demo
+    devDependencies:
+      '@crossbind/core-app-host':
+        specifier: workspace:^
+        version: link:../../core/app-host
+      '@crossbind/core-embind-rust':
+        specifier: workspace:^
+        version: link:../../core/embind-rust
+      '@crossbind/plugin-vite':
+        specifier: workspace:^
+        version: link:../../plugins/vite
+      crossbind:
+        specifier: workspace:^
+        version: link:../../core/crossbind
+      vite:
+        specifier: ^8.2.1
+        version: 8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0)
 
   e2e/mobile-reactnative-cli:
     dependencies:
@@ -954,6 +988,22 @@ importers:
       wrangler:
         specifier: ^4.136.3
         version: 4.149.0(@types/node@24.19.1)
+
+  examples/desktop-app:
+    dependencies:
+      '@crossbind/example-lib-prebuilt-matrix':
+        specifier: workspace:^
+        version: link:../lib-prebuilt-matrix
+    devDependencies:
+      '@crossbind/core-app-host':
+        specifier: workspace:^
+        version: link:../../core/app-host
+      '@crossbind/plugin-vite':
+        specifier: workspace:^
+        version: link:../../plugins/vite
+      vite:
+        specifier: ^8.2.1
+        version: 8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0)
 
   examples/desktop-electron:
     devDependencies:

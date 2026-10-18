@@ -6,12 +6,12 @@ import { Option } from 'commander';
 
 import { state } from './index.js';
 import { addSystemCommands, createProgram, handleFatal } from './program.js';
-import createBridgeFile from './actions/createInterface.js';
 import createLib from './actions/createLib.js';
 import buildWasm from './actions/buildWasm.js';
 import buildWasiCommand from './actions/buildWasiCommand.js';
 import buildNode, { addonsInPackages, bundleNodeLoader, publishNodeData } from './actions/buildNode.js';
 import buildNativeCommand from './actions/buildNativeCommand.js';
+import buildApp, { publishApp } from './actions/buildApp.js';
 import buildExternal from './actions/buildExternal.js';
 import buildPackageTypes from './actions/buildTypes.js';
 import buildLib from './actions/buildLib.js';
@@ -19,8 +19,7 @@ import buildDependencies from './actions/buildDependencies.js';
 import writeRuntimeEntry, { removeImportHooks, writeImportHooks, writeImportManifest } from './actions/writeRuntimeEntry.js';
 import { bindsAppImports, createImportedBridges, findAppNativeImports } from './actions/createImportedBridges.js';
 import { nativeExtensions } from './utils/nativeImports.js';
-import getDependFilePath from './integration/getDependFilePath.js';
-import { boundHeaderSpecifiers, bridgeTargets, nodeBridgeTarget, resolveBoundHeaders } from './utils/boundHeaders.js';
+import { createBridges, createNativeBridges } from './actions/nativeBridges.js';
 import { ENTRY_RUNTIMES } from './utils/runtimeEntries.js';
 import { publishNativeCommand, publishNodeAddon, publishWasiCommand } from './actions/publishBinary.js';
 import runCrossbindApp from './actions/run.js';
@@ -105,7 +104,7 @@ program.command('licenses')
     .option('--sbom [file]', 'write a CycloneDX SBOM json file (default: sbom.cdx.json)')
     .option('--check', 'exit non-zero when a license field is missing or not valid SPDX')
     .option('--platform <platform>', "also list what this platform's artifact statically links beyond the package graph (vendored copies, toolchain runtime)")
-    .addOption(new Option('-e, --runtime-env <runtimeEnv>', 'also list the crossbind runtime an addon of --platform compiles in, or without --platform the one its loader bundles').choices(['node']))
+    .addOption(new Option('-e, --runtime-env <runtimeEnv>', "also list the crossbind runtime an addon of --platform compiles in (without --platform the one its loader bundles), or what an app's host carries").choices(['node', 'app']))
     .option('--json [file]', 'write the rows, license texts included, as JSON (default: licenses.json)')
     .option('--package', "write this Node-API package's LICENSE, sbom.cdx.json and package.json license field (with -e node)")
     .action(async (options) => {
@@ -318,6 +317,7 @@ async function build(targetParams, rebuildOption, binaryRuntimeEnvs, wasmOptions
         await createWasmJs(binaryParams, wasmOptions);
         await createNodeAddons(binaryParams);
         await createNativeCommands(binaryParams);
+        await createApps(binaryParams);
         await createWasiCommands(binaryParams);
     }
     buildPackageTypes();
@@ -336,6 +336,19 @@ async function createNativeCommands(targetParams) {
     }
 }
 
+// An app built without a bundler has no page; the Vite plugin puts one in.
+async function createApps(targetParams) {
+    const targets = getBuildTargets(targetParams).filter((target) => target.runtimeEnv === 'app');
+    if (targets.length === 0) {
+        return;
+    }
+    const bridges = createNativeBridges(targets).headers.flatMap((header) => header.bridge ?? []);
+    for (const target of targets) {
+        const built = await buildApp(target, { bridges, force: !fs.existsSync(`${state.config.paths.output}/${target.appName}`) });
+        if (built) publishApp(target);
+    }
+}
+
 async function createWasiCommands(targetParams) {
     const targets = getFilteredBuildTargets(targetParams, { platform: 'wasi' });
     if (targets.length === 0) {
@@ -349,23 +362,6 @@ async function createWasiCommands(targetParams) {
         }
         publishWasiCommand(target);
     }
-}
-
-function createBridges(target) {
-    let headers = [];
-    state.config.paths.header.forEach((headerPath) => {
-        headers.push(findFiles('**/*.h', { cwd: headerPath }));
-    });
-    headers = headers.filter((path) => !!path.toString()).flat();
-
-    return headers.map((header) => ({ file: header, bridge: createBridgeFile(header, target) }));
-}
-
-// The dependency headers the config binds whole, each read where one of the targets' packages ships it.
-function createBoundBridges(targets) {
-    const headers = resolveBoundHeaders(boundHeaderSpecifiers(state.config), bridgeTargets(targets, state.targets), getDependFilePath);
-    const wholeHeaders = headers.map((header) => header.file);
-    return headers.map((header) => ({ ...header, bridge: createBridgeFile(header.file, header.target, { wholeHeaders }) }));
 }
 
 // A package whose platform packages link its addons ships what loads them: the loader and the data.
@@ -389,10 +385,7 @@ async function createNodeAddons(targetParams) {
         `${resolveEmbindJsiRoot()}/cpp/src`,
         `${resolveEmbindNapiRoot()}/third_party/node-api-jsi/jsi`,
     ];
-    const boundHeaders = createBoundBridges(targets);
-    const ownHeaders = [...createBridges(nodeBridgeTarget(targets)), ...boundHeaders];
-    const imports = findAppNativeImports(bridgeTargets(targets, state.targets));
-    const headers = [...ownHeaders, ...createImportedBridges(ownHeaders, imports)];
+    const { headers, imports } = createNativeBridges(targets);
     const opt = {
         buildSource: false,
         nativeGlob: [

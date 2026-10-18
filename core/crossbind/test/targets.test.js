@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import {
     TARGETS, OPT_IN_PLATFORMS, RUNTIME_ENVS, runtimeEnvsOf, selectRuntimeEnvs, targetPathOf, filterTargetSpecs, nodeAddonNamesOf,
-    nativeCommandNamesOf, wasiNamesOf,
+    nativeCommandNamesOf, wasiNamesOf, appNamesOf,
 } from '../src/utils/targets.js';
 
 describe('TARGETS', () => {
@@ -23,6 +23,13 @@ describe('TARGETS', () => {
             .filter((t) => t.platform === platform && t.runtimeEnv === runtimeEnv).map(targetPathOf).sort();
         expect(pathsOf('native')).toEqual(pathsOf('node'));
         expect(pathsOf('native')).toHaveLength(4);
+    });
+
+    test('macOS builds app hosts from the addon targets, and no other platform does yet', () => {
+        const app = TARGETS.filter((t) => t.runtimeEnv === 'app');
+        const darwinNode = TARGETS.filter((t) => t.platform === 'darwin' && t.runtimeEnv === 'node');
+        expect(app.map(targetPathOf).sort()).toEqual(darwinNode.map(targetPathOf).sort());
+        expect(app.every((t) => t.platform === 'darwin')).toBe(true);
     });
 
     test('Node-API addon platforms build only when named, so a plain build keeps its output', () => {
@@ -68,7 +75,7 @@ describe('TARGETS', () => {
 
 describe('runtime environments', () => {
     test('RUNTIME_ENVS lists every binary a build can make', () => {
-        expect([...RUNTIME_ENVS].sort()).toEqual(['browser', 'edge', 'http', 'native', 'node', 'wasi']);
+        expect([...RUNTIME_ENVS].sort()).toEqual(['app', 'browser', 'edge', 'http', 'native', 'node', 'wasi']);
     });
 
     test('selectRuntimeEnvs takes -e first, then target.runtimeEnv, then nothing', () => {
@@ -81,6 +88,7 @@ describe('runtime environments', () => {
         expect(runtimeEnvsOf('wasm').sort()).toEqual(['browser', 'edge', 'node']);
         expect(runtimeEnvsOf('wasi')).toEqual(['wasi', 'http']);
         expect(runtimeEnvsOf('linux')).toEqual(['node', 'native']);
+        expect(runtimeEnvsOf('darwin')).toEqual(['node', 'native', 'app']);
         expect(runtimeEnvsOf('android')).toEqual([]);
     });
 });
@@ -91,6 +99,17 @@ describe('wasiNamesOf', () => {
     test('names the command after the project and target, and the http component apart from it', () => {
         expect(wasiNamesOf(wasi('wasi'), 'demo')).toEqual({ wasmName: 'demo-wasi-wasm32-st-release.wasm' });
         expect(wasiNamesOf(wasi('http'), 'demo')).toEqual({ wasmName: 'demo-wasi-wasm32-st-release.http.wasm' });
+    });
+});
+
+describe('appNamesOf', () => {
+    const app = (arch, buildType) => ({
+        platform: 'darwin', arch, runtime: 'mt', buildType, runtimeEnv: 'app',
+    });
+
+    test('names the app after the project, platform and arch, and the page runtime after the build type alone', () => {
+        expect(appNamesOf(app('arm64', 'release'), 'demo')).toEqual({ appName: 'demo.darwin-arm64.app', appJsName: 'demo.app.js' });
+        expect(appNamesOf(app('x64', 'debug'), 'demo')).toEqual({ appName: 'demo.darwin-x64.debug.app', appJsName: 'demo.app.debug.js' });
     });
 });
 

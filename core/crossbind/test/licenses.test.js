@@ -220,6 +220,27 @@ describe('collectLicenseRows', () => {
     });
 });
 
+describe('collectLicenseRows for an app', () => {
+    beforeEach(() => {
+        state.config = { allDependencies: [] };
+    });
+
+    test("lists crossbind's runtime and what the host carries, each upstream piece with its pin and its text", async () => {
+        const rows = await collectLicenseRows(null, { runtimeEnv: 'app' });
+
+        expect(rows.map((row) => row.name)).toEqual(['crossbind', 'emscripten-embind', 'hermes', 'jsi', 'webview']);
+        const byName = Object.fromEntries(rows.map((row) => [row.name, row]));
+        for (const name of ['hermes', 'jsi', 'webview']) {
+            expect(byName[name].license).toBe('MIT');
+            expect(byName[name].nativeVersion).toBeTruthy();
+            expect(byName[name].sha256).toMatch(/^[0-9a-f]{64}$/);
+        }
+        expect(byName.hermes.licenseText).toContain('Meta Platforms');
+        expect(byName.webview.licenseText).toContain('Serge Zaitsev');
+        rows.forEach((row) => expect(validateSpdx(row.license).isValid).toBe(true));
+    });
+});
+
 describe('collectLicenseRows for a Node-API addon', () => {
     beforeEach(() => {
         state.config = { allDependencies: [] };

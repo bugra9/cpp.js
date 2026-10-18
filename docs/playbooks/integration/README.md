@@ -43,6 +43,7 @@ What does package.json deps + filesystem look like?
 ├─ has "react-native" + no "expo"      → docs/playbooks/integration/react-native-cli.md
 ├─ has "expo"                          → docs/playbooks/integration/react-native-expo.md
 ├─ has "wrangler" or worker config     → docs/playbooks/integration/cloudflare-worker.md
+├─ has "@crossbind/core-app-host"      → docs/playbooks/integration/desktop-app.md (a desktop app; check this before "vite")
 ├─ Node-only project (no bundler)      → docs/playbooks/integration/nodejs.md
 └─ plain HTML / no bundler             → docs/playbooks/integration/vanilla.md
 ```

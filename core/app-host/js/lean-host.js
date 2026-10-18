@@ -1,0 +1,237 @@
+// The lean protocol's host side, with the contract a worker-backed web build has: objects as handles the page releases,
+// enum values with their identity, vectors returned as arrays, plain arrays coerced into vector parameters, errors
+// with their own fields, and large byte arrays as attachments of a crossbind:// request.
+/* global __host_reply, __host_token */
+import { pack, unpack, CODEC_TAG as TAG } from './codec.js';
+import { setCoercionModule, unwrapCoercionProxy, wrapWithVectorCoercion } from 'crossbind/runtime/adapters/vector-coercion.js';
+import { UNBOUND_MESSAGE } from 'crossbind/runtime/adapters/unboundMessage.js';
+
+// Results holding a typed array at least this large go back as a crossbind:// response body.
+const BIG_RESULT_BYTES = 4096;
+
+const registry = new Map();
+const holders = new WeakMap();
+let nextHandle = 1;
+
+const enumValues = new WeakSet();
+const enumIds = new WeakMap();
+const enumsById = new Map();
+let nextEnum = 1;
+
+const bigResults = new Map();
+let nextBig = 1;
+
+let module = null;
+let root = null;
+
+const isEmbindObject = (value) => typeof value.delete === 'function' && typeof value.isDeleted === 'function';
+const isVector = (value) => isEmbindObject(value) && typeof value.size === 'function' && typeof value.get === 'function';
+// What JavaScript owns, as the worker adapter decides it: a smart pointer or a copy embind marked as owned.
+const ownsObject = (value) => Boolean(value.$$ && (value.$$.smartPtr || value.$$.count?.owned));
+
+// The module's own objects, its globals above all, live as long as the module, so letting go of a handle to one
+// frees nothing.
+const moduleObjects = new WeakSet();
+
+function freeIfOwned(value) {
+    if (ownsObject(value) && !moduleObjects.has(value) && !value.isDeleted()) value.delete();
+}
+
+function register(value) {
+    const id = nextHandle;
+    nextHandle += 1;
+    registry.set(id, value);
+    holders.set(value, (holders.get(value) ?? 0) + 1);
+    return id;
+}
+
+function release(ids) {
+    for (const id of ids) {
+        const value = registry.get(id);
+        if (!registry.delete(id)) continue;
+        const left = holders.get(value) - 1;
+        if (left > 0) {
+            holders.set(value, left);
+        } else {
+            holders.delete(value);
+            freeIfOwned(value);
+        }
+    }
+}
+
+// embind hangs enum values off the enum type; an instance with a numeric value and no lifecycle methods is one.
+function collectEnums() {
+    for (const key of Object.keys(module)) {
+        const holder = module[key];
+        if (holder == null || (typeof holder !== 'object' && typeof holder !== 'function') || ArrayBuffer.isView(holder)) continue;
+        for (const value of Object.values(holder)) {
+            if (value != null && typeof value === 'object' && typeof value.value === 'number'
+                && typeof value.delete !== 'function' && value.constructor && value.constructor !== Object) {
+                enumValues.add(value);
+            }
+        }
+    }
+}
+
+function enumIdOf(value) {
+    let id = enumIds.get(value);
+    if (!id) {
+        id = nextEnum;
+        nextEnum += 1;
+        enumIds.set(value, id);
+        enumsById.set(id, value);
+    }
+    return id;
+}
+
+// The build's env never replaces a variable the process already has; values the page passes to initNative() do.
+function setEnv(env, overwrite) {
+    const dataPath = module.Crossbind.getEnv('CROSSBIND_DATA_PATH');
+    for (const [key, value] of Object.entries(env)) {
+        module.Crossbind.setEnv(key, String(value).replace('_CROSSBIND_DATA_PATH_', dataPath), overwrite);
+    }
+}
+
+function encode(value) {
+    return pack(value, (item) => {
+        if (typeof item === 'function') return { [TAG]: 'fn' };
+        if (item === null || typeof item !== 'object' || ArrayBuffer.isView(item)) return undefined;
+        const raw = unwrapCoercionProxy(item);
+        if (enumValues.has(raw)) return { [TAG]: 'e', v: enumIdOf(raw), n: raw.value };
+        if (isVector(raw)) {
+            const elements = [];
+            for (let i = 0; i < raw.size(); i += 1) elements.push(encode(raw.get(i)));
+            freeIfOwned(raw);
+            return elements;
+        }
+        if (isEmbindObject(raw)) return { [TAG]: 'h', v: register(raw) };
+        return undefined;
+    });
+}
+
+function decode(value, attachments) {
+    return unpack(value, (tag, item) => {
+        if (tag === 'h') {
+            if (!registry.has(item.v)) throw new Error(`crossbind: object ${item.v} was already released`);
+            return registry.get(item.v);
+        }
+        if (tag === 'e') return enumsById.get(item.v);
+        if (tag === 'att') return attachments[item.i];
+        return undefined;
+    });
+}
+
+function encodeResult(op, value) {
+    // What JavaScript constructs stays an object, a vector too, as the worker adapter hands out what `new` makes.
+    if (op === 'new' && value !== null && typeof value === 'object' && isEmbindObject(unwrapCoercionProxy(value))) {
+        return { [TAG]: 'h', v: register(unwrapCoercionProxy(value)) };
+    }
+    if (ArrayBuffer.isView(value) && value.byteLength >= BIG_RESULT_BYTES) {
+        const id = nextBig;
+        nextBig += 1;
+        bigResults.set(id, value);
+        return { [TAG]: 'big', v: id, k: value.constructor.name };
+    }
+    return encode(value);
+}
+
+function encodeError(error) {
+    const fields = { name: error?.name ?? 'Error', message: String(error?.message ?? error) };
+    if (error !== null && typeof error === 'object') {
+        for (const key of Object.keys(error)) {
+            const item = error[key];
+            if (item === null || ['string', 'number', 'boolean'].includes(typeof item)) fields[key] = item;
+        }
+    }
+    return fields;
+}
+
+// An operation on a path from the module, or from an object the page holds a handle to.
+function dispatch(op, target, path, args) {
+    if (op === 'release') {
+        release(args[0]);
+        return null;
+    }
+    if (op === 'env') {
+        setEnv(args[0], true);
+        return __host_token;
+    }
+    const base = target === 0 ? root : wrapWithVectorCoercion(registry.get(target));
+    if (base === undefined) throw new Error(`crossbind: object ${target} was already released`);
+    const parent = path.slice(0, -1).reduce((object, key) => object[key], base);
+    const key = path[path.length - 1];
+    if (op === 'get') return path.length === 0 ? base : parent[key];
+    if (op === 'set') {
+        parent[key] = args[0];
+        return true;
+    }
+    const member = parent[key];
+    if (typeof member !== 'function') throw new Error(`crossbind: ${path.join('.')} ${UNBOUND_MESSAGE}`);
+    if (op === 'new') return new member(...args);
+    return member.apply(parent, args);
+}
+
+function answer(message, attachments) {
+    const [op, target, path, args] = message;
+    try {
+        return JSON.stringify([0, encodeResult(op, dispatch(op, target, path, decode(args, attachments)))]);
+    } catch (error) {
+        return JSON.stringify([1, encodeError(error)]);
+    }
+}
+
+function viewOf(kind, buffer, offset, length) {
+    const View = globalThis[kind] ?? Uint8Array;
+    const bytes = new Uint8Array(buffer, offset, length);
+    if (View === Uint8Array) return bytes;
+    const copy = bytes.slice();
+    return new View(copy.buffer, 0, length / (View.BYTES_PER_ELEMENT ?? 1));
+}
+
+function parseQuery(query) {
+    const params = {};
+    for (const part of query.split('&')) {
+        const at = part.indexOf('=');
+        params[decodeURIComponent(at < 0 ? part : part.slice(0, at))] = at < 0 ? '' : decodeURIComponent(part.slice(at + 1));
+    }
+    return params;
+}
+
+export function installHost(embindModule, env) {
+    module = embindModule;
+    // A plain array passed for a vector parameter becomes one of the module's vector classes.
+    setCoercionModule(module);
+    root = wrapWithVectorCoercion(module);
+    collectEnums();
+    for (const value of Object.values(module)) {
+        if (value !== null && typeof value === 'object' && isEmbindObject(value)) moduleObjects.add(value);
+    }
+    setEnv(env, false);
+
+    globalThis.__crossbind_receive = (call, text) => __host_reply(call, answer(JSON.parse(text), []));
+
+    // A new page replaced the one that held these, and its garbage collector will never release them.
+    globalThis.__crossbind_reset = () => {
+        release([...registry.keys()]);
+        bigResults.clear();
+    };
+
+    // A message in the query, its attachments one after another in the body.
+    globalThis.__crossbind_frame = (query, buffer) => {
+        const message = JSON.parse(parseQuery(query).m);
+        const attachments = [];
+        let offset = 0;
+        for (const [kind, length] of message[4]) {
+            attachments.push(viewOf(kind, buffer, offset, length));
+            offset += length;
+        }
+        return answer(message, attachments);
+    };
+
+    globalThis.__crossbind_result = (query) => {
+        const id = Number(parseQuery(query).id);
+        const value = bigResults.get(id);
+        bigResults.delete(id);
+        return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+    };
+}

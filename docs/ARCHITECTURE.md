@@ -15,6 +15,7 @@ flowchart TD
     BuildWasi["actions/buildWasiCommand.js<br/>(wasi-sdk link → single .wasm component)"]
     BuildNode["actions/buildNode.js<br/>(Node-API link → .node addon + .native.cjs loader)"]
     BuildCargo["actions/buildCargo.js<br/>(cargo build → staged .a, export.type 'cargo')"]
+    BuildApp["actions/buildApp.js<br/>(app host link → .app, runtimeEnv 'app')"]
     BuildJs["actions/buildJs.js<br/>(rollup, runtime adapter selection)"]
     Run["actions/run.js<br/>(Docker or host shell-out per target)"]
     Cmake["cmake / configure"]
@@ -31,6 +32,7 @@ flowchart TD
     BuildLib --> BuildWasi
     BuildLib --> BuildNode
     BuildLib --> BuildCargo
+    BuildLib --> BuildApp
     BuildWasm --> BuildJs
     Run --> Cmake
     Run --> Emcc
@@ -43,6 +45,7 @@ flowchart TD
     BuildWasi --> Dist
     BuildNode --> Dist
     BuildCargo --> Dist
+    BuildApp --> Dist
 ```
 
 ## Key abstractions
@@ -84,6 +87,10 @@ Each `plugins/*` adapts crossbind's outputs to one bundler. They share a small c
 - Set COOP/COEP headers when multithread is in use.
 
 `plugins/rollup` is the inner kernel; `plugins/vite` wraps it; `plugins/webpack` is parallel; `plugins/react-native` + `plugins/metro` handle RN, and `plugins/metro` alone builds the wasm for Expo's web platform.
+
+### Apps
+
+`target.runtimeEnv: 'app'` builds a desktop app (ADR-0017, [`api/app.md`](./api/app.md)). `actions/buildApp.js` links the project's archives, its bridges compiled against Hermes' JSI and `core/app-host` into one host executable, and the Vite plugin puts the page beside it in `<name>.app`. The page reaches the module through the host's lean protocol, with the contract `worker-comlink.js` gives a worker-backed web build.
 
 ### Packages (prebuilt C++ libs)
 

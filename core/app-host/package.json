@@ -1,0 +1,27 @@
+{
+    "name": "@crossbind/core-app-host",
+    "version": "2.0.0-beta.64",
+    "description": "App host for the crossbind embind runtime: a desktop app whose page runs in the system webview and whose bindings run natively in Hermes.",
+    "homepage": "https://github.com/crossbind/crossbind/tree/main/core/app-host#readme",
+    "repository": "https://github.com/crossbind/crossbind.git",
+    "license": "MIT",
+    "files": [
+        "cpp",
+        "js",
+        "third_party"
+    ],
+    "dependencies": {
+        "@crossbind/core-embind-jsi": "workspace:^"
+    },
+    "keywords": [
+        "embind",
+        "hermes",
+        "webview",
+        "desktop",
+        "app",
+        "bind",
+        "c++",
+        "rust",
+        "macos"
+    ]
+}

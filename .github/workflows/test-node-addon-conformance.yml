@@ -9,7 +9,11 @@ on:
             - core/embind-jsi/**
             - core/embind-napi/**
             - core/embind-rust/**
+            - core/app-host/**
+            - plugins/vite/**
+            - plugins/rollup/**
             - e2e/backend-nodejs-native/**
+            - e2e/desktop-app/**
             - e2e/conformance/**
             - e2e/conformance-rust/**
             - .nvmrc
@@ -22,7 +26,11 @@ on:
             - core/embind-jsi/**
             - core/embind-napi/**
             - core/embind-rust/**
+            - core/app-host/**
+            - plugins/vite/**
+            - plugins/rollup/**
             - e2e/backend-nodejs-native/**
+            - e2e/desktop-app/**
             - e2e/conformance/**
             - e2e/conformance-rust/**
             - .nvmrc
@@ -55,14 +63,17 @@ jobs:
                   if-no-files-found: error
                   # A re-run of this job uploads under the same name again.
                   overwrite: true
-                  # The suite checks that every kit export it reaches was bound, from the build's bridge exports.
+                  # The suite checks that every kit export it reaches was bound, from the build's bridge exports;
+                  # the app leg builds from the bridges and interfaces themselves.
                   include-hidden-files: true
                   # dist/node holds the addon's entry and the import hooks the suite runs under.
                   path: |
                       e2e/backend-nodejs-native/dist/*.node
                       e2e/backend-nodejs-native/dist/*.cjs
                       e2e/backend-nodejs-native/dist/node/
-                      e2e/backend-nodejs-native/.crossbind/build/bridge/*.exports.json
+                      e2e/backend-nodejs-native/.crossbind/cache.json
+                      e2e/backend-nodejs-native/.crossbind/build/bridge/
+                      e2e/backend-nodejs-native/.crossbind/build/interface/
                   retention-days: 1
     run:
         # Linux runs the glibc and musl addons in containers; a hosted Windows runner cannot run the
@@ -96,3 +107,41 @@ jobs:
                   path: e2e/backend-nodejs-native
             - name: Run the conformance suite
               run: node e2e/backend-nodejs-native/e2e/run.mjs
+    app:
+        # A macOS runner has no Docker to run SWIG in, so the app leg builds from the addon's bridges: it binds
+        # the same headers with the same names.
+        needs: build
+        runs-on: macos-latest
+        timeout-minutes: 60
+        env:
+            # The leg's crate imports are resolved with cargo metadata, which runs in the image unless the runner
+            # is LOCAL.
+            CROSSBIND_RUNNER: LOCAL
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+            - name: Install pnpm
+              uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+            - name: Use Node.js
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'pnpm'
+            - name: Install dependencies
+              run: pnpm install
+            - name: Restore the addon build
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+              with:
+                  name: node-addon-conformance
+                  path: e2e/backend-nodejs-native
+            - name: Take its bridges under the app leg's paths
+              working-directory: e2e/desktop-app
+              run: |
+                  mkdir -p .crossbind/build
+                  cp -r ../backend-nodejs-native/.crossbind/build/bridge ../backend-nodejs-native/.crossbind/build/interface .crossbind/build/
+                  cp ../backend-nodejs-native/.crossbind/cache.json .crossbind/
+                  sed -i '' -e 's#/home/runner/work/#/Users/runner/work/#g' -e 's#/e2e/backend-nodejs-native/#/e2e/desktop-app/#g' \
+                      .crossbind/cache.json .crossbind/build/bridge/*.source .crossbind/build/bridge/*.deps
+            - name: Build the app and run the conformance suite in it
+              run: |
+                  pnpm --filter=@crossbind/e2e-desktop-app run build
+                  pnpm --filter=@crossbind/e2e-desktop-app run e2e:prod

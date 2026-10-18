@@ -45,18 +45,19 @@ export function rustParityChecks({ add, todo, skip }, s, { worker, jsi, nodeAddo
     rejecting(add)('rs:napi:bytesRejectString', () => s.confRsBytesSum('abc'), /Uint8Array/);
     add('rs:napi:bytesOutTyped', async () => (await s.confRsBytesOwned(2)) instanceof Uint8Array, true);
     // Reading a typed array's length used to leave an emval handle behind on every jsi call.
-    if (!jsi || typeof s.count_emval_handles !== 'function') skip('rs:napi:typedArraysNoLeak', 'needs count_emval_handles on the module, which only the Node addon loader exposes');
+    if (!jsi || typeof s.count_emval_handles !== 'function') skip('rs:napi:typedArraysNoLeak', 'needs count_emval_handles on the module, which the Node addon loader and the app host expose');
     else add('rs:napi:typedArraysNoLeak', async () => {
         const bytes = new Uint8Array([1, 2, 3]);
         const floats = new Float64Array([1.5]);
         await s.confRsBytesView(bytes);
         await s.confRsFloatsSum(floats);
-        const before = s.count_emval_handles();
+        // An app's page reads the count from the host, so it arrives as a promise there.
+        const before = await s.count_emval_handles();
         for (let i = 0; i < 50; i++) {
             await s.confRsBytesView(bytes);
             await s.confRsFloatsSum(floats);
         }
-        return s.count_emval_handles() - before;
+        return (await s.count_emval_handles()) - before;
     }, 0);
     add('rs:napi:errorCode', async () => { try { await s.confRsCodedErr(); return 'no-throw'; } catch (e) { return [e instanceof Error, e.message, e.code]; } }, [true, 'coded failure', 'E_CONF']);
     // Held back on React Native until a run there proves the unwinding path; the Node addon unwinds
