@@ -16,6 +16,11 @@ export default {
     // into state.config.paths.build automatically.
     // `version` is the nativeVersion field from package.json.
 
+  getMirrors: (version) => ['https://mirror.example.com/upstream-${version}.tar.gz'],
+    // Optional: other https URLs that serve the same tarball. When getURL's
+    // download fails, or its bytes miss the sha256, the CLI tries these in
+    // order. getURL stays the source that license/SBOM rows name.
+
   sha256: '1051c33d…',
     // Checksum of the tarball getURL returns. Verified on download, and the
     // single source for license/SBOM rows and the -bin provenance block
@@ -151,7 +156,7 @@ export default {
 For each architecture sub-package (`-wasm`, `-android`, `-ios`), the CLI:
 
 1. Reads the package's `nativeVersion` from `package.json`.
-2. Calls `getURL(version)` to populate `state.config.paths.build`.
+2. Calls `getURL(version)` to populate `state.config.paths.build`, then each of `getMirrors(version)` in turn while a download fails or misses the `sha256`.
 3. Builds it:
    - `buildType: 'cmake'` → `cmake -S <build> -B <build/build> [getBuildParams flags] && cmake --build`
    - `buildType: 'configure'` → `[configureProgram || './configure'] [getBuildParams flags] && make && make install`

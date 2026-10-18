@@ -14,17 +14,43 @@ const RETRYABLE_STATUS = new Set([408, 429]);
 const sleep = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
 const retryable = (error) => Object.assign(error, { retryable: true });
 
-export default async function downloadAndExtractFile(url, output, sha256, options = {}) {
-    const archive = path.basename(url);
+// A recipe names its source with getURL and may name mirrors that serve the same archive under the same pin.
+export function sourcesOf({ getURL, getMirrors }, version) {
+    return [getURL(version), ...(getMirrors?.(version) ?? [])];
+}
+
+// `urls` is one URL or a list of them: the first names the archive, the others are mirrors of it.
+export default async function downloadAndExtractFile(urls, output, sha256, options = {}) {
+    const sources = [urls].flat();
+    const archive = path.basename(sources[0]);
     if (fs.existsSync(`${output}/source`) && sourceCameFrom(output, archive)) {
         return false;
     }
+    sources.forEach((url) => assertHttps(url));
     fs.rmSync(`${output}/source`, { recursive: true, force: true });
-    const filePath = await downloadFile(url, output, options);
-    verifyIntegrity(filePath, url, sha256);
+    const { filePath, url } = await downloadFromAny(sources, output, sha256, { ...options, name: archive });
     extractArchive(filePath, url, output);
     fs.writeFileSync(`${output}/source.archive`, archive);
     return true;
+}
+
+// A source that cannot serve the archive, or serves bytes the pin does not match, hands over to the next one.
+async function downloadFromAny(sources, output, sha256, options) {
+    const failures = [];
+    for (const url of sources) {
+        try {
+            const filePath = await downloadFile(url, output, options);
+            verifyIntegrity(filePath, url, sha256);
+            return { filePath, url };
+        } catch (err) {
+            failures.push(err);
+        }
+    }
+    if (failures.length === 1) throw failures[0];
+    throw new Error(
+        `crossbind: no source of ${options.name} could be used:\n${failures.map((err) => `  - ${err.message}`).join('\n')}`,
+        { cause: failures.at(-1) },
+    );
 }
 
 // A cached source tree only counts when it came from the archive the recipe names now, or a
@@ -95,9 +121,9 @@ export function assertHttps(target, context = target) {
 
 // fetch follows redirects itself, which release downloads rely on (github and the osgeo
 // mirrors both bounce), so the download needs no redirect library of its own.
-export async function downloadFile(url, folder, { retryDelaysMs = RETRY_DELAYS_MS } = {}) {
+export async function downloadFile(url, folder, { retryDelaysMs = RETRY_DELAYS_MS, name = path.basename(url) } = {}) {
     mkdirSync(folder, { recursive: true });
-    const dest = `${folder}/${path.basename(url)}`;
+    const dest = `${folder}/${name}`;
     if (fs.existsSync(dest)) return dest;
 
     assertHttps(url);
