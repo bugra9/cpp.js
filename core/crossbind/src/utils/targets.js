@@ -148,12 +148,16 @@ const BASE_TARGETS = [
     },
 ];
 
-// A native executable links the same archives as the Node-API addon of its platform and arch.
+// A native executable links the same archives as the Node-API addon of its platform and arch, and so does an app's
+// host, on macOS so far.
 export const TARGETS = [
     ...BASE_TARGETS,
     ...BASE_TARGETS
         .filter((target) => target.runtimeEnv === 'node' && target.platform !== 'wasm')
         .map((target) => ({ ...target, runtimeEnv: 'native' })),
+    ...BASE_TARGETS
+        .filter((target) => target.runtimeEnv === 'node' && target.platform === 'darwin')
+        .map((target) => ({ ...target, runtimeEnv: 'app' })),
 ];
 
 // Built only when named with -p: a plain `crossbind build` keeps producing what it did before
@@ -202,6 +206,15 @@ export function nodeAddonNamesOf(target, projectName) {
 export const wasiNamesOf = (target, projectName) => ({
     wasmName: `${projectName}-${targetPathOf(target)}${target.runtimeEnv === 'http' ? '.http' : ''}.wasm`,
 });
+
+// One app per platform, arch and build type, and one page runtime per build type for all of them.
+export function appNamesOf(target, projectName) {
+    const suffix = target.buildType === 'debug' ? '.debug' : '';
+    return {
+        appName: `${projectName}.${target.platform}-${target.arch}${suffix}.app`,
+        appJsName: `${projectName}.app${suffix}.js`,
+    };
+}
 
 // One executable per platform, arch and build type, named like the addons it replaces.
 export function nativeCommandNamesOf(target, projectName) {

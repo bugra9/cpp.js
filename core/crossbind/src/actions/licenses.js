@@ -8,6 +8,8 @@ import familyManifestOf from '../utils/familyManifest.js';
 import { wasiToolchainIdentity } from '../utils/provenance.js';
 import { resolveWasiSdkPath } from '../utils/wasiToolchain.js';
 import resolveEmbindNapiRoot, { resolveEmbindJsiRoot } from '../utils/resolveEmbindNapi.js';
+import resolveAppHostRoot, { resolveAppEmbindJsiRoot } from '../utils/resolveAppHost.js';
+import { HERMES, hermesUrl } from '../utils/hermes.js';
 import { shippedBundledLicense } from '../utils/bundledLicenses.js';
 import toolchainNoticesDir from '../utils/toolchainNotices.js';
 
@@ -147,16 +149,15 @@ function addonToolchainRows(platform) {
     ];
 }
 
-// A Node-API addon compiles in crossbind's runtime: embind-jsi, which adapts Emscripten's embind,
-// and node-api-jsi. The loader bundles the JavaScript half of the same runtime.
-function nodeRuntimeRows({ isAddon }) {
-    const versionOf = (dir) => JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8')).version;
-    const textOf = (file) => fs.readFileSync(file, 'utf8').trim();
+const versionOf = (dir) => JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8')).version;
+const textOf = (file) => fs.readFileSync(file, 'utf8').trim();
+
+// crossbind's runtime, which an addon and an app host compile in: embind-jsi, which adapts Emscripten's embind.
+function runtimeRows(jsiRoot, notes) {
     const shared = {
         nativeVersion: null, sha256: null, licenseSelected: null, isCopyleft: false,
     };
-    const jsiRoot = resolveEmbindJsiRoot();
-    const rows = [
+    return [
         {
             ...shared,
             name: 'crossbind',
@@ -165,7 +166,7 @@ function nodeRuntimeRows({ isAddon }) {
             license: 'MIT',
             licenseDeclared: 'MIT',
             sourceUrl: 'https://github.com/crossbind/crossbind',
-            licenseNotes: 'the embind-jsi and embind-napi runtime and the bindings crossbind generates',
+            licenseNotes: notes,
             licenseText: textOf(path.join(CROSSBIND_ROOT, 'LICENSE')),
         },
         {
@@ -180,10 +181,19 @@ function nodeRuntimeRows({ isAddon }) {
             licenseText: textOf(path.join(jsiRoot, 'LICENSE')),
         },
     ];
+}
+
+// A Node-API addon compiles in crossbind's runtime and node-api-jsi. The loader bundles the JavaScript half of the
+// same runtime.
+function nodeRuntimeRows({ isAddon }) {
+    const rows = runtimeRows(resolveEmbindJsiRoot(), 'the embind-jsi and embind-napi runtime and the bindings crossbind generates');
     if (!isAddon) return rows;
     const napiRoot = resolveEmbindNapiRoot();
     return [...rows, {
-        ...shared,
+        nativeVersion: null,
+        sha256: null,
+        licenseSelected: null,
+        isCopyleft: false,
         name: 'node-api-jsi',
         npmName: '@crossbind/core-embind-napi',
         version: versionOf(napiRoot),
@@ -193,6 +203,52 @@ function nodeRuntimeRows({ isAddon }) {
         licenseNotes: 'JSI over Node-API, with the local patches @crossbind/core-embind-napi lists',
         licenseText: textOf(path.join(napiRoot, 'third_party', 'node-api-jsi', 'LICENSE')),
     }];
+}
+
+// What an app's host carries beside crossbind's runtime, pinned as the third_party READMEs of @crossbind/core-app-host
+// record: React Native's Hermes, JSI's jsi.cpp from the same release, and webview/webview.
+const WEBVIEW = { version: 'cbbdee44afff22867de9fd88a9fc8350d9bdd399', sha256: '10e972a2327b5681474f4aa4499e505eaa4ff659aa995380386f08fd6fc1b763' };
+const JSI_SHA256 = 'cb6274a22abc93ecc970066539815e716d3e47716e8f93a9971cf4eb5918ffc1';
+
+function appRuntimeRows() {
+    const hostRoot = resolveAppHostRoot();
+    const hermesLicense = textOf(path.join(hostRoot, 'third_party', 'jsi', 'LICENSE'));
+    const mit = {
+        npmName: '@crossbind/core-app-host', license: 'MIT', licenseDeclared: 'MIT', licenseSelected: null, isCopyleft: false,
+    };
+    return [
+        ...runtimeRows(resolveAppEmbindJsiRoot(), 'the embind-jsi runtime, the app host and the bindings crossbind generates'),
+        {
+            ...mit,
+            name: 'hermes',
+            version: HERMES.version,
+            nativeVersion: HERMES.version,
+            sha256: HERMES.sha256,
+            sourceUrl: hermesUrl(HERMES.version),
+            licenseNotes: "React Native's Hermes for Apple platforms, which the app carries as hermesvm.framework",
+            licenseText: hermesLicense,
+        },
+        {
+            ...mit,
+            name: 'jsi',
+            version: HERMES.version,
+            nativeVersion: HERMES.version,
+            sha256: JSI_SHA256,
+            sourceUrl: 'https://github.com/facebook/hermes',
+            licenseNotes: "JSI's jsi.cpp from the same Hermes release, compiled into the host",
+            licenseText: hermesLicense,
+        },
+        {
+            ...mit,
+            name: 'webview',
+            version: WEBVIEW.version,
+            nativeVersion: WEBVIEW.version,
+            sha256: WEBVIEW.sha256,
+            sourceUrl: 'https://github.com/webview/webview',
+            licenseNotes: 'webview/webview, with the local patch @crossbind/core-app-host lists',
+            licenseText: textOf(path.join(hostRoot, 'third_party', 'webview', 'LICENSE')),
+        },
+    ];
 }
 
 async function buildRow(node) {
@@ -284,7 +340,8 @@ function assertConanStaged() {
 // platform (optional, e.g. 'wasi') additionally includes what that platform's
 // artifact statically links beyond the package graph: recipe-declared vendored
 // copies and the toolchain runtime. runtimeEnv 'node' adds the crossbind runtime an
-// addon of that platform compiles in, or without a platform the one its loader bundles.
+// addon of that platform compiles in, or without a platform the one its loader bundles;
+// runtimeEnv 'app' adds what an app's host carries.
 export default async function collectLicenseRows(platform = null, { runtimeEnv = null } = {}) {
     assertConanStaged();
     // The root package is a component too when it is a port: leaf -wasi packages have no deps but ship
@@ -310,5 +367,6 @@ export default async function collectLicenseRows(platform = null, { runtimeEnv =
     if (platform === 'wasi') rows.push(...wasiToolchainRows());
     if (['linux', 'linuxmusl', 'win32'].includes(platform)) rows.push(...addonToolchainRows(platform));
     if (runtimeEnv === 'node') rows.push(...nodeRuntimeRows({ isAddon: platform !== null }));
+    if (runtimeEnv === 'app') rows.push(...appRuntimeRows());
     return rows.sort((a, b) => a.name.localeCompare(b.name));
 }

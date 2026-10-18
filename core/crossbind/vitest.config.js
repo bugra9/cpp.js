@@ -1,6 +1,11 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+    // The app host package's scripts import crossbind's runtime modules the way buildApp bundles them.
+    resolve: {
+        alias: [{ find: /^crossbind\/runtime\//, replacement: fileURLToPath(new URL('./src/assets/js-runtime/', import.meta.url)) }],
+    },
     // loadJs/loadConfig dynamically import config files written to os.tmpdir()
     // during tests. Vite 6 tightened server.fs.allow and rejects those out-of-root
     // paths ("Does the file exist?"); relax the fs check for the test runner.

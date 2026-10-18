@@ -58,6 +58,13 @@ describe('getLinkInputs', () => {
         expect(inputs.hasRust).toBe(false);
     });
 
+    // An app host's bridges compile against another JSI than an addon's, into an archive of their own.
+    test('ends with the bridge archive it is given', () => {
+        const inputs = getLinkInputs(target, { keepFlag, bridge: 'AppBridge' });
+
+        expect(inputs.libs.at(-1)).toBe(`${work}/AppBridge-Release/darwin-arm64-mt-release/libdemo.a`);
+    });
+
     // A native executable binds nothing, so there is no bridge archive to link.
     test('can end with the project archive alone', () => {
         const inputs = getLinkInputs(target, { keepFlag, withBridge: false });

@@ -60,6 +60,14 @@
         "keepLockfile": true
     },
     {
+        "key": "desktop-app",
+        "group": "Desktop",
+        "framework": null,
+        "label": "App",
+        "kind": "app",
+        "source": "examples/desktop-app"
+    },
+    {
         "key": "desktop-electron",
         "group": "Desktop",
         "framework": null,

@@ -2,16 +2,23 @@
 
 import {
     state, createLib, createBridgeFile, buildWasm, getCrossbindScript, getRustJsScript, buildDependencies,
-    getDependFilePath, getTargetParams, getFilteredBuildTargets, isSourceNewer, appSourceFiles,
+    getDependFilePath, getTargetParams, getFilteredBuildTargets, isSourceNewer, appSourceFiles, buildProjectApp, publishApp,
 } from 'crossbind';
 
 import fs from 'node:fs';
 import p from 'node:path';
 
-const targetParams = getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
+// An app's page reaches the module in the host the app runs on this machine, so its build makes the host, not wasm.
+const isApp = state.config.target.runtimeEnv === 'app';
+const targetParams = isApp
+    ? getTargetParams({ platform: [process.platform], arch: [process.arch], runtime: ['mt'], runtimeEnv: ['app'] }, true)
+    : getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
 let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
 let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
 
+if (isApp && !buildTargetRelease) {
+    throw new Error(`crossbind: apps build on macOS so far, and this machine runs ${process.platform}-${process.arch}.`);
+}
 if (!buildTargetRelease && !buildTargetDebug) {
     throw new Error('No build targets found');
 }
@@ -25,11 +32,13 @@ const rollupCrossbindPlugin = (options, bridges = []) => {
     const moduleRegex = new RegExp(`\\.(${state.config.ext.module.join('|')})$`);
     // Vite gives the base it serves the app from; plain Rollup has none.
     let base = '/';
+    let isServe = false;
 
     return {
         name: 'rollup-plugin-crossbind',
         configResolved(config) {
             base = config.base;
+            isServe = config.command === 'serve';
         },
         resolveId(source) {
             if (source === '/crossbind.js') {
@@ -57,7 +66,9 @@ const rollupCrossbindPlugin = (options, bridges = []) => {
             // A header transforms again after each source edit; a repeated entry would change the bridge lib's fingerprint.
             if (!bridges.includes(bridgeFile)) bridges.push(bridgeFile);
             // The names the app imports decide what a header binds, so watch mode transforms it again after any source edit.
-            appSourceFiles(state.config.paths.project).forEach((file) => this.addWatchFile(file));
+            // An app's dev server rebuilds for those itself: there, Vite would take the sources for imports of the header
+            // and, the page importing the header, update nothing after an edit to the page.
+            if (!(isApp && isServe)) appSourceFiles(state.config.paths.project).forEach((file) => this.addWatchFile(file));
 
             return getCrossbindScript(buildTargetRelease, bridgeFile, { base });
         },
@@ -89,6 +100,15 @@ const rollupCrossbindPlugin = (options, bridges = []) => {
             });
         },
         async generateBundle() {
+            if (isApp) {
+                await buildProjectApp(buildTargetRelease);
+                this.emitFile({
+                    type: 'asset',
+                    source: fs.readFileSync(`${state.config.paths.build}/${buildTargetRelease.appJsName}`),
+                    fileName: 'crossbind.js',
+                });
+                return;
+            }
             const force = isSourceNewer(buildTargetRelease);
             const sourceBuilt = createLib(buildTargetRelease, 'Source', { force, buildSource: true });
             // Bridge cache is keyed on the nativeGlob fingerprint: adding or
@@ -124,6 +144,12 @@ const rollupCrossbindPlugin = (options, bridges = []) => {
                     fileName: `cpp.worker.js`,
                 });
             } */
+        },
+        // The page, once written, goes into the app beside it.
+        writeBundle(outputOptions) {
+            if (!isApp) return;
+            const dir = outputOptions.dir ?? p.dirname(outputOptions.file);
+            publishApp(buildTargetRelease, { to: `${dir}/${state.config.general.name}.app`, page: dir });
         },
     };
 };

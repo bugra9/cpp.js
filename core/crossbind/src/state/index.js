@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import loadJson from '../utils/loadJson.js';
 import writeJson from '../utils/writeJson.js';
 import {
-    TARGETS, targetPathOf, nodeAddonNamesOf, nativeCommandNamesOf, wasiNamesOf,
+    TARGETS, targetPathOf, nodeAddonNamesOf, nativeCommandNamesOf, wasiNamesOf, appNamesOf,
 } from '../utils/targets.js';
 import { findCargoModuleImportsIn, writeCargoMarker } from '../utils/cargoImport.js';
 import { exportWasiSdkPath } from '../utils/wasiToolchain.js';
@@ -61,6 +61,9 @@ async function initProcessState() {
         }
         if (target.runtimeEnv === 'native') {
             Object.assign(target, nativeCommandNamesOf(target, state.config.general.name));
+        }
+        if (target.runtimeEnv === 'app') {
+            Object.assign(target, appNamesOf(target, state.config.general.name));
         }
     });
 

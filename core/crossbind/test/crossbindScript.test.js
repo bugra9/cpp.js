@@ -14,6 +14,7 @@ vi.mock('../src/state/index.js', () => ({ default: { config: { paths: {}, ext: {
 const { default: getCrossbindScript, liveExports } = await import('../src/integration/getCrossbindScript.js');
 
 const TARGET = { platform: 'wasm' };
+const APP_TARGET = { platform: 'darwin', runtimeEnv: 'app' };
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-script-'));
 
 // The generated text is an ES module, so it has to be evaluated as one to observe live bindings.
@@ -237,6 +238,21 @@ describe('the browser boot', () => {
             expect(m.config.path).toBe(appUrl);
         } finally {
             delete globalThis.__webpack_public_path__;
+        }
+    });
+
+    // An app's host applies the build's env itself, so the page hands initNative() only what the app passes.
+    test("an app's page loads crossbind.js from its base and passes on only the app's config", async () => {
+        env.CONF_FROM_BUILD = 'build';
+        try {
+            const proxy = await loadModule(`proxy-base-${apps}`, getCrossbindScript(APP_TARGET, '/nonexistent/bridge', { base: './' }));
+
+            const m = await proxy.initNative({ env: { KEY: 'value' } });
+
+            expect(fileURLToPath(globalThis.crossbindLoadedFrom)).toBe(path.join(app, 'crossbind.js'));
+            expect(m.config).toEqual({ env: { KEY: 'value' } });
+        } finally {
+            delete env.CONF_FROM_BUILD;
         }
     });
 
