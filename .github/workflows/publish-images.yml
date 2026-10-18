@@ -596,7 +596,7 @@ jobs:
                   [ -n "$v" ] || { echo "no RUST_VERSION in rust-sysroot.Dockerfile"; exit 1; }
                   echo "version=$v" >> "$GITHUB_OUTPUT"
                   echo "sysroot rustc: $v"
-            - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master, 2026-08-05
+            - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master, 2026-08-05
               with:
                   toolchain: ${{ steps.rustc.outputs.version }}
                   targets: wasm32-unknown-emscripten
