@@ -83,4 +83,6 @@ plain arrays, plain arrays coerce into vector params, enum values cross as ident
 transfer-handler tokens, live-JS values cannot cross). `caps.jsiNative` is accepted but
 currently drives no skip: the engine-gap wave closed the jsi C++ gaps (fields, exception
 messages, by-value vectors, `std::optional`), so the full direct-runtime list runs there.
+`caps.nodeAddon` marks the Node-API addon, where a Rust panic must reach JavaScript as an `Error`;
+React Native skips that check until a run there proves it.
 The Rust surface runs in full on every leg its import model reaches.

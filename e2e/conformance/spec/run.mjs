@@ -512,7 +512,7 @@ export function buildChecks(s) {
         rustErrorChecks({ add, todo }, s.rustKit);
         rustOwnershipChecks({ add, todo }, s.rustKit);
         rustSurfaceChecks({ add, todo, skip }, s.rustKit, { worker });
-        rustParityChecks({ add, todo, skip }, s.rustKit, { worker, jsi: Boolean(s.caps?.jsiNative) });
+        rustParityChecks({ add, todo, skip }, s.rustKit, { worker, jsi: Boolean(s.caps?.jsiNative), nodeAddon: Boolean(s.caps?.nodeAddon) });
     }));
     // Last on purpose: it reads what every earlier check touched.
     section(list, 'coverage', 'no export list wired on this leg', s.coverage && (() => add('coverage:everyExportTouched', () => untouchedExports(s.coverage.exports, s.coverage.seen), [])));
