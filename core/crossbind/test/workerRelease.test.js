@@ -62,6 +62,9 @@ beforeEach(async () => {
         boxAt: () => new Box(borrowed()),
         numbers: () => vectorOf([1, 2], owned()),
         numbersAt: () => vectorOf([3], borrowed()),
+        // Globals, as emscripten::constant leaves them: owned handles the module keeps.
+        counter: new Box(owned()),
+        primes: vectorOf([2, 3], owned()),
     };
     worker.setCoercionModule(m);
     channel = new MessageChannel();
@@ -90,6 +93,12 @@ describe('a vector the worker hands over as an array', () => {
         expect(await remote.numbersAt()).toEqual([3]);
         expect(deleted).toEqual([]);
     });
+
+    test('stays when the module keeps it', async () => {
+        expect(await remote.primes).toEqual([2, 3]);
+        expect(await remote.primes).toEqual([2, 3]);
+        expect(deleted).toEqual([]);
+    });
 });
 
 describe('a handle the main thread no longer reaches', () => {
@@ -106,6 +115,16 @@ describe('a handle the main thread no longer reaches', () => {
     test('to a raw pointer is forgotten without freeing what it points at', async () => {
         const box = await remote.boxAt();
         const { id, collect } = watchOf(box);
+
+        collect();
+
+        await vi.waitFor(() => expect(forgotten(id)).toBe(true));
+        expect(deleted).toEqual([]);
+    });
+
+    test('to a global the module keeps is forgotten without freeing it', async () => {
+        const counter = await remote.counter;
+        const { id, collect } = watchOf(counter);
 
         collect();
 

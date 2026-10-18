@@ -54,7 +54,7 @@
     {
       "source": "docs/api/lifecycle-and-types.md",
       "output": "api/lifecycle-and-types.md",
-      "sha256": "dc24b94d253b25f6a6e3deda6a03e8aa25fecadcab1c9229fa70ff0dabc0d28a"
+      "sha256": "8731ba9d94b4811adafdeee3a5c4f5c7143086330a863e2585e718b68e94835d"
     },
     {
       "source": "docs/api/native.md",
