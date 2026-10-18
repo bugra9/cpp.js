@@ -6,6 +6,7 @@ export const imports = {
         'XML_SetCharacterDataHandler',
         'XML_Parse',
         'XML_Status',
+        'XML_TRUE',
         'XML_GetErrorCode',
         'XML_ErrorString',
         'XML_GetCurrentLineNumber',
@@ -17,11 +18,11 @@ export const imports = {
         'releaseCallback',
     ],
 };
-export const note = 'Handlers are JavaScript functions, which cannot be sent to a worker, so the module runs on the page\'s thread and each handler is freed with `releaseCallback` (64 can be registered at a time). Attributes arrive as a handle to walk with `readPointerAt`, and character data as a handle that `readBuffer` reads for exactly its `length` bytes; `XML_Parse` wants the UTF-8 byte count too, `xml.length` stops one byte short here and fails with `unclosed token`. `XML_TRUE` is defined as `((XML_Bool)1)`, which is not bound, so `isFinal` is passed as 1.';
+export const note = 'Handlers are JavaScript functions, which cannot be sent to a worker, so the module runs on the page\'s thread and each handler is freed with `releaseCallback` (64 can be registered at a time). Attributes arrive as a handle to walk with `readPointerAt`, and character data as a handle that `readBuffer` reads for exactly its `length` bytes; `XML_Parse` wants the UTF-8 byte count too, `xml.length` stops one byte short here and fails with `unclosed token`.';
 export const expected = ({ expat }) => [`Expat ${expat}`, '1 en Dune 9.99 EUR', "2 fr L'Étranger 7.50 EUR", '3 en Pride & Prejudice 5.25 GBP', 'mismatched tag at line 2, column 30'];
 export const init = { useWorker: false };
 
-export default async function example({ XML_ExpatVersionInfo, XML_ParserCreate, XML_SetElementHandler, XML_SetCharacterDataHandler, XML_Parse, XML_Status, XML_GetErrorCode, XML_ErrorString, XML_GetCurrentLineNumber, XML_GetCurrentColumnNumber, XML_ParserFree, readCString, readPointerAt, readBuffer, releaseCallback }, console) {
+export default async function example({ XML_ExpatVersionInfo, XML_ParserCreate, XML_SetElementHandler, XML_SetCharacterDataHandler, XML_Parse, XML_Status, XML_TRUE, XML_GetErrorCode, XML_ErrorString, XML_GetCurrentLineNumber, XML_GetCurrentColumnNumber, XML_ParserFree, readCString, readPointerAt, readBuffer, releaseCallback }, console) {
     const version = XML_ExpatVersionInfo();
     console.log('Expat', `${version.major}.${version.minor}.${version.micro}`);
     const encoder = new TextEncoder();
@@ -46,7 +47,7 @@ export default async function example({ XML_ExpatVersionInfo, XML_ParserCreate, 
         try {
             XML_SetElementHandler(parser, onStart, onEnd);
             XML_SetCharacterDataHandler(parser, onText);
-            if (XML_Parse(parser, xml, encoder.encode(xml).length, 1) !== XML_Status.XML_STATUS_OK) {
+            if (XML_Parse(parser, xml, encoder.encode(xml).length, XML_TRUE) !== XML_Status.XML_STATUS_OK) {
                 throw new Error(`${readCString(XML_ErrorString(XML_GetErrorCode(parser)))} at line ${XML_GetCurrentLineNumber(parser)}, column ${XML_GetCurrentColumnNumber(parser)}`);
             }
             return root.children[0];
