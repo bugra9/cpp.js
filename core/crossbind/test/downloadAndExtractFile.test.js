@@ -7,7 +7,7 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import downloadAndExtractFile, { assertHttps } from '../src/utils/downloadAndExtractFile.js';
+import downloadAndExtractFile, { assertHttps, sourcesOf } from '../src/utils/downloadAndExtractFile.js';
 
 const sha256Of = (content) => crypto.createHash('sha256').update(content).digest('hex');
 
@@ -231,6 +231,82 @@ describe('downloadAndExtractFile', () => {
             .rejects.toThrow(/must come over https/);
         expect(fs.existsSync(path.join(output, 'pkg-1.0.tar.gz'))).toBe(false);
     });
+
+    describe('with mirrors', () => {
+        const unreachable = 'http://127.0.0.1:1/downloads/pkg-1.0.tar.gz';
+        let archive;
+
+        beforeEach(() => {
+            const staged = path.join(output, 'staged.tar.gz');
+            archive = packArchive(staged);
+            fs.rmSync(staged);
+        });
+
+        test('downloads from the next source when the first cannot be reached', async () => {
+            const { server, port } = await startServer(archive);
+            try {
+                const sources = [unreachable, `http://127.0.0.1:${port}/downloads/pkg-1.0.tar.gz`];
+                await expect(downloadAndExtractFile(sources, output, sha256Of(archive), NO_WAIT)).resolves.toBe(true);
+                expect(fs.existsSync(path.join(output, 'source/lib.c'))).toBe(true);
+            } finally {
+                server.close();
+            }
+        });
+
+        test('downloads from the next source when the first answers 404', async () => {
+            const { server, port } = await startServer(archive);
+            try {
+                const sources = [`http://127.0.0.1:${port}/missing/pkg-1.0.tar.gz`, `http://127.0.0.1:${port}/downloads/pkg-1.0.tar.gz`];
+                await expect(downloadAndExtractFile(sources, output, sha256Of(archive), NO_WAIT)).resolves.toBe(true);
+            } finally {
+                server.close();
+            }
+        });
+
+        test('downloads from the next source when the first serves another archive', async () => {
+            const other = packArchive(path.join(output, 'other.tar.gz'), { root: 'other-1.0' });
+            fs.rmSync(path.join(output, 'other.tar.gz'));
+            const wrong = await startServer(other);
+            const right = await startServer(archive);
+            try {
+                const sources = [`http://127.0.0.1:${wrong.port}/downloads/pkg-1.0.tar.gz`, `http://127.0.0.1:${right.port}/downloads/pkg-1.0.tar.gz`];
+                await expect(downloadAndExtractFile(sources, output, sha256Of(archive), NO_WAIT)).resolves.toBe(true);
+                expect(fs.readFileSync(path.join(output, 'pkg-1.0.tar.gz'))).toEqual(archive);
+            } finally {
+                wrong.server.close();
+                right.server.close();
+            }
+        });
+
+        test('names every source when none can be used', async () => {
+            const { server, port } = await startServer(archive);
+            try {
+                const missing = `http://127.0.0.1:${port}/missing/pkg-1.0.tar.gz`;
+                const error = await downloadAndExtractFile([unreachable, missing], output, sha256Of(archive), NO_WAIT).catch((e) => e);
+                expect(error.message).toMatch(/no source of pkg-1\.0\.tar\.gz could be used/);
+                expect(error.message).toContain(`cannot reach ${unreachable}`);
+                expect(error.message).toContain(`${missing} — HTTP 404`);
+            } finally {
+                server.close();
+            }
+        });
+
+        test('keeps the archive under the name the first source gives it', async () => {
+            const { server, port } = await startServer(archive);
+            try {
+                await downloadAndExtractFile([unreachable, `http://127.0.0.1:${port}/redirect/latest`], output, sha256Of(archive), NO_WAIT);
+                expect(fs.existsSync(path.join(output, 'pkg-1.0.tar.gz'))).toBe(true);
+                expect(fs.readFileSync(path.join(output, 'source.archive'), 'utf8')).toBe('pkg-1.0.tar.gz');
+            } finally {
+                server.close();
+            }
+        });
+
+        test('refuses a mirror served over plain http, before any request goes out', async () => {
+            await expect(downloadAndExtractFile([unreachable, 'http://mirror.example.invalid/pkg-1.0.tar.gz'], output, undefined, NO_WAIT))
+                .rejects.toThrow(/must come over https/);
+        });
+    });
 });
 
 describe('assertHttps', () => {
@@ -246,5 +322,16 @@ describe('assertHttps', () => {
     test('refuses a redirect that downgrades the transport', () => {
         expect(() => assertHttps('http://mirror.example.invalid/pkg.tar.gz', 'https://upstream.example (redirected)'))
             .toThrow(/https:\/\/upstream.example \(redirected\) over http:\/\//);
+    });
+});
+
+describe('sourcesOf', () => {
+    test('lists the recipe URL first, then its mirrors', () => {
+        const recipe = { getURL: (v) => `https://upstream.example/pkg-${v}.tar.gz`, getMirrors: (v) => [`https://mirror.example/pkg-${v}.tar.gz`] };
+        expect(sourcesOf(recipe, '1.0')).toEqual(['https://upstream.example/pkg-1.0.tar.gz', 'https://mirror.example/pkg-1.0.tar.gz']);
+    });
+
+    test('lists the recipe URL alone when it names no mirrors', () => {
+        expect(sourcesOf({ getURL: (v) => `https://upstream.example/pkg-${v}.tar.gz` }, '1.0')).toEqual(['https://upstream.example/pkg-1.0.tar.gz']);
     });
 });

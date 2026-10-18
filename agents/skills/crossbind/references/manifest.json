@@ -34,7 +34,7 @@
     {
       "source": "docs/api/crossbind-build.md",
       "output": "api/crossbind-build.md",
-      "sha256": "92b1ac2fc92dab74cc4a5e7eb3ba4c64374b83ed25402f77293f3db1f0553201"
+      "sha256": "a9940a5928ad1160e1e610d5105abffbab5afdaae0c2be08f8b215985da5cab2"
     },
     {
       "source": "docs/api/crossbind-config.md",

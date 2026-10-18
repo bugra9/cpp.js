@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import replace from 'replace';
-import downloadAndExtractFile from '../utils/downloadAndExtractFile.js';
+import downloadAndExtractFile, { sourcesOf } from '../utils/downloadAndExtractFile.js';
 import copyToDistSource from '../utils/copyToDistSource.js';
 import { getBuildTargets } from './target.js';
 import state from '../state/index.js';
@@ -14,8 +14,8 @@ export default async function buildExternal(targetParams, options = {}) {
         throw new Error(`crossbind: "${state.config.general?.name}" has a crossbind.build recipe but no "nativeVersion" in package.json — cannot build from source.`);
     }
 
-    const { getURL, sha256, replaceList, copyToSource, copyToDist } = state.config.build;
-    const isNewlyCreated = await downloadAndExtractFile(getURL(version), state.config.paths.build, sha256);
+    const { sha256, replaceList, copyToSource, copyToDist } = state.config.build;
+    const isNewlyCreated = await downloadAndExtractFile(sourcesOf(state.config.build, version), state.config.paths.build, sha256);
     const sourcePath = `${state.config.paths.build}/source`;
     if (isNewlyCreated && replaceList) {
         replaceList.forEach(({ regex, replacement, paths }) => {
