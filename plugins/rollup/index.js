@@ -66,9 +66,9 @@ const rollupCrossbindPlugin = (options, bridges = []) => {
             // A header transforms again after each source edit; a repeated entry would change the bridge lib's fingerprint.
             if (!bridges.includes(bridgeFile)) bridges.push(bridgeFile);
             // The names the app imports decide what a header binds, so watch mode transforms it again after any source edit.
-            // An app's dev server rebuilds for those itself: there, Vite would take the sources for imports of the header
-            // and, the page importing the header, update nothing after an edit to the page.
-            if (!(isApp && isServe)) appSourceFiles(state.config.paths.project).forEach((file) => this.addWatchFile(file));
+            // Vite's dev server rebinds them itself: there, Vite would take the sources for imports of the header and, the
+            // page importing the header, update nothing after an edit to the page.
+            if (!isServe) appSourceFiles(state.config.paths.project).forEach((file) => this.addWatchFile(file));
 
             return getCrossbindScript(buildTargetRelease, bridgeFile, { base });
         },
