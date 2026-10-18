@@ -21,6 +21,7 @@ What stays C++'s:
 
 - An object a function returns through a raw pointer (`T *`): the instance points at it and frees nothing, and nor does a `NativePointer` handle for memory a library returns (see [`cpp-binding-rules.md`](./cpp-binding-rules.md) Rule 1). Free that memory with the library's own function. A handle does free what crossbind allocated for it (`allocBuffer`, `allocPointer`, `allocString`, `cstring`).
 - An object C++ keeps: a C++ function that stores an object it gets from JavaScript takes it as a `std::shared_ptr`, or the object goes when JavaScript lets go of it.
+- The handle a mutable global arrives as (see [`cpp-binding-rules.md`](./cpp-binding-rules.md) Rule 10): the module keeps it while it runs, so letting go of it frees nothing.
 
 ### When C++ has a long-lived resource
 

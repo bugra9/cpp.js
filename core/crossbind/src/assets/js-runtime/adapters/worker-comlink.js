@@ -41,8 +41,12 @@ const ownsObject = (obj) => {
     return Boolean($$ && ($$.smartPtr || $$.count?.owned));
 };
 
+// The module's own objects, its globals above all, live as long as the module, so letting go of a handle to one
+// frees nothing.
+const moduleObjects = new WeakSet();
+
 const freeIfOwned = (obj) => {
-    if (ownsObject(obj) && !obj.isDeleted()) obj.delete();
+    if (ownsObject(obj) && !moduleObjects.has(obj) && !obj.isDeleted()) obj.delete();
 };
 
 // The worker side of a handle the main thread no longer reaches: its id goes, and the object with the last id.
@@ -297,6 +301,9 @@ export function moduleRoot(m) {
         configurable: true,
     });
     Object.defineProperty(m, RELEASE, { value: releaseEmbindObjects, configurable: true });
+    Object.values(m).forEach((value) => {
+        if (value !== null && typeof value === 'object') moduleObjects.add(value);
+    });
     return wrapWithVectorCoercion(m);
 }
 
