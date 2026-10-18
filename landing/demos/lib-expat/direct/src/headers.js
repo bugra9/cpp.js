@@ -19,6 +19,7 @@ export {
     XML_SetStartElementHandler,
     XML_SetStartNamespaceDeclHandler,
     XML_Status,
+    XML_TRUE,
     readBuffer,
     readCString,
     readPointerAt,

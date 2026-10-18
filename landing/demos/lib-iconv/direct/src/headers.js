@@ -8,7 +8,7 @@ export {
     iconv_close,
     iconv_open,
     iconv_open_into,
-    libiconvlist,
+    iconvlist,
     allocBuffer,
     allocPointer,
     readBytes,
