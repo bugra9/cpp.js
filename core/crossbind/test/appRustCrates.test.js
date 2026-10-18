@@ -13,6 +13,8 @@ vi.mock('../src/state/index.js', () => ({ default: { config: { paths: {}, system
 
 const WASM = { platform: 'wasm', arch: 'wasm32' };
 const TRIPLE = 'wasm32-unknown-emscripten';
+const DARWIN = { platform: 'darwin', arch: 'arm64' };
+const DARWIN_TRIPLE = 'aarch64-apple-darwin';
 const PINNED_LOCK = '# pinned by the project\n';
 const RESOLVED_LOCK = '# resolved by cargo\n';
 
@@ -38,9 +40,9 @@ function addCrate(name, userFile = null) {
 }
 
 // What a cargo build leaves: the archive, and the Cargo.lock it resolved beside the manifest.
-function fakeCargoOutput(targetDirName = 'target') {
+function fakeCargoOutput(targetDirName = 'target', triple = TRIPLE) {
     const superDir = path.join(cacheDir, 'rust-bridges/_app_super');
-    const lib = path.join(superDir, targetDirName, TRIPLE, 'release/libcrossbind_app_super.a');
+    const lib = path.join(superDir, targetDirName, triple, 'release/libcrossbind_app_super.a');
     fs.mkdirSync(path.dirname(lib), { recursive: true });
     fs.writeFileSync(lib, '');
     fs.writeFileSync(path.join(superDir, 'Cargo.lock'), RESOLVED_LOCK);
@@ -95,6 +97,30 @@ describe('buildAppRustCrates', () => {
         expect(command).toBe('cargo');
         expect(args).toContain('--target');
         expect(args).toContain(TRIPLE);
+    });
+
+    test('unwinds outside wasm, so a panic reaches JavaScript as an exception', async () => {
+        addCrate('counter');
+        const { buildAppRustCrates, spawnSync } = await importFresh();
+        spawnSync.mockImplementation(() => { fakeCargoOutput('target', DARWIN_TRIPLE); return { status: 0 }; });
+
+        buildAppRustCrates(DARWIN, cacheDir);
+
+        const manifest = fs.readFileSync(path.join(cacheDir, 'rust-bridges/_app_super/Cargo.toml'), 'utf8');
+        expect(manifest).toContain('[profile.release]\npanic = "unwind"');
+        const [, , options] = spawnSync.mock.calls.find(([command, args]) => command === 'cargo' && args.includes('build'));
+        expect(options.env.CARGO_PROFILE_RELEASE_PANIC).toBeUndefined();
+    });
+
+    test('aborts on wasm, as the std it links does', async () => {
+        addCrate('counter');
+        const { buildAppRustCrates, spawnSync } = await importFresh();
+        spawnSync.mockImplementation(() => { fakeCargoOutput(); return { status: 0 }; });
+
+        buildAppRustCrates(WASM, cacheDir);
+
+        const [, , options] = spawnSync.mock.calls.find(([command, args]) => command === 'cargo' && args.includes('build'));
+        expect(options.env.CARGO_PROFILE_RELEASE_PANIC).toBe('abort');
     });
 
     test('pins every bridge that has a keep symbol from its own, each built as one object', async () => {

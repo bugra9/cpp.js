@@ -84,7 +84,7 @@ initNative().then(async (m) => {
             extras,
             rustKit: proxy,
             coverage: { exports: kitExports(fileURLToPath(new URL('../.crossbind/build/bridge/', import.meta.url))), seen },
-            caps: { jsiNative: true },
+            caps: { jsiNative: true, nodeAddon: true },
         });
         console.log(result.summary);
         if (result.pass !== result.run) console.log(result.lines.join('\n'));

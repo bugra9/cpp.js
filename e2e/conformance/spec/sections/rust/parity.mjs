@@ -8,7 +8,7 @@ import { rejecting } from '../expect.mjs';
 // as properties, getter/setter pairs as accessors, Uint8Array/Float64Array for byte and float
 // slices, `code`/`message` on thrown errors, a JS Error for a Rust panic, typed callbacks,
 // the iterator protocol, f32/char/usize as output-only values, i64 accepting a plain number.
-export function rustParityChecks({ add, todo, skip }, s, { worker, jsi }) {
+export function rustParityChecks({ add, todo, skip }, s, { worker, jsi, nodeAddon }) {
     add('rs:napi:hashSetOut', async () => [...(await s.confRsSetMake(3))].sort(), [0, 1, 2]);
     add('rs:napi:hashSetIn', () => s.confRsSetLen(new Set([1, 2, 2])), 2);
     add('rs:napi:btreeSet', async () => Array.from(await s.confRsBsetSorted(new Set([3, 1, 2]))), [1, 2, 3]);
@@ -59,9 +59,9 @@ export function rustParityChecks({ add, todo, skip }, s, { worker, jsi }) {
         return s.count_emval_handles() - before;
     }, 0);
     add('rs:napi:errorCode', async () => { try { await s.confRsCodedErr(); return 'no-throw'; } catch (e) { return [e instanceof Error, e.message, e.code]; } }, [true, 'coded failure', 'E_CONF']);
-    // Held back on the native runtime until an RN run proves the unwinding path; on wasm the
-    // panic hook already raises it as a JS Error.
-    if (jsi) skip('rs:napi:panicBecomesError', 'native panic path not verified on a device yet');
+    // Held back on React Native until a run there proves the unwinding path; the Node addon unwinds
+    // it, and on wasm the panic hook raises it as a JS Error.
+    if (jsi && !nodeAddon) skip('rs:napi:panicBecomesError', 'native panic path not verified on a device yet');
     else add('rs:napi:panicBecomesError', async () => { try { await s.confRsPanics(true); return 'no-throw'; } catch (e) { return e instanceof Error && /kit panic/.test(e.message); } }, true);
     if (worker) skip('rs:napi:callbacks:*', 'JS functions cannot cross a worker boundary');
     else {

@@ -80,7 +80,9 @@ export default function buildAppRustCrates(target, cacheDir, cargoDependencies =
         ...crates.map((c) => `${c.replaceAll('_', '-')}-crossbind-app = { path = "${relPath(superDir, `${root}/${c}`)}" }`),
         '',
         '[profile.release]',
-        'panic = "abort"',
+        // Unwinding, as in a package's bridge, whose shims raise a panic as a JS exception: an abort runtime here could
+        // end the process on a panic in any crate. wasm still aborts, as its std does.
+        'panic = "unwind"',
         '',
         ...crates.flatMap((c) => [`[profile.release.package.${c.replaceAll('_', '-')}-crossbind-app]`, 'codegen-units = 1', '']),
         '[workspace]',
