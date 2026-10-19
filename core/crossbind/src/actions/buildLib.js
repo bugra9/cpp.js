@@ -54,7 +54,7 @@ export default function buildLib(targetParams, options = {}) {
                 fs.copyFileSync(modulePath, `${state.config.paths.output}/prebuilt/${target.path}/swig/${fileName}`);
             });
             writeSourceFingerprint(libdir, sourceFingerprint);
-            if (isCargo) writeEmbindRsFingerprint(libdir, getEmbindRsFingerprint());
+            if (isCargo) writeEmbindRsFingerprint(libdir, getEmbindRsFingerprint(target));
             isChanged = true;
         } else {
             logger.cachedStep(target, 'lib');

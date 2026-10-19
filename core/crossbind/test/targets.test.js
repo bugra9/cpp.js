@@ -25,11 +25,11 @@ describe('TARGETS', () => {
         expect(pathsOf('native')).toHaveLength(4);
     });
 
-    test('macOS builds app hosts from the addon targets, and no other platform does yet', () => {
+    test('macOS and glibc Linux build app hosts from the addon targets, and no other platform does yet', () => {
         const app = TARGETS.filter((t) => t.runtimeEnv === 'app');
-        const darwinNode = TARGETS.filter((t) => t.platform === 'darwin' && t.runtimeEnv === 'node');
-        expect(app.map(targetPathOf).sort()).toEqual(darwinNode.map(targetPathOf).sort());
-        expect(app.every((t) => t.platform === 'darwin')).toBe(true);
+        const node = TARGETS.filter((t) => ['darwin', 'linux'].includes(t.platform) && t.runtimeEnv === 'node');
+        expect(app.map(targetPathOf).sort()).toEqual(node.map(targetPathOf).sort());
+        expect([...new Set(app.map((t) => t.platform))].sort()).toEqual(['darwin', 'linux']);
     });
 
     test('Node-API addon platforms build only when named, so a plain build keeps its output', () => {
@@ -87,7 +87,8 @@ describe('runtime environments', () => {
     test('runtimeEnvsOf lists the binaries of one platform', () => {
         expect(runtimeEnvsOf('wasm').sort()).toEqual(['browser', 'edge', 'node']);
         expect(runtimeEnvsOf('wasi')).toEqual(['wasi', 'http']);
-        expect(runtimeEnvsOf('linux')).toEqual(['node', 'native']);
+        expect(runtimeEnvsOf('linux')).toEqual(['node', 'native', 'app']);
+        expect(runtimeEnvsOf('linuxmusl')).toEqual(['node', 'native']);
         expect(runtimeEnvsOf('darwin')).toEqual(['node', 'native', 'app']);
         expect(runtimeEnvsOf('android')).toEqual([]);
     });
@@ -103,13 +104,18 @@ describe('wasiNamesOf', () => {
 });
 
 describe('appNamesOf', () => {
-    const app = (arch, buildType) => ({
-        platform: 'darwin', arch, runtime: 'mt', buildType, runtimeEnv: 'app',
+    const app = (arch, buildType, platform = 'darwin') => ({
+        platform, arch, runtime: 'mt', buildType, runtimeEnv: 'app',
     });
 
     test('names the app after the project, platform and arch, and the page runtime after the build type alone', () => {
         expect(appNamesOf(app('arm64', 'release'), 'demo')).toEqual({ appName: 'demo.darwin-arm64.app', appJsName: 'demo.app.js' });
         expect(appNamesOf(app('x64', 'debug'), 'demo')).toEqual({ appName: 'demo.darwin-x64.debug.app', appJsName: 'demo.app.debug.js' });
+    });
+
+    test('names a Linux app as a directory, without the bundle suffix', () => {
+        expect(appNamesOf(app('x64', 'release', 'linux'), 'demo')).toEqual({ appName: 'demo.linux-x64', appJsName: 'demo.app.js' });
+        expect(appNamesOf(app('arm64', 'debug', 'linux'), 'demo')).toEqual({ appName: 'demo.linux-arm64.debug', appJsName: 'demo.app.debug.js' });
     });
 });
 

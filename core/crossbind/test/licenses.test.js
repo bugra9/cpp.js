@@ -239,6 +239,15 @@ describe('collectLicenseRows for an app', () => {
         expect(byName.webview.licenseText).toContain('Serge Zaitsev');
         rows.forEach((row) => expect(validateSpdx(row.license).isValid).toBe(true));
     });
+
+    test('names, for a Linux app, the Hermes source it builds and the libc++ it links', async () => {
+        const rows = await collectLicenseRows('linux', { runtimeEnv: 'app' });
+        const byName = Object.fromEntries(rows.map((row) => [row.name, row]));
+
+        expect(byName.hermes.sourceUrl).toMatch(/^https:\/\/github\.com\/facebook\/hermes\/archive\/refs\/tags\/hermes-v.+\.tar\.gz$/);
+        expect(byName.hermes.sha256).toMatch(/^[0-9a-f]{64}$/);
+        expect(byName['llvm-runtimes'].license).toBe('Apache-2.0 WITH LLVM-exception');
+    });
 });
 
 describe('collectLicenseRows for a Node-API addon', () => {

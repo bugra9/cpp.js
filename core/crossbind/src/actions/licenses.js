@@ -9,7 +9,7 @@ import { wasiToolchainIdentity } from '../utils/provenance.js';
 import { resolveWasiSdkPath } from '../utils/wasiToolchain.js';
 import resolveEmbindNapiRoot, { resolveEmbindJsiRoot } from '../utils/resolveEmbindNapi.js';
 import resolveAppHostRoot, { resolveAppEmbindJsiRoot } from '../utils/resolveAppHost.js';
-import { HERMES, hermesUrl } from '../utils/hermes.js';
+import { HERMES, HERMES_SOURCE, hermesUrl } from '../utils/hermes.js';
 import { shippedBundledLicense } from '../utils/bundledLicenses.js';
 import toolchainNoticesDir from '../utils/toolchainNotices.js';
 
@@ -132,7 +132,7 @@ function addonToolchainRows(platform) {
     };
     const llvmText = 'license text: https://github.com/llvm/llvm-project/blob/main/LICENSE.TXT';
     if (platform === 'linux' || platform === 'linuxmusl') {
-        return [{ ...llvmRuntimes, licenseNotes: `libc++ and libc++abi of the linux toolchain image, statically linked into the addon; ${llvmText}` }];
+        return [{ ...llvmRuntimes, licenseNotes: `libc++ and libc++abi of the linux toolchain image, statically linked into the binary; ${llvmText}` }];
     }
     const mingwLicense = 'LicenseRef-MinGW-w64-runtime';
     return [
@@ -210,22 +210,31 @@ function nodeRuntimeRows({ isAddon }) {
 const WEBVIEW = { version: 'cbbdee44afff22867de9fd88a9fc8350d9bdd399', sha256: '10e972a2327b5681474f4aa4499e505eaa4ff659aa995380386f08fd6fc1b763' };
 const JSI_SHA256 = 'cb6274a22abc93ecc970066539815e716d3e47716e8f93a9971cf4eb5918ffc1';
 
-function appRuntimeRows() {
+function appRuntimeRows(platform) {
     const hostRoot = resolveAppHostRoot();
     const hermesLicense = textOf(path.join(hostRoot, 'third_party', 'jsi', 'LICENSE'));
     const mit = {
         npmName: '@crossbind/core-app-host', license: 'MIT', licenseDeclared: 'MIT', licenseSelected: null, isCopyleft: false,
     };
+    const hermes = platform === 'linux'
+        ? {
+            sha256: HERMES_SOURCE.sha256,
+            sourceUrl: HERMES_SOURCE.url,
+            licenseNotes: "Hermes built from its release's source in the linux toolchain image, statically linked into the host",
+        }
+        : {
+            sha256: HERMES.sha256,
+            sourceUrl: hermesUrl(HERMES.version),
+            licenseNotes: "React Native's Hermes for Apple platforms, which the app carries as hermesvm.framework",
+        };
     return [
         ...runtimeRows(resolveAppEmbindJsiRoot(), 'the embind-jsi runtime, the app host and the bindings crossbind generates'),
         {
             ...mit,
+            ...hermes,
             name: 'hermes',
             version: HERMES.version,
             nativeVersion: HERMES.version,
-            sha256: HERMES.sha256,
-            sourceUrl: hermesUrl(HERMES.version),
-            licenseNotes: "React Native's Hermes for Apple platforms, which the app carries as hermesvm.framework",
             licenseText: hermesLicense,
         },
         {
@@ -367,6 +376,6 @@ export default async function collectLicenseRows(platform = null, { runtimeEnv =
     if (platform === 'wasi') rows.push(...wasiToolchainRows());
     if (['linux', 'linuxmusl', 'win32'].includes(platform)) rows.push(...addonToolchainRows(platform));
     if (runtimeEnv === 'node') rows.push(...nodeRuntimeRows({ isAddon: platform !== null }));
-    if (runtimeEnv === 'app') rows.push(...appRuntimeRows());
+    if (runtimeEnv === 'app') rows.push(...appRuntimeRows(platform));
     return rows.sort((a, b) => a.name.localeCompare(b.name));
 }

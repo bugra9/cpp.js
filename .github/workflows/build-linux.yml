@@ -47,9 +47,15 @@ jobs:
               run: pnpm run check:publish
             - name: Install Playwright Browsers
               run: pnpm exec playwright install --with-deps
+            - name: Install WebKitGTK, which the desktop app sample runs on
+              run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-0
             - name: Run Playwright tests
               # The full fixtures and their port dependencies run in test-e2e-fixtures.yml.
-              # The Electron sample opens a window, which needs a display even when it shows nothing.
+              # The Electron and app samples open a window, which needs a display even when it shows nothing.
+              # WebKitGTK runs without its sandbox and GPU compositing, as in the containers the app was measured in.
+              env:
+                  WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: '1'
+                  WEBKIT_DISABLE_COMPOSITING_MODE: '1'
               run: xvfb-run -a pnpm run ci:linux:e2e
             - name: Install wasi-sdk (wasi e2e toolchain)
               run: |

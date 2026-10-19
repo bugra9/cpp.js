@@ -43,6 +43,20 @@ describe('embind-rs fingerprint', () => {
         expect(getEmbindRsFingerprint()).not.toBe(before);
     });
 
+    // lld refuses the second copy of Rust std's symbols that an archive from another rustc brings; Apple's linker takes
+    // the mix, and the host's rustc builds those.
+    test("counts the image's rustc for a target an image builds, and no rustc for an Apple one", () => {
+        root.dir = crateAt(`${work}/a`);
+        const linux = { platform: 'linux', arch: 'arm64' };
+        const darwin = { platform: 'darwin', arch: 'arm64' };
+        const { rust } = JSON.parse(fs.readFileSync(new URL('../src/assets/toolchain-digests.json', import.meta.url), 'utf8')).toolchains;
+
+        expect(getEmbindRsFingerprint(darwin)).toBe(getEmbindRsFingerprint());
+        expect(getEmbindRsFingerprint(linux)).not.toBe(getEmbindRsFingerprint(darwin));
+        expect(getEmbindRsFingerprint(linux)).toBe(getEmbindRsFingerprint({ platform: 'win32', arch: 'x64' }));
+        expect(rust).toMatch(/^\d+\.\d+\.\d+$/);
+    });
+
     test('counts a prebuilt without a stamp, or with another one, as stale', () => {
         const prebuilt = `${work}/prebuilt/wasm-wasm32-st-release`;
         expect(isEmbindRsFingerprintStale(prebuilt, 'current')).toBe(true);

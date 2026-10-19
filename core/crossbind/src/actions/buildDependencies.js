@@ -83,12 +83,13 @@ async function buildMissingCargoDependencies(buildTargets, targetParams) {
     const bridgeTarget = buildTargets.some(isWasm) ? state.targets.find(isWasm) : undefined;
     const extraTarget = bridgeTarget && !buildTargets.some((target) => target.path === bridgeTarget.path) ? bridgeTarget : undefined;
     const targets = extraTarget ? [...buildTargets, extraTarget] : buildTargets;
-    // A prebuilt from another embind-rs counts as missing: linked, it carries stale glue or clashes with the others.
-    const fingerprint = getEmbindRsFingerprint();
+    // A prebuilt from another embind-rs, or for an image's target from another rustc, counts as missing: linked, it
+    // carries stale glue or clashes with the others.
     const prebuiltOf = (dep, target) => [target.path, target.releasePath]
         .map((targetPath) => `${dep.paths.output}/prebuilt/${targetPath}`)
         .find((dir) => fs.existsSync(dir)) ?? `${dep.paths.output}/prebuilt/${target.path}`;
-    const isBuilt = (dep, target) => dep.functions.isEnabled(target) && !isEmbindRsFingerprintStale(prebuiltOf(dep, target), fingerprint);
+    const isBuilt = (dep, target) => dep.functions.isEnabled(target)
+        && !isEmbindRsFingerprintStale(prebuiltOf(dep, target), getEmbindRsFingerprint(target));
     const missing = cargoDependencies.filter((dep) => targets.some((target) => !isBuilt(dep, target)));
 
     for (const dep of missing) {

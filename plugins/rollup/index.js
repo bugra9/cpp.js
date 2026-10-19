@@ -3,6 +3,7 @@
 import {
     state, createLib, createBridgeFile, buildWasm, getCrossbindScript, getRustJsScript, buildDependencies,
     getDependFilePath, getTargetParams, getFilteredBuildTargets, isSourceNewer, appSourceFiles, buildProjectApp, publishApp,
+    appOutputName,
 } from 'crossbind';
 
 import fs from 'node:fs';
@@ -17,7 +18,7 @@ let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'rel
 let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
 
 if (isApp && !buildTargetRelease) {
-    throw new Error(`crossbind: apps build on macOS so far, and this machine runs ${process.platform}-${process.arch}.`);
+    throw new Error(`crossbind: apps build on macOS and Linux so far, and this machine runs ${process.platform}-${process.arch}.`);
 }
 if (!buildTargetRelease && !buildTargetDebug) {
     throw new Error('No build targets found');
@@ -149,7 +150,7 @@ const rollupCrossbindPlugin = (options, bridges = []) => {
         writeBundle(outputOptions) {
             if (!isApp) return;
             const dir = outputOptions.dir ?? p.dirname(outputOptions.file);
-            publishApp(buildTargetRelease, { to: `${dir}/${state.config.general.name}.app`, page: dir });
+            publishApp(buildTargetRelease, { to: `${dir}/${appOutputName(buildTargetRelease)}`, page: dir });
         },
     };
 };

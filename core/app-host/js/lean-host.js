@@ -1,7 +1,7 @@
 // The lean protocol's host side, with the contract a worker-backed web build has: objects as handles the page releases,
 // enum values with their identity, vectors returned as arrays, plain arrays coerced into vector parameters, errors
 // with their own fields, and large byte arrays as attachments of a crossbind:// request.
-/* global __host_reply, __host_token */
+/* global __host_reply */
 import { pack, unpack, CODEC_TAG as TAG } from './codec.js';
 import { setCoercionModule, unwrapCoercionProxy, wrapWithVectorCoercion } from 'crossbind/runtime/adapters/vector-coercion.js';
 import { UNBOUND_MESSAGE } from 'crossbind/runtime/adapters/unboundMessage.js';
@@ -154,7 +154,7 @@ function dispatch(op, target, path, args) {
     }
     if (op === 'env') {
         setEnv(args[0], true);
-        return __host_token;
+        return null;
     }
     const base = target === 0 ? root : wrapWithVectorCoercion(registry.get(target));
     if (base === undefined) throw new Error(`crossbind: object ${target} was already released`);

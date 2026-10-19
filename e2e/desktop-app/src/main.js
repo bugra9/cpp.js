@@ -24,11 +24,32 @@ import { Argon2, Params as Argon2Params, Algorithm as Argon2Algorithm, Version a
 import { Params as Argon2ModuleParams, Memory as Argon2Memory } from 'cargo:argon2-rust/params';
 import { XzOptions, XzWriter, XzReader, LzmaOptions, LzmaWriter, Lzma2Reader, LzmaReader } from 'cargo:lzma-rust2';
 
+// A sandboxed frame of the page reaches the module's channel too, but not the token of the page's top frame.
+function callFromSandboxedFrame() {
+    const frame = document.createElement('iframe');
+    frame.sandbox = 'allow-scripts';
+    frame.srcdoc = `<script>
+        const post = (text) => parent.postMessage(text, '*');
+        try {
+            window.webkit.messageHandlers.crossbind.postMessage('["get",0,["ConfBox"],[]]').then(String, () => 'refused').then(post);
+        } catch {
+            post('refused');
+        }
+    </script>`;
+    const answer = new Promise((resolve) => {
+        addEventListener('message', (event) => resolve(String(event.data)), { once: true });
+    });
+    document.body.append(frame);
+    return answer.finally(() => frame.remove());
+}
+
 initNative().then(async (m) => {
     try {
         // Markup can make a crossbind:// request as well, so one without the page's token must be refused.
         const { status } = await fetch('crossbind://app/b/result?id=1');
         if (status !== 403) throw new Error(`the host answered ${status} to a request without the page's token`);
+        const framed = await callFromSandboxedFrame();
+        if (framed.startsWith('[0,')) throw new Error(`a sandboxed frame called the module: ${framed}`);
         const result = await runConformance({
             cpp: { ConfBox: m.ConfBox, ConfCircle: m.ConfCircle, ConfOps: m.ConfOps, ConfShape: m.ConfShape },
             rustPkg: {

@@ -69,11 +69,17 @@ int main() {
     view.set_title(appName());
     view.set_size(WIDTH, HEIGHT, WEBVIEW_HINT_NONE);
     void *webView = view.browser_controller().value();
+#ifndef __APPLE__
+    registerSchemeHandler(webView, "crossbind", schemeHandler);
+#endif
 
     std::vector<std::string> origins{APP_ORIGIN};
     if (devUrl) origins.push_back(originOf(devUrl));
+    // Only the top frame gets the token every message and crossbind:// call carries: a frame of another origin, or a
+    // sandboxed one, cannot read it.
+    addTopFrameScript(webView, "Object.defineProperty(globalThis, '__crossbind_token', { value: '" + core.token() + "' });");
     installReplyChannel(webView, "crossbind", [&core, origins](std::string origin, std::string message, ReplyFn reply) {
-        if (std::find(origins.begin(), origins.end(), origin) == origins.end()) {
+        if (!origin.empty() && std::find(origins.begin(), origins.end(), origin) == origins.end()) {
             reply(REFUSED);
             return;
         }

@@ -213,8 +213,8 @@ export default {
       // darwin, linux, linuxmusl or win32; 'native' is an executable on those
       // four (see native.md). Under -p wasi, 'wasi' is a command and 'http' a
       // wasi:http/service component (see wasi.md). 'app' is a desktop app's
-      // host under -p darwin; set here, it also turns the Vite plugin's build
-      // into the app's (see app.md).
+      // host under -p darwin or linux; set here, it also turns the Vite
+      // plugin's build into the app's (see app.md).
   },
 
   targetSpecs: [

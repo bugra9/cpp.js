@@ -3,8 +3,8 @@
 > The page runs in the system webview, the bindings natively in the app's process. Reference: [`docs/api/app.md`](../../api/app.md).
 
 Use it when a project wants a desktop app without Electron: the same page and the same `initNative()` calls as its
-web build, with the C++ or Rust running natively. macOS only for now; for Linux and Windows desktops today, use
-Electron with a Node-API addon ([`nodejs.md`](./nodejs.md#electron)).
+web build, with the C++ or Rust running natively. macOS and Linux for now; for Windows desktops today, use Electron
+with a Node-API addon ([`nodejs.md`](./nodejs.md#electron)).
 
 ## Steps
 
@@ -27,7 +27,8 @@ Electron with a Node-API addon ([`nodejs.md`](./nodejs.md#electron)).
 
 ## Validation
 
-- `pnpm vite build` ends with `dist/<name>.app`, and `open dist/<name>.app` shows the page.
+- `pnpm vite build` ends with `dist/<name>.app`, and `open dist/<name>.app` shows the page. On Linux it ends with
+  `dist/<name>-linux-<arch>/` and its `.tar.gz`, and `dist/<name>-linux-<arch>/<name>` shows the page.
 - With `CROSSBIND_APP_CONSOLE=1`, running `dist/<name>.app/Contents/MacOS/<name>` prints what the page logs.
 - `crossbind licenses -e app --notices` writes the notices to ship with the app.
 
@@ -37,7 +38,8 @@ Electron with a Node-API addon ([`nodejs.md`](./nodejs.md#electron)).
   configs.
 - Navigation to another origin is refused; links the user follows open in the default browser. Embed no third-party
   page in an iframe.
-- `vite` and `vite build` run on macOS only for an app.
+- `vite` and `vite build` build the app of the machine they run on, macOS or Linux; `crossbind build -p linux -e app`
+  builds a Linux app from a Mac too. A Linux app needs Docker to build and WebKitGTK 4.1 (2.40 or later) to run.
 
 ## Reference
 

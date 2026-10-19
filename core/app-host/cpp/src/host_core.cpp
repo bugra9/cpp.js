@@ -229,7 +229,6 @@ void JsThread::run(const Task &task) {
 }
 
 void Core::installHostFunctions(jsi::Runtime &rt) {
-    rt.global().setProperty(rt, "__host_token", jsi::String::createFromAscii(rt, token_));
     setFunction(rt, "__host_log", 2, [](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args, size_t) {
         const std::string level = args[0].asString(rt).utf8(rt);
         std::FILE *out = level == "warn" || level == "error" ? stderr : stdout;
@@ -285,6 +284,11 @@ std::string Core::boot(std::string bundle, const std::string &sourceUrl, const s
 }
 
 void Core::receive(std::string message, ReplyFn reply) {
+    if (message.compare(0, token_.size(), token_) != 0) {
+        reply(errorReply("crossbind: this message does not carry the page's token"));
+        return;
+    }
+    message.erase(0, token_.size());
     js_.post([this, message = std::move(message), reply = std::move(reply)](jsi::Runtime &rt) {
         const std::string call = std::to_string(nextReply_++);
         replies_.emplace(call, reply);

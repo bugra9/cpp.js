@@ -145,3 +145,29 @@ jobs:
               run: |
                   pnpm --filter=@crossbind/e2e-desktop-app run build
                   pnpm --filter=@crossbind/e2e-desktop-app run e2e:prod
+    app-linux:
+        # The app builds in crossbind's linux image, as the addons do, with Hermes and WebKitGTK's headers and
+        # libraries fetched on first use, and runs on the runner's own WebKitGTK.
+        runs-on: ubuntu-latest
+        timeout-minutes: 60
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+            - name: Install pnpm
+              uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+            - name: Use Node.js
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'pnpm'
+            - name: Install dependencies
+              run: pnpm install
+            - name: Install WebKitGTK, which the app runs on
+              run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-0
+            - name: Build the app and run the conformance suite in it
+              # WebKitGTK runs without its sandbox and GPU compositing, as in the containers the app was measured in.
+              env:
+                  WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: '1'
+                  WEBKIT_DISABLE_COMPOSITING_MODE: '1'
+              run: |
+                  pnpm --filter=@crossbind/e2e-desktop-app run build
+                  xvfb-run -a pnpm --filter=@crossbind/e2e-desktop-app run e2e:prod

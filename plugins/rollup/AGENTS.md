@@ -15,7 +15,7 @@
 | `buildStart` | Iterate `state.config.paths.native` array; `addWatchFile` every entry. Watch mode now sees `.cpp`/`.h` edits |
 | `generateBundle` | Run `createLib + createXCFramework + buildWasm` with `force = isSourceNewer(...)`; emit `crossbind.js`, `crossbind.wasm`, `crossbind.data.txt` as bundle assets |
 
-In app mode (`target.runtimeEnv: 'app'`, macOS for now) `generateBundle` builds the app host for this machine with `buildProjectApp` instead, and emits its page runtime as `crossbind.js`; `writeBundle` then puts the written page into `<name>.app` beside it with `publishApp`. See `docs/api/app.md`.
+In app mode (`target.runtimeEnv: 'app'`, macOS and Linux for now) `generateBundle` builds the app host for this machine with `buildProjectApp` instead, and emits its page runtime as `crossbind.js`; `writeBundle` then puts the written page into `<name>.app` beside it with `publishApp`. See `docs/api/app.md`.
 
 ## Invariants
 

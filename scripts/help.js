@@ -24,7 +24,7 @@ const scripts = pkg.scripts || {};
 const ANNOTATIONS = {
     // build
     'build:ports': 'Build every @crossbind/port-* (pnpm topological order)',
-    'build:examples': 'Build every @crossbind/example-* but desktop-app, which builds on macOS only',
+    'build:examples': 'Build every @crossbind/example-*',
     'build:examples:desktop': "Build the desktop samples' binaries for every desktop platform, not just this machine's",
     'build:examples:lib': 'Build sample-lib-* packages (the C++ library samples)',
     'build:examples:lib:wasm': 'Build sample-lib-* for wasm only',

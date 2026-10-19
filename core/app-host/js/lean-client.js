@@ -30,8 +30,6 @@ function createSession(transport) {
     const handleIds = new WeakMap();
     const tokens = new Map();
     const tokenIds = new WeakMap();
-    // The host's crossbind:// requests need it, and only a page the host's channel answers learns it.
-    let sessionToken = '';
 
     const pendingRelease = [];
     const collector = typeof FinalizationRegistry === 'function' ? new FinalizationRegistry((id) => {
@@ -51,14 +49,14 @@ function createSession(transport) {
         return promise;
     };
     function send(message) {
-        const text = JSON.stringify(message);
+        const text = transport.token + JSON.stringify(message);
         return track(gate.then(() => transport.send(text)));
     }
     function sendWithAttachments(message, attachments) {
         const query = `m=${encodeURIComponent(JSON.stringify([...message, attachments.map((view) => [view.constructor.name, view.byteLength])]))}`;
         const body = concatenate(attachments);
         const done = Promise.allSettled([...inflight])
-            .then(() => fetch(`${transport.base}/b/frame?${query}&t=${sessionToken}`, { method: 'POST', body }))
+            .then(() => fetch(`${transport.base}/b/frame?${query}&t=${transport.token}`, { method: 'POST', body }))
             .then(checked)
             .then((response) => response.text());
         gate = done.then(() => undefined, () => undefined);
@@ -103,7 +101,7 @@ function createSession(transport) {
         const [failed, value] = JSON.parse(text);
         if (failed) throw Object.assign(new Error(value.message), value);
         if (value !== null && typeof value === 'object' && value[TAG] === 'big') {
-            const bytes = await (await checked(await fetch(`${transport.base}/b/result?id=${value.v}&t=${sessionToken}`))).arrayBuffer();
+            const bytes = await (await checked(await fetch(`${transport.base}/b/result?id=${value.v}&t=${transport.token}`))).arrayBuffer();
             const View = globalThis[value.k] ?? Uint8Array;
             return new View(bytes, 0, bytes.byteLength / (View.BYTES_PER_ELEMENT ?? 1));
         }
@@ -145,17 +143,13 @@ function createSession(transport) {
         });
     }
 
-    // The first message: the host takes the page's env and answers with the session's token.
-    async function open(env) {
-        sessionToken = await request('env', 0, [], [env ?? {}]);
-    }
-
-    return { open, module: remote(0, []) };
+    return { request, module: remote(0, []) };
 }
 
-// transport: { send(text) → Promise<reply text>, base: the URL the host serves request bodies at, attachBytes }.
+// transport: { send(text) → Promise<reply text>, base: the URL the host serves request bodies at, attachBytes, token:
+// what the host gave the page, which every message and request carries }.
 export async function connect(transport, env) {
     const session = createSession(transport);
-    await session.open(env);
+    if (env && Object.keys(env).length > 0) await session.request('env', 0, [], [env]);
     return session.module;
 }
