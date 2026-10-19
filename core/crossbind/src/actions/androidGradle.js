@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import state from '../state/index.js';
 import getOsUserAndGroupId from '../utils/getOsUserAndGroupId.js';
 import pullDockerImage, { getDockerImage } from '../utils/pullDockerImage.js';
-import replaceBasePathForDocker, { DOCKER_BASE } from '../utils/replaceBasePathForDocker.js';
+import { DOCKER_BASE } from '../utils/replaceBasePathForDocker.js';
 import { DOCKER_RUN_SECURITY_ARGS } from '../utils/dockerSecurity.js';
 import { getContentHash } from '../utils/hash.js';
 
@@ -70,14 +70,14 @@ function docker(args, what) {
     }
 }
 
-// The container sees the project's base alone.
+// The container sees the project's base alone, under its own POSIX path whatever the host's separators.
 function inContainer(project) {
     const dir = path.resolve(project);
     const relative = path.relative(state.config.paths.base, dir);
     if (/^\.\.(?:[\\/]|$)/.test(relative) || path.isAbsolute(relative)) {
         throw new Error(`crossbind: the Android project ${dir} is outside ${state.config.paths.base}, the project's base and all the android-app container sees. Build the app into a directory under it.`);
     }
-    return replaceBasePathForDocker(dir, state.config.paths.base);
+    return path.posix.join(DOCKER_BASE, ...relative.split(path.sep));
 }
 
 // An Android app as the files it ships: its release APK, and with an upload key also the bundle Google Play takes, beside
