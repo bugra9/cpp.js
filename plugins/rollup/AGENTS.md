@@ -15,7 +15,7 @@
 | `buildStart` | Iterate `state.config.paths.native` array; `addWatchFile` every entry. Watch mode now sees `.cpp`/`.h` edits |
 | `generateBundle` | Run `createLib + createXCFramework + buildWasm` with `force = isSourceNewer(...)`; emit `crossbind.js`, `crossbind.wasm`, `crossbind.data.txt` as bundle assets |
 
-In app mode (`target.runtimeEnv: 'app'`, macOS, Linux, iOS and Android for now) `generateBundle` builds the app host for this machine with `buildProjectApp` instead, or with `CROSSBIND_APP_PLATFORM=ios` or `android` one for each iOS SDK or Android ABI (`appTargetParams`), and emits its page runtime as `crossbind.js`; `writeBundle` then puts the written page into the app beside it with `publishApp`: `<name>.app`, the Xcode project `<name>-ios/` or the Gradle project `<name>-android/`. See `docs/api/app.md`.
+In app mode (`target.runtimeEnv: 'app'`, macOS, Linux, iOS and Android for now) `generateBundle` builds the app host for this machine with `buildProjectApp` instead, or with `CROSSBIND_APP_PLATFORM`, which `crossbind app -p` sets, one for each iOS SDK, Android ABI or Linux arch (`appTargetParams`), and emits its page runtime as `crossbind.js`; `writeBundle` then puts the written page into each app beside it with `publishApp`: `<name>.app`, `<name>-linux-<arch>/`, the Xcode project `<name>-ios/` or the Gradle project `<name>-android/` and its APK. See `docs/api/app.md`.
 
 ## Invariants
 

@@ -45,6 +45,11 @@ describe('imageRoleFor', () => {
         const { mod } = await importFresh();
         expect(mod.imageRoleFor({ platform: 'linuxmusl' })).toBe('linux');
     });
+
+    test('builds an Android app in the android-app image, which adds Gradle and Hermes to android', async () => {
+        const { mod } = await importFresh();
+        expect(mod.imageRoleFor({ platform: 'android', runtimeEnv: 'app' })).toBe('android-app');
+    });
 });
 
 describe('getDockerImage', () => {
@@ -54,6 +59,7 @@ describe('getDockerImage', () => {
         expect(mod.getDockerImage('android')).toMatch(/^ghcr\.io\/crossbind\/android@sha256:[0-9a-f]{64}$/);
         expect(mod.getDockerImage('linux')).toMatch(/^ghcr\.io\/crossbind\/linux@sha256:[0-9a-f]{64}$/);
         expect(mod.getDockerImage('windows')).toMatch(/^ghcr\.io\/crossbind\/windows@sha256:[0-9a-f]{64}$/);
+        expect(mod.getDockerImage('android-app', 'linux/amd64')).toMatch(/^ghcr\.io\/crossbind\/android-app@sha256:[0-9a-f]{64}$/);
     });
 
     test('returns a distinct digest-pinned amd64 leaf for linux/amd64', async () => {
@@ -96,6 +102,14 @@ describe('image overrides', () => {
         expect(mod.getDockerImage('linux')).toBe('crossbind/linux:dev');
         expect(mod.getDockerImage('windows')).toBe('crossbind/windows:dev');
         expect(mod.getDockerImage('web')).toMatch(/^ghcr\.io\/crossbind\/web@sha256:/);
+    });
+
+    test('the android-app image takes an override of its own', async () => {
+        const { mod } = await importFresh();
+        vi.stubEnv('CROSSBIND_IMAGE_ANDROID_APP', 'crossbind/android-app:dev');
+
+        expect(mod.getDockerImage('android-app', 'linux/amd64')).toBe('crossbind/android-app:dev');
+        expect(mod.getDockerImage('android', 'linux/amd64')).toMatch(/^ghcr\.io\/crossbind\/android@sha256:/);
     });
 
     test('a tag override says the reproducibility guarantee is gone', async () => {

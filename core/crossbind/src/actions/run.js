@@ -124,7 +124,7 @@ const iosParams = [
 
 // The C++ compiler of the image that runs SWIG for the target, so its -dM macro table matches that parse.
 export function cxxPreprocessorFor(target) {
-    if (imageRoleFor(target) !== 'android') return 'em++';
+    if (target?.platform !== 'android') return 'em++';
     return `${t}/${target.arch === 'x86_64' ? CROSSCOMPILER_x86_64 : CROSSCOMPILER_ARM64}-clang++`;
 }
 

@@ -38,19 +38,23 @@ export default defineConfig({ plugins: [viteCrossbindPlugin()] });
 
 | Command | What it does |
 |---|---|
-| `vite` | Builds the host for this machine and opens the app on the dev server. An edit to the page reloads it; an edit to native code, or to what the page imports from it, rebuilds the host and opens the app again. The page's console shows in the terminal, and closing the window ends the session. |
-| `vite build` | Builds the page and the host and writes the app: `dist/<name>.app`, signed ad hoc, on macOS; `dist/<name>-linux-<arch>/` and the same as a `.tar.gz` on Linux. |
+| `crossbind app dev` | Builds the host for this machine and opens the app on the dev server. An edit to the page reloads it; an edit to native code, or to what the page imports from it, rebuilds the host and opens the app again. The page's console shows in the terminal, and closing the window ends the session. |
+| `crossbind app build` | Builds the page and the host and writes the app: `dist/<name>.app`, signed ad hoc, on macOS; `dist/<name>-linux-<arch>/` and the same as a `.tar.gz` on Linux. |
+| `crossbind app build -p linux` | Writes the Linux app for x64 and arm64, on a Mac as well: `dist/<name>-linux-x64/` and `dist/<name>-linux-arm64/`, each with its `.tar.gz`. A Linux app's development session runs on Linux. |
 | `crossbind build -p host -e app` | Builds the host alone, with no page in it: `<paths.output>/<name>.darwin-<arch>.app` on macOS, `<paths.output>/<name>.linux-<arch>` and its `.tar.gz` on Linux. `-p linux` builds a Linux app from a Mac as well. |
-| `CROSSBIND_APP_PLATFORM=ios vite` | Builds the host for the iOS Simulator and opens the app there on the dev server: in the Simulator already booted, else in an iPhone of the newest iOS. Edits reload the page or rebuild the host as on the desktop, and ending the app in the Simulator ends the session. |
-| `CROSSBIND_APP_PLATFORM=ios vite build` | Builds the page and the host for devices and the Simulator and writes the app's Xcode project, `dist/<name>-ios/` (see [iOS](#ios)). |
+| `crossbind app dev -p ios` | Builds the host for the iOS Simulator and opens the app there on the dev server: in the Simulator already booted, else in an iPhone of the newest iOS. Edits reload the page or rebuild the host as on the desktop, and ending the app in the Simulator ends the session. |
+| `crossbind app build -p ios` | Builds the page and the host for devices and the Simulator and writes the app's Xcode project, `dist/<name>-ios/` (see [iOS](#ios)). |
 | `crossbind build -p ios -e app` | Writes the Xcode project with no page in it: `<paths.output>/<name>-ios`, or `<name>-ios.debug` for a debug build. |
-| `CROSSBIND_APP_PLATFORM=android vite` | Builds the host for the attached Android device or emulator, installs the app as a debug APK and opens it on the dev server, which the device reaches through `adb reverse`. Edits reload the page or rebuild the host as on the desktop; the page's console shows in the terminal, and the end of the app's process, as when it is swiped away, ends the session (Back leaves the process running). crossbind starts no emulator: start one, or connect a phone with USB debugging on, and with several attached set `ANDROID_SERIAL`. |
-| `CROSSBIND_APP_PLATFORM=android vite build` | Builds the page and the host for arm64-v8a and x86_64 and writes the app's Gradle project, `dist/<name>-android/` (see [Android](#android)). |
-| `crossbind build -p android -e app` | Writes the Gradle project with no page in it: `<paths.output>/<name>-android`, or `<name>-android.debug` for a debug build. |
+| `crossbind app dev -p android` | Builds the host for the attached Android device or emulator, installs the app as a debug APK and opens it on the dev server, which the device reaches through `adb reverse`. Edits reload the page or rebuild the host as on the desktop; the page's console shows in the terminal, and the end of the app's process, as when it is swiped away, ends the session (Back leaves the process running). crossbind starts no emulator: start one, or connect a phone with USB debugging on, and with several attached set `ANDROID_SERIAL`. |
+| `crossbind app build -p android` | Builds the page and the host for arm64-v8a and x86_64, writes the app's Gradle project, `dist/<name>-android/`, and packages it: `dist/<name>-android.apk`, and with an upload key `dist/<name>-android.aab` too (see [Android](#android)). |
+| `crossbind build -p android -e app` | Writes the Gradle project with no page in it: `<paths.output>/<name>-android`, or `<name>-android.debug` for a debug build. A release build packages it as `crossbind app build -p android` does. |
 
-The first build fetches Hermes once, and on Linux WebKitGTK's headers and libraries too (see [Hermes](#hermes)).
-Without `CROSSBIND_APP_PLATFORM`, Vite builds this machine's desktop app; `ios` and `android` are the other values it
-takes.
+`crossbind app` runs the project's Vite with `CROSSBIND_APP_PLATFORM` set to the platform `-p` names, `macos`, `linux`,
+`ios` or `android`; without `-p` it keeps the variable the environment sets, and without that builds this machine's
+desktop app. `vite` and `vite build` take the variable as well, and Vite's own options, such as `--port` or `--mode`,
+pass through `crossbind app` to Vite. A macOS or iOS build fetches Hermes once; Linux and Android apps build in
+crossbind's linux and android-app images, which carry what they compile and link against (see [Hermes](#hermes)).
+They need `RUNNER=DOCKER_RUN` or `DOCKER_EXEC`, and another runner stops the build before its first step.
 
 ## The page
 
@@ -104,6 +108,8 @@ the process already has keeps its value.
         │                         the WebView, its message port and navigation rule
         ├── jniLibs/<abi>/        the host, JSI, the NDK's libc++ and the packages' shared libraries
         └── assets/app/           host.hbc, page/ and data/, copied out to the app's files when it first starts
+
+<name>-android.apk                the release APK Gradle makes of it, and <name>-android.aab with an upload key
 ```
 
 The sample app is 6.7 MB on disk and 1.8 MB zipped (arm64): a 0.8 MB host and a 6 MB Hermes. It shows its first
@@ -159,30 +165,52 @@ app: {
 },
 ```
 
-Open `dist/<name>-android/` in Android Studio to run the app on a device or an emulator, or to make a signed bundle for
-Google Play. From a terminal, `./gradlew bundleRelease` makes the bundle and `./gradlew assembleDebug` an APK that
-installs anywhere, signed with the machine's debug key. The version name is the project's `package.json` version; the
-version code is made from its numbers, major × 1,000,000 + minor × 1,000 + patch, so the prereleases of one version
-share it.
+`crossbind app build -p android` packages it in crossbind's android-app image, with no network: the release APK,
+`dist/<name>-android.apk`, and with an upload key also the bundle Google Play takes, `dist/<name>-android.aab`.
+Without one, the APK is signed with this machine's debug key, which installs it for testing (`adb install`), and the
+build says so. The upload key comes from the environment alone, so no secret reaches a file:
 
-Gradle adds Hermes, React Native's `hermes-android` of the same release, and androidx.webkit from Maven, and needs a
-JDK 17 or later and the Android SDK: `ANDROID_HOME`'s, else the one Android Studio installs. The host builds in
-crossbind's android image, as a package's Android libraries do, so it needs Docker (`RUNNER=DOCKER_RUN` or
-`DOCKER_EXEC`), and the first build unpacks Hermes' AAR with `unzip`.
+| Variable | Value |
+|---|---|
+| `CROSSBIND_ANDROID_KEYSTORE` | The keystore that holds the upload key. |
+| `CROSSBIND_ANDROID_KEY_ALIAS` | The key's alias in it. |
+| `CROSSBIND_ANDROID_KEYSTORE_PASSWORD` | The keystore's password. |
+| `CROSSBIND_ANDROID_KEY_PASSWORD` | The key's password, when it is not the keystore's. |
+
+The keystore reaches the container read-only and the passwords by name, never on a command line. A keystore without
+its alias and password stops the build, and so does an alias or a password without a keystore. Android Studio makes
+an upload key, and so does the `keytool` of any JDK. The Gradle project stays in `dist/<name>-android/`, which
+Android Studio opens too. The version name is the project's `package.json` version; the version code is made from its
+numbers, major × 1,000,000 + minor × 1,000 + patch, so the prereleases of one version share it.
+
+The image carries a JDK, the Android SDK platform and build tools, Gradle and every Maven artifact the build takes,
+Hermes' `hermes-android` and androidx.webkit among them, each checked against its sha256, so a build needs no JDK or
+Android SDK on the machine and fetches nothing. Gradle's caches and the debug key stay in `~/.crossbind/android/`: the
+next build reuses them, and an app signed with the same debug key installs over the last. The host builds in the same
+image, as a package's Android libraries do in the android image it adds to, so it needs Docker (`RUNNER=DOCKER_RUN`
+or `DOCKER_EXEC`).
+
+`crossbind app dev -p android` keeps one container of the image for the session, whose Gradle daemon packages each
+build, and removes it when the session ends. The image is amd64 only, as the android image is, so it runs under
+emulation on an Apple silicon Mac: there the conformance app reopened about 25 s after an edit to its native code, and
+its page reloaded within 2 s of an edit. The app reaches the device through this machine's `adb`, from `PATH` or the
+Android SDK, which crossbind does not install: `brew install --cask android-platform-tools` on macOS,
+`sudo apt install adb` on Debian and Ubuntu, or Android Studio's. An app the device already has under another key,
+such as the one Google Play installed, cannot be updated; crossbind names the `adb uninstall` that removes it, with
+its data, and leaves running it to you.
 
 ## Hermes
 
-The host runs React Native's Hermes for Apple platforms, release `250829098.0.17`, on macOS and iOS alike. The first
-build downloads it from Maven Central into `~/.crossbind/hermes/` and checks it against the sha256 crossbind pins.
-Android takes the same release's `hermes-android` AAR the same way: the host compiles against its headers and links
-its `libhermesvm.so`, which the app's Gradle build packages, and the host bundle compiles with the `hermesc` of the
-release's `hermes-compiler` package, pinned too, in crossbind's android image.
+The host runs React Native's Hermes, release `250829098.0.17`, on every platform. For macOS and iOS the first build
+downloads the release for Apple platforms from Maven Central into `~/.crossbind/hermes/` and checks it against the
+sha256 crossbind pins. Android and Linux apps take it from the image they build in. The android-app image carries the
+same release's `hermes-android` AAR, whose headers the host compiles against and whose `libhermesvm.so` Gradle
+packages, and the release's `hermesc`, which compiles the host bundle.
 
-Linux has no published Hermes: the first Linux build compiles the same release from its source, pinned by sha256, in
-crossbind's linux image, once per machine and arch, in a few minutes. The host builds in that image too, with its
-static libc++, against the WebKitGTK 4.1 headers and libraries of Ubuntu 22.04's packages. The first build downloads
-those from Launchpad into `~/.crossbind/sysroots/` and checks each against the sha256 crossbind pins
-(`src/assets/webkitgtk-sysroot.txt`); the app itself runs on the system's WebKitGTK.
+Linux has no published Hermes, so the linux image carries the same release built from its source, pinned by sha256,
+for x64 and arm64. A Linux host builds in that image with its static libc++, against the WebKitGTK 4.1 headers and
+libraries of Ubuntu 22.04's packages, which the image carries too, each checked against the sha256 crossbind pins
+(`tooling/docker/webkitgtk-sysroot.txt`); the app itself runs on the system's WebKitGTK.
 
 `crossbind licenses -e app` lists what the app carries beside its packages: crossbind's runtime, Hermes, JSI's
 `jsi.cpp` from the same release and webview/webview, each with its version, its sha256 and its license text; with

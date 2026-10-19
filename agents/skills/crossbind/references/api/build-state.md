@@ -148,6 +148,7 @@ state.system = {
     DOCKER_REGISTRY_MIRROR:  string,            // default ''  (registry prefix; crossbind appends the release digest)
     DOCKER_IMAGE_WEB:        string,            // default ''  (image for wasm and wasi builds)
     DOCKER_IMAGE_ANDROID:    string,            // default ''  (image for android builds)
+    DOCKER_IMAGE_ANDROID_APP: string,           // default ''  (image for Android apps)
 }
 ```
 

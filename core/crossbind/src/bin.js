@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import os from 'node:os';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { execFileSync, spawn } from 'node:child_process';
 import { Option } from 'commander';
 
 import { state } from './index.js';
@@ -11,7 +14,8 @@ import buildWasm from './actions/buildWasm.js';
 import buildWasiCommand from './actions/buildWasiCommand.js';
 import buildNode, { addonsInPackages, bundleNodeLoader, publishNodeData } from './actions/buildNode.js';
 import buildNativeCommand from './actions/buildNativeCommand.js';
-import buildApp, { appOutputPath, publishApp } from './actions/buildApp.js';
+import buildApp, { appOutputPath, assertAppRunner, publishApp } from './actions/buildApp.js';
+import { releaseSigning } from './actions/androidGradle.js';
 import buildExternal from './actions/buildExternal.js';
 import buildPackageTypes from './actions/buildTypes.js';
 import buildLib from './actions/buildLib.js';
@@ -99,6 +103,43 @@ function declaredSbomPath(projectDir) {
     }
 }
 
+// An app's page is the project's Vite build, which @crossbind/plugin-vite makes into the app of the platform named.
+const APP_PLATFORMS = ['android', 'ios', 'linux', 'macos'];
+
+function projectVite() {
+    try {
+        const manifest = createRequire(`${state.config.paths.project}/package.json`).resolve('vite/package.json');
+        return path.join(path.dirname(manifest), JSON.parse(fs.readFileSync(manifest, 'utf8')).bin.vite);
+    } catch {
+        throw new Error("crossbind: crossbind app builds the app's page with the project's Vite, which the project does not have. Add vite and @crossbind/plugin-vite to it, as the desktop-app template has them.");
+    }
+}
+
+const commandApp = program.command('app').description('build the project as an app, or open it on the dev server');
+[
+    ['dev', 'open the app on the dev server, and open it anew as its native code changes'],
+    ['build', 'build the app with its page: for Android also its APK, and with an upload key its bundle'],
+].forEach(([name, description]) => commandApp.command(name).description(description)
+    .addOption(new Option('-p, --platform <platform>', "the app's platform (default: CROSSBIND_APP_PLATFORM, else this machine's)").choices(APP_PLATFORMS))
+    // Vite's own options, as --port or --mode, go on to Vite.
+    .allowUnknownOption()
+    .allowExcessArguments()
+    .action(({ platform }, command) => {
+        if (state.config.target.runtimeEnv !== 'app') {
+            throw new Error("crossbind: crossbind app builds an app, which this project is not: set target: { runtimeEnv: 'app' } in crossbind.config.js, as the desktop-app template does.");
+        }
+        // An Android build checks its upload key before the native build, not after it.
+        if (name === 'build' && (platform ?? process.env.CROSSBIND_APP_PLATFORM) === 'android') releaseSigning();
+        const vite = spawn(process.execPath, [projectVite(), ...(name === 'build' ? ['build'] : []), ...command.args], {
+            stdio: 'inherit',
+            cwd: state.config.paths.project,
+            env: platform ? { ...process.env, CROSSBIND_APP_PLATFORM: platform } : process.env,
+        });
+        // A signal sent to crossbind alone reaches Vite too, which ends through its exit hooks; Ctrl-C reaches both.
+        ['SIGINT', 'SIGTERM', 'SIGHUP'].forEach((signal) => process.prependListener(signal, () => vite.kill(signal)));
+        vite.on('exit', (code, signal) => process.exit(code ?? 128 + os.constants.signals[signal]));
+    }));
+
 program.command('licenses')
     .description('list bundled native dependencies with SPDX license, versions and source URL')
     .option('--notices [file]', 'write a THIRD-PARTY-NOTICES markdown file (default: THIRD-PARTY-NOTICES.md)')
@@ -175,7 +216,7 @@ program.command('clean-deps')
     });
 
 // A container belongs to one image: the web container carries no NDK, and android runs a forced platform.
-const IMAGE_ROLES = ['web', 'android', 'linux', 'windows'];
+const IMAGE_ROLES = ['web', 'android', 'android-app', 'linux', 'windows'];
 const dockerContainerName = (role) => {
     if (!IMAGE_ROLES.includes(role)) {
         console.error(`crossbind: unknown image "${role}" - expected one of ${IMAGE_ROLES.join(', ')}.`);
@@ -205,8 +246,8 @@ const imageArgument = (command) => command.argument('[image]', `image to act on 
 
 imageArgument(commandDocker.command('create').description('create docker container'))
     .action((image) => {
-        // Google ships the linux NDK for x86_64 only, so an android container is always amd64.
-        const platform = image === 'android' ? 'linux/amd64' : undefined;
+        // Google ships the linux NDK for x86_64 only, so an android or android-app container is always amd64.
+        const platform = ['android', 'android-app'].includes(image) ? 'linux/amd64' : undefined;
         // Docker on Linux makes a missing mount source owned by root, which the user's builds cannot write.
         [cargoHome(), conanRoot()].forEach((dir) => fs.mkdirSync(dir, { recursive: true }));
         dockerExec([
@@ -344,6 +385,7 @@ async function createApps(targetParams) {
     if (targets.length === 0) {
         return;
     }
+    targets.forEach(assertAppRunner);
     const bridges = createNativeBridges(targets).headers.flatMap((header) => header.bridge ?? []);
     // An iOS or Android app is one project for all its SDKs or ABIs, written once they are built, and every time, as it
     // also takes the app's identity and the host package's template.

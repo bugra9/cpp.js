@@ -88,6 +88,13 @@ describe('runnerFor', () => {
             .toMatchObject({ token: undefined, tokenVariable: 'CROSSBIND_TOKEN_LINUX' });
     });
 
+    test('names the variables of an image with a hyphen in its name with an underscore', () => {
+        const system = { RUNNER: 'REMOTE', REMOTE_URL_ANDROID_APP: 'https://android-app.example' };
+
+        expect(runnerFor('android-app', system, { CROSSBIND_TOKEN_ANDROID_APP: 'app-token' }).remote)
+            .toMatchObject({ url: 'https://android-app.example', token: 'app-token', tokenVariable: 'CROSSBIND_TOKEN_ANDROID_APP' });
+    });
+
     test('gives an image without an address no runner rather than the local Docker', () => {
         const system = { RUNNER: 'REMOTE', REMOTE_URL_WEB: 'https://web.example' };
 
