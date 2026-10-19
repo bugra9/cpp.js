@@ -10,7 +10,7 @@ on:
     workflow_call:
         inputs:
             image:
-                description: Image name under the registry namespace (base, web, android, linux, windows, rust-sysroot)
+                description: Image name under the registry namespace (base, web, android, android-app, linux, windows, rust-sysroot)
                 required: true
                 type: string
             dockerfile:
@@ -61,8 +61,8 @@ jobs:
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            # The web image is ~4 GB and android carries the NDK; the runner's preinstalled SDKs are
-            # dead weight that the build would otherwise compete with for disk.
+            # The web image is ~4 GB, android carries the NDK and android-app adds a JDK, the SDK and Gradle;
+            # the runner's preinstalled SDKs are dead weight that the build would otherwise compete with for disk.
             - name: Free runner disk
               run: |
                   sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
@@ -122,7 +122,8 @@ jobs:
         steps:
             - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
               with:
-                  pattern: digest-${{ inputs.image }}-*
+                  # The job index only: android's digests must not take in android-app's.
+                  pattern: digest-${{ inputs.image }}-[0-9]*
                   merge-multiple: true
                   path: /tmp/digests
 

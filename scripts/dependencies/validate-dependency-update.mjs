@@ -95,11 +95,12 @@ function validateToolchain(proposal, platform) {
     if (proposal.component === 'android-ndk') {
         run('pnpm', ['build:base:amd64'], { cwd: path.join(ROOT, 'tooling/docker') });
         run('pnpm', ['build:android'], { cwd: path.join(ROOT, 'tooling/docker') });
-        run(process.execPath, ['scripts/smoke-images.js', 'android:amd64']);
+        run('pnpm', ['build:android-app'], { cwd: path.join(ROOT, 'tooling/docker') });
+        run(process.execPath, ['scripts/smoke-images.js', 'android:amd64', 'android-app:amd64']);
         return;
     }
     run('pnpm', ['build:family'], { cwd: path.join(ROOT, 'tooling/docker') });
-    run(process.execPath, ['scripts/smoke-images.js', 'base:amd64', 'web:amd64', 'android:amd64']);
+    run(process.execPath, ['scripts/smoke-images.js', 'base:amd64', 'web:amd64', 'android:amd64', 'android-app:amd64']);
     run('pnpm', ['run', 'gate:pinned-local-sysroot']);
     run('pnpm', ['run', 'check:release:web'], { environment: { CROSSBIND_IMAGE_WEB: 'crossbind/web:dev-amd64' } });
 }

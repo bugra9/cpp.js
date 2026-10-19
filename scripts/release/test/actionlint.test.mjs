@@ -197,6 +197,51 @@ test('the unpublished toolchain image train uses the reviewed stable versions', 
     assert.match(windows, /\$\{sha256\}.*sha256sum -c -/);
     assert.match(linux, /^USER 10001:10001$/m);
     assert.match(windows, /^USER 10001:10001$/m);
+
+    // So do the app toolchains, and their Hermes is the release the CLI pins.
+    const androidApp = fs.readFileSync(path.join(dockerDirectory, 'android-app.Dockerfile'), 'utf8');
+    assert.match(androidApp, /^FROM \$\{BASE_IMAGE\} AS android-app$/m);
+    for (const [archive, sha1, sha256] of [
+        ['PLATFORM_ARCHIVE', 'PLATFORM_SHA1', 'PLATFORM_SHA256'],
+        ['BUILD_TOOLS_ARCHIVE', 'BUILD_TOOLS_SHA1', 'BUILD_TOOLS_SHA256'],
+    ]) {
+        assert.match(androidApp, new RegExp(`^ARG ${sha1}=[0-9a-f]{40}$`, 'm'));
+        assert.match(androidApp, new RegExp(`^ARG ${sha256}=[0-9a-f]{64}$`, 'm'));
+        assert.match(androidApp, new RegExp(`unpack "\\$\\{${archive}\\}" "\\$\\{${sha1}\\}" "\\$\\{${sha256}\\}"`));
+    }
+    assert.match(androidApp, /echo "\$2 {2}\/tmp\/\$1" \| sha1sum -c -/);
+    assert.match(androidApp, /echo "\$3 {2}\/tmp\/\$1" \| sha256sum -c -/);
+    for (const pin of ['GRADLE_SHA256', 'HERMES_ANDROID_SHA256', 'HERMES_COMPILER_SHA256', 'HERMES_LICENSE_SHA256']) {
+        assert.match(androidApp, new RegExp(`^ARG ${pin}=[0-9a-f]{64}$`, 'm'));
+        assert.match(androidApp, new RegExp(`\\$\\{${pin}\\}.*sha256sum -c -`));
+    }
+    assert.match(androidApp, /^USER 10001:10001$/m);
+    assert.match(linux, /^ARG HERMES_SHA256=[0-9a-f]{64}$/m);
+    assert.match(linux, /\$\{HERMES_SHA256\}.*sha256sum -c -/);
+    const webkitgtkPackages = fs
+        .readFileSync(path.join(dockerDirectory, 'webkitgtk-sysroot.txt'), 'utf8')
+        .split('\n')
+        .filter((line) => line && !line.startsWith('#'));
+    assert.ok(webkitgtkPackages.length > 0);
+    for (const line of webkitgtkPackages) assert.match(line, /^(amd64|arm64) \S+\.deb [0-9a-f]{64}$/);
+    assert.match(linux, /echo "\$\{sha256\} {2}\/tmp\/\$\{file\}" \| sha256sum -c -/);
+    // The CLI still downloads the same list itself.
+    const cliWebkitgtkPackages = fs
+        .readFileSync(path.join(ROOT, 'core/crossbind/src/assets/webkitgtk-sysroot.txt'), 'utf8')
+        .split(/\r?\n/)
+        .filter((line) => line && !line.startsWith('#'));
+    assert.deepEqual(webkitgtkPackages, cliWebkitgtkPackages);
+    const hermes = fs.readFileSync(path.join(ROOT, 'core/crossbind/src/utils/hermes.js'), 'utf8');
+    // And builds Hermes for Linux itself, with the same switches.
+    assert.equal(/flags="(-DCMAKE_BUILD_TYPE=[^"]+)"/.exec(linux)?.[1], /^FLAGS="([^"]+)"$/m.exec(hermes)?.[1]);
+    const pinned = (name) => new RegExp(`export const ${name} = \\{.*?sha256: '([0-9a-f]{64})'`, 's').exec(hermes)?.[1];
+    const hermesVersion = /version: '([^']+)'/.exec(hermes)?.[1];
+    assert.ok(hermesVersion);
+    assert.match(androidApp, new RegExp(`^ARG HERMES_VERSION=${hermesVersion.replaceAll('.', '\\.')}$`, 'm'));
+    assert.match(linux, new RegExp(`^ARG HERMES_VERSION=${hermesVersion.replaceAll('.', '\\.')}$`, 'm'));
+    assert.match(androidApp, new RegExp(`^ARG HERMES_ANDROID_SHA256=${pinned('HERMES_ANDROID')}$`, 'm'));
+    assert.match(androidApp, new RegExp(`^ARG HERMES_COMPILER_SHA256=${pinned('HERMES_COMPILER')}$`, 'm'));
+    assert.match(linux, new RegExp(`^ARG HERMES_SHA256=${pinned('HERMES_SOURCE')}$`, 'm'));
 });
 
 test('legacy package scripts cannot publish with a stored npm credential', () => {

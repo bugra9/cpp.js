@@ -144,7 +144,29 @@ RUN set -eu; \
     mkdir -p /opt/licenses/linux-sysroot; \
     cp /src/libcxx/LICENSE.TXT /opt/licenses/linux-sysroot/libcxx-LICENSE.TXT
 
-FROM ${BASE_IMAGE} AS linux
+# What a Linux app's host compiles and links against: WebKitGTK and the libraries its headers name, from the Ubuntu
+# 22.04 packages webkitgtk-sysroot.txt pins by the SHA-256 of the Packages index. The app only links against them; the
+# system's own load at run time. Nothing under usr/share is read.
+COPY webkitgtk-sysroot.txt /tmp/webkitgtk-sysroot.txt
+RUN set -eu; \
+    grep -v -e '^#' -e '^$' /tmp/webkitgtk-sysroot.txt | while read -r arch file sha256; do \
+        case "${arch}" in amd64) triple=x86_64-linux-gnu;; arm64) triple=aarch64-linux-gnu;; *) exit 1;; esac; \
+        wget -q "https://launchpad.net/ubuntu/+archive/primary/+files/${file}" -O "/tmp/${file}"; \
+        echo "${sha256}  /tmp/${file}" | sha256sum -c -; \
+        mkdir -p "/opt/crossbind/webkitgtk/${triple}"; \
+        dpkg-deb -x "/tmp/${file}" "/opt/crossbind/webkitgtk/${triple}"; \
+        rm "/tmp/${file}"; \
+    done; \
+    for root in /opt/crossbind/webkitgtk/*; do \
+        find "${root}/usr/share/doc" -mindepth 2 -maxdepth 2 -name copyright -type f | while read -r copyright; do \
+            package="$(basename "$(dirname "${copyright}")")"; \
+            mkdir -p "/opt/licenses/webkitgtk/$(basename "${root}")"; \
+            cp "${copyright}" "/opt/licenses/webkitgtk/$(basename "${root}")/${package}-copyright"; \
+        done; \
+        rm -rf "${root}/usr/share"; \
+    done
+
+FROM ${BASE_IMAGE} AS toolchains
 
 # The base image is non-root by default; toolchain installation is an image-build operation only.
 USER root
@@ -194,6 +216,45 @@ RUN rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-
 
 # Docker Desktop on macOS now and then fails coreutils' install; crossbind-install says how.
 COPY --chmod=0755 crossbind-install /usr/local/bin/install
+
+# Hermes has no Linux release, so a Linux app's host links the one built here from the release's source, with these
+# toolchains and their static libc++, as JSI hands std types across. Host tools first, whose hermesc the cross builds
+# run and the app's build takes, then the static VM of each glibc target, laid out as the Apple release.
+FROM toolchains AS hermes
+
+ARG HERMES_VERSION=250829098.0.17
+ARG HERMES_SHA256=37e91915c67ce0c457f69b2de00fcaf28fcf755ab7de6e4f33f1d6ee9efcffed
+RUN set -eu; \
+    wget -q "https://github.com/facebook/hermes/archive/refs/tags/hermes-v${HERMES_VERSION}.tar.gz" -O /tmp/hermes.tar.gz; \
+    echo "${HERMES_SHA256}  /tmp/hermes.tar.gz" | sha256sum -c -; \
+    mkdir /src; \
+    tar -xzf /tmp/hermes.tar.gz -C /src --strip-components=1; \
+    rm /tmp/hermes.tar.gz; \
+    flags="-DCMAKE_BUILD_TYPE=Release -DHERMES_ENABLE_TEST_SUITE=OFF -DHERMES_ENABLE_INTL=OFF -DHERMES_UNICODE_LITE=ON -DHERMES_ENABLE_DEBUGGER=OFF"; \
+    cmake -S /src -B /build/host -G "Unix Makefiles" ${flags}; \
+    cmake --build /build/host --target hermesc shermes -- -j"$(nproc)"; \
+    for pair in x64:x86_64-linux-gnu arm64:aarch64-linux-gnu; do \
+        triple="${pair#*:}"; \
+        out="/opt/crossbind/hermes/${HERMES_VERSION}/linux-${pair%%:*}"; \
+        cmake -S /src -B "/build/${triple}" -G "Unix Makefiles" ${flags} -DHERMES_ENABLE_TOOLS=OFF \
+            -DCMAKE_TOOLCHAIN_FILE="/opt/crossbind/linux/${triple}.cmake" -DIMPORT_HOST_COMPILERS=/build/host/ImportHostCompilers.cmake; \
+        cmake --build "/build/${triple}" --target hermesvm_a -- -j"$(nproc)"; \
+        mkdir -p "${out}/lib" "${out}/include/hermes" "${out}/include/jsi" "${out}/bin"; \
+        cp "/build/${triple}/lib/libhermesvm_a.a" "${out}/lib/"; \
+        cp "$(find "/build/${triple}/external" -name libboost_context.a | head -n 1)" "${out}/lib/"; \
+        (cd /src/API/hermes && find . -name '*.h' -exec cp --parents {} "${out}/include/hermes/" \;); \
+        (cd /src/public/hermes && find . -name '*.h' -exec cp --parents {} "${out}/include/hermes/" \;); \
+        cp /src/API/jsi/jsi/*.h "${out}/include/jsi/"; \
+        cp /build/host/bin/hermesc "${out}/bin/"; \
+    done; \
+    cp /src/LICENSE /opt/licenses/hermes-LICENSE
+
+FROM toolchains AS linux
+
+COPY --from=sysroots /opt/crossbind/webkitgtk /opt/crossbind/webkitgtk
+COPY --from=sysroots /opt/licenses/webkitgtk /opt/licenses/webkitgtk
+COPY --from=hermes /opt/crossbind/hermes /opt/crossbind/hermes
+COPY --from=hermes /opt/licenses/hermes-LICENSE /opt/licenses/hermes-LICENSE
 
 WORKDIR /
 USER 10001:10001

@@ -18,6 +18,7 @@ export const IMAGE_PLATFORMS = Object.freeze({
     base: ['linux/amd64', 'linux/arm64'],
     web: ['linux/amd64', 'linux/arm64'],
     android: ['linux/amd64'],
+    'android-app': ['linux/amd64'],
     linux: ['linux/amd64', 'linux/arm64'],
     windows: ['linux/amd64', 'linux/arm64'],
 });

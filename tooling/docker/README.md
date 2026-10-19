@@ -12,24 +12,26 @@ and Node and nothing else.
 
 ## The family
 
-| Image          | Carries                                                     | Platforms    |
-| -------------- | ----------------------------------------------------------- | ------------ |
-| `base`         | Debian, Node, the pinned Rust toolchain, swig, cmake, Conan | amd64, arm64 |
-| `web`          | base + Emscripten, wasi-sdk, the prebuilt Rust sysroots     | amd64, arm64 |
-| `android`      | base + the NDK and the android Rust targets                 | amd64 only   |
-| `linux`        | base + clang, glibc/musl sysroots, libc++, Rust targets     | amd64, arm64 |
-| `windows`      | base + llvm-mingw and Rust targets for Windows UCRT addons  | amd64, arm64 |
-| `rust-sysroot` | just the ST/MT Rust sysroots and their manifest             | amd64, arm64 |
+| Image          | Carries                                                                    | Platforms    |
+| -------------- | -------------------------------------------------------------------------- | ------------ |
+| `base`         | Debian, Node, the pinned Rust toolchain, swig, cmake, Conan                | amd64, arm64 |
+| `web`          | base + Emscripten, wasi-sdk, the prebuilt Rust sysroots                    | amd64, arm64 |
+| `android`      | base + the NDK and the android Rust targets                                | amd64 only   |
+| `android-app`  | android + a JDK, the SDK, Gradle and its cache, Hermes                     | amd64 only   |
+| `linux`        | base + clang, glibc/musl sysroots, libc++, Rust targets, WebKitGTK, Hermes | amd64, arm64 |
+| `windows`      | base + llvm-mingw and Rust targets for Windows UCRT addons                 | amd64, arm64 |
+| `rust-sysroot` | just the ST/MT Rust sysroots and their manifest                            | amd64, arm64 |
 
 `web`, `android`, `linux` and `windows` are built `FROM base`, so all five share one toolchain
-layer. `linux` and `windows` each cross-compile Node.js addons for both x64 and arm64, whichever
-architecture they run on; `linux` builds them against glibc 2.28 and against musl 1.2.5 alike. Nothing above Debian is inherited here: Node and Emscripten are copied
+layer, and `android-app` is built `FROM android`, so an app build pulls only what it adds. `linux` and `windows` each cross-compile Node.js addons for both x64 and arm64, whichever
+architecture they run on; `linux` builds them against glibc 2.28 and against musl 1.2.5 alike, and also carries what a Linux
+app's host links: WebKitGTK from Ubuntu 22.04 packages and Hermes, built here from its source. Nothing above Debian is inherited here: Node and Emscripten are copied
 out of digest-pinned upstream images; Rust is installed as an exact release by the rustup from a
 digest-pinned bootstrap image. This keeps the upstream distributions authoritative while the
 runtime layout — PATH, Node version, `CARGO_HOME`, cache permissions — stays ours to guarantee.
 
 `android` is amd64-only because Google ships the Linux NDK host tools for x86_64 alone; the CLI
-pins android builds to that platform even on an arm64 host.
+pins android builds to that platform even on an arm64 host. `android-app`, built on it, follows it.
 
 ## Building locally
 
