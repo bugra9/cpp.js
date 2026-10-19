@@ -5,7 +5,8 @@ import config from '../crossbind.config.js';
 
 // Opens the app `pnpm build` made and waits for its page to log what the C++ returned. With CROSSBIND_APP_PLATFORM=ios
 // the app is the Xcode project `pnpm build:ios` made, built and opened in the Simulator.
-const RUN_TIMEOUT_MS = 60000;
+// A cold Simulator on a CI runner can take over a minute to show the page.
+const RUN_TIMEOUT_MS = 300000;
 const EXPECTED = 'Matrix multiplier with c++ => J₃ * (2*J₃) = 6*J₃';
 
 const root = resolve(import.meta.dirname, '..');
