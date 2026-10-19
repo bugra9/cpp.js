@@ -46,7 +46,7 @@ export function appLayout(target) {
     if (target.platform === 'darwin') return { executable: `Contents/MacOS/${name}`, resources: 'Contents/Resources' };
     if (target.platform === 'ios') return { executable: null, resources: 'app' };
     if (target.platform === 'android') return { executable: null, resources: 'app/src/main/assets/app' };
-    return { executable: name, resources: 'resources' };
+    return { executable: target.platform === 'win32' ? `${name}.exe` : name, resources: 'resources' };
 }
 
 // The name a bundler gives the app beside the page it built. An iOS app is one Xcode project for both SDKs, and an
@@ -63,7 +63,7 @@ export function assertAppRunner(target) {
     if (['darwin', 'ios'].includes(target.platform)) return;
     const runner = chosenRunner(state.config.system);
     if (['DOCKER_RUN', 'DOCKER_EXEC'].includes(runner)) return;
-    const app = target.platform === 'android' ? 'an Android' : 'a Linux';
+    const app = { android: 'an Android', win32: 'a Windows' }[target.platform] ?? 'a Linux';
     throw new Error(`crossbind: ${app} app builds in crossbind's ${imageRoleFor(target)} image, which RUNNER=${runner} does not use. Build it with RUNNER=DOCKER_RUN.`);
 }
 
@@ -88,8 +88,14 @@ export function appTargetParams({ dev = false } = {}, env = process.env) {
         if (process.platform !== 'darwin') throw new Error('crossbind: macOS apps build on macOS.');
         return app(['darwin'], [process.arch]);
     }
+    if (platform === 'windows') {
+        if (dev && process.platform !== 'win32') {
+            throw new Error('crossbind: a Windows app runs on Windows, and so does its development session; build it here with crossbind app build -p windows.');
+        }
+        return app(['win32'], dev ? [process.arch] : ['x64', 'arm64']);
+    }
     if (platform !== 'ios') {
-        throw new Error(`crossbind: CROSSBIND_APP_PLATFORM=${platform} names no platform an app builds for. Set it to android, ios, linux or macos, or leave it unset for this machine's desktop app.`);
+        throw new Error(`crossbind: CROSSBIND_APP_PLATFORM=${platform} names no platform an app builds for. Set it to android, ios, linux, macos or windows, or leave it unset for this machine's desktop app.`);
     }
     if (process.platform !== 'darwin') throw new Error('crossbind: iOS apps build on macOS, with Xcode.');
     return getTargetParams({ platform: ['ios'], arch: dev ? ['iphonesimulator'] : IOS_SDKS, runtime: ['mt'], runtimeEnv: ['app'] }, true);
@@ -146,6 +152,9 @@ async function hostInputs(target) {
     const inputs = [getDockerImage(imageRoleFor(target), target.platform === 'android' ? 'linux/amd64' : undefined)];
     if (target.platform === 'android') {
         return { hermes: `${IMAGE_HERMES}/android`, cmakeArgs: ['-DANDROID_STL=c++_shared'], inputs };
+    }
+    if (target.platform === 'win32') {
+        return { hermes: `${IMAGE_HERMES}/win32-${target.arch}`, cmakeArgs: ['-DCROSSBIND_WEBVIEW2_INCLUDE=/opt/crossbind/webview2/include'], inputs };
     }
     return {
         hermes: `${IMAGE_HERMES}/linux-${target.arch}`,
@@ -393,7 +402,7 @@ export default async function buildApp(target, { bridges = [], force = false } =
     } else if (target.platform === 'android') {
         assembleAndroidPart(target, { libDir: workDir, sharedLibs: libs.filter((lib) => lib.endsWith('.so')), hbc: `${workDir}/host.hbc` });
     } else {
-        assembleApp(target, { executable: `${workDir}/${name}`, hbc: `${workDir}/host.hbc`, hermes });
+        assembleApp(target, { executable: `${workDir}/${appLayout(target).executable}`, hbc: `${workDir}/host.hbc`, hermes });
     }
     logger.doneStep(target, 'app');
 
