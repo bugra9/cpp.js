@@ -15,12 +15,15 @@
 //   node scripts/check-publish-hygiene.js
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { portsRoot } from './lib/ports.js';
 import { DOCKER_BASE } from '../core/crossbind/src/utils/replaceBasePathForDocker.js';
 
+const execFileAsync = promisify(execFile);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PACKAGES_DIR = portsRoot(ROOT);
 const BUILD_METADATA = /^dist\/prebuilt\/.+(\.pc|\.cmake|\.la|\/bin\/[^/]+-config)$/;
@@ -36,12 +39,31 @@ for (const family of fs.readdirSync(PACKAGES_DIR)) {
     }
 }
 
+const packages = packageDirs
+    .map((pkgDir) => ({ pkgDir, manifest: JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf8')) }))
+    .filter(({ manifest }) => !manifest.private);
+
+// npm pack is nearly all of this gate's time, so the packages are packed side by side.
+const packs = new Map();
+let next = 0;
+await Promise.all(
+    Array.from({ length: Math.min(os.availableParallelism(), packages.length) }, async () => {
+        while (next < packages.length) {
+            const { pkgDir } = packages[next++];
+            // npm runs prepack even for a dry run, and a standalone Node-API package's prepack refuses a fresh checkout.
+            const pack = execFileAsync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], {
+                cwd: pkgDir,
+                encoding: 'utf8',
+                maxBuffer: 64 * 1024 * 1024,
+            });
+            packs.set(pkgDir, await pack.then(({ stdout }) => JSON.parse(stdout)[0].files.map((f) => f.path)).catch((error) => error));
+        }
+    }),
+);
+
 let failures = 0;
 let notEvaluated = 0;
-for (const pkgDir of packageDirs) {
-    const manifest = JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf8'));
-    if (manifest.private) continue;
-
+for (const { pkgDir, manifest } of packages) {
     // The bin map lives in the recipe (crossbind.build.js), contract C.
     let allowed = new Set();
     const recipeFile = path.join(pkgDir, 'crossbind.build.js');
@@ -54,18 +76,9 @@ for (const pkgDir of packageDirs) {
         );
     }
 
-    let files;
-    try {
-        // npm runs prepack even for a dry run, and a standalone Node-API package's prepack refuses a fresh checkout.
-        const raw = execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], {
-            cwd: pkgDir,
-            encoding: 'utf8',
-            stdio: ['ignore', 'pipe', 'ignore'],
-            maxBuffer: 64 * 1024 * 1024,
-        });
-        files = JSON.parse(raw)[0].files.map((f) => f.path);
-    } catch (e) {
-        console.error(`check-publish-hygiene: npm pack failed in ${pkgDir}: ${e.message}`);
+    const files = packs.get(pkgDir);
+    if (files instanceof Error) {
+        console.error(`check-publish-hygiene: npm pack failed in ${pkgDir}: ${files.message}`);
         failures += 1;
         continue;
     }
