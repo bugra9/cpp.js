@@ -27,6 +27,10 @@ on:
             - .github/workflows/build-linux.yml
 
 permissions: {}
+concurrency:
+    # A new push to a pull request supersedes its running checks; a main commit keeps its own run.
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+    cancel-in-progress: true
 jobs:
     build:
         runs-on: ubuntu-latest
