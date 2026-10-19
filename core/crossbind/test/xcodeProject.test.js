@@ -67,7 +67,7 @@ describe('an iOS app\'s Xcode project', () => {
         expect(fs.readFileSync(path.join(to, 'Info.plist'), 'utf8')).toContain('<key>LSRequiresIPhoneOS</key>\n    <true/>');
         expect(fs.readFileSync(path.join(to, 'main.m'), 'utf8')).toContain('return crossbind_app_main(argc, argv);');
         expect(spawnSync).toHaveBeenCalledWith('xcodebuild', [
-            '-create-xcframework', '-framework', path.join(sim.dir, 'hermesvm.framework'), '-output', `${to}/Frameworks/hermesvm.xcframework`,
+            '-create-xcframework', '-framework', `${sim.dir}/hermesvm.framework`, '-output', `${to}/Frameworks/hermesvm.xcframework`,
         ], { encoding: 'utf8' });
         if (process.platform === 'darwin') {
             expect(execFileSync('plutil', ['-lint', path.join(to, 'demo.xcodeproj', 'project.pbxproj')], { encoding: 'utf8' })).toContain(': OK');
