@@ -1,7 +1,7 @@
 
 import {
     state, createLib, createBridgeFile, buildWasm, buildDependencies, getTargetParams, getFilteredBuildTargets, isSourceNewer, getRustJsScript,
-    isAppSource, getFileHash, buildProjectApp,
+    isAppSource, getFileHash, buildProjectApp, appLayout,
 } from 'crossbind';
 import rollupCrossbindPlugin from '@crossbind/plugin-rollup';
 
@@ -45,7 +45,7 @@ function appDevPlugin() {
     }
 
     function launch() {
-        const executable = `${state.config.paths.build}/${buildTargetDebug.appName}/Contents/MacOS/${state.config.general.name}`;
+        const executable = `${state.config.paths.build}/${buildTargetDebug.appName}/${appLayout(buildTargetDebug).executable}`;
         const child = spawn(executable, [], { stdio: 'inherit', env: { ...process.env, CROSSBIND_APP_URL: appUrl } });
         app = child;
         child.once('error', (error) => {

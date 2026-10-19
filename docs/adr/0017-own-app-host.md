@@ -33,15 +33,17 @@ packaging, and `crossbind build -e app` builds the host alone.
   response bodies.
 - The bindings compile against the JSI of the Hermes the host links, in an archive of their own (`AppBridge`).
 - Hermes comes from React Native's published releases, pinned by version and sha256: `hermes-ios` for macOS and iOS,
-  `hermes-android` for Android. Linux and Windows will build their own.
+  `hermes-android` for Android. Linux builds the release's source in crossbind's linux image, with the static libc++
+  the host and the project's archives share there, since JSI hands std types across; Windows will build its own too.
 - The desktop window comes from webview/webview, vendored with a patch that registers the URL scheme; mobile apps get
   generated Xcode and Gradle projects.
 - The webview loads the app's own origin alone, in every frame (and the dev server during development); the module's
   channel answers that origin only. Measured: a frame from another origin otherwise reaches the `crossbind://` routes
-  even where a message's origin is checked. Those routes also need a token the page learns through the channel, as
-  markup and sandboxed frames of the app's own page reach them too.
-- macOS first. Linux builds on Ubuntu 22.04, Android requires System WebView 116, the first with ArrayBuffer
-  messages.
+  even where a message's origin is checked. The host also gives the page's top frame a token that every message and
+  `crossbind://` call carries: markup and sandboxed frames of the app's own page reach the channel and the routes too,
+  and WebKitGTK does not tell a message's sender (measured).
+- macOS and Linux first. A Linux app builds against the WebKitGTK 4.1 of Ubuntu 22.04's packages and runs on the
+  system's; Android requires System WebView 116, the first with ArrayBuffer messages.
 
 ## Consequences
 

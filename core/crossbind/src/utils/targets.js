@@ -149,14 +149,14 @@ const BASE_TARGETS = [
 ];
 
 // A native executable links the same archives as the Node-API addon of its platform and arch, and so does an app's
-// host, on macOS so far.
+// host, on macOS and on glibc Linux so far.
 export const TARGETS = [
     ...BASE_TARGETS,
     ...BASE_TARGETS
         .filter((target) => target.runtimeEnv === 'node' && target.platform !== 'wasm')
         .map((target) => ({ ...target, runtimeEnv: 'native' })),
     ...BASE_TARGETS
-        .filter((target) => target.runtimeEnv === 'node' && target.platform === 'darwin')
+        .filter((target) => target.runtimeEnv === 'node' && ['darwin', 'linux'].includes(target.platform))
         .map((target) => ({ ...target, runtimeEnv: 'app' })),
 ];
 
@@ -207,11 +207,12 @@ export const wasiNamesOf = (target, projectName) => ({
     wasmName: `${projectName}-${targetPathOf(target)}${target.runtimeEnv === 'http' ? '.http' : ''}.wasm`,
 });
 
-// One app per platform, arch and build type, and one page runtime per build type for all of them.
+// One app per platform, arch and build type, and one page runtime per build type for all of them. A macOS app is a
+// bundle; a Linux app a directory.
 export function appNamesOf(target, projectName) {
     const suffix = target.buildType === 'debug' ? '.debug' : '';
     return {
-        appName: `${projectName}.${target.platform}-${target.arch}${suffix}.app`,
+        appName: `${projectName}.${target.platform}-${target.arch}${suffix}${target.platform === 'darwin' ? '.app' : ''}`,
         appJsName: `${projectName}.app${suffix}.js`,
     };
 }

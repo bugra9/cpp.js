@@ -116,7 +116,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | Per-target static lib build | `src/actions/createLib.js` |
 | Wasm linking + JS loader gen | `src/actions/buildWasm.js` |
 | Node-API addon link (`.node`) + CommonJS loader | `src/actions/buildNode.js` |
-| App host link (`.app`): bridges against Hermes' JSI, host bytecode, page runtime, bundle and ad hoc signature | `src/actions/buildApp.js` |
+| App host link: bridges against Hermes' JSI, host bytecode, page runtime; a macOS `.app` signed ad hoc, or a Linux directory and its `.tar.gz` | `src/actions/buildApp.js` |
 | The bridges a native binary binds: own headers, headers bound whole, imported headers | `src/actions/nativeBridges.js` |
 | Node import hooks: the native imports of an app without a bundler (`dist/node/<format>.register.mjs`) | `src/actions/createImportedBridges.js`, `src/actions/writeRuntimeEntry.js`, `src/assets/node-import-hooks.mjs` |
 | `crossbind/node/dev`: build this machine's Node binary when its native inputs changed, then load those hooks | `src/node/dev.mjs`, `src/utils/nodeDevBuild.js` |
@@ -229,7 +229,9 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | @crossbind/core-embind-rust resolution (consumer-declared) | `src/utils/resolveEmbindRust.js` |
 | @crossbind/core-embind-napi resolution (consumer-declared) | `src/utils/resolveEmbindNapi.js` |
 | @crossbind/core-app-host resolution (consumer-declared) | `src/utils/resolveAppHost.js` |
-| React Native's Hermes for apps: pinned release, download into `~/.crossbind/hermes` | `src/utils/hermes.js` |
+| Hermes for apps: React Native's pinned release for Apple platforms, and on Linux its source built once in the linux image, both in `~/.crossbind/hermes` | `src/utils/hermes.js` |
+| WebKitGTK headers and libraries for Linux apps: the pinned Ubuntu 22.04 packages (`src/assets/webkitgtk-sysroot.txt`), unpacked into `~/.crossbind/sysroots` | `src/utils/webkitgtkSysroot.js` |
+| A step on a machine-wide cache under `~/.crossbind`, in a run of the linux image of its own | `src/utils/linuxImage.js` |
 | wasi bin command runner (npm shims import this) | `src/runtime/wasiRun.mjs` |
 
 ## Plugins (`plugins/`)
@@ -273,7 +275,7 @@ To add a new `ports/<X>`: see `docs/playbooks/new-port.md` (uses `ports/zlib` as
 | `examples/backend-nodejs-native` | Node.js app that builds its own addon (`-p host -e node`, `build:desktop` for every desktop platform; the macOS CI job uses `ci/` bridge snapshots) |
 | `examples/backend-nodejs-standalone` | Node.js app on the Node-API addons `@crossbind/example-lib-prebuilt-matrix` ships (`/node/napi`), nothing to build |
 | `examples/desktop-electron` | Electron app with its own addon in the main process, packaged with electron-builder (`dist/` stays outside the asar archive); takes the `backend-nodejs-native` bridge snapshot in the macOS CI job |
-| `examples/desktop-app` | macOS app on crossbind's own host (`target.runtimeEnv: 'app'`): Vite page in the system webview, the C++ in Hermes; the `Desktop App` template; takes the same bridge snapshot in the macOS CI job |
+| `examples/desktop-app` | macOS and Linux app on crossbind's own host (`target.runtimeEnv: 'app'`): Vite page in the system webview, the C++ in Hermes; the `Desktop App` template; takes a bridge snapshot in the macOS CI job and builds in the Linux one |
 | `examples/native-executable` | Native executable from `main()` (`-e native`); the `Native Executable` template |
 | `examples/cloud-cloudflare-worker` | Cloudflare Worker / edge |
 | `examples/mobile-reactnative-cli` | RN-cli (canonical mobile reference; CI uses `ci/crossbind-snapshot/`) |

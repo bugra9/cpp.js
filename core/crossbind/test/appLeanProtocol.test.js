@@ -57,33 +57,41 @@ const fakeModule = {
     filled: (length) => new Uint8Array(length).fill(7),
 };
 
-// Replies arrive later, as the webview's do.
+// As the host takes messages, which come with the token it gave the page and get their replies later.
+const TOKEN = 'session-token';
+const REFUSED = JSON.stringify([1, { name: 'Error', message: "crossbind: this message does not carry the page's token" }]);
 let nextCall = 0;
 const pending = new Map();
+const sent = [];
 const transport = {
     send: (text) => new Promise((resolve) => {
+        sent.push(text);
+        if (!text.startsWith(TOKEN)) {
+            resolve(REFUSED);
+            return;
+        }
         const call = String(nextCall);
         nextCall += 1;
         pending.set(call, resolve);
-        setImmediate(() => globalThis.__crossbind_receive(call, text));
+        setImmediate(() => globalThis.__crossbind_receive(call, text.slice(TOKEN.length)));
     }),
     base: 'crossbind://app',
     attachBytes: 8,
+    token: TOKEN,
 };
 const requests = [];
 
 let m;
 beforeAll(async () => {
-    globalThis.__host_token = 'session-token';
     globalThis.__host_reply = (call, text) => {
         pending.get(call)(text);
         pending.delete(call);
     };
-    // As the host's crossbind:// routes answer: a request without the session's token is refused.
+    // As the host's crossbind:// routes answer: a request without the page's token is refused.
     globalThis.fetch = async (url, init = {}) => {
         const { pathname, search, searchParams } = new URL(url);
         requests.push(pathname);
-        if (searchParams.get('t') !== globalThis.__host_token) return { ok: false, status: 403, text: async () => '' };
+        if (searchParams.get('t') !== TOKEN) return { ok: false, status: 403, text: async () => '' };
         if (pathname === '/b/frame') {
             const { body } = init;
             const text = globalThis.__crossbind_frame(search.slice(1), body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength));
@@ -97,6 +105,13 @@ beforeAll(async () => {
 });
 
 describe('the lean protocol of an app', () => {
+    test('sends every message with the token the host gave the page', async () => {
+        await m.add(1, 1);
+
+        expect(sent.length).toBeGreaterThan(0);
+        expect(sent.every((text) => text.startsWith(TOKEN))).toBe(true);
+    });
+
     test('calls a function on the host and hands back what it returns', async () => {
         expect(await m.add(2, 3)).toBe(5);
         expect(await m.big(21n)).toBe(42n);
@@ -166,11 +181,11 @@ describe('the lean protocol of an app', () => {
     });
 
     test('frees an object the page owns once the page releases its last handle', async () => {
-        const [, handle] = JSON.parse(await transport.send(JSON.stringify(['new', 0, ['Point'], [9]])));
+        const [, handle] = JSON.parse(await transport.send(TOKEN + JSON.stringify(['new', 0, ['Point'], [9]])));
         const point = points.at(-1);
 
         expect(point.freed).toBe(false);
-        await transport.send(JSON.stringify(['release', 0, [], [[handle.v]]]));
+        await transport.send(TOKEN + JSON.stringify(['release', 0, [], [[handle.v]]]));
 
         expect(point.freed).toBe(true);
     });

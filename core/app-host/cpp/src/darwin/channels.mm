@@ -182,8 +182,15 @@ void forwardConsole(void *webView) {
                                                   forMainFrameOnly:YES]];
 }
 
-void registerSchemeHandler(void *configuration, const char *scheme, SchemeHandler handler) {
-    WKWebViewConfiguration *config = (__bridge WKWebViewConfiguration *)configuration;
+void addTopFrameScript(void *webView, const std::string &source) {
+    WKUserContentController *controller = ((__bridge WKWebView *)webView).configuration.userContentController;
+    [controller addUserScript:[[WKUserScript alloc] initWithSource:[NSString stringWithUTF8String:source.c_str()]
+                                                     injectionTime:WKUserScriptInjectionTimeAtDocumentStart
+                                                  forMainFrameOnly:YES]];
+}
+
+void registerSchemeHandler(void *target, const char *scheme, SchemeHandler handler) {
+    WKWebViewConfiguration *config = (__bridge WKWebViewConfiguration *)target;
     CBSchemeHandler *schemeHandler = [[CBSchemeHandler alloc] initWithHandler:std::move(handler)];
     [config setURLSchemeHandler:schemeHandler forURLScheme:[NSString stringWithUTF8String:scheme]];
 }

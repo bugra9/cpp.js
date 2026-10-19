@@ -20,7 +20,7 @@ That's it. The package is intentionally thin; logic that's bundler-agnostic live
 
 The inner rollup plugin handles `transform('.h')` (turn header into JS bridge) and `buildStart` (`addWatchFile` for native sources).
 
-In app mode (`target.runtimeEnv: 'app'`, macOS for now) the factory returns `[rollupCrossbindPlugin, appDevPlugin]` and builds no wasm. Once the dev server listens, `appDevPlugin` builds the app host for this machine and opens the app on the server's URL; it serves the page runtime at `/crossbind.js`, rebuilds on native or page-import changes and reopens the app only when the build changed, and closing the window ends the dev server. Check it with `examples/desktop-app` and `e2e/desktop-app`; the contract is in `docs/api/app.md`.
+In app mode (`target.runtimeEnv: 'app'`, macOS and Linux for now) the factory returns `[rollupCrossbindPlugin, appDevPlugin]` and builds no wasm. Once the dev server listens, `appDevPlugin` builds the app host for this machine and opens the app on the server's URL; it serves the page runtime at `/crossbind.js`, rebuilds on native or page-import changes and reopens the app only when the build changed, and closing the window ends the dev server. Check it with `examples/desktop-app` and `e2e/desktop-app`; the contract is in `docs/api/app.md`.
 
 ## Key invariants
 

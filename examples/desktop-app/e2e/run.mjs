@@ -9,7 +9,10 @@ const EXPECTED = 'Matrix multiplier with c++ => J₃ * (2*J₃) = 6*J₃';
 
 const root = resolve(import.meta.dirname, '..');
 const { name } = config.general;
-const executable = `${root}/dist/${name}.app/Contents/MacOS/${name}`;
+// A macOS app is a bundle; a Linux app a directory named after its platform and arch.
+const executable = process.platform === 'darwin'
+    ? `${root}/dist/${name}.app/Contents/MacOS/${name}`
+    : `${root}/dist/${name}-${process.platform}-${process.arch}/${name}`;
 if (!existsSync(executable)) {
     console.error(`FAIL: ${executable} is missing - run \`pnpm build\` first.`);
     process.exit(1);

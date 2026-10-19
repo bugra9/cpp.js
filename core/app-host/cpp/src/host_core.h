@@ -64,6 +64,7 @@ public:
     // A new page replaced the one that held the module's objects.
     void reset();
     void stop() { js_.stop(); }
+    const std::string &token() const { return token_; }
 
     // Every response lets any origin read it, as a page from a dev server needs.
     bool cors = false;
@@ -73,8 +74,8 @@ private:
 
     JsThread js_;
     std::string pageDir_;
-    // Only a page the module's channel answers learns it, and the calls made as crossbind:// requests need it: markup
-    // and frames the channel refuses cannot make one.
+    // Made at boot for the page's top frame. Every message and every call made as a crossbind:// request carries it, so
+    // markup and frames that cannot read the top frame's globals cannot make one.
     std::string token_;
     std::unordered_map<std::string, ReplyFn> replies_;
     long long nextReply_ = 0;
