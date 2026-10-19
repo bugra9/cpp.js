@@ -16,7 +16,7 @@ const packageUrl = (file) => `https://launchpad.net/ubuntu/+archive/primary/+fil
 // arch. Another list unpacks into a directory of its own.
 export default async function resolveWebkitGtkSysroot(arch) {
     const list = fs.readFileSync(LIST, 'utf8');
-    const packages = list.split('\n').filter((line) => line && !line.startsWith('#'))
+    const packages = list.split(/\r?\n/).filter((line) => line && !line.startsWith('#'))
         .map((line) => line.split(' ')).filter(([debianArch]) => debianArch === DEBIAN_ARCH[arch]);
     const digest = crypto.createHash('sha256').update(list).digest('hex').slice(0, 12);
     const dir = path.join(os.homedir(), '.crossbind', 'sysroots', `webkitgtk-jammy-${digest}`, arch);

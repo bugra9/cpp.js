@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import fs from 'node:fs';
 
 const entries = fs.readFileSync(new URL('../src/assets/webkitgtk-sysroot.txt', import.meta.url), 'utf8')
-    .split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(' '));
+    .split(/\r?\n/).filter((line) => line && !line.startsWith('#')).map((line) => line.split(' '));
 
 describe('the WebKitGTK sysroot list', () => {
     test('pins every package of both arches by its file and sha256', () => {
