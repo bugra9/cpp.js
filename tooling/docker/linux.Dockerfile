@@ -146,12 +146,13 @@ RUN set -eu; \
 
 # What a Linux app's host compiles and links against: WebKitGTK and the libraries its headers name, from the Ubuntu
 # 22.04 packages webkitgtk-sysroot.txt pins by the SHA-256 of the Packages index. The app only links against them; the
-# system's own load at run time. Nothing under usr/share is read.
+# system's own load at run time. Nothing under usr/share is read. Launchpad now and then answers with an error, so each
+# package is fetched with retries.
 COPY webkitgtk-sysroot.txt /tmp/webkitgtk-sysroot.txt
 RUN set -eu; \
     grep -v -e '^#' -e '^$' /tmp/webkitgtk-sysroot.txt | while read -r arch file sha256; do \
         case "${arch}" in amd64) triple=x86_64-linux-gnu;; arm64) triple=aarch64-linux-gnu;; *) exit 1;; esac; \
-        wget -q "https://launchpad.net/ubuntu/+archive/primary/+files/${file}" -O "/tmp/${file}"; \
+        wget -q --tries=5 --retry-on-http-error=429,500,502,503,504 "https://launchpad.net/ubuntu/+archive/primary/+files/${file}" -O "/tmp/${file}"; \
         echo "${sha256}  /tmp/${file}" | sha256sum -c -; \
         mkdir -p "/opt/crossbind/webkitgtk/${triple}"; \
         dpkg-deb -x "/tmp/${file}" "/opt/crossbind/webkitgtk/${triple}"; \
