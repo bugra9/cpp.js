@@ -13,7 +13,7 @@ Core &start(const char *devUrl);
 // Ends the app without running destructors: bindings keep JSI values in globals, which must not be destroyed after the
 // runtime they belong to.
 [[noreturn]] void quit(Core &core, int status);
-// Readies a webview for the page, and returns the URL it opens first.
+// Readies a webview for the page, and returns the URL it opens first. An Android app's activity does this in Java.
 std::string attach(Core &core, void *webView, const char *devUrl);
 
 }  // namespace crossbind::app

@@ -17,6 +17,8 @@ import { isNativeSourceNewerThan } from './isSourceNewer.js';
 import { createNativeBridges } from './nativeBridges.js';
 import { getTargetParams } from './target.js';
 import writeXcodeProject, { HERMES_SLICES, IOS_SDKS } from './xcodeProject.js';
+import writeGradleProject, { ANDROID_ABIS } from './gradleProject.js';
+import { attachedDevice } from './androidDevice.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
 import findFiles from '../utils/findFiles.js';
@@ -25,7 +27,7 @@ import { xmlPlist } from '../utils/plist.js';
 import { writeNativeSourceStamp } from '../utils/nativeSourceStamp.js';
 import resetCMakeCacheForSource from '../utils/resetCMakeCacheForSource.js';
 import resolveAppHostRoot, { resolveAppEmbindJsiRoot } from '../utils/resolveAppHost.js';
-import resolveHermes, { HERMES, resolveLinuxHermes } from '../utils/hermes.js';
+import resolveHermes, { HERMES, resolveAndroidHermes, resolveLinuxHermes } from '../utils/hermes.js';
 import resolveWebkitGtkSysroot from '../utils/webkitgtkSysroot.js';
 import { chosenRunner } from '../utils/selectRunner.js';
 import { DARWIN_DEPLOYMENT_TARGET } from '../utils/darwinToolchain.js';
@@ -35,32 +37,37 @@ const BRIDGE = 'AppBridge';
 const LINUX_MULTIARCH = { x64: 'x86_64-linux-gnu', arm64: 'aarch64-linux-gnu' };
 
 // Where an app keeps its executable and its files: a macOS bundle, a Linux directory, or the app folder of an iOS app's
-// Xcode project, whose executable Xcode links.
+// Xcode project or of an Android app's Gradle project, which link the executable themselves.
 export function appLayout(target) {
     const { name } = state.config.general;
     if (target.platform === 'darwin') return { executable: `Contents/MacOS/${name}`, resources: 'Contents/Resources' };
     if (target.platform === 'ios') return { executable: null, resources: 'app' };
+    if (target.platform === 'android') return { executable: null, resources: 'app/src/main/assets/app' };
     return { executable: name, resources: 'resources' };
 }
 
-// The name a bundler gives the app beside the page it built. An iOS app is one Xcode project for both SDKs.
+// The name a bundler gives the app beside the page it built. An iOS app is one Xcode project for both SDKs, and an
+// Android app one Gradle project for both ABIs.
 export function appOutputName(target) {
     const { name } = state.config.general;
     if (target.platform === 'darwin') return `${name}.app`;
-    if (target.platform === 'ios') return `${name}-ios`;
+    if (['ios', 'android'].includes(target.platform)) return `${name}-${target.platform}`;
     return `${name}-${target.platform}-${target.arch}`;
 }
 
-// The app a bundler builds: this machine's desktop app, or with CROSSBIND_APP_PLATFORM=ios an iOS app, for both SDKs or
-// during development for the Simulator alone.
-export function appTargetParams({ simulatorOnly = false } = {}, env = process.env) {
+// The app a bundler builds: this machine's desktop app, or with CROSSBIND_APP_PLATFORM an iOS app for both SDKs or an
+// Android app for both ABIs. During development only what runs it: the Simulator, or the attached device.
+export function appTargetParams({ dev = false } = {}, env = process.env) {
     const platform = env.CROSSBIND_APP_PLATFORM;
     if (!platform) return getTargetParams({ platform: [process.platform], arch: [process.arch], runtime: ['mt'], runtimeEnv: ['app'] }, true);
+    if (platform === 'android') {
+        return getTargetParams({ platform: ['android'], arch: dev ? [attachedDevice().abi] : ANDROID_ABIS, runtime: ['mt'], runtimeEnv: ['app'] }, true);
+    }
     if (platform !== 'ios') {
-        throw new Error(`crossbind: CROSSBIND_APP_PLATFORM=${platform} names no platform an app builds for. Set it to ios, or leave it unset for this machine's desktop app.`);
+        throw new Error(`crossbind: CROSSBIND_APP_PLATFORM=${platform} names no platform an app builds for. Set it to ios or android, or leave it unset for this machine's desktop app.`);
     }
     if (process.platform !== 'darwin') throw new Error('crossbind: iOS apps build on macOS, with Xcode.');
-    return getTargetParams({ platform: ['ios'], arch: simulatorOnly ? ['iphonesimulator'] : IOS_SDKS, runtime: ['mt'], runtimeEnv: ['app'] }, true);
+    return getTargetParams({ platform: ['ios'], arch: dev ? ['iphonesimulator'] : IOS_SDKS, runtime: ['mt'], runtimeEnv: ['app'] }, true);
 }
 
 // An app's bundle id: the project's app.id, else one made from the project's name.
@@ -81,8 +88,23 @@ function appTeam() {
     return team;
 }
 
+// An Android app's id: the project's app.id, else one made from the project's name.
+function androidAppId() {
+    const id = state.config.app.id ?? `dev.crossbind.${state.config.general.name.replace(/[^A-Za-z0-9.]/g, '_')}`;
+    if (!/^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/.test(id)) {
+        throw new Error(`crossbind: ${JSON.stringify(id)} (app.id, else made from the project's name) is no Android application id, which takes dot-separated parts of letters, digits and underscores that each start with a letter, as com.example.app does. Set app.id in crossbind.config.js.`);
+    }
+    return id;
+}
+
 // Apple takes dot-separated integers alone as an app's version.
 const appVersion = () => (state.config.package?.version ?? '1.0.0').replace(/[-+].*$/, '');
+
+// Android takes any name for an app's version, and a positive integer that grows from release to release as its code.
+function androidVersion() {
+    const [major = 0, minor = 0, patch = 0] = appVersion().split('.').map(Number);
+    return { name: state.config.package?.version ?? '1.0.0', code: Math.max(1, major * 1000000 + minor * 1000 + patch) };
+}
 
 // The apps this run built or found current. A part of an iOS app that an earlier run built may be stale.
 const currentApps = new Set();
@@ -117,7 +139,8 @@ function mirrorIntoBuild(source, name) {
 }
 
 // What a host takes from the machine: Hermes, and on Linux the WebKitGTK it compiles and links against, built in the
-// linux image, which reaches them only under the build directory.
+// linux or android image, which reaches them only under the build directory. An Android host shares the C++ runtime
+// of Hermes' libraries.
 async function hostInputs(target) {
     if (['darwin', 'ios'].includes(target.platform)) {
         const hermes = await resolveHermes();
@@ -125,7 +148,12 @@ async function hostInputs(target) {
     }
     const runner = chosenRunner(state.config.system);
     if (!['DOCKER_RUN', 'DOCKER_EXEC'].includes(runner)) {
-        throw new Error(`crossbind: a Linux app builds in crossbind's linux image, which RUNNER=${runner} does not use. Build it with RUNNER=DOCKER_RUN.`);
+        const app = target.platform === 'android' ? 'an Android' : 'a Linux';
+        throw new Error(`crossbind: ${app} app builds in crossbind's ${target.platform} image, which RUNNER=${runner} does not use. Build it with RUNNER=DOCKER_RUN.`);
+    }
+    if (target.platform === 'android') {
+        const hermesCache = await resolveAndroidHermes();
+        return { hermes: mirrorIntoBuild(hermesCache, 'hermes-android'), cmakeArgs: ['-DANDROID_STL=c++_shared'], inputs: [hermesCache] };
     }
     const hermesCache = await resolveLinuxHermes(target.arch);
     const gtkCache = await resolveWebkitGtkSysroot(target.arch);
@@ -217,10 +245,21 @@ function assembleIosPart(target, { library, linkArgs, hbc, hermes }) {
     copyAppFiles(`${part}/app`, hbc, target);
 }
 
-// The parts of an iOS app this run has for its build type, one per SDK.
-const iosParts = (target) => state.targets
-    .filter((t) => t.platform === 'ios' && t.runtimeEnv === 'app' && t.buildType === target.buildType && currentApps.has(t.appName))
-    .map((t) => ({ sdk: t.arch, dir: `${state.config.paths.build}/${t.appName}` }));
+// What an Android ABI target brings to the app's Gradle project: the host, the libraries beside it and the packages'
+// shared libraries it links, and the app's files.
+function assembleAndroidPart(target, { libDir, sharedLibs, hbc }) {
+    const part = `${state.config.paths.build}/${target.appName}`;
+    fs.rmSync(part, { recursive: true, force: true });
+    fs.mkdirSync(`${part}/lib`, { recursive: true });
+    [...['libcrossbind_app.so', 'libjsi.so', 'libc++_shared.so'].map((file) => `${libDir}/${file}`), ...sharedLibs]
+        .forEach((file) => fs.copyFileSync(file, `${part}/lib/${path.basename(file)}`));
+    copyAppFiles(`${part}/app`, hbc, target);
+}
+
+// The parts of an iOS or Android app this run has for its build type, one per SDK or ABI.
+const appParts = (target) => state.targets
+    .filter((t) => t.platform === target.platform && t.runtimeEnv === 'app' && t.buildType === target.buildType && currentApps.has(t.appName))
+    .map((t) => ({ arch: t.arch, dir: `${state.config.paths.build}/${t.appName}` }));
 
 // A Linux app also ships as one archive, next to its directory.
 function archiveApp(app) {
@@ -238,19 +277,23 @@ function signApp(app, target) {
     run(null, ['codesign', '--force', '--sign', '-', '--timestamp=none', app], null, target);
 }
 
-// Where a build without a bundler puts an app: under its own name, or for iOS as the Xcode project of its build type.
+// Where a build without a bundler puts an app: under its own name, or for iOS and Android as the project of its build
+// type.
 export function appOutputPath(target) {
     const { output } = state.config.paths;
-    if (target.platform !== 'ios') return `${output}/${target.appName}`;
+    if (!['ios', 'android'].includes(target.platform)) return `${output}/${target.appName}`;
     return `${output}/${appOutputName(target)}${target.buildType === 'debug' ? '.debug' : ''}`;
 }
 
 // The built app with a page's files at `to`: the bundler's output for its page, or the project's output for a build
-// with none. An iOS app is its Xcode project, with every SDK built so far.
+// with none. An iOS app is its Xcode project and an Android app its Gradle project, with every SDK or ABI built so far.
 export function publishApp(target, { to = appOutputPath(target), page = null } = {}) {
     const built = `${state.config.paths.build}/${target.appName}`;
     if (target.platform === 'ios') {
-        writeXcodeProject(to, { parts: iosParts(target), identity: { id: appId(), team: appTeam() }, version: appVersion() });
+        const parts = appParts(target).map(({ arch, dir }) => ({ sdk: arch, dir }));
+        writeXcodeProject(to, { parts, identity: { id: appId(), team: appTeam() }, version: appVersion() });
+    } else if (target.platform === 'android') {
+        writeGradleProject(to, { parts: appParts(target), id: androidAppId(), version: androidVersion() });
     } else if (path.resolve(to) !== path.resolve(built)) {
         fs.rmSync(to, { recursive: true, force: true });
         fs.cpSync(built, to, { recursive: true, verbatimSymlinks: true });
@@ -263,7 +306,7 @@ export function publishApp(target, { to = appOutputPath(target), page = null } =
         });
     }
     if (target.platform === 'darwin') signApp(to, target);
-    else if (target.platform !== 'ios') archiveApp(to);
+    else if (!['ios', 'android'].includes(target.platform)) archiveApp(to);
     return to;
 }
 
@@ -285,8 +328,9 @@ export default async function buildApp(target, { bridges = [], force = false } =
     const jsiRoot = resolveAppEmbindJsiRoot();
     const { hermes, cmakeArgs, inputs } = await hostInputs(target);
 
-    // The bridges compile against the embind runtime, which speaks the JSI of the Hermes the host links.
-    const headerDirs = [`${jsiRoot}/cpp/src`, `${hermes}/include`];
+    // The bridges compile against the embind runtime, which speaks the JSI of the Hermes the host links. Android's
+    // Hermes comes without JSI's headers, which the host package has from the same release.
+    const headerDirs = [`${jsiRoot}/cpp/src`, `${hermes}/include`, ...(target.platform === 'android' ? [`${appHostRoot}/third_party/jsi/include`] : [])];
     createLib(target, BRIDGE, {
         buildSource: false,
         nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...bridges],
@@ -324,13 +368,15 @@ export default async function buildApp(target, { bridges = [], force = false } =
     const platformPrefix = `App-${buildType}`;
     const workDir = `${build}/${platformPrefix}/${target.path}`;
     const { name } = state.config.general;
+    // An Android app's activity loads its host by this one name.
+    const hostName = target.platform === 'android' ? 'crossbind_app' : name;
     logger.startStep(target, 'app');
     resetCMakeCacheForSource(workDir, `${appHostRoot}/cpp`, target);
     run(null, [
         // An iOS host builds with crossbind's iOS toolchain file rather than as an Xcode project of its own.
         target.platform === 'ios' ? 'ios-cmake' : 'cmake', `${appHostRoot}/cpp`,
         `-DCMAKE_BUILD_TYPE=${buildType}`,
-        `-DCROSSBIND_APP_FILE=${name}`,
+        `-DCROSSBIND_APP_FILE=${hostName}`,
         `-DCROSSBIND_JSI_ROOT=${jsiRoot}`,
         `-DCROSSBIND_HERMES=${hermes}`,
         `-DCROSSBIND_EXTRA_SOURCES=${extraSources.join(';')}`,
@@ -350,6 +396,8 @@ export default async function buildApp(target, { bridges = [], force = false } =
     await bundle(`${appHostRoot}/js/page.js`, `${build}/${target.appJsName}`, []);
     if (target.platform === 'ios') {
         assembleIosPart(target, { library: `${workDir}/lib${name}.a`, linkArgs, hbc: `${workDir}/host.hbc`, hermes });
+    } else if (target.platform === 'android') {
+        assembleAndroidPart(target, { libDir: workDir, sharedLibs: libs.filter((lib) => lib.endsWith('.so')), hbc: `${workDir}/host.hbc` });
     } else {
         assembleApp(target, { executable: `${workDir}/${name}`, hbc: `${workDir}/host.hbc`, hermes });
     }

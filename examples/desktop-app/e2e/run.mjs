@@ -4,7 +4,8 @@ import { resolve } from 'node:path';
 import config from '../crossbind.config.js';
 
 // Opens the app `pnpm build` made and waits for its page to log what the C++ returned. With CROSSBIND_APP_PLATFORM=ios
-// the app is the Xcode project `pnpm build:ios` made, built and opened in the Simulator.
+// the app is the Xcode project `pnpm build:ios` made, built and opened in the Simulator, and with android the Gradle
+// project `pnpm build:android` made, built and opened on the attached device.
 // A cold Simulator on a CI runner can take over a minute to show the page.
 const RUN_TIMEOUT_MS = 300000;
 const EXPECTED = 'Matrix multiplier with c++ => J₃ * (2*J₃) = 6*J₃';
@@ -19,11 +20,12 @@ function missing(file) {
 }
 
 async function open() {
-    if (process.env.CROSSBIND_APP_PLATFORM === 'ios') {
-        const project = `${root}/dist/${name}-ios`;
+    const platform = process.env.CROSSBIND_APP_PLATFORM;
+    if (platform) {
+        const project = `${root}/dist/${name}-${platform}`;
         if (!existsSync(project)) missing(project);
-        const { buildForSimulator, openInSimulator } = await import('crossbind');
-        return openInSimulator(buildForSimulator(project), { env });
+        const { buildForSimulator, openInSimulator, buildApk, openOnDevice } = await import('crossbind');
+        return platform === 'ios' ? openInSimulator(buildForSimulator(project), { env }) : openOnDevice(buildApk(project), { env });
     }
     // A macOS app is a bundle; a Linux app a directory named after its platform and arch.
     const executable = process.platform === 'darwin'

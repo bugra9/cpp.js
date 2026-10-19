@@ -2,7 +2,7 @@
 
 - **Status:** Proposed
 - **Date:** 2026-10-18
-- **Affects:** `core/app-host/`, `core/crossbind/src/actions/{buildApp,nativeBridges,xcodeProject,iosSimulator}.js`, `src/utils/{targets,hermes,resolveAppHost}.js`, `src/integration/getCrossbindScript.js`, `plugins/{rollup,vite}`, `examples/desktop-app`, `e2e/desktop-app`
+- **Affects:** `core/app-host/`, `core/crossbind/src/actions/{buildApp,nativeBridges,xcodeProject,iosSimulator,gradleProject,androidDevice}.js`, `src/utils/{targets,hermes,resolveAppHost}.js`, `src/integration/getCrossbindScript.js`, `plugins/{rollup,vite}`, `examples/desktop-app`, `e2e/desktop-app`
 
 ## Context
 
@@ -42,14 +42,23 @@ packaging, and `crossbind build -e app` builds the host alone.
   embeds Hermes and copies the app's files, so it is relocatable and holds nothing to edit. Its bundle id and team
   come from `crossbind.config.js`. Vite builds it when `CROSSBIND_APP_PLATFORM=ios` and runs it in the Simulator
   during development.
+- An Android app is a Gradle project crossbind writes anew on every build in the same way: the host is a shared
+  library per ABI behind JNI, built in crossbind's android image against the `hermes-android` AAR, and the project
+  packages it with the packages' shared libraries and one Java activity, takes Hermes and androidx.webkit from Maven
+  and carries Gradle's wrapper. The page comes from an https origin the activity serves from the app's files. Its
+  calls travel over a WebMessagePort, with byte arrays as ArrayBuffer messages instead of request bodies, which
+  Android's request interception does not pass; a script at the start of every page asks for the port once it
+  listens, with an ask of its own the port comes back with, so no port reaches a page before it can take it, nor the
+  page after the one it was for (measured: a port handed over as the page commits is lost now and then). Vite runs it
+  on the attached device or emulator during development.
 - The webview loads the app's own origin alone, in every frame (and the dev server during development); the module's
   channel answers that origin only. Measured: a frame from another origin otherwise reaches the `crossbind://` routes
   even where a message's origin is checked. The host also gives the page's top frame a token that every message and
   `crossbind://` call carries: markup and sandboxed frames of the app's own page reach the channel and the routes too,
   and WebKitGTK does not tell a message's sender (measured).
-- macOS, Linux and iOS first. A Linux app builds against the WebKitGTK 4.1 of Ubuntu 22.04's packages and runs on the
-  system's; an iOS app needs iOS 15.1, as Hermes does; Android requires System WebView 116, the first with
-  ArrayBuffer messages.
+- macOS, Linux, iOS and Android first. A Linux app builds against the WebKitGTK 4.1 of Ubuntu 22.04's packages and
+  runs on the system's; an iOS app needs iOS 15.1, as Hermes does; an Android app needs Android 13, the API level
+  crossbind's Android libraries build against, and System WebView 116, the first with ArrayBuffer messages.
 
 ## Consequences
 

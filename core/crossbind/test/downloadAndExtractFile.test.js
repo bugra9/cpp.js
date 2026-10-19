@@ -116,6 +116,21 @@ describe('downloadAndExtractFile', () => {
         expect(fs.readFileSync(path.join(output, 'source/lib.c'), 'utf8')).toContain('answer');
     });
 
+    // Windows runs no Android build, and has no zip to pack the fixture with.
+    test.skipIf(process.platform === 'win32')('extracts a zip archive, as an Android AAR is, which GNU tar cannot read', async () => {
+        const staging = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-fixture-'));
+        fs.mkdirSync(path.join(staging, 'jni/x86_64'), { recursive: true });
+        fs.writeFileSync(path.join(staging, 'AndroidManifest.xml'), '<manifest />\n');
+        fs.writeFileSync(path.join(staging, 'jni/x86_64/libanswer.so'), 'not really a library');
+        execFileSync('zip', ['-q', '-r', path.join(output, 'pkg-1.0.aar'), '.'], { cwd: staging });
+        fs.rmSync(staging, { recursive: true, force: true });
+        const archive = fs.readFileSync(path.join(output, 'pkg-1.0.aar'));
+
+        await expect(downloadAndExtractFile('http://127.0.0.1:1/downloads/pkg-1.0.aar', output, sha256Of(archive))).resolves.toBe(true);
+        expect(fs.readFileSync(path.join(output, 'source/jni/x86_64/libanswer.so'), 'utf8')).toBe('not really a library');
+        expect(fs.existsSync(path.join(output, 'source/AndroidManifest.xml'))).toBe(true);
+    });
+
     test('downloads, verifies the pin, and extracts to source', async () => {
         const staged = path.join(output, 'staged.tar.gz');
         const archive = packArchive(staged);

@@ -22,7 +22,7 @@ crossbind/
 │   ├── crossbind/                    ← the CLI + build orchestration (most-touched)
 │   ├── embind-jsi/                   ← Embind/JSI helper used by RN bridge
 │   ├── embind-napi/                  ← Node-API host for embind-jsi: native Node.js addons (ADR-0011)
-│   ├── app-host/                     ← App host for embind-jsi: the system webview + Hermes, desktop and iOS apps (ADR-0017)
+│   ├── app-host/                     ← App host for embind-jsi: the system webview + Hermes, desktop and mobile apps (ADR-0017)
 │   └── embind-rust/                  ← Rust producer crate + per-host adapters (see docs/api/rust.md)
 ├── tooling/                          ← dev-time helpers, not part of a consumer build
 │   ├── create-app/                   ← create-crossbind scaffolder (templates built from examples/)
@@ -116,9 +116,11 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | Per-target static lib build | `src/actions/createLib.js` |
 | Wasm linking + JS loader gen | `src/actions/buildWasm.js` |
 | Node-API addon link (`.node`) + CommonJS loader | `src/actions/buildNode.js` |
-| App host link: bridges against Hermes' JSI, host bytecode, page runtime; a macOS `.app` signed ad hoc, a Linux directory and its `.tar.gz`, or what each iOS SDK brings to the Xcode project | `src/actions/buildApp.js` |
+| App host link: bridges against Hermes' JSI, host bytecode, page runtime; a macOS `.app` signed ad hoc, a Linux directory and its `.tar.gz`, or what each iOS SDK or Android ABI brings to the Xcode or Gradle project | `src/actions/buildApp.js` |
 | iOS app: the Xcode project written anew from each SDK's part (archives and their link line, Hermes' slice, the app's files) | `src/actions/xcodeProject.js` |
 | An iOS app built for the Simulator and opened there, for `vite` and the e2e runs | `src/actions/iosSimulator.js` |
+| Android app: the Gradle project written anew from `core/app-host/android` and each ABI's part (the host and the libraries it loads, the app's files) | `src/actions/gradleProject.js` |
+| An Android app built as a debug APK and opened on the attached device, its log relayed, for `vite` and the e2e runs | `src/actions/androidDevice.js` |
 | The bridges a native binary binds: own headers, headers bound whole, imported headers | `src/actions/nativeBridges.js` |
 | Node import hooks: the native imports of an app without a bundler (`dist/node/<format>.register.mjs`) | `src/actions/createImportedBridges.js`, `src/actions/writeRuntimeEntry.js`, `src/assets/node-import-hooks.mjs` |
 | `crossbind/node/dev`: build this machine's Node binary when its native inputs changed, then load those hooks | `src/node/dev.mjs`, `src/utils/nodeDevBuild.js` |
@@ -231,7 +233,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | @crossbind/core-embind-rust resolution (consumer-declared) | `src/utils/resolveEmbindRust.js` |
 | @crossbind/core-embind-napi resolution (consumer-declared) | `src/utils/resolveEmbindNapi.js` |
 | @crossbind/core-app-host resolution (consumer-declared) | `src/utils/resolveAppHost.js` |
-| Hermes for apps: React Native's pinned release for macOS and iOS, and on Linux its source built once in the linux image, both in `~/.crossbind/hermes` | `src/utils/hermes.js` |
+| Hermes for apps: React Native's pinned releases for macOS, iOS and Android (with the release's hermesc), and on Linux its source built once in the linux image, all in `~/.crossbind/hermes` | `src/utils/hermes.js` |
 | WebKitGTK headers and libraries for Linux apps: the pinned Ubuntu 22.04 packages (`src/assets/webkitgtk-sysroot.txt`), unpacked into `~/.crossbind/sysroots` | `src/utils/webkitgtkSysroot.js` |
 | A step on a machine-wide cache under `~/.crossbind`, in a run of the linux image of its own | `src/utils/linuxImage.js` |
 | Property lists: XML for an Info.plist, the text form for a project.pbxproj | `src/utils/plist.js` |
@@ -278,7 +280,7 @@ To add a new `ports/<X>`: see `docs/playbooks/new-port.md` (uses `ports/zlib` as
 | `examples/backend-nodejs-native` | Node.js app that builds its own addon (`-p host -e node`, `build:desktop` for every desktop platform; the macOS CI job uses `ci/` bridge snapshots) |
 | `examples/backend-nodejs-standalone` | Node.js app on the Node-API addons `@crossbind/example-lib-prebuilt-matrix` ships (`/node/napi`), nothing to build |
 | `examples/desktop-electron` | Electron app with its own addon in the main process, packaged with electron-builder (`dist/` stays outside the asar archive); takes the `backend-nodejs-native` bridge snapshot in the macOS CI job |
-| `examples/desktop-app` | macOS, Linux and iOS app on crossbind's own host (`target.runtimeEnv: 'app'`): Vite page in the system webview, the C++ in Hermes; the `Desktop App` template; takes a bridge snapshot in the macOS CI job and builds in the Linux one |
+| `examples/desktop-app` | macOS, Linux, iOS and Android app on crossbind's own host (`target.runtimeEnv: 'app'`): Vite page in the system webview, the C++ in Hermes; the `Desktop App` template; takes a bridge snapshot in the macOS CI job and builds in the Linux ones |
 | `examples/native-executable` | Native executable from `main()` (`-e native`); the `Native Executable` template |
 | `examples/cloud-cloudflare-worker` | Cloudflare Worker / edge |
 | `examples/mobile-reactnative-cli` | RN-cli (canonical mobile reference; CI uses `ci/crossbind-snapshot/`) |

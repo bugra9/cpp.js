@@ -7,7 +7,8 @@ import runInLinuxImage from './linuxImage.js';
 import logger from './logger.js';
 
 // The Hermes React Native publishes on Maven Central for Apple platforms: the macOS framework, the iOS xcframework,
-// hermesc and the headers. A new version also moves third_party/jsi of @crossbind/core-app-host to its tag.
+// hermesc and the headers. A new version also moves third_party/jsi of @crossbind/core-app-host to its tag, and the
+// Android pins below.
 export const HERMES = {
     version: '250829098.0.17',
     sha256: '2967ee51b41bd433b3027dda875e96194354e2b4d715f9f186fd0c04ccef309d',
@@ -59,6 +60,38 @@ cp "$S/API/jsi/jsi/"*.h "$OUT/include/jsi/"
 cp "$HOST/bin/hermesc" "$OUT/bin/"
 touch "$OUT/.complete"
 `;
+
+// Android's Hermes is React Native's AAR, which an app's Gradle build also takes for the libraries it packages, and
+// hermesc comes from the release's hermes-compiler package, whose Linux build runs in crossbind's android image.
+export const HERMES_ANDROID = {
+    url: `https://repo1.maven.org/maven2/com/facebook/hermes/hermes-android/${HERMES.version}/hermes-android-${HERMES.version}-release.aar`,
+    sha256: '6fb440b29aadb5925bed1109338da61623c54c3508020bb2cecebcaaa80e53b8',
+};
+export const HERMES_COMPILER = {
+    url: `https://registry.npmjs.org/hermes-compiler/-/hermes-compiler-${HERMES.version}.tgz`,
+    sha256: '517f2a48812931f89fe6e6e8ab4b2b7335269cb502f41cd65d6d396703f60757',
+};
+
+// Laid out as the other platforms' Hermes are: include/, a libs/android.<abi>/ per ABI, and bin/hermesc.
+export async function resolveAndroidHermes() {
+    const root = hermesDir();
+    const out = path.join(root, 'android');
+    fs.mkdirSync(root, { recursive: true });
+    await withDirLock(path.join(root, 'android.lock'), async () => {
+        if (fs.existsSync(path.join(out, '.complete'))) return;
+        await downloadAndExtractFile(HERMES_ANDROID.url, path.join(root, 'android-aar'), HERMES_ANDROID.sha256);
+        await downloadAndExtractFile(HERMES_COMPILER.url, path.join(root, 'compiler'), HERMES_COMPILER.sha256);
+        fs.rmSync(out, { recursive: true, force: true });
+        const prefab = path.join(root, 'android-aar', 'source', 'prefab', 'modules', 'hermesvm');
+        fs.cpSync(path.join(prefab, 'include'), path.join(out, 'include'), { recursive: true });
+        fs.cpSync(path.join(prefab, 'libs'), path.join(out, 'libs'), { recursive: true });
+        fs.mkdirSync(path.join(out, 'bin'));
+        fs.copyFileSync(path.join(root, 'compiler', 'source', 'hermesc', 'linux64-bin', 'hermesc'), path.join(out, 'bin', 'hermesc'));
+        fs.chmodSync(path.join(out, 'bin', 'hermesc'), 0o755);
+        fs.writeFileSync(path.join(out, '.complete'), '');
+    });
+    return out;
+}
 
 export async function resolveLinuxHermes(arch) {
     const root = hermesDir();

@@ -24,14 +24,16 @@ import { Argon2, Params as Argon2Params, Algorithm as Argon2Algorithm, Version a
 import { Params as Argon2ModuleParams, Memory as Argon2Memory } from 'cargo:argon2-rust/params';
 import { XzOptions, XzWriter, XzReader, LzmaOptions, LzmaWriter, Lzma2Reader, LzmaReader } from 'cargo:lzma-rust2';
 
-// A sandboxed frame of the page reaches the module's channel too, but not the token of the page's top frame.
+// A sandboxed frame of the page reaches the module's channel too, but not the token of the page's top frame; on Android
+// it gets neither the token nor the port, nor the object a page asks for its port with.
 function callFromSandboxedFrame() {
     const frame = document.createElement('iframe');
     frame.sandbox = 'allow-scripts';
     frame.srcdoc = `<script>
         const post = (text) => parent.postMessage(text, '*');
         try {
-            window.webkit.messageHandlers.crossbind.postMessage('["get",0,["ConfBox"],[]]').then(String, () => 'refused').then(post);
+            if (window.__crossbind_token || window.__crossbind_port || window.__crossbind_ready) post('[0,"a sandboxed frame got the port"]');
+            else window.webkit.messageHandlers.crossbind.postMessage('["get",0,["ConfBox"],[]]').then(String, () => 'refused').then(post);
         } catch {
             post('refused');
         }
@@ -43,13 +45,35 @@ function callFromSandboxedFrame() {
     return answer.finally(() => frame.remove());
 }
 
+// On Android a frame of the page's own origin has the object a page asks for its port with, and the app answers the top
+// frame alone: the page keeps its port, and the module the objects the page holds.
+async function askFromSameOriginFrame(m) {
+    const box = await new m.ConfBox(2, 3);
+    const frame = document.createElement('iframe');
+    // A frame's empty first document gets no such object; a blob URL's document has the page's origin and does.
+    frame.src = URL.createObjectURL(new Blob(['<p>a frame of the page</p>'], { type: 'text/html' }));
+    const loaded = new Promise((resolve) => { frame.onload = resolve; });
+    document.body.append(frame);
+    await loaded;
+    const ready = frame.contentWindow.__crossbind_ready;
+    if (!ready) throw new Error("a frame of the page's origin has no object to ask for a port with, so nothing was checked");
+    ready.postMessage('frame');
+    await new Promise((resolve) => { setTimeout(resolve, 300); });
+    frame.remove();
+    const area = await Promise.race([box.area(), new Promise((resolve) => { setTimeout(() => resolve('no answer'), 3000); })]);
+    if (area !== 6) throw new Error(`after a frame asked for a port, an object of the page answered ${area}`);
+}
+
 initNative().then(async (m) => {
     try {
-        // Markup can make a crossbind:// request as well, so one without the page's token must be refused.
-        const { status } = await fetch('crossbind://app/b/result?id=1');
-        if (status !== 403) throw new Error(`the host answered ${status} to a request without the page's token`);
+        // Markup can make a crossbind:// request as well, so one without the page's token must be refused. On Android the
+        // bytes travel over the page's port alone, and the page's origin serves no such request.
+        const isAndroid = Boolean(globalThis.__crossbind_port);
+        const { status } = await fetch(isAndroid ? '/b/result?id=1' : 'crossbind://app/b/result?id=1');
+        if (status !== (isAndroid ? 404 : 403)) throw new Error(`the host answered ${status} to a request without the page's token`);
         const framed = await callFromSandboxedFrame();
         if (framed.startsWith('[0,')) throw new Error(`a sandboxed frame called the module: ${framed}`);
+        if (isAndroid) await askFromSameOriginFrame(m);
         const result = await runConformance({
             cpp: { ConfBox: m.ConfBox, ConfCircle: m.ConfCircle, ConfOps: m.ConfOps, ConfShape: m.ConfShape },
             rustPkg: {

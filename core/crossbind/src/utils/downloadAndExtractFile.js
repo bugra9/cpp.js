@@ -63,20 +63,22 @@ function sourceCameFrom(output, archive) {
 }
 
 // Extraction runs through the system tar (GNU tar and bsdtar both detect gzip/bzip2/xz, and
-// every platform the engine builds on ships one). Extracting into a scratch directory keeps
-// the archive from choosing where its files land, and gives the upstream root folder - which
-// recipes address as build/source - one place to be renamed from.
+// every platform the engine builds on ships one), and a zip archive, which GNU tar cannot read,
+// through unzip. Extracting into a scratch directory keeps the archive from choosing where its
+// files land, and gives the upstream root folder - which recipes address as build/source - one
+// place to be renamed from.
 function extractArchive(filePath, url, output) {
     const work = `${output}/.extract`;
     fs.rmSync(work, { recursive: true, force: true });
     mkdirSync(work, { recursive: true });
     try {
-        const tar = spawnSync('tar', ['-xf', filePath, '-C', work], { encoding: 'utf8' });
-        if (tar.error) {
-            throw new Error(`crossbind: cannot run tar to extract ${filePath}: ${tar.error.message}`);
+        const [tool, args] = /\.(zip|aar)$/.test(filePath) ? ['unzip', ['-q', filePath, '-d', work]] : ['tar', ['-xf', filePath, '-C', work]];
+        const extracted = spawnSync(tool, args, { encoding: 'utf8' });
+        if (extracted.error) {
+            throw new Error(`crossbind: cannot run ${tool} to extract ${filePath}: ${extracted.error.message}`);
         }
-        if (tar.status !== 0) {
-            throw new Error(`crossbind: extracting ${filePath} (from ${url}) failed: ${(tar.stderr || '').trim() || `tar exited ${tar.status}`}`);
+        if (extracted.status !== 0) {
+            throw new Error(`crossbind: extracting ${filePath} (from ${url}) failed: ${(extracted.stderr || '').trim() || `${tool} exited ${extracted.status}`}`);
         }
         const entries = fs.readdirSync(work, { withFileTypes: true });
         if (entries.length === 0) {

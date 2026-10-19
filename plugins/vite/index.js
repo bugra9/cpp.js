@@ -2,7 +2,7 @@
 import {
     state, createLib, createBridgeFile, buildWasm, buildDependencies, getTargetParams, getFilteredBuildTargets, isSourceNewer, getRustJsScript,
     isAppSource, getFileHash, buildProjectApp, appLayout, appOutputName, appTargetParams, publishApp, buildForSimulator,
-    openInSimulator,
+    openInSimulator, buildApk, openOnDevice,
 } from 'crossbind';
 import rollupCrossbindPlugin from '@crossbind/plugin-rollup';
 
@@ -10,15 +10,12 @@ import fs from 'node:fs';
 import { spawn } from 'node:child_process';
 
 const isApp = state.config.target.runtimeEnv === 'app';
-const targetParams = isApp
-    ? appTargetParams({ simulatorOnly: true })
-    : getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
-// iOS keeps targets without a runtime environment for React Native, which every filter of runtimeEnv lets through.
-const appOnly = isApp ? { runtimeEnv: 'app' } : {};
-let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release', ...appOnly })?.[0];
-let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug', ...appOnly })?.[0];
+// An app's targets are what runs it during development, which appDevPlugin finds as the session starts.
+const targetParams = isApp ? null : getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
+let buildTargetRelease = isApp ? null : getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
+let buildTargetDebug = isApp ? null : getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
 
-if (!buildTargetRelease && !buildTargetDebug) {
+if (!isApp && !buildTargetRelease && !buildTargetDebug) {
     throw new Error('No build targets found');
 }
 
@@ -26,27 +23,31 @@ if (!buildTargetDebug) {
     buildTargetDebug = buildTargetRelease;
 }
 
-// During development an app opens on the dev server. Its host is built for this machine first, or an iOS app's for the
-// Simulator, and built and reopened whenever the native code or the native imports of the page change; the page itself
-// reloads as any Vite page does. Closing the window, or the app in the Simulator, ends the session.
+// During development an app opens on the dev server. Its host is built for this machine first, an iOS app's for the
+// Simulator or an Android app's for the attached device, and built and reopened whenever the native code or the native
+// imports of the page change; the page itself reloads as any Vite page does. Closing the window, or the app on the
+// Simulator or device, ends the session.
 function appDevPlugin() {
     let isServe = false;
     let server = null;
     let appUrl = null;
     let app = null;
     let closeApp = null;
-    let simulatorApp = null;
+    let mobileApp = null;
     let building = Promise.resolve(false);
+    let devParams = null;
+    let target = null;
+    const isMobile = () => ['ios', 'android'].includes(target.platform);
     const nativeRegex = new RegExp(`\\.(${[...state.config.ext.header, ...state.config.ext.source, 'rs'].join('|')})$`);
 
     async function build() {
-        await buildDependencies({ targetParams: { ...targetParams, buildType: [buildTargetDebug.buildType] } });
-        const changed = await buildProjectApp(buildTargetDebug);
-        if (buildTargetDebug.platform !== 'ios' || (!changed && simulatorApp)) return changed;
-        // An iOS app links in Xcode, as a desktop host links in its build: before the app that runs gives way. Its
-        // project holds no page, which the dev server serves.
-        const project = publishApp(buildTargetDebug, { to: `${state.config.paths.build}/${appOutputName(buildTargetDebug)}.debug` });
-        simulatorApp = buildForSimulator(project, 'Debug');
+        await buildDependencies({ targetParams: { ...devParams, buildType: [target.buildType] } });
+        const changed = await buildProjectApp(target);
+        if (!isMobile() || (!changed && mobileApp)) return changed;
+        // A mobile app links in Xcode or packages in Gradle, as a desktop host links in its build: before the app that
+        // runs gives way. Its project holds no page, which the dev server serves.
+        const project = publishApp(target, { to: `${state.config.paths.build}/${appOutputName(target)}.debug` });
+        mobileApp = target.platform === 'ios' ? buildForSimulator(project, 'Debug') : buildApk(project);
         return true;
     }
 
@@ -56,16 +57,15 @@ function appDevPlugin() {
     }
 
     function open() {
-        if (buildTargetDebug.platform !== 'ios') {
-            const executable = `${state.config.paths.build}/${buildTargetDebug.appName}/${appLayout(buildTargetDebug).executable}`;
+        if (!isMobile()) {
+            const executable = `${state.config.paths.build}/${target.appName}/${appLayout(target).executable}`;
             return spawn(executable, [], { stdio: 'inherit', env: { ...process.env, CROSSBIND_APP_URL: appUrl } });
         }
-        // The terminal's input stays Vite's: simctl would forward it to the app.
-        const simulator = openInSimulator(simulatorApp, {
-            env: { CROSSBIND_APP_URL: appUrl }, show: true, stdio: ['ignore', 'inherit', 'inherit'],
-        });
-        closeApp = simulator.close;
-        return simulator.child;
+        // The terminal's input stays Vite's: simctl and adb would forward it to the device.
+        const options = { env: { CROSSBIND_APP_URL: appUrl }, stdio: ['ignore', 'inherit', 'inherit'] };
+        const opened = target.platform === 'ios' ? openInSimulator(mobileApp, { ...options, show: true }) : openOnDevice(mobileApp, options);
+        closeApp = opened.close;
+        return opened.child;
     }
 
     function launch() {
@@ -106,15 +106,22 @@ function appDevPlugin() {
 
     return {
         name: 'vite-plugin-crossbind-app',
+        // Gradle writes reports into the Android project it builds, in crossbind's own directory, and an HTML file there
+        // would reload the page.
+        config: () => ({ server: { watch: { ignored: [`${state.config.paths.cache}/**`, `${state.config.paths.build}/**`] } } }),
         configResolved(config) {
             isServe = config.command === 'serve';
         },
         async load(source) {
             if (!isServe || source !== '/crossbind.js') return null;
             await building;
-            return fs.readFileSync(`${state.config.paths.build}/${buildTargetDebug.appJsName}`, { encoding: 'utf8' });
+            return fs.readFileSync(`${state.config.paths.build}/${target.appJsName}`, { encoding: 'utf8' });
         },
         configureServer(devServer) {
+            // This machine, the Simulator, or the Android device attached now. iOS and Android keep targets without a
+            // runtime environment for React Native, which the filter leaves out.
+            devParams = appTargetParams({ dev: true });
+            [target] = getFilteredBuildTargets(devParams, { buildType: 'debug', runtimeEnv: 'app' });
             server = devServer;
             devServer.httpServer?.once('listening', () => {
                 appUrl = `http://localhost:${devServer.httpServer.address().port}${devServer.config.base}`;

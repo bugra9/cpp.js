@@ -196,7 +196,7 @@ export default function run(program, params = [], platformPrefix = null, target 
             case 'android':
                 [dProgram, ...dParams] = params;
                 platformParams = target.arch === 'x86_64' ? androidParamsX86_64 : androidParamsArm64;
-                if (dProgram === 'cmake') {
+                if (dProgram === 'cmake' && dParams[0] !== '--build' && dParams[0] !== '--install') {
                     dParams = [
                         ...dParams,
                         `-DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake`,

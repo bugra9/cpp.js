@@ -10,12 +10,13 @@ import fs from 'node:fs';
 import p from 'node:path';
 
 // An app's page reaches the module in the host the app runs, so its build makes the host, not wasm: this machine's, or
-// with CROSSBIND_APP_PLATFORM=ios one per iOS SDK.
+// with CROSSBIND_APP_PLATFORM one per iOS SDK or Android ABI.
 const isApp = state.config.target.runtimeEnv === 'app';
 const targetParams = isApp
     ? appTargetParams()
     : getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
-// iOS keeps targets without a runtime environment for React Native, which every filter of runtimeEnv lets through.
+// iOS and Android keep targets without a runtime environment for React Native, which every filter of runtimeEnv lets
+// through.
 const appOnly = isApp ? { runtimeEnv: 'app' } : {};
 let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release', ...appOnly })?.[0];
 let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug', ...appOnly })?.[0];

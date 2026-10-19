@@ -32,8 +32,9 @@ export default function getCmakeParameters(target, options = {}) {
         ...(options.headerDirs || []),
     ];
 
+    // React Native loads a library on Android as a shared one; an app's host links the project's archives into itself.
     const sharedPlatforms = ['android'];
-    const buildType = sharedPlatforms.includes(target.platform) ? 'SHARED' : 'STATIC';
+    const buildType = sharedPlatforms.includes(target.platform) && target.runtimeEnv !== 'app' ? 'SHARED' : 'STATIC';
     const otherBuildType = buildType === 'STATIC' ? 'SHARED' : 'STATIC';
 
     const cmakeCompileOptions = [...new Set(getData('cmake', target)?.compileOptions || [])];
