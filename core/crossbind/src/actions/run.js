@@ -22,7 +22,7 @@ import {
 } from '../utils/darwinToolchain.js';
 
 // Native builds can outrun Node's 1 MiB default pipe buffer; without a raised cap a successful build dies with ENOBUFS.
-const EXEC_MAX_BUFFER = 512 * 1024 * 1024;
+export const EXEC_MAX_BUFFER = 512 * 1024 * 1024;
 // Containers share the memory of Docker's VM, and one compile at full -j can take most of a desktop VM
 // (GDAL's bindings peak at 7.5 of 7.7 GiB), so the exclusive steps of parallel builds take turns.
 const DOCKER_COMPILE_LOCK = path.join(os.homedir(), '.crossbind', 'docker-compile.lock');

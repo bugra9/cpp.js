@@ -11,7 +11,7 @@ import buildWasm from './actions/buildWasm.js';
 import buildWasiCommand from './actions/buildWasiCommand.js';
 import buildNode, { addonsInPackages, bundleNodeLoader, publishNodeData } from './actions/buildNode.js';
 import buildNativeCommand from './actions/buildNativeCommand.js';
-import buildApp, { publishApp } from './actions/buildApp.js';
+import buildApp, { appOutputPath, publishApp } from './actions/buildApp.js';
 import buildExternal from './actions/buildExternal.js';
 import buildPackageTypes from './actions/buildTypes.js';
 import buildLib from './actions/buildLib.js';
@@ -83,7 +83,8 @@ program.command('build')
         if (state.config.build.withBuildConfig) {
             buildExternal(targetParams);
         } else {
-            build(targetParams, rebuildDeps, binaryRuntimeEnvs, { bindImports });
+            // An app builds only for the platforms -p names, so a plain build keeps making the archives alone.
+            build(targetParams, rebuildDeps, binaryRuntimeEnvs, { bindImports }, rest.platform ?? []);
         }
     });
 
@@ -305,11 +306,12 @@ function onlyLoadsPackagedAddons(binaryParams) {
     return targets.every((target) => target.runtimeEnv === 'node' && target.platform !== 'wasm') && addonsInPackages();
 }
 
-async function build(targetParams, rebuildOption, binaryRuntimeEnvs, wasmOptions = {}) {
+async function build(targetParams, rebuildOption, binaryRuntimeEnvs, wasmOptions = {}, appPlatforms = []) {
     await buildDependencies({ targetParams, rebuildOption });
     const binaryParams = { ...targetParams, runtimeEnv: binaryRuntimeEnvs };
     if (!onlyLoadsPackagedAddons(binaryParams)) {
-        buildLib(targetParams);
+        // An app links its archives into itself, so it publishes no xcframework or podspec of them.
+        buildLib(targetParams, { skipXcframework: binaryRuntimeEnvs.includes('app') });
     }
     if (binaryRuntimeEnvs.length === 0) {
         logger.info(`crossbind: no runtime environment was selected, so only the archives were built - pass -e (${runtimeEnvs.join(', ')}) for a binary.`);
@@ -317,7 +319,7 @@ async function build(targetParams, rebuildOption, binaryRuntimeEnvs, wasmOptions
         await createWasmJs(binaryParams, wasmOptions);
         await createNodeAddons(binaryParams);
         await createNativeCommands(binaryParams);
-        await createApps(binaryParams);
+        await createApps({ ...binaryParams, platform: appPlatforms });
         await createWasiCommands(binaryParams);
     }
     buildPackageTypes();
@@ -344,7 +346,7 @@ async function createApps(targetParams) {
     }
     const bridges = createNativeBridges(targets).headers.flatMap((header) => header.bridge ?? []);
     for (const target of targets) {
-        const built = await buildApp(target, { bridges, force: !fs.existsSync(`${state.config.paths.output}/${target.appName}`) });
+        const built = await buildApp(target, { bridges, force: !fs.existsSync(appOutputPath(target)) });
         if (built) publishApp(target);
     }
 }

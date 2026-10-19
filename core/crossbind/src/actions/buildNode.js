@@ -34,18 +34,19 @@ export function filesUnder(dirs) {
 
 // The addon's link, and an app host's, whose bridges come from an archive of their own.
 export function linkInputs(target, { bridge } = {}) {
+    const isMachO = ['darwin', 'ios'].includes(target.platform);
     const {
         libs, appRustLibs, wholeArchiveAll, wholeArchiveNames, rustKeepFlags, hasRust,
     } = getLinkInputs(target, {
         // The linker loads the archive member that defines a -u symbol; Mach-O prefixes C names with _.
-        keepFlag: (name) => `-Wl,-u,${target.platform === 'darwin' ? '_' : ''}crossbind_keep_${name}`,
+        keepFlag: (name) => `-Wl,-u,${isMachO ? '_' : ''}crossbind_keep_${name}`,
         bridge,
     });
     // The app's Rust goes first: what a package's kept member needs from std and rustc's allocator shims is then
     // already the app's, and the package's own copies stay in its archive instead of defining them twice.
     const ordered = [...appRustLibs, ...libs.filter((lib) => !appRustLibs.includes(lib))];
     const linkArgs = [
-        ...buildLinkLibArgs(ordered, { wholeArchiveAll, wholeArchiveNames, forceLoad: target.platform === 'darwin' }),
+        ...buildLinkLibArgs(ordered, { wholeArchiveAll, wholeArchiveNames, forceLoad: isMachO }),
         ...rustKeepFlags,
         // The system libraries the archives need, declared by the packages that bring them in.
         ...(getData('binary', target)?.addonFlags ?? []),

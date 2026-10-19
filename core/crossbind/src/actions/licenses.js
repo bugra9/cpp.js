@@ -247,7 +247,8 @@ function appRuntimeRows(platform) {
             licenseNotes: "JSI's jsi.cpp from the same Hermes release, compiled into the host",
             licenseText: hermesLicense,
         },
-        {
+        // An iOS app makes its window with UIKit, without webview/webview.
+        ...(platform === 'ios' ? [] : [{
             ...mit,
             name: 'webview',
             version: WEBVIEW.version,
@@ -256,7 +257,7 @@ function appRuntimeRows(platform) {
             sourceUrl: 'https://github.com/webview/webview',
             licenseNotes: 'webview/webview, with the local patch @crossbind/core-app-host lists',
             licenseText: textOf(path.join(hostRoot, 'third_party', 'webview', 'LICENSE')),
-        },
+        }]),
     ];
 }
 

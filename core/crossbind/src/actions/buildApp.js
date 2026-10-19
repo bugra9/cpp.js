@@ -15,10 +15,13 @@ import { filesUnder, linkInputs } from './buildNode.js';
 import { suppressNodeBuiltinWarnings } from './buildJs.js';
 import { isNativeSourceNewerThan } from './isSourceNewer.js';
 import { createNativeBridges } from './nativeBridges.js';
+import { getTargetParams } from './target.js';
+import writeXcodeProject, { HERMES_SLICES, IOS_SDKS } from './xcodeProject.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
 import findFiles from '../utils/findFiles.js';
 import { getContentHash, getFilesFingerprint } from '../utils/hash.js';
+import { xmlPlist } from '../utils/plist.js';
 import { writeNativeSourceStamp } from '../utils/nativeSourceStamp.js';
 import resetCMakeCacheForSource from '../utils/resetCMakeCacheForSource.js';
 import resolveAppHostRoot, { resolveAppEmbindJsiRoot } from '../utils/resolveAppHost.js';
@@ -31,18 +34,58 @@ const cpuCount = Math.max(1, os.cpus().length - 1);
 const BRIDGE = 'AppBridge';
 const LINUX_MULTIARCH = { x64: 'x86_64-linux-gnu', arm64: 'aarch64-linux-gnu' };
 
-// Where an app keeps its executable and its files: a macOS bundle, or a Linux directory.
+// Where an app keeps its executable and its files: a macOS bundle, a Linux directory, or the app folder of an iOS app's
+// Xcode project, whose executable Xcode links.
 export function appLayout(target) {
     const { name } = state.config.general;
-    return target.platform === 'darwin'
-        ? { executable: `Contents/MacOS/${name}`, resources: 'Contents/Resources' }
-        : { executable: name, resources: 'resources' };
+    if (target.platform === 'darwin') return { executable: `Contents/MacOS/${name}`, resources: 'Contents/Resources' };
+    if (target.platform === 'ios') return { executable: null, resources: 'app' };
+    return { executable: name, resources: 'resources' };
 }
 
-// The name a bundler gives the app beside the page it built.
-export const appOutputName = (target) => (target.platform === 'darwin'
-    ? `${state.config.general.name}.app`
-    : `${state.config.general.name}-${target.platform}-${target.arch}`);
+// The name a bundler gives the app beside the page it built. An iOS app is one Xcode project for both SDKs.
+export function appOutputName(target) {
+    const { name } = state.config.general;
+    if (target.platform === 'darwin') return `${name}.app`;
+    if (target.platform === 'ios') return `${name}-ios`;
+    return `${name}-${target.platform}-${target.arch}`;
+}
+
+// The app a bundler builds: this machine's desktop app, or with CROSSBIND_APP_PLATFORM=ios an iOS app, for both SDKs or
+// during development for the Simulator alone.
+export function appTargetParams({ simulatorOnly = false } = {}, env = process.env) {
+    const platform = env.CROSSBIND_APP_PLATFORM;
+    if (!platform) return getTargetParams({ platform: [process.platform], arch: [process.arch], runtime: ['mt'], runtimeEnv: ['app'] }, true);
+    if (platform !== 'ios') {
+        throw new Error(`crossbind: CROSSBIND_APP_PLATFORM=${platform} names no platform an app builds for. Set it to ios, or leave it unset for this machine's desktop app.`);
+    }
+    if (process.platform !== 'darwin') throw new Error('crossbind: iOS apps build on macOS, with Xcode.');
+    return getTargetParams({ platform: ['ios'], arch: simulatorOnly ? ['iphonesimulator'] : IOS_SDKS, runtime: ['mt'], runtimeEnv: ['app'] }, true);
+}
+
+// An app's bundle id: the project's app.id, else one made from the project's name.
+function appId() {
+    const id = state.config.app.id ?? `dev.crossbind.${state.config.general.name.replace(/[^A-Za-z0-9.-]/g, '-')}`;
+    if (!/^[A-Za-z0-9.-]+$/.test(id)) {
+        throw new Error(`crossbind: app.id ${JSON.stringify(id)} is no bundle id, which takes letters, digits, hyphens and dots, as com.example.app does.`);
+    }
+    return id;
+}
+
+// The Apple team that signs an iOS app: the project's app.team, else the machine's XCODE_DEVELOPMENT_TEAM, else none.
+function appTeam() {
+    const team = state.config.app.team ?? state.config.system.XCODE_DEVELOPMENT_TEAM ?? '';
+    if (team && !/^[A-Z0-9]{10}$/.test(team)) {
+        throw new Error(`crossbind: ${JSON.stringify(team)} (app.team or XCODE_DEVELOPMENT_TEAM) is no Apple team id, which is ten capital letters and digits.`);
+    }
+    return team;
+}
+
+// Apple takes dot-separated integers alone as an app's version.
+const appVersion = () => (state.config.package?.version ?? '1.0.0').replace(/[-+].*$/, '');
+
+// The apps this run built or found current. A part of an iOS app that an earlier run built may be stale.
+const currentApps = new Set();
 
 // A machine-wide cache made visible to a build's container: mirrored under the build directory, by hard links where the
 // disk allows them.
@@ -76,7 +119,7 @@ function mirrorIntoBuild(source, name) {
 // What a host takes from the machine: Hermes, and on Linux the WebKitGTK it compiles and links against, built in the
 // linux image, which reaches them only under the build directory.
 async function hostInputs(target) {
-    if (target.platform === 'darwin') {
+    if (['darwin', 'ios'].includes(target.platform)) {
         const hermes = await resolveHermes();
         return { hermes, cmakeArgs: [], inputs: [hermes] };
     }
@@ -110,39 +153,38 @@ async function bundle(input, file, plugins) {
     await build.close();
 }
 
-function infoPlist(name, version) {
-    const escape = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const strings = {
-        CFBundleExecutable: name,
-        CFBundleIdentifier: `dev.crossbind.${name.replace(/[^A-Za-z0-9.-]/g, '-')}`,
-        CFBundleName: name,
-        CFBundlePackageType: 'APPL',
-        CFBundleShortVersionString: version,
-        CFBundleVersion: version,
-        LSMinimumSystemVersion: DARWIN_DEPLOYMENT_TARGET,
-        NSPrincipalClass: 'NSApplication',
-    };
-    const entries = Object.entries(strings).map(([key, value]) => `    <key>${key}</key>\n    <string>${escape(value)}</string>`);
-    return '<?xml version="1.0" encoding="UTF-8"?>\n'
-        + '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
-        + `<plist version="1.0">\n<dict>\n${entries.join('\n')}\n    <key>NSHighResolutionCapable</key>\n    <true/>\n</dict>\n</plist>\n`;
+const infoPlist = (name, version) => xmlPlist({
+    CFBundleExecutable: name,
+    CFBundleIdentifier: appId(),
+    CFBundleName: name,
+    CFBundlePackageType: 'APPL',
+    CFBundleShortVersionString: version,
+    CFBundleVersion: version,
+    LSMinimumSystemVersion: DARWIN_DEPLOYMENT_TARGET,
+    NSPrincipalClass: 'NSApplication',
+    NSHighResolutionCapable: true,
+});
+
+// The host's bytecode and the data the packages ship, beside the page's folder.
+function copyAppFiles(dir, hbc, target) {
+    fs.mkdirSync(`${dir}/page`, { recursive: true });
+    fs.copyFileSync(hbc, `${dir}/host.hbc`);
+    Object.entries(getData('data', target)).forEach(([source, dataName]) => {
+        if (fs.existsSync(source)) fs.cpSync(source, `${dir}/data/${dataName}`, { recursive: true });
+    });
 }
 
-// Everything but the page: the host, the host's bytecode and the data the packages ship, and on macOS Hermes beside it.
+// Everything but the page: the host and the app's files, and on macOS Hermes beside them.
 function assembleApp(target, { executable, hbc, hermes }) {
     const app = `${state.config.paths.build}/${target.appName}`;
     const { name } = state.config.general;
     const layout = appLayout(target);
     fs.rmSync(app, { recursive: true, force: true });
     fs.mkdirSync(path.dirname(`${app}/${layout.executable}`), { recursive: true });
-    fs.mkdirSync(`${app}/${layout.resources}/page`, { recursive: true });
     fs.copyFileSync(executable, `${app}/${layout.executable}`);
-    fs.copyFileSync(hbc, `${app}/${layout.resources}/host.hbc`);
-    Object.entries(getData('data', target)).forEach(([source, dataName]) => {
-        if (fs.existsSync(source)) fs.cpSync(source, `${app}/${layout.resources}/data/${dataName}`, { recursive: true });
-    });
+    copyAppFiles(`${app}/${layout.resources}`, hbc, target);
     if (target.platform !== 'darwin') return;
-    fs.writeFileSync(`${app}/Contents/Info.plist`, infoPlist(name, state.config.package?.version ?? '1.0.0'));
+    fs.writeFileSync(`${app}/Contents/Info.plist`, infoPlist(name, appVersion()));
     const framework = `${app}/Contents/Frameworks/hermesvm.framework`;
     fs.cpSync(`${hermes}/Library/Frameworks/macosx/hermesvm.framework`, framework, { recursive: true, verbatimSymlinks: true });
     // The release carries Intel and Apple silicon; an app of one arch needs its own half.
@@ -150,6 +192,35 @@ function assembleApp(target, { executable, hbc, hermes }) {
     run(null, ['lipo', library, '-thin', target.arch === 'x64' ? 'x86_64' : 'arm64', '-output', `${library}.thin`], null, target);
     fs.renameSync(`${library}.thin`, library);
 }
+
+// What an iOS SDK target brings to the app's Xcode project: the host and the archives it links, copied beside a link
+// line that names them under {lib}, its slice of Hermes, and the app's files.
+function assembleIosPart(target, { library, linkArgs, hbc, hermes }) {
+    const part = `${state.config.paths.build}/${target.appName}`;
+    fs.rmSync(part, { recursive: true, force: true });
+    fs.mkdirSync(`${part}/lib`, { recursive: true });
+    let count = 0;
+    const place = (file) => {
+        const name = `${count++}-${path.basename(file)}`;
+        fs.copyFileSync(file, `${part}/lib/${name}`);
+        return `{lib}/${name}`;
+    };
+    const args = [`-Wl,-force_load,${place(library)}`, ...linkArgs.map((arg) => {
+        const archive = arg.match(/^(-Wl,-force_load,)?(\/.+\.a)$/);
+        if (archive) return `${archive[1] ?? ''}${place(archive[2])}`;
+        if (arg.endsWith('.a')) throw new Error(`crossbind: the iOS app cannot take ${arg} into its Xcode project, as it names no absolute path.`);
+        return arg;
+    })];
+    fs.writeFileSync(`${part}/link.json`, JSON.stringify(args, null, 2));
+    fs.cpSync(`${hermes}/Library/Frameworks/universal/hermesvm.xcframework/${HERMES_SLICES[target.arch]}/hermesvm.framework`,
+        `${part}/hermesvm.framework`, { recursive: true, verbatimSymlinks: true });
+    copyAppFiles(`${part}/app`, hbc, target);
+}
+
+// The parts of an iOS app this run has for its build type, one per SDK.
+const iosParts = (target) => state.targets
+    .filter((t) => t.platform === 'ios' && t.runtimeEnv === 'app' && t.buildType === target.buildType && currentApps.has(t.appName))
+    .map((t) => ({ sdk: t.arch, dir: `${state.config.paths.build}/${t.appName}` }));
 
 // A Linux app also ships as one archive, next to its directory.
 function archiveApp(app) {
@@ -167,11 +238,20 @@ function signApp(app, target) {
     run(null, ['codesign', '--force', '--sign', '-', '--timestamp=none', app], null, target);
 }
 
+// Where a build without a bundler puts an app: under its own name, or for iOS as the Xcode project of its build type.
+export function appOutputPath(target) {
+    const { output } = state.config.paths;
+    if (target.platform !== 'ios') return `${output}/${target.appName}`;
+    return `${output}/${appOutputName(target)}${target.buildType === 'debug' ? '.debug' : ''}`;
+}
+
 // The built app with a page's files at `to`: the bundler's output for its page, or the project's output for a build
-// with none.
-export function publishApp(target, { to = `${state.config.paths.output}/${target.appName}`, page = null } = {}) {
+// with none. An iOS app is its Xcode project, with every SDK built so far.
+export function publishApp(target, { to = appOutputPath(target), page = null } = {}) {
     const built = `${state.config.paths.build}/${target.appName}`;
-    if (path.resolve(to) !== path.resolve(built)) {
+    if (target.platform === 'ios') {
+        writeXcodeProject(to, { parts: iosParts(target), identity: { id: appId(), team: appTeam() }, version: appVersion() });
+    } else if (path.resolve(to) !== path.resolve(built)) {
         fs.rmSync(to, { recursive: true, force: true });
         fs.cpSync(built, to, { recursive: true, verbatimSymlinks: true });
     }
@@ -183,15 +263,15 @@ export function publishApp(target, { to = `${state.config.paths.output}/${target
         });
     }
     if (target.platform === 'darwin') signApp(to, target);
-    else archiveApp(to);
+    else if (target.platform !== 'ios') archiveApp(to);
     return to;
 }
 
 // Builds an app's host from the project's archives and the given bridges, its Hermes bytecode and the page runtime the
 // page loads as crossbind.js, and puts them into an app without a page.
 export default async function buildApp(target, { bridges = [], force = false } = {}) {
-    if (target.platform === 'darwin' && process.platform !== 'darwin') {
-        logger.info(`[${target.path}] app skipped (macOS apps build on a macOS host)`);
+    if (['darwin', 'ios'].includes(target.platform) && process.platform !== 'darwin') {
+        logger.info(`[${target.path}] app skipped (macOS and iOS apps build on a macOS host)`);
         return false;
     }
     if (state.config.export.type === 'cargo') {
@@ -237,6 +317,7 @@ export default async function buildApp(target, { bridges = [], force = false } =
     const isChanged = !fs.existsSync(fingerprintFile) || fs.readFileSync(fingerprintFile, { encoding: 'utf8' }) !== fingerprint;
     if (!force && !isChanged && fs.existsSync(`${build}/${target.appName}`) && fs.existsSync(`${build}/${target.appJsName}`)) {
         logger.cachedStep(target, 'app');
+        currentApps.add(target.appName);
         return false;
     }
 
@@ -246,7 +327,8 @@ export default async function buildApp(target, { bridges = [], force = false } =
     logger.startStep(target, 'app');
     resetCMakeCacheForSource(workDir, `${appHostRoot}/cpp`, target);
     run(null, [
-        'cmake', `${appHostRoot}/cpp`,
+        // An iOS host builds with crossbind's iOS toolchain file rather than as an Xcode project of its own.
+        target.platform === 'ios' ? 'ios-cmake' : 'cmake', `${appHostRoot}/cpp`,
         `-DCMAKE_BUILD_TYPE=${buildType}`,
         `-DCROSSBIND_APP_FILE=${name}`,
         `-DCROSSBIND_JSI_ROOT=${jsiRoot}`,
@@ -266,11 +348,16 @@ export default async function buildApp(target, { bridges = [], force = false } =
     run(null, [`${hermes}/bin/hermesc`, '-O', '-Xes6-block-scoping', '-emit-binary', '-out', `${workDir}/host.hbc`, `${workDir}/host.js`],
         platformPrefix, target);
     await bundle(`${appHostRoot}/js/page.js`, `${build}/${target.appJsName}`, []);
-    assembleApp(target, { executable: `${workDir}/${name}`, hbc: `${workDir}/host.hbc`, hermes });
+    if (target.platform === 'ios') {
+        assembleIosPart(target, { library: `${workDir}/lib${name}.a`, linkArgs, hbc: `${workDir}/host.hbc`, hermes });
+    } else {
+        assembleApp(target, { executable: `${workDir}/${name}`, hbc: `${workDir}/host.hbc`, hermes });
+    }
     logger.doneStep(target, 'app');
 
     fs.writeFileSync(fingerprintFile, fingerprint);
     writeNativeSourceStamp(`${build}/${target.appName}`, state.config.paths.native);
+    currentApps.add(target.appName);
     return true;
 }
 

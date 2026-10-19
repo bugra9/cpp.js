@@ -1,7 +1,8 @@
 
 import {
     state, createLib, createBridgeFile, buildWasm, buildDependencies, getTargetParams, getFilteredBuildTargets, isSourceNewer, getRustJsScript,
-    isAppSource, getFileHash, buildProjectApp, appLayout,
+    isAppSource, getFileHash, buildProjectApp, appLayout, appOutputName, appTargetParams, publishApp, buildForSimulator,
+    openInSimulator,
 } from 'crossbind';
 import rollupCrossbindPlugin from '@crossbind/plugin-rollup';
 
@@ -10,10 +11,12 @@ import { spawn } from 'node:child_process';
 
 const isApp = state.config.target.runtimeEnv === 'app';
 const targetParams = isApp
-    ? getTargetParams({ platform: [process.platform], arch: [process.arch], runtime: ['mt'], runtimeEnv: ['app'] }, true)
+    ? appTargetParams({ simulatorOnly: true })
     : getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
-let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
-let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
+// iOS keeps targets without a runtime environment for React Native, which every filter of runtimeEnv lets through.
+const appOnly = isApp ? { runtimeEnv: 'app' } : {};
+let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release', ...appOnly })?.[0];
+let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug', ...appOnly })?.[0];
 
 if (!buildTargetRelease && !buildTargetDebug) {
     throw new Error('No build targets found');
@@ -23,20 +26,28 @@ if (!buildTargetDebug) {
     buildTargetDebug = buildTargetRelease;
 }
 
-// During development an app opens on the dev server. Its host is built for this machine first, and built and reopened
-// whenever the native code or the native imports of the page change; the page itself reloads as any Vite page does.
-// Closing the window ends the session.
+// During development an app opens on the dev server. Its host is built for this machine first, or an iOS app's for the
+// Simulator, and built and reopened whenever the native code or the native imports of the page change; the page itself
+// reloads as any Vite page does. Closing the window, or the app in the Simulator, ends the session.
 function appDevPlugin() {
     let isServe = false;
     let server = null;
     let appUrl = null;
     let app = null;
+    let closeApp = null;
+    let simulatorApp = null;
     let building = Promise.resolve(false);
     const nativeRegex = new RegExp(`\\.(${[...state.config.ext.header, ...state.config.ext.source, 'rs'].join('|')})$`);
 
     async function build() {
         await buildDependencies({ targetParams: { ...targetParams, buildType: [buildTargetDebug.buildType] } });
-        return buildProjectApp(buildTargetDebug);
+        const changed = await buildProjectApp(buildTargetDebug);
+        if (buildTargetDebug.platform !== 'ios' || (!changed && simulatorApp)) return changed;
+        // An iOS app links in Xcode, as a desktop host links in its build: before the app that runs gives way. Its
+        // project holds no page, which the dev server serves.
+        const project = publishApp(buildTargetDebug, { to: `${state.config.paths.build}/${appOutputName(buildTargetDebug)}.debug` });
+        simulatorApp = buildForSimulator(project, 'Debug');
+        return true;
     }
 
     // The session ends with the app, as the app ended.
@@ -44,9 +55,21 @@ function appDevPlugin() {
         server.close().then(() => process.exit(status));
     }
 
+    function open() {
+        if (buildTargetDebug.platform !== 'ios') {
+            const executable = `${state.config.paths.build}/${buildTargetDebug.appName}/${appLayout(buildTargetDebug).executable}`;
+            return spawn(executable, [], { stdio: 'inherit', env: { ...process.env, CROSSBIND_APP_URL: appUrl } });
+        }
+        // The terminal's input stays Vite's: simctl would forward it to the app.
+        const simulator = openInSimulator(simulatorApp, {
+            env: { CROSSBIND_APP_URL: appUrl }, show: true, stdio: ['ignore', 'inherit', 'inherit'],
+        });
+        closeApp = simulator.close;
+        return simulator.child;
+    }
+
     function launch() {
-        const executable = `${state.config.paths.build}/${buildTargetDebug.appName}/${appLayout(buildTargetDebug).executable}`;
-        const child = spawn(executable, [], { stdio: 'inherit', env: { ...process.env, CROSSBIND_APP_URL: appUrl } });
+        const child = open();
         app = child;
         child.once('error', (error) => {
             server.config.logger.error(`crossbind: the app did not start: ${error.message}`);
@@ -60,16 +83,19 @@ function appDevPlugin() {
     function stop() {
         const running = app;
         app = null;
+        closeApp?.();
+        closeApp = null;
         running?.kill();
     }
 
     // One build at a time, so an edit during a build waits for it. The window keeps running until a new host is ready,
-    // and a build that changed nothing leaves it alone. Resolves to whether the app opened anew.
+    // and a build that changed nothing leaves it alone, unless no app runs because the last one failed to open.
+    // Resolves to whether the app opened anew.
     function refresh({ always = false } = {}) {
         const next = building.catch(() => {}).then(build);
         building = next;
         return next.then((changed) => {
-            if (!changed && !always) return false;
+            if (!changed && !always && app) return false;
             // A new host may bind other names, so its page transforms the header modules again.
             server.moduleGraph.invalidateAll();
             stop();

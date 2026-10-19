@@ -1,4 +1,9 @@
+#import <TargetConditionals.h>
+#if TARGET_OS_IPHONE
+#import <UIKit/UIKit.h>
+#else
 #import <Cocoa/Cocoa.h>
+#endif
 #import <WebKit/WebKit.h>
 #import <objc/runtime.h>
 
@@ -37,7 +42,11 @@
     }
     const BOOL followed = action.navigationType == WKNavigationTypeLinkActivated || action.targetFrame == nil;
     if (followed && [@[ @"http", @"https", @"mailto" ] containsObject:url.scheme.lowercaseString]) {
+#if TARGET_OS_IPHONE
+        [UIApplication.sharedApplication openURL:url options:@{} completionHandler:nil];
+#else
         [NSWorkspace.sharedWorkspace openURL:url];
+#endif
     }
     decide(WKNavigationActionPolicyCancel);
 }

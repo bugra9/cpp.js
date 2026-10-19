@@ -14,12 +14,12 @@
     {
       "source": "docs/api/README.md",
       "output": "api/README.md",
-      "sha256": "0b4536929f50735de54997ca4ea60ab19f3a065119612cad2a3eb708d318e2f8"
+      "sha256": "828a3f5048025780bdee7b4cfc93aeb485fe6c33abbe6cfd9337310efddc64ce"
     },
     {
       "source": "docs/api/app.md",
       "output": "api/app.md",
-      "sha256": "44e86a2140b4be6dde7059c208e375c52c43ba864a81347a71306af421e5e86e"
+      "sha256": "8b15803f175147278b822568d2390a198c025d77af9dc7f5e00f6ee399cad673"
     },
     {
       "source": "docs/api/build-state.md",
@@ -44,7 +44,7 @@
     {
       "source": "docs/api/crossbind-config.md",
       "output": "api/crossbind-config.md",
-      "sha256": "e4a22f95abf2c9db27bcdd5f91c391ef6738a737c6dc0ec224e8aa669f820c9b"
+      "sha256": "f36e11bedb8194c599d272967d57651fddf864cf94bdb7cea55c2af9bb0fba04"
     },
     {
       "source": "docs/api/filesystem.md",
@@ -109,7 +109,7 @@
     {
       "source": "docs/playbooks/integration/README.md",
       "output": "integration/README.md",
-      "sha256": "124bab053ef627822626398035e63e2e0eec5e3e4960ec62c03295b247fce32f"
+      "sha256": "87ee339fc2b15b147eaa72238a2be989407b3dc755d550f80e8b38e0e5c4caba"
     },
     {
       "source": "docs/playbooks/integration/cloudflare-worker.md",
@@ -119,7 +119,7 @@
     {
       "source": "docs/playbooks/integration/desktop-app.md",
       "output": "integration/desktop-app.md",
-      "sha256": "682733aad9bdd69bd6c4fc9b0250c73ae3cd5f748a580e50e6611fbe44621cf6"
+      "sha256": "6b1a4ea615d6626f65fd9db0216c1cfb8fba7f6677f3d0e646400800296f8907"
     },
     {
       "source": "docs/playbooks/integration/nextjs.md",

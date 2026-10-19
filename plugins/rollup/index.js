@@ -3,22 +3,26 @@
 import {
     state, createLib, createBridgeFile, buildWasm, getCrossbindScript, getRustJsScript, buildDependencies,
     getDependFilePath, getTargetParams, getFilteredBuildTargets, isSourceNewer, appSourceFiles, buildProjectApp, publishApp,
-    appOutputName,
+    appOutputName, appTargetParams,
 } from 'crossbind';
 
 import fs from 'node:fs';
 import p from 'node:path';
 
-// An app's page reaches the module in the host the app runs on this machine, so its build makes the host, not wasm.
+// An app's page reaches the module in the host the app runs, so its build makes the host, not wasm: this machine's, or
+// with CROSSBIND_APP_PLATFORM=ios one per iOS SDK.
 const isApp = state.config.target.runtimeEnv === 'app';
 const targetParams = isApp
-    ? getTargetParams({ platform: [process.platform], arch: [process.arch], runtime: ['mt'], runtimeEnv: ['app'] }, true)
+    ? appTargetParams()
     : getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
-let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
-let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug' })?.[0];
+// iOS keeps targets without a runtime environment for React Native, which every filter of runtimeEnv lets through.
+const appOnly = isApp ? { runtimeEnv: 'app' } : {};
+let buildTargetRelease = getFilteredBuildTargets(targetParams, { buildType: 'release', ...appOnly })?.[0];
+let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug', ...appOnly })?.[0];
+const appTargets = isApp ? getFilteredBuildTargets(targetParams, { buildType: 'release', ...appOnly }) : [];
 
 if (isApp && !buildTargetRelease) {
-    throw new Error(`crossbind: apps build on macOS and Linux so far, and this machine runs ${process.platform}-${process.arch}.`);
+    throw new Error(`crossbind: desktop apps build on macOS and Linux so far, and this machine runs ${process.platform}-${process.arch}.`);
 }
 if (!buildTargetRelease && !buildTargetDebug) {
     throw new Error('No build targets found');
@@ -102,7 +106,7 @@ const rollupCrossbindPlugin = (options, bridges = []) => {
         },
         async generateBundle() {
             if (isApp) {
-                await buildProjectApp(buildTargetRelease);
+                for (const target of appTargets) await buildProjectApp(target);
                 this.emitFile({
                     type: 'asset',
                     source: fs.readFileSync(`${state.config.paths.build}/${buildTargetRelease.appJsName}`),

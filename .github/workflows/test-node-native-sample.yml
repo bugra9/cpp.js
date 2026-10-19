@@ -78,6 +78,13 @@ jobs:
               run: |
                   pnpm --filter=@crossbind/example-desktop-app run build
                   pnpm --filter=@crossbind/example-desktop-app run e2e:prod
+            - name: Build examples/desktop-app for iOS and run it in the Simulator
+              env:
+                  CROSSBIND_APP_PLATFORM: ios
+              run: |
+                  pnpm --filter=@crossbind/example-lib-prebuilt-matrix run build:ios
+                  pnpm --filter=@crossbind/example-desktop-app run build
+                  pnpm --filter=@crossbind/example-desktop-app run e2e:prod
     windows-addons:
         # A hosted Windows runner cannot run the Linux image the win32 addons build in, so this
         # runner builds the ones the Windows runners load.

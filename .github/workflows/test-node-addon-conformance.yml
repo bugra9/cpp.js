@@ -145,6 +145,45 @@ jobs:
               run: |
                   pnpm --filter=@crossbind/e2e-desktop-app run build
                   pnpm --filter=@crossbind/e2e-desktop-app run e2e:prod
+    app-ios:
+        # The iOS app builds on a macOS runner from the addon's bridges as the macOS app does, its Rust for both
+        # iOS SDKs, and runs in the Simulator.
+        needs: build
+        runs-on: macos-latest
+        timeout-minutes: 60
+        env:
+            CROSSBIND_RUNNER: LOCAL
+            CROSSBIND_APP_PLATFORM: ios
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+            - name: Install pnpm
+              uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+            - name: Use Node.js
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'pnpm'
+            - name: Install dependencies
+              run: pnpm install
+            - name: Add Rust's iOS targets
+              run: rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+            - name: Restore the addon build
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+              with:
+                  name: node-addon-conformance
+                  path: e2e/backend-nodejs-native
+            - name: Take its bridges under the app leg's paths
+              working-directory: e2e/desktop-app
+              run: |
+                  mkdir -p .crossbind/build
+                  cp -r ../backend-nodejs-native/.crossbind/build/bridge ../backend-nodejs-native/.crossbind/build/interface .crossbind/build/
+                  cp ../backend-nodejs-native/.crossbind/cache.json .crossbind/
+                  sed -i '' -e 's#/home/runner/work/#/Users/runner/work/#g' -e 's#/e2e/backend-nodejs-native/#/e2e/desktop-app/#g' \
+                      .crossbind/cache.json .crossbind/build/bridge/*.source .crossbind/build/bridge/*.deps
+            - name: Build the app and run the conformance suite in the Simulator
+              run: |
+                  pnpm --filter=@crossbind/e2e-desktop-app run build
+                  pnpm --filter=@crossbind/e2e-desktop-app run e2e:prod
     app-linux:
         # The app builds in crossbind's linux image, as the addons do, with Hermes and WebKitGTK's headers and
         # libraries fetched on first use, and runs on the runner's own WebKitGTK.

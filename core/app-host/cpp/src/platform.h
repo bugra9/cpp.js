@@ -1,7 +1,8 @@
 #pragma once
 
 // What a platform gives the host: the webview's channels, its URL scheme, its navigation rule and where the app's
-// files are. darwin/ implements it with WKWebView, linux/ with WebKitGTK.
+// files are. darwin/ implements it with WKWebView on macOS and iOS (ios/ has the iOS app's own parts), linux/ with
+// WebKitGTK.
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -42,7 +43,8 @@ void registerSchemeHandler(void *target, const char *scheme, SchemeHandler handl
 // The webview loads only these origins, in any frame; a link to another opens in the default browser. newPage runs
 // when the main frame commits another document.
 void restrictNavigation(void *webView, std::vector<std::string> origins, std::function<void()> newPage);
-// Runs when the app is quit other than by closing its window (the Dock on macOS), before it would exit.
+// Runs when the app is quit other than by closing its window (the Dock on macOS, the system on iOS), before it would
+// exit.
 void onQuit(std::function<void()> quit);
 // Where the app's files are, and its name.
 std::string resourceDir();
