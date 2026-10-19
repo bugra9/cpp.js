@@ -12,6 +12,7 @@
 
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 // The version lives in one place - the Dockerfile that builds the sysroot - because a copy here
 // would agree with it right up until someone bumps one and not the other.
@@ -27,6 +28,19 @@ if (!EMSDK_VERSION || !WASI_SDK_VERSION) throw new Error('cannot read web toolch
 const NODE_VERSION = fs.readFileSync(new URL('../.nvmrc', import.meta.url), 'utf8').trim();
 const CONAN_VERSION = fs.readFileSync(new URL('../tooling/docker/conan-requirements.txt', import.meta.url), 'utf8').match(/^conan==(\S+)/m)?.[1];
 if (!CONAN_VERSION) throw new Error('cannot read the conan pin from tooling/docker/conan-requirements.txt');
+const ANDROID_APP_DOCKERFILE = fs.readFileSync(new URL('../tooling/docker/android-app.Dockerfile', import.meta.url), 'utf8');
+const GRADLE_VERSION = ANDROID_APP_DOCKERFILE.match(/^ARG GRADLE_VERSION=(.+)$/m)?.[1]?.trim();
+const BUILD_TOOLS = ANDROID_APP_DOCKERFILE.match(/^ARG BUILD_TOOLS=(.+)$/m)?.[1]?.trim();
+const ANDROID_HERMES_VERSION = ANDROID_APP_DOCKERFILE.match(/^ARG HERMES_VERSION=(.+)$/m)?.[1]?.trim();
+if (!GRADLE_VERSION || !BUILD_TOOLS || !ANDROID_HERMES_VERSION)
+    throw new Error('cannot read the app toolchain versions from tooling/docker/android-app.Dockerfile');
+const LINUX_HERMES_VERSION = fs
+    .readFileSync(new URL('../tooling/docker/linux.Dockerfile', import.meta.url), 'utf8')
+    .match(/^ARG HERMES_VERSION=(.+)$/m)?.[1]
+    ?.trim();
+if (!LINUX_HERMES_VERSION) throw new Error('cannot read ARG HERMES_VERSION from tooling/docker/linux.Dockerfile');
+// The project android-app warmed its dependency cache with, mounted into the container, where it must build offline.
+const PROBE = fileURLToPath(new URL('../tooling/docker/android-app', import.meta.url));
 
 // Local builds carry one tag per architecture, because `docker build --load` cannot produce a
 // multi-arch index; a published image is a single index that resolves per platform on pull.
@@ -40,6 +54,7 @@ const IMAGES = [
     { name: 'web', ref: refFor('web', 'crossbind/web:dev'), arch: 'arm64' },
     { name: 'web', ref: refFor('web', 'crossbind/web:dev-amd64'), arch: 'amd64' },
     { name: 'android', ref: refFor('android', 'crossbind/android:dev'), arch: 'amd64' },
+    { name: 'android-app', ref: refFor('android-app', 'crossbind/android-app:dev'), arch: 'amd64', offline: true, probe: PROBE },
     { name: 'linux', ref: refFor('linux', 'crossbind/linux:dev'), arch: 'arm64' },
     { name: 'linux', ref: refFor('linux', 'crossbind/linux:dev-amd64'), arch: 'amd64' },
     { name: 'windows', ref: refFor('windows', 'crossbind/windows:dev'), arch: 'arm64' },
@@ -137,6 +152,36 @@ done
 echo "android C++ and Rust targets compile"
 `;
 
+// An app's Gradle project builds with no network, from what the image carries alone.
+const ANDROID_APP_SCRIPT = `${ANDROID_SCRIPT}
+touch "$GRADLE_USER_HOME/.probe"
+rm "$GRADLE_USER_HOME/.probe"
+touch "$ANDROID_USER_HOME/.probe"
+rm "$ANDROID_USER_HOME/.probe"
+echo "gradle and android homes writable"
+javac -version
+gradle --version | grep -qx 'Gradle ${GRADLE_VERSION}'
+echo "gradle ${GRADLE_VERSION}"
+"$ANDROID_HOME/build-tools/${BUILD_TOOLS}/aapt2" version
+test -f /opt/licenses/ndk-NOTICE
+test -f /opt/licenses/android-platform-NOTICE.txt
+test -f /opt/licenses/android-build-tools-NOTICE.txt
+test -f /opt/licenses/gradle-LICENSE
+test -f /opt/licenses/hermes-LICENSE
+hermes=/opt/crossbind/hermes/${ANDROID_HERMES_VERSION}/android
+test -f "$hermes/include/hermes/hermes.h"
+test "$(stat -c %s "$hermes/libs/android.arm64-v8a/libhermesvm.so")" -lt 10000000
+test "$(stat -c %s "$hermes/libs/android.x86_64/libhermesvm.so")" -lt 10000000
+"$hermes/bin/hermesc" -version > /dev/null
+echo "hermes ${ANDROID_HERMES_VERSION} for the app's host, its libraries stripped"
+cp -R /probe /tmp/probe
+gradle --offline --no-daemon --no-watch-fs --console=plain -q -p /tmp/probe assembleDebug assembleRelease bundleRelease > /tmp/probe.log 2>&1 || { tail -20 /tmp/probe.log >&2; exit 1; }
+test -s /tmp/probe/app/build/outputs/apk/debug/app-debug.apk
+test -s /tmp/probe/app/build/outputs/apk/release/app-release-unsigned.apk
+test -s /tmp/probe/app/build/outputs/bundle/release/app-release.aab
+echo "gradle builds both APKs and the bundle with no network, from verified artifacts"
+`;
+
 // An addon the image builds must load on any glibc from 2.28 on, or any musl from 1.2.5 on, and bring
 // its own C++ runtime. musl has no __cxa_thread_atexit_impl, so a musl addon must not need one.
 const LINUX_SCRIPT = `${BASE_SCRIPT}
@@ -194,6 +239,19 @@ echo "$(uname -m) musl program compile+run ok"
 install -m 0644 addon.cpp installed.cpp
 test -f installed.cpp
 echo "install shim ok"
+test -f /opt/licenses/hermes-LICENSE
+for pair in x64:x86_64-linux-gnu arm64:aarch64-linux-gnu; do
+  triple="\${pair#*:}"
+  gtk="/opt/crossbind/webkitgtk/\${triple}"
+  test -f "\${gtk}/usr/include/webkitgtk-4.1/webkit2/webkit2.h"
+  test -e "\${gtk}/usr/lib/\${triple}/libwebkit2gtk-4.1.so"
+  test -n "$(ls "/opt/licenses/webkitgtk/\${triple}")"
+  hermes="/opt/crossbind/hermes/${LINUX_HERMES_VERSION}/linux-\${pair%%:*}"
+  test -f "\${hermes}/lib/libhermesvm_a.a"
+  test -f "\${hermes}/include/jsi/jsi.h"
+  "\${hermes}/bin/hermesc" -version > /dev/null
+  echo "\${triple} app: WebKitGTK and Hermes ${LINUX_HERMES_VERSION}"
+done
 `;
 
 // An addon the image builds may import only what every Windows 10 carries.
@@ -231,6 +289,7 @@ const SCRIPTS = {
     base: BASE_SCRIPT,
     web: WEB_SCRIPT,
     android: ANDROID_SCRIPT,
+    'android-app': ANDROID_APP_SCRIPT,
     linux: LINUX_SCRIPT,
     windows: WINDOWS_SCRIPT,
 };
@@ -239,7 +298,7 @@ function inspect(ref, format) {
     return execFileSync('docker', ['image', 'inspect', ref, '--format', format], { encoding: 'utf8' }).trim();
 }
 
-function smoke({ name, ref, arch }) {
+function smoke({ name, ref, arch, offline = false, probe = null }) {
     // A published ref is an index: inspect reads the local store, so the wanted platform has to be
     // pulled first - and pulling it is itself part of what this checks.
     if (PUBLISHED) {
@@ -265,6 +324,8 @@ function smoke({ name, ref, arch }) {
             'no-new-privileges=true',
             '--user',
             HOST_UID,
+            ...(offline ? ['--network', 'none'] : []),
+            ...(probe ? ['-v', `${probe}:/probe:ro`] : []),
             ref,
             'sh',
             '-c',

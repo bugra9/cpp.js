@@ -5,9 +5,10 @@
 # builds and smoke-tests the family on native runners without writing to any registry. A writing
 # run publishes hidden staging tags and promotes the same digests only after every gate passes.
 #
-# The order is forced, not stylistic: web, android, linux and windows are FROM base, and buildx resolves that
-# reference from the registry, so base must exist there before they can build. Each stage consumes
-# the previous one by DIGEST, so an image can never be built on top of a tag that moved underneath.
+# The order is forced, not stylistic: web, android, linux and windows are FROM base, and android-app is FROM
+# android; buildx resolves those references from the registry, so base and android must exist there before what
+# builds on them. Each stage consumes the previous one by DIGEST, so an image can never be built on top of a tag
+# that moved underneath.
 
 name: Publish images
 
@@ -78,6 +79,12 @@ jobs:
             contents: read
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+            # Every image of the leg builds here, android-app and linux's Hermes among them; the runner's preinstalled
+            # SDKs are dead weight the builds would otherwise compete with for disk.
+            - name: Free runner disk
+              run: |
+                  sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
+                  df -h /
             - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
               with:
                   node-version-file: .nvmrc
@@ -107,11 +114,14 @@ jobs:
                     docker build --platform linux/amd64 -f android.Dockerfile --target android \
                       --build-arg "BASE_IMAGE=crossbind/base:dev-amd64" \
                       -t crossbind/android:dev .
+                    docker build --platform linux/amd64 -f android-app.Dockerfile --target android-app \
+                      --build-arg "BASE_IMAGE=crossbind/android:dev" \
+                      -t crossbind/android-app:dev .
                   fi
             - name: Smoke-test the locally built images under the hardened runtime profile
               run: |
                   targets=("base:${{ matrix.arch }}" "web:${{ matrix.arch }}" "linux:${{ matrix.arch }}" "windows:${{ matrix.arch }}")
-                  if [ "${{ matrix.android }}" = true ]; then targets+=(android:amd64); fi
+                  if [ "${{ matrix.android }}" = true ]; then targets+=(android:amd64 android-app:amd64); fi
                   node scripts/smoke-images.js "${targets[@]}"
             - name: Scan local base image without writing a shared cache
               uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -173,6 +183,20 @@ jobs:
                   cache: false
                   scan-type: image
                   scan-ref: crossbind/android:dev
+                  scanners: vuln
+                  vuln-type: os,library
+                  severity: HIGH,CRITICAL
+                  ignore-unfixed: true
+                  exit-code: 1
+                  timeout: 20m
+            - name: Scan local Android app image without writing a shared cache
+              if: ${{ matrix.android }}
+              uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+              with:
+                  version: v0.74.0
+                  cache: false
+                  scan-type: image
+                  scan-ref: crossbind/android-app:dev
                   scanners: vuln
                   vuln-type: os,library
                   severity: HIGH,CRITICAL
@@ -243,6 +267,22 @@ jobs:
             build-args: |
                 BASE_IMAGE=${{ needs.setup.outputs.registry }}/base@${{ needs.base.outputs.digest }}
 
+    android-app:
+        needs: [setup, android]
+        uses: ./.github/workflows/publish-image.yml
+        permissions:
+            contents: read
+            packages: write
+        with:
+            image: android-app
+            dockerfile: android-app.Dockerfile
+            target: android-app
+            tag: ${{ needs.setup.outputs.tag }}
+            release-version: ${{ needs.setup.outputs.version }}
+            runners: ${{ needs.setup.outputs.amd64 }}
+            build-args: |
+                BASE_IMAGE=${{ needs.setup.outputs.registry }}/android@${{ needs.android.outputs.digest }}
+
     linux:
         needs: [setup, base]
         uses: ./.github/workflows/publish-image.yml
@@ -283,15 +323,15 @@ jobs:
     # releases.
     # Signing (ADR rev 7.2). Two things are pinned here and neither is cosmetic.
     #
-    # SCOPE: every public image's root index, PLUS the android linux/amd64 leaf. The CLI pins that
-    # leaf directly - a classic image store holds one platform per digest reference - and a consumer
+    # SCOPE: every public image's root index, PLUS the linux/amd64 leaves of android and android-app. The CLI
+    # pins those leaves directly - a classic image store holds one platform per digest reference - and a consumer
     # verifying the leaf cannot discover a signature attached only to the root. Signing --recursive
     # would attach one to every leaf of every image; we sign the one that is actually consumed.
     #
     # STORAGE: GHCR's OCI 1.1 referrers TAG SCHEMA, pinned rather than negotiated. The cosign v2
     # `.sig` layout is a different scheme and is asserted absent.
     sign:
-        needs: [setup, sysroot, base, web, android, linux, windows]
+        needs: [setup, sysroot, base, web, android, android-app, linux, windows]
         if: ${{ !inputs.dry_run }}
         runs-on: ubuntu-24.04
         permissions:
@@ -332,7 +372,7 @@ jobs:
                     echo "refusing to sign: the certificate identity would not match the verification policy"
                     exit 1
                   }
-            - name: Sign each root index, and the android leaf the CLI pins
+            - name: Sign each root index, and the amd64-only leaves the CLI pins
               env:
                   V: ${{ needs.setup.outputs.tag }}
                   GHCR: ${{ needs.setup.outputs.registry }}
@@ -341,19 +381,21 @@ jobs:
                   set -euo pipefail
                   digest_of() { docker buildx imagetools inspect "$1" --raw | sha256sum | cut -d' ' -f1; }
 
-                  for image in rust-sysroot base web android linux windows; do
+                  for image in rust-sysroot base web android android-app linux windows; do
                     root="sha256:$(digest_of "${GHCR}/${image}:${V}")"
                     cosign sign "${GHCR}/${image}@${root}"
                     echo "signed ${image} root ${root}"
                   done
 
-                  # The android leaf, signed as its own subject.
-                  root="sha256:$(digest_of "${GHCR}/android:${V}")"
-                  leaf=$(docker buildx imagetools inspect "${GHCR}/android@${root}" --raw \
-                    | jq -r '.manifests[] | select(.platform.os=="linux" and .platform.architecture=="amd64") | .digest')
-                  [ -n "$leaf" ] || { echo "the android index carries no linux/amd64 leaf"; exit 1; }
-                  cosign sign "${GHCR}/android@${leaf}"
-                  echo "signed android linux/amd64 leaf ${leaf}"
+                  # The amd64-only leaves, each signed as its own subject.
+                  for image in android android-app; do
+                    root="sha256:$(digest_of "${GHCR}/${image}:${V}")"
+                    leaf=$(docker buildx imagetools inspect "${GHCR}/${image}@${root}" --raw \
+                      | jq -r '.manifests[] | select(.platform.os=="linux" and .platform.architecture=="amd64") | .digest')
+                    [ -n "$leaf" ] || { echo "the ${image} index carries no linux/amd64 leaf"; exit 1; }
+                    cosign sign "${GHCR}/${image}@${leaf}"
+                    echo "signed ${image} linux/amd64 leaf ${leaf}"
+                  done
 
             # Subject verification, on the primary, before anything is copied: each signature is found
             # through the native referrers API and its manifest's .subject.digest must equal the digest we
@@ -379,7 +421,7 @@ jobs:
                     --primary "${{ needs.setup.outputs.registry }}"
 
     digests:
-        needs: [setup, sysroot, base, web, android, linux, windows]
+        needs: [setup, sysroot, base, web, android, android-app, linux, windows]
         if: ${{ !inputs.dry_run }}
         runs-on: ubuntu-24.04
         permissions:
@@ -415,7 +457,7 @@ jobs:
                   }
                   jq -n --arg version "$RELEASE" --arg registry "$GHCR" --arg rust "$rust" \
                     '{version: $version, registry: $registry, toolchains: {rust: $rust}, images: {}}' > digests.json
-                  for image in rust-sysroot base web android linux windows; do
+                  for image in rust-sysroot base web android android-app linux windows; do
                     docker buildx imagetools inspect "${GHCR}/${image}:${V}" --raw > "raw-${image}.json"
                     index="sha256:$(sha256sum "raw-${image}.json" | cut -d' ' -f1)"
                     jq --arg i "$image" --arg d "$index" --slurpfile m "raw-${image}.json" \
@@ -433,7 +475,7 @@ jobs:
                       raw-*.json
 
     gate-attestations:
-        needs: [setup, sysroot, base, web, android, linux, windows]
+        needs: [setup, sysroot, base, web, android, android-app, linux, windows]
         if: ${{ !inputs.dry_run }}
         runs-on: ubuntu-24.04
         permissions:
@@ -460,7 +502,7 @@ jobs:
                     --registry "${{ needs.setup.outputs.registry }}"
 
     scan:
-        needs: [setup, sysroot, base, web, android, linux, windows]
+        needs: [setup, sysroot, base, web, android, android-app, linux, windows]
         if: ${{ !inputs.dry_run }}
         strategy:
             fail-fast: false
@@ -473,6 +515,7 @@ jobs:
                     - { image: web, platform: linux/amd64 }
                     - { image: web, platform: linux/arm64 }
                     - { image: android, platform: linux/amd64 }
+                    - { image: android-app, platform: linux/amd64 }
                     - { image: linux, platform: linux/amd64 }
                     - { image: linux, platform: linux/arm64 }
                     - { image: windows, platform: linux/amd64 }
@@ -501,6 +544,7 @@ jobs:
                   BASE_ROOT: ${{ needs.base.outputs.digest }}
                   WEB_ROOT: ${{ needs.web.outputs.digest }}
                   ANDROID_ROOT: ${{ needs.android.outputs.digest }}
+                  ANDROID_APP_ROOT: ${{ needs.android-app.outputs.digest }}
                   LINUX_ROOT: ${{ needs.linux.outputs.digest }}
                   WINDOWS_ROOT: ${{ needs.windows.outputs.digest }}
               run: |
@@ -510,6 +554,7 @@ jobs:
                     base) root="${BASE_ROOT}" ;;
                     web) root="${WEB_ROOT}" ;;
                     android) root="${ANDROID_ROOT}" ;;
+                    android-app) root="${ANDROID_APP_ROOT}" ;;
                     linux) root="${LINUX_ROOT}" ;;
                     windows) root="${WINDOWS_ROOT}" ;;
                     *) echo "unknown image ${IMAGE}"; exit 1 ;;
@@ -660,15 +705,17 @@ jobs:
                     jq -r '.[0].optional.Subject // "(no subject)"' /tmp/v.json
                   }
 
-                  for image in rust-sysroot base web android linux windows; do
+                  for image in rust-sysroot base web android android-app linux windows; do
                     root="sha256:$(docker buildx imagetools inspect "${GHCR}/${image}:${V}" --raw | sha256sum | cut -d' ' -f1)"
                     subject=$(verify "${GHCR}/${image}@${root}")
                     echo "ok  ${GHCR}/${image} root ${root}  signer=${subject}"
                   done
-                  leaf=$(docker buildx imagetools inspect "${GHCR}/android:${V}" --raw \
-                    | jq -r '.manifests[] | select(.platform.os=="linux" and .platform.architecture=="amd64") | .digest')
-                  subject=$(verify "${GHCR}/android@${leaf}")
-                  echo "ok  ${GHCR}/android linux/amd64 leaf ${leaf}  signer=${subject}"
+                  for image in android android-app; do
+                    leaf=$(docker buildx imagetools inspect "${GHCR}/${image}:${V}" --raw \
+                      | jq -r '.manifests[] | select(.platform.os=="linux" and .platform.architecture=="amd64") | .digest')
+                    subject=$(verify "${GHCR}/${image}@${leaf}")
+                    echo "ok  ${GHCR}/${image} linux/amd64 leaf ${leaf}  signer=${subject}"
+                  done
 
                   # Negative cases, and they are deliberately NEAR misses. An obviously foreign identity
                   # would be refused even by a policy that ignored the ref and the workflow file entirely,

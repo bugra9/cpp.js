@@ -45,7 +45,7 @@ if (!PRIMARY_ONLY && !MIRROR) {
     process.exit(1);
 }
 
-const IMAGES = ['rust-sysroot', 'base', 'web', 'android', 'linux', 'windows'];
+const IMAGES = ['rust-sysroot', 'base', 'web', 'android', 'android-app', 'linux', 'windows'];
 let failed = 0;
 const ok = (m) => console.log(`  ok    ${m}`);
 const bad = (m, d = '') => {
@@ -149,14 +149,16 @@ console.log(`gate-referrers: ${PRIMARY} (${PRIMARY_MODE})${PRIMARY_ONLY ? '' : `
 
 for (const image of IMAGES) check(`${image} root`, image, indexDigest(`${PRIMARY}/${image}:${TAG}`));
 
-// The android linux/amd64 leaf is a signed subject in its own right: the CLI pins it directly,
-// because a classic image store holds one platform per digest reference.
-const androidRoot = indexDigest(`${PRIMARY}/android:${TAG}`);
-const leaf = (rawIndex(`${PRIMARY}/android@${androidRoot}`).manifests ?? []).find(
-    (m) => m.platform?.os === 'linux' && m.platform?.architecture === 'amd64',
-);
-if (!leaf) bad('the android index carries no linux/amd64 leaf');
-else check('android linux/amd64 leaf', 'android', leaf.digest);
+// The linux/amd64 leaves of android and android-app are signed subjects in their own right: the CLI pins them
+// directly, because a classic image store holds one platform per digest reference.
+for (const image of ['android', 'android-app']) {
+    const root = indexDigest(`${PRIMARY}/${image}:${TAG}`);
+    const leaf = (rawIndex(`${PRIMARY}/${image}@${root}`).manifests ?? []).find(
+        (m) => m.platform?.os === 'linux' && m.platform?.architecture === 'amd64',
+    );
+    if (!leaf) bad(`the ${image} index carries no linux/amd64 leaf`);
+    else check(`${image} linux/amd64 leaf`, image, leaf.digest);
+}
 
 for (const registry of PRIMARY_ONLY ? [PRIMARY] : [PRIMARY, MIRROR]) assertNoLegacySignatureTags(registry);
 if (!failed) ok('no cosign v2 .sig tags on any registry');

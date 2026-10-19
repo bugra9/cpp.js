@@ -1,0 +1,14 @@
+// The Android Gradle plugin's own dependencies with known vulnerabilities, at their fixed releases.
+buildscript {
+    configurations.classpath {
+        resolutionStrategy.eachDependency {
+            if (requested.group == 'org.bouncycastle') useVersion '1.85'
+            if (requested.group == 'org.bitbucket.b_c' && requested.name == 'jose4j') useVersion '0.9.6'
+            if (requested.group == 'org.jdom' && requested.name == 'jdom2') useVersion '2.0.6.1'
+        }
+    }
+}
+
+plugins {
+    id 'com.android.application' version '9.4.1' apply false
+}

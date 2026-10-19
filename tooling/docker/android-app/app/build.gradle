@@ -1,0 +1,49 @@
+// What the app/build.gradle crossbind writes asks Maven for, so that the image holds all of it; crossbind's tests keep
+// the two the same.
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'dev.crossbind.warm'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'dev.crossbind.warm'
+        minSdk 33
+        targetSdk 36
+        versionCode 1
+        versionName '1.0.0'
+        ndk {
+            abiFilters 'arm64-v8a', 'x86_64'
+        }
+    }
+
+    lint {
+        checkReleaseBuilds false
+    }
+
+    packaging {
+        jniLibs {
+            // Hermes brings fbjni, and with it an older libc++_shared.so; the module's is the NDK's it was built with.
+            pickFirsts += ['**/libc++_shared.so']
+            // The libraries come stripped, and stripping them again would take an NDK of the plugin's own.
+            keepDebugSymbols += ['**/*.so']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    // Hermes' release build in every variant: it is the one the host links against.
+    implementation('com.facebook.hermes:hermes-android:250829098.0.17') {
+        attributes {
+            attribute(com.android.build.api.attributes.BuildTypeAttr.ATTRIBUTE, objects.named(com.android.build.api.attributes.BuildTypeAttr, 'release'))
+        }
+    }
+    implementation 'androidx.webkit:webkit:1.17.1'
+}

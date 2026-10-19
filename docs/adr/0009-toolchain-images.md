@@ -30,7 +30,9 @@ only one a build uses.
   `CARGO_HOME`, cache permissions. `linux` and `windows` carry the toolchains of
   native Node.js addons (ADR-0011).
 - `android` is declared `linux/amd64` only. `web`, `base`, `linux` and
-  `windows` are multi-arch.
+  `windows` are multi-arch. `android-app`, built `FROM android` and as
+  amd64-only, adds what packages an app offline: a JDK, the Android SDK, Gradle
+  and a read-only cache of the app project's Maven artifacts.
 - One exact-version stable Rust toolchain, everywhere. The MT sysroot is built
   once in a disposable builder stage; `RUSTC_BOOTSTRAP` and `-Zbuild-std` exist
   only there and never reach a published image.
