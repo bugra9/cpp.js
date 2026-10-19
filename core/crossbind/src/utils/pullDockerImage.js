@@ -8,7 +8,11 @@ const table = createRequire(import.meta.url)('../assets/toolchain-digests.json')
 const REGISTRY = table.registry;
 const IMAGE_VERSION = table.version;
 const OVERRIDE_KEYS = {
-    web: 'CROSSBIND_IMAGE_WEB', android: 'CROSSBIND_IMAGE_ANDROID', linux: 'CROSSBIND_IMAGE_LINUX', windows: 'CROSSBIND_IMAGE_WINDOWS',
+    web: 'CROSSBIND_IMAGE_WEB',
+    android: 'CROSSBIND_IMAGE_ANDROID',
+    'android-app': 'CROSSBIND_IMAGE_ANDROID_APP',
+    linux: 'CROSSBIND_IMAGE_LINUX',
+    windows: 'CROSSBIND_IMAGE_WINDOWS',
 };
 const IMAGES = Object.fromEntries(
     Object.keys(OVERRIDE_KEYS).map((role) => [
@@ -21,9 +25,11 @@ const IMAGES = Object.fromEntries(
 );
 
 // Which image a target compiles in: wasm and wasi share the web image, linux and linuxmusl the linux
-// image, ios and darwin never reach docker.
+// image, ios and darwin never reach docker. An Android app builds in android-app, the android image with
+// what packages the app.
 export function imageRoleFor(target) {
-    if (target?.platform === 'android' || target?.platform === 'linux') return target.platform;
+    if (target?.platform === 'android') return target.runtimeEnv === 'app' ? 'android-app' : 'android';
+    if (target?.platform === 'linux') return 'linux';
     if (target?.platform === 'linuxmusl') return 'linux';
     if (target?.platform === 'win32') return 'windows';
     return 'web';

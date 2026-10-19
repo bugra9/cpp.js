@@ -14,17 +14,17 @@
     {
       "source": "docs/api/README.md",
       "output": "api/README.md",
-      "sha256": "35578b640a554d06b2718d8062c218e4daa5f62bb5543610656903b563766153"
+      "sha256": "9d5cf3757e0c9021921a6db0d238cdef0016d3b4974e745c0aa1c824d0901702"
     },
     {
       "source": "docs/api/app.md",
       "output": "api/app.md",
-      "sha256": "8e2ed61e0114b507714d0361356ff6b5eebc501894953d7d2a22049e1f90b64c"
+      "sha256": "2492a0edee3aaffc387fd78754b4611b7d9d2819b9421b8cdfa15ca4610c6c30"
     },
     {
       "source": "docs/api/build-state.md",
       "output": "api/build-state.md",
-      "sha256": "84b9523dd151cedec8ac2ce0c2e2f6dd204be577d926eaf42b12726dcb88ff40"
+      "sha256": "3b30bd9359d411885372c6dc5f94a65af293670adadebc15559d9bb58e062784"
     },
     {
       "source": "docs/api/conan.md",
@@ -69,7 +69,7 @@
     {
       "source": "docs/api/overrides.md",
       "output": "api/overrides.md",
-      "sha256": "541e18c1c236d9bf0fc5f86ab9943909264a58fe4ebe521071d56b53bbe2414d"
+      "sha256": "4113264a580cd128535d1b60c882fcbbfb3007a28c66d3f65a6388f72694ef2f"
     },
     {
       "source": "docs/api/performance.md",
@@ -119,7 +119,7 @@
     {
       "source": "docs/playbooks/integration/desktop-app.md",
       "output": "integration/desktop-app.md",
-      "sha256": "cb82a0fd8c973a5f3bbe7fb997b135ca95a552e2f847d2a8ebb19b0eeef31ce3"
+      "sha256": "6700b79ff9c3902ace164a41bf57bc2a1fd44ab5de8f4196c592b4ecbd75093a"
     },
     {
       "source": "docs/playbooks/integration/nextjs.md",

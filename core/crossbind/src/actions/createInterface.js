@@ -21,7 +21,6 @@ import {
 } from '../utils/swigInterface.js';
 import writeIfChanged from '../utils/writeIfChanged.js';
 import { withDirLockSync } from '../utils/dirLock.js';
-import { imageRoleFor } from '../utils/pullDockerImage.js';
 import { conanImportOfHeader } from '../utils/conanImport.js';
 import run, { cxxPreprocessorFor } from './run.js';
 import isSourceCmakePackage from '../utils/isSourceCmakePackage.js';
@@ -355,7 +354,7 @@ const RELEASE_DEFINE = '-DNDEBUG';
 // One bridge serves every desktop target, so SWIG and the macro table it reads come from the web image's em++,
 // which defines no operating system; an android bridge is read with the NDK it compiles with. The headers
 // still come from the target's own packages.
-const toolTargetFor = (target) => (imageRoleFor(target) === 'android' ? target : { ...target, platform: 'wasm' });
+const toolTargetFor = (target) => (target?.platform === 'android' ? target : { ...target, platform: 'wasm' });
 
 function dumpMacros(outputFile, includes, includePath, target, defines = []) {
     const tool = toolTargetFor(target);

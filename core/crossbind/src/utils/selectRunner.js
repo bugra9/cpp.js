@@ -7,7 +7,7 @@ const SYSTEM_CONFIG = '~/.crossbind.json';
 const SHARED = { key: 'REMOTE_URL', url: 'CROSSBIND_REMOTE_URL', token: 'CROSSBIND_TOKEN' };
 
 export const remoteVariables = (role) => {
-    const suffix = `_${role.toUpperCase()}`;
+    const suffix = `_${role.toUpperCase().replaceAll('-', '_')}`;
     return { key: `${SHARED.key}${suffix}`, url: `${SHARED.url}${suffix}`, token: `${SHARED.token}${suffix}` };
 };
 

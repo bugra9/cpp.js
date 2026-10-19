@@ -225,22 +225,14 @@ test('the unpublished toolchain image train uses the reviewed stable versions', 
     assert.ok(webkitgtkPackages.length > 0);
     for (const line of webkitgtkPackages) assert.match(line, /^(amd64|arm64) \S+\.deb [0-9a-f]{64}$/);
     assert.match(linux, /echo "\$\{sha256\} {2}\/tmp\/\$\{file\}" \| sha256sum -c -/);
-    // The CLI still downloads the same list itself.
-    const cliWebkitgtkPackages = fs
-        .readFileSync(path.join(ROOT, 'core/crossbind/src/assets/webkitgtk-sysroot.txt'), 'utf8')
-        .split(/\r?\n/)
-        .filter((line) => line && !line.startsWith('#'));
-    assert.deepEqual(webkitgtkPackages, cliWebkitgtkPackages);
+    // The CLI finds the images' Hermes under the version it pins, and reports its origin by these sha256s.
     const hermes = fs.readFileSync(path.join(ROOT, 'core/crossbind/src/utils/hermes.js'), 'utf8');
-    // And builds Hermes for Linux itself, with the same switches.
-    assert.equal(/flags="(-DCMAKE_BUILD_TYPE=[^"]+)"/.exec(linux)?.[1], /^FLAGS="([^"]+)"$/m.exec(hermes)?.[1]);
     const pinned = (name) => new RegExp(`export const ${name} = \\{.*?sha256: '([0-9a-f]{64})'`, 's').exec(hermes)?.[1];
     const hermesVersion = /version: '([^']+)'/.exec(hermes)?.[1];
     assert.ok(hermesVersion);
     assert.match(androidApp, new RegExp(`^ARG HERMES_VERSION=${hermesVersion.replaceAll('.', '\\.')}$`, 'm'));
     assert.match(linux, new RegExp(`^ARG HERMES_VERSION=${hermesVersion.replaceAll('.', '\\.')}$`, 'm'));
     assert.match(androidApp, new RegExp(`^ARG HERMES_ANDROID_SHA256=${pinned('HERMES_ANDROID')}$`, 'm'));
-    assert.match(androidApp, new RegExp(`^ARG HERMES_COMPILER_SHA256=${pinned('HERMES_COMPILER')}$`, 'm'));
     assert.match(linux, new RegExp(`^ARG HERMES_SHA256=${pinned('HERMES_SOURCE')}$`, 'm'));
 });
 

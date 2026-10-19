@@ -9,9 +9,9 @@ app; the page uses the system's own, WKWebView on macOS and iOS and WebKitGTK on
 # Getting Started
 
 >**Note**: Make sure you have completed the [crossbind - Prerequisites](https://crossbind.dev/docs/guide/getting-started/prerequisites) instructions.
-Apps build on macOS with Xcode's command line tools, iOS apps with Xcode and its iOS platform, and Linux apps in
-crossbind's linux image; the bindings are generated in Docker. The first build fetches Hermes once into `~/.crossbind/hermes`: React Native's build for Apple platforms on
-macOS, the same release built from its source on Linux, where it also downloads WebKitGTK's headers and libraries.
+Apps build on macOS with Xcode's command line tools, iOS apps with Xcode and its iOS platform, and Linux and Android
+apps in crossbind's linux and android-app images, which carry everything they build with; the bindings are generated
+in Docker. A macOS or iOS build fetches React Native's Hermes once into `~/.crossbind/hermes`.
 
 ## Setup
 
@@ -44,6 +44,12 @@ writes the app to `dist/crossbind-example-desktop-app.app`, signed ad hoc, so it
 Linux it writes `dist/crossbind-example-desktop-app-linux-<arch>/` and the same as a `.tar.gz`, which runs where
 WebKitGTK 4.1 is installed (`libwebkit2gtk-4.1-0` on Debian and Ubuntu).
 
+```bash
+pnpm build:linux
+```
+
+writes the Linux app for x64 and arm64, on a Mac as well.
+
 ## iOS
 
 ```bash
@@ -68,14 +74,18 @@ pnpm dev:android
 
 opens the app on the attached Android device or the running emulator on Vite's dev server, as `pnpm dev` does on the
 desktop; ending the app ends the session. Start an emulator first, in Android Studio's Device Manager, or connect a
-phone with USB debugging on.
+phone with USB debugging on. crossbind reaches it with the machine's `adb` (`brew install --cask
+android-platform-tools` on macOS, `sudo apt install adb` on Debian and Ubuntu, or Android Studio's).
 
 ```bash
 pnpm build:android
 ```
 
-writes the app's Gradle project to `dist/crossbind-example-desktop-app-android/`. Open it in Android Studio, or run
-`./gradlew assembleDebug` in it for an APK and `./gradlew bundleRelease` for Google Play.
+writes `dist/crossbind-example-desktop-app-android.apk`, signed with this machine's debug key, which `adb install`
+puts on a device. With `CROSSBIND_ANDROID_KEYSTORE`, `CROSSBIND_ANDROID_KEY_ALIAS` and
+`CROSSBIND_ANDROID_KEYSTORE_PASSWORD` set to Google Play's upload key, the APK is signed with it and
+`dist/crossbind-example-desktop-app-android.aab` is the bundle Google Play takes. Gradle runs in Docker, so no JDK or
+Android SDK is needed; the Gradle project it builds stays in `dist/crossbind-example-desktop-app-android/`.
 
 ## Test
 

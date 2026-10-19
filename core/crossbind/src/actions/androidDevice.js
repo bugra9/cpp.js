@@ -7,15 +7,18 @@ import { EXEC_MAX_BUFFER } from './run.js';
 
 const ACTIVITY = 'dev.crossbind.app.CrossbindActivity';
 
-// The Android SDK of the machine: ANDROID_HOME's, else the one Android Studio installs.
-function androidSdk() {
+// The adb that reaches the device: the one on PATH, else the platform tools of ANDROID_HOME's SDK or Android Studio's.
+// crossbind installs none.
+function adbPath() {
     const sdk = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT
         || path.join(os.homedir(), process.platform === 'darwin' ? 'Library/Android/sdk' : 'Android/Sdk');
-    if (!fs.existsSync(sdk)) throw new Error(`crossbind: there is no Android SDK at ${sdk}. Install Android Studio, or set ANDROID_HOME to an SDK.`);
-    return sdk;
+    const found = [...(process.env.PATH ?? '').split(path.delimiter).map((dir) => path.join(dir, 'adb')), path.join(sdk, 'platform-tools', 'adb')]
+        .find((file) => fs.statSync(file, { throwIfNoEntry: false })?.isFile());
+    if (!found) {
+        throw new Error('crossbind: an Android app runs on a device through adb, which is not on PATH nor in an Android SDK. Install Android\'s platform tools: `brew install --cask android-platform-tools` on macOS, `sudo apt install adb` on Debian and Ubuntu, or Android Studio.');
+    }
+    return found;
 }
-
-const adbPath = () => path.join(androidSdk(), 'platform-tools', 'adb');
 
 function tool(program, args, options = {}) {
     const result = spawnSync(program, args, { encoding: 'utf8', maxBuffer: EXEC_MAX_BUFFER, ...options });
@@ -46,20 +49,19 @@ export function attachedDevice() {
     return { serial, abi };
 }
 
-// Builds an Android app's Gradle project as a debug APK, which Gradle signs with the machine's debug key, and returns
-// the APK.
-export function buildApk(project) {
-    tool(path.join(project, 'gradlew'), ['assembleDebug', '--quiet', '--console=plain'], { cwd: project, env: { ...process.env, ANDROID_HOME: androidSdk() } });
-    return path.join(project, 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
-}
-
 // Installs an APK on the attached device and opens it, with `env` as the activity's extras; a dev server's page on this
 // machine reaches the device through adb reverse. The process returned carries the app's log, its page's console among
 // it, and ends with the app; close() ends the app.
 export default function openOnDevice(apk, { env = {}, stdio = 'pipe' } = {}) {
     const { serial } = attachedDevice();
     const id = JSON.parse(fs.readFileSync(path.join(path.dirname(apk), 'output-metadata.json'), 'utf8')).applicationId;
-    adb(['-s', serial, 'install', '-r', '-d', apk]);
+    try {
+        adb(['-s', serial, 'install', '-r', '-d', apk]);
+    } catch (error) {
+        if (!error.message.includes('INSTALL_FAILED_UPDATE_INCOMPATIBLE')) throw error;
+        // As the one Google Play installs: only an uninstall replaces it, which takes its data, so the developer runs it.
+        throw new Error(`crossbind: ${id} on ${serial} is signed with another key than this build, so it cannot be updated; \`adb -s ${serial} uninstall ${id}\` removes it, with its data, and the next run installs this one.`, { cause: error });
+    }
     const devPort = env.CROSSBIND_APP_URL && new URL(env.CROSSBIND_APP_URL).port;
     if (devPort) adb(['-s', serial, 'reverse', `tcp:${devPort}`, `tcp:${devPort}`]);
     const extras = Object.entries(env).flatMap(([key, value]) => ['--es', key, quoted(value)]);

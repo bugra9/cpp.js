@@ -120,7 +120,8 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | iOS app: the Xcode project written anew from each SDK's part (archives and their link line, Hermes' slice, the app's files) | `src/actions/xcodeProject.js` |
 | An iOS app built for the Simulator and opened there, for `vite` and the e2e runs | `src/actions/iosSimulator.js` |
 | Android app: the Gradle project written anew from `core/app-host/android` and each ABI's part (the host and the libraries it loads, the app's files) | `src/actions/gradleProject.js` |
-| An Android app built as a debug APK and opened on the attached device, its log relayed, for `vite` and the e2e runs | `src/actions/androidDevice.js` |
+| An Android app's debug APK opened on the attached device through the machine's adb, its log relayed, for `vite` and the e2e runs | `src/actions/androidDevice.js` |
+| Gradle in the android-app image with no network: the release APK, and the bundle signed with the upload key the environment names; the debug APKs of a development session in one container | `src/actions/androidGradle.js` |
 | The bridges a native binary binds: own headers, headers bound whole, imported headers | `src/actions/nativeBridges.js` |
 | Node import hooks: the native imports of an app without a bundler (`dist/node/<format>.register.mjs`) | `src/actions/createImportedBridges.js`, `src/actions/writeRuntimeEntry.js`, `src/assets/node-import-hooks.mjs` |
 | `crossbind/node/dev`: build this machine's Node binary when its native inputs changed, then load those hooks | `src/node/dev.mjs`, `src/utils/nodeDevBuild.js` |
@@ -233,9 +234,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | @crossbind/core-embind-rust resolution (consumer-declared) | `src/utils/resolveEmbindRust.js` |
 | @crossbind/core-embind-napi resolution (consumer-declared) | `src/utils/resolveEmbindNapi.js` |
 | @crossbind/core-app-host resolution (consumer-declared) | `src/utils/resolveAppHost.js` |
-| Hermes for apps: React Native's pinned releases for macOS, iOS and Android (with the release's hermesc), and on Linux its source built once in the linux image, all in `~/.crossbind/hermes` | `src/utils/hermes.js` |
-| WebKitGTK headers and libraries for Linux apps: the pinned Ubuntu 22.04 packages (`src/assets/webkitgtk-sysroot.txt`), unpacked into `~/.crossbind/sysroots` | `src/utils/webkitgtkSysroot.js` |
-| A step on a machine-wide cache under `~/.crossbind`, in a run of the linux image of its own | `src/utils/linuxImage.js` |
+| Hermes for apps: React Native's pinned release for macOS and iOS in `~/.crossbind/hermes`, and the pins of the Android and source releases the android-app and linux images carry | `src/utils/hermes.js` |
 | Property lists: XML for an Info.plist, the text form for a project.pbxproj | `src/utils/plist.js` |
 | wasi bin command runner (npm shims import this) | `src/runtime/wasiRun.mjs` |
 

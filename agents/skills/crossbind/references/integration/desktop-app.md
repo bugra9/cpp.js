@@ -25,24 +25,25 @@ Windows desktops today, use Electron with a Node-API addon ([`nodejs.md`](./node
 3. Add `viteCrossbindPlugin()` to `vite.config.js` if it is not there yet.
 4. Write the page as for a worker-backed web build: `await initNative()`, then await every call. Do not pass
    JavaScript functions to the module.
-5. Run `pnpm vite` to develop, `pnpm vite build` to get `dist/<name>.app`.
-6. For iOS, set `CROSSBIND_APP_PLATFORM=ios`: `vite` then opens the app in the Simulator and `vite build` writes the
-   Xcode project `dist/<name>-ios/`. To run it on a device, give the app its bundle id and Apple team in
+5. Run `pnpm crossbind app dev` to develop, `pnpm crossbind app build` to get `dist/<name>.app`.
+6. For iOS, add `-p ios`: `crossbind app dev -p ios` opens the app in the Simulator and `crossbind app build -p ios`
+   writes the Xcode project `dist/<name>-ios/`. To run it on a device, give the app its bundle id and Apple team in
    `crossbind.config.js` (`app: { id, team }`) and open the project in Xcode.
-7. For Android, set `CROSSBIND_APP_PLATFORM=android` with an emulator running or a phone attached: `vite` then opens
-   the app on it and `vite build` writes the Gradle project `dist/<name>-android/`. Give the app its id in
-   `crossbind.config.js` (`app: { id }`, without hyphens) and open the project in Android Studio, or run
-   `./gradlew bundleRelease` in it, for Google Play.
+7. For Android, add `-p android`, with `adb` installed and an emulator running or a phone attached:
+   `crossbind app dev -p android` opens the app on it and `crossbind app build -p android` writes
+   `dist/<name>-android.apk`. For Google Play, give the app its id in `crossbind.config.js` (`app: { id }`, without
+   hyphens) and set `CROSSBIND_ANDROID_KEYSTORE`, `CROSSBIND_ANDROID_KEY_ALIAS` and
+   `CROSSBIND_ANDROID_KEYSTORE_PASSWORD` to its upload key: the build then also writes the bundle,
+   `dist/<name>-android.aab`.
 
 ## Validation
 
-- `pnpm vite build` ends with `dist/<name>.app`, and `open dist/<name>.app` shows the page. On Linux it ends with
-  `dist/<name>-linux-<arch>/` and its `.tar.gz`, and `dist/<name>-linux-<arch>/<name>` shows the page.
-- `CROSSBIND_APP_PLATFORM=ios pnpm vite build` ends with `dist/<name>-ios/<name>.xcodeproj`, which
+- `pnpm crossbind app build` ends with `dist/<name>.app`, and `open dist/<name>.app` shows the page. On Linux it ends
+  with `dist/<name>-linux-<arch>/` and its `.tar.gz`, and `dist/<name>-linux-<arch>/<name>` shows the page.
+- `crossbind app build -p ios` ends with `dist/<name>-ios/<name>.xcodeproj`, which
   `xcodebuild -project dist/<name>-ios/<name>.xcodeproj -sdk iphonesimulator build` builds with no team.
-- `CROSSBIND_APP_PLATFORM=android pnpm vite build` ends with `dist/<name>-android/`, in which `./gradlew assembleDebug`
-  makes `app/build/outputs/apk/debug/app-debug.apk`; `adb install` puts it on the emulator, and the page logs to
-  `adb logcat -s Crossbind` when the app starts with `--es CROSSBIND_APP_CONSOLE 1`.
+- `crossbind app build -p android` ends with `dist/<name>-android.apk`, which `adb install` puts on the emulator;
+  `crossbind app dev -p android` shows the page's console in the terminal.
 - With `CROSSBIND_APP_CONSOLE=1`, running `dist/<name>.app/Contents/MacOS/<name>` prints what the page logs.
 - `crossbind licenses -e app --notices` writes the notices to ship with the app.
 
@@ -52,14 +53,15 @@ Windows desktops today, use Electron with a Node-API addon ([`nodejs.md`](./node
   configs.
 - Navigation to another origin is refused; links the user follows open in the default browser. Embed no third-party
   page in an iframe.
-- `vite` and `vite build` build the app of the machine they run on, macOS or Linux, unless `CROSSBIND_APP_PLATFORM=ios`
-  asks for the iOS app; `crossbind build -p linux -e app` builds a Linux app from a Mac too. A Linux app needs Docker
-  to build and WebKitGTK 4.1 (2.40 or later) to run.
+- `crossbind app dev` and `crossbind app build` make the app of the machine they run on, macOS or Linux, unless `-p`
+  names another; `crossbind app build -p linux` builds the Linux app on a Mac too, but its development session runs
+  on Linux alone. A Linux app needs Docker to build and WebKitGTK 4.1 (2.40 or later) to run.
 - crossbind writes the iOS Xcode project and the Android Gradle project anew on every build, so an edit made in Xcode
   or Android Studio is gone after the next one: the app's identity goes in `crossbind.config.js`.
-- An Android app needs Docker, a JDK 17 or later and the Android SDK to build, and an attached device or a running
-  emulator to develop on; crossbind starts none. It runs on Android 13 or later with Android System WebView 116 or
-  later.
+- An Android app needs Docker alone to build: the android-app image carries the JDK, the SDK and Gradle. To run it,
+  it needs `adb` and an attached device or a running emulator, and crossbind installs and starts neither. It runs on
+  Android 13 or later with Android System WebView 116 or later. On an Apple silicon Mac the amd64 image runs under
+  emulation, so the app reopens about 25 s after an edit to native code.
 
 ## Reference
 

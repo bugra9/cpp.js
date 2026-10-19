@@ -6,10 +6,14 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 // adb answers as an emulator does: `devices` lists what the test attaches, getprop names the ABIs, pidof the app.
 let devices = [];
 let abilist = 'arm64-v8a';
+let installedKey = 'debug';
 const calls = [];
 const spawnSync = vi.fn((program, args) => {
     calls.push(args);
     if (args[0] === 'devices') return { status: 0, stdout: `List of devices attached\n${devices.map((d) => `${d}\tdevice\n`).join('')}\n`, stderr: '' };
+    if (args.includes('install') && installedKey !== 'debug') {
+        return { status: 1, stdout: 'Performing Streamed Install\n', stderr: 'adb: failed to install app-debug.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package com.example.demo signatures do not match newer version; ignoring!]\n' };
+    }
     if (args.includes('getprop')) return { status: 0, stdout: `${abilist}\n`, stderr: '' };
     if (args.includes('pidof')) return { status: 0, stdout: '4242\n', stderr: '' };
     return { status: 0, stdout: '', stderr: '' };
@@ -24,11 +28,15 @@ let serial;
 
 beforeEach(() => {
     sdk = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-android-sdk-'));
+    fs.mkdirSync(path.join(sdk, 'platform-tools'));
+    fs.writeFileSync(path.join(sdk, 'platform-tools', 'adb'), '');
     vi.stubEnv('ANDROID_HOME', sdk);
+    vi.stubEnv('PATH', '');
     serial = process.env.ANDROID_SERIAL;
     delete process.env.ANDROID_SERIAL;
     devices = [];
     abilist = 'arm64-v8a';
+    installedKey = 'debug';
     calls.length = 0;
 });
 
@@ -58,6 +66,27 @@ describe('the Android device an app runs on', () => {
         expect(attachedDevice().serial).toBe('R58M123');
     });
 
+    test('is reached through an adb the machine has, of which crossbind installs none', () => {
+        devices = ['emulator-5554'];
+        expect(attachedDevice().serial).toBe('emulator-5554');
+        expect(spawnSync.mock.calls.at(-1)[0]).toBe(path.join(sdk, 'platform-tools', 'adb'));
+
+        fs.rmSync(path.join(sdk, 'platform-tools', 'adb'));
+        expect(() => attachedDevice()).toThrow('brew install --cask android-platform-tools');
+    });
+
+    test('is reached through the adb on PATH before the SDK\'s', () => {
+        devices = ['emulator-5554'];
+        const bin = path.join(sdk, 'bin');
+        fs.mkdirSync(bin);
+        fs.writeFileSync(path.join(bin, 'adb'), '');
+        vi.stubEnv('PATH', bin);
+
+        attachedDevice();
+
+        expect(spawnSync.mock.calls.at(-1)[0]).toBe(path.join(bin, 'adb'));
+    });
+
     test('runs an ABI an app builds for', () => {
         devices = ['old-phone'];
         abilist = 'armeabi-v7a,armeabi';
@@ -82,5 +111,14 @@ describe('an Android app opened on the device', () => {
         expect(relay.at(-1)).toBe("logcat -v raw --pid=4242 -s Crossbind:V | grep -v '^--------- ' & while [ -d /proc/4242 ]; do sleep 1; done; "
             + "pkill -f '^logcat -v raw --pid=4242 -s Crossbind:V'");
         expect(child).toBeDefined();
+    });
+
+    test('names the uninstall an app signed with another key needs, and leaves it to the developer, as it takes the data', () => {
+        devices = ['emulator-5554'];
+        installedKey = 'upload';
+        fs.writeFileSync(path.join(sdk, 'output-metadata.json'), JSON.stringify({ applicationId: 'com.example.demo' }));
+
+        expect(() => openOnDevice(path.join(sdk, 'app-debug.apk'))).toThrow('`adb -s emulator-5554 uninstall com.example.demo` removes it, with its data');
+        expect(calls.some((args) => args.includes('uninstall'))).toBe(false);
     });
 });

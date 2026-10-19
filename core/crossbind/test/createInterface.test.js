@@ -423,6 +423,15 @@ describe('the image SWIG reads a header in', () => {
 
         expect(toolPlatforms(run)).toEqual(new Set(['android']));
     });
+
+    test("is an NDK image for an Android app's target too, which builds in android-app", async () => {
+        const { run, createBridgeFile } = await importFresh();
+        fs.writeFileSync(header, 'int one();\n');
+
+        createBridgeFile(header, { platform: 'android', arch: 'arm64-v8a', runtimeEnv: 'app', path: 'android-arm64-v8a-mt-app-release' });
+
+        expect(toolPlatforms(run)).toEqual(new Set(['android']));
+    });
 });
 
 // A dependency root is matched as text: a project path can hold regex characters.

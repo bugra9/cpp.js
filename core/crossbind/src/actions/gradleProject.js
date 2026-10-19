@@ -4,6 +4,7 @@ import state from '../state/index.js';
 import { ANDROID_API_LEVEL } from '../utils/androidToolchain.js';
 import { HERMES } from '../utils/hermes.js';
 import resolveAppHostRoot from '../utils/resolveAppHost.js';
+import { SIGNING } from './androidGradle.js';
 
 // The ABIs an Android app builds for: phones and Apple silicon's emulators, and the emulators of x86_64 machines.
 export const ANDROID_ABIS = ['arm64-v8a', 'x86_64'];
@@ -33,6 +34,25 @@ android {
         manifestPlaceholders = [appName: ${groovyString(label)}]
         ndk {
             abiFilters ${abis.map(groovyString).join(', ')}
+        }
+    }
+
+    // A release is signed with the upload key crossbind's environment names, else with the debug key.
+    signingConfigs {
+        release {
+            def keystore = System.getenv('${SIGNING.keystore}')
+            if (keystore) {
+                storeFile file(keystore)
+                storePassword System.getenv('${SIGNING.password}')
+                keyAlias System.getenv('${SIGNING.alias}')
+                keyPassword System.getenv('${SIGNING.keyPassword}') ?: System.getenv('${SIGNING.password}')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig System.getenv('${SIGNING.keystore}') ? signingConfigs.release : signingConfigs.debug
         }
     }
 

@@ -197,6 +197,7 @@ Use when you need to share an override across **multiple crossbind packages**. I
 | `DOCKER_REGISTRY_MIRROR` | `''` | Registry prefix to pull the build images from, e.g. `registry.example.dev/crossbind`. crossbind appends the release digest itself, so builds stay reproducible. Env: `CROSSBIND_REGISTRY_MIRROR` |
 | `DOCKER_IMAGE_WEB` | `''` | Image used for wasm and wasi builds instead of the pinned one. A reference without the release digest disables the reproducibility guarantee. Env: `CROSSBIND_IMAGE_WEB` |
 | `DOCKER_IMAGE_ANDROID` | `''` | Same, for android builds. Env: `CROSSBIND_IMAGE_ANDROID` |
+| `DOCKER_IMAGE_ANDROID_APP` | `''` | Same, for Android apps, which build and package in the android-app image. Env: `CROSSBIND_IMAGE_ANDROID_APP` |
 
 These apply to every crossbind project on the machine. Use sparingly — they don't travel with the project.
 

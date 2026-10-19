@@ -17,10 +17,11 @@ Add it next to `crossbind` and the Vite plugin, and mark the project as an app i
 
 ```bash
 pnpm add -D crossbind@beta @crossbind/plugin-vite@beta @crossbind/core-app-host@beta
-pnpm vite          # the app on the dev server
-pnpm vite build    # dist/<name>.app on macOS, dist/<name>-linux-<arch>/ on Linux
-CROSSBIND_APP_PLATFORM=ios pnpm vite build        # dist/<name>-ios/, an Xcode project
-CROSSBIND_APP_PLATFORM=android pnpm vite build    # dist/<name>-android/, a Gradle project
+pnpm crossbind app dev                   # the app on the dev server
+pnpm crossbind app build                 # dist/<name>.app on macOS, dist/<name>-linux-<arch>/ on Linux
+pnpm crossbind app build -p linux        # dist/<name>-linux-x64/ and -arm64/, on a Mac as well
+pnpm crossbind app build -p ios          # dist/<name>-ios/, an Xcode project
+pnpm crossbind app build -p android      # dist/<name>-android.apk, and its Gradle project
 ```
 
 crossbind resolves this package from your project; you never import it yourself. See the
@@ -44,9 +45,9 @@ defaults and current limits (macOS, Linux, iOS and Android for now).
   its README.
 - `third_party/jsi/` — JSI's `jsi.cpp` (MIT) from the Hermes release the host links, and on Android its headers.
 
-Hermes itself (MIT) is React Native's published build on macOS, iOS and Android, downloaded once into
-`~/.crossbind/hermes/` and checked against the sha256 crossbind pins; on Linux crossbind builds the same release from
-its pinned source, once.
+Hermes itself (MIT) is React Native's published build: on macOS and iOS downloaded once into `~/.crossbind/hermes/`
+and checked against the sha256 crossbind pins, and on Android carried by crossbind's android-app image. Linux has no
+published build, so crossbind's linux image carries the same release built from its pinned source.
 
 ## License
 

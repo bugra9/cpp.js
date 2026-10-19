@@ -67,10 +67,13 @@ async function askFromSameOriginFrame(m) {
 initNative().then(async (m) => {
     try {
         // Markup can make a crossbind:// request as well, so one without the page's token must be refused. On Android the
-        // bytes travel over the page's port alone, and the page's origin serves no such request.
+        // bytes travel over the page's port alone, and the page's origin serves no such request; during development that
+        // origin is the dev server's, which answers any path with the page.
         const isAndroid = Boolean(globalThis.__crossbind_port);
-        const { status } = await fetch(isAndroid ? '/b/result?id=1' : 'crossbind://app/b/result?id=1');
-        if (status !== (isAndroid ? 404 : 403)) throw new Error(`the host answered ${status} to a request without the page's token`);
+        if (!isAndroid || !import.meta.env.DEV) {
+            const { status } = await fetch(isAndroid ? '/b/result?id=1' : 'crossbind://app/b/result?id=1');
+            if (status !== (isAndroid ? 404 : 403)) throw new Error(`the host answered ${status} to a request without the page's token`);
+        }
         const framed = await callFromSandboxedFrame();
         if (framed.startsWith('[0,')) throw new Error(`a sandboxed frame called the module: ${framed}`);
         if (isAndroid) await askFromSameOriginFrame(m);

@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import p from 'node:path';
 
 // An app's page reaches the module in the host the app runs, so its build makes the host, not wasm: this machine's, or
-// with CROSSBIND_APP_PLATFORM one per iOS SDK or Android ABI.
+// with CROSSBIND_APP_PLATFORM one per iOS SDK, Android ABI or Linux arch.
 const isApp = state.config.target.runtimeEnv === 'app';
 const targetParams = isApp
     ? appTargetParams()
@@ -151,11 +151,13 @@ const rollupCrossbindPlugin = (options, bridges = []) => {
                 });
             } */
         },
-        // The page, once written, goes into the app beside it.
+        // The page, once written, goes into the app beside it: one project of every SDK or ABI for iOS and Android, one
+        // app per arch for a desktop.
         writeBundle(outputOptions) {
             if (!isApp) return;
             const dir = outputOptions.dir ?? p.dirname(outputOptions.file);
-            publishApp(buildTargetRelease, { to: `${dir}/${appOutputName(buildTargetRelease)}`, page: dir });
+            const apps = ['ios', 'android'].includes(buildTargetRelease.platform) ? [buildTargetRelease] : appTargets;
+            apps.forEach((target) => publishApp(target, { to: `${dir}/${appOutputName(target)}`, page: dir }));
         },
     };
 };

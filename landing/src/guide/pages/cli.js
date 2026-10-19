@@ -4,7 +4,7 @@ export default {
     slug: 'cli',
     title: 'CLI',
     description: 'Every crossbind command and option, and what each one touches before you run it.',
-    lede: 'The `crossbind` package installs one command. Bundler plugins and React Native builds run the build for you; the other commands list licenses, manage the build containers and runners, sign in to crossbind cloud and edit the machine settings.',
+    lede: 'The `crossbind` package installs one command. Bundler plugins and React Native builds run the build for you; the other commands build and open apps, list licenses, manage the build containers and runners, sign in to crossbind cloud and edit the machine settings.',
     blocks: [
         { type: 'h2', id: 'commands', text: 'Commands at a glance' },
         {
@@ -12,6 +12,7 @@ export default {
             head: ['Command', 'Does', 'Touches'],
             rows: [
                 ['`build`', 'compiles the project', 'Docker or a runner, the network, `.crossbind/`, `paths.output`'],
+                ['`app`', 'builds the project as an app with its Vite, or opens it on the dev server', 'what `build` touches, `dist/`, `~/.crossbind/android/`, the attached Android device or the iOS Simulator'],
                 ['`licenses`', 'lists the licenses of the native dependencies', 'reads the project; writes only the files you ask for'],
                 ['`clean-deps`', 'deletes dependencies rebuilt from source', '`.crossbind/deps/`'],
                 ['`docker`', 'manages the toolchain containers', 'Docker'],
@@ -69,6 +70,30 @@ export default {
             text: '**Touches:** under the default `RUNNER`, it pulls the pinned toolchain images and runs a container for each step ([Remote builds](/guide/remote-builds/) moves the steps elsewhere); `ios` and `darwin` compile with Xcode on the Mac. It writes the cache in `.crossbind/`, the output folder (`paths.output`, `.crossbind/build` unless the config names another), `conan.lock` and `crossbind.cargo.lock` next to the config for a project with Conan packages or crates, and shared caches under `~/.crossbind/`, and downloads crates, Conan packages and sources a build needs.',
         },
 
+        { type: 'h2', id: 'app', text: 'app' },
+        {
+            type: 'code',
+            file: 'shell',
+            code: `crossbind app dev
+crossbind app build -p android`,
+        },
+        {
+            type: 'table',
+            head: ['Command', 'Does'],
+            rows: [
+                ['`app dev [-p platform]`', 'opens the app on the dev server: an edit to the page reloads it, an edit to native code rebuilds the host and opens the app again'],
+                ['`app build [-p platform]`', 'builds the page and the host and writes the app to `dist/`'],
+            ],
+        },
+        {
+            type: 'p',
+            text: "`-p` is `macos`, `linux`, `ios` or `android`; without it the platform `CROSSBIND_APP_PLATFORM` names, else this machine's desktop app. Vite's own options, such as `--port` or `--mode`, pass through to Vite. `app build -p linux` writes the Linux app for x64 and arm64, on a Mac as well. `app build -p android` writes `dist/<name>-android.apk`, signed with this machine's debug key, or with the upload key `CROSSBIND_ANDROID_KEYSTORE`, `CROSSBIND_ANDROID_KEY_ALIAS` and `CROSSBIND_ANDROID_KEYSTORE_PASSWORD` name, and then also `dist/<name>-android.aab`, the bundle Google Play takes. The project needs `target: { runtimeEnv: 'app' }`, Vite and `@crossbind/plugin-vite`.",
+        },
+        {
+            type: 'p',
+            text: "**Touches:** Linux and Android apps build in the pinned linux and android-app images, and Gradle packages an Android app there with no network, keeping its caches and the debug key in `~/.crossbind/android/`. An Android app opens on the attached device through this machine's `adb`, which crossbind does not install; an iOS app opens in the Simulator.",
+        },
+
         { type: 'h2', id: 'licenses', text: 'licenses' },
         {
             type: 'code',
@@ -104,7 +129,7 @@ crossbind licenses --notices --sbom`,
         { type: 'h2', id: 'docker', text: 'docker' },
         {
             type: 'p',
-            text: 'One container per toolchain image and project. `[image]` is `web` (the default), `android`, `linux` or `windows`.',
+            text: 'One container per toolchain image and project. `[image]` is `web` (the default), `android`, `android-app`, `linux` or `windows`.',
         },
         {
             type: 'table',
@@ -201,7 +226,7 @@ crossbind build -p wasm`,
                 ['`WASI_SDK_PATH`', '-', 'a local wasi-sdk, 34 or later, for WASI builds under `RUNNER=LOCAL`', '`CROSSBIND_WASI_SDK_PATH`'],
                 ['`DOCKER_REGISTRY_MIRROR`', '-', 'a registry prefix to pull the pinned images from; the release digest stays', '`CROSSBIND_REGISTRY_MIRROR`'],
                 [
-                    '`DOCKER_IMAGE_WEB`, `DOCKER_IMAGE_ANDROID`, `DOCKER_IMAGE_LINUX`, `DOCKER_IMAGE_WINDOWS`',
+                    '`DOCKER_IMAGE_WEB`, `DOCKER_IMAGE_ANDROID`, `DOCKER_IMAGE_ANDROID_APP`, `DOCKER_IMAGE_LINUX`, `DOCKER_IMAGE_WINDOWS`',
                     '-',
                     'an image to use instead of the pinned one; without the release digest, builds lose their reproducibility guarantee',
                     '`CROSSBIND_IMAGE_WEB` and the like',

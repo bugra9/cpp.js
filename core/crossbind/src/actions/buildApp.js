@@ -19,6 +19,7 @@ import { getTargetParams } from './target.js';
 import writeXcodeProject, { HERMES_SLICES, IOS_SDKS } from './xcodeProject.js';
 import writeGradleProject, { ANDROID_ABIS } from './gradleProject.js';
 import { attachedDevice } from './androidDevice.js';
+import { packageAndroidRelease } from './androidGradle.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
 import findFiles from '../utils/findFiles.js';
@@ -27,14 +28,16 @@ import { xmlPlist } from '../utils/plist.js';
 import { writeNativeSourceStamp } from '../utils/nativeSourceStamp.js';
 import resetCMakeCacheForSource from '../utils/resetCMakeCacheForSource.js';
 import resolveAppHostRoot, { resolveAppEmbindJsiRoot } from '../utils/resolveAppHost.js';
-import resolveHermes, { HERMES, resolveAndroidHermes, resolveLinuxHermes } from '../utils/hermes.js';
-import resolveWebkitGtkSysroot from '../utils/webkitgtkSysroot.js';
+import resolveHermes, { HERMES } from '../utils/hermes.js';
+import { getDockerImage, imageRoleFor } from '../utils/pullDockerImage.js';
 import { chosenRunner } from '../utils/selectRunner.js';
 import { DARWIN_DEPLOYMENT_TARGET } from '../utils/darwinToolchain.js';
 
 const cpuCount = Math.max(1, os.cpus().length - 1);
 const BRIDGE = 'AppBridge';
 const LINUX_MULTIARCH = { x64: 'x86_64-linux-gnu', arm64: 'aarch64-linux-gnu' };
+// Where the android-app and linux images keep the Hermes of the release crossbind pins.
+const IMAGE_HERMES = `/opt/crossbind/hermes/${HERMES.version}`;
 
 // Where an app keeps its executable and its files: a macOS bundle, a Linux directory, or the app folder of an iOS app's
 // Xcode project or of an Android app's Gradle project, which link the executable themselves.
@@ -55,16 +58,38 @@ export function appOutputName(target) {
     return `${name}-${target.platform}-${target.arch}`;
 }
 
-// The app a bundler builds: this machine's desktop app, or with CROSSBIND_APP_PLATFORM an iOS app for both SDKs or an
-// Android app for both ABIs. During development only what runs it: the Simulator, or the attached device.
+// An Android or Linux app builds in one of crossbind's images, which a local or remote runner does not have.
+export function assertAppRunner(target) {
+    if (['darwin', 'ios'].includes(target.platform)) return;
+    const runner = chosenRunner(state.config.system);
+    if (['DOCKER_RUN', 'DOCKER_EXEC'].includes(runner)) return;
+    const app = target.platform === 'android' ? 'an Android' : 'a Linux';
+    throw new Error(`crossbind: ${app} app builds in crossbind's ${imageRoleFor(target)} image, which RUNNER=${runner} does not use. Build it with RUNNER=DOCKER_RUN.`);
+}
+
+// The app a bundler builds: this machine's desktop app, or with CROSSBIND_APP_PLATFORM an iOS app for both SDKs, an
+// Android app for both ABIs, or a Linux app for both arches, which builds in Docker on any machine. During development
+// only what runs it: the Simulator, the attached device, or this machine.
 export function appTargetParams({ dev = false } = {}, env = process.env) {
     const platform = env.CROSSBIND_APP_PLATFORM;
-    if (!platform) return getTargetParams({ platform: [process.platform], arch: [process.arch], runtime: ['mt'], runtimeEnv: ['app'] }, true);
-    if (platform === 'android') {
-        return getTargetParams({ platform: ['android'], arch: dev ? [attachedDevice().abi] : ANDROID_ABIS, runtime: ['mt'], runtimeEnv: ['app'] }, true);
+    const app = (platforms, archs) => {
+        platforms.forEach((name) => assertAppRunner({ platform: name, runtimeEnv: 'app' }));
+        return getTargetParams({ platform: platforms, arch: archs, runtime: ['mt'], runtimeEnv: ['app'] }, true);
+    };
+    if (!platform) return app([process.platform], [process.arch]);
+    if (platform === 'android') return app(['android'], dev ? [attachedDevice().abi] : ANDROID_ABIS);
+    if (platform === 'linux') {
+        if (dev && process.platform !== 'linux') {
+            throw new Error('crossbind: a Linux app runs on Linux, and so does its development session; build it here with crossbind app build -p linux.');
+        }
+        return app(['linux'], dev ? [process.arch] : Object.keys(LINUX_MULTIARCH));
+    }
+    if (platform === 'macos') {
+        if (process.platform !== 'darwin') throw new Error('crossbind: macOS apps build on macOS.');
+        return app(['darwin'], [process.arch]);
     }
     if (platform !== 'ios') {
-        throw new Error(`crossbind: CROSSBIND_APP_PLATFORM=${platform} names no platform an app builds for. Set it to ios or android, or leave it unset for this machine's desktop app.`);
+        throw new Error(`crossbind: CROSSBIND_APP_PLATFORM=${platform} names no platform an app builds for. Set it to android, ios, linux or macos, or leave it unset for this machine's desktop app.`);
     }
     if (process.platform !== 'darwin') throw new Error('crossbind: iOS apps build on macOS, with Xcode.');
     return getTargetParams({ platform: ['ios'], arch: dev ? ['iphonesimulator'] : IOS_SDKS, runtime: ['mt'], runtimeEnv: ['app'] }, true);
@@ -109,61 +134,26 @@ function androidVersion() {
 // The apps this run built or found current. A part of an iOS app that an earlier run built may be stale.
 const currentApps = new Set();
 
-// A machine-wide cache made visible to a build's container: mirrored under the build directory, by hard links where the
-// disk allows them.
-function mirrorIntoBuild(source, name) {
-    const dest = `${state.config.paths.build}/app-inputs/${name}`;
-    const marker = `${dest}/.source`;
-    if (fs.existsSync(marker) && fs.readFileSync(marker, 'utf8') === source) return dest;
-    fs.rmSync(dest, { recursive: true, force: true });
-    const mirror = (from, to) => {
-        fs.mkdirSync(to, { recursive: true });
-        for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
-            const [file, copy] = [path.join(from, entry.name), path.join(to, entry.name)];
-            if (entry.isDirectory()) {
-                mirror(file, copy);
-            } else if (entry.isSymbolicLink()) {
-                fs.symlinkSync(fs.readlinkSync(file), copy);
-            } else {
-                try {
-                    fs.linkSync(file, copy);
-                } catch {
-                    fs.copyFileSync(file, copy);
-                }
-            }
-        }
-    };
-    mirror(source, dest);
-    fs.writeFileSync(marker, source);
-    return dest;
-}
-
-// What a host takes from the machine: Hermes, and on Linux the WebKitGTK it compiles and links against, built in the
-// linux or android image, which reaches them only under the build directory. An Android host shares the C++ runtime
-// of Hermes' libraries.
+// What a host compiles and links against beside the project's archives: Hermes, and on Linux WebKitGTK. Apple's Hermes
+// is React Native's release on this machine; the others are in the image the host builds in, android-app or linux,
+// whose reference stands for them in the fingerprint. An Android host shares the C++ runtime of Hermes' libraries.
 async function hostInputs(target) {
     if (['darwin', 'ios'].includes(target.platform)) {
         const hermes = await resolveHermes();
         return { hermes, cmakeArgs: [], inputs: [hermes] };
     }
-    const runner = chosenRunner(state.config.system);
-    if (!['DOCKER_RUN', 'DOCKER_EXEC'].includes(runner)) {
-        const app = target.platform === 'android' ? 'an Android' : 'a Linux';
-        throw new Error(`crossbind: ${app} app builds in crossbind's ${target.platform} image, which RUNNER=${runner} does not use. Build it with RUNNER=DOCKER_RUN.`);
-    }
+    assertAppRunner(target);
+    const inputs = [getDockerImage(imageRoleFor(target), target.platform === 'android' ? 'linux/amd64' : undefined)];
     if (target.platform === 'android') {
-        const hermesCache = await resolveAndroidHermes();
-        return { hermes: mirrorIntoBuild(hermesCache, 'hermes-android'), cmakeArgs: ['-DANDROID_STL=c++_shared'], inputs: [hermesCache] };
+        return { hermes: `${IMAGE_HERMES}/android`, cmakeArgs: ['-DANDROID_STL=c++_shared'], inputs };
     }
-    const hermesCache = await resolveLinuxHermes(target.arch);
-    const gtkCache = await resolveWebkitGtkSysroot(target.arch);
     return {
-        hermes: mirrorIntoBuild(hermesCache, `hermes-linux-${target.arch}`),
+        hermes: `${IMAGE_HERMES}/linux-${target.arch}`,
         cmakeArgs: [
-            `-DCROSSBIND_GTK_SYSROOT=${mirrorIntoBuild(gtkCache, `webkitgtk-linux-${target.arch}`)}`,
+            `-DCROSSBIND_GTK_SYSROOT=/opt/crossbind/webkitgtk/${LINUX_MULTIARCH[target.arch]}`,
             `-DCROSSBIND_GTK_MULTIARCH=${LINUX_MULTIARCH[target.arch]}`,
         ],
-        inputs: [hermesCache, gtkCache],
+        inputs,
     };
 }
 
@@ -299,13 +289,16 @@ export function publishApp(target, { to = appOutputPath(target), page = null } =
         fs.cpSync(built, to, { recursive: true, verbatimSymlinks: true });
     }
     if (page) {
-        // The app may land inside the page's own directory, which it then leaves out, with its archive.
-        const own = new Set([path.basename(to), `${path.basename(to)}.tar.gz`]);
-        fs.readdirSync(page).filter((entry) => !entry.endsWith('.app') && !own.has(entry)).forEach((entry) => {
+        // The app may land inside the page's own directory, which it then leaves out, with every app built there and what
+        // packages it.
+        const apps = new Set([path.basename(to), ...state.targets.filter((t) => t.runtimeEnv === 'app').map(appOutputName)]);
+        const isApp = (entry) => entry.endsWith('.app') || apps.has(entry.replace(/\.(tar\.gz|apk|aab)$/, ''));
+        fs.readdirSync(page).filter((entry) => !isApp(entry)).forEach((entry) => {
             fs.cpSync(`${page}/${entry}`, `${to}/${appLayout(target).resources}/page/${entry}`, { recursive: true });
         });
     }
     if (target.platform === 'darwin') signApp(to, target);
+    else if (target.platform === 'android' && target.buildType === 'release') packageAndroidRelease(to);
     else if (!['ios', 'android'].includes(target.platform)) archiveApp(to);
     return to;
 }
@@ -335,7 +328,8 @@ export default async function buildApp(target, { bridges = [], force = false } =
         buildSource: false,
         nativeGlob: [`${state.config.paths.cli}/assets/cpp-runtime/commonBridges.cpp`, ...bridges],
         headerDirs,
-        inputs: headerDirs.flatMap((dir) => findFiles('**/*.h', { cwd: dir })),
+        // Headers in the image count by their path, which names the Hermes release.
+        inputs: headerDirs.flatMap((dir) => (fs.existsSync(dir) ? findFiles('**/*.h', { cwd: dir }) : [dir])),
     });
     const { libs, linkArgs, extraSources } = linkInputs(target, { bridge: BRIDGE });
 
