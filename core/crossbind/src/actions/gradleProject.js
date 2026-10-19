@@ -36,10 +36,18 @@ android {
         }
     }
 
+    // Release builds skip lint's vital checks, whose tools crossbind's android-app image leaves out: the module's code is
+    // crossbind's own.
+    lint {
+        checkReleaseBuilds false
+    }
+
     packaging {
         jniLibs {
             // Hermes brings fbjni, and with it an older libc++_shared.so; the module's is the NDK's it was built with.
             pickFirsts += ['**/libc++_shared.so']
+            // The libraries come stripped, and stripping them again would take an NDK of the plugin's own.
+            keepDebugSymbols += ['**/*.so']
         }
     }
 
@@ -55,7 +63,12 @@ android {
 }
 
 dependencies {
-    implementation 'com.facebook.hermes:hermes-android:${HERMES.version}'
+    // Hermes' release build in every variant: it is the one the host links against.
+    implementation('com.facebook.hermes:hermes-android:${HERMES.version}') {
+        attributes {
+            attribute(com.android.build.api.attributes.BuildTypeAttr.ATTRIBUTE, objects.named(com.android.build.api.attributes.BuildTypeAttr, 'release'))
+        }
+    }
     implementation 'androidx.webkit:webkit:${ANDROIDX_WEBKIT}'
 }
 `;

@@ -38,10 +38,30 @@ describe("an Android app's Gradle project", () => {
         expect(gradle).toContain("versionName '1.2.3-beta.1'");
         expect(gradle).toContain("abiFilters 'arm64-v8a', 'x86_64'");
         expect(gradle).toContain("manifestPlaceholders = [appName: 'demo-app']");
-        expect(gradle).toMatch(/implementation 'com\.facebook\.hermes:hermes-android:\d+\.\d+\.\d+'/);
+        expect(gradle).toMatch(/implementation\('com\.facebook\.hermes:hermes-android:\d+\.\d+\.\d+'\)/);
         // Android's default pattern would leave out the page's _app and .well-known directories.
         expect(gradle).toContain("ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'");
         if (process.platform !== 'win32') expect(fs.statSync(path.join(to, 'gradlew')).mode & 0o111).not.toBe(0);
+        fs.rmSync(root, { recursive: true, force: true });
+    });
+
+    test('asks Maven for nothing the android-app image did not resolve, so the image builds it offline', () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-gradle-'));
+        const to = path.join(root, 'demo-app-android');
+        writeGradleProject(to, { parts: [part(root, 'arm64-v8a'), part(root, 'x86_64')], id: 'com.example.demo', version: { name: '1.0.0', code: 1 } });
+        const image = path.join(import.meta.dirname, '..', '..', '..', 'tooling', 'docker', 'android-app');
+        const read = (file) => fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+        for (const file of ['settings.gradle', 'build.gradle', 'gradle.properties']) {
+            expect(read(path.join(image, file))).toBe(read(path.join(to, file)));
+        }
+        const written = read(path.join(to, 'app', 'build.gradle'));
+        const warmed = read(path.join(image, 'app', 'build.gradle'));
+        const block = (text, name) => text.match(new RegExp(`^( *)${name} \\{[\\s\\S]*?^\\1\\}`, 'm'))?.[0];
+        for (const name of ['lint', 'packaging', 'dependencies']) {
+            expect(block(warmed, name)).toBeTruthy();
+            expect(block(warmed, name)).toBe(block(written, name));
+        }
+        expect(warmed.match(/^ {4}compileSdk \d+$/m)?.[0]).toBe(written.match(/^ {4}compileSdk \d+$/m)?.[0]);
         fs.rmSync(root, { recursive: true, force: true });
     });
 

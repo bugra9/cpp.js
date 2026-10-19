@@ -93,7 +93,7 @@ the process already has keeps its value.
 
 <name>-android/                   a Gradle project, written anew on every build
 ├── settings.gradle, build.gradle, gradlew and gradle/
-│                                 the Android Gradle plugin and Gradle 9.4.1's wrapper
+│                                 the Android Gradle plugin and Gradle 9.8.1's wrapper
 └── app/
     ├── build.gradle              the app's id, version and ABIs, and Hermes and androidx.webkit from Maven
     └── src/main/
