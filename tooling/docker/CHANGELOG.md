@@ -1,5 +1,24 @@
 # @crossbind/docker
 
+## Image family 1.0.14
+
+### Patch Changes
+
+- Added the `android-app` image, built on `android`, which packages a crossbind app for Android with
+  no network: Debian's OpenJDK 21, the Android SDK platform 36 and build tools 36.0.0 unpacked from
+  their checked archives, Gradle 9.8.1, and a read-only Gradle cache (`GRADLE_RO_DEP_CACHE`) of
+  every Maven artifact of the project crossbind writes, from the Android Gradle plugin 9.4.1 to the
+  Hermes and androidx.webkit AARs, each checked by Gradle against the SHA-256 recorded in
+  `android-app/gradle/verification-metadata.xml`. The plugin's bouncycastle, jose4j and jdom2 come at
+  their fixed releases. Hermes 250829098.0.17's headers, stripped libraries and hermesc for the app's host sit in
+  `/opt/crossbind/hermes`. amd64 only, as `android`.
+- The `linux` image carries what a Linux app's host compiles and links against, for x64 and arm64:
+  WebKitGTK 2.50.4 and the libraries its headers name, from sha256-checked Ubuntu 22.04 packages
+  (`webkitgtk-sysroot.txt`), and Hermes 250829098.0.17, built from its pinned source with the
+  image's own toolchains.
+- An image's publish job downloads only its own digests, so a re-run of `android`'s cannot take in
+  `android-app`'s.
+
 ## Image family 1.0.13
 
 ### Patch Changes
