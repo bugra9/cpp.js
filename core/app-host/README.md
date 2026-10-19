@@ -35,7 +35,7 @@ defaults and current limits (macOS, Linux, iOS and Android for now).
   static library for the app's Xcode project) and Linux (`src/linux/`, WebKitGTK). An Android host
   (`src/android/jni.cpp`) is a shared library behind JNI.
 - `android/` — the Gradle project an Android app is written into: its one activity (`CrossbindActivity.java`, the
-  WebView, its message port and navigation rule), the manifest, and Gradle 9.4.1's wrapper (Apache-2.0), as
+  WebView, its message port and navigation rule), the manifest, and Gradle 9.8.1's wrapper (Apache-2.0), as
   `gradle wrapper` writes it; `gradle-wrapper.jar` matches the sha256 Gradle publishes for the release.
 - `js/host.js` — what runs in Hermes: the embind runtime and the side of the protocol that answers the page.
 - `js/page.js` — what the page loads as `crossbind.js`: `initNative()` over the webview's messages, or on Android its
