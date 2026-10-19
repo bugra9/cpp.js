@@ -24,6 +24,20 @@ concurrency:
     group: crossbind-landing-${{ github.event.pull_request.number || github.ref }}
     cancel-in-progress: true
 
+# The demos main's deploy keeps for later runs, in two caches: the ones installed from npm change with a release or
+# their own sources, the samples and app pictures built from this repository with most commits. Each demo's record
+# says whether its files can be kept.
+env:
+    # The wildcard names each entry: actions/cache archives a listed directory whole, so only a named entry can be left out.
+    NPM_DEMOS: |
+        landing/public/examples/*
+        !landing/public/examples/demos.json
+        !landing/public/examples/sample-*
+        !landing/public/examples/apps
+    REPO_DEMOS: |
+        landing/public/examples/sample-*
+        landing/public/examples/apps
+
 # No path filter: the site reads CHANGELOG.md, releases/, ports metadata, scripts/site and
 # landing/, and resolves the rest from live npm, so any filter narrow enough to be useful would
 # miss a source.
@@ -49,6 +63,19 @@ jobs:
             # module answers; a runner has no browser until Playwright downloads one.
             - name: Install the smoke-test browser
               run: pnpm exec playwright install --with-deps chromium
+            # A pull request starts from the newest demos main's deploy kept and builds only those its changes reach.
+            - name: Restore the demos built from npm
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: ${{ env.NPM_DEMOS }}
+                  key: landing-npm-demos
+                  restore-keys: landing-npm-demos-
+            - name: Restore the samples and app pictures
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: ${{ env.REPO_DEMOS }}
+                  key: landing-repo-demos
+                  restore-keys: landing-repo-demos-
             # The demos are gitignored and the deploy gate refuses a snapshot without them.
             - name: Build the live example demos
               run: pnpm --filter @crossbind/landing run demos
@@ -83,12 +110,44 @@ jobs:
               run: pnpm install
             - name: Install the smoke-test browser
               run: pnpm exec playwright install --with-deps chromium
+            - name: Restore the demos built from npm
+              id: npm-demos
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: ${{ env.NPM_DEMOS }}
+                  key: landing-npm-demos
+                  restore-keys: landing-npm-demos-
+            - name: Restore the samples and app pictures
+              id: repo-demos
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: ${{ env.REPO_DEMOS }}
+                  key: landing-repo-demos
+                  restore-keys: landing-repo-demos-
             - name: Build the live example demos
               run: pnpm --filter @crossbind/landing run demos
+            # Saved as soon as they change, and from a failed build too: a newer push cancels this run, and the next one
+            # should not build them again.
+            - name: Keep the demos built from npm
+              if: >-
+                  ${{ !cancelled() && steps.npm-demos.outputs.cache-matched-key != format('landing-npm-demos-{0}',
+                  hashFiles('landing/public/examples/*/demo.json', '!landing/public/examples/sample-*/demo.json')) }}
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: ${{ env.NPM_DEMOS }}
+                  key: landing-npm-demos-${{ hashFiles('landing/public/examples/*/demo.json', '!landing/public/examples/sample-*/demo.json') }}
             - name: Capture the app pictures
               run: pnpm --filter @crossbind/landing run previews
               env:
                   GH_TOKEN: ${{ github.token }}
+            - name: Keep the samples and app pictures
+              if: >-
+                  ${{ !cancelled() && steps.repo-demos.outputs.cache-matched-key != format('landing-repo-demos-{0}',
+                  hashFiles('landing/public/examples/sample-*/demo.json', 'landing/public/examples/apps/previews.json')) }}
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: ${{ env.REPO_DEMOS }}
+                  key: landing-repo-demos-${{ hashFiles('landing/public/examples/sample-*/demo.json', 'landing/public/examples/apps/previews.json') }}
             - name: Build, gate and deploy
               run: pnpm --filter @crossbind/landing run deploy
               env:

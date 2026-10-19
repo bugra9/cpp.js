@@ -133,13 +133,15 @@ In `dev`, a small middleware in `vite.config.js` maps `/examples/<id>/` to that 
 The deploy gate reads `dist/examples/demos.json` and refuses to deploy unless every demo is present,
 every example was built with the crossbind version the site resolved and every playground sample
 from the sources now in the tree. Run `demos` once per release, before
-`deploy`; needs Docker and the Playwright browsers from `e2e/web-vite`.
+`deploy`; needs Docker and the Playwright browsers from `e2e/web-vite`. A demo whose `demo.json` record
+shows that nothing it is built from changed is kept as it is; delete its directory to build it again.
 
 The pictures on `/examples/` come from the apps themselves. `pnpm --filter @crossbind/landing previews`
 (`scripts/site/capture-app-previews.mjs`) starts the dev server, presses every library app's run button
 on its library's page, in the light and the dark theme, and writes the output as
 `public/examples/apps/<id>-<theme>.webp` (gitignored). The apps load the modules `demos` builds, so run
-it after `demos`; add `-- --only <app ids>` to recapture some. The deploy gate refuses a site without a
+it after `demos`; add `-- --only <app ids>` to recapture some. A full run is skipped while every picture
+is there and `apps/previews.json` names what they were taken from. The deploy gate refuses a site without a
 picture of every app; a build without them shows empty frames.
 
 Adding a page is three steps:
