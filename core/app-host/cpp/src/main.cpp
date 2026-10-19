@@ -1,29 +1,18 @@
 // A desktop app: a window with the system webview whose page reaches a crossbind module running in Hermes. The page
 // comes from crossbind://app/, or in the debug host the dev server opens, from the URL CROSSBIND_APP_URL names. Its
 // calls arrive as webview messages, their large bytes as crossbind:// request and response bodies.
-#include "host_core.h"
+#include "app.h"
 #include "platform.h"
 #include "webview/webview.h"
 
-#include <algorithm>
-#include <cstdio>
-#include <cstdlib>
-
 namespace {
 
-constexpr const char *APP_ORIGIN = "crossbind://app";
-constexpr const char *APP_URL = "crossbind://app/";
+namespace app = crossbind::app;
+
 constexpr int WIDTH = 1024;
 constexpr int HEIGHT = 768;
-constexpr const char *REFUSED = "[1,{\"name\":\"Error\",\"message\":\"crossbind: a page from this origin may not call the app's module\"}]";
 
 SchemeHandler schemeHandler;
-
-std::string originOf(const std::string &url) {
-    const auto scheme = url.find("://");
-    if (scheme == std::string::npos) return url;
-    return url.substr(0, url.find_first_of("/?#", scheme + 3));
-}
 
 #ifdef __APPLE__
 // WKWebView takes its scheme handlers from the configuration it is made from.
@@ -33,34 +22,9 @@ void configureWebView(void *configuration) { registerSchemeHandler(configuration
 }  // namespace
 
 int main() {
-    const std::string resources = resourceDir();
-#ifdef CROSSBIND_APP_DEV
-    const char *devUrl = std::getenv("CROSSBIND_APP_URL");
-#else
-    // A release build loads its own page, whatever starts it.
-    const char *devUrl = nullptr;
-#endif
-    crossbind::app::Core core(resources + "/page");
-    core.cors = devUrl != nullptr;
+    const char *devUrl = app::devUrl();
+    app::Core &core = app::start(devUrl);
     schemeHandler = [&core](SchemeRequest request, SchemeRespond respond) { core.serve(std::move(request), std::move(respond)); };
-    // Bindings keep JSI values in globals, which must not be destroyed after the runtime they belong to, so the app ends
-    // without running destructors.
-    const auto quit = [&core](int status) {
-        core.stop();
-        std::fflush(nullptr);
-        std::_Exit(status);
-    };
-
-    std::string bootError;
-    try {
-        bootError = core.boot(crossbind::app::readFile(resources + "/host.hbc"), "host.hbc", resources + "/data");
-    } catch (const std::exception &error) {
-        bootError = error.what();
-    }
-    if (!bootError.empty()) {
-        std::fprintf(stderr, "crossbind: the app's module failed to start: %s\n", bootError.c_str());
-        quit(1);
-    }
 
 #ifdef __APPLE__
     webview::detail::cocoa_webkit::cocoa_configure_hook = configureWebView;
@@ -72,25 +36,11 @@ int main() {
 #ifndef __APPLE__
     registerSchemeHandler(webView, "crossbind", schemeHandler);
 #endif
-
-    std::vector<std::string> origins{APP_ORIGIN};
-    if (devUrl) origins.push_back(originOf(devUrl));
-    // Only the top frame gets the token every message and crossbind:// call carries: a frame of another origin, or a
-    // sandboxed one, cannot read it.
-    addTopFrameScript(webView, "Object.defineProperty(globalThis, '__crossbind_token', { value: '" + core.token() + "' });");
-    installReplyChannel(webView, "crossbind", [&core, origins](std::string origin, std::string message, ReplyFn reply) {
-        if (!origin.empty() && std::find(origins.begin(), origins.end(), origin) == origins.end()) {
-            reply(REFUSED);
-            return;
-        }
-        core.receive(std::move(message), std::move(reply));
-    });
-    if (devUrl || std::getenv("CROSSBIND_APP_CONSOLE")) forwardConsole(webView);
-    restrictNavigation(webView, origins, [&core] { core.reset(); });
+    const std::string url = app::attach(core, webView, devUrl);
     // Quitting from the Dock or the system ends the app as closing its window does.
-    onQuit([&quit] { quit(0); });
+    onQuit([&core] { app::quit(core, 0); });
 
-    view.navigate(devUrl ? devUrl : APP_URL);
+    view.navigate(url);
     view.run();
-    quit(0);
+    app::quit(core, 0);
 }

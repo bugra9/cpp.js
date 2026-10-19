@@ -248,6 +248,12 @@ describe('collectLicenseRows for an app', () => {
         expect(byName.hermes.sha256).toMatch(/^[0-9a-f]{64}$/);
         expect(byName['llvm-runtimes'].license).toBe('Apache-2.0 WITH LLVM-exception');
     });
+
+    test('leaves webview/webview out of an iOS app, whose window UIKit makes', async () => {
+        const rows = await collectLicenseRows('ios', { runtimeEnv: 'app' });
+
+        expect(rows.map((row) => row.name)).toEqual(['crossbind', 'emscripten-embind', 'hermes', 'jsi']);
+    });
 });
 
 describe('collectLicenseRows for a Node-API addon', () => {

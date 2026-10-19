@@ -212,9 +212,19 @@ export default {
       // 'node' is a wasm module under -p wasm and a Node-API addon under -p
       // darwin, linux, linuxmusl or win32; 'native' is an executable on those
       // four (see native.md). Under -p wasi, 'wasi' is a command and 'http' a
-      // wasi:http/service component (see wasi.md). 'app' is a desktop app's
-      // host under -p darwin or linux; set here, it also turns the Vite
-      // plugin's build into the app's (see app.md).
+      // wasi:http/service component (see wasi.md). 'app' is an app's host under
+      // -p darwin or linux, and an Xcode project under -p ios; set here, it
+      // also turns the Vite plugin's build into the app's (see app.md).
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // App identity (target.runtimeEnv: 'app', see app.md)
+  // ─────────────────────────────────────────────────────────────
+  app: {
+    id: 'com.example.myapp',
+      // The bundle id of a macOS or iOS app. Default: dev.crossbind.<general.name>.
+    team: 'ABCDE12345',
+      // The Apple team that signs an iOS app. Default: XCODE_DEVELOPMENT_TEAM of ~/.crossbind.json.
   },
 
   targetSpecs: [

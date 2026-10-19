@@ -28,7 +28,8 @@ export function getTargetParams(givenTargetParams = {}, noParamCheck = false) {
 }
 
 export function getBuildTargets(targetParams) {
-    const { platform, arch, runtime, buildType, runtimeEnv } = targetParams;
+    // A lookup that names no runtime environment finds the targets that have none: the archives' alone.
+    const { platform, arch, runtime, buildType, runtimeEnv = [] } = targetParams;
     return state.targets.filter(t => (
         (!t.platform || platform.includes(t.platform))
         && (!t.arch || arch.includes(t.arch))

@@ -1001,6 +1001,9 @@ importers:
       '@crossbind/plugin-vite':
         specifier: workspace:^
         version: link:../../plugins/vite
+      crossbind:
+        specifier: workspace:^
+        version: link:../../core/crossbind
       vite:
         specifier: ^8.2.1
         version: 8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.37.0)(yaml@2.9.0)

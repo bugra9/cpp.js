@@ -6,26 +6,36 @@ else()
 endif()
 
 # crossbind configures this project for one app host: the window and its webview, Hermes and the embind runtime
-# compile here, the project's own code arrives as prebuilt archives in CROSSBIND_LINK_ARGS.
+# compile here, the project's own code arrives as prebuilt archives in CROSSBIND_LINK_ARGS. An iOS host is a static
+# library instead, which the app's Xcode project links with those archives.
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(THIRD_PARTY "${CMAKE_CURRENT_SOURCE_DIR}/../third_party")
-if(APPLE)
-    set(CMAKE_OBJCXX_STANDARD 20)
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    set(PLATFORM_SOURCES src/ios/main.mm src/ios/bundle.mm src/darwin/channels.mm src/darwin/navigation.mm)
+elseif(APPLE)
     set(PLATFORM_SOURCES src/darwin/bundle.mm src/darwin/channels.mm src/darwin/navigation.mm)
 else()
     set(PLATFORM_SOURCES src/linux/app.cpp src/linux/channels.cpp src/linux/navigation.cpp)
 endif()
+if(APPLE)
+    set(CMAKE_OBJCXX_STANDARD 20)
+endif()
 
-add_executable(app
+set(SOURCES
+    src/app.cpp
     src/host_core.cpp
-    src/main.cpp
     ${PLATFORM_SOURCES}
     "${THIRD_PARTY}/jsi/jsi.cpp"
     "${CROSSBIND_JSI_ROOT}/cpp/src/emscripten/bind.cpp"
     ${CROSSBIND_EXTRA_SOURCES})
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    add_library(app STATIC ${SOURCES})
+else()
+    add_executable(app src/main.cpp ${SOURCES})
+endif()
 
 set_target_properties(app PROPERTIES OUTPUT_NAME "${CROSSBIND_APP_FILE}")
 # Only a debug host opens the page of a dev server.
@@ -36,13 +46,19 @@ target_include_directories(app PRIVATE
     "${CROSSBIND_HERMES}/include"
     "${CROSSBIND_JSI_ROOT}/cpp/src"
     "${THIRD_PARTY}/webview/core/include")
+if(APPLE)
+    set_source_files_properties(${PLATFORM_SOURCES} PROPERTIES COMPILE_OPTIONS -fobjc-arc)
+endif()
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    return()
+endif()
+
 target_link_libraries(app PRIVATE ${CROSSBIND_LINK_ARGS})
 # A force-loaded archive reaches the link as a linker flag, which CMake does not track: without this, a rebuilt bridge
 # archive would leave the previous host in place.
 set_property(TARGET app APPEND PROPERTY LINK_DEPENDS ${CROSSBIND_LINK_DEPENDS})
 
 if(APPLE)
-    set_source_files_properties(${PLATFORM_SOURCES} PROPERTIES COMPILE_OPTIONS -fobjc-arc)
     # Hermes is a framework the app bundle carries next to the executable. Only what main() and the bindings' static
     # initializers reach stays, without the local symbols of a release build.
     target_link_options(app PRIVATE "-F${CROSSBIND_HERMES}/Library/Frameworks/macosx" "LINKER:-rpath,@executable_path/../Frameworks"

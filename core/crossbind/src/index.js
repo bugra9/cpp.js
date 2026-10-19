@@ -4,8 +4,9 @@ export { default as createLib } from './actions/createLib.js';
 export { default as createBridgeFile } from './actions/createInterface.js';
 export { default as buildWasm } from './actions/buildWasm.js';
 export {
-    default as buildApp, buildProjectApp, publishApp, appLayout, appOutputName,
+    default as buildApp, buildProjectApp, publishApp, appLayout, appOutputName, appTargetParams,
 } from './actions/buildApp.js';
+export { default as openInSimulator, buildForSimulator } from './actions/iosSimulator.js';
 export { default as isSourceNewer } from './actions/isSourceNewer.js';
 export { default as getData } from './actions/getData.js';
 export { default as getCmakeParameters } from './actions/getCmakeParameters.js';

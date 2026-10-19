@@ -13,10 +13,13 @@ export default function getLinkInputs(target, { keepFlag, withBridge = true, bri
 
     // buildLib's cache is keyed on paths.output/prebuilt; after a cache clean the
     // build-dir copy can be gone while the output artifact is still valid — link it then.
-    const sourceLibCandidates = [
-        `${build}/Source-${buildType}/${target.path}/lib${name}.a`,
-        `${output}/prebuilt/${target.path}/lib/lib${name}.a`,
+    // An Xcode build (iOS) leaves its archive in the install tree alone.
+    const builtLib = (prefix) => [
+        `${build}/${prefix}-${buildType}/${target.path}/lib${name}.a`,
+        `${build}/${prefix}-${buildType}/prebuilt/${target.path}/lib/lib${name}.a`,
     ];
+    const sourceLibCandidates = [...builtLib('Source'), `${output}/prebuilt/${target.path}/lib/lib${name}.a`];
+    const bridgeLibCandidates = builtLib(bridge);
     // App-local Rust surfaces (imported .rs files) arrive as ONE super staticlib; it is the
     // single fully-loaded Rust archive of the link (see the libstd rule below).
     const appRustLibs = buildAppRustCrates(target, cache, state.config.cargoDependencies ?? {});
@@ -24,7 +27,7 @@ export default function getLinkInputs(target, { keepFlag, withBridge = true, bri
         ...getDependLibs(target),
         ...appRustLibs,
         sourceLibCandidates.find((lib) => fs.existsSync(lib)) ?? sourceLibCandidates[0],
-        ...(withBridge ? [`${build}/${bridge}-${buildType}/${target.path}/lib${name}.a`] : []),
+        ...(withBridge ? [bridgeLibCandidates.find((lib) => fs.existsSync(lib)) ?? bridgeLibCandidates[0]] : []),
     ];
 
     // By default only the Bridge archive is kept whole (see linkLayout.js) so the linker

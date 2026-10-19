@@ -2,7 +2,7 @@
 
 - **Status:** Proposed
 - **Date:** 2026-10-18
-- **Affects:** `core/app-host/`, `core/crossbind/src/actions/{buildApp,nativeBridges}.js`, `src/utils/{targets,hermes,resolveAppHost}.js`, `src/integration/getCrossbindScript.js`, `plugins/{rollup,vite}`, `examples/desktop-app`, `e2e/desktop-app`
+- **Affects:** `core/app-host/`, `core/crossbind/src/actions/{buildApp,nativeBridges,xcodeProject,iosSimulator}.js`, `src/utils/{targets,hermes,resolveAppHost}.js`, `src/integration/getCrossbindScript.js`, `plugins/{rollup,vite}`, `examples/desktop-app`, `e2e/desktop-app`
 
 ## Context
 
@@ -37,13 +37,19 @@ packaging, and `crossbind build -e app` builds the host alone.
   the host and the project's archives share there, since JSI hands std types across; Windows will build its own too.
 - The desktop window comes from webview/webview, vendored with a patch that registers the URL scheme; mobile apps get
   generated Xcode and Gradle projects.
+- An iOS app is an Xcode project crossbind writes anew on every build. The host, with a UIKit scene and the macOS
+  channels, and every archive it links come prebuilt for each SDK; the project only links them from a stub `main`,
+  embeds Hermes and copies the app's files, so it is relocatable and holds nothing to edit. Its bundle id and team
+  come from `crossbind.config.js`. Vite builds it when `CROSSBIND_APP_PLATFORM=ios` and runs it in the Simulator
+  during development.
 - The webview loads the app's own origin alone, in every frame (and the dev server during development); the module's
   channel answers that origin only. Measured: a frame from another origin otherwise reaches the `crossbind://` routes
   even where a message's origin is checked. The host also gives the page's top frame a token that every message and
   `crossbind://` call carries: markup and sandboxed frames of the app's own page reach the channel and the routes too,
   and WebKitGTK does not tell a message's sender (measured).
-- macOS and Linux first. A Linux app builds against the WebKitGTK 4.1 of Ubuntu 22.04's packages and runs on the
-  system's; Android requires System WebView 116, the first with ArrayBuffer messages.
+- macOS, Linux and iOS first. A Linux app builds against the WebKitGTK 4.1 of Ubuntu 22.04's packages and runs on the
+  system's; an iOS app needs iOS 15.1, as Hermes does; Android requires System WebView 116, the first with
+  ArrayBuffer messages.
 
 ## Consequences
 

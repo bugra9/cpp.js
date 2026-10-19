@@ -9,7 +9,9 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
+        "dev:ios": "CROSSBIND_APP_PLATFORM=ios vite",
         "build": "vite build",
+        "build:ios": "CROSSBIND_APP_PLATFORM=ios vite build",
         "e2e:prod": "node e2e/run.mjs"
     },
     "dependencies": {
@@ -18,6 +20,7 @@
     "devDependencies": {
         "@crossbind/core-app-host": "workspace:^",
         "@crossbind/plugin-vite": "workspace:^",
+        "crossbind": "workspace:^",
         "vite": "^8.2.1"
     },
     "keywords": [

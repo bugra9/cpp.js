@@ -142,10 +142,12 @@ export const MULTI_PLATFORM_RUNNERS = [...Object.keys(MULTI_PLATFORM_BUILDS), 'n
 
 // A build makes binaries only for the runtime environments it names, and the multi-platform
 // package publishes every binary its platform has but an HTTP component, which needs a handler of
-// the app's own. On the desktop platforms a library publishes its archives, which apps link into
-// their own Node.js addons and executables.
+// the app's own, and an app. On the desktop platforms a library publishes its archives, which apps
+// link into their own Node.js addons and executables.
 export function multiPlatformBuildArgs(platform) {
-    const runtimeEnvs = OPT_IN_PLATFORMS.includes(platform) ? [] : runtimeEnvsOf(platform).filter((runtimeEnv) => runtimeEnv !== 'http');
+    const runtimeEnvs = OPT_IN_PLATFORMS.includes(platform)
+        ? []
+        : runtimeEnvsOf(platform).filter((runtimeEnv) => !['http', 'app'].includes(runtimeEnv));
     return ['build', '-p', platform, ...(runtimeEnvs.length ? ['-e', runtimeEnvs.join(',')] : [])];
 }
 

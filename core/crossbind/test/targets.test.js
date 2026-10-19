@@ -25,11 +25,12 @@ describe('TARGETS', () => {
         expect(pathsOf('native')).toHaveLength(4);
     });
 
-    test('macOS and glibc Linux build app hosts from the addon targets, and no other platform does yet', () => {
+    test('macOS and glibc Linux build app hosts from the addon targets, and iOS from its SDK targets', () => {
         const app = TARGETS.filter((t) => t.runtimeEnv === 'app');
-        const node = TARGETS.filter((t) => ['darwin', 'linux'].includes(t.platform) && t.runtimeEnv === 'node');
-        expect(app.map(targetPathOf).sort()).toEqual(node.map(targetPathOf).sort());
-        expect([...new Set(app.map((t) => t.platform))].sort()).toEqual(['darwin', 'linux']);
+        const hosts = TARGETS.filter((t) => (['darwin', 'linux'].includes(t.platform) && t.runtimeEnv === 'node')
+            || (t.platform === 'ios' && !t.runtimeEnv));
+        expect(app.map(targetPathOf).sort()).toEqual(hosts.map(targetPathOf).sort());
+        expect([...new Set(app.map((t) => t.platform))].sort()).toEqual(['darwin', 'ios', 'linux']);
     });
 
     test('Node-API addon platforms build only when named, so a plain build keeps its output', () => {
@@ -91,6 +92,7 @@ describe('runtime environments', () => {
         expect(runtimeEnvsOf('linuxmusl')).toEqual(['node', 'native']);
         expect(runtimeEnvsOf('darwin')).toEqual(['node', 'native', 'app']);
         expect(runtimeEnvsOf('android')).toEqual([]);
+        expect(runtimeEnvsOf('ios')).toEqual(['app']);
     });
 });
 
@@ -116,6 +118,12 @@ describe('appNamesOf', () => {
     test('names a Linux app as a directory, without the bundle suffix', () => {
         expect(appNamesOf(app('x64', 'release', 'linux'), 'demo')).toEqual({ appName: 'demo.linux-x64', appJsName: 'demo.app.js' });
         expect(appNamesOf(app('arm64', 'debug', 'linux'), 'demo')).toEqual({ appName: 'demo.linux-arm64.debug', appJsName: 'demo.app.debug.js' });
+    });
+
+    test('names what an iOS SDK brings to the app after the SDK', () => {
+        expect(appNamesOf(app('iphonesimulator', 'debug', 'ios'), 'demo')).toEqual({
+            appName: 'demo.ios-iphonesimulator.debug', appJsName: 'demo.app.debug.js',
+        });
     });
 });
 

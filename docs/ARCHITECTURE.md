@@ -90,7 +90,7 @@ Each `plugins/*` adapts crossbind's outputs to one bundler. They share a small c
 
 ### Apps
 
-`target.runtimeEnv: 'app'` builds a desktop app (ADR-0017, [`api/app.md`](./api/app.md)). `actions/buildApp.js` links the project's archives, its bridges compiled against Hermes' JSI and `core/app-host` into one host executable, and the Vite plugin puts the page beside it: in `<name>.app` on macOS, in `<name>-linux-<arch>/` on Linux, whose host builds in the linux image against WebKitGTK and a Hermes built there. The page reaches the module through the host's lean protocol, with the contract `worker-comlink.js` gives a worker-backed web build.
+`target.runtimeEnv: 'app'` builds an app (ADR-0017, [`api/app.md`](./api/app.md)). `actions/buildApp.js` links the project's archives, its bridges compiled against Hermes' JSI and `core/app-host` into one host executable, and the Vite plugin puts the page beside it: in `<name>.app` on macOS, in `<name>-linux-<arch>/` on Linux, whose host builds in the linux image against WebKitGTK and a Hermes built there. With `CROSSBIND_APP_PLATFORM=ios` the host is a static library per SDK instead, and `actions/xcodeProject.js` writes an Xcode project, `<name>-ios/`, that links it with the archives from a stub `main`; `actions/iosSimulator.js` builds and opens it in the Simulator. The page reaches the module through the host's lean protocol, with the contract `worker-comlink.js` gives a worker-backed web build.
 
 ### Packages (prebuilt C++ libs)
 
