@@ -1,6 +1,6 @@
 // The lean protocol's page side: the awaitable module a worker-backed web build hands out, over one message per call.
-// Byte arrays from transport.attachBytes up travel as attachments of a request to the host, a large result comes back
-// as a response body, and a request waits for the messages sent before it, so order holds across the two channels.
+// Byte arrays from transport.attachBytes up travel as attachments of a frame, a large result comes back on its own, and
+// a frame waits for the messages sent before it, so order holds where the two take different channels.
 import { pack, unpack, CODEC_TAG as TAG } from './codec.js';
 
 const FUNCTION = Symbol('remote function');
@@ -18,12 +18,6 @@ function concatenate(views) {
         offset += view.byteLength;
     }
     return body;
-}
-
-// A request the host refuses fails its call with what the host answered.
-async function checked(response) {
-    if (!response.ok) throw new Error((await response.text()) || `crossbind: the app's host answered ${response.status}`);
-    return response;
 }
 
 function createSession(transport) {
@@ -55,10 +49,7 @@ function createSession(transport) {
     function sendWithAttachments(message, attachments) {
         const query = `m=${encodeURIComponent(JSON.stringify([...message, attachments.map((view) => [view.constructor.name, view.byteLength])]))}`;
         const body = concatenate(attachments);
-        const done = Promise.allSettled([...inflight])
-            .then(() => fetch(`${transport.base}/b/frame?${query}&t=${transport.token}`, { method: 'POST', body }))
-            .then(checked)
-            .then((response) => response.text());
+        const done = Promise.allSettled([...inflight]).then(() => transport.frame(`${query}&t=${transport.token}`, body));
         gate = done.then(() => undefined, () => undefined);
         return track(done);
     }
@@ -101,7 +92,7 @@ function createSession(transport) {
         const [failed, value] = JSON.parse(text);
         if (failed) throw Object.assign(new Error(value.message), value);
         if (value !== null && typeof value === 'object' && value[TAG] === 'big') {
-            const bytes = await (await checked(await fetch(`${transport.base}/b/result?id=${value.v}&t=${transport.token}`))).arrayBuffer();
+            const bytes = await transport.result(`id=${value.v}&t=${transport.token}`);
             const View = globalThis[value.k] ?? Uint8Array;
             return new View(bytes, 0, bytes.byteLength / (View.BYTES_PER_ELEMENT ?? 1));
         }
@@ -146,8 +137,9 @@ function createSession(transport) {
     return { request, module: remote(0, []) };
 }
 
-// transport: { send(text) → Promise<reply text>, base: the URL the host serves request bodies at, attachBytes, token:
-// what the host gave the page, which every message and request carries }.
+// transport: { send(text) → Promise<reply text>; frame(query, body) → Promise<reply text>, a message whose byte arrays
+// are the body; result(query) → Promise<ArrayBuffer>, a large result; attachBytes; token: what the host gave the page,
+// which every message, frame and result request carries }. A frame or result the host refuses rejects with its answer.
 export async function connect(transport, env) {
     const session = createSession(transport);
     if (env && Object.keys(env).length > 0) await session.request('env', 0, [], [env]);

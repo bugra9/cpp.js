@@ -211,8 +211,9 @@ export default {
       // darwin, linux, linuxmusl or win32; 'native' is an executable on those
       // four (see native.md). Under -p wasi, 'wasi' is a command and 'http' a
       // wasi:http/service component (see wasi.md). 'app' is an app's host under
-      // -p darwin or linux, and an Xcode project under -p ios; set here, it
-      // also turns the Vite plugin's build into the app's (see app.md).
+      // -p darwin or linux, an Xcode project under -p ios and a Gradle project
+      // under -p android; set here, it also turns the Vite plugin's build into
+      // the app's (see app.md).
   },
 
   // ─────────────────────────────────────────────────────────────
@@ -220,7 +221,8 @@ export default {
   // ─────────────────────────────────────────────────────────────
   app: {
     id: 'com.example.myapp',
-      // The bundle id of a macOS or iOS app. Default: dev.crossbind.<general.name>.
+      // The bundle id of a macOS or iOS app, and the application id of an Android app, which takes no hyphens.
+      // Default: dev.crossbind.<general.name>, on Android with an underscore for each hyphen.
     team: 'ABCDE12345',
       // The Apple team that signs an iOS app. Default: XCODE_DEVELOPMENT_TEAM of ~/.crossbind.json.
   },

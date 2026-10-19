@@ -22,7 +22,8 @@ pnpm install
 ```
 
 Inside the crossbind repository, build the library's archives first:
-`pnpm --filter @crossbind/example-lib-prebuilt-matrix run build:desktop`, and `run build:ios` for the iOS app.
+`pnpm --filter @crossbind/example-lib-prebuilt-matrix run build:desktop`, `run build:ios` for the iOS app and
+`run build:android` for the Android app.
 
 ## Get Started
 
@@ -59,7 +60,25 @@ pnpm build:ios
 writes the app's Xcode project to `dist/crossbind-example-desktop-app-ios/`. Open it in Xcode to run the app on an
 iPhone, once `crossbind.config.js` names the app's bundle id and Apple team (`app: { id, team }`).
 
+## Android
+
+```bash
+pnpm dev:android
+```
+
+opens the app on the attached Android device or the running emulator on Vite's dev server, as `pnpm dev` does on the
+desktop; ending the app ends the session. Start an emulator first, in Android Studio's Device Manager, or connect a
+phone with USB debugging on.
+
+```bash
+pnpm build:android
+```
+
+writes the app's Gradle project to `dist/crossbind-example-desktop-app-android/`. Open it in Android Studio, or run
+`./gradlew assembleDebug` in it for an APK and `./gradlew bundleRelease` for Google Play.
+
 ## Test
 
 `pnpm run e2e:prod` opens the built app and waits for the page to log the result; with `CROSSBIND_APP_PLATFORM=ios` it
-builds the Xcode project for the Simulator and opens the app there.
+builds the Xcode project for the Simulator and opens the app there, and with `android` it builds the Gradle project as
+a debug APK and opens the app on the attached device.

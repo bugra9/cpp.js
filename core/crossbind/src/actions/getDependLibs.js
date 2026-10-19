@@ -11,9 +11,15 @@ export default function getDependLibs(target) {
             const ignoreLibNames = getFilteredTargetSpec(d?.targetSpecs, target).map(s => s.ignoreLibName).flat();
             d.export.libName.forEach((fileName) => {
                 if (ignoreLibNames?.includes(fileName)) return;
-                let libPaths = findFiles(`${d.paths.output}/prebuilt/${target.path}/lib/lib${fileName}.a`, { cwd: d.paths.project });
+                // On Android a package ships the shared library React Native packages, which an app carries beside
+                // its host.
+                const extensions = target.platform === 'android' ? ['a', 'so'] : ['a'];
+                const libsIn = (targetPath) => extensions
+                    .map((extension) => findFiles(`${d.paths.output}/prebuilt/${targetPath}/lib/lib${fileName}.${extension}`, { cwd: d.paths.project }))
+                    .find((found) => found.length > 0) ?? [];
+                let libPaths = libsIn(target.path);
                 if (libPaths.length === 0) {
-                    libPaths = findFiles(`${d.paths.output}/prebuilt/${target.releasePath}/lib/lib${fileName}.a`, { cwd: d.paths.project });
+                    libPaths = libsIn(target.releasePath);
                 }
                 dependLibs.push(...libPaths);
             });

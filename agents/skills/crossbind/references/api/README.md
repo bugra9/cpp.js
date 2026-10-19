@@ -25,7 +25,7 @@ C++ binding & build authoring:
 - [`conan.md`](./conan.md) — C and C++ packages from ConanCenter: `conanDependencies`, `conan:` header imports, `conan.lock`; web, Android, iOS and Node.js addon (Linux, macOS, Windows) builds.
 - [`wasi.md`](./wasi.md) — `platform: 'wasi'` single-module command builds and HTTP components (`-e http`), `-wasi` prebuilts, `-standalone-wasi` npm CLI tool packages.
 - [`native.md`](./native.md) — Desktop platforms beyond Node.js addons: native executables (`-e native`) and the `darwin`, `linux`, `linuxmusl` and `win32` prebuilt archives in your own C or C++ build.
-- [`app.md`](./app.md) — Apps (`target.runtimeEnv: 'app'`): the page in the system webview, the bindings native in the app's process on Hermes; `vite` and `vite build`, security defaults, Hermes and licenses. macOS, Linux and iOS for now.
+- [`app.md`](./app.md) — Apps (`target.runtimeEnv: 'app'`): the page in the system webview, the bindings native in the app's process on Hermes; `vite` and `vite build`, security defaults, Hermes and licenses. macOS, Linux, iOS and Android for now.
 - [`swig-escape.md`](./swig-escape.md) — Manual SWIG `.i` files when auto-generation isn't enough.
 - [`build-state.md`](./build-state.md) — `state` and `target` object shapes passed to `crossbind.build.js` hooks; full inventory of 32 built-in build targets.
 - [`overrides.md`](./overrides.md) — Catalog of 17 override points ordered least → most invasive.

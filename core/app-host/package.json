@@ -6,6 +6,7 @@
     "repository": "https://github.com/crossbind/crossbind.git",
     "license": "MIT",
     "files": [
+        "android",
         "cpp",
         "js",
         "third_party"

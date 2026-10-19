@@ -7,7 +7,8 @@ endif()
 
 # crossbind configures this project for one app host: the window and its webview, Hermes and the embind runtime
 # compile here, the project's own code arrives as prebuilt archives in CROSSBIND_LINK_ARGS. An iOS host is a static
-# library instead, which the app's Xcode project links with those archives.
+# library instead, which the app's Xcode project links with those archives, and an Android host a shared library the
+# app's activity loads, beside the JSI its Hermes loads.
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,6 +18,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
     set(PLATFORM_SOURCES src/ios/main.mm src/ios/bundle.mm src/darwin/channels.mm src/darwin/navigation.mm)
 elseif(APPLE)
     set(PLATFORM_SOURCES src/darwin/bundle.mm src/darwin/channels.mm src/darwin/navigation.mm)
+elseif(ANDROID)
+    set(PLATFORM_SOURCES src/android/jni.cpp)
 else()
     set(PLATFORM_SOURCES src/linux/app.cpp src/linux/channels.cpp src/linux/navigation.cpp)
 endif()
@@ -28,13 +31,16 @@ set(SOURCES
     src/app.cpp
     src/host_core.cpp
     ${PLATFORM_SOURCES}
-    "${THIRD_PARTY}/jsi/jsi.cpp"
     "${CROSSBIND_JSI_ROOT}/cpp/src/emscripten/bind.cpp"
     ${CROSSBIND_EXTRA_SOURCES})
 if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    add_library(app STATIC ${SOURCES})
+    add_library(app STATIC src/attach.cpp "${THIRD_PARTY}/jsi/jsi.cpp" ${SOURCES})
+elseif(ANDROID)
+    add_library(jsi SHARED "${THIRD_PARTY}/jsi/jsi.cpp")
+    target_include_directories(jsi PUBLIC "${THIRD_PARTY}/jsi/include")
+    add_library(app SHARED ${SOURCES})
 else()
-    add_executable(app src/main.cpp ${SOURCES})
+    add_executable(app src/main.cpp src/attach.cpp "${THIRD_PARTY}/jsi/jsi.cpp" ${SOURCES})
 endif()
 
 set_target_properties(app PROPERTIES OUTPUT_NAME "${CROSSBIND_APP_FILE}")
@@ -64,6 +70,15 @@ if(APPLE)
     target_link_options(app PRIVATE "-F${CROSSBIND_HERMES}/Library/Frameworks/macosx" "LINKER:-rpath,@executable_path/../Frameworks"
         "LINKER:-dead_strip" "$<$<CONFIG:Release>:LINKER:-x>")
     target_link_libraries(app PRIVATE "-framework hermesvm" "-framework WebKit" "-framework Cocoa")
+elseif(ANDROID)
+    # Hermes comes with the app from its own package; the C++ runtime the host shares with it is this NDK's, which goes
+    # beside the host, stripped.
+    target_link_libraries(app PRIVATE jsi "${CROSSBIND_HERMES}/libs/android.${ANDROID_ABI}/libhermesvm.so" log)
+    target_link_options(app PRIVATE "LINKER:--gc-sections" "$<$<CONFIG:Release>:LINKER:-s>")
+    target_link_options(jsi PRIVATE "$<$<CONFIG:Release>:LINKER:-s>")
+    add_custom_command(TARGET app POST_BUILD
+        COMMAND "${CMAKE_STRIP}" -o "$<TARGET_FILE_DIR:app>/libc++_shared.so"
+            "${CMAKE_SYSROOT}/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/libc++_shared.so")
 else()
     # WebKitGTK comes from the Ubuntu 22.04 packages crossbind downloads: its headers are searched after the C library's,
     # which the image's glibc 2.28 sysroot keeps, and its libraries are only linked against, as the system's load at run

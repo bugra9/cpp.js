@@ -9,7 +9,10 @@ import { wasiToolchainIdentity } from '../utils/provenance.js';
 import { resolveWasiSdkPath } from '../utils/wasiToolchain.js';
 import resolveEmbindNapiRoot, { resolveEmbindJsiRoot } from '../utils/resolveEmbindNapi.js';
 import resolveAppHostRoot, { resolveAppEmbindJsiRoot } from '../utils/resolveAppHost.js';
-import { HERMES, HERMES_SOURCE, hermesUrl } from '../utils/hermes.js';
+import {
+    HERMES, HERMES_ANDROID, HERMES_SOURCE, hermesUrl,
+} from '../utils/hermes.js';
+import { ANDROIDX_WEBKIT } from './gradleProject.js';
 import { shippedBundledLicense } from '../utils/bundledLicenses.js';
 import toolchainNoticesDir from '../utils/toolchainNotices.js';
 
@@ -209,6 +212,58 @@ function nodeRuntimeRows({ isAddon }) {
 // record: React Native's Hermes, JSI's jsi.cpp from the same release, and webview/webview.
 const WEBVIEW = { version: 'cbbdee44afff22867de9fd88a9fc8350d9bdd399', sha256: '10e972a2327b5681474f4aa4499e505eaa4ff659aa995380386f08fd6fc1b763' };
 const JSI_SHA256 = 'cb6274a22abc93ecc970066539815e716d3e47716e8f93a9971cf4eb5918ffc1';
+// The fbjni the Hermes release for Android depends on.
+const FBJNI_VERSION = '0.7.0';
+
+const HERMES_BUILDS = {
+    linux: {
+        sha256: HERMES_SOURCE.sha256,
+        sourceUrl: HERMES_SOURCE.url,
+        licenseNotes: "Hermes built from its release's source in the linux toolchain image, statically linked into the host",
+    },
+    android: {
+        sha256: HERMES_ANDROID.sha256,
+        sourceUrl: HERMES_ANDROID.url,
+        licenseNotes: "React Native's Hermes for Android, whose libraries the app's Gradle build takes from Maven Central",
+    },
+};
+
+// What an Android app's Gradle build adds from Maven, and the C++ runtime the app carries beside its host.
+function androidAppRows() {
+    const shared = {
+        npmName: null, sha256: null, licenseSelected: null, licenseText: null, isCopyleft: false,
+    };
+    const apache = { ...shared, license: 'Apache-2.0', licenseDeclared: 'Apache-2.0' };
+    const llvmLicense = 'Apache-2.0 WITH LLVM-exception';
+    return [
+        {
+            ...apache,
+            name: 'fbjni',
+            version: FBJNI_VERSION,
+            nativeVersion: FBJNI_VERSION,
+            sourceUrl: 'https://github.com/facebookincubator/fbjni',
+            licenseNotes: 'libfbjni.so, which Hermes loads and Gradle takes with it; license text: https://github.com/facebookincubator/fbjni/blob/main/LICENSE',
+        },
+        {
+            ...apache,
+            name: 'androidx-webkit',
+            version: ANDROIDX_WEBKIT,
+            nativeVersion: ANDROIDX_WEBKIT,
+            sourceUrl: 'https://developer.android.com/jetpack/androidx/releases/webkit',
+            licenseNotes: "androidx.webkit, the WebView's message ports and start scripts, from Google's Maven repository; license text: https://www.apache.org/licenses/LICENSE-2.0.txt",
+        },
+        {
+            ...shared,
+            name: 'llvm-runtimes',
+            version: null,
+            nativeVersion: null,
+            license: llvmLicense,
+            licenseDeclared: llvmLicense,
+            sourceUrl: 'https://github.com/llvm/llvm-project',
+            licenseNotes: "libc++ of the android image's NDK, which the app carries as libc++_shared.so; license text: https://github.com/llvm/llvm-project/blob/main/LICENSE.TXT",
+        },
+    ];
+}
 
 function appRuntimeRows(platform) {
     const hostRoot = resolveAppHostRoot();
@@ -216,17 +271,11 @@ function appRuntimeRows(platform) {
     const mit = {
         npmName: '@crossbind/core-app-host', license: 'MIT', licenseDeclared: 'MIT', licenseSelected: null, isCopyleft: false,
     };
-    const hermes = platform === 'linux'
-        ? {
-            sha256: HERMES_SOURCE.sha256,
-            sourceUrl: HERMES_SOURCE.url,
-            licenseNotes: "Hermes built from its release's source in the linux toolchain image, statically linked into the host",
-        }
-        : {
-            sha256: HERMES.sha256,
-            sourceUrl: hermesUrl(HERMES.version),
-            licenseNotes: "React Native's Hermes for Apple platforms, which the app carries as hermesvm.framework",
-        };
+    const hermes = HERMES_BUILDS[platform] ?? {
+        sha256: HERMES.sha256,
+        sourceUrl: hermesUrl(HERMES.version),
+        licenseNotes: "React Native's Hermes for Apple platforms, which the app carries as hermesvm.framework",
+    };
     return [
         ...runtimeRows(resolveAppEmbindJsiRoot(), 'the embind-jsi runtime, the app host and the bindings crossbind generates'),
         {
@@ -247,8 +296,9 @@ function appRuntimeRows(platform) {
             licenseNotes: "JSI's jsi.cpp from the same Hermes release, compiled into the host",
             licenseText: hermesLicense,
         },
-        // An iOS app makes its window with UIKit, without webview/webview.
-        ...(platform === 'ios' ? [] : [{
+        ...(platform === 'android' ? androidAppRows() : []),
+        // A mobile app makes its window with UIKit or an Android activity, without webview/webview.
+        ...(['ios', 'android'].includes(platform) ? [] : [{
             ...mit,
             name: 'webview',
             version: WEBVIEW.version,

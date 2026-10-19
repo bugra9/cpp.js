@@ -345,10 +345,16 @@ async function createApps(targetParams) {
         return;
     }
     const bridges = createNativeBridges(targets).headers.flatMap((header) => header.bridge ?? []);
+    // An iOS or Android app is one project for all its SDKs or ABIs, written once they are built, and every time, as it
+    // also takes the app's identity and the host package's template.
+    const projects = new Map();
     for (const target of targets) {
-        const built = await buildApp(target, { bridges, force: !fs.existsSync(appOutputPath(target)) });
-        if (built) publishApp(target);
+        const isProject = ['ios', 'android'].includes(target.platform);
+        const built = await buildApp(target, { bridges, force: !isProject && !fs.existsSync(appOutputPath(target)) });
+        if (isProject) projects.set(appOutputPath(target), target);
+        else if (built) publishApp(target);
     }
+    projects.forEach((target) => publishApp(target));
 }
 
 async function createWasiCommands(targetParams) {

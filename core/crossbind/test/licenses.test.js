@@ -254,6 +254,19 @@ describe('collectLicenseRows for an app', () => {
 
         expect(rows.map((row) => row.name)).toEqual(['crossbind', 'emscripten-embind', 'hermes', 'jsi']);
     });
+
+    test("names, for an Android app, Hermes' AAR, what its Gradle build adds, and the NDK's libc++ it carries", async () => {
+        const rows = await collectLicenseRows('android', { runtimeEnv: 'app' });
+        const byName = Object.fromEntries(rows.map((row) => [row.name, row]));
+
+        expect(rows.map((row) => row.name)).toEqual(['androidx-webkit', 'crossbind', 'emscripten-embind', 'fbjni', 'hermes', 'jsi', 'llvm-runtimes']);
+        expect(byName.hermes.sourceUrl).toMatch(/\/hermes-android-.+-release\.aar$/);
+        expect(byName.hermes.sha256).toMatch(/^[0-9a-f]{64}$/);
+        expect(byName.fbjni.license).toBe('Apache-2.0');
+        expect(byName['androidx-webkit'].version).toMatch(/^\d+\.\d+\.\d+$/);
+        expect(byName['llvm-runtimes'].licenseNotes).toContain('libc++_shared.so');
+        rows.forEach((row) => expect(validateSpdx(row.license).isValid).toBe(true));
+    });
 });
 
 describe('collectLicenseRows for a Node-API addon', () => {

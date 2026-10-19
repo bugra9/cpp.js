@@ -25,12 +25,12 @@ describe('TARGETS', () => {
         expect(pathsOf('native')).toHaveLength(4);
     });
 
-    test('macOS and glibc Linux build app hosts from the addon targets, and iOS from its SDK targets', () => {
+    test('macOS and glibc Linux build app hosts from the addon targets, and iOS and Android from their SDK and ABI targets', () => {
         const app = TARGETS.filter((t) => t.runtimeEnv === 'app');
         const hosts = TARGETS.filter((t) => (['darwin', 'linux'].includes(t.platform) && t.runtimeEnv === 'node')
-            || (t.platform === 'ios' && !t.runtimeEnv));
+            || (['ios', 'android'].includes(t.platform) && !t.runtimeEnv));
         expect(app.map(targetPathOf).sort()).toEqual(hosts.map(targetPathOf).sort());
-        expect([...new Set(app.map((t) => t.platform))].sort()).toEqual(['darwin', 'ios', 'linux']);
+        expect([...new Set(app.map((t) => t.platform))].sort()).toEqual(['android', 'darwin', 'ios', 'linux']);
     });
 
     test('Node-API addon platforms build only when named, so a plain build keeps its output', () => {
@@ -91,7 +91,7 @@ describe('runtime environments', () => {
         expect(runtimeEnvsOf('linux')).toEqual(['node', 'native', 'app']);
         expect(runtimeEnvsOf('linuxmusl')).toEqual(['node', 'native']);
         expect(runtimeEnvsOf('darwin')).toEqual(['node', 'native', 'app']);
-        expect(runtimeEnvsOf('android')).toEqual([]);
+        expect(runtimeEnvsOf('android')).toEqual(['app']);
         expect(runtimeEnvsOf('ios')).toEqual(['app']);
     });
 });

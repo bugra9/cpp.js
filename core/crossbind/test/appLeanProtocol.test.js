@@ -2,8 +2,8 @@ import { beforeAll, describe, expect, test } from 'vitest';
 import { installHost } from '../../app-host/js/lean-host.js';
 import { connect } from '../../app-host/js/lean-client.js';
 
-// The two sides of an app's protocol joined in one process: the page's messages reach the host directly, and the
-// requests that carry bytes reach its crossbind:// routes through a stand-in fetch.
+// The two sides of an app's protocol joined in one process: the page's messages reach the host directly, and so do
+// the frames and results that carry bytes, as the host's byte routes take them.
 
 const points = [];
 class Point {
@@ -75,7 +75,17 @@ const transport = {
         pending.set(call, resolve);
         setImmediate(() => globalThis.__crossbind_receive(call, text.slice(TOKEN.length)));
     }),
-    base: 'crossbind://app',
+    // As the host's byte routes answer: a request without the page's token is refused.
+    frame: async (query, body) => {
+        requests.push('frame');
+        if (new URLSearchParams(query).get('t') !== TOKEN) throw new Error("crossbind: this request does not carry the page's token");
+        return globalThis.__crossbind_frame(query, body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength));
+    },
+    result: async (query) => {
+        requests.push('result');
+        if (new URLSearchParams(query).get('t') !== TOKEN) throw new Error("crossbind: this request does not carry the page's token");
+        return globalThis.__crossbind_result(query).slice().buffer;
+    },
     attachBytes: 8,
     token: TOKEN,
 };
@@ -86,19 +96,6 @@ beforeAll(async () => {
     globalThis.__host_reply = (call, text) => {
         pending.get(call)(text);
         pending.delete(call);
-    };
-    // As the host's crossbind:// routes answer: a request without the page's token is refused.
-    globalThis.fetch = async (url, init = {}) => {
-        const { pathname, search, searchParams } = new URL(url);
-        requests.push(pathname);
-        if (searchParams.get('t') !== TOKEN) return { ok: false, status: 403, text: async () => '' };
-        if (pathname === '/b/frame') {
-            const { body } = init;
-            const text = globalThis.__crossbind_frame(search.slice(1), body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength));
-            return { ok: true, status: 200, text: async () => text };
-        }
-        const view = globalThis.__crossbind_result(search.slice(1));
-        return { ok: true, status: 200, arrayBuffer: async () => view.slice().buffer };
     };
     installHost(fakeModule, { PRESET: 'build', DATA: '_CROSSBIND_DATA_PATH_/proj', REPLACED: 'build' });
     m = await connect(transport, { RUNTIME: '_CROSSBIND_DATA_PATH_/runtime', REPLACED: 'runtime' });
@@ -150,17 +147,20 @@ describe('the lean protocol of an app', () => {
         expect(await m.byteLengthOf(new DataView(new ArrayBuffer(64)))).toBe(64);
     });
 
-    test('rejects a call whose byte request the host refuses, with what the host answered', async () => {
-        const { fetch } = globalThis;
-        globalThis.fetch = async () => ({ ok: false, status: 500, text: async () => 'crossbind: bad frame' });
+    test('rejects a call whose frame the host refuses, with what the host answered, and goes on', async () => {
+        const { frame } = transport;
+        transport.frame = async () => {
+            throw new Error('crossbind: bad frame');
+        };
         try {
             await expect(m.sum(new Uint8Array(64))).rejects.toMatchObject({ message: 'crossbind: bad frame' });
         } finally {
-            globalThis.fetch = fetch;
+            transport.frame = frame;
         }
+        expect(await m.add(1, 2)).toBe(3);
     });
 
-    test('sends a large byte array with the request that carries it, and fetches a large result', async () => {
+    test('sends a large byte array with the frame that carries it, and asks for a large result', async () => {
         requests.length = 0;
         const bytes = Uint8Array.from({ length: 64 }, (_, i) => i);
 
@@ -170,7 +170,7 @@ describe('the lean protocol of an app', () => {
         expect(filled).toBeInstanceOf(Uint8Array);
         expect(filled.length).toBe(8192);
         expect(filled.every((byte) => byte === 7)).toBe(true);
-        expect(requests).toEqual(['/b/frame', '/b/result']);
+        expect(requests).toEqual(['frame', 'result']);
     });
 
     test("leaves a variable the process has to the build's env, lets initNative()'s replace one, and fills in the data path", () => {

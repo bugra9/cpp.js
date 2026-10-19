@@ -63,7 +63,10 @@ export default function createLib(target, fileType, options = {}) {
     const httpHeader = target.platform === 'wasi' && !state.config.build.withBuildConfig
         ? getFilesFingerprint([wasiHttpHeader(state.config.paths.cli)])
         : null;
-    const flagsFingerprint = getContentHash(JSON.stringify(httpHeader ? [keyInputs, httpHeader] : keyInputs));
+    // An Android app links the project's archives from the build where React Native's shared library comes from.
+    const appArchives = target.platform === 'android' && target.runtimeEnv === 'app' ? 'archives' : null;
+    const extraKeys = [httpHeader, appArchives].filter(Boolean);
+    const flagsFingerprint = getContentHash(JSON.stringify(extraKeys.length ? [keyInputs, ...extraKeys] : keyInputs));
     const flagsChanged = !fs.existsSync(flagsFingerprintFile)
         || fs.readFileSync(flagsFingerprintFile, { encoding: 'utf8' }) !== flagsFingerprint;
 

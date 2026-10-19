@@ -149,14 +149,15 @@ const BASE_TARGETS = [
 ];
 
 // A native executable links the same archives as the Node-API addon of its platform and arch, and so does an app's
-// host on macOS and glibc Linux. An iOS app links the archives React Native does, one target per SDK.
+// host on macOS and glibc Linux. An iOS or Android app links the archives React Native does, one target per SDK or
+// ABI.
 export const TARGETS = [
     ...BASE_TARGETS,
     ...BASE_TARGETS
         .filter((target) => target.runtimeEnv === 'node' && target.platform !== 'wasm')
         .map((target) => ({ ...target, runtimeEnv: 'native' })),
     ...BASE_TARGETS
-        .filter((target) => (target.runtimeEnv === 'node' && ['darwin', 'linux'].includes(target.platform)) || target.platform === 'ios')
+        .filter((target) => (target.runtimeEnv === 'node' && ['darwin', 'linux'].includes(target.platform)) || ['ios', 'android'].includes(target.platform))
         .map((target) => ({ ...target, runtimeEnv: 'app' })),
 ];
 
@@ -167,8 +168,8 @@ export const OPT_IN_PLATFORMS = ['darwin', 'linux', 'linuxmusl', 'win32'];
 // Built on the host itself: Apple's linker and SDKs exist in no toolchain image.
 export const HOST_BUILT_PLATFORMS = ['ios', 'darwin'];
 
-// The runtime environment names the binary a build makes; android has none, since React Native
-// links it, and ios only the app.
+// The runtime environment names the binary a build makes; on android and ios React Native links
+// the archives, and the app is the one binary.
 export const runtimeEnvsOf = (platform) => [
     ...new Set(TARGETS.filter((target) => target.platform === platform && target.runtimeEnv).map((target) => target.runtimeEnv)),
 ];
@@ -208,7 +209,8 @@ export const wasiNamesOf = (target, projectName) => ({
 });
 
 // One app per platform, arch and build type, and one page runtime per build type for all of them. A macOS app is a
-// bundle; a Linux app a directory; an iOS one what its SDK brings to the app's Xcode project.
+// bundle; a Linux app a directory; an iOS or Android one what its SDK or ABI brings to the app's Xcode or Gradle
+// project.
 export function appNamesOf(target, projectName) {
     const suffix = target.buildType === 'debug' ? '.debug' : '';
     return {
