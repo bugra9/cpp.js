@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import upath from 'upath';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 // What an Android app's build asks of the steps it shares with React Native's Android build.
@@ -71,12 +72,13 @@ describe('an Android app build', () => {
 
     test("links a package's shared library on Android, its archive where it has one, and archives alone elsewhere", async () => {
         const { default: getDependLibs } = await import('../src/actions/getDependLibs.js');
+        // crossbind holds paths with forward slashes, Windows' among them.
         const lib = (dir, file) => {
-            fs.mkdirSync(path.join(work, 'dep', 'prebuilt', dir, 'lib'), { recursive: true });
-            fs.writeFileSync(path.join(work, 'dep', 'prebuilt', dir, 'lib', file), '');
-            return path.join(work, 'dep', 'prebuilt', dir, 'lib', file);
+            fs.mkdirSync(upath.join(work, 'dep', 'prebuilt', dir, 'lib'), { recursive: true });
+            fs.writeFileSync(upath.join(work, 'dep', 'prebuilt', dir, 'lib', file), '');
+            return upath.join(work, 'dep', 'prebuilt', dir, 'lib', file);
         };
-        const dependency = { export: { libName: ['dep'] }, paths: { output: path.join(work, 'dep'), project: work }, targetSpecs: [] };
+        const dependency = { export: { libName: ['dep'] }, paths: { output: upath.join(work, 'dep'), project: upath.normalize(work) }, targetSpecs: [] };
         holder.config.dependencyParameters.getCmakeDepends = () => [dependency];
         const shared = lib('android-x86_64-mt-release', 'libdep.so');
         lib('linux-x64-mt-release', 'libdep.so');
