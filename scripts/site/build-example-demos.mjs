@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -14,13 +14,16 @@ import { readNativeVersions } from './native-versions.mjs';
 // Builds the live demos the Examples page links to: each web example is scaffolded with the same
 // `npm create crossbind@<tag>` command the page shows, installed from npm, built for its subpath
 // and copied under landing/public/examples/<id>/. Every demo is then loaded in a browser from
-// that subpath before it is accepted. Needs the network, Docker (the toolchain image) and the
-// workspace's Playwright. The output directory is generated, not committed.
+// that subpath before it is accepted. A demo whose record shows that nothing it is built from
+// changed is kept as it is. Needs the network, Docker (the toolchain image) and the workspace's
+// Playwright. The output directory is generated, not committed.
 
 const execFileAsync = promisify(execFile);
 export const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const DEMOS_ROOT = path.join(REPOSITORY_ROOT, 'landing', 'public', 'examples');
 export const MANIFEST_NAME = 'demos.json';
+// Each demo's own record, beside its files: what it was built from and the manifest entry it made.
+export const RECORD_NAME = 'demo.json';
 
 // The web templates and how each one hosts under /examples/<id>/. `vite` builds with --base and
 // `rspack` already emits relative asset URLs. Older releases need a compatibility patch for
@@ -243,6 +246,67 @@ export function sampleSourceHash(sample) {
     return hash.digest('hex');
 }
 
+// What a demo is built with besides its own files.
+const BUILDER_INPUTS = ['scripts/site/build-example-demos.mjs', 'scripts/site/native-versions.mjs'];
+// What every sample takes from this repository besides its project: crossbind and the Rust kit as the compiler image
+// carries them, the lockfile and settings they deploy with, the compiler's packages and the playground's runner.
+const SAMPLE_INPUTS = [
+    'core/crossbind',
+    'core/embind-rust',
+    'tooling/cloud/compiler',
+    'tooling/cloud/scripts/node-modules.mjs',
+    'landing/demos/sample',
+    'landing/src/playground',
+    ':(exclude)landing/src/playground/samples',
+    'package.json',
+    'pnpm-workspace.yaml',
+    'pnpm-lock.yaml',
+];
+
+// The files under each path that a checkout holds, by name and content; what git ignores, an install say, stays out.
+export function treeHash(paths, root = REPOSITORY_ROOT) {
+    const listed = execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard', '--', ...paths], {
+        cwd: root,
+        encoding: 'utf8',
+    });
+    const hash = crypto.createHash('sha256');
+    [...new Set(listed.split('\0').filter(Boolean))]
+        .filter((file) => fs.statSync(path.join(root, file), { throwIfNoEntry: false })?.isFile())
+        .sort()
+        .forEach((file) =>
+            hash
+                .update(`${file}\0`)
+                .update(fs.readFileSync(path.join(root, file)))
+                .update('\0'),
+        );
+    return hash.digest('hex');
+}
+
+// What a demo's files are made from: its entry, the channel and the builder, then a source demo's directory or a
+// sample's project and what it takes from this repository. A demo from npm is also bound to the crossbind its record
+// shows, which reusableEntry compares.
+export function demoFingerprint(demo, { distTag, builder, samples }) {
+    const hash = crypto.createHash('sha256').update(`${JSON.stringify(demo)}\0${distTag}\0${builder}\0`);
+    if (demo.kind === 'source') hash.update(treeHash([`landing/demos/${demo.source ?? demo.id}`]));
+    if (demo.kind === 'sample') hash.update(`${sampleSourceHash(sampleOf(demo))}\0${samples}`);
+    return hash.digest('hex');
+}
+
+// A demo is already built while its record names the same inputs and, for one installed from npm, the crossbind the
+// channel resolves to now.
+export function reusableEntry(demo, record, { fingerprint, version }) {
+    if (record?.fingerprint !== fingerprint) return null;
+    return demo.kind === 'sample' || record.demo.crossbind === version ? record.demo : null;
+}
+
+// A demo dropped from DEMOS would otherwise live on in a restored cache, and in the deployed site.
+export function removeDroppedDemos(root = DEMOS_ROOT) {
+    if (!fs.existsSync(root)) return;
+    fs.readdirSync(root)
+        .filter((name) => !DEMOS.some((demo) => demo.id === name) && fs.existsSync(path.join(root, name, RECORD_NAME)))
+        .forEach((name) => fs.rmSync(path.join(root, name), { recursive: true, force: true }));
+}
+
 // The sample in the compiler's template as a compile writes it (tooling/cloud/compiler/compile.js), with crossbind and
 // the packages in node_modules: inside the project, which is all a build's container sees.
 function writeSampleProject(sample, project, { cli, modules }) {
@@ -403,9 +467,23 @@ export async function buildExampleDemos({ channel, only = null } = {}) {
     const distTag = channelDistTag(channel);
     const suffix = distTagSuffix(channel);
     const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-demos-'));
+    const version = (await run('npm', ['view', `crossbind@${distTag}`, 'version'], workspace)).stdout.trim();
+    const inputs = { distTag, builder: treeHash(BUILDER_INPUTS), samples: treeHash(SAMPLE_INPUTS) };
+    removeDroppedDemos();
     const built = [];
     let samples = null;
     for (const demo of DEMOS.filter((entry) => !only || only.includes(entry.id))) {
+        const out = path.join(DEMOS_ROOT, demo.id);
+        const recordFile = path.join(out, RECORD_NAME);
+        const fingerprint = demoFingerprint(demo, inputs);
+        const record =
+            fs.existsSync(recordFile) && fs.existsSync(path.join(out, 'index.html')) ? JSON.parse(fs.readFileSync(recordFile, 'utf8')) : null;
+        const reused = reusableEntry(demo, record, { fingerprint, version });
+        if (reused) {
+            log(`${demo.id}: unchanged since its last build, kept`);
+            built.push(reused);
+            continue;
+        }
         const project = path.join(workspace, demo.id);
         if (demo.kind === 'source') {
             const source = demo.source ?? demo.id;
@@ -425,7 +503,6 @@ export async function buildExampleDemos({ channel, only = null } = {}) {
         // installed package directly instead of asking npm ls, which exits non-zero for those.
         const installed = path.join(project, 'node_modules', 'crossbind', 'package.json');
         const crossbindVersion = fs.existsSync(installed) ? JSON.parse(fs.readFileSync(installed, 'utf8')).version : null;
-        const out = path.join(DEMOS_ROOT, demo.id);
         fs.rmSync(out, { recursive: true, force: true });
         const artifact = await BUILDERS[demo.kind](project, demo.id, out);
         const onScreen = await verifyDemo(demo.id);
@@ -437,7 +514,9 @@ export async function buildExampleDemos({ channel, only = null } = {}) {
             throw new Error(`${demo.id}: main.js did not run to its end; saw "${onScreen.slice(-120)}"`);
         }
         log(`${demo.id}: ok - "${onScreen.slice(0, 80)}"`);
-        built.push({ id: demo.id, href: `/examples/${demo.id}/`, crossbind: crossbindVersion, onScreen, ...(artifact ?? {}) });
+        const entry = { id: demo.id, href: `/examples/${demo.id}/`, crossbind: crossbindVersion, onScreen, ...(artifact ?? {}) };
+        fs.writeFileSync(recordFile, `${JSON.stringify({ fingerprint, demo: entry }, null, 2)}\n`);
+        built.push(entry);
     }
     // A partial run (--only) keeps the other demos already on disk in the manifest.
     const manifestFile = path.join(DEMOS_ROOT, MANIFEST_NAME);

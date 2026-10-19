@@ -4,7 +4,16 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { APP_LIST, PREVIEW_THEMES, previewOf } from '../../../landing/src/apps/appList.js';
-import { assertAppPreviews, captureAppPreviews, missingPreviews, previewArea } from '../capture-app-previews.mjs';
+import { RECORD_NAME } from '../build-example-demos.mjs';
+import {
+    assertAppPreviews,
+    captureAppPreviews,
+    missingPreviews,
+    previewArea,
+    previewsFingerprint,
+    previewsRecord,
+    previewsUpToDate,
+} from '../capture-app-previews.mjs';
 
 const EVERY_PICTURE = APP_LIST.flatMap((app) => PREVIEW_THEMES.map((theme) => previewOf(app.id, theme)));
 
@@ -58,4 +67,34 @@ test('the gate counts what it does not list', () => {
     withDist([], (dist) => {
         assert.throws(() => assertAppPreviews(dist), new RegExp(` and ${EVERY_PICTURE.length - 3} more; `));
     });
+});
+
+test('the pictures are kept while every one is there and their record names what they are taken from', () => {
+    withDist(EVERY_PICTURE, (dist) => {
+        assert.equal(previewsUpToDate('f', dist), false);
+        fs.writeFileSync(previewsRecord(dist), JSON.stringify({ fingerprint: 'f' }));
+        assert.equal(previewsUpToDate('f', dist), true);
+        assert.equal(previewsUpToDate('g', dist), false);
+        fs.rmSync(path.join(dist, EVERY_PICTURE[0]));
+        assert.equal(previewsUpToDate('f', dist), false);
+    });
+});
+
+test('the pictures follow the library modules the apps run, not the other demos', () => {
+    const demos = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-app-previews-demos-'));
+    const record = (id, crossbind) => {
+        fs.mkdirSync(path.join(demos, id), { recursive: true });
+        fs.writeFileSync(path.join(demos, id, RECORD_NAME), JSON.stringify({ fingerprint: 'f', demo: { id, crossbind } }));
+    };
+    try {
+        record('lib-zstd', '2.0.0-beta.64');
+        record('web-vanilla', '2.0.0-beta.64');
+        const before = previewsFingerprint(demos);
+        record('web-vanilla', '2.0.0-beta.65');
+        assert.equal(previewsFingerprint(demos), before);
+        record('lib-zstd', '2.0.0-beta.65');
+        assert.notEqual(previewsFingerprint(demos), before);
+    } finally {
+        fs.rmSync(demos, { recursive: true, force: true });
+    }
 });

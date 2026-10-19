@@ -1,9 +1,21 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import { assertDemosMatchSnapshot, DEMOS, REPOSITORY_ROOT, patchBundles, sampleSourceHash } from '../build-example-demos.mjs';
+import {
+    assertDemosMatchSnapshot,
+    DEMOS,
+    demoFingerprint,
+    RECORD_NAME,
+    REPOSITORY_ROOT,
+    patchBundles,
+    removeDroppedDemos,
+    reusableEntry,
+    sampleSourceHash,
+    treeHash,
+} from '../build-example-demos.mjs';
 
 const snapshot = { version: '2.0.0-beta.56' };
 const sourcesOf = (demo) => (demo.kind === 'sample' ? { sources: sampleSourceHash(demo.id.replace(/^sample-/, '')) } : {});
@@ -114,4 +126,64 @@ test('with a dist root, every demo page has to be in the build', () => {
         () => assertDemosMatchSnapshot(manifestFor(snapshot.version), snapshot, { distRoot: dist }),
         new RegExp(`not in the build: ${DEMOS.at(-1).id}`),
     );
+});
+
+test('a tree hash follows the content of the files a checkout holds and skips what git ignores', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-tree-hash-'));
+    try {
+        execFileSync('git', ['init', '--quiet'], { cwd: root });
+        fs.mkdirSync(path.join(root, 'demo', 'node_modules'), { recursive: true });
+        fs.writeFileSync(path.join(root, '.gitignore'), 'node_modules/\n');
+        fs.writeFileSync(path.join(root, 'demo', 'index.html'), 'one');
+        const before = treeHash(['demo'], root);
+        fs.writeFileSync(path.join(root, 'demo', 'node_modules', 'installed.js'), 'ignored');
+        assert.equal(treeHash(['demo'], root), before);
+        fs.writeFileSync(path.join(root, 'demo', 'index.html'), 'two');
+        assert.notEqual(treeHash(['demo'], root), before);
+    } finally {
+        fs.rmSync(root, { recursive: true, force: true });
+    }
+});
+
+test('a demo fingerprint moves with what the demo is built from, and nothing else', () => {
+    const inputs = { distTag: 'beta', builder: 'builder', samples: 'samples' };
+    const byId = (id) => DEMOS.find((demo) => demo.id === id);
+    const [lib, template, sample] = ['lib-zstd', 'web-vanilla', 'sample-hello'].map(byId);
+    assert.equal(demoFingerprint(lib, inputs), demoFingerprint(lib, inputs));
+    assert.notEqual(demoFingerprint(lib, inputs), demoFingerprint(byId('lib-zstd-direct'), inputs));
+    assert.notEqual(demoFingerprint(lib, inputs), demoFingerprint(lib, { ...inputs, builder: 'changed' }));
+    assert.notEqual(demoFingerprint(template, inputs), demoFingerprint(template, { ...inputs, distTag: 'next' }));
+    assert.equal(demoFingerprint(lib, inputs), demoFingerprint(lib, { ...inputs, samples: 'changed' }));
+    assert.notEqual(demoFingerprint(sample, inputs), demoFingerprint(sample, { ...inputs, samples: 'changed' }));
+});
+
+test('a demo is kept while its record names the same inputs, and the same crossbind for one installed from npm', () => {
+    const lib = DEMOS.find((demo) => demo.kind === 'source');
+    const sample = DEMOS.find((demo) => demo.kind === 'sample');
+    const record = { fingerprint: 'f', demo: { id: lib.id, crossbind: '2.0.0-beta.64' } };
+    assert.equal(reusableEntry(lib, record, { fingerprint: 'f', version: '2.0.0-beta.64' }), record.demo);
+    assert.equal(reusableEntry(lib, record, { fingerprint: 'g', version: '2.0.0-beta.64' }), null);
+    assert.equal(reusableEntry(lib, record, { fingerprint: 'f', version: '2.0.0-beta.65' }), null);
+    assert.equal(reusableEntry(lib, null, { fingerprint: 'f', version: '2.0.0-beta.64' }), null);
+    const built = { fingerprint: 'f', demo: { id: sample.id, crossbind: '2.0.0-beta.63' } };
+    assert.equal(reusableEntry(sample, built, { fingerprint: 'f', version: '2.0.0-beta.64' }), built.demo);
+});
+
+test('a demo the builder no longer lists is removed, and nothing it did not build', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-demos-dropped-'));
+    try {
+        assert.doesNotThrow(() => removeDroppedDemos(path.join(root, 'none yet')));
+        for (const [dir, file] of [
+            ['lib-zstd', RECORD_NAME],
+            ['lib-gone', RECORD_NAME],
+            ['apps', 'lib-zstd-light.webp'],
+        ]) {
+            fs.mkdirSync(path.join(root, dir));
+            fs.writeFileSync(path.join(root, dir, file), '{}');
+        }
+        removeDroppedDemos(root);
+        assert.deepEqual(fs.readdirSync(root).toSorted(), ['apps', 'lib-zstd']);
+    } finally {
+        fs.rmSync(root, { recursive: true, force: true });
+    }
 });

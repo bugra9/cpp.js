@@ -1,13 +1,16 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { APP_LIST, PREVIEW_HEIGHT, PREVIEW_THEMES, PREVIEW_WIDTH, previewOf } from '../../landing/src/apps/appList.js';
+import { DEMOS, DEMOS_ROOT, RECORD_NAME, treeHash } from './build-example-demos.mjs';
 
 // The pictures on /examples/: every library app run once on its library's page in each theme, its output saved as
 // the WebP its card shows. `pnpm run previews` runs this under prepare-site, which it needs to start the landing dev
 // server, once `pnpm run demos` has built the modules the apps load; the deploy check (assertAppPreviews) refuses a
 // site that lacks a picture. --base-url points it at a site that is already running, --only at some of the apps.
+// A full capture is skipped while every picture is there and its record names what they are taken from.
 
 const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const LANDING = path.join(REPOSITORY_ROOT, 'landing');
@@ -47,6 +50,27 @@ export function assertAppPreviews(distRoot) {
         throw new Error(`app pictures are missing: ${missing.slice(0, 3).join(', ')}${more}; run pnpm run previews before the build.`);
     }
     return APP_LIST.length;
+}
+
+// What the pictures show besides the library modules: the site's own files and this capture.
+const PREVIEW_INPUTS = ['landing', ':(exclude)landing/demos', 'scripts/site/capture-app-previews.mjs'];
+
+// Beside the pictures previewOf names: what they were taken from.
+export const previewsRecord = (publicDir = PUBLIC_DIR) => path.join(publicDir, 'examples', 'apps', 'previews.json');
+
+// The site and the library modules its apps run, as their build records name them.
+export function previewsFingerprint(demosRoot = DEMOS_ROOT) {
+    const hash = crypto.createHash('sha256').update(`${treeHash(PREVIEW_INPUTS)}\0`);
+    for (const demo of DEMOS.filter((entry) => entry.kind === 'source')) {
+        const record = path.join(demosRoot, demo.id, RECORD_NAME);
+        hash.update(`${demo.id}\0${fs.existsSync(record) ? fs.readFileSync(record, 'utf8') : ''}\0`);
+    }
+    return hash.digest('hex');
+}
+
+export function previewsUpToDate(fingerprint, publicDir = PUBLIC_DIR) {
+    const record = previewsRecord(publicDir);
+    return !missingPreviews(publicDir).length && fs.existsSync(record) && JSON.parse(fs.readFileSync(record, 'utf8')).fingerprint === fingerprint;
 }
 
 // No file watching: an edit during the capture would reload the page under it.
@@ -175,6 +199,9 @@ async function captureTheme(browser, converter, siteUrl, apps, theme) {
 export async function captureAppPreviews({ baseUrl, only } = {}) {
     const unknown = (only ?? []).filter((id) => !APP_LIST.some((app) => app.id === id));
     if (unknown.length) throw new Error(`there is no app ${unknown.join(', ')}.`);
+    // Only a full capture of this checkout's own site can vouch for every picture.
+    const fingerprint = only || baseUrl ? null : previewsFingerprint();
+    if (fingerprint && previewsUpToDate(fingerprint)) return { captured: 0, kept: APP_LIST.length * PREVIEW_THEMES.length, failed: [] };
     const apps = only ? APP_LIST.filter((app) => only.includes(app.id)) : APP_LIST;
     const site = baseUrl ? { url: baseUrl, close: async () => {} } : await startSite();
     try {
@@ -183,7 +210,8 @@ export async function captureAppPreviews({ baseUrl, only } = {}) {
             const converter = await browser.newPage();
             const failed = [];
             for (const theme of PREVIEW_THEMES) failed.push(...(await captureTheme(browser, converter, site.url, apps, theme)));
-            return { captured: apps.length * PREVIEW_THEMES.length - failed.length, failed };
+            if (fingerprint && !failed.length) fs.writeFileSync(previewsRecord(), `${JSON.stringify({ fingerprint })}\n`);
+            return { captured: apps.length * PREVIEW_THEMES.length - failed.length, kept: 0, failed };
         } finally {
             await browser.close();
         }
@@ -197,8 +225,8 @@ async function main(argv) {
         const index = argv.indexOf(flag);
         return index === -1 ? undefined : argv[index + 1];
     };
-    const { captured, failed } = await captureAppPreviews({ baseUrl: valueOf('--base-url'), only: valueOf('--only')?.split(',') });
-    log(`Captured ${captured} app pictures.`);
+    const { captured, kept, failed } = await captureAppPreviews({ baseUrl: valueOf('--base-url'), only: valueOf('--only')?.split(',') });
+    log(kept ? `Kept the ${kept} app pictures: nothing they are taken from changed.` : `Captured ${captured} app pictures.`);
     if (failed.length) throw new Error(`no picture of ${failed.join(', ')}.`);
 }
 
