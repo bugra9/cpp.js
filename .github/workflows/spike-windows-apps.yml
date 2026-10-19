@@ -1,0 +1,49 @@
+name: spike windows apps
+# The Windows apps spike's own runs, on pushes to its branch alone: what builds in crossbind's windows image on Linux,
+# run on Windows for x64 and arm64.
+on:
+    push:
+        branches:
+            - test/app-host/windows-apps-spike
+
+permissions: {}
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+            - name: Build Hermes and the smoke test in crossbind's windows image
+              run: |
+                  mkdir -p out
+                  image=ghcr.io/crossbind/windows@sha256:040fb03c9c78185a897f2a70fb1771052e230b35cea5992f6aed72a6fdd6067a
+                  docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD/spike/windows:/spike:ro" -v "$PWD/out:/out" "$image" bash /spike/build.sh /out
+            - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+              with:
+                  name: windows-spike
+                  path: |
+                      out/x64/hermes-smoke.exe
+                      out/arm64/hermes-smoke.exe
+                      out/smoke.hbc
+    run:
+        needs: build
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - { os: windows-latest, arch: x64 }
+                    - { os: windows-11-arm, arch: arm64 }
+        runs-on: ${{ matrix.os }}
+        timeout-minutes: 15
+        steps:
+            - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+              with:
+                  name: windows-spike
+            - name: Run Hermes on Windows
+              shell: pwsh
+              run: |
+                  & ".\${{ matrix.arch }}\hermes-smoke.exe" smoke.hbc
+                  if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
