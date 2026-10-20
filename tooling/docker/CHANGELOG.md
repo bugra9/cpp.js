@@ -1,5 +1,14 @@
 # @crossbind/docker
 
+## Image family 1.0.15
+
+### Patch Changes
+
+- The `windows` image carries what a Windows app's host compiles and links against, for x64 and
+  arm64: Hermes 250829098.0.17, built from its pinned source with llvm-mingw, and the headers of
+  the WebView2 SDK 1.0.4258.31 (BSD-3-Clause), checked against the SHA-256 of their NuGet package.
+  The app loads the WebView2 runtime the system carries, so no loader ships. zip archives the app.
+
 ## Image family 1.0.14
 
 ### Patch Changes
