@@ -20,6 +20,10 @@ export default {
     target: {
         runtimeEnv: 'app',
     },
+    // Smaller than every runner's display, which would hold the window to less; src/main.js checks the page has it.
+    app: {
+        window: { width: 800, height: 600 },
+    },
     paths: {
         config: import.meta.url,
         base: '../..',

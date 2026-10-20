@@ -53,7 +53,7 @@ describe('an iOS app\'s Xcode project', () => {
         const to = path.join(root, 'with space', 'demo-ios');
         const sim = part(root, 'iphonesimulator');
 
-        writeXcodeProject(to, { parts: [sim], identity: { id: 'com.example.demo', team: 'ABCDE12345' }, version: '1.2.3' });
+        writeXcodeProject(to, { parts: [sim], identity: { id: 'com.example.demo', team: 'ABCDE12345' }, label: 'Demo & App', version: '1.2.3' });
 
         const project = fs.readFileSync(path.join(to, 'demo.xcodeproj', 'project.pbxproj'), 'utf8');
         expect(fs.readFileSync(path.join(to, 'lib', 'iphonesimulator', '0-libdemo.a'), 'utf8')).toBe('archive');
@@ -65,6 +65,7 @@ describe('an iOS app\'s Xcode project', () => {
         expect(project).toContain('"DEVELOPMENT_TEAM" = "ABCDE12345";');
         expect(project).toContain('"MARKETING_VERSION" = "1.2.3";');
         expect(fs.readFileSync(path.join(to, 'Info.plist'), 'utf8')).toContain('<key>LSRequiresIPhoneOS</key>\n    <true/>');
+        expect(fs.readFileSync(path.join(to, 'Info.plist'), 'utf8')).toContain('<key>CFBundleDisplayName</key>\n    <string>Demo &amp; App</string>');
         expect(fs.readFileSync(path.join(to, 'main.m'), 'utf8')).toContain('return crossbind_app_main(argc, argv);');
         expect(spawnSync).toHaveBeenCalledWith('xcodebuild', [
             '-create-xcframework', '-framework', `${sim.dir}/hermesvm.framework`, '-output', `${to}/Frameworks/hermesvm.xcframework`,

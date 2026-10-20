@@ -98,6 +98,9 @@ void forward(int fd, int priority) {
 
 std::string resourceDir() { return resources; }
 
+// The app's output goes to logcat, which has the reason already.
+void showError(const std::string &) {}
+
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *) {
     vm = jvm;
     forward(STDOUT_FILENO, ANDROID_LOG_INFO);

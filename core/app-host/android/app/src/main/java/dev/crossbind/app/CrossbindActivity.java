@@ -2,6 +2,7 @@ package dev.crossbind.app;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
@@ -17,6 +18,7 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.webkit.ConsoleMessage;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -24,6 +26,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 
 import androidx.webkit.WebMessageCompat;
 import androidx.webkit.WebMessagePortCompat;
@@ -36,8 +40,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -76,6 +82,12 @@ public class CrossbindActivity extends Activity {
     private WebMessagePortCompat port;
     private String token;
     private final Set<String> origins = new HashSet<>();
+    // A file input's picker answers in onActivityResult, under the request code of the latest one.
+    private int pickRequest;
+    private ValueCallback<Uri[]> pendingFiles;
+    // Back walks the page's history first, as in a browser; with none left, the system's own back leaves the app.
+    private final OnBackInvokedCallback back = () -> webView.goBack();
+    private boolean isBackTaken;
 
     // Starts the module, once per process, and returns the page's token and the dev server's page, or "".
     private static native String[] nativeStart(String files, String devUrl);
@@ -164,7 +176,7 @@ public class CrossbindActivity extends Activity {
             if (isMainFrame) handOverPort(origin, message.getData());
         });
         webView.setWebViewClient(new PageClient());
-        if (!devUrl.isEmpty() || (isDebuggable && getIntent().hasExtra("CROSSBIND_APP_CONSOLE"))) webView.setWebChromeClient(new ConsoleClient());
+        webView.setWebChromeClient(new PageChrome(!devUrl.isEmpty() || (isDebuggable && getIntent().hasExtra("CROSSBIND_APP_CONSOLE"))));
         // The page stays clear of the system bars, the display cutout and the keyboard.
         FrameLayout frame = new FrameLayout(this);
         frame.addView(webView);
@@ -189,6 +201,36 @@ public class CrossbindActivity extends Activity {
         boolean isDark = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
         int light = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
         getWindow().getInsetsController().setSystemBarsAppearance(isDark ? 0 : light, light);
+    }
+
+    @Override
+    protected void onActivityResult(int request, int result, Intent data) {
+        super.onActivityResult(request, result, data);
+        if (request != pickRequest || pendingFiles == null) return;
+        pendingFiles.onReceiveValue(pickedFiles(result, data));
+        pendingFiles = null;
+    }
+
+    // What the picker chose, several files as clip data, and as content URIs alone: a file URI, such as one of this app's
+    // own files a picker could name, stays out.
+    private static Uri[] pickedFiles(int result, Intent data) {
+        if (result != RESULT_OK || data == null) return null;
+        List<Uri> picked = new ArrayList<>();
+        ClipData clip = data.getClipData();
+        if (clip == null) picked.add(data.getData());
+        else for (int i = 0; i < clip.getItemCount(); i += 1) picked.add(clip.getItemAt(i).getUri());
+        Uri[] files = picked.stream().filter((uri) -> uri != null && "content".equals(uri.getScheme())).toArray(Uri[]::new);
+        return files.length == 0 ? null : files;
+    }
+
+    // The callback is taken only while the page has history to go back to, so the system's back animates leaving.
+    private void matchBack() {
+        boolean canGoBack = webView.canGoBack();
+        if (canGoBack == isBackTaken) return;
+        OnBackInvokedDispatcher dispatcher = getOnBackInvokedDispatcher();
+        if (canGoBack) dispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, back);
+        else dispatcher.unregisterOnBackInvokedCallback(back);
+        isBackTaken = canGoBack;
     }
 
     @Override
@@ -286,6 +328,10 @@ public class CrossbindActivity extends Activity {
             return response(nativeRequest(path.getBytes(StandardCharsets.UTF_8), query == null ? "" : query));
         }
 
+        @Override
+        public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
+            matchBack();
+        }
     }
 
     // A new page replaced the one whose objects the module holds, and gets a port of its own: the old page's port is
@@ -305,15 +351,38 @@ public class CrossbindActivity extends Activity {
                 origin);
     }
 
-    private static final class ConsoleClient extends WebChromeClient {
+    // Without a WebChromeClient the WebView shows no alert(), confirm() or prompt(), and no picker for a file input.
+    private final class PageChrome extends WebChromeClient {
+        private final boolean isConsoleShown;
+
+        PageChrome(boolean isConsoleShown) {
+            this.isConsoleShown = isConsoleShown;
+        }
+
         @Override
         public boolean onConsoleMessage(ConsoleMessage message) {
+            if (!isConsoleShown) return true;
             int priority = switch (message.messageLevel()) {
                 case ERROR -> Log.ERROR;
                 case WARNING -> Log.WARN;
                 default -> Log.INFO;
             };
             Log.println(priority, TAG, message.message());
+            return true;
+        }
+
+        @Override
+        public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> files, FileChooserParams params) {
+            Intent intent = params.createIntent();
+            if (params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            try {
+                startActivityForResult(intent, ++pickRequest);
+            } catch (ActivityNotFoundException none) {
+                Log.w(TAG, "nothing on this device picks a file");
+                return false;
+            }
+            if (pendingFiles != null) pendingFiles.onReceiveValue(null);
+            pendingFiles = files;
             return true;
         }
     }

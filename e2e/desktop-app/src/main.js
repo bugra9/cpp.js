@@ -70,6 +70,11 @@ initNative().then(async (m) => {
         // bytes travel over the page's port alone, and the page's origin serves no such request; during development that
         // origin is the dev server's, which answers any path with the page.
         const isAndroid = Boolean(globalThis.__crossbind_port);
+        // The desktop window opens the page at the size app.window gives, whatever frame it adds around it.
+        const isDesktop = !isAndroid && navigator.maxTouchPoints === 0;
+        if (isDesktop && (innerWidth !== 800 || innerHeight !== 600)) {
+            throw new Error(`the page is ${innerWidth} × ${innerHeight}, not the 800 × 600 app.window gives`);
+        }
         if (!isAndroid || !import.meta.env.DEV) {
             const { status } = await fetch(isAndroid ? '/b/result?id=1' : 'crossbind://app/b/result?id=1');
             if (status !== (isAndroid ? 404 : 403)) throw new Error(`the host answered ${status} to a request without the page's token`);

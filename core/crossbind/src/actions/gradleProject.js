@@ -95,7 +95,7 @@ dependencies {
 
 // An Android app as a Gradle project, written anew from the parts its ABI targets built: each brings its libraries,
 // the first also the app's files. Gradle adds Hermes and androidx.webkit from Maven, and makes the APK or the bundle.
-export default function writeGradleProject(to, { parts, id, version }) {
+export default function writeGradleProject(to, { parts, id, label, version }) {
     const { name } = state.config.general;
     if (parts.length === 0) throw new Error(`crossbind: no part of the Android app ${name} is built, so there is no Gradle project to write.`);
     fs.rmSync(to, { recursive: true, force: true });
@@ -104,7 +104,7 @@ export default function writeGradleProject(to, { parts, id, version }) {
     parts.forEach(({ arch, dir }) => fs.cpSync(path.join(dir, 'lib'), path.join(main, 'jniLibs', arch), { recursive: true }));
     fs.cpSync(path.join(parts[0].dir, 'app'), path.join(main, 'assets', 'app'), { recursive: true });
     fs.writeFileSync(path.join(to, 'app', 'build.gradle'), buildGradle({
-        id, label: name, version, abis: parts.map(({ arch }) => arch),
+        id, label, version, abis: parts.map(({ arch }) => arch),
     }));
     return to;
 }
