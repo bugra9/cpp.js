@@ -104,7 +104,7 @@ function declaredSbomPath(projectDir) {
 }
 
 // An app's page is the project's Vite build, which @crossbind/plugin-vite makes into the app of the platform named.
-const APP_PLATFORMS = ['android', 'ios', 'linux', 'macos'];
+const APP_PLATFORMS = ['android', 'ios', 'linux', 'macos', 'windows'];
 
 function projectVite() {
     try {

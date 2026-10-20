@@ -3,7 +3,7 @@
 # Apps — `target.runtimeEnv: 'app'`
 
 > An app whose page runs in the system webview and whose bindings run natively in the app's own process, with no
-> Node.js and no browser engine of its own. macOS, Linux, iOS and Android for now.
+> Node.js and no browser engine of its own. macOS, Linux, Windows, iOS and Android for now.
 
 The page calls the module exactly as a web build that runs its module in a worker does: `initNative()` resolves to the
 module, and every call is awaited. The C++ and Rust behind it run in Hermes, inside the app, with the speed and the
@@ -41,7 +41,8 @@ export default defineConfig({ plugins: [viteCrossbindPlugin()] });
 | `crossbind app dev` | Builds the host for this machine and opens the app on the dev server. An edit to the page reloads it; an edit to native code, or to what the page imports from it, rebuilds the host and opens the app again. The page's console shows in the terminal, and closing the window ends the session. |
 | `crossbind app build` | Builds the page and the host and writes the app: `dist/<name>.app`, signed ad hoc, on macOS; `dist/<name>-linux-<arch>/` and the same as a `.tar.gz` on Linux. |
 | `crossbind app build -p linux` | Writes the Linux app for x64 and arm64, on a Mac as well: `dist/<name>-linux-x64/` and `dist/<name>-linux-arm64/`, each with its `.tar.gz`. A Linux app's development session runs on Linux. |
-| `crossbind build -p host -e app` | Builds the host alone, with no page in it: `<paths.output>/<name>.darwin-<arch>.app` on macOS, `<paths.output>/<name>.linux-<arch>` and its `.tar.gz` on Linux. `-p linux` builds a Linux app from a Mac as well. |
+| `crossbind app build -p windows` | Writes the Windows app for x64 and arm64, on a Mac or a Linux machine as well: `dist/<name>-win32-x64/` and `dist/<name>-win32-arm64/`, each with its `.zip`. A Windows app's development session runs on Windows. |
+| `crossbind build -p host -e app` | Builds the host alone, with no page in it: `<paths.output>/<name>.darwin-<arch>.app` on macOS, `<paths.output>/<name>.linux-<arch>` and its `.tar.gz` on Linux. `-p linux` or `-p win32` builds a Linux app, or a Windows app with its `.zip`, from a Mac as well. |
 | `crossbind app dev -p ios` | Builds the host for the iOS Simulator and opens the app there on the dev server: in the Simulator already booted, else in an iPhone of the newest iOS. Edits reload the page or rebuild the host as on the desktop, and ending the app in the Simulator ends the session. |
 | `crossbind app build -p ios` | Builds the page and the host for devices and the Simulator and writes the app's Xcode project, `dist/<name>-ios/` (see [iOS](#ios)). |
 | `crossbind build -p ios -e app` | Writes the Xcode project with no page in it: `<paths.output>/<name>-ios`, or `<name>-ios.debug` for a debug build. |
@@ -50,10 +51,11 @@ export default defineConfig({ plugins: [viteCrossbindPlugin()] });
 | `crossbind build -p android -e app` | Writes the Gradle project with no page in it: `<paths.output>/<name>-android`, or `<name>-android.debug` for a debug build. A release build packages it as `crossbind app build -p android` does. |
 
 `crossbind app` runs the project's Vite with `CROSSBIND_APP_PLATFORM` set to the platform `-p` names, `macos`, `linux`,
-`ios` or `android`; without `-p` it keeps the variable the environment sets, and without that builds this machine's
-desktop app. `vite` and `vite build` take the variable as well, and Vite's own options, such as `--port` or `--mode`,
-pass through `crossbind app` to Vite. A macOS or iOS build fetches Hermes once; Linux and Android apps build in
-crossbind's linux and android-app images, which carry what they compile and link against (see [Hermes](#hermes)).
+`windows`, `ios` or `android`; without `-p` it keeps the variable the environment sets, and without that builds this
+machine's desktop app. `vite` and `vite build` take the variable as well, and Vite's own options, such as `--port` or
+`--mode`, pass through `crossbind app` to Vite. A macOS or iOS build fetches Hermes once; Linux, Windows and Android
+apps build in crossbind's linux, windows and android-app images, which carry what they compile and link against (see
+[Hermes](#hermes)).
 They need `RUNNER=DOCKER_RUN` or `DOCKER_EXEC`, and another runner stops the build before its first step.
 
 ## The page
@@ -88,6 +90,8 @@ the process already has keeps its value.
 ├── <name>                        the window, the webview, Hermes and the bindings, in one executable
 └── resources/                    host.hbc, page/ and data/, as on macOS
 
+<name>-win32-<arch>/              as on Linux, with <name>.exe
+
 <name>-ios/                       an Xcode project, written anew on every build
 ├── <name>.xcodeproj
 ├── main.m                        calls the app, which comes prebuilt
@@ -114,7 +118,9 @@ the process already has keeps its value.
 
 The sample app is 6.7 MB on disk and 1.8 MB zipped (arm64): a 0.8 MB host and a 6 MB Hermes. It shows its first
 native result 0.34 s after launch on an M-series Mac. A Linux app links Hermes into its executable and runs on the
-system's WebKitGTK. Built for iOS devices, the sample is 4.7 MB, 1.3 MB zipped: a 1.3 MB executable and a 3.3 MB Hermes.
+system's WebKitGTK. A Windows app links it in too and runs on the system's WebView2: the sample's executable is 4.6 MB
+on x64, 1.8 MB zipped, and 4.1 MB on arm64, 1.6 MB zipped. Built for iOS devices, the sample is 4.7 MB, 1.3 MB
+zipped: a 1.3 MB executable and a 3.3 MB Hermes.
 The sample's Android release APK is 14.8 MB with both ABIs: each ABI's libraries take 5.5 MB of it (Hermes 2.4 MB, the
 NDK's libc++ 1.4 MB, the host 1 MB), and the Java side 2.9 MB, which R8, off by default, would shrink. Google Play
 delivers one ABI.
@@ -126,8 +132,8 @@ delivers one ABI.
   follows to another page opens in the default browser, and any other navigation away is refused.
 - The host gives the top frame of its page a token, and every message to the module and every call that travels as a
   `crossbind://` request carries it. Markup, such as an image, a frame from another origin and a sandboxed frame
-  cannot read it, so none of them reaches the module. On macOS and iOS the channel also checks the sender's origin,
-  which WebKitGTK does not tell.
+  cannot read it, so none of them reaches the module. On macOS, iOS and Windows the channel also checks the sender's
+  origin, which WebKitGTK does not tell.
 - Responses from `crossbind://` let another origin read them only during development, when the page comes from the
   dev server.
 - Only the debug host the dev server opens reads `CROSSBIND_APP_URL`; a release build always loads its own page.
@@ -203,27 +209,34 @@ its data, and leaves running it to you.
 
 The host runs React Native's Hermes, release `250829098.0.17`, on every platform. For macOS and iOS the first build
 downloads the release for Apple platforms from Maven Central into `~/.crossbind/hermes/` and checks it against the
-sha256 crossbind pins. Android and Linux apps take it from the image they build in. The android-app image carries the
-same release's `hermes-android` AAR, whose headers the host compiles against and whose `libhermesvm.so` Gradle
-packages, and the release's `hermesc`, which compiles the host bundle.
+sha256 crossbind pins. Android, Linux and Windows apps take it from the image they build in. The android-app image
+carries the same release's `hermes-android` AAR, whose headers the host compiles against and whose `libhermesvm.so`
+Gradle packages, and the release's `hermesc`, which compiles the host bundle.
 
 Linux has no published Hermes, so the linux image carries the same release built from its source, pinned by sha256,
 for x64 and arm64. A Linux host builds in that image with its static libc++, against the WebKitGTK 4.1 headers and
 libraries of Ubuntu 22.04's packages, which the image carries too, each checked against the sha256 crossbind pins
 (`tooling/docker/webkitgtk-sysroot.txt`); the app itself runs on the system's WebKitGTK.
 
+Windows has none for llvm-mingw either, so the windows image carries the same release built from its source with
+llvm-mingw, for x64 and arm64, and the headers of Microsoft's WebView2 SDK, release `1.0.4258.31`, both pinned by
+sha256. A Windows host builds in that image into one executable, with llvm-mingw's libc++ and the mingw-w64 runtime
+linked in and no DLL beside it: webview/webview loads the system's WebView2 Runtime itself.
+
 `crossbind licenses -e app` lists what the app carries beside its packages: crossbind's runtime, Hermes, JSI's
 `jsi.cpp` from the same release and webview/webview, each with its version, its sha256 and its license text; with
-`-p linux`, the Hermes source and the libc++ a Linux app links; with `-p ios`, no webview/webview, which an iOS app does
-not use; with `-p android`, Hermes' AAR, the fbjni and androidx.webkit Gradle adds and the NDK's libc++ the app
-carries. `--notices` writes them to a file to ship with the app.
+`--platform linux`, the Hermes source and the libc++ a Linux app links; with `--platform win32`, the Hermes source, the
+WebView2 SDK and the llvm-mingw and mingw-w64 runtimes a Windows app links, whose notices its build copies out of the
+image; with `--platform ios`, no webview/webview, which an iOS app does not use; with `--platform android`, Hermes'
+AAR, the fbjni and androidx.webkit Gradle adds and the NDK's libc++ the app carries. `--notices` writes them to a file
+to ship with the app.
 
 ## Environment variables of the app
 
 | Variable | Effect |
 |---|---|
 | `CROSSBIND_APP_URL` | Opens this page instead of `crossbind://app/`, in a debug build only; the Vite plugin sets it to the dev server. |
-| `CROSSBIND_APP_CONSOLE` | Writes the page's console and uncaught errors to the app's output; on during development. |
+| `CROSSBIND_APP_CONSOLE` | Writes the page's console and uncaught errors to the app's output; on during development. A Windows app has no console of its own, so it writes only to an output that is redirected, as a development session's is. |
 
 An Android app takes them as its activity's string extras (`adb shell am start --es CROSSBIND_APP_CONSOLE 1 …`) and
 writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and the console only in a debuggable app.
@@ -235,6 +248,12 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
   measured on Ubuntu 22.04. A Linux app builds in crossbind's linux image, so it needs Docker (`RUNNER=DOCKER_RUN` or
   `DOCKER_EXEC`), on a Mac as well.
 - The ad hoc signature opens the app on the Mac that built it. Developer ID signing and notarization are not wired yet.
+- Windows, x64 and arm64, with the WebView2 Runtime, which Windows 11 includes; measured on GitHub's Windows Server
+  2025 runner with WebView2 154 and its Windows 11 arm64 runner with 155. A Windows app builds in crossbind's windows
+  image, so it needs Docker (`RUNNER=DOCKER_RUN` or `DOCKER_EXEC`), on a Mac or a Linux machine as well. Building
+  one or developing it on a Windows machine has not been measured yet.
+- A Windows app is not signed, so SmartScreen warns about it once it is downloaded. Authenticode signing is not wired
+  yet.
 - On the desktop, one window, 1024 × 768, titled after the app.
 - iOS 15.1 or later, arm64 alone: devices, and the Simulator of an Apple silicon Mac. It builds on macOS with Xcode.
 - During development an iOS app runs in the Simulator; a device runs the Xcode project's build.

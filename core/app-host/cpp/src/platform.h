@@ -2,7 +2,7 @@
 
 // What a platform gives the host: the webview's channels, its URL scheme, its navigation rule and where the app's
 // files are. darwin/ implements it with WKWebView on macOS and iOS (ios/ has the iOS app's own parts), linux/ with
-// WebKitGTK.
+// WebKitGTK, windows/ with WebView2.
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -49,3 +49,9 @@ void onQuit(std::function<void()> quit);
 // Where the app's files are, and its name.
 std::string resourceDir();
 std::string appName();
+
+#ifdef _WIN32
+// The ICoreWebView2EnvironmentOptions WebView2's environment is made with: they register the scheme, which pages of
+// these other origins may request as well.
+void *schemeEnvironmentOptions(const char *scheme, const std::vector<std::string> &origins);
+#endif

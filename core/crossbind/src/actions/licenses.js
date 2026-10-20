@@ -108,7 +108,7 @@ function wasiToolchainRows() {
     ];
 }
 
-// The notices a build copied out of its toolchain image (buildNode does it for Windows addons).
+// The notices a build copied out of its toolchain image (a Windows addon's or app's does).
 function toolchainNoticeTexts(platform) {
     const build = state.config?.paths?.build;
     const dir = build ? path.join(build, toolchainNoticesDir(platform)) : null;
@@ -139,14 +139,14 @@ function addonToolchainRows(platform) {
     }
     const mingwLicense = 'LicenseRef-MinGW-w64-runtime';
     return [
-        { ...llvmRuntimes, licenseNotes: `libc++, libc++abi, libunwind and compiler-rt of the windows toolchain image (llvm-mingw), statically linked into the addon; ${llvmText}` },
+        { ...llvmRuntimes, licenseNotes: `libc++, libc++abi, libunwind and compiler-rt of the windows toolchain image (llvm-mingw), statically linked into the binary; ${llvmText}` },
         {
             ...shared,
             name: 'mingw-w64-runtime',
             license: mingwLicense,
             licenseDeclared: mingwLicense,
             sourceUrl: 'https://github.com/mingw-w64/mingw-w64',
-            licenseNotes: 'the mingw-w64 startup code and winpthreads, statically linked into the addon; a binary distribution includes their notices: https://github.com/mingw-w64/mingw-w64/blob/master/COPYING.MinGW-w64-runtime/COPYING.MinGW-w64-runtime.txt and https://github.com/mingw-w64/mingw-w64/blob/master/mingw-w64-libraries/winpthreads/COPYING (the windows image carries both in /opt/licenses/llvm-mingw)',
+            licenseNotes: 'the mingw-w64 startup code and winpthreads, statically linked into the binary; a binary distribution includes their notices: https://github.com/mingw-w64/mingw-w64/blob/master/COPYING.MinGW-w64-runtime/COPYING.MinGW-w64-runtime.txt and https://github.com/mingw-w64/mingw-w64/blob/master/mingw-w64-libraries/winpthreads/COPYING (the windows image carries both in /opt/licenses/llvm-mingw)',
             licenseText: toolchainNoticeTexts('win32'),
         },
     ];
@@ -209,8 +209,10 @@ function nodeRuntimeRows({ isAddon }) {
 }
 
 // What an app's host carries beside crossbind's runtime, pinned as the third_party READMEs of @crossbind/core-app-host
-// record: React Native's Hermes, JSI's jsi.cpp from the same release, and webview/webview.
+// record: React Native's Hermes, JSI's jsi.cpp from the same release, webview/webview, and on Windows the WebView2 SDK's
+// headers.
 const WEBVIEW = { version: 'cbbdee44afff22867de9fd88a9fc8350d9bdd399', sha256: '10e972a2327b5681474f4aa4499e505eaa4ff659aa995380386f08fd6fc1b763' };
+const WEBVIEW2_SDK = { version: '1.0.4258.31', sha256: '56f7f4b8bf9aee4b8efefbbdd4f67d5f74ebd1b100ed0806da71bf76af481aa9' };
 const JSI_SHA256 = 'cb6274a22abc93ecc970066539815e716d3e47716e8f93a9971cf4eb5918ffc1';
 // The fbjni the Hermes release for Android depends on.
 const FBJNI_VERSION = '0.7.0';
@@ -220,6 +222,11 @@ const HERMES_BUILDS = {
         sha256: HERMES_SOURCE.sha256,
         sourceUrl: HERMES_SOURCE.url,
         licenseNotes: "Hermes built from its release's source in the linux toolchain image, statically linked into the host",
+    },
+    win32: {
+        sha256: HERMES_SOURCE.sha256,
+        sourceUrl: HERMES_SOURCE.url,
+        licenseNotes: "Hermes built from its release's source in the windows toolchain image (llvm-mingw), statically linked into the host",
     },
     android: {
         sha256: HERMES_ANDROID.sha256,
@@ -265,6 +272,26 @@ function androidAppRows() {
     ];
 }
 
+// The WebView2 SDK headers a Windows host compiles against. webview/webview loads the WebView2 Runtime itself, without
+// the SDK's loader.
+function windowsAppRows(hostRoot) {
+    const license = 'BSD-3-Clause';
+    return [{
+        npmName: '@crossbind/core-app-host',
+        name: 'webview2-sdk',
+        version: WEBVIEW2_SDK.version,
+        nativeVersion: WEBVIEW2_SDK.version,
+        sha256: WEBVIEW2_SDK.sha256,
+        license,
+        licenseDeclared: license,
+        licenseSelected: null,
+        isCopyleft: false,
+        sourceUrl: `https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/${WEBVIEW2_SDK.version}/microsoft.web.webview2.${WEBVIEW2_SDK.version}.nupkg`,
+        licenseNotes: "the WebView2 SDK's headers from the windows toolchain image, whose interface IDs the host compiles in",
+        licenseText: textOf(path.join(hostRoot, 'third_party', 'webview2', 'LICENSE')),
+    }];
+}
+
 function appRuntimeRows(platform) {
     const hostRoot = resolveAppHostRoot();
     const hermesLicense = textOf(path.join(hostRoot, 'third_party', 'jsi', 'LICENSE'));
@@ -297,6 +324,7 @@ function appRuntimeRows(platform) {
             licenseText: hermesLicense,
         },
         ...(platform === 'android' ? androidAppRows() : []),
+        ...(platform === 'win32' ? windowsAppRows(hostRoot) : []),
         // A mobile app makes its window with UIKit or an Android activity, without webview/webview.
         ...(['ios', 'android'].includes(platform) ? [] : [{
             ...mit,

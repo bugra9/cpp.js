@@ -20,6 +20,9 @@ elseif(APPLE)
     set(PLATFORM_SOURCES src/darwin/bundle.mm src/darwin/channels.mm src/darwin/navigation.mm)
 elseif(ANDROID)
     set(PLATFORM_SOURCES src/android/jni.cpp)
+elseif(WIN32)
+    enable_language(RC)
+    set(PLATFORM_SOURCES src/windows/app.cpp src/windows/channels.cpp src/windows/com.cpp src/windows/navigation.cpp src/windows/app.rc)
 else()
     set(PLATFORM_SOURCES src/linux/app.cpp src/linux/channels.cpp src/linux/navigation.cpp)
 endif()
@@ -79,6 +82,14 @@ elseif(ANDROID)
     add_custom_command(TARGET app POST_BUILD
         COMMAND "${CMAKE_STRIP}" -o "$<TARGET_FILE_DIR:app>/libc++_shared.so"
             "${CMAKE_SYSROOT}/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/libc++_shared.so")
+elseif(WIN32)
+    # A window app, linked whole: the system's UCRT is all it loads beside WebView2, which webview finds itself, so no
+    # loader DLL ships. WebView2's headers come from crossbind's windows image.
+    target_include_directories(app SYSTEM PRIVATE "${CROSSBIND_WEBVIEW2_INCLUDE}")
+    target_link_libraries(app PRIVATE "${CROSSBIND_HERMES}/lib/libhermesvm_a.a"
+        ole32 oleaut32 uuid shell32 shlwapi user32 gdi32 advapi32 version dwmapi winmm)
+    set_target_properties(app PROPERTIES WIN32_EXECUTABLE ON)
+    target_link_options(app PRIVATE -static "LINKER:--gc-sections" "$<$<CONFIG:Release>:LINKER:-s>")
 else()
     # WebKitGTK comes from the Ubuntu 22.04 packages crossbind downloads: its headers are searched after the C library's,
     # which the image's glibc 2.28 sysroot keeps, and its libraries are only linked against, as the system's load at run

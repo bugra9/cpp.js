@@ -20,21 +20,22 @@ pnpm add -D crossbind@beta @crossbind/plugin-vite@beta @crossbind/core-app-host@
 pnpm crossbind app dev                   # the app on the dev server
 pnpm crossbind app build                 # dist/<name>.app on macOS, dist/<name>-linux-<arch>/ on Linux
 pnpm crossbind app build -p linux        # dist/<name>-linux-x64/ and -arm64/, on a Mac as well
+pnpm crossbind app build -p windows      # dist/<name>-win32-x64/ and -arm64/, on a Mac or Linux as well
 pnpm crossbind app build -p ios          # dist/<name>-ios/, an Xcode project
 pnpm crossbind app build -p android      # dist/<name>-android.apk, and its Gradle project
 ```
 
 crossbind resolves this package from your project; you never import it yourself. See the
 [app reference](https://github.com/crossbind/crossbind/blob/main/docs/api/app.md) for the page's contract, security
-defaults and current limits (macOS, Linux, iOS and Android for now).
+defaults and current limits (macOS, Linux, Windows, iOS and Android for now).
 
 ## Contents
 
 - `cpp/` — the host's CMake project: Hermes on a thread of its own, the page's messages and `crossbind://` requests
   (`src/host_core.cpp`), what every app does around its webview (`src/app.cpp`), and the window, channels and
   navigation rule of macOS (`src/darwin/`), iOS (`src/ios/` with the WKWebView channels of `src/darwin/`, built as a
-  static library for the app's Xcode project) and Linux (`src/linux/`, WebKitGTK). An Android host
-  (`src/android/jni.cpp`) is a shared library behind JNI.
+  static library for the app's Xcode project), Linux (`src/linux/`, WebKitGTK) and Windows (`src/windows/`, WebView2).
+  An Android host (`src/android/jni.cpp`) is a shared library behind JNI.
 - `android/` — the Gradle project an Android app is written into: its one activity (`CrossbindActivity.java`, the
   WebView, its message port and navigation rule), the manifest, and Gradle 9.8.1's wrapper (Apache-2.0), as
   `gradle wrapper` writes it; `gradle-wrapper.jar` matches the sha256 Gradle publishes for the release.
@@ -44,10 +45,13 @@ defaults and current limits (macOS, Linux, iOS and Android for now).
 - `third_party/webview/` — webview/webview (MIT), vendored at a pinned commit; provenance and the local patch are in
   its README.
 - `third_party/jsi/` — JSI's `jsi.cpp` (MIT) from the Hermes release the host links, and on Android its headers.
+- `third_party/webview2/` — the license of the WebView2 SDK (BSD-3-Clause), whose headers crossbind's windows image
+  carries for a Windows host.
 
 Hermes itself (MIT) is React Native's published build: on macOS and iOS downloaded once into `~/.crossbind/hermes/`
-and checked against the sha256 crossbind pins, and on Android carried by crossbind's android-app image. Linux has no
-published build, so crossbind's linux image carries the same release built from its pinned source.
+and checked against the sha256 crossbind pins, and on Android carried by crossbind's android-app image. Linux and
+Windows have no published build, so crossbind's linux and windows images carry the same release built from its pinned
+source.
 
 ## License
 

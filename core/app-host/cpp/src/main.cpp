@@ -17,6 +17,14 @@ SchemeHandler schemeHandler;
 #ifdef __APPLE__
 // WKWebView takes its scheme handlers from the configuration it is made from.
 void configureWebView(void *configuration) { registerSchemeHandler(configuration, "crossbind", schemeHandler); }
+#elif defined(_WIN32)
+// WebView2 takes its schemes from the environment the webview is made in; a dev server's page requests the scheme too.
+// webview asks again on every attempt to make the environment, which keeps what it needs of them.
+std::vector<std::string> schemeOrigins;
+ICoreWebView2EnvironmentOptions *environmentOptions() {
+    static auto *options = static_cast<ICoreWebView2EnvironmentOptions *>(schemeEnvironmentOptions("crossbind", schemeOrigins));
+    return options;
+}
 #endif
 
 }  // namespace
@@ -28,6 +36,9 @@ int main() {
 
 #ifdef __APPLE__
     webview::detail::cocoa_webkit::cocoa_configure_hook = configureWebView;
+#elif defined(_WIN32)
+    if (devUrl) schemeOrigins.push_back(app::originOf(devUrl));
+    webview::detail::win32_environment_options_hook = environmentOptions;
 #endif
     webview::webview view(devUrl != nullptr, nullptr);
     view.set_title(appName());

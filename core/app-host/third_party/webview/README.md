@@ -17,3 +17,8 @@ Only `core/include` is kept.
   before the `WKWebView` is made from it. A URL scheme handler can be registered only then, and the host serves the
   page and large bodies from `crossbind://`. Upstream tracks this as issue #851; PRs #955 (WebKitGTK only) and #1370
   are open.
+- `detail/backends/win32_edge.hh` makes WebView2's environment with the options `win32_environment_options_hook`
+  returns, when one is set, instead of none: WebView2 takes custom URL schemes from those options alone.
+- `detail/native_library.hh` loads a library named without a path from System32 alone. webview first tries
+  `WebView2Loader.dll`, which no crossbind app ships, so otherwise a copy in the working directory or on `PATH` would
+  load into the app.

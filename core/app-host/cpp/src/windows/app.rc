@@ -1,0 +1,3 @@
+// The app's manifest (resource 1 of type RT_MANIFEST) makes its narrow strings UTF-8: the paths and the environment
+// the host and the libraries it links pass to the C runtime and to Windows, such as a user folder with a non-ASCII name.
+1 24 "app.manifest"

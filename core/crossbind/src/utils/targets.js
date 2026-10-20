@@ -149,15 +149,15 @@ const BASE_TARGETS = [
 ];
 
 // A native executable links the same archives as the Node-API addon of its platform and arch, and so does an app's
-// host on macOS and glibc Linux. An iOS or Android app links the archives React Native does, one target per SDK or
-// ABI.
+// host on macOS, glibc Linux and Windows. An iOS or Android app links the archives React Native does, one target per
+// SDK or ABI.
 export const TARGETS = [
     ...BASE_TARGETS,
     ...BASE_TARGETS
         .filter((target) => target.runtimeEnv === 'node' && target.platform !== 'wasm')
         .map((target) => ({ ...target, runtimeEnv: 'native' })),
     ...BASE_TARGETS
-        .filter((target) => (target.runtimeEnv === 'node' && ['darwin', 'linux'].includes(target.platform)) || ['ios', 'android'].includes(target.platform))
+        .filter((target) => (target.runtimeEnv === 'node' && ['darwin', 'linux', 'win32'].includes(target.platform)) || ['ios', 'android'].includes(target.platform))
         .map((target) => ({ ...target, runtimeEnv: 'app' })),
 ];
 

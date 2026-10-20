@@ -309,6 +309,9 @@ private:
   std::wstring m_code;
 };
 
+// crossbind: the options WebView2's environment is made with, the only time a custom URL scheme can be registered.
+inline ICoreWebView2EnvironmentOptions *(*win32_environment_options_hook)() = nullptr;
+
 class win32_edge_engine : public engine_base {
 public:
   win32_edge_engine(bool debug, void *window) : engine_base{!window} {
@@ -756,7 +759,10 @@ private:
 
     m_com_handler->set_attempt_handler([&] {
       return m_webview2_loader.create_environment_with_options(
-          nullptr, userDataFolder, nullptr, m_com_handler);
+          nullptr, userDataFolder,
+          win32_environment_options_hook ? win32_environment_options_hook()
+                                         : nullptr,
+          m_com_handler);
     });
     m_com_handler->try_create_environment();
 

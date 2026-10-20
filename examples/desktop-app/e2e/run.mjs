@@ -27,10 +27,10 @@ async function open() {
         const { buildForSimulator, openInSimulator, buildApk, openOnDevice } = await import('crossbind');
         return platform === 'ios' ? openInSimulator(buildForSimulator(project), { env }) : openOnDevice(buildApk(project), { env });
     }
-    // A macOS app is a bundle; a Linux app a directory named after its platform and arch.
+    // A macOS app is a bundle; a Linux or Windows app a directory named after its platform and arch.
     const executable = process.platform === 'darwin'
         ? `${root}/dist/${name}.app/Contents/MacOS/${name}`
-        : `${root}/dist/${name}-${process.platform}-${process.arch}/${name}`;
+        : `${root}/dist/${name}-${process.platform}-${process.arch}/${name}${process.platform === 'win32' ? '.exe' : ''}`;
     if (!existsSync(executable)) missing(executable);
     return { child: spawn(executable, [], { env: { ...process.env, ...env } }), close: () => {} };
 }
