@@ -104,7 +104,9 @@ SDK manager, so nothing is fetched at build time beyond the reviewed archive. `a
 does carry a JDK, the SDK platform and build tools, Gradle and the Android Gradle plugin's Maven
 artifacts; the bot tracks none of them, so those pins in `android-app.Dockerfile` and its
 `android-app/` project move by hand, as do the WebKitGTK package list of `linux.Dockerfile` and the WebView2 SDK of
-`windows.Dockerfile`; the Hermes of `linux.Dockerfile` and `windows.Dockerfile` moves with the release the CLI pins. A change
+`windows.Dockerfile`, with the pin and the license `crossbind licenses` reports (`core/crossbind/src/actions/licenses.js`,
+`core/app-host/third_party/webview2/`); the Hermes of `linux.Dockerfile` and `windows.Dockerfile` moves with the release
+the CLI pins. A change
 to the project's dependencies rewrites `android-app/gradle/verification-metadata.xml` with
 `gradle --write-verification-metadata sha256 assembleDebug assembleRelease bundleRelease`. The Docker image, the
 Android sample workflow, the React Native Gradle projects and the React Native plugin module all name

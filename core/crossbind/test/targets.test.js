@@ -25,12 +25,12 @@ describe('TARGETS', () => {
         expect(pathsOf('native')).toHaveLength(4);
     });
 
-    test('macOS and glibc Linux build app hosts from the addon targets, and iOS and Android from their SDK and ABI targets', () => {
+    test('macOS, glibc Linux and Windows build app hosts from the addon targets, and iOS and Android from their SDK and ABI targets', () => {
         const app = TARGETS.filter((t) => t.runtimeEnv === 'app');
-        const hosts = TARGETS.filter((t) => (['darwin', 'linux'].includes(t.platform) && t.runtimeEnv === 'node')
+        const hosts = TARGETS.filter((t) => (['darwin', 'linux', 'win32'].includes(t.platform) && t.runtimeEnv === 'node')
             || (['ios', 'android'].includes(t.platform) && !t.runtimeEnv));
         expect(app.map(targetPathOf).sort()).toEqual(hosts.map(targetPathOf).sort());
-        expect([...new Set(app.map((t) => t.platform))].sort()).toEqual(['android', 'darwin', 'ios', 'linux']);
+        expect([...new Set(app.map((t) => t.platform))].sort()).toEqual(['android', 'darwin', 'ios', 'linux', 'win32']);
     });
 
     test('Node-API addon platforms build only when named, so a plain build keeps its output', () => {

@@ -5,8 +5,8 @@
 > The page runs in the system webview, the bindings natively in the app's process. Reference: [`docs/api/app.md`](../../api/app.md).
 
 Use it when a project wants a desktop, iOS or Android app without Electron or React Native: the same page and the same
-`initNative()` calls as its web build, with the C++ or Rust running natively. macOS, Linux, iOS and Android for now; for
-Windows desktops today, use Electron with a Node-API addon ([`nodejs.md`](./nodejs.md#electron)).
+`initNative()` calls as its web build, with the C++ or Rust running natively. macOS, Linux, Windows, iOS and Android for
+now.
 
 ## Steps
 
@@ -40,12 +40,15 @@ Windows desktops today, use Electron with a Node-API addon ([`nodejs.md`](./node
 
 - `pnpm crossbind app build` ends with `dist/<name>.app`, and `open dist/<name>.app` shows the page. On Linux it ends
   with `dist/<name>-linux-<arch>/` and its `.tar.gz`, and `dist/<name>-linux-<arch>/<name>` shows the page.
+- `crossbind app build -p windows` ends with `dist/<name>-win32-<arch>/` and its `.zip`, whose `<name>.exe` shows the
+  page on Windows.
 - `crossbind app build -p ios` ends with `dist/<name>-ios/<name>.xcodeproj`, which
   `xcodebuild -project dist/<name>-ios/<name>.xcodeproj -sdk iphonesimulator build` builds with no team.
 - `crossbind app build -p android` ends with `dist/<name>-android.apk`, which `adb install` puts on the emulator;
   `crossbind app dev -p android` shows the page's console in the terminal.
 - With `CROSSBIND_APP_CONSOLE=1`, running `dist/<name>.app/Contents/MacOS/<name>` prints what the page logs.
-- `crossbind licenses -e app --notices` writes the notices to ship with the app.
+- `crossbind licenses -e app --notices` writes the notices to ship with the app; `--platform linux`, `win32`, `ios` or
+  `android` adds what that platform's app carries.
 
 ## Pitfalls
 
@@ -53,9 +56,11 @@ Windows desktops today, use Electron with a Node-API addon ([`nodejs.md`](./node
   configs.
 - Navigation to another origin is refused; links the user follows open in the default browser. Embed no third-party
   page in an iframe.
-- `crossbind app dev` and `crossbind app build` make the app of the machine they run on, macOS or Linux, unless `-p`
-  names another; `crossbind app build -p linux` builds the Linux app on a Mac too, but its development session runs
-  on Linux alone. A Linux app needs Docker to build and WebKitGTK 4.1 (2.40 or later) to run.
+- `crossbind app dev` and `crossbind app build` make the app of the machine they run on, macOS, Linux or Windows,
+  unless `-p` names another; `crossbind app build -p linux` builds the Linux app on a Mac too, but its development
+  session runs on Linux alone. A Linux app needs Docker to build and WebKitGTK 4.1 (2.40 or later) to run.
+- `crossbind app build -p windows` builds the Windows app on a Mac or a Linux machine, in Docker. It runs where the
+  WebView2 Runtime is, as on Windows 11, and is not signed yet, so SmartScreen warns about it once downloaded.
 - crossbind writes the iOS Xcode project and the Android Gradle project anew on every build, so an edit made in Xcode
   or Android Studio is gone after the next one: the app's identity goes in `crossbind.config.js`.
 - An Android app needs Docker alone to build: the android-app image carries the JDK, the SDK and Gradle. To run it,

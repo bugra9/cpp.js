@@ -249,6 +249,20 @@ describe('collectLicenseRows for an app', () => {
         expect(byName['llvm-runtimes'].license).toBe('Apache-2.0 WITH LLVM-exception');
     });
 
+    test('names, for a Windows app, the Hermes source it builds, the WebView2 SDK it compiles against and the runtimes it links', async () => {
+        const rows = await collectLicenseRows('win32', { runtimeEnv: 'app' });
+        const byName = Object.fromEntries(rows.map((row) => [row.name, row]));
+
+        expect(rows.map((row) => row.name)).toEqual([
+            'crossbind', 'emscripten-embind', 'hermes', 'jsi', 'llvm-runtimes', 'mingw-w64-runtime', 'webview', 'webview2-sdk',
+        ]);
+        expect(byName.hermes.sourceUrl).toMatch(/^https:\/\/github\.com\/facebook\/hermes\/archive\/refs\/tags\/hermes-v.+\.tar\.gz$/);
+        expect(byName['webview2-sdk'].license).toBe('BSD-3-Clause');
+        expect(byName['webview2-sdk'].sha256).toMatch(/^[0-9a-f]{64}$/);
+        expect(byName['webview2-sdk'].licenseText).toContain('Copyright (C) Microsoft Corporation');
+        rows.forEach((row) => expect(validateSpdx(row.license).isValid).toBe(true));
+    });
+
     test('leaves webview/webview out of an iOS app, whose window UIKit makes', async () => {
         const rows = await collectLicenseRows('ios', { runtimeEnv: 'app' });
 
