@@ -39,6 +39,11 @@ const LINUX_HERMES_VERSION = fs
     .match(/^ARG HERMES_VERSION=(.+)$/m)?.[1]
     ?.trim();
 if (!LINUX_HERMES_VERSION) throw new Error('cannot read ARG HERMES_VERSION from tooling/docker/linux.Dockerfile');
+const WINDOWS_HERMES_VERSION = fs
+    .readFileSync(new URL('../tooling/docker/windows.Dockerfile', import.meta.url), 'utf8')
+    .match(/^ARG HERMES_VERSION=(.+)$/m)?.[1]
+    ?.trim();
+if (!WINDOWS_HERMES_VERSION) throw new Error('cannot read ARG HERMES_VERSION from tooling/docker/windows.Dockerfile');
 // The project android-app warmed its dependency cache with, mounted into the container, where it must build offline.
 const PROBE = fileURLToPath(new URL('../tooling/docker/android-app', import.meta.url));
 
@@ -283,6 +288,19 @@ done
 install -m 0644 addon.cpp installed.cpp
 test -f installed.cpp
 echo "install shim ok"
+zip -v > /dev/null
+test -f /opt/licenses/hermes-LICENSE
+test -f /opt/licenses/webview2-sdk/LICENSE.txt
+grep -q '^#define CROSSBIND_WEBVIEW2_TARGET_VERSION L"[0-9.]*"$' /opt/crossbind/webview2/include/crossbind_webview2.h
+printf '#include <windows.h>\n#include <hermes/hermes.h>\n#include "WebView2.h"\n#include "crossbind_webview2.h"\nint host(){ return facebook::hermes::makeHermesRuntime() != nullptr; }\n' > host.cpp
+for pair in x64:x86_64-w64-mingw32 arm64:aarch64-w64-mingw32; do
+  hermes="/opt/crossbind/hermes/${WINDOWS_HERMES_VERSION}/win32-\${pair%%:*}"
+  triple="\${pair#*:}"
+  "\${hermes}/bin/hermesc" -version > /dev/null
+  /opt/llvm-mingw/bin/llvm-nm -C "\${hermes}/lib/libhermesvm_a.a" | grep -q ' T llvh::sys::MemoryFence()'
+  "/opt/llvm-mingw/bin/\${triple}-clang++" -std=c++20 -c -I"\${hermes}/include" -I/opt/crossbind/webview2/include host.cpp -o "host-\${triple}.o"
+  echo "\${triple} app: Hermes ${WINDOWS_HERMES_VERSION} with its atomics, and WebView2's headers"
+done
 `;
 
 const SCRIPTS = {

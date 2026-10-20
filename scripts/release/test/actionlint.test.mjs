@@ -234,6 +234,11 @@ test('the unpublished toolchain image train uses the reviewed stable versions', 
     assert.match(linux, new RegExp(`^ARG HERMES_VERSION=${hermesVersion.replaceAll('.', '\\.')}$`, 'm'));
     assert.match(androidApp, new RegExp(`^ARG HERMES_ANDROID_SHA256=${pinned('HERMES_ANDROID')}$`, 'm'));
     assert.match(linux, new RegExp(`^ARG HERMES_SHA256=${pinned('HERMES_SOURCE')}$`, 'm'));
+    assert.match(windows, new RegExp(`^ARG HERMES_VERSION=${hermesVersion.replaceAll('.', '\\.')}$`, 'm'));
+    assert.match(windows, new RegExp(`^ARG HERMES_SHA256=${pinned('HERMES_SOURCE')}$`, 'm'));
+    assert.match(windows, /\$\{HERMES_SHA256\}.*sha256sum -c -/);
+    assert.match(windows, /^ARG WEBVIEW2_SHA256=[0-9a-f]{64}$/m);
+    assert.match(windows, /\$\{WEBVIEW2_SHA256\}.*sha256sum -c -/);
 });
 
 test('legacy package scripts cannot publish with a stored npm credential', () => {
