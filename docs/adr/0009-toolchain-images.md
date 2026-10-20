@@ -28,7 +28,8 @@ only one a build uses.
   digest-pinned upstream images rather than installed, so upstream keeps its
   build recipes and we keep the runtime layout: PATH, Node version,
   `CARGO_HOME`, cache permissions. `linux` and `windows` carry the toolchains of
-  native Node.js addons (ADR-0011).
+  native Node.js addons (ADR-0011), and what an app's host links (ADR-0017):
+  Hermes built from its source, with WebKitGTK or WebView2's headers.
 - `android` is declared `linux/amd64` only. `web`, `base`, `linux` and
   `windows` are multi-arch. `android-app`, built `FROM android` and as
   amd64-only, adds what packages an app offline: a JDK, the Android SDK, Gradle
