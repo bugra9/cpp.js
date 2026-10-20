@@ -1,6 +1,9 @@
 #include "platform.h"
 #include "windows/com.h"
 
+// crossbind's windows image writes it beside the SDK's headers.
+#include "crossbind_webview2.h"
+
 #include <shlwapi.h>
 
 #include <cstdio>
@@ -11,20 +14,22 @@ using namespace crossbind::windows;
 
 namespace {
 
-// The WebView2 runtime an app needs: the one of the SDK whose headers it builds with.
-constexpr const wchar_t *TARGET_VERSION = L"154.0.4258.31";
+// The runtime the app declares itself compatible with, as the SDK's own options do: the one of the SDK it builds with.
+constexpr const wchar_t *TARGET_VERSION = CROSSBIND_WEBVIEW2_TARGET_VERSION;
 
 // WebView2's page messages answer nothing, so the page side of WebKit's reply channels is this script: a message
-// carries its channel's name and an id, and the reply comes back with the id. The host hears the top frame alone.
+// carries its channel's name and an id, and the reply comes back with the id. The host hears the top frame alone. An id
+// names its document too, so a reply meant for the page before a reload answers nothing in the next one.
 constexpr const char *CHANNELS_SCRIPT = R"js((() => {
   const pending = new Map();
+  const session = crypto.getRandomValues(new Uint32Array(2)).join('-');
   let next = 0;
   const handlers = {};
   Object.defineProperty(globalThis, 'webkit', { value: { messageHandlers: handlers } });
   Object.defineProperty(globalThis, '__crossbind_channel', { value: (name) => {
     handlers[name] = {
       postMessage: (text) => new Promise((resolve) => {
-        const id = String(++next);
+        const id = `${session}.${++next}`;
         pending.set(id, resolve);
         chrome.webview.postMessage(`${name}\n${id}\n${text}`);
       }),
@@ -75,7 +80,12 @@ void addScript(ICoreWebView2 *core, const std::string &source) {
             return S_OK;
         });
     if (SUCCEEDED(core->AddScriptToExecuteOnDocumentCreated(wide("if (window === window.top) {\n" + source + "\n}").c_str(), done))) {
-        for (MSG message; !*added && GetMessageW(&message, nullptr, 0, 0) > 0;) {
+        MSG message;
+        while (!*added) {
+            const BOOL got = GetMessageW(&message, nullptr, 0, 0);
+            // The window closed meanwhile: the app's own loop gets the quit as well.
+            if (got == 0) PostQuitMessage(static_cast<int>(message.wParam));
+            if (got <= 0) break;
             TranslateMessage(&message);
             DispatchMessageW(&message);
         }
@@ -99,9 +109,10 @@ void listen(ICoreWebView2 *core) {
             const auto handler = handlers().find(text.substr(0, first));
             if (handler == handlers().end()) return S_OK;
             LPWSTR source = nullptr;
-            args->get_Source(&source);
+            // A sender WebView2 cannot name is no origin a page may call from.
+            const std::string origin = SUCCEEDED(args->get_Source(&source)) ? originOf(take(source)) : "null";
             const std::string id = text.substr(first + 1, second - first - 1);
-            handler->second(originOf(take(source)), text.substr(second + 1), [core, id](const std::string &reply) {
+            handler->second(origin, text.substr(second + 1), [core, id](const std::string &reply) {
                 onMainThread([core, message = wide(id + "\n" + reply)] { core->PostWebMessageAsString(message.c_str()); });
             });
             return S_OK;

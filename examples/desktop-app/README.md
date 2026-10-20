@@ -1,17 +1,18 @@
 # @crossbind/example-desktop-app
 **crossbind desktop app sample**
 
-A macOS, Linux and iOS app whose page runs in the system webview and whose C++ runs natively in the app: crossbind
-builds `src/native` and the matrix library into the app's own host, and the page calls it with the same `initNative()`
-and awaited calls as a web build that runs its module in a worker. There is no Node.js and no browser engine in the
-app; the page uses the system's own, WKWebView on macOS and iOS and WebKitGTK on Linux.
+A macOS, Linux, Windows, iOS and Android app whose page runs in the system webview and whose C++ runs natively in the
+app: crossbind builds `src/native` and the matrix library into the app's own host, and the page calls it with the same
+`initNative()` and awaited calls as a web build that runs its module in a worker. There is no Node.js and no browser
+engine in the app; the page uses the system's own, WKWebView on macOS and iOS, WebKitGTK on Linux, WebView2 on
+Windows and Android System WebView on Android.
 
 # Getting Started
 
 >**Note**: Make sure you have completed the [crossbind - Prerequisites](https://crossbind.dev/docs/guide/getting-started/prerequisites) instructions.
-Apps build on macOS with Xcode's command line tools, iOS apps with Xcode and its iOS platform, and Linux and Android
-apps in crossbind's linux and android-app images, which carry everything they build with; the bindings are generated
-in Docker. A macOS or iOS build fetches React Native's Hermes once into `~/.crossbind/hermes`.
+Apps build on macOS with Xcode's command line tools, iOS apps with Xcode and its iOS platform, and Linux, Windows and
+Android apps in crossbind's linux, windows and android-app images, which carry everything they build with; the
+bindings are generated in Docker. A macOS or iOS build fetches React Native's Hermes once into `~/.crossbind/hermes`.
 
 ## Setup
 
@@ -49,6 +50,13 @@ pnpm build:linux
 ```
 
 writes the Linux app for x64 and arm64, on a Mac as well.
+
+```bash
+pnpm build:windows
+```
+
+writes the Windows app for x64 and arm64, on a Mac or Linux as well: `dist/crossbind-example-desktop-app-win32-<arch>/`
+and the same as a `.zip`, which runs where the WebView2 Runtime is installed, as on Windows 11.
 
 ## iOS
 

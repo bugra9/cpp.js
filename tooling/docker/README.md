@@ -19,13 +19,15 @@ and Node and nothing else.
 | `android`      | base + the NDK and the android Rust targets                                | amd64 only   |
 | `android-app`  | android + a JDK, the SDK, Gradle and its cache, Hermes                     | amd64 only   |
 | `linux`        | base + clang, glibc/musl sysroots, libc++, Rust targets, WebKitGTK, Hermes | amd64, arm64 |
-| `windows`      | base + llvm-mingw and Rust targets for Windows UCRT addons                 | amd64, arm64 |
+| `windows`      | base + llvm-mingw, Rust targets, Hermes, WebView2's headers, zip           | amd64, arm64 |
 | `rust-sysroot` | just the ST/MT Rust sysroots and their manifest                            | amd64, arm64 |
 
 `web`, `android`, `linux` and `windows` are built `FROM base`, so all five share one toolchain
 layer, and `android-app` is built `FROM android`, so an app build pulls only what it adds. `linux` and `windows` each cross-compile Node.js addons for both x64 and arm64, whichever
 architecture they run on; `linux` builds them against glibc 2.28 and against musl 1.2.5 alike, and also carries what a Linux
-app's host links: WebKitGTK from Ubuntu 22.04 packages and Hermes, built here from its source. Nothing above Debian is inherited here: Node and Emscripten are copied
+app's host links: WebKitGTK from Ubuntu 22.04 packages and Hermes, built here from its source. `windows` does the same for a
+Windows app's host: Hermes built here with llvm-mingw, the headers of WebView2's SDK, whose runtime the system carries, and zip
+for the app's archive. Nothing above Debian is inherited here: Node and Emscripten are copied
 out of digest-pinned upstream images; Rust is installed as an exact release by the rustup from a
 digest-pinned bootstrap image. This keeps the upstream distributions authoritative while the
 runtime layout — PATH, Node version, `CARGO_HOME`, cache permissions — stays ours to guarantee.

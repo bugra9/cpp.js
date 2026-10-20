@@ -214,6 +214,77 @@ jobs:
               run: |
                   pnpm --filter=@crossbind/e2e-desktop-app run build
                   xvfb-run -a pnpm --filter=@crossbind/e2e-desktop-app run e2e:prod
+    app-windows:
+        # A hosted Windows runner cannot run crossbind's windows image, a Linux one, so this runner builds the app in it,
+        # against the Hermes and the WebView2 SDK headers the image carries.
+        runs-on: ubuntu-latest
+        timeout-minutes: 60
+        env:
+            CROSSBIND_APP_PLATFORM: windows
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+            - name: Install pnpm
+              uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+            - name: Use Node.js
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'pnpm'
+            - name: Install dependencies
+              run: pnpm install
+            - name: Build the app
+              run: pnpm --filter=@crossbind/e2e-desktop-app run build
+            - name: Keep the app for the runners that open it
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+              with:
+                  name: windows-app
+                  if-no-files-found: error
+                  # A re-run of this job uploads under the same name again.
+                  overwrite: true
+                  path: |
+                      e2e/desktop-app/dist/crossbind-e2e-desktop-app-win32-x64/
+                      e2e/desktop-app/dist/crossbind-e2e-desktop-app-win32-arm64/
+                  retention-days: 1
+    app-windows-run:
+        # Each Windows runner opens the app built for it, on its own WebView2 Runtime. The checkout's directory has a
+        # non-ASCII name, as a user's folder may: the app finds its files by a UTF-8 path.
+        needs: app-windows
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - { runner: windows-latest, arch: x64 }
+                    - { runner: windows-11-arm, arch: arm64 }
+        runs-on: ${{ matrix.runner }}
+        timeout-minutes: 15
+        defaults:
+            run:
+                working-directory: ünicode
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+              with:
+                  path: ünicode
+            - name: Install pnpm
+              uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+              with:
+                  package_json_file: ünicode/package.json
+            - name: Use Node.js
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+              with:
+                  node-version-file: ünicode/.nvmrc
+                  # The runner opens the app of Node's arch: an emulated x64 Node.js would open the x64 app on the
+                  # arm64 runner.
+                  architecture: ${{ matrix.arch }}
+            - name: Install the conformance kit
+              # The leg's config imports the kit; nothing is built on these runners.
+              run: pnpm install --frozen-lockfile --prod --filter "@crossbind/e2e-desktop-app..."
+            - name: Restore the app
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+              with:
+                  name: windows-app
+                  path: ünicode/e2e/desktop-app/dist
+            - name: Run the conformance suite in the app
+              run: node e2e/desktop-app/e2e/run.mjs
     app-android:
         # The Android app's host and Rust build in crossbind's android-app image, its bridges in the web image, and Gradle
         # packages the app in the android-app image too; it runs on an emulator.

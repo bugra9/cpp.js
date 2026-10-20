@@ -116,7 +116,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | Per-target static lib build | `src/actions/createLib.js` |
 | Wasm linking + JS loader gen | `src/actions/buildWasm.js` |
 | Node-API addon link (`.node`) + CommonJS loader | `src/actions/buildNode.js` |
-| App host link: bridges against Hermes' JSI, host bytecode, page runtime; a macOS `.app` signed ad hoc, a Linux directory and its `.tar.gz`, or what each iOS SDK or Android ABI brings to the Xcode or Gradle project | `src/actions/buildApp.js` |
+| App host link: bridges against Hermes' JSI, host bytecode, page runtime; a macOS `.app` signed ad hoc, a Linux directory and its `.tar.gz`, a Windows directory and its `.zip`, or what each iOS SDK or Android ABI brings to the Xcode or Gradle project | `src/actions/buildApp.js` |
 | iOS app: the Xcode project written anew from each SDK's part (archives and their link line, Hermes' slice, the app's files) | `src/actions/xcodeProject.js` |
 | An iOS app built for the Simulator and opened there, for `vite` and the e2e runs | `src/actions/iosSimulator.js` |
 | Android app: the Gradle project written anew from `core/app-host/android` and each ABI's part (the host and the libraries it loads, the app's files) | `src/actions/gradleProject.js` |
@@ -279,7 +279,7 @@ To add a new `ports/<X>`: see `docs/playbooks/new-port.md` (uses `ports/zlib` as
 | `examples/backend-nodejs-native` | Node.js app that builds its own addon (`-p host -e node`, `build:desktop` for every desktop platform; the macOS CI job uses `ci/` bridge snapshots) |
 | `examples/backend-nodejs-standalone` | Node.js app on the Node-API addons `@crossbind/example-lib-prebuilt-matrix` ships (`/node/napi`), nothing to build |
 | `examples/desktop-electron` | Electron app with its own addon in the main process, packaged with electron-builder (`dist/` stays outside the asar archive); takes the `backend-nodejs-native` bridge snapshot in the macOS CI job |
-| `examples/desktop-app` | macOS, Linux, iOS and Android app on crossbind's own host (`target.runtimeEnv: 'app'`): Vite page in the system webview, the C++ in Hermes; the `Desktop App` template; takes a bridge snapshot in the macOS CI job and builds in the Linux ones |
+| `examples/desktop-app` | macOS, Linux, Windows, iOS and Android app on crossbind's own host (`target.runtimeEnv: 'app'`): Vite page in the system webview, the C++ in Hermes; the `Desktop App` template; takes a bridge snapshot in the macOS CI job and builds in the Linux ones |
 | `examples/native-executable` | Native executable from `main()` (`-e native`); the `Native Executable` template |
 | `examples/cloud-cloudflare-worker` | Cloudflare Worker / edge |
 | `examples/mobile-reactnative-cli` | RN-cli (canonical mobile reference; CI uses `ci/crossbind-snapshot/`) |

@@ -155,8 +155,14 @@ private:
   }
 
 #ifdef _WIN32
+  // crossbind: a name without a path loads from System32 alone, so no copy in
+  // the app's directory, the working directory or PATH stands in for a system
+  // library, or for WebView2Loader.dll, which crossbind's apps do not ship.
   static inline mod_handle_t load_library(const std::wstring &name) {
-    return LoadLibraryW(name.c_str());
+    return name.find_first_of(L"\\/") == std::wstring::npos
+               ? LoadLibraryExW(name.c_str(), nullptr,
+                                LOAD_LIBRARY_SEARCH_SYSTEM32)
+               : LoadLibraryW(name.c_str());
   }
 #endif
 

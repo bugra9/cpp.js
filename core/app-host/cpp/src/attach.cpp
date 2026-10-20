@@ -11,13 +11,13 @@ constexpr const char *APP_ORIGIN = "crossbind://app";
 constexpr const char *APP_URL = "crossbind://app/";
 constexpr const char *REFUSED = "[1,{\"name\":\"Error\",\"message\":\"crossbind: a page from this origin may not call the app's module\"}]";
 
+}  // namespace
+
 std::string originOf(const std::string &url) {
     const auto scheme = url.find("://");
     if (scheme == std::string::npos) return url;
     return url.substr(0, url.find_first_of("/?#", scheme + 3));
 }
-
-}  // namespace
 
 std::string attach(Core &core, void *webView, const char *devUrl) {
     std::vector<std::string> origins{APP_ORIGIN};

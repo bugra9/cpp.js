@@ -33,6 +33,8 @@ bool allows(const Lock &lock, const std::string &uri) {
 void openOutside(const std::string &uri) {
     const std::string scheme = uri.substr(0, uri.find(':'));
     if (scheme != "http" && scheme != "https" && scheme != "mailto") return;
+    // The URL goes into the command line of its scheme's handler, where a quote or a space would split it.
+    if (std::any_of(uri.begin(), uri.end(), [](unsigned char c) { return c <= ' ' || c == '"' || c == 0x7f; })) return;
     ShellExecuteW(nullptr, L"open", wide(uri).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
@@ -69,7 +71,10 @@ void restrictNavigation(void *webView, std::vector<std::string> origins, std::fu
         IID_ICoreWebView2NewWindowRequestedEventHandler, [](ICoreWebView2 *, ICoreWebView2NewWindowRequestedEventArgs *args) -> HRESULT {
             LPWSTR requested = nullptr;
             args->get_Uri(&requested);
-            openOutside(take(requested));
+            const std::string uri = take(requested);
+            BOOL followed = FALSE;
+            args->get_IsUserInitiated(&followed);
+            if (followed) openOutside(uri);
             args->put_Handled(TRUE);
             return S_OK;
         });

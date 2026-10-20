@@ -15,5 +15,7 @@ Core &start(const char *devUrl);
 [[noreturn]] void quit(Core &core, int status);
 // Readies a webview for the page, and returns the URL it opens first. An Android app's activity does this in Java.
 std::string attach(Core &core, void *webView, const char *devUrl);
+// The scheme and authority of a URL: the origin a webview names a page by.
+std::string originOf(const std::string &url);
 
 }  // namespace crossbind::app

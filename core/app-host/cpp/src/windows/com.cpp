@@ -1,6 +1,8 @@
 #include "windows/com.h"
 
 #include <cstring>
+#include <deque>
+#include <mutex>
 
 namespace crossbind::windows {
 
@@ -9,12 +11,17 @@ namespace {
 constexpr UINT RUN = WM_APP + 1;
 DWORD uiThread = 0;
 HWND dispatcher = nullptr;
+std::mutex queueMutex;
+std::deque<std::function<void()>> queue;
 
 LRESULT CALLBACK dispatch(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
     if (message != RUN) return DefWindowProcW(window, message, wParam, lParam);
-    auto *fn = reinterpret_cast<std::function<void()> *>(lParam);
-    (*fn)();
-    delete fn;
+    std::deque<std::function<void()>> tasks;
+    {
+        std::lock_guard<std::mutex> lock(queueMutex);
+        tasks.swap(queue);
+    }
+    for (auto &task : tasks) task();
     return 0;
 }
 
@@ -67,12 +74,19 @@ ICoreWebView2 *coreWebView(void *controller) {
     return core;
 }
 
+// What other threads post waits in one queue, which one message drains: Windows caps the messages a thread has posted.
 void onMainThread(std::function<void()> fn) {
     if (GetCurrentThreadId() == uiThread) {
         fn();
         return;
     }
-    PostMessageW(dispatcher, RUN, 0, reinterpret_cast<LPARAM>(new std::function<void()>(std::move(fn))));
+    bool isIdle;
+    {
+        std::lock_guard<std::mutex> lock(queueMutex);
+        isIdle = queue.empty();
+        queue.push_back(std::move(fn));
+    }
+    if (isIdle) PostMessageW(dispatcher, RUN, 0, 0);
 }
 
 }  // namespace crossbind::windows

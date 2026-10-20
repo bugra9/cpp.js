@@ -87,11 +87,11 @@ crossbind app build -p android`,
         },
         {
             type: 'p',
-            text: "`-p` is `macos`, `linux`, `ios` or `android`; without it the platform `CROSSBIND_APP_PLATFORM` names, else this machine's desktop app. Vite's own options, such as `--port` or `--mode`, pass through to Vite. `app build -p linux` writes the Linux app for x64 and arm64, on a Mac as well. `app build -p android` writes `dist/<name>-android.apk`, signed with this machine's debug key, or with the upload key `CROSSBIND_ANDROID_KEYSTORE`, `CROSSBIND_ANDROID_KEY_ALIAS` and `CROSSBIND_ANDROID_KEYSTORE_PASSWORD` name, and then also `dist/<name>-android.aab`, the bundle Google Play takes. The project needs `target: { runtimeEnv: 'app' }`, Vite and `@crossbind/plugin-vite`.",
+            text: "`-p` is `macos`, `linux`, `windows`, `ios` or `android`; without it the platform `CROSSBIND_APP_PLATFORM` names, else this machine's desktop app. Vite's own options, such as `--port` or `--mode`, pass through to Vite. `app build -p linux` and `app build -p windows` write the Linux and Windows apps for x64 and arm64, on a Mac as well. `app build -p android` writes `dist/<name>-android.apk`, signed with this machine's debug key, or with the upload key `CROSSBIND_ANDROID_KEYSTORE`, `CROSSBIND_ANDROID_KEY_ALIAS` and `CROSSBIND_ANDROID_KEYSTORE_PASSWORD` name, and then also `dist/<name>-android.aab`, the bundle Google Play takes. The project needs `target: { runtimeEnv: 'app' }`, Vite and `@crossbind/plugin-vite`.",
         },
         {
             type: 'p',
-            text: "**Touches:** Linux and Android apps build in the pinned linux and android-app images, and Gradle packages an Android app there with no network, keeping its caches and the debug key in `~/.crossbind/android/`. An Android app opens on the attached device through this machine's `adb`, which crossbind does not install; an iOS app opens in the Simulator.",
+            text: "**Touches:** Linux, Windows and Android apps build in the pinned linux, windows and android-app images, and Gradle packages an Android app there with no network, keeping its caches and the debug key in `~/.crossbind/android/`. An Android app opens on the attached device through this machine's `adb`, which crossbind does not install; an iOS app opens in the Simulator.",
         },
 
         { type: 'h2', id: 'licenses', text: 'licenses' },

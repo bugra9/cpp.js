@@ -6,7 +6,7 @@ import downloadAndExtractFile from './downloadAndExtractFile.js';
 
 // The Hermes React Native publishes on Maven Central for Apple platforms: the macOS framework, the iOS xcframework,
 // hermesc and the headers. A new version also moves third_party/jsi of @crossbind/core-app-host to its tag, and the
-// Hermes of crossbind's android-app and linux images.
+// Hermes of crossbind's android-app, linux and windows images.
 export const HERMES = {
     version: '250829098.0.17',
     sha256: '2967ee51b41bd433b3027dda875e96194354e2b4d715f9f186fd0c04ccef309d',
@@ -25,8 +25,8 @@ export default async function resolveHermes() {
     return `${dir}/source/destroot`;
 }
 
-// Linux has no published Hermes, so crossbind's linux image builds the release's source, with its static libc++: JSI
-// hands std types across, and the host and the project's archives build there too.
+// Linux and Windows have no published Hermes, so crossbind's linux and windows images build the release's source, with
+// their static libc++: JSI hands std types across, and the host and the project's archives build there too.
 export const HERMES_SOURCE = {
     url: `https://github.com/facebook/hermes/archive/refs/tags/hermes-v${HERMES.version}.tar.gz`,
     sha256: '37e91915c67ce0c457f69b2de00fcaf28fcf755ab7de6e4f33f1d6ee9efcffed',

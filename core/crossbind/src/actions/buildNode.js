@@ -119,6 +119,13 @@ export function bundleNodeLoader(target) {
     return bundleLoader(target, resolveEmbindNapiRoot(), nodeLoaderConfig(target));
 }
 
+// The mingw-w64 runtime and winpthreads in a Windows addon or app ask for their notices in binary
+// distributions. The windows image carries them; a host toolchain may not.
+export function copyWindowsNotices(target) {
+    const notices = toolchainNoticesDir('win32');
+    run(null, ['sh', '-c', `if [ -d ${WINDOWS_IMAGE_NOTICES} ]; then mkdir -p ${notices} && cp ${WINDOWS_IMAGE_NOTICES}/* ${notices}/; fi`], null, target);
+}
+
 // Links one Node-API addon from the project's archives and bundles the loader that picks the
 // addon matching the running process.
 export default async function buildNode(target, options = {}) {
@@ -173,12 +180,7 @@ export default async function buildNode(target, options = {}) {
         `-DCROSSBIND_LINK_DEPENDS=${libs.join(';')}`,
     ], platformPrefix, target);
     run(null, ['cmake', '--build', '.', '-j', String(cpuCount)], platformPrefix, target, { exclusive: true });
-    if (target.platform === 'win32') {
-        // The mingw-w64 runtime and winpthreads in the addon ask for their notices in binary
-        // distributions. The windows image carries them; a host toolchain may not.
-        const notices = toolchainNoticesDir('win32');
-        run(null, ['sh', '-c', `if [ -d ${WINDOWS_IMAGE_NOTICES} ]; then mkdir -p ${notices} && cp ${WINDOWS_IMAGE_NOTICES}/* ${notices}/; fi`], null, target);
-    }
+    if (target.platform === 'win32') copyWindowsNotices(target);
     fs.copyFileSync(`${build}/${platformPrefix}/${target.path}/${target.addonName}`, `${build}/${target.addonName}`);
     logger.doneStep(target, 'addon');
 

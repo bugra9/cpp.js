@@ -14,12 +14,12 @@
     {
       "source": "docs/api/README.md",
       "output": "api/README.md",
-      "sha256": "9d5cf3757e0c9021921a6db0d238cdef0016d3b4974e745c0aa1c824d0901702"
+      "sha256": "4ad8f70599ada6db00bdd5572c46d613e9100f6575c1d6cff45f515e6ff8ac0f"
     },
     {
       "source": "docs/api/app.md",
       "output": "api/app.md",
-      "sha256": "2492a0edee3aaffc387fd78754b4611b7d9d2819b9421b8cdfa15ca4610c6c30"
+      "sha256": "e872b81a1c8d6d2a15fdd92295fb3965fefc635fff54acfa6c890f3297af40a6"
     },
     {
       "source": "docs/api/build-state.md",
@@ -119,7 +119,7 @@
     {
       "source": "docs/playbooks/integration/desktop-app.md",
       "output": "integration/desktop-app.md",
-      "sha256": "6700b79ff9c3902ace164a41bf57bc2a1fd44ab5de8f4196c592b4ecbd75093a"
+      "sha256": "185410bd009c9660ccf1cc0aa8458b43c558ee5b3b4335ba54bcc5823dbd6492"
     },
     {
       "source": "docs/playbooks/integration/nextjs.md",

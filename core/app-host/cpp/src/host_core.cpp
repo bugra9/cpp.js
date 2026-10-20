@@ -139,6 +139,8 @@ SchemeResponse pageFile(const std::string &pageDir, const std::string &path) {
     std::filesystem::path file = pageDir + path;
     std::error_code error;
     if (std::filesystem::is_directory(file, error)) file /= "index.html";
+    // A device, such as Windows' CON, or a pipe would hold the read up.
+    if (!std::filesystem::is_regular_file(file, error)) return SchemeResponse{404, "text/plain", {}};
     std::ifstream stream(file, std::ios::binary);
     if (!stream) return SchemeResponse{404, "text/plain", {}};
     std::ostringstream content;

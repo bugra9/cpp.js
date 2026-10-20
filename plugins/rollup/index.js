@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import p from 'node:path';
 
 // An app's page reaches the module in the host the app runs, so its build makes the host, not wasm: this machine's, or
-// with CROSSBIND_APP_PLATFORM one per iOS SDK, Android ABI or Linux arch.
+// with CROSSBIND_APP_PLATFORM one per iOS SDK, Android ABI or Linux or Windows arch.
 const isApp = state.config.target.runtimeEnv === 'app';
 const targetParams = isApp
     ? appTargetParams()
@@ -23,7 +23,7 @@ let buildTargetDebug = getFilteredBuildTargets(targetParams, { buildType: 'debug
 const appTargets = isApp ? getFilteredBuildTargets(targetParams, { buildType: 'release', ...appOnly }) : [];
 
 if (isApp && !buildTargetRelease) {
-    throw new Error(`crossbind: desktop apps build on macOS and Linux so far, and this machine runs ${process.platform}-${process.arch}.`);
+    throw new Error(`crossbind: desktop apps build on macOS, Linux and Windows so far, and this machine runs ${process.platform}-${process.arch}.`);
 }
 if (!buildTargetRelease && !buildTargetDebug) {
     throw new Error('No build targets found');

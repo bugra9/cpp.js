@@ -19,9 +19,11 @@ SchemeHandler schemeHandler;
 void configureWebView(void *configuration) { registerSchemeHandler(configuration, "crossbind", schemeHandler); }
 #elif defined(_WIN32)
 // WebView2 takes its schemes from the environment the webview is made in; a dev server's page requests the scheme too.
+// webview asks again on every attempt to make the environment, which keeps what it needs of them.
 std::vector<std::string> schemeOrigins;
 ICoreWebView2EnvironmentOptions *environmentOptions() {
-    return static_cast<ICoreWebView2EnvironmentOptions *>(schemeEnvironmentOptions("crossbind", schemeOrigins));
+    static auto *options = static_cast<ICoreWebView2EnvironmentOptions *>(schemeEnvironmentOptions("crossbind", schemeOrigins));
+    return options;
 }
 #endif
 
@@ -35,10 +37,7 @@ int main() {
 #ifdef __APPLE__
     webview::detail::cocoa_webkit::cocoa_configure_hook = configureWebView;
 #elif defined(_WIN32)
-    if (devUrl) {
-        const std::string url = devUrl;
-        schemeOrigins.push_back(url.substr(0, url.find_first_of("/?#", url.find("://") + 3)));
-    }
+    if (devUrl) schemeOrigins.push_back(app::originOf(devUrl));
     webview::detail::win32_environment_options_hook = environmentOptions;
 #endif
     webview::webview view(devUrl != nullptr, nullptr);

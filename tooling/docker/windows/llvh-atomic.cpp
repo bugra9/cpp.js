@@ -1,5 +1,5 @@
 // llvh's call_once falls back to these atomics where it is neither MSVC nor Unix, as with llvm-mingw, and Hermes leaves
-// out Atomic.cpp, where LLVM defines them.
+// out Atomic.cpp, where LLVM defines them. windows.Dockerfile adds this to each Windows triple's libhermesvm_a.a.
 #include "llvh/Support/Atomic.h"
 
 void llvh::sys::MemoryFence() { __atomic_thread_fence(__ATOMIC_SEQ_CST); }

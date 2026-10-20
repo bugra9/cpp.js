@@ -91,7 +91,8 @@ test('every GitHub Actions Node job uses the exact repository pin', () => {
     for (const workflow of fs.readdirSync(workflowDirectory).filter((name) => name.endsWith('.yml'))) {
         const source = fs.readFileSync(path.join(workflowDirectory, workflow), 'utf8');
         const setupNodeSteps = source.match(/uses:\s*actions\/setup-node@/g)?.length ?? 0;
-        const repositoryPins = source.match(/node-version-file:\s*(?:\.nvmrc|\$\{\{ matrix\.node-version-file \}\})/g)?.length ?? 0;
+        // A job may check the repository out into a directory of its own.
+        const repositoryPins = source.match(/node-version-file:\s*(?:(?:\S+\/)?\.nvmrc|\$\{\{ matrix\.node-version-file \}\})/g)?.length ?? 0;
 
         assert.equal(repositoryPins, setupNodeSteps, `${workflow} must read every Node version from .nvmrc`);
         assert.doesNotMatch(source, /\bnode-version:/, `${workflow} must not carry a second Node version`);
@@ -234,6 +235,17 @@ test('the unpublished toolchain image train uses the reviewed stable versions', 
     assert.match(linux, new RegExp(`^ARG HERMES_VERSION=${hermesVersion.replaceAll('.', '\\.')}$`, 'm'));
     assert.match(androidApp, new RegExp(`^ARG HERMES_ANDROID_SHA256=${pinned('HERMES_ANDROID')}$`, 'm'));
     assert.match(linux, new RegExp(`^ARG HERMES_SHA256=${pinned('HERMES_SOURCE')}$`, 'm'));
+    assert.match(windows, new RegExp(`^ARG HERMES_VERSION=${hermesVersion.replaceAll('.', '\\.')}$`, 'm'));
+    assert.match(windows, new RegExp(`^ARG HERMES_SHA256=${pinned('HERMES_SOURCE')}$`, 'm'));
+    assert.match(windows, /\$\{HERMES_SHA256\}.*sha256sum -c -/);
+    assert.match(windows, /^ARG WEBVIEW2_SHA256=[0-9a-f]{64}$/m);
+    assert.match(windows, /\$\{WEBVIEW2_SHA256\}.*sha256sum -c -/);
+    // A Windows app's licenses name the WebView2 SDK the image carries.
+    const licenses = fs.readFileSync(path.join(ROOT, 'core/crossbind/src/actions/licenses.js'), 'utf8');
+    const [, webview2Version, webview2Sha256] = /const WEBVIEW2_SDK = \{ version: '([^']+)', sha256: '([0-9a-f]{64})' \}/.exec(licenses) ?? [];
+    assert.ok(webview2Version);
+    assert.match(windows, new RegExp(`^ARG WEBVIEW2_VERSION=${webview2Version.replaceAll('.', '\\.')}$`, 'm'));
+    assert.match(windows, new RegExp(`^ARG WEBVIEW2_SHA256=${webview2Sha256}$`, 'm'));
 });
 
 test('legacy package scripts cannot publish with a stored npm credential', () => {

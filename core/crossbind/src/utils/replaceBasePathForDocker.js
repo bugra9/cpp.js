@@ -1,4 +1,12 @@
+import path from 'node:path';
+
 export const DOCKER_BASE = '/tmp/crossbind/live';
+
+// Whether a container, which sees the project's base alone, sees dir.
+export function isUnderBase(dir, basePath) {
+    const relative = path.relative(basePath, path.resolve(dir));
+    return !/^\.\.(?:[\\/]|$)/.test(relative) && !path.isAbsolute(relative);
+}
 
 export default function replaceBasePathForDocker(data, basePath) {
     if (typeof data === 'string' || data instanceof String) {
