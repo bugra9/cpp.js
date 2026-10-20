@@ -25,6 +25,8 @@ import logger from '../utils/logger.js';
 import findFiles from '../utils/findFiles.js';
 import { getContentHash, getFilesFingerprint } from '../utils/hash.js';
 import { xmlPlist } from '../utils/plist.js';
+import { appDisplayName, appHeader } from '../utils/appOptions.js';
+import writeIfChanged from '../utils/writeIfChanged.js';
 import { writeNativeSourceStamp } from '../utils/nativeSourceStamp.js';
 import resetCMakeCacheForSource from '../utils/resetCMakeCacheForSource.js';
 import resolveAppHostRoot, { resolveAppEmbindJsiRoot } from '../utils/resolveAppHost.js';
@@ -183,9 +185,10 @@ async function bundle(input, file, plugins) {
 }
 
 const infoPlist = (name, version) => xmlPlist({
+    CFBundleDisplayName: appDisplayName(state.config),
     CFBundleExecutable: name,
     CFBundleIdentifier: appId(),
-    CFBundleName: name,
+    CFBundleName: appDisplayName(state.config),
     CFBundlePackageType: 'APPL',
     CFBundleShortVersionString: version,
     CFBundleVersion: version,
@@ -301,9 +304,9 @@ export function publishApp(target, { to = appOutputPath(target), page = null } =
     const built = `${state.config.paths.build}/${target.appName}`;
     if (target.platform === 'ios') {
         const parts = appParts(target).map(({ arch, dir }) => ({ sdk: arch, dir }));
-        writeXcodeProject(to, { parts, identity: { id: appId(), team: appTeam() }, version: appVersion() });
+        writeXcodeProject(to, { parts, identity: { id: appId(), team: appTeam() }, label: appDisplayName(state.config), version: appVersion() });
     } else if (target.platform === 'android') {
-        writeGradleProject(to, { parts: appParts(target), id: androidAppId(), version: androidVersion() });
+        writeGradleProject(to, { parts: appParts(target), id: androidAppId(), label: appDisplayName(state.config), version: androidVersion() });
     } else if (path.resolve(to) !== path.resolve(built)) {
         fs.rmSync(to, { recursive: true, force: true });
         fs.cpSync(built, to, { recursive: true, verbatimSymlinks: true });
@@ -334,6 +337,9 @@ export default async function buildApp(target, { bridges = [], force = false } =
         logger.info(`[${target.path}] app skipped (cargo package - staticlib only)`);
         return false;
     }
+    // A desktop host's title and window, and a Windows one's version: a bad app section stops the build before anything
+    // compiles.
+    const header = ['darwin', 'linux', 'win32'].includes(target.platform) ? appHeader(state.config, target.platform) : null;
 
     const buildType = target.buildType === 'release' ? 'Release' : 'Debug';
     const { build } = state.config.paths;
@@ -356,6 +362,9 @@ export default async function buildApp(target, { bridges = [], force = false } =
     const fingerprintFile = `${build}/${target.appName}.fingerprint`;
     const fingerprint = getContentHash(JSON.stringify({
         builder: getFilesFingerprint([fileURLToPath(import.meta.url)]),
+        header,
+        // A macOS app's bundle takes its id, name and version from it.
+        infoPlist: target.platform === 'darwin' ? infoPlist(state.config.general.name, appVersion()) : null,
         hermes: HERMES.version,
         inputs,
         linkArgs,
@@ -386,6 +395,8 @@ export default async function buildApp(target, { bridges = [], force = false } =
     const hostName = target.platform === 'android' ? 'crossbind_app' : name;
     logger.startStep(target, 'app');
     resetCMakeCacheForSource(workDir, `${appHostRoot}/cpp`, target);
+    // The host includes it from its build directory; written only when it changed, it recompiles nothing otherwise.
+    if (header) writeIfChanged(`${workDir}/crossbind_app.h`, header);
     run(null, [
         // An iOS host builds with crossbind's iOS toolchain file rather than as an Xcode project of its own.
         target.platform === 'ios' ? 'ios-cmake' : 'cmake', `${appHostRoot}/cpp`,

@@ -19,12 +19,15 @@ function part(root, arch) {
 }
 
 describe("an Android app's Gradle project", () => {
-    test("packages each ABI's libraries and the app's files, under the app's id and version", () => {
+    test("packages each ABI's libraries and the app's files, under the app's id, name and version", () => {
         const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-gradle-'));
         const to = path.join(root, 'with space', 'demo-app-android');
 
         writeGradleProject(to, {
-            parts: [part(root, 'arm64-v8a'), part(root, 'x86_64')], id: 'com.example.demo', version: { name: '1.2.3-beta.1', code: 1002003 },
+            parts: [part(root, 'arm64-v8a'), part(root, 'x86_64')],
+            id: 'com.example.demo',
+            label: "Demo's App",
+            version: { name: '1.2.3-beta.1', code: 1002003 },
         });
 
         const main = path.join(to, 'app', 'src', 'main');
@@ -37,7 +40,7 @@ describe("an Android app's Gradle project", () => {
         expect(gradle).toContain('versionCode 1002003');
         expect(gradle).toContain("versionName '1.2.3-beta.1'");
         expect(gradle).toContain("abiFilters 'arm64-v8a', 'x86_64'");
-        expect(gradle).toContain("manifestPlaceholders = [appName: 'demo-app']");
+        expect(gradle).toContain("manifestPlaceholders = [appName: 'Demo\\'s App']");
         expect(gradle).toMatch(/implementation\('com\.facebook\.hermes:hermes-android:\d+\.\d+\.\d+'\)/);
         // Android's default pattern would leave out the page's _app and .well-known directories.
         expect(gradle).toContain("ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'");
@@ -48,7 +51,7 @@ describe("an Android app's Gradle project", () => {
     test('asks Maven for nothing the android-app image did not resolve, so the image builds it offline', () => {
         const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-gradle-'));
         const to = path.join(root, 'demo-app-android');
-        writeGradleProject(to, { parts: [part(root, 'arm64-v8a'), part(root, 'x86_64')], id: 'com.example.demo', version: { name: '1.0.0', code: 1 } });
+        writeGradleProject(to, { parts: [part(root, 'arm64-v8a'), part(root, 'x86_64')], id: 'com.example.demo', label: 'demo-app', version: { name: '1.0.0', code: 1 } });
         const image = path.join(import.meta.dirname, '..', '..', '..', 'tooling', 'docker', 'android-app');
         const read = (file) => fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
         for (const file of ['settings.gradle', 'build.gradle', 'gradle.properties']) {

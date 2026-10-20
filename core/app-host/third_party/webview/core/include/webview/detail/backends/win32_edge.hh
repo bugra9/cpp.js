@@ -567,12 +567,22 @@ private:
           break;
         case WM_GETMINMAXINFO: {
           auto lpmmi = (LPMINMAXINFO)lp;
+          // crossbind: the limits are the content's, in logical pixels, as
+          // set_size's own size is, so they become frame sizes at this DPI.
+          auto frame = [hwnd](POINT size) {
+            auto dpi = get_window_dpi(hwnd);
+            auto scaled =
+                scale_size(size.x, size.y, get_default_window_dpi(), dpi);
+            auto framed =
+                make_window_frame_size(hwnd, scaled.cx, scaled.cy, dpi);
+            return POINT{framed.cx, framed.cy};
+          };
           if (w->m_maxsz.x > 0 && w->m_maxsz.y > 0) {
-            lpmmi->ptMaxSize = w->m_maxsz;
-            lpmmi->ptMaxTrackSize = w->m_maxsz;
+            lpmmi->ptMaxSize = frame(w->m_maxsz);
+            lpmmi->ptMaxTrackSize = lpmmi->ptMaxSize;
           }
-          if (w->m_minsz.x > 0 && w->m_minsz.y > 0) {
-            lpmmi->ptMinTrackSize = w->m_minsz;
+          if (w->m_minsz.x > 0 || w->m_minsz.y > 0) {
+            lpmmi->ptMinTrackSize = frame(w->m_minsz);
           }
         } break;
         case 0x02E4 /*WM_GETDPISCALEDSIZE*/: {

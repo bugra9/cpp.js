@@ -1,3 +1,4 @@
+#include "crossbind_app.h"
 #include "platform.h"
 #include "windows/com.h"
 
@@ -25,12 +26,12 @@ std::string resourceDir() {
     return executable.substr(0, executable.find_last_of("\\/")) + "\\resources";
 }
 
-std::string appName() {
-    const std::string executable = executablePath();
-    std::string name = executable.substr(executable.find_last_of("\\/") + 1);
-    if (name.size() > 4 && name.compare(name.size() - 4, 4, ".exe") == 0) name.resize(name.size() - 4);
-    return name;
-}
-
 // The app ends with its window; anything else ends the process as it ends any other.
 void onQuit(std::function<void()>) {}
+
+// WebView2 shows the page's dialogs, file inputs and downloads itself.
+void showPageDialogs(void *) {}
+
+void showError(const std::string &message) {
+    MessageBoxW(nullptr, wide(message).c_str(), wide(CROSSBIND_APP_NAME " cannot open").c_str(), MB_OK | MB_ICONERROR);
+}

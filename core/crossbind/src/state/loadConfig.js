@@ -133,7 +133,7 @@ export function getFilledConfig(config, options = { isDepend: false }) {
         targetSpecs: config.targetSpecs || [],
         build: config.build || {},
         target: config.target || {},
-        // An app's identity: its bundle id, and on iOS the Apple team that signs it.
+        // An app's identity: its bundle id, on iOS the Apple team that signs it, the name it shows and its desktop window.
         app: config.app || {},
         extensions: config.extensions || [],
         package: null,

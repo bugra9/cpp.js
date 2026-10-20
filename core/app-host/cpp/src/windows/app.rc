@@ -1,3 +1,33 @@
+#include <winver.h>
+// The app's name and version, which crossbind writes into the build directory from crossbind.config.js.
+#include "crossbind_app.h"
+
 // The app's manifest (resource 1 of type RT_MANIFEST) makes its narrow strings UTF-8: the paths and the environment
 // the host and the libraries it links pass to the C runtime and to Windows, such as a user folder with a non-ASCII name.
 1 24 "app.manifest"
+
+// What Explorer shows in the executable's details, and Task Manager by its process.
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION CROSSBIND_APP_VERSION_NUMBERS
+PRODUCTVERSION CROSSBIND_APP_VERSION_NUMBERS
+FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+FILEFLAGS 0
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "FileDescription", CROSSBIND_APP_NAME
+            VALUE "FileVersion", CROSSBIND_APP_VERSION
+            VALUE "ProductName", CROSSBIND_APP_NAME
+            VALUE "ProductVersion", CROSSBIND_APP_VERSION
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

@@ -33,6 +33,7 @@ std::string attach(Core &core, void *webView, const char *devUrl) {
         core.receive(std::move(message), std::move(reply));
     });
     if (devUrl || std::getenv("CROSSBIND_APP_CONSOLE")) forwardConsole(webView);
+    showPageDialogs(webView);
     restrictNavigation(webView, origins, [&core] { core.reset(); });
     return devUrl ? devUrl : APP_URL;
 }

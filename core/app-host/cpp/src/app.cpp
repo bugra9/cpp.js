@@ -24,10 +24,7 @@ Core &start(const char *devUrl) {
     } catch (const std::exception &error) {
         bootError = error.what();
     }
-    if (!bootError.empty()) {
-        std::fprintf(stderr, "crossbind: the app's module failed to start: %s\n", bootError.c_str());
-        quit(core, 1);
-    }
+    if (!bootError.empty()) fail(core, devUrl, "the app's module failed to start: " + bootError);
     return core;
 }
 
@@ -35,6 +32,18 @@ void quit(Core &core, int status) {
     core.stop();
     std::fflush(nullptr);
     std::_Exit(status);
+}
+
+void fail(Core &core, const char *devUrl, const std::string &reason) {
+    std::fprintf(stderr, "crossbind: %s\n", reason.c_str());
+    // A development session and a run with CROSSBIND_APP_CONSOLE read the output; an app its user opened has none, and
+    // its box shows the reason's first line, without the stack a script's error carries. The module stops first, so
+    // nothing runs behind the box.
+    if (!devUrl && !std::getenv("CROSSBIND_APP_CONSOLE")) {
+        core.stop();
+        showError(reason.substr(0, reason.find('\n')));
+    }
+    quit(core, 1);
 }
 
 }  // namespace crossbind::app

@@ -114,7 +114,7 @@ function objects(name, targetSettings) {
 // An iOS app as an Xcode project, written anew from the parts its SDK targets built: each brings its archives and
 // their link line, and its slice of Hermes; the first also the app's files. Xcode signs the app and runs it, in the
 // Simulator or on a device.
-export default function writeXcodeProject(to, { parts, identity, version }) {
+export default function writeXcodeProject(to, { parts, identity, label, version }) {
     const { name } = state.config.general;
     if (parts.length === 0) throw new Error(`crossbind: no part of the iOS app ${name} is built, so there is no Xcode project to write.`);
     fs.rmSync(to, { recursive: true, force: true });
@@ -133,7 +133,7 @@ export default function writeXcodeProject(to, { parts, identity, version }) {
     if (result.status !== 0) throw new Error(`crossbind: cannot make Hermes' xcframework for ${to}: ${result.stderr || result.error?.message}`);
 
     fs.writeFileSync(`${to}/main.m`, MAIN);
-    fs.writeFileSync(`${to}/Info.plist`, infoPlist(name));
+    fs.writeFileSync(`${to}/Info.plist`, infoPlist(label));
     const targetSettings = {
         PRODUCT_NAME: name,
         PRODUCT_BUNDLE_IDENTIFIER: identity.id,

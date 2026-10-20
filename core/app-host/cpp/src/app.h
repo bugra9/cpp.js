@@ -13,6 +13,8 @@ Core &start(const char *devUrl);
 // Ends the app without running destructors: bindings keep JSI values in globals, which must not be destroyed after the
 // runtime they belong to.
 [[noreturn]] void quit(Core &core, int status);
+// Ends the app for this reason, which its output gets, and its user as well when nobody reads that output.
+[[noreturn]] void fail(Core &core, const char *devUrl, const std::string &reason);
 // Readies a webview for the page, and returns the URL it opens first. An Android app's activity does this in Java.
 std::string attach(Core &core, void *webView, const char *devUrl);
 // The scheme and authority of a URL: the origin a webview names a page by.

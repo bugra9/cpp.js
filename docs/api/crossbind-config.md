@@ -225,6 +225,13 @@ export default {
       // Default: dev.crossbind.<general.name>, on Android with an underscore for each hyphen.
     team: 'ABCDE12345',
       // The Apple team that signs an iOS app. Default: XCODE_DEVELOPMENT_TEAM of ~/.crossbind.json.
+    name: 'My App',
+      // The name the app shows: its window's title, its macOS menus, its Windows file description and the label
+      // under its icon on iOS and Android. Text without a quotation mark, a backslash or a control character.
+      // Default: general.name.
+    window: { width: 1024, height: 768, minWidth: 0, minHeight: 0, resizable: true },
+      // The desktop window, these being the defaults: the size of its page in pixels (up to 16384), the least it
+      // shrinks to (0: no limit) and whether it resizes. A minimum needs a window that resizes.
   },
 
   targetSpecs: [

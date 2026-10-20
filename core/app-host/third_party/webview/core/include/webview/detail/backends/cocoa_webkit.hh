@@ -212,10 +212,9 @@ protected:
     } else if (hints == WEBVIEW_HINT_MAX) {
       NSWindow_set_contentMaxSize(m_window, NSSizeMake(width, height));
     } else {
-      auto rect{NSWindow_get_frame(m_window)};
-      NSWindow_setFrame(m_window,
-                        NSRectMake(rect.origin.x, rect.origin.y, width, height),
-                        true, false);
+      // crossbind: the size is the content's, as on GTK and Windows.
+      objc::msg_send<void>(m_window, objc::selector("setContentSize:"),
+                           NSSizeMake(width, height));
     }
     NSWindow_center(m_window);
 

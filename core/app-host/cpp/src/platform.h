@@ -46,9 +46,19 @@ void restrictNavigation(void *webView, std::vector<std::string> origins, std::fu
 // Runs when the app is quit other than by closing its window (the Dock on macOS, the system on iOS), before it would
 // exit.
 void onQuit(std::function<void()> quit);
-// Where the app's files are, and its name.
+// The page's alert(), confirm() and prompt(), and on macOS its file inputs, as a browser shows them. WebKitGTK and
+// WebView2 show them themselves.
+void showPageDialogs(void *webView);
+// Tells the user why the app cannot go on: in a message box on the desktop, in the system's log on iOS and Android.
+void showError(const std::string &message);
+// Where the app's files are.
 std::string resourceDir();
-std::string appName();
+
+#ifdef __APPLE__
+// macOS sends the standard shortcuts, ⌘C and ⌘Q among them, through the menu bar, so a window without the app, Edit,
+// View and Window menus never sees them.
+void installAppMenu();
+#endif
 
 #ifdef _WIN32
 // The ICoreWebView2EnvironmentOptions WebView2's environment is made with: they register the scheme, which pages of

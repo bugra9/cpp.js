@@ -74,6 +74,33 @@ They need `RUNNER=DOCKER_RUN` or `DOCKER_EXEC`, and another runner stops the bui
 `initNative({ env })` sets environment variables in the app's process. The build's env is the app's own, and a variable
 the process already has keeps its value.
 
+## The window
+
+`app.name` in `crossbind.config.js` is the name the app shows: its window's title, its macOS menus, its Windows file
+description and the label under its icon on iOS and Android; without it, the app shows `general.name`. A Windows app's
+executable also carries `package.json`'s version, which Windows takes as up to four numbers from 0 to 65535 and a
+prerelease part, as 1.2.3-beta.1. `app.window` sizes the desktop window:
+
+```js
+app: {
+    name: 'My App',
+    window: { width: 1024, height: 768, minWidth: 640, minHeight: 480, resizable: true },
+},
+```
+
+The sizes are the page's, in whole pixels up to 16384, whatever frame the window adds around it; a display too small for
+the window holds it to its own size. The window opens at 1024 × 768 and
+resizes without app.window, and shrinks to any size without a minimum, which needs a window that resizes. An option the
+build cannot honour stops it, naming the option.
+
+A macOS app has the app, Edit, View and Window menus every Mac app has, so ⌘C, ⌘V, ⌘Z, ⌘A, ⌘W and ⌘Q reach it. The
+page's `alert()`, `confirm()` and `prompt()` show as they do in a browser, and so does the picker of a file input. A
+download the page starts, such as an `<a download>` link, asks where to save on macOS. On Android, Back goes back in the
+page's history first, and leaves the app when there is none.
+
+An app that cannot start, for want of the WebView2 Runtime or of a file it carries, writes why to its output; a desktop
+app its user opened says so in a message box as well.
+
 ## What the app holds
 
 ```
@@ -236,7 +263,7 @@ to ship with the app.
 | Variable | Effect |
 |---|---|
 | `CROSSBIND_APP_URL` | Opens this page instead of `crossbind://app/`, in a debug build only; the Vite plugin sets it to the dev server. |
-| `CROSSBIND_APP_CONSOLE` | Writes the page's console and uncaught errors to the app's output; on during development. A Windows app has no console of its own, so it writes only to an output that is redirected, as a development session's is. |
+| `CROSSBIND_APP_CONSOLE` | Writes the page's console and uncaught errors to the app's output; on during development. A Windows app has no console of its own, so it writes only to an output that is redirected, as a development session's is. With it, an app that cannot start says why in its output alone, without a message box. |
 
 An Android app takes them as its activity's string extras (`adb shell am start --es CROSSBIND_APP_CONSOLE 1 …`) and
 writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and the console only in a debuggable app.
@@ -254,7 +281,11 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
   one or developing it on a Windows machine has not been measured yet.
 - A Windows app is not signed, so SmartScreen warns about it once it is downloaded. Authenticode signing is not wired
   yet.
-- On the desktop, one window, 1024 × 768, titled after the app.
+- On the desktop, one window.
+- A download the page starts saves where its user picks on macOS, when it is a `Blob` or other data the page holds: an
+  `<a download>` link to one of the app's own files saves nothing yet, so the page fetches the file and saves it as a
+  `Blob`. WebView2 and WebKitGTK handle downloads themselves on Windows and Linux, which has not been measured yet; an
+  iOS or Android app does not save one yet.
 - iOS 15.1 or later, arm64 alone: devices, and the Simulator of an Apple silicon Mac. It builds on macOS with Xcode.
 - During development an iOS app runs in the Simulator; a device runs the Xcode project's build.
 - An iOS app has no icon of its own yet, which App Store Connect requires.

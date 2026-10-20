@@ -19,6 +19,11 @@ Only `core/include` is kept.
   are open.
 - `detail/backends/win32_edge.hh` makes WebView2's environment with the options `win32_environment_options_hook`
   returns, when one is set, instead of none: WebView2 takes custom URL schemes from those options alone.
+- `detail/backends/cocoa_webkit.hh` sizes the window's content in `set_size`, not its frame, as the other backends do:
+  the app's window opens with the page size crossbind.config.js gives.
+- `detail/backends/win32_edge.hh` takes the minimum and maximum sizes as the content's, in logical pixels, as the size
+  itself, and turns them into frame sizes at the window's DPI when Windows asks; upstream passed the numbers to Windows
+  as frame pixels.
 - `detail/native_library.hh` loads a library named without a path from System32 alone. webview first tries
   `WebView2Loader.dll`, which no crossbind app ships, so otherwise a copy in the working directory or on `PATH` would
   load into the app.
