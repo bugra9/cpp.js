@@ -86,12 +86,13 @@ describe('crossbind inside a project', () => {
     });
 });
 
-// An app whose Vite prints what crossbind started it with, then exits with 3, or waits for SIGTERM and marks it.
+// An app whose Vite prints what crossbind started it with, then exits with 3, or waits for SIGTERM and marks it. It
+// listens before it prints, as the test signals once it has printed.
 describe('crossbind app', () => {
     const VITE = `const fs = require('node:fs');
+process.on('SIGTERM', () => { fs.writeFileSync(process.env.FAKE_VITE_MARK, 'SIGTERM'); process.exit(143); });
 console.log(JSON.stringify({ args: process.argv.slice(2), platform: process.env.CROSSBIND_APP_PLATFORM }));
 if (!process.env.FAKE_VITE_MARK) process.exit(3);
-process.on('SIGTERM', () => { fs.writeFileSync(process.env.FAKE_VITE_MARK, 'SIGTERM'); process.exit(143); });
 setInterval(() => {}, 1000);
 `;
     const UNSET = {
