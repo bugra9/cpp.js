@@ -1,5 +1,23 @@
 # @crossbind/docker
 
+## Image family 1.0.16
+
+### Patch Changes
+
+- The `windows` image carries NSIS 3.11, Debian's `nsis` package, which builds a Windows app's
+  installer, and jsign 7.6 on Debian's OpenJDK 21, which signs the app and its installer with
+  Authenticode by a PKCS#12 file, a PKCS#11 token or a cloud's key service. The jsign jar is
+  checked against its SHA-256.
+- Updated Node.js to 24.22.1, a security release that fixes seven CVEs, in `base` and every image
+  built on it.
+- Updated certifi to 2026.10.19 in the Conan venv of `base`. Earlier releases trust the
+  `emSign ECC Root CA - G3` root, under which eight revoked intermediate CAs have compromised keys
+  (GHSA-6q48-6c7w-9gw2, CRITICAL); the daily scan has found it in every published 1.0.15 image
+  built on `base` since 21 October.
+- Refreshed the pinned `debian:trixie-slim` digest, the starting point of `base` (and so of
+  every image built on it) and of the stage that assembles the `linux` sysroots. The tag is the
+  same; upstream rebuilt it.
+
 ## Image family 1.0.15
 
 ### Patch Changes
