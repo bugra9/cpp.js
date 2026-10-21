@@ -50,6 +50,8 @@ defaults and current limits (macOS, Linux, Windows, iOS and Android for now).
 - `third_party/webview/` — webview/webview (MIT), vendored at a pinned commit; provenance and the local patch are in
   its README.
 - `third_party/jsi/` — JSI's `jsi.cpp` (MIT) from the Hermes release the host links, and on Android its headers.
+- `third_party/nsis/` — the license of NSIS 3.11 (zlib, and MIT for its System plugin), whose installer stub and
+  plugins a Windows app's setup program carries; provenance in its README.
 - `third_party/webview2/` — the license of the WebView2 SDK (BSD-3-Clause), whose headers crossbind's windows image
   carries for a Windows host.
 - `third_party/monocypher/` — Monocypher 4.0.3 (BSD-2-Clause or CC0-1.0), whose Ed25519 and SHA-512 check a desktop

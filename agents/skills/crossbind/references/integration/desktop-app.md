@@ -79,7 +79,7 @@ now.
   unless `-p` names another; `crossbind app build -p linux` builds the Linux app on a Mac too, but its development
   session runs on Linux alone. A Linux app needs Docker to build and WebKitGTK 4.1 (2.40 or later) to run.
 - `crossbind app build -p windows` builds the Windows app on a Mac or a Linux machine, in Docker. It runs where the
-  WebView2 Runtime is, as on Windows 11, and is not signed yet, so SmartScreen warns about it once downloaded.
+  WebView2 Runtime is, as on Windows 11; unless step 5's key signs it, SmartScreen warns about it once downloaded.
 - Whoever holds `CROSSBIND_UPDATER_PRIVATE_KEY` signs updates every installed app accepts: keep it in the build's
   secrets, never in the repository. An app updates in a folder its user can change, so one in a read-only place, a
   Debian package's among them, does not update itself.

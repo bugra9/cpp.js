@@ -119,7 +119,7 @@
     {
       "source": "docs/playbooks/integration/desktop-app.md",
       "output": "integration/desktop-app.md",
-      "sha256": "fd1e8ff6f774cf0bd6b1d257746402e96dbbbb086cd1bf0d2c9fcb6a5b44aaa9"
+      "sha256": "5b2599e57a1845e9ae7a86c6ebd2fd9611f98a72f1711f7901e07ea3236bb963"
     },
     {
       "source": "docs/playbooks/integration/nextjs.md",
