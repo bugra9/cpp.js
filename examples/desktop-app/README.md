@@ -59,7 +59,8 @@ pnpm build:windows
 
 writes the Windows app for x64 and arm64, on a Mac or Linux as well: `dist/crossbind-example-desktop-app-win32-<arch>/`,
 the same as a `.zip`, which runs where the WebView2 Runtime is installed, as on Windows 11, and a `-setup.exe` that
-installs it, with the runtime where Windows has none.
+installs it, with the runtime where Windows has none; a signing key in the environment signs both (see
+`docs/api/app.md`).
 
 ## iOS
 

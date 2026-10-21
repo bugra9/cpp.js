@@ -145,7 +145,8 @@ The Debian package and the shortcut and folder take their names from the app's, 
 Debian name, or an app name with any of `< > : / | ? *` or a space or dot at its end, stops `crossbind app build` before
 anything compiles.
 
-The Linux and Windows ones are not signed yet (see [Limits](#limits)).
+A macOS or Windows app is signed with a key in the environment, as the next sections tell. The Debian package is not
+signed: apt checks the signature of a repository, not of a package.
 
 ## Signing a macOS app
 
@@ -167,6 +168,38 @@ identity or a key without all three stops `crossbind app build` before anything 
 identity other than a Developer ID Application one. Apple takes a few minutes to check the app, two hours at most
 before the build gives up, and a rejection stops the build with Apple's log. A signed app that is not notarized opens
 on another Mac only once its user allows it in System Settings, and the build says so.
+
+## Signing a Windows app
+
+`crossbind app build` leaves a Windows app and its setup program unsigned, so SmartScreen warns about them once they
+are downloaded, and says so. With a key in the environment, jsign in crossbind's windows image signs the app before
+its zip is made, and the setup program and its uninstaller as NSIS writes them, with Authenticode and a timestamp. The
+key is jsign's own: a cloud's key service whose credentials jsign takes as its password, such as Azure Trusted Signing,
+Azure Key Vault, AWS or Google Cloud KMS, or SSL.com eSigner, or a PKCS#12 file. Its files reach the container
+read-only, and its passwords by name, never on a command line:
+
+| Variable | Value |
+|---|---|
+| `CROSSBIND_WINDOWS_SIGNING_STORETYPE` | jsign's store type, as `TRUSTEDSIGNING`, `AZUREKEYVAULT`, `AWS`, `GOOGLECLOUD`, `ESIGNER` or `PKCS12`. |
+| `CROSSBIND_WINDOWS_SIGNING_KEYSTORE` | The key store: the service's endpoint or name, or the PKCS#12 file. |
+| `CROSSBIND_WINDOWS_SIGNING_ALIAS` | The key's name in it. |
+| `CROSSBIND_WINDOWS_SIGNING_STOREPASS` | Its password, or the service's access token. |
+| `CROSSBIND_WINDOWS_SIGNING_KEYPASS` | The key's password, where it is not the store's. |
+| `CROSSBIND_WINDOWS_SIGNING_CERTFILE` | The certificate chain a cloud key comes without, as a `.p7b` file. |
+| `CROSSBIND_WINDOWS_SIGNING_TSAURL` | The timestamp server; `http://timestamp.digicert.com` without it. |
+
+With Azure Trusted Signing, for one:
+
+```bash
+export CROSSBIND_WINDOWS_SIGNING_STORETYPE=TRUSTEDSIGNING
+export CROSSBIND_WINDOWS_SIGNING_KEYSTORE=weu.codesigning.azure.net
+export CROSSBIND_WINDOWS_SIGNING_ALIAS=<account>/<profile>
+export CROSSBIND_WINDOWS_SIGNING_STOREPASS="$(az account get-access-token --resource https://codesigning.azure.net --query accessToken -o tsv)"
+```
+
+A variable without the store type, a store type jsign does not take, a key file that is not there, or a hardware
+token, which the container does not reach, stops `crossbind app build` before anything compiles. SmartScreen trusts a signed app as its certificate's
+downloads build a reputation, so the first downloads of a new certificate may still warn.
 
 ## The app's functions
 
@@ -406,8 +439,9 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
   2025 runner with WebView2 154 and its Windows 11 arm64 runner with 155. A Windows app builds in crossbind's windows
   image, so it needs Docker (`RUNNER=DOCKER_RUN` or `DOCKER_EXEC`), on a Mac or a Linux machine as well. Building
   one or developing it on a Windows machine has not been measured yet.
-- A Windows app and its setup program are not signed, so SmartScreen warns about them once they are downloaded.
-  Authenticode signing is not wired yet.
+- Signing a Windows app has been measured with a throwaway PKCS#12 key, whose signatures and timestamp on the app, its
+  zip's copy and the setup program jsign reads back; not yet with a cloud's key service. Windows itself checks them,
+  and the uninstaller's, in CI alone.
 - The Windows setup program has been built, not yet run on Windows. Its install of the WebView2 Runtime, for a system
   that has none, cannot be measured on the Windows machines crossbind is tested on, which have the runtime; the
   bootstrapper it downloads over HTTPS runs with no check of its own.

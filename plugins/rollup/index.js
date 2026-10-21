@@ -79,6 +79,9 @@ const rollupCrossbindPlugin = (options, bridges = []) => {
             return getCrossbindScript(buildTargetRelease, bridgeFile, { base });
         },
         async buildStart() {
+            // writeBundle puts each app beside what installs it, whose names and signing keys stop the build here if
+            // they cannot be, before the dependencies compile.
+            if (isApp && !isServe) appTargets.forEach(checkInstaller);
             // Before any transform: a header's bridge reads the include roots of every dependency, and a cargo
             // dependency built for another target only is there but lacks this one until the build makes it.
             await buildDependencies({ targetParams: { ...targetParams, buildType: [buildTargetRelease.buildType] } });
@@ -107,8 +110,6 @@ const rollupCrossbindPlugin = (options, bridges = []) => {
         },
         async generateBundle() {
             if (isApp) {
-                // writeBundle puts each app beside what installs it, whose names stop the build here if they cannot be.
-                appTargets.forEach(checkInstaller);
                 for (const target of appTargets) await buildProjectApp(target);
                 this.emitFile({
                     type: 'asset',

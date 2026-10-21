@@ -1,12 +1,18 @@
 ; A crossbind app's setup program. It installs the app for the user who runs it, with no administrator's approval, in
 ; %LOCALAPPDATA%\Programs, puts it in the Start menu and among the apps Settings lists, and installs the WebView2
-; Runtime the app runs on when the system has none. crossbind defines NAME, EXE, ID, VERSION, APP and OUTFILE, and ICON
-; for an app with an icon.
+; Runtime the app runs on when the system has none. crossbind defines NAME, EXE, ID, VERSION, APP and OUTFILE, ICON for
+; an app with an icon, and SIGNER with a signing key.
 Unicode true
 ManifestDPIAware true
 RequestExecutionLevel user
 ; LZMA would compress better, but NSIS's module for it is under CPL-1.0, whose binaries carry terms of their own.
 SetCompressor /SOLID zlib
+
+; With a key, crossbind defines SIGNER, the script that signs the uninstaller and this setup program as they are written.
+!ifdef SIGNER
+  !uninstfinalize 'sh "${SIGNER}" "%1"' = 0
+  !finalize 'sh "${SIGNER}" "%1"' = 0
+!endif
 
 !include MUI2.nsh
 !include LogicLib.nsh
