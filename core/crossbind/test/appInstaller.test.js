@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { PNG } from 'pngjs';
 
 const state = { config: {} };
@@ -36,6 +36,7 @@ function project(app, { name = 'demo', appOptions = {}, pkg = { version: '1.2.0-
 }
 
 beforeEach(() => run.mockReset());
+afterEach(() => vi.unstubAllEnvs());
 
 describe("a Linux app's Debian package", () => {
     test('is named after the project in lower case, with a hyphen for each underscore and from its first letter or digit', () => {
@@ -185,5 +186,11 @@ describe('the names an installer takes', () => {
         expect(() => checkInstaller({ platform: 'linux', arch: 'x64' })).toThrow('general.name "x" makes no Debian package name');
         expect(() => checkInstaller({ platform: 'win32', arch: 'x64' })).toThrow('"Notes: Pro", the name of a Windows app\'s Start menu shortcut');
         expect(() => checkInstaller({ platform: 'darwin', arch: 'arm64' })).not.toThrow();
+    });
+
+    test('stop a macOS build whose notarization could not be, before anything compiles', () => {
+        project({});
+        vi.stubEnv('CROSSBIND_APPLE_API_KEY_ID', 'ABC123');
+        expect(() => checkInstaller({ platform: 'darwin', arch: 'arm64' })).toThrow('CROSSBIND_APPLE_API_KEY_ID is set without CROSSBIND_APPLE_SIGNING_IDENTITY');
     });
 });

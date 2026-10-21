@@ -27,8 +27,11 @@ now.
    JavaScript functions to the module. What the app's host does, the file dialogs, opening a link in the browser, the
    app's folders and quitting, the page imports from `crossbind/app` after `initNative()`, and the C++ includes from
    `<crossbind/app.h>`.
-5. Run `pnpm crossbind app dev` to develop, `pnpm crossbind app build` to get `dist/<name>.app`. Its icon comes from
-   the square PNG `app.icon` names in `crossbind.config.js`, at best 1024 × 1024.
+5. Run `pnpm crossbind app dev` to develop, `pnpm crossbind app build` to get `dist/<name>.app` and its disk image. Its
+   icon comes from the square PNG `app.icon` names in `crossbind.config.js`, at best 1024 × 1024. To ship it to other
+   Macs, set `CROSSBIND_APPLE_SIGNING_IDENTITY` to a Developer ID and `CROSSBIND_APPLE_API_KEY`,
+   `CROSSBIND_APPLE_API_KEY_ID` and `CROSSBIND_APPLE_API_ISSUER` to an App Store Connect API key: the build then signs
+   the app and Apple notarizes it.
 6. For iOS, add `-p ios`: `crossbind app dev -p ios` opens the app in the Simulator and `crossbind app build -p ios`
    writes the Xcode project `dist/<name>-ios/`. To run it on a device, give the app its bundle id and Apple team in
    `crossbind.config.js` (`app: { id, team }`) and open the project in Xcode.

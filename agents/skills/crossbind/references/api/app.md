@@ -39,7 +39,7 @@ export default defineConfig({ plugins: [viteCrossbindPlugin()] });
 | Command | What it does |
 |---|---|
 | `crossbind app dev` | Builds the host for this machine and opens the app on the dev server. An edit to the page reloads it; an edit to native code, or to what the page imports from it, rebuilds the host and opens the app again. The page's console shows in the terminal, and closing the window ends the session. |
-| `crossbind app build` | Builds the page and the host and writes the app with what installs it (see [Installers](#installers)): `dist/<name>.app`, signed ad hoc, and `dist/<name>.dmg` on macOS; `dist/<name>-linux-<arch>/`, the same as a `.tar.gz`, and its `.deb` on Linux. |
+| `crossbind app build` | Builds the page and the host and writes the app with what installs it (see [Installers](#installers)): `dist/<name>.app`, signed ad hoc or with a Developer ID (see [Signing a macOS app](#signing-a-macos-app)), and `dist/<name>.dmg` on macOS; `dist/<name>-linux-<arch>/`, the same as a `.tar.gz`, and its `.deb` on Linux. |
 | `crossbind app build -p linux` | Writes the Linux app for x64 and arm64, on a Mac as well: `dist/<name>-linux-x64/` and `dist/<name>-linux-arm64/`, each with its `.tar.gz` and `.deb`. A Linux app's development session runs on Linux. |
 | `crossbind app build -p windows` | Writes the Windows app for x64 and arm64, on a Mac or a Linux machine as well: `dist/<name>-win32-x64/` and `dist/<name>-win32-arm64/`, each with its `.zip` and `-setup.exe`. A Windows app's development session runs on Windows. |
 | `crossbind build -p host -e app` | Builds the host alone, with no page in it: `<paths.output>/<name>.darwin-<arch>.app` on macOS, `<paths.output>/<name>.linux-<arch>` and its `.tar.gz` on Linux. `-p linux` or `-p win32` builds a Linux app, or a Windows app with its `.zip`, from a Mac as well. |
@@ -145,7 +145,28 @@ The Debian package and the shortcut and folder take their names from the app's, 
 Debian name, or an app name with any of `< > : / | ? *` or a space or dot at its end, stops `crossbind app build` before
 anything compiles.
 
-None of them is signed yet (see [Limits](#limits)).
+The Linux and Windows ones are not signed yet (see [Limits](#limits)).
+
+## Signing a macOS app
+
+`crossbind app build` signs a macOS app ad hoc, which opens it on the Mac that built it alone, and says so. With a
+Developer ID it signs the app and its framework with that identity instead, in the hardened runtime, and with an App
+Store Connect API key Apple also notarizes the app, whose ticket the build staples to it before it makes the disk
+image: the app then opens on any Mac, offline too. The disk image stays unsigned, so that Gatekeeper judges the app in
+it, which Apple has notarized. Both come from the environment alone:
+
+| Variable | Value |
+|---|---|
+| `CROSSBIND_APPLE_SIGNING_IDENTITY` | A code signing identity in the keychain, by name or hash, as `Developer ID Application: <name> (<team>)`. |
+| `CROSSBIND_APPLE_API_KEY` | The API key's `.p8` file, which App Store Connect gives once. |
+| `CROSSBIND_APPLE_API_KEY_ID` | The key's ID. |
+| `CROSSBIND_APPLE_API_ISSUER` | The issuer ID of the key's team. |
+
+An identity the keychain does not hold, a name two of its identities share, as after a renewal, a key without an
+identity or a key without all three stops `crossbind app build` before anything compiles, and so does a key beside an
+identity other than a Developer ID Application one. Apple takes a few minutes to check the app, two hours at most
+before the build gives up, and a rejection stops the build with Apple's log. A signed app that is not notarized opens
+on another Mac only once its user allows it in System Settings, and the build says so.
 
 ## The app's functions
 
@@ -378,8 +399,9 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
 - Linux: a glibc system with WebKitGTK 4.1, release 2.40 or later (`libwebkit2gtk-4.1-0` on Debian and Ubuntu),
   measured on Ubuntu 22.04. A Linux app builds in crossbind's linux image, so it needs Docker (`RUNNER=DOCKER_RUN` or
   `DOCKER_EXEC`), on a Mac as well.
-- The ad hoc signature opens the app on the Mac that built it, from its disk image as well. Developer ID signing and
-  notarization are not wired yet.
+- Signing with a Developer ID and notarizing have not been run with a real Developer ID yet. The app runs in the
+  hardened runtime, measured with an ad hoc signature without library validation, which a Developer ID passes when the
+  app and its framework carry the same team.
 - Windows, x64 and arm64, with the WebView2 Runtime, which Windows 11 includes; measured on GitHub's Windows Server
   2025 runner with WebView2 154 and its Windows 11 arm64 runner with 155. A Windows app builds in crossbind's windows
   image, so it needs Docker (`RUNNER=DOCKER_RUN` or `DOCKER_EXEC`), on a Mac or a Linux machine as well. Building

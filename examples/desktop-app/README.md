@@ -41,9 +41,11 @@ and the page's console shows in the terminal. Closing the window ends the sessio
 pnpm build
 ```
 
-writes the app to `dist/crossbind-example-desktop-app.app`, signed ad hoc, so it opens on the Mac that built it. On
-Linux it writes `dist/crossbind-example-desktop-app-linux-<arch>/` and the same as a `.tar.gz`, which runs where
-WebKitGTK 4.1 is installed (`libwebkit2gtk-4.1-0` on Debian and Ubuntu).
+writes the app to `dist/crossbind-example-desktop-app.app`, signed ad hoc, so it opens on the Mac that built it, and
+its disk image beside it; a Developer ID and an App Store Connect API key in the environment sign it for every Mac
+(see `docs/api/app.md`). On Linux it writes `dist/crossbind-example-desktop-app-linux-<arch>/`, the same as a
+`.tar.gz`, which runs where WebKitGTK 4.1 is installed (`libwebkit2gtk-4.1-0` on Debian and Ubuntu), and a `.deb`
+that installs it with WebKitGTK.
 
 ```bash
 pnpm build:linux
@@ -55,8 +57,9 @@ writes the Linux app for x64 and arm64, on a Mac as well.
 pnpm build:windows
 ```
 
-writes the Windows app for x64 and arm64, on a Mac or Linux as well: `dist/crossbind-example-desktop-app-win32-<arch>/`
-and the same as a `.zip`, which runs where the WebView2 Runtime is installed, as on Windows 11.
+writes the Windows app for x64 and arm64, on a Mac or Linux as well: `dist/crossbind-example-desktop-app-win32-<arch>/`,
+the same as a `.zip`, which runs where the WebView2 Runtime is installed, as on Windows 11, and a `-setup.exe` that
+installs it, with the runtime where Windows has none.
 
 ## iOS
 
