@@ -27,11 +27,19 @@ export default defineConfig({
             CROSSBIND_REMOTE_URL_LINUX: '',
             CROSSBIND_REMOTE_URL_WINDOWS: '',
             CROSSBIND_CLOUD_URL: 'http://127.0.0.1:9',
-            // Nor their Developer ID: a macOS app here is signed ad hoc unless a test names one.
+            // Nor their signing keys: a macOS app here is signed ad hoc, and a Windows app not at all, unless a test names
+            // a key.
             CROSSBIND_APPLE_SIGNING_IDENTITY: '',
             CROSSBIND_APPLE_API_KEY: '',
             CROSSBIND_APPLE_API_KEY_ID: '',
             CROSSBIND_APPLE_API_ISSUER: '',
+            CROSSBIND_WINDOWS_SIGNING_STORETYPE: '',
+            CROSSBIND_WINDOWS_SIGNING_KEYSTORE: '',
+            CROSSBIND_WINDOWS_SIGNING_ALIAS: '',
+            CROSSBIND_WINDOWS_SIGNING_STOREPASS: '',
+            CROSSBIND_WINDOWS_SIGNING_KEYPASS: '',
+            CROSSBIND_WINDOWS_SIGNING_CERTFILE: '',
+            CROSSBIND_WINDOWS_SIGNING_TSAURL: '',
         },
         coverage: {
             provider: 'v8',

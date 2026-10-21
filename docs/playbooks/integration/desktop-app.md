@@ -29,7 +29,8 @@ now.
    icon comes from the square PNG `app.icon` names in `crossbind.config.js`, at best 1024 × 1024. To ship it to other
    Macs, set `CROSSBIND_APPLE_SIGNING_IDENTITY` to a Developer ID and `CROSSBIND_APPLE_API_KEY`,
    `CROSSBIND_APPLE_API_KEY_ID` and `CROSSBIND_APPLE_API_ISSUER` to an App Store Connect API key: the build then signs
-   the app and Apple notarizes it.
+   the app and Apple notarizes it. A Windows app is signed with `CROSSBIND_WINDOWS_SIGNING_STORETYPE` and the key it
+   names, as `docs/api/app.md` tells.
 6. For iOS, add `-p ios`: `crossbind app dev -p ios` opens the app in the Simulator and `crossbind app build -p ios`
    writes the Xcode project `dist/<name>-ios/`. To run it on a device, give the app its bundle id and Apple team in
    `crossbind.config.js` (`app: { id, team }`) and open the project in Xcode.

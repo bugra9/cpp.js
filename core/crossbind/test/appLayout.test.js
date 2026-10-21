@@ -12,9 +12,12 @@ vi.mock('../src/actions/androidDevice.js', () => ({ attachedDevice: () => ({ ser
 // tar, which archives a Linux app.
 const spawnSync = vi.fn(() => ({ status: 0, stdout: '', stderr: '' }));
 vi.mock('node:child_process', async (importOriginal) => ({ ...await importOriginal(), spawnSync }));
-// The windows image, which zips a Windows app.
+// The windows image, which zips a Windows app, and runs the makensis that writes its setup program.
 const run = vi.fn();
 vi.mock('../src/actions/run.js', () => ({ default: run }));
+const inWindowsImage = vi.fn();
+const signWindows = vi.fn();
+vi.mock('../src/actions/windowsSigning.js', async (importOriginal) => ({ ...await importOriginal(), inWindowsImage, signWindows }));
 
 const { appLayout, appOutputName, appTargetParams, publishApp } = await import('../src/actions/buildApp.js');
 
@@ -152,9 +155,57 @@ describe("a desktop app's page", () => {
 
             expect(fs.readdirSync(path.join(dist, 'demo-win32-x64', 'resources', 'page'))).toEqual(['index.html']);
             expect(run).toHaveBeenCalledWith(null, ['zip', '-q', '-r', '-X', 'demo-win32-x64.zip', 'demo-win32-x64'], null, x64, { workdir: dist });
-            expect(run).toHaveBeenCalledWith(null, expect.arrayContaining(['makensis', `-DOUTFILE=${path.join(dist, 'demo-win32-x64')}-setup.exe`]), null, x64,
-                expect.anything());
+            expect(inWindowsImage).toHaveBeenCalledWith(expect.arrayContaining(['makensis', `-DOUTFILE=${path.join(dist, 'demo-win32-x64')}-setup.exe`]), dist, null);
         } finally {
+            state.targets = [];
+            fs.rmSync(root, { recursive: true, force: true });
+        }
+    });
+
+    test('is in a Windows app signed before its zip and its signed setup program are made, with a key in the environment', () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-page-'));
+        const dist = path.join(root, 'dist');
+        const x64 = { platform: 'win32', arch: 'x64', runtimeEnv: 'app', appName: 'demo.win32-x64' };
+        state.config.paths = { base: root, build: path.join(root, 'build') };
+        state.targets = [x64];
+        fs.mkdirSync(path.join(root, 'build', x64.appName), { recursive: true });
+        fs.mkdirSync(dist, { recursive: true });
+        fs.writeFileSync(path.join(root, 'key.p12'), 'key');
+        vi.stubEnv('CROSSBIND_WINDOWS_SIGNING_STORETYPE', 'PKCS12');
+        vi.stubEnv('CROSSBIND_WINDOWS_SIGNING_KEYSTORE', path.join(root, 'key.p12'));
+        try {
+            publishApp(x64, { to: path.join(dist, 'demo-win32-x64'), page: dist });
+
+            const app = path.join(dist, 'demo-win32-x64');
+            const signedAt = signWindows.mock.calls.findLastIndex(([files]) => files.join() === `${app}/demo.exe`);
+            const setupAt = inWindowsImage.mock.calls.findLastIndex(([command]) => command[0] === 'makensis');
+            const zippedAt = run.mock.calls.findLastIndex(([, args]) => args[0] === 'zip');
+            const order = [signWindows.mock.invocationCallOrder[signedAt], run.mock.invocationCallOrder[zippedAt], inWindowsImage.mock.invocationCallOrder[setupAt]];
+            expect(order.every(Number.isInteger)).toBe(true);
+            expect(order).toEqual(order.toSorted((a, b) => a - b));
+            expect(inWindowsImage.mock.calls[setupAt][0].some((param) => /^-DSIGNER=.*jsign\.sh$/.test(param))).toBe(true);
+        } finally {
+            vi.unstubAllEnvs();
+            state.targets = [];
+            fs.rmSync(root, { recursive: true, force: true });
+        }
+    });
+
+    test('is in a Windows app the build says SmartScreen warns of, without a key', () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-page-'));
+        const dist = path.join(root, 'dist');
+        const x64 = { platform: 'win32', arch: 'x64', runtimeEnv: 'app', appName: 'demo.win32-x64' };
+        state.config.paths = { base: root, build: path.join(root, 'build') };
+        state.targets = [x64];
+        fs.mkdirSync(path.join(root, 'build', x64.appName), { recursive: true });
+        fs.mkdirSync(dist, { recursive: true });
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        try {
+            publishApp(x64, { to: path.join(dist, 'demo-win32-x64'), page: dist });
+
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining('demo-win32-x64 is not signed, so SmartScreen warns of it and of its setup program'));
+        } finally {
+            warn.mockRestore();
             state.targets = [];
             fs.rmSync(root, { recursive: true, force: true });
         }

@@ -22,6 +22,7 @@ import { attachedDevice } from './androidDevice.js';
 import { packageAndroidRelease } from './androidGradle.js';
 import writeInstaller, { assertUnderBase } from './appInstaller.js';
 import { APPLE_SIGNING, appleSigning, notarizeApp } from './appleSigning.js';
+import { WINDOWS_SIGNING, signWindows, windowsSigning } from './windowsSigning.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
 import findFiles from '../utils/findFiles.js';
@@ -288,6 +289,15 @@ function signApp(app, target, signing) {
     run(null, ['codesign', '--force', ...sign, app], null, target);
 }
 
+// A Windows app is signed before its zip and its setup program are made of it; one with its page that is not, the build
+// says SmartScreen warns of.
+function signWindowsApp(app, target, page) {
+    assertUnderBase(app, target);
+    const signing = windowsSigning();
+    if (signing) signWindows([`${app}/${appLayout(target).executable}`], signing);
+    else if (page) console.warn(`crossbind: ${path.basename(app)} is not signed, so SmartScreen warns of it and of its setup program once they are downloaded. Set ${WINDOWS_SIGNING.storetype} and the key it names to sign them with Authenticode.`);
+}
+
 // A macOS app with its page is the one that ships: Apple notarizes it, or the build says why another Mac refuses it.
 function shipMacApp(app, signing) {
     const notarize = `${APPLE_SIGNING.key}, ${APPLE_SIGNING.keyId} and ${APPLE_SIGNING.issuer} to have Apple notarize it`;
@@ -337,8 +347,12 @@ export function publishApp(target, { to = appOutputPath(target), page = null } =
         const signing = appleSigning();
         signApp(to, target, signing);
         if (page) shipMacApp(to, signing);
-    } else if (target.platform === 'android' && target.buildType === 'release') packageAndroidRelease(to);
-    else if (!['ios', 'android'].includes(target.platform)) archiveApp(to, target);
+    } else if (target.platform === 'android' && target.buildType === 'release') {
+        packageAndroidRelease(to);
+    } else if (!['ios', 'android'].includes(target.platform)) {
+        if (target.platform === 'win32') signWindowsApp(to, target, page);
+        archiveApp(to, target);
+    }
     // A desktop app with its page ships with what installs it.
     if (page && ['darwin', 'linux', 'win32'].includes(target.platform)) writeInstaller(to, target);
     return to;

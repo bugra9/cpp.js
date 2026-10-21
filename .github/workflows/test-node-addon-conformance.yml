@@ -238,7 +238,16 @@ jobs:
                   cache: 'pnpm'
             - name: Install dependencies
               run: pnpm install
+            - name: Make a throwaway key, with which the build signs the app and its setup program
+              run: >-
+                  keytool -genkeypair -alias "crossbind e2e" -keyalg RSA -keysize 2048 -validity 2 -dname "CN=crossbind e2e"
+                  -ext EKU=codeSigning -keystore "$RUNNER_TEMP/e2e.p12" -storetype PKCS12 -storepass e2e-pass
             - name: Build the app
+              env:
+                  CROSSBIND_WINDOWS_SIGNING_STORETYPE: PKCS12
+                  CROSSBIND_WINDOWS_SIGNING_KEYSTORE: ${{ runner.temp }}/e2e.p12
+                  CROSSBIND_WINDOWS_SIGNING_ALIAS: crossbind e2e
+                  CROSSBIND_WINDOWS_SIGNING_STOREPASS: e2e-pass
               run: pnpm --filter=@crossbind/e2e-desktop-app run build
             - name: Keep the app for the runners that open it
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -296,6 +305,19 @@ jobs:
               run: |
                   $setup = Start-Process -Wait -PassThru -FilePath e2e\desktop-app\dist\crossbind-e2e-desktop-app-win32-${{ matrix.arch }}-setup.exe -ArgumentList /S
                   if ($setup.ExitCode -ne 0) { throw "the setup program exited with $($setup.ExitCode)" }
+            - name: Check that the app, its setup program and its uninstaller carry the build's signature
+              run: |
+                  $files = "e2e\desktop-app\dist\crossbind-e2e-desktop-app-win32-${{ matrix.arch }}\crossbind-e2e-desktop-app.exe",
+                      "e2e\desktop-app\dist\crossbind-e2e-desktop-app-win32-${{ matrix.arch }}-setup.exe",
+                      "$env:LOCALAPPDATA\Programs\crossbind-e2e-desktop-app\uninstall.exe"
+                  foreach ($file in $files) {
+                      # The throwaway key is trusted nowhere, so a sound signature by it reads as untrusted, not as
+                      # missing or broken.
+                      $signature = Get-AuthenticodeSignature $file
+                      if ($signature.Status -in 'NotSigned', 'HashMismatch', 'NotSupportedFileFormat') { throw "$file has no sound signature: $($signature.Status)" }
+                      if ($signature.SignerCertificate.Subject -ne 'CN=crossbind e2e') { throw "$file is not signed by the build's key: $($signature.SignerCertificate.Subject)" }
+                      if (-not $signature.TimeStamperCertificate) { throw "$file has no timestamp" }
+                  }
             - name: Run the conformance suite in the installed app
               run: node e2e/desktop-app/e2e/run.mjs --installed
             - name: Uninstall the app, which takes its shortcut, its files and its entry in Settings

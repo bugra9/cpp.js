@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import run from './run.js';
 import { appleSigning } from './appleSigning.js';
+import { inWindowsImage, jsignScript, windowsSigning } from './windowsSigning.js';
 import state from '../state/index.js';
 import { appDisplayName, appId } from '../utils/appOptions.js';
 import { readAppIcon, windowsIcon } from '../utils/appIcon.js';
@@ -119,13 +120,14 @@ function windowsName() {
 // A Windows setup program reads a dollar sign in its text as the start of a variable.
 const nsisText = (text) => text.replaceAll('$', () => '$$');
 
-// A Windows app's setup program, which NSIS builds in the windows image from the host's installer.nsi.
-function windowsSetup(app, target) {
+// A Windows app's setup program, which NSIS builds in the windows image from the host's installer.nsi; with a key in
+// the environment, jsign signs it and its uninstaller as NSIS writes them.
+function windowsSetup(app) {
+    const signing = windowsSigning();
     const icon = readAppIcon(state.config);
     const iconFile = `${state.config.paths.build}/${path.basename(app)}.ico`;
     if (icon) fs.writeFileSync(iconFile, windowsIcon(icon));
-    // makensis reads its arguments in the locale's encoding, which the image leaves unset.
-    run(null, [
+    inWindowsImage([
         'makensis', '-V2', '-INPUTCHARSET', 'UTF8',
         `-DNAME=${nsisText(windowsName())}`,
         `-DEXE=${nsisText(`${state.config.general.name}.exe`)}`,
@@ -134,16 +136,20 @@ function windowsSetup(app, target) {
         `-DAPP=${app}`,
         `-DOUTFILE=${app}-setup.exe`,
         ...(icon ? [`-DICON=${iconFile}`] : []),
+        ...(signing ? [`-DSIGNER=${jsignScript()}`] : []),
         `${resolveAppHostRoot()}/windows/installer.nsi`,
-    ], null, target, { params: ['-e', 'LC_ALL=C.UTF-8'] });
+    ], path.dirname(app), signing);
 }
 
-// What an app's installer takes from the app and the environment, checked before anything compiles: the names, and on
-// macOS the identity and key that sign and notarize the app.
+// What an app's installer takes from the app and the environment, checked before anything compiles: the names, and the
+// keys that sign a macOS or Windows app.
 export function checkInstaller(target) {
     if (target.platform === 'darwin') appleSigning();
     else if (target.platform === 'linux') debianName(state.config.general.name);
-    else if (target.platform === 'win32') windowsName();
+    else if (target.platform === 'win32') {
+        windowsName();
+        windowsSigning();
+    }
 }
 
 // What installs a desktop app, written beside it: a disk image on macOS, a Debian package on Linux and a setup program
@@ -151,5 +157,5 @@ export function checkInstaller(target) {
 export default function writeInstaller(app, target) {
     if (target.platform === 'darwin') diskImage(app, target);
     else if (target.platform === 'linux') debianPackage(app, target);
-    else if (target.platform === 'win32') windowsSetup(app, target);
+    else if (target.platform === 'win32') windowsSetup(app);
 }

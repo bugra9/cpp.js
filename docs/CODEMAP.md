@@ -119,6 +119,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | App host link: bridges against Hermes' JSI, host bytecode, page runtime; a macOS `.app` signed ad hoc or with a Developer ID, a Linux directory and its `.tar.gz`, a Windows directory and its `.zip`, or what each iOS SDK or Android ABI brings to the Xcode or Gradle project | `src/actions/buildApp.js` |
 | Desktop app installers: a macOS disk image (hdiutil), a Linux Debian package (dpkg-deb in the linux image), a Windows setup program (NSIS in the windows image, from `core/app-host/windows/installer.nsi`) | `src/actions/appInstaller.js` |
 | macOS app signing: the Developer ID and App Store Connect API key the environment names, notarization with notarytool and the stapled ticket | `src/actions/appleSigning.js` |
+| Windows app signing: the jsign key the environment names, passed into the windows image by name, which signs the app, its setup program and its uninstaller (`core/app-host/windows/jsign.sh`) | `src/actions/windowsSigning.js` |
 | iOS app: the Xcode project written anew from each SDK's part (archives and their link line, Hermes' slice, the app's files) | `src/actions/xcodeProject.js` |
 | An iOS app built for the Simulator and opened there, for `vite` and the e2e runs | `src/actions/iosSimulator.js` |
 | Android app: the Gradle project written anew from `core/app-host/android` and each ABI's part (the host and the libraries it loads, the app's files) | `src/actions/gradleProject.js` |

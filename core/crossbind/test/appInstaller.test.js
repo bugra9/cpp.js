@@ -6,9 +6,11 @@ import { PNG } from 'pngjs';
 
 const state = { config: {} };
 vi.mock('../src/state/index.js', () => ({ default: state }));
-// hdiutil, dpkg-deb and makensis, which see what they package as it is when they run.
+// hdiutil and dpkg-deb, which see what they package as it is when they run, and the windows image, which runs makensis.
 const run = vi.fn();
 vi.mock('../src/actions/run.js', () => ({ default: run }));
+const inWindowsImage = vi.fn();
+vi.mock('../src/actions/windowsSigning.js', async (importOriginal) => ({ ...await importOriginal(), inWindowsImage }));
 
 const {
     default: writeInstaller, checkInstaller, debianControl, debianName, debianVersion, desktopEntry, maintainer,
@@ -35,7 +37,10 @@ function project(app, { name = 'demo', appOptions = {}, pkg = { version: '1.2.0-
     return root;
 }
 
-beforeEach(() => run.mockReset());
+beforeEach(() => {
+    run.mockReset();
+    inWindowsImage.mockReset();
+});
 afterEach(() => vi.unstubAllEnvs());
 
 describe("a Linux app's Debian package", () => {
@@ -153,30 +158,50 @@ describe("a Windows app's setup program", () => {
 
         writeInstaller(app, target);
 
-        const [, params, , , options] = run.mock.calls[0];
-        expect(params.slice(0, 4)).toEqual(['makensis', '-V2', '-INPUTCHARSET', 'UTF8']);
+        const [command, workdir, signing] = inWindowsImage.mock.calls[0];
+        expect(command.slice(0, 4)).toEqual(['makensis', '-V2', '-INPUTCHARSET', 'UTF8']);
         // NSIS reads $ as the start of a variable, so the app's name doubles it.
-        expect(params).toEqual(expect.arrayContaining([
+        expect(command).toEqual(expect.arrayContaining([
             '-DNAME=My $$Demo', '-DEXE=demo.exe', '-DID=dev.crossbind.demo', '-DVERSION=1.2.0-beta.3', `-DAPP=${app}`, `-DOUTFILE=${app}-setup.exe`,
             `-DICON=${path.join(root, 'build')}/demo-win32-x64.ico`,
         ]));
-        expect(params.at(-1)).toMatch(/[/\\]windows[/\\]installer\.nsi$/);
-        expect(fs.existsSync(params.at(-1))).toBe(true);
-        expect(options).toEqual({ params: ['-e', 'LC_ALL=C.UTF-8'] });
+        expect(command.at(-1)).toMatch(/[/\\]windows[/\\]installer\.nsi$/);
+        expect(fs.existsSync(command.at(-1))).toBe(true);
+        expect([workdir, signing]).toEqual([path.join(root, 'dist'), null]);
+        expect(command.some((param) => param.startsWith('-DSIGNER='))).toBe(false);
         expect(fs.readFileSync(path.join(root, 'build/demo-win32-x64.ico')).readUInt16LE(2)).toBe(1);
     });
 
     test('has no icon of its own without app.icon', () => {
         const root = project({ 'demo-win32-x64/demo.exe': 'MZ' });
         writeInstaller(path.join(root, 'dist/demo-win32-x64'), { platform: 'win32', arch: 'x64' });
-        expect(run.mock.calls[0][1].some((param) => param.startsWith('-DICON='))).toBe(false);
+        expect(inWindowsImage.mock.calls[0][0].some((param) => param.startsWith('-DICON='))).toBe(false);
+    });
+
+    test('is signed with its uninstaller as NSIS writes them, by the script that signs the app, with a key in the environment', () => {
+        const root = project({ 'demo-win32-x64/demo.exe': 'MZ', 'key.p12': 'key' });
+        vi.stubEnv('CROSSBIND_WINDOWS_SIGNING_STORETYPE', 'PKCS12');
+        vi.stubEnv('CROSSBIND_WINDOWS_SIGNING_KEYSTORE', path.join(root, 'dist/key.p12'));
+        vi.stubEnv('CROSSBIND_WINDOWS_SIGNING_STOREPASS', 'secret');
+
+        writeInstaller(path.join(root, 'dist/demo-win32-x64'), { platform: 'win32', arch: 'x64' });
+
+        const [command, , signing] = inWindowsImage.mock.calls[0];
+        const signer = command.find((param) => param.startsWith('-DSIGNER=')).slice('-DSIGNER='.length);
+        expect(signer).toMatch(/[/\\]windows[/\\]jsign\.sh$/);
+        expect(fs.existsSync(signer)).toBe(true);
+        expect(signing).toEqual({
+            names: ['CROSSBIND_WINDOWS_SIGNING_STORETYPE', 'CROSSBIND_WINDOWS_SIGNING_KEYSTORE', 'CROSSBIND_WINDOWS_SIGNING_STOREPASS'],
+            files: { keystore: path.join(root, 'dist/key.p12') },
+        });
+        expect(command.join(' ')).not.toContain('secret');
     });
 
     test('is refused for a name Windows takes for no shortcut or folder', () => {
         const root = project({}, { appOptions: { name: 'Notes: Pro' } });
         expect(() => writeInstaller(path.join(root, 'dist/demo-win32-x64'), { platform: 'win32', arch: 'x64' }))
             .toThrow('"Notes: Pro", the name of a Windows app\'s Start menu shortcut and folder, is no file name Windows takes');
-        expect(run).not.toHaveBeenCalled();
+        expect(inWindowsImage).not.toHaveBeenCalled();
     });
 });
 
@@ -186,6 +211,12 @@ describe('the names an installer takes', () => {
         expect(() => checkInstaller({ platform: 'linux', arch: 'x64' })).toThrow('general.name "x" makes no Debian package name');
         expect(() => checkInstaller({ platform: 'win32', arch: 'x64' })).toThrow('"Notes: Pro", the name of a Windows app\'s Start menu shortcut');
         expect(() => checkInstaller({ platform: 'darwin', arch: 'arm64' })).not.toThrow();
+    });
+
+    test('stop a Windows build whose key could not sign it, before anything compiles', () => {
+        project({});
+        vi.stubEnv('CROSSBIND_WINDOWS_SIGNING_STORETYPE', 'YUBIKEY');
+        expect(() => checkInstaller({ platform: 'win32', arch: 'x64' })).toThrow("is a hardware token, which crossbind's windows container does not reach");
     });
 
     test('stop a macOS build whose notarization could not be, before anything compiles', () => {
