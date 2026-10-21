@@ -75,6 +75,24 @@ describe('an iOS app\'s Xcode project', () => {
         }
     });
 
+    test("has the app's icon in an asset catalog, from which Xcode makes every size", () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-xcode-'));
+        const to = path.join(root, 'demo-ios');
+        writeXcodeProject(to, { parts: [part(root, 'iphoneos')], identity: { id: 'com.example.demo', team: '' }, label: 'Demo', version: '1', icon: 'png' });
+
+        const set = path.join(to, 'Assets.xcassets', 'AppIcon.appiconset');
+        const project = fs.readFileSync(path.join(to, 'demo.xcodeproj', 'project.pbxproj'), 'utf8');
+        expect(fs.readFileSync(path.join(set, 'icon.png'), 'utf8')).toBe('png');
+        expect(JSON.parse(fs.readFileSync(path.join(set, 'Contents.json'), 'utf8')).images)
+            .toEqual([{ filename: 'icon.png', idiom: 'universal', platform: 'ios', size: '1024x1024' }]);
+        expect(project).toContain('"path" = "Assets.xcassets";');
+        expect(project).toContain('"ASSETCATALOG_COMPILER_APPICON_NAME" = "AppIcon";');
+        if (process.platform === 'darwin') {
+            expect(execFileSync('plutil', ['-lint', path.join(to, 'demo.xcodeproj', 'project.pbxproj')], { encoding: 'utf8' })).toContain(': OK');
+        }
+        fs.rmSync(root, { recursive: true, force: true });
+    });
+
     test('is not written from no part at all', () => {
         expect(() => writeXcodeProject(path.join(os.tmpdir(), 'crossbind-none'), { parts: [], identity: { id: 'a', team: '' }, version: '1' }))
             .toThrow('no part of the iOS app demo is built');

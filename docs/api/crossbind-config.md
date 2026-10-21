@@ -235,6 +235,9 @@ export default {
     openPath: ['logs', 'picked'],
       // Where the page's shell.openPath opens files (see app.md): 'data', 'cache' and 'logs', the app's folders,
       // and 'picked', what a dialog picked during this run. Opening a program runs it. Default: [], nowhere.
+    icon: 'icon.png',
+      // A square PNG, at best 1024 × 1024, from which the build makes each platform's icon (see app.md).
+      // Default: the system's.
   },
 
   targetSpecs: [

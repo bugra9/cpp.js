@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import config from '../crossbind.config.mjs';
 
@@ -21,6 +21,28 @@ function missing(file) {
     process.exit(1);
 }
 
+// The start of a 256 × 256 PNG, the largest image of a Windows app's icon.
+const PNG_256 = Buffer.from('89504e470d0a1a0a0000000d494844520000010000000100', 'hex');
+
+// The build gave the app the icon app.icon names.
+function checkIcon() {
+    const app = `${root}/dist/${name}`;
+    const has = (file, part) => existsSync(file) && (!part || readFileSync(file).includes(part));
+    const checks = {
+        ios: () => has(`${app}-ios/Assets.xcassets/AppIcon.appiconset/icon.png`),
+        android: () => has(`${app}-android/app/src/main/res/mipmap-anydpi/ic_launcher.xml`),
+        darwin: () => has(`${app}.app/Contents/Resources/icon.icns`) && has(`${app}.app/Contents/Info.plist`, '<key>CFBundleIconFile</key>'),
+        linux: () => has(`${app}-linux-${process.arch}/resources/icon.png`),
+        win32: () => has(`${app}-win32-${process.arch}/${name}.exe`, PNG_256),
+    };
+    // A platform the runner does not open is left to open() to refuse.
+    const check = checks[platform ?? process.platform];
+    if (check && !check()) {
+        console.error(`FAIL: the ${platform ?? process.platform} app has no icon from app.icon.`);
+        process.exit(1);
+    }
+}
+
 async function open() {
     if (platform) {
         const project = `${root}/dist/${name}-${platform}`;
@@ -37,6 +59,7 @@ async function open() {
 }
 
 let out = '';
+checkIcon();
 const { child: app, close } = await open();
 
 function finish(problem) {

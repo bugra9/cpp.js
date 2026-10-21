@@ -38,4 +38,15 @@ describe('writeIfChanged', () => {
         writeIfChanged(file, 'second');
         expect(fs.readFileSync(file, 'utf8')).toBe('second');
     });
+
+    test('compares bytes, so a binary file the same as before stays untouched', async () => {
+        const file = path.join(work, 'icon.ico');
+        writeIfChanged(file, Buffer.from([0, 0, 1, 0, 0xff]));
+        const before = fs.statSync(file).mtimeMs;
+        await new Promise((resolve) => { setTimeout(resolve, 10); });
+        writeIfChanged(file, Buffer.from([0, 0, 1, 0, 0xff]));
+        expect(fs.statSync(file).mtimeMs).toBe(before);
+        writeIfChanged(file, Buffer.from([0, 0, 1, 0, 0xfe]));
+        expect([...fs.readFileSync(file)]).toEqual([0, 0, 1, 0, 0xfe]);
+    });
 });

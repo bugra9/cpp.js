@@ -181,8 +181,10 @@ void quitApp() {
     });
 }
 
-// Forgotten when the window goes, so a late quit finds none.
+// Forgotten when the window goes, so a late quit finds none. It shows the app's icon, if the app has one.
 void setMainWindow(void *window) {
     mainWindow = GTK_WINDOW(window);
     g_object_add_weak_pointer(G_OBJECT(mainWindow), reinterpret_cast<gpointer *>(&mainWindow));
+    const std::string icon = resourceDir() + "/icon.png";
+    if (g_file_test(icon.c_str(), G_FILE_TEST_EXISTS)) gtk_window_set_icon_from_file(mainWindow, icon.c_str(), nullptr);
 }

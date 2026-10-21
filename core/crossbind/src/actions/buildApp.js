@@ -26,6 +26,7 @@ import findFiles from '../utils/findFiles.js';
 import { getContentHash, getFilesFingerprint } from '../utils/hash.js';
 import { xmlPlist } from '../utils/plist.js';
 import { appDisplayName, appHeader, appId } from '../utils/appOptions.js';
+import { androidIcons, iosIcon, linuxIcon, macIcon, readAppIcon, windowsIcon } from '../utils/appIcon.js';
 import writeIfChanged from '../utils/writeIfChanged.js';
 import { writeNativeSourceStamp } from '../utils/nativeSourceStamp.js';
 import resetCMakeCacheForSource from '../utils/resetCMakeCacheForSource.js';
@@ -175,9 +176,11 @@ async function bundle(input, file, plugins) {
     await build.close();
 }
 
-const infoPlist = (name, version) => xmlPlist({
+const infoPlist = (name, version, hasIcon) => xmlPlist({
     CFBundleDisplayName: appDisplayName(state.config),
     CFBundleExecutable: name,
+    // Contents/Resources/icon.icns.
+    ...(hasIcon ? { CFBundleIconFile: 'icon' } : {}),
     CFBundleIdentifier: appId(state.config),
     CFBundleName: appDisplayName(state.config),
     CFBundlePackageType: 'APPL',
@@ -197,8 +200,9 @@ function copyAppFiles(dir, hbc, target) {
     });
 }
 
-// Everything but the page: the host and the app's files, and on macOS Hermes beside them.
-function assembleApp(target, { executable, hbc, hermes }) {
+// Everything but the page: the host and the app's files, its icon, and on macOS Hermes beside them. A Windows host
+// carries its icon itself.
+function assembleApp(target, { executable, hbc, hermes, icon }) {
     const app = `${state.config.paths.build}/${target.appName}`;
     const { name } = state.config.general;
     const layout = appLayout(target);
@@ -206,8 +210,10 @@ function assembleApp(target, { executable, hbc, hermes }) {
     fs.mkdirSync(path.dirname(`${app}/${layout.executable}`), { recursive: true });
     fs.copyFileSync(executable, `${app}/${layout.executable}`);
     copyAppFiles(`${app}/${layout.resources}`, hbc, target);
+    if (target.platform === 'linux' && icon) fs.writeFileSync(`${app}/${layout.resources}/icon.png`, linuxIcon(icon));
     if (target.platform !== 'darwin') return;
-    fs.writeFileSync(`${app}/Contents/Info.plist`, infoPlist(name, appVersion()));
+    fs.writeFileSync(`${app}/Contents/Info.plist`, infoPlist(name, appVersion(), Boolean(icon)));
+    if (icon) fs.writeFileSync(`${app}/Contents/Resources/icon.icns`, macIcon(icon));
     const framework = `${app}/Contents/Frameworks/hermesvm.framework`;
     fs.cpSync(`${hermes}/Library/Frameworks/macosx/hermesvm.framework`, framework, { recursive: true, verbatimSymlinks: true });
     // The release carries Intel and Apple silicon; an app of one arch needs its own half.
@@ -295,9 +301,15 @@ export function publishApp(target, { to = appOutputPath(target), page = null } =
     const built = `${state.config.paths.build}/${target.appName}`;
     if (target.platform === 'ios') {
         const parts = appParts(target).map(({ arch, dir }) => ({ sdk: arch, dir }));
-        writeXcodeProject(to, { parts, identity: { id: appId(state.config), team: appTeam() }, label: appDisplayName(state.config), version: appVersion() });
+        const icon = readAppIcon(state.config);
+        writeXcodeProject(to, {
+            parts, identity: { id: appId(state.config), team: appTeam() }, label: appDisplayName(state.config), version: appVersion(), icon: icon && iosIcon(icon),
+        });
     } else if (target.platform === 'android') {
-        writeGradleProject(to, { parts: appParts(target), id: androidAppId(), label: appDisplayName(state.config), version: androidVersion() });
+        const icon = readAppIcon(state.config);
+        writeGradleProject(to, {
+            parts: appParts(target), id: androidAppId(), label: appDisplayName(state.config), version: androidVersion(), icons: icon && androidIcons(icon),
+        });
     } else if (path.resolve(to) !== path.resolve(built)) {
         fs.rmSync(to, { recursive: true, force: true });
         fs.cpSync(built, to, { recursive: true, verbatimSymlinks: true });
@@ -328,9 +340,10 @@ export default async function buildApp(target, { bridges = [], force = false } =
         logger.info(`[${target.path}] app skipped (cargo package - staticlib only)`);
         return false;
     }
-    // Where the page opens files, a desktop host's title and window, and a Windows one's version: a bad app section stops
-    // the build before anything compiles.
+    // Where the page opens files, a desktop host's title and window, a Windows one's version, and the app's icon: a bad
+    // app section stops the build before anything compiles.
     const header = appHeader(state.config, target.platform);
+    const icon = readAppIcon(state.config);
 
     const buildType = target.buildType === 'release' ? 'Release' : 'Debug';
     const { build } = state.config.paths;
@@ -352,10 +365,12 @@ export default async function buildApp(target, { bridges = [], force = false } =
 
     const fingerprintFile = `${build}/${target.appName}.fingerprint`;
     const fingerprint = getContentHash(JSON.stringify({
-        builder: getFilesFingerprint([fileURLToPath(import.meta.url)]),
+        builder: getFilesFingerprint([fileURLToPath(import.meta.url), fileURLToPath(new URL('../utils/appIcon.js', import.meta.url))]),
         header,
+        // A desktop app carries its icon; an iOS or Android one gets it as its project is written.
+        icon: ['ios', 'android'].includes(target.platform) ? null : icon?.hash ?? null,
         // A macOS app's bundle takes its id, name and version from it.
-        infoPlist: target.platform === 'darwin' ? infoPlist(state.config.general.name, appVersion()) : null,
+        infoPlist: target.platform === 'darwin' ? infoPlist(state.config.general.name, appVersion(), Boolean(icon)) : null,
         hermes: HERMES.version,
         inputs,
         linkArgs,
@@ -388,6 +403,11 @@ export default async function buildApp(target, { bridges = [], force = false } =
     resetCMakeCacheForSource(workDir, `${appHostRoot}/cpp`, target);
     // The host includes it from its build directory; written only when it changed, it recompiles nothing otherwise.
     writeIfChanged(`${workDir}/crossbind_app.h`, header);
+    // A Windows host's executable carries the app's icon, which its resource script takes from beside the header.
+    if (target.platform === 'win32') {
+        if (icon) writeIfChanged(`${workDir}/icon.ico`, windowsIcon(icon));
+        else fs.rmSync(`${workDir}/icon.ico`, { force: true });
+    }
     run(null, [
         // An iOS host builds with crossbind's iOS toolchain file rather than as an Xcode project of its own.
         target.platform === 'ios' ? 'ios-cmake' : 'cmake', `${appHostRoot}/cpp`,
@@ -416,7 +436,7 @@ export default async function buildApp(target, { bridges = [], force = false } =
     } else if (target.platform === 'android') {
         assembleAndroidPart(target, { libDir: workDir, sharedLibs: libs.filter((lib) => lib.endsWith('.so')), hbc: `${workDir}/host.hbc` });
     } else {
-        assembleApp(target, { executable: `${workDir}/${path.basename(appLayout(target).executable)}`, hbc: `${workDir}/host.hbc`, hermes });
+        assembleApp(target, { executable: `${workDir}/${path.basename(appLayout(target).executable)}`, hbc: `${workDir}/host.hbc`, hermes, icon });
     }
     logger.doneStep(target, 'app');
 
