@@ -142,11 +142,13 @@ inline SIZE make_window_frame_size(HWND window, int width, int height,
                                    int dpi) {
   auto style = GetWindowLong(window, GWL_STYLE);
   RECT r{0, 0, width, height};
+  // crossbind: a menu bar is the frame's, not the content's.
+  BOOL has_menu = GetMenu(window) != nullptr;
   auto user32 = native_library(L"user32.dll");
   if (auto fn = user32.get(user32_symbols::AdjustWindowRectExForDpi)) {
-    fn(&r, style, FALSE, 0, static_cast<UINT>(dpi));
+    fn(&r, style, has_menu, 0, static_cast<UINT>(dpi));
   } else {
-    AdjustWindowRect(&r, style, 0);
+    AdjustWindowRect(&r, style, has_menu);
   }
   auto frame_width = r.right - r.left;
   auto frame_height = r.bottom - r.top;

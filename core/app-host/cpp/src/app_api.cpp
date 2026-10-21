@@ -236,6 +236,94 @@ std::vector<std::string> texts(jsi::Runtime &rt, const jsi::Value &array) {
     return out;
 }
 
+// The roles crossbind/app takes, which a page that went around it is held to as well.
+const std::vector<std::string> MENU_ROLES{"editMenu", "windowMenu", "undo", "redo", "cut", "copy", "paste", "selectAll", "minimize", "close", "quit"};
+constexpr int FUNCTION_KEYS = 12;
+
+Accelerator acceleratorOf(const std::string &text) {
+    Accelerator accelerator;
+    size_t start = 0;
+    for (size_t end = text.find('+'); end != std::string::npos; end = text.find('+', start)) {
+        const std::string modifier = text.substr(start, end - start);
+#ifdef __APPLE__
+        const bool isCommand = modifier == "CmdOrCtrl";
+#else
+        const bool isCommand = false;
+#endif
+        if (isCommand) {
+            accelerator.command = true;
+        } else if (modifier == "CmdOrCtrl" || modifier == "Ctrl") {
+            accelerator.control = true;
+        } else if (modifier == "Alt") {
+            accelerator.alt = true;
+        } else if (modifier == "Shift") {
+            accelerator.shift = true;
+        } else {
+            throw std::invalid_argument("crossbind: no accelerator has the modifier " + modifier);
+        }
+        start = end + 1;
+    }
+    accelerator.key = text.substr(start);
+    for (int number = 1; number <= FUNCTION_KEYS; number += 1) {
+        if (accelerator.key == "F" + std::to_string(number)) accelerator.function = number;
+    }
+    return accelerator;
+}
+
+#ifndef __APPLE__
+// A standard menu off macOS is its standard items, which each platform makes as its apps have them.
+MenuItem standardMenu(const MenuItem &menu) {
+    const bool isEdit = menu.role == "editMenu";
+    MenuItem out;
+    out.isSubmenu = true;
+    out.label = !menu.label.empty() ? menu.label : isEdit ? "Edit" : "Window";
+    const std::vector<std::string> roles = isEdit ? std::vector<std::string>{"undo", "redo", "", "cut", "copy", "paste", "", "selectAll"}
+                                                  : std::vector<std::string>{"minimize", "close"};
+    for (const auto &role : roles) {
+        MenuItem item;
+        item.role = role;
+        item.isSeparator = role.empty();
+        out.items.push_back(std::move(item));
+    }
+    return out;
+}
+#endif
+
+std::vector<MenuItem> menuItems(jsi::Runtime &rt, const jsi::Value &list) {
+    std::vector<MenuItem> out;
+    const jsi::Array items = list.asObject(rt).asArray(rt);
+    for (size_t i = 0; i < items.size(rt); i += 1) {
+        const jsi::Value value = items.getValueAtIndex(rt, i);
+        MenuItem item;
+        item.label = text(rt, value, "label");
+        item.id = text(rt, value, "id");
+        item.role = text(rt, value, "role");
+        if (!item.role.empty() && std::find(MENU_ROLES.begin(), MENU_ROLES.end(), item.role) == MENU_ROLES.end()) {
+            throw std::invalid_argument("crossbind: no menu item has the role " + item.role);
+        }
+        const std::string accelerator = text(rt, value, "accelerator");
+        if (!accelerator.empty()) item.accelerator = acceleratorOf(accelerator);
+        const jsi::Value checked = property(rt, value, "checked");
+        if (!checked.isUndefined()) item.checked = checked.asBool();
+        const jsi::Value enabled = property(rt, value, "enabled");
+        item.isEnabled = enabled.isUndefined() || enabled.asBool();
+        item.isSeparator = text(rt, value, "type") == "separator";
+        const jsi::Value children = property(rt, value, "items");
+        item.isSubmenu = !children.isUndefined();
+        if (item.isSubmenu) item.items = menuItems(rt, children);
+#ifndef __APPLE__
+        if (item.role == "editMenu" || item.role == "windowMenu") item = standardMenu(item);
+#endif
+        out.push_back(std::move(item));
+    }
+    return out;
+}
+
+// A click the page hears of as the event menu.
+void menuClicked(std::string id, std::optional<bool> checked) {
+    postEvent("menu", "{\"id\":" + json(id) + (checked ? std::string(",\"checked\":") + (*checked ? "true" : "false") : "") + "}");
+}
+
 std::vector<FileFilter> filters(jsi::Runtime &rt, const jsi::Value &options) {
     std::vector<FileFilter> out;
     const jsi::Value value = property(rt, options, "filters");
@@ -313,6 +401,8 @@ void callApp(jsi::Runtime &rt, const std::string &name, const jsi::Value &option
             // A platform whose apps do not quit themselves throws, and the page hears that alone.
             quitApp();
             reply(ok("null"));
+        } else if (name == "menu.set") {
+            setMenu(menuItems(rt, property(rt, options, "menus")), menuClicked, answered(reply));
         } else if (name == "updater.check") {
             inBackground(reply, [] {
                 const std::optional<std::string> version = checkForUpdate();

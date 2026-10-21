@@ -1,7 +1,7 @@
 // The conformance suite inside an app: the page reaches the module the app's host runs as a worker-backed web build
 // reaches its worker, and the host runs embind-jsi as React Native does.
 import { runConformance } from '@crossbind/conformance/spec/run.mjs';
-import { app as host, shell, updater } from 'crossbind/app';
+import { app as host, menu, shell, updater } from 'crossbind/app';
 // Constants bind only for the names imported here; the header also defines one no leg imports.
 import {
     initNative, AllSymbols as confConstantsModule, CONF_BASE, CONF_BASE_NAME, CONF_CHAR, CONF_DOUBLE, CONF_EXPRESSION,
@@ -78,6 +78,34 @@ async function checkCallbacks(m) {
     if (JSON.stringify(got) !== '[3.5,7,8]') throw new Error(`the page functions native code called ran with ${JSON.stringify(got)}, not 3.5, 7 and 8`);
 }
 
+// The window changes its size a while after the host answers, and the page later still.
+async function checkPageSize(when) {
+    await new Promise((resolve) => { setTimeout(resolve, 500); });
+    for (let i = 0; i < 100 && innerHeight !== 600; i += 1) await new Promise((resolve) => { setTimeout(resolve, 20); });
+    if (innerWidth !== 800 || innerHeight !== 600) throw new Error(`${when}, the page is ${innerWidth} × ${innerHeight}, not 800 × 600`);
+}
+
+// On Windows and Linux the menus go in a bar of the window, which keeps the page at the size app.window gives, and no
+// menus take the bar away; on macOS they go in the screen's menu bar, and a phone has none.
+async function checkMenus(isDesktop) {
+    const menus = [
+        { label: 'File', items: [{ label: 'Open', id: 'open', accelerator: 'CmdOrCtrl+O' }, { type: 'separator' }, { role: 'quit' }] },
+        { role: 'editMenu' },
+        { label: 'View', items: [{ label: 'Sidebar', id: 'sidebar', checked: true, accelerator: 'F9' }] },
+    ];
+    const set = await menu.set(menus).then(() => 'set', (error) => error.message);
+    if (!isDesktop) {
+        if (!set.includes('has no menu bar')) throw new Error(`menu.set() did not refuse on a phone: ${set}`);
+        return;
+    }
+    if (set !== 'set') throw new Error(`menu.set() failed: ${set}`);
+    await checkPageSize('with its menu bar');
+    await menu.set([]);
+    await checkPageSize('without its menu bar');
+    await menu.set(menus);
+    await checkPageSize('with its menu bar again');
+}
+
 // e2e/run.mjs serves a newer version whose file its signature covers, then the same version with that file changed: the
 // app gets past the first one's signature to find it unpacks to no app, and refuses the second.
 async function checkUpdates() {
@@ -118,6 +146,7 @@ initNative().then(async (m) => {
         if (listed === 'opened' || listed.includes('app.openPath')) throw new Error(`a missing file where app.openPath lets the page: ${listed}`);
         const inside = await shell.revealInFolder(`${folders.data}${separator}crossbind-missing`).then(() => 'shown', (error) => error.message);
         if (inside === 'shown' || inside.includes("reaches the app's folders")) throw new Error(`a missing file in the app's folder: ${inside}`);
+        await checkMenus(isDesktop);
         // A phone's system ends its apps, and its store updates them.
         if (!isDesktop) {
             const quit = await host.quit().then(() => 'quit', (error) => error.message);

@@ -95,7 +95,8 @@ the window holds it to its own size. The window opens at 1024 × 768 and
 resizes without app.window, and shrinks to any size without a minimum, which needs a window that resizes. An option the
 build cannot honour stops it, naming the option.
 
-A macOS app has the app, Edit, View and Window menus every Mac app has, so ⌘C, ⌘V, ⌘Z, ⌘A, ⌘W and ⌘Q reach it. The
+A macOS app opens with the app, Edit, View and Window menus every Mac app has, so ⌘C, ⌘V, ⌘Z, ⌘A, ⌘W and ⌘Q reach
+it, and the page may set its own, as [Menus](#menus) tells. The
 page's `alert()`, `confirm()` and `prompt()` show as they do in a browser, and so does the picker of a file input. A
 download the page starts, such as an `<a download>` link, asks where to save on macOS. On Android, Back goes back in the
 page's history first, and leaves the app when there is none.
@@ -261,8 +262,9 @@ which it compiles in.
 
 ## The app's functions
 
-The page imports what the app's host does for it from `crossbind/app`, and the app's C++ calls the same through
-`<crossbind/app.h>`, which an app's own code finds as it builds, with `CROSSBIND_APP` defined:
+The page imports what the app's host does for it from `crossbind/app`. The app's C++ calls the same, but for
+`menu.set` and `events.on`, through `<crossbind/app.h>`, which an app's own code finds as it builds, with
+`CROSSBIND_APP` defined:
 
 ```js
 import { app, dialog, shell } from 'crossbind/app';
@@ -289,6 +291,7 @@ std::string databasePath() { return crossbind::app::paths().data + "/notes.sqlit
 | `shell.revealInFolder(path)` | A file, selected, in the system's file manager, or on Linux without one its folder | ✓ | | |
 | `app.paths()` | `{ data, cache, logs }`, the app's own folders, made when first asked for | ✓ | ✓ | ✓ |
 | `app.quit()` | Ends the app as closing its window does | ✓ | | |
+| `menu.set(menus)` | Sets the app's menus, whose clicks are the event `menu`; the page alone | ✓ | | |
 | `events.on(name, listener)` | Calls `listener` with each event of this name the app's C++ emits; returns what stops it | ✓ | ✓ | ✓ |
 | `updater.check()` | `{ version }`, the newer version `app.updater.url` offers, or `null` | ✓ | | |
 | `updater.install()` | Installs that version once its signature holds, then quits the app and opens the new one | ✓ | | |
@@ -347,6 +350,50 @@ const stop = events.on('progress', ({ done }) => { progress.value = done; });
 calls of the page's functions. A page gets the events emitted once its first `events.on`, or the first function it
 passes, has reached the host: a call of the module it makes after either comes later. Text that is no JSON reaches no
 page, and the app's output says why. Both travel with the page's other messages, on every platform an app runs on.
+
+## Menus
+
+The page sets the app's menus while it runs, and hears of their clicks as the event `menu`:
+
+```js
+import { events, menu } from 'crossbind/app';
+
+await menu.set([
+    { label: 'File', items: [
+        { label: 'Open…', id: 'open', accelerator: 'CmdOrCtrl+O' },
+        { type: 'separator' },
+        { role: 'quit' },
+    ] },
+    { role: 'editMenu' },
+    { label: 'View', items: [{ label: 'Sidebar', id: 'sidebar', checked: true, accelerator: 'F9' }] },
+    { role: 'windowMenu' },
+]);
+events.on('menu', ({ id, checked }) => {
+    if (id === 'open') openFile();
+    if (id === 'sidebar') sidebar.hidden = !checked;
+});
+```
+
+A menu is `{ label, items }`, or a standard one by its role, `editMenu` or `windowMenu`, which a label may rename. An
+item is `{ label, id, accelerator, enabled, checked }`, a submenu `{ label, items }`, `{ type: 'separator' }`, a
+standard menu, or a standard item by its role, which a label may rename: `undo`, `redo`, `cut`, `copy`, `paste` and
+`selectAll`, which keep the platform's keys, and `minimize`, `close` and `quit`, whose accelerator the page may change.
+A click of an item with an id is the event `menu` of `{ id }`, or of `{ id, checked }` for an item with `checked`,
+which the click turns over first; a standard item does what its role says, and the page hears nothing of it. An
+accelerator is a key with `CmdOrCtrl`, `Ctrl` or `Alt`, and maybe `Shift`, joined by `+`, as `CmdOrCtrl+Shift+O` is,
+or one of `F1` to `F12`, alone or with any of them. The key is a capital letter, a digit, a function key or one of
+`Enter`, `Escape`, `Tab`, `Space`, `Backspace`, `Delete`, `Up`, `Down`, `Left`, `Right`, `Home`, `End`, `PageUp`,
+`PageDown`, `Plus`, `Minus`, `Comma` and `Period`, and `CmdOrCtrl` is ⌘ on macOS and Ctrl elsewhere. A menu the page
+gets wrong fails before the host sees it, naming the item.
+
+Each call replaces the menus the last one set, so the page changes an item by setting them all again. On macOS they
+follow the app menu, which the app keeps with its ⌘H, ⌥⌘H and ⌘Q, in place of the Edit, View and Window menus it
+opens with: ⌘C, ⌘V, ⌘Z and ⌘A reach the page through `editMenu` or the editing items alone, and ⌘M and ⌘W through
+`windowMenu` or `minimize` and `close`. On Windows and Linux they are a bar in the window, above the page, which keeps
+its size, as the window grows by the bar's height unless it fills the screen; `editMenu` and `windowMenu` are there the
+standard items of that platform's apps, and `menu.set([])` takes the bar away. iOS and Android apps have no menu bar,
+and `menu.set` rejects there. The event `menu` is the menus' alone: the app's C++ sets no menus, and the events it
+emits, one of which the page may set them on, go by other names.
 
 ## What the app holds
 

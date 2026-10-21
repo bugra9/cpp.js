@@ -53,7 +53,35 @@ export declare const app: {
     quit(): Promise<void>;
 };
 
+/** A key with CmdOrCtrl, Ctrl or Alt and maybe Shift, joined by +, as CmdOrCtrl+Shift+O is, or F1–F12, alone or with any of them. The key is A–Z, 0–9, F1–F12, Enter, Escape, Tab, Space, Backspace, Delete, Up, Down, Left, Right, Home, End, PageUp, PageDown, Plus, Minus, Comma or Period. */
+export type Accelerator = string;
+
+/** An item of a menu: one the page handles, by its id, a submenu, a separator, or a standard one by its role. */
+export type MenuItem =
+    | { label: string; id?: string; accelerator?: Accelerator; enabled?: boolean; checked?: boolean }
+    | { label: string; items: MenuItem[] }
+    | { type: 'separator' }
+    | { role: 'undo' | 'redo' | 'cut' | 'copy' | 'paste' | 'selectAll'; label?: string; accelerator?: never }
+    | { role: 'minimize' | 'close' | 'quit'; label?: string; accelerator?: Accelerator }
+    | { role: 'editMenu' | 'windowMenu'; label?: string };
+
+/** A menu of the bar, by its items, or a standard one by its role. */
+export type Menu = { label: string; items: MenuItem[] } | { role: 'editMenu' | 'windowMenu'; label?: string };
+
+/** What the event menu carries: the id of the item clicked, and for one with checked whether it now is. */
+export interface MenuClick {
+    id: string;
+    checked?: boolean;
+}
+
+export declare const menu: {
+    /** Sets the app's menus: on macOS after its app menu, which the app keeps, and on Windows and Linux in a bar of its window. A click of an item with an id is an event, menu, with a MenuClick. */
+    set(menus: Menu[]): Promise<void>;
+};
+
 export declare const events: {
+    /** Calls listener with each click of an item with an id in the menus menu.set sets, until the function it returns is called. */
+    on(name: 'menu', listener: (click: MenuClick) => void): () => void;
     /** Calls listener with the value of each event of this name the app's native code emits from now on, until the function it returns is called. */
     on(name: string, listener: (value: unknown) => void): () => void;
 };

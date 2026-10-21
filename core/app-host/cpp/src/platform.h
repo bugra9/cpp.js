@@ -79,6 +79,37 @@ void setMainWindow(void *window);
 // and throws why it could not, as when the answer runs past maxBytes.
 void download(const std::string &url, const std::filesystem::path &file, std::uintmax_t maxBytes);
 
+// A key and its modifiers, as crossbind/app checks them: the key is A–Z, 0–9, F1–F12 or one of crossbind/app's names,
+// and CmdOrCtrl is command on macOS and control elsewhere.
+struct Accelerator {
+    bool command = false;
+    bool control = false;
+    bool alt = false;
+    bool shift = false;
+    std::string key;
+    // 1 to 12 for F1 to F12, else 0.
+    int function = 0;
+};
+
+// An item of the page's menus: a separator, a standard menu or item by its role, a submenu, or one whose clicks the page
+// hears of by its id.
+struct MenuItem {
+    std::string label;
+    std::string id;
+    std::string role;
+    std::optional<Accelerator> accelerator;
+    std::optional<bool> checked;
+    bool isSeparator = false;
+    bool isEnabled = true;
+    bool isSubmenu = false;
+    std::vector<MenuItem> items;
+};
+
+using MenuClicked = std::function<void(std::string id, std::optional<bool> checked)>;
+// Sets the app's menus, on the main thread, which calls done; a click of an item with an id calls clicked there, with
+// whether a checked one now is.
+void setMenu(std::vector<MenuItem> menus, MenuClicked clicked, std::function<void(Failure)> done);
+
 #ifdef __APPLE__
 // macOS sends the standard shortcuts, ⌘C and ⌘Q among them, through the menu bar, so a window without the app, Edit,
 // View and Window menus never sees them.
@@ -91,4 +122,6 @@ void installAppMenu();
 void *schemeEnvironmentOptions(const char *scheme, const std::vector<std::string> &origins);
 // Starts an update's setup program, which installs it where the app is once the app has quit, and opens it anew.
 void runSetup(const std::filesystem::path &setup);
+// The webview whose key presses reach the menus' accelerators first, as it holds the keyboard.
+void setMenuWebView(void *controller);
 #endif

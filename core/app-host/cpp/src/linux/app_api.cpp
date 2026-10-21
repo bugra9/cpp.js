@@ -1,5 +1,6 @@
 #include "crossbind_app.h"
 #include "linux/main_thread.h"
+#include "linux/window.h"
 #include "platform.h"
 
 #include <gtk/gtk.h>
@@ -12,6 +13,8 @@
 namespace {
 
 GtkWindow *mainWindow = nullptr;
+GtkBox *windowBox = nullptr;
+GtkWidget *webView = nullptr;
 
 // GTK matches a pattern in one case alone, where macOS and Windows match an extension in any; "*" is any file.
 std::string patternOf(const std::string &extension) {
@@ -181,10 +184,40 @@ void quitApp() {
     });
 }
 
-// Forgotten when the window goes, so a late quit finds none. It shows the app's icon, if the app has one.
+// Forgotten when they go, so a late call finds none. It shows the app's icon, if the app has one. Before the page
+// loads, the webview, which webview put in the window, goes in a box, above which the page's menu bar goes, and takes
+// the window's minimum size, which is the page's. GTK holds a window that does not resize to the size of what it
+// holds, whatever size webview asked for, so the webview asks for the page's.
 void setMainWindow(void *window) {
     mainWindow = GTK_WINDOW(window);
     g_object_add_weak_pointer(G_OBJECT(mainWindow), reinterpret_cast<gpointer *>(&mainWindow));
     const std::string icon = resourceDir() + "/icon.png";
     if (g_file_test(icon.c_str(), G_FILE_TEST_EXISTS)) gtk_window_set_icon_from_file(mainWindow, icon.c_str(), nullptr);
+    webView = gtk_bin_get_child(GTK_BIN(mainWindow));
+    if (!webView) return;
+    g_object_add_weak_pointer(G_OBJECT(webView), reinterpret_cast<gpointer *>(&webView));
+    int minWidth = -1;
+    int minHeight = -1;
+    gtk_widget_get_size_request(GTK_WIDGET(mainWindow), &minWidth, &minHeight);
+    gtk_widget_set_size_request(GTK_WIDGET(mainWindow), -1, -1);
+    if (!gtk_window_get_resizable(mainWindow)) {
+        minWidth = CROSSBIND_APP_WINDOW_WIDTH;
+        minHeight = CROSSBIND_APP_WINDOW_HEIGHT;
+    }
+    gtk_widget_set_size_request(webView, minWidth, minHeight);
+    g_object_ref(webView);
+    gtk_container_remove(GTK_CONTAINER(mainWindow), webView);
+    windowBox = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0));
+    g_object_add_weak_pointer(G_OBJECT(windowBox), reinterpret_cast<gpointer *>(&windowBox));
+    gtk_box_pack_end(windowBox, webView, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(mainWindow), GTK_WIDGET(windowBox));
+    g_object_unref(webView);
+    gtk_widget_show(GTK_WIDGET(windowBox));
+    gtk_widget_grab_focus(webView);
 }
+
+GtkWindow *appWindow() { return mainWindow; }
+
+GtkBox *appWindowBox() { return windowBox; }
+
+GtkWidget *appWebView() { return webView; }
