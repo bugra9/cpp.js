@@ -53,6 +53,11 @@ export declare const app: {
     quit(): Promise<void>;
 };
 
+export declare const events: {
+    /** Calls listener with the value of each event of this name the app's native code emits from now on, until the function it returns is called. */
+    on(name: string, listener: (value: unknown) => void): () => void;
+};
+
 /** A newer version of the app, which app.updater.url in crossbind.config.js offers. */
 export interface Update {
     version: string;

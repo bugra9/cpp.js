@@ -1,6 +1,7 @@
 // The lean protocol's page side: the awaitable module a worker-backed web build hands out, over one message per call.
 // Byte arrays from transport.attachBytes up travel as attachments of a frame, a large result comes back on its own, and
-// a frame waits for the messages sent before it, so order holds where the two take different channels.
+// a frame waits for the messages sent before it, so order holds where the two take different channels. A function
+// passed to the module goes as an id, and the host's calls of it run it here, later and without an answer.
 import { pack, unpack, CODEC_TAG as TAG } from './codec.js';
 
 const FUNCTION = Symbol('remote function');
@@ -8,6 +9,35 @@ const LOCAL_MEMBERS = {
     toJSON: () => ({}),
     [Symbol.toPrimitive]: (hint) => (hint === 'number' ? NaN : '[object Object]'),
 };
+
+// The functions the page passed, which outlive the session that passed them, as native code may keep one: by the id each
+// went as, with how many messages carried it since native code last let go of it, which a drop counts down so that a
+// message still on its way keeps it, and the session that reads its arguments.
+const callbacks = new Map();
+const callbackIds = new WeakMap();
+let nextCallback = 1;
+
+// Native code called a function the page passed, or let go of one.
+function receivePush([kind, id, value]) {
+    const callback = callbacks.get(id);
+    if (!callback) return;
+    if (kind === 'drop') {
+        callback.passed -= value;
+        if (callback.passed > 0) return;
+        callbacks.delete(id);
+        callbackIds.delete(callback.fn);
+        return;
+    }
+    const { fn, decode } = callback;
+    try {
+        fn(...decode(value));
+    } catch (error) {
+        // Nothing waits for it, so the page hears of its failure as of any uncaught one.
+        queueMicrotask(() => {
+            throw error;
+        });
+    }
+}
 
 function concatenate(views) {
     const total = views.reduce((sum, view) => sum + view.byteLength, 0);
@@ -71,19 +101,46 @@ function createSession(transport) {
         return handle;
     }
 
+    // The functions a message passes count once it is made: one that could not be holds none of them.
     function encodeArgs(args, attachments) {
-        return pack(args, (value) => {
+        const fresh = new Map();
+        const passed = [];
+        const callbackIdOf = (fn) => {
+            let id = callbackIds.get(fn) ?? fresh.get(fn);
+            if (id === undefined) {
+                id = nextCallback;
+                nextCallback += 1;
+                fresh.set(fn, id);
+            }
+            passed.push(id);
+            return id;
+        };
+        const encoded = pack(args, (value) => {
             if (typeof value === 'function') {
                 if (handleIds.has(value)) return { [TAG]: 'h', v: handleIds.get(value) };
-                const error = new Error('A function cannot be passed to the native module');
-                error.name = 'DataCloneError';
-                throw error;
+                return { [TAG]: 'cb', v: callbackIdOf(value) };
             }
             if (value !== null && typeof value === 'object' && tokenIds.has(value)) return { [TAG]: 'e', v: tokenIds.get(value) };
             if (ArrayBuffer.isView(value) && value.byteLength >= transport.attachBytes) {
                 attachments.push(value);
                 return { [TAG]: 'att', i: attachments.length - 1 };
             }
+            return undefined;
+        });
+        for (const [fn, id] of fresh) {
+            callbackIds.set(fn, id);
+            callbacks.set(id, { fn, passed: 0, decode: decodeValue });
+        }
+        for (const id of passed) callbacks.get(id).passed += 1;
+        if (passed.length > 0) transport.listen(receivePush);
+        return encoded;
+    }
+
+    function decodeValue(value) {
+        return unpack(value, (tag, item) => {
+            if (tag === 'h') return handleFor(item.v);
+            if (tag === 'e') return tokenFor(item.v, item.n);
+            if (tag === 'fn') return FUNCTION;
             return undefined;
         });
     }
@@ -96,12 +153,7 @@ function createSession(transport) {
             const View = globalThis[value.k] ?? Uint8Array;
             return new View(bytes, 0, bytes.byteLength / (View.BYTES_PER_ELEMENT ?? 1));
         }
-        return unpack(value, (tag, item) => {
-            if (tag === 'h') return handleFor(item.v);
-            if (tag === 'e') return tokenFor(item.v, item.n);
-            if (tag === 'fn') return FUNCTION;
-            return undefined;
-        });
+        return decodeValue(value);
     }
 
     async function request(op, target, path, args) {
@@ -138,8 +190,10 @@ function createSession(transport) {
 }
 
 // transport: { send(text) → Promise<reply text>; frame(query, body) → Promise<reply text>, a message whose byte arrays
-// are the body; result(query) → Promise<ArrayBuffer>, a large result; attachBytes; token: what the host gave the page,
-// which every message, frame and result request carries }. A frame or result the host refuses rejects with its answer.
+// are the body; result(query) → Promise<ArrayBuffer>, a large result; listen(handler), which hands handler what the host
+// pushes for the functions the page passed, whatever session passed them; attachBytes; token: what the host gave the
+// page, which every message, frame and result request carries }. A frame or result the host refuses rejects with its
+// answer.
 export async function connect(transport, env) {
     const session = createSession(transport);
     if (env && Object.keys(env).length > 0) await session.request('env', 0, [], [env]);

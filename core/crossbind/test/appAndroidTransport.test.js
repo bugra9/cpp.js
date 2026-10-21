@@ -1,4 +1,6 @@
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import {
+    afterAll, beforeAll, describe, expect, test, vi,
+} from 'vitest';
 import { installHost } from '../../app-host/js/lean-host.js';
 
 // The page of an Android app over a real message port: a stand-in for the activity reads what the page sends as the
@@ -12,12 +14,45 @@ const pageIds = new Map();
 let nextCall = 0;
 let refusesFrames = false;
 
+// The functions the module holds of those the page passed.
+const kept = [];
 const fakeModule = {
     Crossbind: { getEnv: () => '', setEnv: () => 0 },
     add: (a, b) => a + b,
     sum: (bytes) => bytes.reduce((total, byte) => total + byte, 0),
     filled: (length) => new Uint8Array(length).fill(7),
+    notify: (fn, x) => (fn(x * 2) === undefined ? 'no answer' : 'answered'),
+    keep: (fn) => {
+        kept.push(fn);
+    },
+    fire: (x) => kept.at(-1)(x),
+    fireAt: (index, x) => kept[index](x),
 };
+let refusesPolls = false;
+
+// As the host keeps one function for each the page passed while the module holds it, counting the messages that
+// passed it, and as Hermes collecting one tells the page.
+const pageFunctions = new Map();
+function hostPageFunction(id) {
+    if (!pageFunctions.has(id)) pageFunctions.set(id, { passed: 0, fn: (...args) => globalThis.__crossbind_called(id, ...args) });
+    const held = pageFunctions.get(id);
+    held.passed += 1;
+    return held.fn;
+}
+
+function collect(fn) {
+    const [id, held] = [...pageFunctions].find(([, entry]) => entry.fn === fn);
+    pageFunctions.delete(id);
+    globalThis.__crossbind_dropped(id, held.passed);
+}
+
+async function until(isDone) {
+    for (let i = 0; i < 200 && !isDone(); i += 1) await new Promise((resolve) => { setTimeout(resolve, 5); });
+    expect(isDone()).toBe(true);
+}
+
+const messages = [];
+const lastCallbackId = () => Number(messages.findLast((text) => text.includes('"cb"')).match(/"cb","v":(\d+)/)[1]);
 
 // "<id>|m|<message>" or "<id>|r|<query>", or as an ArrayBuffer "<header length><id>|<query>" and the bytes.
 activityPort.onmessage = ({ data }) => {
@@ -44,6 +79,12 @@ activityPort.onmessage = ({ data }) => {
         return;
     }
     seen.push('message');
+    messages.push(rest);
+    if (refusesPolls && rest.startsWith(`${TOKEN}["events"`)) {
+        refusesPolls = false;
+        activityPort.postMessage(`${id}|!${REFUSED}`);
+        return;
+    }
     const call = String(nextCall);
     nextCall += 1;
     pageIds.set(call, id);
@@ -56,6 +97,7 @@ beforeAll(async () => {
         activityPort.postMessage(`${pageIds.get(call)}|${text}`);
         pageIds.delete(call);
     };
+    globalThis.__host_page_function = hostPageFunction;
     installHost(fakeModule, {});
     // What the activity's script gives the top frame before the page's own scripts run.
     globalThis.__crossbind_token = TOKEN;
@@ -111,5 +153,140 @@ describe('the page of an Android app', () => {
             refusesFrames = false;
         }
         expect(await m.add(1, 2)).toBe(3);
+    });
+});
+
+describe('what the host pushes to the page', () => {
+    test('runs a function the page passes to the module once the module calls it, without an answer for the module', async () => {
+        const got = [];
+
+        expect(await m.notify((x) => got.push(x), 21)).toBe('no answer');
+
+        await until(() => got.length === 1);
+        expect(got).toEqual([42]);
+    });
+
+    test('gives the module the same function each time the page passes one while the module holds it', async () => {
+        const got = [];
+        const fn = (x) => got.push(x);
+
+        await m.keep(fn);
+        await m.keep(fn);
+        await m.fire(7);
+
+        expect(kept.at(-1)).toBe(kept.at(-2));
+        await until(() => got.length === 1);
+        expect(got).toEqual([7]);
+    });
+
+    test('lets go of a function once the module has, and of none a message still carries', async () => {
+        const fn = () => {};
+        await m.keep(fn);
+        const first = lastCallbackId();
+        collect(kept.at(-1));
+        // An answer that left the host after the push has the page take the push first.
+        await m.add(0, 0);
+        await m.keep(fn);
+        expect(lastCallbackId()).not.toBe(first);
+
+        const got = [];
+        const carried = (x) => got.push(x);
+        await m.keep(carried);
+        const sent = m.keep(carried);
+        collect(kept.at(-1));
+        await sent;
+        await m.add(0, 0);
+        await m.fire(5);
+        await until(() => got.length === 1);
+        expect(got).toEqual([5]);
+    });
+
+    test("hands a listener the events the app's native code emits under its name, until it stops listening", async () => {
+        const got = [];
+        const off = globalThis.Crossbind.on('progress', (value) => got.push(value));
+        const done = [];
+        globalThis.Crossbind.on('done', (value) => done.push(value));
+        await until(() => messages.some((text) => text.startsWith(`${TOKEN}["events"`)));
+
+        globalThis.__crossbind_event('progress', '{"done":0.5}');
+        globalThis.__crossbind_event('other', '1');
+        await until(() => got.length === 1);
+        off();
+        globalThis.__crossbind_event('progress', '1');
+        globalThis.__crossbind_event('done', 'true');
+        await until(() => done.length === 1);
+
+        expect(got).toEqual([{ done: 0.5 }]);
+    });
+
+    test('runs each listening apart, even of one listener, and a listener added as an event arrives from the next', async () => {
+        const got = [];
+        const listener = (value) => got.push(value);
+        const offFirst = globalThis.Crossbind.on('tick', listener);
+        globalThis.Crossbind.on('tick', listener);
+        let added = false;
+        globalThis.Crossbind.on('tick', () => {
+            if (added) return;
+            added = true;
+            globalThis.Crossbind.on('tick', (value) => got.push(`late ${value}`));
+        });
+
+        globalThis.__crossbind_event('tick', '1');
+        await until(() => got.length === 2);
+        offFirst();
+        globalThis.__crossbind_event('tick', '2');
+        await until(() => got.length === 4);
+
+        expect(got).toEqual([1, 1, 2, 'late 2']);
+    });
+
+    test('keeps the functions of one session apart from those of the next, which native code may still call', async () => {
+        const got = [];
+        await m.keep((x) => got.push(`first ${x}`));
+        const firstAt = kept.length - 1;
+        globalThis.Crossbind.initNative.terminate();
+        const next = await globalThis.Crossbind.initNative();
+
+        await next.keep((x) => got.push(`second ${x}`));
+        await next.fire(1);
+        await next.fireAt(firstAt, 2);
+        await until(() => got.length === 2);
+
+        expect(got).toEqual(['second 1', 'first 2']);
+        m = next;
+    });
+
+    test('goes on running the functions the page passed after one of them throws, which the page hears of', async () => {
+        const rethrown = [];
+        const spy = vi.spyOn(globalThis, 'queueMicrotask').mockImplementation((task) => rethrown.push(task));
+        const got = [];
+        try {
+            await m.keep(() => {
+                throw new Error('listener boom');
+            });
+            await m.fire(1);
+            await m.notify((x) => got.push(x), 2);
+            await until(() => got.length === 1);
+        } finally {
+            spy.mockRestore();
+        }
+
+        expect(got).toEqual([4]);
+        expect(rethrown).toHaveLength(1);
+        expect(rethrown[0]).toThrow('listener boom');
+    });
+
+    test('asks again a moment after the channel failed its request for pushes', async () => {
+        const got = [];
+        globalThis.Crossbind.on('again', (value) => got.push(value));
+        refusesPolls = true;
+        // The request waiting now is answered, so the next one is refused.
+        globalThis.__crossbind_event('again', '1');
+        await until(() => got.length === 1 && !refusesPolls);
+
+        globalThis.__crossbind_event('again', '2');
+        await until(() => got.length === 2);
+
+        expect(got).toEqual([1, 2]);
     });
 });

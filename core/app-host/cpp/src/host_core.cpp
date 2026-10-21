@@ -3,6 +3,7 @@
 #include <emscripten/bind.h>
 
 #include <array>
+#include <atomic>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -71,6 +72,9 @@ std::vector<uint8_t> fromBase64(const std::string &text) {
 namespace {
 
 std::vector<uint8_t> bytesOf(const std::string &text) { return std::vector<uint8_t>(text.begin(), text.end()); }
+
+// The app's one module, which the app's native code emits events through from any thread.
+std::atomic<Core *> running{nullptr};
 
 // 128 random bits, as hex.
 std::string randomToken() {
@@ -221,10 +225,18 @@ void JsThread::loop(const Task &boot) {
     while (Task task = next()) run(task);
 }
 
-void JsThread::run(const Task &task) {
+void JsThread::postOrRun(Task task) {
+    if (std::this_thread::get_id() != thread_.get_id()) {
+        post(std::move(task));
+        return;
+    }
+    run(task, false);
+}
+
+void JsThread::run(const Task &task, bool drains) {
     try {
         task(*runtime_);
-        while (!runtime_->drainMicrotasks()) {
+        while (drains && !runtime_->drainMicrotasks()) {
         }
     } catch (const jsi::JSError &error) {
         std::fprintf(stderr, "crossbind: %s\n%s\n", error.getMessage().c_str(), error.getStack().c_str());
@@ -257,6 +269,9 @@ void Core::installHostFunctions(jsi::Runtime &rt) {
     setFunction(rt, "__host_b64decode", 1, [](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args, size_t) {
         auto bytes = fromBase64(args[0].asString(rt).utf8(rt));
         return jsi::Value(rt, jsi::ArrayBuffer(rt, std::make_shared<VectorBuffer>(std::move(bytes))));
+    });
+    setFunction(rt, "__host_page_function", 1, [this](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args, size_t) {
+        return pageFunction(rt, static_cast<long long>(args[0].asNumber()));
     });
     // A call of the page to one of the app's functions, which callApp answers once the main thread has done it.
     setFunction(rt, "__app_call", 3, [this](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args, size_t) {
@@ -297,7 +312,10 @@ std::string Core::boot(std::string bundle, const std::string &sourceUrl, const s
             booted.set_value(error.what());
         }
     });
-    return booted.get_future().get();
+    const std::string error = booted.get_future().get();
+    // The app's native code reaches the page through the module once it has started, and its thread is known.
+    if (error.empty()) running = this;
+    return error;
 }
 
 void Core::receive(std::string message, ReplyFn reply) {
@@ -344,7 +362,71 @@ void Core::serve(SchemeRequest request, SchemeRespond answer) {
 }
 
 void Core::reset() {
-    js_.post([](jsi::Runtime &rt) { rt.global().getPropertyAsFunction(rt, "__crossbind_reset").call(rt); });
+    js_.post([this](jsi::Runtime &rt) {
+        page_ += 1;
+        pageFunctions_.clear();
+        rt.global().getPropertyAsFunction(rt, "__crossbind_reset").call(rt);
+    });
+}
+
+void Core::postEvent(std::string event, std::string json) {
+    js_.postOrRun([event = std::move(event), json = std::move(json)](jsi::Runtime &rt) {
+        rt.global().getPropertyAsFunction(rt, "__crossbind_event").call(rt, jsi::String::createFromUtf8(rt, event), jsi::String::createFromUtf8(rt, json));
+    });
+}
+
+// A function the page passed, as the module holds it. It counts the messages that passed it to this one, which the
+// page, told the count once Hermes collects it, takes from its own, so that a message still on its way keeps it.
+struct Core::PageFunction {
+    PageFunction(Core *core, long long page, long long id) : core(core), page(page), id(id) {}
+    PageFunction(const PageFunction &) = delete;
+    PageFunction &operator=(const PageFunction &) = delete;
+    ~PageFunction() { core->dropped(page, id, passed); }
+
+    Core *core;
+    long long page;
+    long long id;
+    double passed = 0;
+};
+
+jsi::Value Core::pageFunction(jsi::Runtime &rt, long long id) {
+    const auto held = pageFunctions_.find(id);
+    if (held != pageFunctions_.end()) {
+        const std::shared_ptr<PageFunction> state = held->second.first.lock();
+        jsi::Value function = held->second.second.lock(rt);
+        if (state && function.isObject()) {
+            state->passed += 1;
+            return function;
+        }
+    }
+    auto state = std::make_shared<PageFunction>(this, page_, id);
+    state->passed = 1;
+    jsi::Function function = jsi::Function::createFromHostFunction(rt, jsi::PropNameID::forAscii(rt, "pageFunction"), 0,
+        [this, state](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args, size_t count) {
+            if (state->page != page_) return jsi::Value::undefined();
+            std::vector<jsi::Value> forwarded;
+            forwarded.reserve(count + 1);
+            forwarded.emplace_back(static_cast<double>(state->id));
+            for (size_t i = 0; i < count; i += 1) forwarded.emplace_back(rt, args[i]);
+            rt.global().getPropertyAsFunction(rt, "__crossbind_called").call(rt, static_cast<const jsi::Value *>(forwarded.data()), forwarded.size());
+            return jsi::Value::undefined();
+        });
+    pageFunctions_.insert_or_assign(id, std::make_pair(std::weak_ptr<PageFunction>(state), jsi::WeakObject(rt, function)));
+    return jsi::Value(rt, function);
+}
+
+// Hermes collects functions while JS runs, so the page hears of one in a task of its own.
+void Core::dropped(long long page, long long id, double passed) {
+    js_.post([this, page, id, passed](jsi::Runtime &rt) {
+        if (page != page_) return;
+        const auto held = pageFunctions_.find(id);
+        if (held != pageFunctions_.end() && held->second.first.expired()) pageFunctions_.erase(held);
+        rt.global().getPropertyAsFunction(rt, "__crossbind_dropped").call(rt, static_cast<double>(id), passed);
+    });
+}
+
+void postEvent(std::string event, std::string json) {
+    if (Core *core = running.load()) core->postEvent(std::move(event), std::move(json));
 }
 
 }  // namespace crossbind::app

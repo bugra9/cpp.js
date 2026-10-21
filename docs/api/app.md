@@ -68,7 +68,8 @@ They need `RUNNER=DOCKER_RUN` or `DOCKER_EXEC`, and another runner stops the bui
 - Vectors arrive as arrays, and a plain array passed for a vector parameter becomes one.
 - Enum values keep their identity.
 - An error keeps its own fields, such as `code`.
-- A JavaScript function cannot be passed to the module (`DataCloneError`).
+- A JavaScript function passed to the module runs in the page when native code calls it, later and without an answer
+  ([Events and callbacks](#events-and-callbacks)).
 
 `initNative({ env })` sets environment variables in the app's process. The build's env is the app's own, and a variable
 the process already has keeps its value.
@@ -286,12 +287,14 @@ std::string databasePath() { return crossbind::app::paths().data + "/notes.sqlit
 | `shell.revealInFolder(path)` | A file, selected, in the system's file manager, or on Linux without one its folder | ✓ | | |
 | `app.paths()` | `{ data, cache, logs }`, the app's own folders, made when first asked for | ✓ | ✓ | ✓ |
 | `app.quit()` | Ends the app as closing its window does | ✓ | | |
+| `events.on(name, listener)` | Calls `listener` with each event of this name the app's C++ emits; returns what stops it | ✓ | ✓ | ✓ |
 | `updater.check()` | `{ version }`, the newer version `app.updater.url` offers, or `null` | ✓ | | |
 | `updater.install()` | Installs that version once its signature holds, then quits the app and opens the new one | ✓ | | |
 
-In the page each returns a promise once `initNative()` has run, as what it loads carries the calls to the host; in C++
-each waits for its answer, a dialog for its user's. A function a platform has not got rejects, or throws, saying so,
-and in a web or Node.js build every one rejects. A filter's extensions go with or without their dot, `"*"` for any
+In the page each returns a promise once `initNative()` has run, as what it loads carries the calls to the host, but
+`events.on`, which returns at once what stops it and throws where it cannot listen; in C++ each waits for its answer,
+a dialog for its user's, but `emitEvent`. A function a platform has not got rejects, or throws, saying so, and in a web
+or Node.js build every one fails. A filter's extensions go with or without their dot, `"*"` for any
 file, paths are absolute, and an option the page misspells fails before the host sees it. The dialogs are modal: to the
 app on macOS, to its window elsewhere; one shows at a time, and another rejects while it does.
 
@@ -307,6 +310,41 @@ On the desktop the folders take the name of `app.id`: under `~/Library` on macOS
 `$XDG_CACHE_HOME` and `$XDG_STATE_HOME` on Linux, and under `%APPDATA%` and `%LOCALAPPDATA%` on Windows. An iOS
 app's are its own `Library/Application Support`, `Library/Caches` and `Library/Logs`, and an Android app's its
 `files`, `cache` and `files/logs`.
+
+## Events and callbacks
+
+Native code reaches the page in two ways, each one way.
+
+A function the page passes to the module, such as a progress callback, runs in the page when native code calls it:
+
+```js
+await Native.exportReport(file, (done) => { progress.value = done; });
+```
+
+The call reaches the page later. Native code goes on at once and gets `undefined` for an answer, so pass a function
+where native code calls one whose answer it does not use, such as an `emscripten::val`, a Rust `JsFunction` or a
+`void` callback. Native code calls it on the module's thread, as any JavaScript value; another thread emits an event
+instead. The calls run in the order native code made them, perhaps after the call that passed the function returns,
+and an error one throws reaches the page as an uncaught one. Their arguments arrive as results do, numbers, strings and
+arrays as copies; a pointer, such as the one a C callback gets for its buffer, may point at nothing by the time the
+page reads it. Native code may keep the function and call it again, and the page lets go of it once native code has.
+
+An event the app's C++ emits reaches the page's listeners of it, with the value its JSON text holds:
+
+```cpp
+crossbind::app::emitEvent("progress", "{\"done\":0.5}");
+```
+
+```js
+import { events } from 'crossbind/app';
+
+const stop = events.on('progress', ({ done }) => { progress.value = done; });
+```
+
+`emitEvent` waits for nothing, so any thread may call it, and events of the module's thread keep their order among the
+calls of the page's functions. A page gets the events emitted once its first `events.on`, or the first function it
+passes, has reached the host: a call of the module it makes after either comes later. Text that is no JSON reaches no
+page, and the app's output says why. Both travel with the page's other messages, on every platform an app runs on.
 
 ## What the app holds
 
@@ -508,6 +546,8 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
   that has none, cannot be measured on the Windows machines crossbind is tested on, which have the runtime; the
   bootstrapper it downloads over HTTPS runs with no check of its own.
 - On the desktop, one window.
+- The functions the page passes have been measured on macOS and Linux, and the events of C++ on macOS alone; on
+  Windows, iOS and Android the conformance runs in CI check the functions.
 - On macOS the file dialogs, `shell.revealInFolder`, `app.paths` and `app.quit` have been measured, and so has
   `shell.openExternal` refusing other addresses; `shell.openExternal` opening one and `shell.openPath` opening a file
   have not. On Linux and Windows the dialogs, `shell.openExternal` opening an address, `shell.openPath`,

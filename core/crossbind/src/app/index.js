@@ -1,18 +1,21 @@
 // What an app's host does for its page: the dialogs that pick files, opening an address or a file outside the app, the
-// app's folders, quitting and a desktop app's updates. Each call goes to the host of an app (target.runtimeEnv: 'app');
-// in any other build it rejects. The app's native code calls the same through <crossbind/app.h>.
+// app's folders, quitting, the events of the app's native code and a desktop app's updates. Each call goes to the host
+// of an app (target.runtimeEnv: 'app'); in any other build it rejects, or events.on throws. The app's native code calls
+// the same through <crossbind/app.h>.
 
 const OPEN = { title: 'string', defaultPath: 'string', filters: 'filters', directory: 'boolean', multiple: 'boolean' };
 const SAVE = { title: 'string', defaultPath: 'string', defaultName: 'string', filters: 'filters' };
 
 // The app's crossbind.js, which initNative() loads, hands the calls to the host.
-function call(name, options) {
-    const host = globalThis.Crossbind?.app;
-    if (host) return host(name, options);
+function hostOf(member, name) {
+    const host = globalThis.Crossbind?.[member];
+    if (host) return host;
     if (globalThis.Crossbind) throw new Error(`crossbind: this app's host is older than crossbind/app; update @crossbind/core-app-host to call ${name}`);
     if (globalThis.__crossbind_token) throw new Error(`crossbind: ${name} works once the page has called initNative()`);
     throw new Error(`crossbind: ${name} works in an app alone, whose crossbind.config.js sets target.runtimeEnv: 'app'`);
 }
+
+const call = (name, options) => hostOf('app', name)(name, options);
 
 const isFilters = (value) => Array.isArray(value) && value.every((filter) => typeof filter?.name === 'string'
     && Array.isArray(filter.extensions) && filter.extensions.every((extension) => typeof extension === 'string'));
@@ -63,6 +66,16 @@ export const app = {
     paths: async () => call('app.paths', {}),
     // Ends the app as closing its window does.
     quit: async () => call('app.quit', {}),
+};
+
+export const events = {
+    // Calls listener with the value of each event of this name the app's native code emits from now on, until the
+    // function it returns is called.
+    on: (name, listener) => {
+        if (typeof name !== 'string' || !name) throw new TypeError('crossbind: events.on takes the name of an event.');
+        if (typeof listener !== 'function') throw new TypeError('crossbind: events.on takes a function to call.');
+        return hostOf('on', 'events.on')(name, listener);
+    },
 };
 
 // One check or install runs at a time, and another rejects meanwhile.
