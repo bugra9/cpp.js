@@ -1,7 +1,9 @@
 // The lean protocol's host side, with the contract a worker-backed web build has: objects as handles the page releases,
 // enum values with their identity, vectors returned as arrays, plain arrays coerced into vector parameters, errors
-// with their own fields, and large byte arrays as attachments of a crossbind:// request.
-/* global __host_reply, __app_call */
+// with their own fields, and large byte arrays as attachments of a crossbind:// request. Beyond it, a function the page
+// passes reaches the module as one whose calls run it in the page, later and without an answer, and the page gets the
+// events the app's native code emits.
+/* global __host_reply, __app_call, __host_page_function */
 import { pack, unpack, CODEC_TAG as TAG } from './codec.js';
 import { setCoercionModule, unwrapCoercionProxy, wrapWithVectorCoercion } from 'crossbind/runtime/adapters/vector-coercion.js';
 import { UNBOUND_MESSAGE } from 'crossbind/runtime/adapters/unboundMessage.js';
@@ -20,6 +22,18 @@ let nextEnum = 1;
 
 const bigResults = new Map();
 let nextBig = 1;
+
+// What the page is pushed, a batch for each request it makes for them: the calls of the functions it passed, the ones
+// the module let go of, and the events the app's native code emits once the page listens. Events wait for a page that
+// asks no more, as one in the background, up to a limit, past which the oldest go.
+const pushes = [];
+const MAX_WAITING_EVENTS = 1000;
+let waitingEvents = 0;
+// The call of the page's request for pushes, which waits for the next. One that another request replaced, or a page
+// that another replaced, is answered null: it stops asking.
+let poll = null;
+let isListening = false;
+const STOP = '[0,null]';
 
 let module = null;
 let root = null;
@@ -109,7 +123,21 @@ function encode(value) {
     });
 }
 
+// The functions a message passes, each counted as the message arrives, whatever its decoding does after, as the page
+// counted them when it sent it. The host keeps one for each the page passed while the module holds it.
+function pageFunctionsOf(value, found = new Map()) {
+    if (value === null || typeof value !== 'object') return found;
+    if (value[TAG] === 'cb') {
+        if (!Number.isSafeInteger(value.v) || value.v < 1) throw new Error(`crossbind: no function of the page goes as ${value.v}`);
+        found.set(value.v, __host_page_function(value.v));
+        return found;
+    }
+    for (const item of Object.values(value)) pageFunctionsOf(item, found);
+    return found;
+}
+
 function decode(value, attachments) {
+    const pageFunctions = pageFunctionsOf(value);
     return unpack(value, (tag, item) => {
         if (tag === 'h') {
             if (!registry.has(item.v)) throw new Error(`crossbind: object ${item.v} was already released`);
@@ -117,8 +145,29 @@ function decode(value, attachments) {
         }
         if (tag === 'e') return enumsById.get(item.v);
         if (tag === 'att') return attachments[item.i];
+        if (tag === 'cb') return pageFunctions.get(item.v);
         return undefined;
     });
+}
+
+function flush() {
+    if (poll === null || pushes.length === 0) return;
+    const call = poll;
+    poll = null;
+    waitingEvents = 0;
+    __host_reply(call, JSON.stringify([0, pushes.splice(0)]));
+}
+
+function push(entry) {
+    if (entry[0] === 'event') {
+        if (waitingEvents === MAX_WAITING_EVENTS) {
+            pushes.splice(pushes.findIndex(([kind]) => kind === 'event'), 1);
+            waitingEvents -= 1;
+        }
+        waitingEvents += 1;
+    }
+    pushes.push(entry);
+    flush();
 }
 
 function encodeResult(op, value) {
@@ -211,12 +260,44 @@ export function installHost(embindModule, env) {
     globalThis.__crossbind_receive = (call, text) => {
         const message = JSON.parse(text);
         // One of the app's own functions, which the host answers once the main thread has done it.
-        if (message[0] === 'app') __app_call(call, message[2][0], message[3][0]);
-        else __host_reply(call, answer(message, []));
+        if (message[0] === 'app') {
+            __app_call(call, message[2][0], message[3][0]);
+        } else if (message[0] === 'events') {
+            // The page's request for pushes waits for them. A second one, as from a second copy of the page's script,
+            // takes the first one's place.
+            if (poll !== null) __host_reply(poll, STOP);
+            poll = call;
+            isListening = true;
+            flush();
+        } else {
+            __host_reply(call, answer(message, []));
+        }
     };
 
-    // A new page replaced the one that held these, and its garbage collector will never release them.
+    // The module called a function the page passed: the page runs it later, and the module gets no answer.
+    globalThis.__crossbind_called = (id, ...args) => push(['cb', id, encode(args)]);
+    // The module let go of one, which so many messages passed it: the page keeps it for any still on their way.
+    globalThis.__crossbind_dropped = (id, passed) => push(['drop', id, passed]);
+    // An event of the app's native code, which a page gets once it listens.
+    globalThis.__crossbind_event = (name, json) => {
+        let value;
+        try {
+            value = JSON.parse(json);
+        } catch (error) {
+            // The JS thread prints it, after crossbind's name.
+            throw new Error(`the event ${name} carries no JSON text: ${error.message}`, { cause: error });
+        }
+        if (isListening) push(['event', name, value]);
+    };
+
+    // A new page replaced the one that held these, and its garbage collector will never release them. What was pushed
+    // for it reaches no page, and the new one listens once it asks.
     globalThis.__crossbind_reset = () => {
+        pushes.length = 0;
+        waitingEvents = 0;
+        if (poll !== null) __host_reply(poll, STOP);
+        poll = null;
+        isListening = false;
         release([...registry.keys()]);
         bigResults.clear();
     };

@@ -65,6 +65,19 @@ async function askFromSameOriginFrame(m) {
     if (area !== 6) throw new Error(`after a frame asked for a port, an object of the page answered ${area}`);
 }
 
+// A function the page passes to the module runs in the page once native code calls it, with no answer for native code,
+// and one native code kept runs each time it calls it again.
+async function checkCallbacks(m) {
+    const got = [];
+    const answer = await m.jsCall((x) => got.push(x), 3.5);
+    if (answer !== undefined) throw new Error(`native code got an answer from a page function: ${JSON.stringify(answer)}`);
+    await m.jsStore((x) => got.push(x));
+    await m.jsFire(7);
+    await m.jsFire(8);
+    for (let i = 0; i < 100 && got.length < 3; i += 1) await new Promise((resolve) => { setTimeout(resolve, 20); });
+    if (JSON.stringify(got) !== '[3.5,7,8]') throw new Error(`the page functions native code called ran with ${JSON.stringify(got)}, not 3.5, 7 and 8`);
+}
+
 // e2e/run.mjs serves a newer version whose file its signature covers, then the same version with that file changed: the
 // app gets past the first one's signature to find it unpacks to no app, and refuses the second.
 async function checkUpdates() {
@@ -121,6 +134,7 @@ initNative().then(async (m) => {
         const framed = await callFromSandboxedFrame();
         if (framed.startsWith('[0,')) throw new Error(`a sandboxed frame called the module: ${framed}`);
         if (isAndroid) await askFromSameOriginFrame(m);
+        await checkCallbacks(m);
         const result = await runConformance({
             cpp: { ConfBox: m.ConfBox, ConfCircle: m.ConfCircle, ConfOps: m.ConfOps, ConfShape: m.ConfShape },
             rustPkg: {

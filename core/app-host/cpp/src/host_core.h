@@ -35,6 +35,9 @@ std::string errorReply(const std::string &message);
 void callApp(jsi::Runtime &rt, const std::string &name, const jsi::Value &options, ReplyFn reply);
 // Whether the main thread answers the waits of <crossbind/app.h>: from the module's start until the app quits.
 void answerWaits(bool answer);
+// Sends an event of the app's native code to the page, from any thread, through the app's one module; before it boots,
+// nowhere.
+void postEvent(std::string event, std::string json);
 
 // Runs every JS task on one thread, as JSI requires, and drains Hermes' microtasks after each, so a reply that waits
 // on a promise goes out before the next message.
@@ -44,6 +47,9 @@ public:
 
     void start(Task boot);
     void post(Task task);
+    // On the JS thread itself the task runs at once, in its place among what the module's call there does, and drains
+    // no microtask in the middle of that call; from another thread it is posted.
+    void postOrRun(Task task);
     void postAfter(double ms, Task task);
     // The runtime stays alive: bindings keep JSI values in globals that would outlive its teardown.
     void stop();
@@ -51,7 +57,7 @@ public:
 private:
     Task next();
     void loop(const Task &boot);
-    void run(const Task &task);
+    void run(const Task &task, bool drains = true);
 
     std::unique_ptr<facebook::hermes::HermesRuntime> runtime_;
     std::mutex mutex_;
@@ -74,6 +80,8 @@ public:
     void serve(SchemeRequest request, SchemeRespond respond);
     // A new page replaced the one that held the module's objects.
     void reset();
+    // An event for the page, from any thread.
+    void postEvent(std::string event, std::string json);
     void stop() {
         // A wait of the module's code would hold the join below forever.
         answerWaits(false);
@@ -85,9 +93,19 @@ public:
     bool cors = false;
 
 private:
+    struct PageFunction;
+
     void installHostFunctions(jsi::Runtime &rt);
+    // The module's function for one the page passed: the same one while the module holds it.
+    jsi::Value pageFunction(jsi::Runtime &rt, long long id);
+    void dropped(long long page, long long id, double passed);
 
     JsThread js_;
+    // The functions the page passed, by its id for each, while the module holds them. A new page counts anew, and the
+    // functions of the one before reach no page. Their weak references belong to the JS thread and the runtime, which
+    // a Core outlives, as nothing deletes one.
+    long long page_ = 0;
+    std::unordered_map<long long, std::pair<std::weak_ptr<PageFunction>, jsi::WeakObject>> pageFunctions_;
     std::string pageDir_;
     // Made at boot for the page's top frame. Every message and every call made as a crossbind:// request carries it, so
     // markup and frames that cannot read the top frame's globals cannot make one.

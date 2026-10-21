@@ -19,7 +19,7 @@
     {
       "source": "docs/api/app.md",
       "output": "api/app.md",
-      "sha256": "43cb742f3d332653465b3aa6a91e37e92c2cb5e6d89475755d9dfbb0dac482c6"
+      "sha256": "613a0ff0522b263541e7d0fd06d08b64fcc119186b586cb5684e133e69d69d23"
     },
     {
       "source": "docs/api/build-state.md",
@@ -119,7 +119,7 @@
     {
       "source": "docs/playbooks/integration/desktop-app.md",
       "output": "integration/desktop-app.md",
-      "sha256": "3881af54b24de4f529ad9b39ced09b42a8de5067c77275842702f92030c2fdf7"
+      "sha256": "8e28b8407671ed58e0eb5d136449a2f07d4608e791624a55c0be69d9743a2c90"
     },
     {
       "source": "docs/playbooks/integration/nextjs.md",

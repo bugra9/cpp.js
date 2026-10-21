@@ -280,6 +280,8 @@ Paths paths() { return appPaths(); }
 
 void quit() { quitApp(); }
 
+void emitEvent(const std::string &event, const std::string &json) { postEvent(event, json); }
+
 void callApp(jsi::Runtime &rt, const std::string &name, const jsi::Value &options, ReplyFn reply) {
     try {
         if (name == "dialog.open") {

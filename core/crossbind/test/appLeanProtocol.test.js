@@ -200,3 +200,65 @@ describe('the lean protocol of an app', () => {
         await expect(m.xOf(handle)).rejects.toThrow('already released');
     });
 });
+
+describe('what the host pushes to the page', () => {
+    const askForPushes = () => transport.send(TOKEN + JSON.stringify(['events', 0, [], []]));
+
+    test('holds the request for pushes until there are some, and gets the events emitted once the page asks', async () => {
+        globalThis.__crossbind_reset();
+        globalThis.__crossbind_event('early', '1');
+        const waiting = askForPushes();
+        await new Promise(setImmediate);
+
+        globalThis.__crossbind_event('progress', '{"done":0.5}');
+
+        expect(JSON.parse(await waiting)).toEqual([0, [['event', 'progress', { done: 0.5 }]]]);
+        globalThis.__crossbind_event('later', 'null');
+        expect(JSON.parse(await askForPushes())).toEqual([0, [['event', 'later', null]]]);
+    });
+
+    test('names the event whose text is no JSON', () => {
+        expect(() => globalThis.__crossbind_event('broken', '{')).toThrow('the event broken carries no JSON text');
+    });
+
+    test('answers null, to stop asking, the request of a page another one replaced, and keeps none of what was for it', async () => {
+        const waiting = askForPushes();
+        await new Promise(setImmediate);
+
+        globalThis.__crossbind_reset();
+        globalThis.__crossbind_event('stale', '1');
+
+        expect(JSON.parse(await waiting)).toEqual([0, null]);
+        const next = askForPushes();
+        await new Promise(setImmediate);
+        globalThis.__crossbind_event('fresh', '2');
+        expect(JSON.parse(await next)).toEqual([0, [['event', 'fresh', 2]]]);
+    });
+
+    test('answers null a request another request took the place of', async () => {
+        const first = askForPushes();
+        await new Promise(setImmediate);
+        const second = askForPushes();
+        await new Promise(setImmediate);
+
+        expect(JSON.parse(await first)).toEqual([0, null]);
+        globalThis.__crossbind_event('now', '3');
+        expect(JSON.parse(await second)).toEqual([0, [['event', 'now', 3]]]);
+    });
+
+    test('keeps the latest events for a page that asks no more, up to a limit', async () => {
+        for (let i = 0; i < 1005; i += 1) globalThis.__crossbind_event('tick', String(i));
+
+        const [, entries] = JSON.parse(await askForPushes());
+
+        expect(entries).toHaveLength(1000);
+        expect(entries[0]).toEqual(['event', 'tick', 5]);
+        expect(entries.at(-1)).toEqual(['event', 'tick', 1004]);
+    });
+
+    test('refuses a function the page names by no id', async () => {
+        const reply = JSON.parse(await transport.send(`${TOKEN}["call",0,["add"],[{"\\u0001t":"cb","v":1e999},1]]`));
+
+        expect(reply).toEqual([1, expect.objectContaining({ message: 'crossbind: no function of the page goes as Infinity' })]);
+    });
+});

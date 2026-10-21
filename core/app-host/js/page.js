@@ -61,12 +61,84 @@ function androidTransport(port) {
 
 const transport = globalThis.__crossbind_port ? globalThis.__crossbind_port.then(androidTransport) : WEBKIT;
 
+// What the host pushes, a batch for each request the page leaves waiting for them: the events crossbind/app's
+// listeners wait for, and what concerns the functions the page passed to the module, which the protocol's client takes.
+// A request the channel failed is made again a moment later; one the host answers null, as when another took its place,
+// is the last.
+const RETRY_MS = 1000;
+const listeners = new Map();
+let pushedToClient = null;
+let isListening = false;
+
+// Nothing waits for a listener, so the page hears of its failure as of any uncaught one.
+function deliver(listener, value) {
+    try {
+        listener(value);
+    } catch (error) {
+        queueMicrotask(() => {
+            throw error;
+        });
+    }
+}
+
+async function askForPushes(chosen) {
+    try {
+        return JSON.parse(await chosen.send(token + JSON.stringify(['events', 0, [], []])));
+    } catch {
+        await new Promise((resolve) => {
+            setTimeout(resolve, RETRY_MS);
+        });
+        return [0, []];
+    }
+}
+
+function listen() {
+    if (isListening) return;
+    isListening = true;
+    (async () => {
+        const chosen = await transport;
+        for (;;) {
+            const [failed, entries] = await askForPushes(chosen);
+            if (failed) throw new Error(entries.message);
+            if (entries === null) return;
+            for (const entry of entries) {
+                // A listener added as the event arrives waits for the next.
+                if (entry[0] === 'event') [...(listeners.get(entry[1]) ?? [])].forEach(({ listener }) => deliver(listener, entry[2]));
+                else pushedToClient?.(entry);
+            }
+        }
+    })().catch((error) => {
+        console.error(`crossbind: the page stopped hearing from the app's host: ${error.message}`);
+    });
+}
+
+// Calls listener with each event of this name the app's native code emits from now on, until the function it returns
+// is called. Each call listens anew, as a listener passed twice runs twice.
+function on(name, listener) {
+    if (!token) throw new Error("crossbind: only the top frame of an app's own page reaches the app's events");
+    if (!listeners.has(name)) listeners.set(name, new Set());
+    const subscription = { listener };
+    listeners.get(name).add(subscription);
+    listen();
+    return () => {
+        const named = listeners.get(name);
+        named?.delete(subscription);
+        if (named?.size === 0) listeners.delete(name);
+    };
+}
+
 let booted = null;
 
 function initNative(config = {}) {
     if (!booted) {
         booted = token
-            ? Promise.resolve(transport).then((chosen) => connect(chosen, config.env))
+            ? Promise.resolve(transport).then((chosen) => connect({
+                ...chosen,
+                listen: (handler) => {
+                    pushedToClient = handler;
+                    listen();
+                },
+            }, config.env))
             : Promise.reject(new Error("crossbind: only the top frame of an app's own page reaches the app's module"));
     }
     return booted;
@@ -84,4 +156,4 @@ async function callApp(name, options) {
     return value;
 }
 
-globalThis.Crossbind = { initNative, app: callApp };
+globalThis.Crossbind = { initNative, app: callApp, on };

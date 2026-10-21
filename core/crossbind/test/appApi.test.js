@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import {
-    app, dialog, shell, updater,
+    app, dialog, events, shell, updater,
 } from '../src/app/index.js';
 
 // The host of an app, as page.js hands it the page's calls.
@@ -57,6 +57,23 @@ describe("crossbind/app, an app's own functions", () => {
         expect(host).toHaveBeenLastCalledWith('updater.check', {});
         await updater.install();
         expect(host).toHaveBeenLastCalledWith('updater.install', {});
+    });
+
+    test("hands a listener of the app's events to the host, which returns what stops it", () => {
+        const off = () => {};
+        globalThis.Crossbind = { on: vi.fn(() => off) };
+        const listener = () => {};
+
+        expect(events.on('progress', listener)).toBe(off);
+        expect(globalThis.Crossbind.on).toHaveBeenCalledWith('progress', listener);
+    });
+
+    test('refuses a listener without a name or a function, and one outside an app or with an older host', () => {
+        expect(() => events.on('', () => {})).toThrow('takes the name of an event');
+        expect(() => events.on('progress', 'listener')).toThrow('takes a function to call');
+        expect(() => events.on('progress', () => {})).toThrow("target.runtimeEnv: 'app'");
+        inApp();
+        expect(() => events.on('progress', () => {})).toThrow('update @crossbind/core-app-host to call events.on');
     });
 
     test('refuses an option it does not know or of another kind before the host sees it', async () => {
