@@ -112,6 +112,12 @@ describe("the header a desktop app's host builds with", () => {
         expect(() => appHeader(config({ openPath: ['data', 'home'] }), 'darwin')).toThrow('"home" is none of them');
     });
 
+    test('names the icon a Windows executable carries, which the build writes beside the header', () => {
+        expect(appHeader(config({ icon: 'icon.png' }), 'win32')).toContain('#define CROSSBIND_APP_ICON 1\n');
+        expect(appHeader(config(), 'win32')).not.toContain('CROSSBIND_APP_ICON');
+        expect(appHeader(config({ icon: 'icon.png' }), 'darwin')).not.toContain('CROSSBIND_APP_ICON');
+    });
+
     test('refuses a version Windows cannot carry on Windows alone', () => {
         for (const version of ['70000.0.0', '1.2.3.4.5', 'v1.2.3', '1.0.0-x"y', 1]) {
             expect(() => appHeader(config({}, version), 'win32')).toThrow('65535');

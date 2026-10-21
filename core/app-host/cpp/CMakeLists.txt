@@ -27,9 +27,12 @@ elseif(WIN32)
     set(PLATFORM_SOURCES src/windows/app.cpp src/windows/app_api.cpp src/windows/channels.cpp src/windows/com.cpp
         src/windows/navigation.cpp src/windows/app.rc)
     # llvm-windres reads a script as Windows-1252, whatever #pragma code_page it holds, and the app's name is UTF-8. It
-    # reports no headers either, so a new name, version or manifest would leave the old resources.
-    set_source_files_properties(src/windows/app.rc PROPERTIES COMPILE_OPTIONS --codepage=65001 OBJECT_DEPENDS
-        "${CMAKE_BINARY_DIR}/crossbind_app.h;${CMAKE_CURRENT_SOURCE_DIR}/src/windows/app.manifest")
+    # reports no headers either, so a new name, version, manifest or icon would leave the old resources.
+    set(RESOURCE_INPUTS "${CMAKE_BINARY_DIR}/crossbind_app.h;${CMAKE_CURRENT_SOURCE_DIR}/src/windows/app.manifest")
+    if(EXISTS "${CMAKE_BINARY_DIR}/icon.ico")
+        list(APPEND RESOURCE_INPUTS "${CMAKE_BINARY_DIR}/icon.ico")
+    endif()
+    set_source_files_properties(src/windows/app.rc PROPERTIES COMPILE_OPTIONS --codepage=65001 OBJECT_DEPENDS "${RESOURCE_INPUTS}")
 else()
     set(PLATFORM_SOURCES src/linux/app.cpp src/linux/app_api.cpp src/linux/channels.cpp src/linux/navigation.cpp)
 endif()

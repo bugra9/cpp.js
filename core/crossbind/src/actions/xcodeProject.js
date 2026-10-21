@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) { return crossbind_app_main(argc, argv); }
 
 const OBJECT_NAMES = ['project', 'mainGroup', 'products', 'target', 'product', 'main', 'info', 'app', 'hermes', 'mainBuild',
     'appBuild', 'hermesLink', 'hermesEmbed', 'sources', 'frameworks', 'resources', 'embed', 'projectDebug', 'projectRelease',
-    'targetDebug', 'targetRelease', 'projectConfigs', 'targetConfigs'];
+    'targetDebug', 'targetRelease', 'projectConfigs', 'targetConfigs', 'assets', 'assetsBuild'];
 // Xcode names its objects by 24 hex digits. Fixed ones leave the project unchanged while what it holds is.
 const ID = Object.fromEntries(OBJECT_NAMES.map((name, index) => [name, `CB${(index + 1).toString(16).toUpperCase().padStart(22, '0')}`]));
 
@@ -53,14 +53,20 @@ const infoPlist = (name) => xmlPlist({
     'UISupportedInterfaceOrientations~ipad': [...ORIENTATIONS, 'UIInterfaceOrientationPortraitUpsideDown'],
 });
 
-function objects(name, targetSettings) {
+function objects(name, targetSettings, hasIcon) {
     const file = (path, type) => ({ isa: 'PBXFileReference', lastKnownFileType: type, path, sourceTree: '<group>' });
     const phase = (isa, files, extra = {}) => ({ isa, buildActionMask: 2147483647, files, runOnlyForDeploymentPostprocessing: 0, ...extra });
     const configuration = (configurationName, buildSettings) => ({ isa: 'XCBuildConfiguration', buildSettings, name: configurationName });
     const configurations = (debug, release) => ({
         isa: 'XCConfigurationList', buildConfigurations: [debug, release], defaultConfigurationIsVisible: 0, defaultConfigurationName: 'Release',
     });
+    // The app's icon, in an asset catalog.
+    const assets = hasIcon ? {
+        [ID.assets]: file('Assets.xcassets', 'folder.assetcatalog'),
+        [ID.assetsBuild]: { isa: 'PBXBuildFile', fileRef: ID.assets },
+    } : {};
     return {
+        ...assets,
         [ID.main]: file('main.m', 'sourcecode.c.objc'),
         [ID.info]: file('Info.plist', 'text.plist.xml'),
         [ID.app]: file('app', 'folder'),
@@ -74,9 +80,11 @@ function objects(name, targetSettings) {
         [ID.hermesEmbed]: { isa: 'PBXBuildFile', fileRef: ID.hermes, settings: { ATTRIBUTES: ['CodeSignOnCopy', 'RemoveHeadersOnCopy'] } },
         [ID.sources]: phase('PBXSourcesBuildPhase', [ID.mainBuild]),
         [ID.frameworks]: phase('PBXFrameworksBuildPhase', [ID.hermesLink]),
-        [ID.resources]: phase('PBXResourcesBuildPhase', [ID.appBuild]),
+        [ID.resources]: phase('PBXResourcesBuildPhase', [ID.appBuild, ...(hasIcon ? [ID.assetsBuild] : [])]),
         [ID.embed]: phase('PBXCopyFilesBuildPhase', [ID.hermesEmbed], { dstPath: '', dstSubfolderSpec: 10, name: 'Embed Frameworks' }),
-        [ID.mainGroup]: { isa: 'PBXGroup', children: [ID.main, ID.info, ID.app, ID.hermes, ID.products], sourceTree: '<group>' },
+        [ID.mainGroup]: {
+            isa: 'PBXGroup', children: [ID.main, ID.info, ID.app, ...(hasIcon ? [ID.assets] : []), ID.hermes, ID.products], sourceTree: '<group>',
+        },
         [ID.products]: { isa: 'PBXGroup', children: [ID.product], name: 'Products', sourceTree: '<group>' },
         [ID.target]: {
             isa: 'PBXNativeTarget',
@@ -113,8 +121,8 @@ function objects(name, targetSettings) {
 
 // An iOS app as an Xcode project, written anew from the parts its SDK targets built: each brings its archives and
 // their link line, and its slice of Hermes; the first also the app's files. Xcode signs the app and runs it, in the
-// Simulator or on a device.
-export default function writeXcodeProject(to, { parts, identity, label, version }) {
+// Simulator or on a device, and makes every size of its icon from the one PNG given.
+export default function writeXcodeProject(to, { parts, identity, label, version, icon = null }) {
     const { name } = state.config.general;
     if (parts.length === 0) throw new Error(`crossbind: no part of the iOS app ${name} is built, so there is no Xcode project to write.`);
     fs.rmSync(to, { recursive: true, force: true });
@@ -134,7 +142,18 @@ export default function writeXcodeProject(to, { parts, identity, label, version 
 
     fs.writeFileSync(`${to}/main.m`, MAIN);
     fs.writeFileSync(`${to}/Info.plist`, infoPlist(label));
+    if (icon) {
+        const info = { author: 'xcode', version: 1 };
+        const set = `${to}/Assets.xcassets/AppIcon.appiconset`;
+        fs.mkdirSync(set, { recursive: true });
+        fs.writeFileSync(`${to}/Assets.xcassets/Contents.json`, JSON.stringify({ info }, null, 2));
+        fs.writeFileSync(`${set}/Contents.json`, JSON.stringify({
+            images: [{ filename: 'icon.png', idiom: 'universal', platform: 'ios', size: '1024x1024' }], info,
+        }, null, 2));
+        fs.writeFileSync(`${set}/icon.png`, icon);
+    }
     const targetSettings = {
+        ...(icon ? { ASSETCATALOG_COMPILER_APPICON_NAME: 'AppIcon' } : {}),
         PRODUCT_NAME: name,
         PRODUCT_BUNDLE_IDENTIFIER: identity.id,
         DEVELOPMENT_TEAM: identity.team,
@@ -146,7 +165,7 @@ export default function writeXcodeProject(to, { parts, identity, label, version 
         ...linkFlags,
     };
     fs.writeFileSync(`${to}/${name}.xcodeproj/project.pbxproj`, textPlist({
-        archiveVersion: 1, classes: {}, objectVersion: 56, objects: objects(name, targetSettings), rootObject: ID.project,
+        archiveVersion: 1, classes: {}, objectVersion: 56, objects: objects(name, targetSettings, Boolean(icon)), rootObject: ID.project,
     }));
     return to;
 }

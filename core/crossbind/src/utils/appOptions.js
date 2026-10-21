@@ -114,6 +114,8 @@ export function appHeader(config, platform) {
     if (platform === 'win32') {
         const version = windowsVersion(config);
         lines.push(`#define CROSSBIND_APP_VERSION "${version.text}"`, `#define CROSSBIND_APP_VERSION_NUMBERS ${version.numbers}`);
+        // The build writes the icon beside this header.
+        if (config.app.icon !== undefined) lines.push('#define CROSSBIND_APP_ICON 1');
     }
     return [...lines, ''].join('\n');
 }

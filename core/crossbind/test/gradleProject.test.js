@@ -40,7 +40,8 @@ describe("an Android app's Gradle project", () => {
         expect(gradle).toContain('versionCode 1002003');
         expect(gradle).toContain("versionName '1.2.3-beta.1'");
         expect(gradle).toContain("abiFilters 'arm64-v8a', 'x86_64'");
-        expect(gradle).toContain("manifestPlaceholders = [appName: 'Demo\\'s App']");
+        expect(gradle).toContain("manifestPlaceholders = [appName: 'Demo\\'s App', appIcon: '@android:drawable/sym_def_app_icon']");
+        expect(fs.existsSync(path.join(main, 'res', 'mipmap-anydpi'))).toBe(false);
         expect(gradle).toMatch(/implementation\('com\.facebook\.hermes:hermes-android:\d+\.\d+\.\d+'\)/);
         // Android's default pattern would leave out the page's _app and .well-known directories.
         expect(gradle).toContain("ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'");
@@ -65,6 +66,20 @@ describe("an Android app's Gradle project", () => {
             expect(block(warmed, name)).toBe(block(written, name));
         }
         expect(warmed.match(/^ {4}compileSdk \d+$/m)?.[0]).toBe(written.match(/^ {4}compileSdk \d+$/m)?.[0]);
+        fs.rmSync(root, { recursive: true, force: true });
+    });
+
+    test("launches with the app's icon: its foregrounds, and the adaptive icon that puts them on white", () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-gradle-'));
+        const to = path.join(root, 'demo-app-android');
+        const icons = { 'mipmap-mdpi/ic_launcher_foreground.png': 'mdpi png', 'mipmap-xxxhdpi/ic_launcher_foreground.png': 'xxxhdpi png' };
+        writeGradleProject(to, { parts: [part(root, 'x86_64')], id: 'com.example.demo', label: 'Demo', version: { name: '1.0.0', code: 1 }, icons });
+        const res = path.join(to, 'app', 'src', 'main', 'res');
+        expect(fs.readFileSync(path.join(res, 'mipmap-xxxhdpi', 'ic_launcher_foreground.png'), 'utf8')).toBe('xxxhdpi png');
+        expect(fs.readFileSync(path.join(res, 'mipmap-anydpi', 'ic_launcher.xml'), 'utf8'))
+            .toContain('<foreground android:drawable="@mipmap/ic_launcher_foreground" />');
+        expect(fs.readFileSync(path.join(to, 'app', 'build.gradle'), 'utf8')).toContain("appIcon: '@mipmap/ic_launcher'");
+        expect(fs.readFileSync(path.join(to, 'app', 'src', 'main', 'AndroidManifest.xml'), 'utf8')).toContain('android:icon="${appIcon}"');
         fs.rmSync(root, { recursive: true, force: true });
     });
 

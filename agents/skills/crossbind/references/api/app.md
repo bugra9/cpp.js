@@ -101,6 +101,29 @@ page's history first, and leaves the app when there is none.
 An app that cannot start, for want of the WebView2 Runtime or of a file it carries, writes why to its output; a desktop
 app its user opened says so in a message box as well.
 
+## The icon
+
+`app.icon` names a square PNG, at best 1024 × 1024, and the build makes each platform's icon from it:
+
+```js
+app: {
+    icon: 'icon.png',
+},
+```
+
+- macOS: `icon.icns` in the bundle, 16 to 1024 pixels, which the Dock and Finder show as the PNG is: a Mac icon keeps
+  a transparent margin of its own.
+- Windows: the executable's icon, 16 to 256 pixels, which Explorer, the taskbar and the window show.
+- Linux: the window's icon, 512 pixels. GNOME on Wayland shows an installed app's desktop entry instead, which
+  crossbind does not write yet.
+- iOS: one 1024 × 1024 image, its transparent parts white, from which Xcode makes every size and whose corners iOS
+  rounds: the App Store takes no transparent icon.
+- Android: an adaptive icon, the whole PNG, its margin too, in the middle two thirds of a white square, which the
+  launcher shapes.
+
+Without `app.icon` an app has the system's default icon. A path that names no square PNG stops the build. Each size is
+resampled from the PNG, so a small one blurs when enlarged.
+
 ## The app's functions
 
 The page imports what the app's host does for it from `crossbind/app`, and the app's C++ calls the same through
@@ -159,20 +182,22 @@ app's are its own `Library/Application Support`, `Library/Caches` and `Library/L
 ├── MacOS/<name>                  the window, the webview, Hermes and the bindings
 ├── Frameworks/hermesvm.framework
 └── Resources/
+    ├── icon.icns                 the icon, with app.icon
     ├── host.hbc                  the embind runtime and the protocol, as Hermes bytecode
     ├── page/                     what Vite built, served at crossbind://app/
     └── data/                     the packages' data (CROSSBIND_DATA_PATH)
 
 <name>-linux-<arch>/
 ├── <name>                        the window, the webview, Hermes and the bindings, in one executable
-└── resources/                    host.hbc, page/ and data/, as on macOS
+└── resources/                    host.hbc, page/ and data/, as on macOS, and icon.png with app.icon
 
-<name>-win32-<arch>/              as on Linux, with <name>.exe
+<name>-win32-<arch>/              as on Linux, with <name>.exe, which carries the icon
 
 <name>-ios/                       an Xcode project, written anew on every build
 ├── <name>.xcodeproj
 ├── main.m                        calls the app, which comes prebuilt
 ├── Info.plist
+├── Assets.xcassets/              the icon, with app.icon
 ├── lib/iphoneos/, lib/iphonesimulator/
 │                                 the host and the archives it links, for each SDK
 ├── Frameworks/hermesvm.xcframework
@@ -188,6 +213,7 @@ app's are its own `Library/Application Support`, `Library/Caches` and `Library/L
         ├── java/dev/crossbind/app/CrossbindActivity.java
         │                         the WebView, its message port and navigation rule
         ├── jniLibs/<abi>/        the host, JSI, the NDK's libc++ and the packages' shared libraries
+        ├── res/mipmap-*/         the icon, with app.icon
         └── assets/app/           host.hbc, page/ and data/, copied out to the app's files when it first starts
 
 <name>-android.apk                the release APK Gradle makes of it, and <name>-android.aab with an upload key
@@ -341,16 +367,16 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
   `shell.openExternal` refusing other addresses; `shell.openExternal` opening one and `shell.openPath` opening a file
   have not. On Linux and Windows the dialogs, `shell.openExternal` opening an address, `shell.openPath`,
   `shell.revealInFolder` and `app.quit` are built, not measured yet.
+- The icon has been seen in macOS's Finder, in the icon files of an iOS Simulator build and on Android's launcher;
+  Windows and Linux apps carry it, but nobody has looked at it there yet.
 - A download the page starts saves where its user picks on macOS, when it is a `Blob` or other data the page holds: an
   `<a download>` link to one of the app's own files saves nothing yet, so the page fetches the file and saves it as a
   `Blob`. WebView2 and WebKitGTK handle downloads themselves on Windows and Linux, which has not been measured yet; an
   iOS or Android app does not save one yet.
 - iOS 15.1 or later, arm64 alone: devices, and the Simulator of an Apple silicon Mac. It builds on macOS with Xcode.
 - During development an iOS app runs in the Simulator; a device runs the Xcode project's build.
-- An iOS app has no icon of its own yet, which App Store Connect requires.
 - Android 13 (API 33) or later, the level crossbind's Android libraries build against, with Android System WebView
   116 or later, the first that passes byte arrays as ArrayBuffer messages; an older WebView gets a message that names
   the version it needs. arm64-v8a and x86_64.
-- An Android app builds on macOS and Linux. It has no icon of its own yet, and its one activity shows the page under the
-  system bars' insets.
+- An Android app builds on macOS and Linux. Its one activity shows the page under the system bars' insets.
 - Vite only.

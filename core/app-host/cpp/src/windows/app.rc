@@ -6,6 +6,12 @@
 // the host and the libraries it links pass to the C runtime and to Windows, such as a user folder with a non-ASCII name.
 1 24 "app.manifest"
 
+#ifdef CROSSBIND_APP_ICON
+// The app's icon, which crossbind writes beside crossbind_app.h, as IDI_APPLICATION: webview gives its window that one,
+// and Explorer shows it for the executable.
+32512 ICON "icon.ico"
+#endif
+
 // What Explorer shows in the executable's details, and Task Manager by its process.
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION CROSSBIND_APP_VERSION_NUMBERS

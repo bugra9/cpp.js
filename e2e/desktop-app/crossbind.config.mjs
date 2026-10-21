@@ -25,6 +25,8 @@ export default {
         window: { width: 800, height: 600 },
         // src/main.js checks the page opens files in the data folder alone.
         openPath: ['data'],
+        // e2e/run.mjs checks the app has it.
+        icon: 'icon.png',
     },
     paths: {
         config: import.meta.url,
