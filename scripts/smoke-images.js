@@ -289,6 +289,16 @@ install -m 0644 addon.cpp installed.cpp
 test -f installed.cpp
 echo "install shim ok"
 zip -v > /dev/null
+printf 'Unicode true\nRequestExecutionLevel user\nOutFile probe-setup.exe\n!include MUI2.nsh\n!insertmacro MUI_PAGE_INSTFILES\n!insertmacro MUI_LANGUAGE English\nSection\nSystem::Call "kernel32::GetTickCount() i .r0"\nSectionEnd\n' > probe.nsi
+makensis -V2 -WX probe.nsi
+test "$(head -c 2 probe-setup.exe)" = MZ
+echo "makensis builds an installer with MUI2 and the System plugin"
+keytool -genkeypair -alias probe -keyalg RSA -keysize 2048 -validity 1 -dname CN=crossbind-probe -ext EKU=codeSigning -keystore probe.p12 -storetype PKCS12 -storepass probe-pass > /dev/null 2>&1
+jsign --quiet --storetype PKCS12 --keystore probe.p12 --storepass probe-pass --alias probe probe-setup.exe
+jsign extract --format PEM probe-setup.exe > /dev/null
+grep -q 'BEGIN PKCS7' probe-setup.exe.sig.pem
+test -f /opt/licenses/jsign/NOTICE
+echo "jsign signs the installer with a PKCS#12 key"
 test -f /opt/licenses/hermes-LICENSE
 test -f /opt/licenses/webview2-sdk/LICENSE.txt
 grep -q '^#define CROSSBIND_WEBVIEW2_TARGET_VERSION L"[0-9.]*"$' /opt/crossbind/webview2/include/crossbind_webview2.h

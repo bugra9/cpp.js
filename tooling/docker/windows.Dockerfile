@@ -11,8 +11,8 @@ FROM ${BASE_IMAGE} AS toolchains
 # The base image is non-root by default; toolchain installation is an image-build operation only.
 USER root
 
-# nasm assembles libjpeg-turbo's x64 SIMD code; zip archives a Windows app.
-RUN apt-get update && apt-get install -y --no-install-recommends nasm zip \
+# nasm assembles libjpeg-turbo's x64 SIMD code; zip archives a Windows app, and nsis builds its installer.
+RUN apt-get update && apt-get install -y --no-install-recommends nasm zip nsis \
     && rm -rf /var/lib/apt/lists/*
 
 ARG TARGETARCH
@@ -133,6 +133,22 @@ RUN set -eu; \
     printf '#define CROSSBIND_WEBVIEW2_TARGET_VERSION %s\n' "${version}" > /opt/crossbind/webview2/include/crossbind_webview2.h; \
     cp /tmp/webview2/LICENSE.txt /opt/licenses/webview2-sdk/; \
     rm -rf /tmp/webview2 /tmp/webview2.nupkg
+
+# jsign signs a Windows app, its uninstaller and its setup program with Authenticode, by whatever holds the key: a
+# PKCS#12 file, a PKCS#11 token or a cloud's key service. Its release jar bundles what it uses, and Debian's OpenJDK
+# runs it.
+ARG JSIGN_VERSION=7.6
+ARG JSIGN_SHA256=6cf58aa080e7ff82656f320cff8d4a3bff30408df8766806dcba3740dd839fa5
+COPY windows/jsign-NOTICE /opt/licenses/jsign/NOTICE
+RUN set -eu; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends openjdk-21-jre-headless; \
+    rm -rf /var/lib/apt/lists/*; \
+    mkdir -p /opt/jsign; \
+    wget -q "https://repo1.maven.org/maven2/net/jsign/jsign/${JSIGN_VERSION}/jsign-${JSIGN_VERSION}.jar" -O /opt/jsign/jsign.jar; \
+    echo "${JSIGN_SHA256}  /opt/jsign/jsign.jar" | sha256sum -c -; \
+    printf '#!/bin/sh\nexec java -jar /opt/jsign/jsign.jar "$@"\n' > /usr/local/bin/jsign; \
+    chmod 755 /usr/local/bin/jsign
 
 WORKDIR /
 USER 10001:10001
