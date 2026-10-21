@@ -117,6 +117,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | Wasm linking + JS loader gen | `src/actions/buildWasm.js` |
 | Node-API addon link (`.node`) + CommonJS loader | `src/actions/buildNode.js` |
 | App host link: bridges against Hermes' JSI, host bytecode, page runtime; a macOS `.app` signed ad hoc, a Linux directory and its `.tar.gz`, a Windows directory and its `.zip`, or what each iOS SDK or Android ABI brings to the Xcode or Gradle project | `src/actions/buildApp.js` |
+| Desktop app installers: a macOS disk image (hdiutil), a Linux Debian package (dpkg-deb in the linux image), a Windows setup program (NSIS in the windows image, from `core/app-host/windows/installer.nsi`) | `src/actions/appInstaller.js` |
 | iOS app: the Xcode project written anew from each SDK's part (archives and their link line, Hermes' slice, the app's files) | `src/actions/xcodeProject.js` |
 | An iOS app built for the Simulator and opened there, for `vite` and the e2e runs | `src/actions/iosSimulator.js` |
 | Android app: the Gradle project written anew from `core/app-host/android` and each ABI's part (the host and the libraries it loads, the app's files) | `src/actions/gradleProject.js` |

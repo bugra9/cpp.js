@@ -3,7 +3,7 @@
 import {
     state, createLib, createBridgeFile, buildWasm, getCrossbindScript, getRustJsScript, buildDependencies,
     getDependFilePath, getTargetParams, getFilteredBuildTargets, isSourceNewer, appSourceFiles, buildProjectApp, publishApp,
-    appOutputName, appTargetParams,
+    appOutputName, appTargetParams, checkInstaller,
 } from 'crossbind';
 
 import fs from 'node:fs';
@@ -107,6 +107,8 @@ const rollupCrossbindPlugin = (options, bridges = []) => {
         },
         async generateBundle() {
             if (isApp) {
+                // writeBundle puts each app beside what installs it, whose names stop the build here if they cannot be.
+                appTargets.forEach(checkInstaller);
                 for (const target of appTargets) await buildProjectApp(target);
                 this.emitFile({
                     type: 'asset',

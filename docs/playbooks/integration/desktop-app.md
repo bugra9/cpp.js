@@ -39,10 +39,11 @@ now.
 
 ## Validation
 
-- `pnpm crossbind app build` ends with `dist/<name>.app`, and `open dist/<name>.app` shows the page. On Linux it ends
-  with `dist/<name>-linux-<arch>/` and its `.tar.gz`, and `dist/<name>-linux-<arch>/<name>` shows the page.
-- `crossbind app build -p windows` ends with `dist/<name>-win32-<arch>/` and its `.zip`, whose `<name>.exe` shows the
-  page on Windows.
+- `pnpm crossbind app build` ends with `dist/<name>.app` and `dist/<name>.dmg`, and `open dist/<name>.app` shows the
+  page. On Linux it ends with `dist/<name>-linux-<arch>/`, its `.tar.gz` and its `.deb`, and
+  `dist/<name>-linux-<arch>/<name>` shows the page.
+- `crossbind app build -p windows` ends with `dist/<name>-win32-<arch>/`, its `.zip` and its `-setup.exe`, whose
+  `<name>.exe` shows the page on Windows.
 - `crossbind app build -p ios` ends with `dist/<name>-ios/<name>.xcodeproj`, which
   `xcodebuild -project dist/<name>-ios/<name>.xcodeproj -sdk iphonesimulator build` builds with no team.
 - `crossbind app build -p android` ends with `dist/<name>-android.apk`, which `adb install` puts on the emulator;

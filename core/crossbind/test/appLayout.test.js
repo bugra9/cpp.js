@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, test, vi } from 'vitest';
 
-const state = { config: { general: { name: 'demo' }, target: {} }, targets: [] };
+const state = { config: { general: { name: 'demo' }, app: {}, target: {} }, targets: [] };
 vi.mock('../src/state/index.js', () => ({ default: state }));
 // The emulator a dev session runs an Android app on.
 vi.mock('../src/actions/androidDevice.js', () => ({ attachedDevice: () => ({ serial: 'emulator-5554', abi: 'x86_64' }) }));
@@ -109,14 +109,14 @@ describe("a desktop app's page", () => {
         const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-page-'));
         const dist = path.join(root, 'dist');
         const arm64 = { platform: 'linux', arch: 'arm64', runtimeEnv: 'app', appName: 'demo.linux-arm64' };
-        state.config.paths = { build: path.join(root, 'build') };
+        state.config.paths = { base: root, build: path.join(root, 'build') };
         state.targets = [
             arm64, { platform: 'linux', arch: 'x64', runtimeEnv: 'app' }, { platform: 'android', arch: 'x86_64', runtimeEnv: 'app' },
-            { platform: 'win32', arch: 'x64', runtimeEnv: 'app' },
+            { platform: 'win32', arch: 'x64', runtimeEnv: 'app' }, { platform: 'darwin', arch: 'arm64', runtimeEnv: 'app' },
         ];
         fs.mkdirSync(path.join(root, 'build', arm64.appName, 'resources'), { recursive: true });
-        ['index.html', 'crossbind.js', 'assets/index.js', 'demo-linux-x64/demo', 'demo-linux-x64.tar.gz', 'demo-android.apk', 'demo-android.aab',
-            'demo-win32-x64.zip'].forEach((file) => {
+        ['index.html', 'crossbind.js', 'assets/index.js', 'demo-linux-x64/demo', 'demo-linux-x64.tar.gz', 'demo-linux-x64.deb', 'demo-android.apk',
+            'demo-android.aab', 'demo-win32-x64.zip', 'demo-win32-x64-setup.exe', 'demo.dmg'].forEach((file) => {
             fs.mkdirSync(path.dirname(path.join(dist, file)), { recursive: true });
             fs.writeFileSync(path.join(dist, file), file);
         });
@@ -129,6 +129,7 @@ describe("a desktop app's page", () => {
                 expect(fs.readdirSync(path.join(dist, app, 'resources', 'page')).sort()).toEqual(['assets', 'crossbind.js', 'index.html']);
             });
             expect(spawnSync).toHaveBeenCalledWith('tar', expect.arrayContaining([`${path.join(dist, 'demo-linux-arm64')}.tar.gz`]), expect.anything());
+            expect(run).toHaveBeenCalledWith(null, expect.arrayContaining(['dpkg-deb', `${path.join(dist, 'demo-linux-arm64')}.deb`]), null, arm64);
         } finally {
             state.targets = [];
             fs.rmSync(root, { recursive: true, force: true });
@@ -149,6 +150,8 @@ describe("a desktop app's page", () => {
 
             expect(fs.readdirSync(path.join(dist, 'demo-win32-x64', 'resources', 'page'))).toEqual(['index.html']);
             expect(run).toHaveBeenCalledWith(null, ['zip', '-q', '-r', '-X', 'demo-win32-x64.zip', 'demo-win32-x64'], null, x64, { workdir: dist });
+            expect(run).toHaveBeenCalledWith(null, expect.arrayContaining(['makensis', `-DOUTFILE=${path.join(dist, 'demo-win32-x64')}-setup.exe`]), null, x64,
+                expect.anything());
         } finally {
             state.targets = [];
             fs.rmSync(root, { recursive: true, force: true });

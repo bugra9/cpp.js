@@ -20,6 +20,7 @@ import writeXcodeProject, { HERMES_SLICES, IOS_SDKS } from './xcodeProject.js';
 import writeGradleProject, { ANDROID_ABIS } from './gradleProject.js';
 import { attachedDevice } from './androidDevice.js';
 import { packageAndroidRelease } from './androidGradle.js';
+import writeInstaller, { assertUnderBase } from './appInstaller.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
 import findFiles from '../utils/findFiles.js';
@@ -33,7 +34,6 @@ import resetCMakeCacheForSource from '../utils/resetCMakeCacheForSource.js';
 import resolveAppHostRoot, { resolveAppEmbindJsiRoot } from '../utils/resolveAppHost.js';
 import resolveHermes, { HERMES } from '../utils/hermes.js';
 import { getDockerImage, imageRoleFor } from '../utils/pullDockerImage.js';
-import { isUnderBase } from '../utils/replaceBasePathForDocker.js';
 import { chosenRunner } from '../utils/selectRunner.js';
 import { DARWIN_DEPLOYMENT_TARGET } from '../utils/darwinToolchain.js';
 
@@ -266,9 +266,7 @@ const appParts = (target) => state.targets
 // image.
 function archiveApp(app, target) {
     if (target.platform === 'win32') {
-        if (!isUnderBase(app, state.config.paths.base)) {
-            throw new Error(`crossbind: the Windows app ${app} is outside ${state.config.paths.base}, the project's base and all the windows container sees. Build the app into a directory under it.`);
-        }
+        assertUnderBase(app, target);
         fs.rmSync(`${app}.zip`, { force: true });
         run(null, ['zip', '-q', '-r', '-X', `${path.basename(app)}.zip`, path.basename(app)], null, target, { workdir: path.dirname(app) });
         return;
@@ -318,7 +316,8 @@ export function publishApp(target, { to = appOutputPath(target), page = null } =
         // The app may land inside the page's own directory, which it then leaves out, with every app built there and what
         // packages it.
         const apps = new Set([path.basename(to), ...state.targets.filter((t) => t.runtimeEnv === 'app').map(appOutputName)]);
-        const isApp = (entry) => entry.endsWith('.app') || apps.has(entry.replace(/\.(tar\.gz|zip|apk|aab)$/, ''));
+        const isApp = (entry) => entry.endsWith('.app') || apps.has(entry.replace(/\.dmg$/, '.app'))
+            || apps.has(entry.replace(/(\.tar\.gz|\.zip|\.apk|\.aab|\.deb|-setup\.exe)$/, ''));
         fs.readdirSync(page).filter((entry) => !isApp(entry)).forEach((entry) => {
             fs.cpSync(`${page}/${entry}`, `${to}/${appLayout(target).resources}/page/${entry}`, { recursive: true });
         });
@@ -326,6 +325,8 @@ export function publishApp(target, { to = appOutputPath(target), page = null } =
     if (target.platform === 'darwin') signApp(to, target);
     else if (target.platform === 'android' && target.buildType === 'release') packageAndroidRelease(to);
     else if (!['ios', 'android'].includes(target.platform)) archiveApp(to, target);
+    // A desktop app with its page ships with what installs it.
+    if (page && ['darwin', 'linux', 'win32'].includes(target.platform)) writeInstaller(to, target);
     return to;
 }
 

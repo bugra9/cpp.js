@@ -149,6 +149,8 @@ jobs:
               run: |
                   pnpm --filter=@crossbind/e2e-desktop-app run build
                   pnpm --filter=@crossbind/e2e-desktop-app run e2e:prod
+            - name: Run the conformance suite in the app as its disk image holds it
+              run: node e2e/desktop-app/e2e/run.mjs --installed
     app-ios:
         # The iOS app builds on a macOS runner from the addon's bridges as the macOS app does, its Rust for both
         # iOS SDKs, and runs in the Simulator.
@@ -204,16 +206,20 @@ jobs:
                   cache: 'pnpm'
             - name: Install dependencies
               run: pnpm install
-            - name: Install WebKitGTK, which the app runs on
-              run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-0
-            - name: Build the app and run the conformance suite in it
+            - name: Build the app
+              run: pnpm --filter=@crossbind/e2e-desktop-app run build
+            - name: Install the app's Debian package, whose dependencies bring the WebKitGTK it runs on
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y --no-install-recommends ./e2e/desktop-app/dist/crossbind-e2e-desktop-app-linux-x64.deb
+            - name: Run the conformance suite in the app and in the installed app
               # WebKitGTK runs without its sandbox and GPU compositing, as in the containers the app was measured in.
               env:
                   WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: '1'
                   WEBKIT_DISABLE_COMPOSITING_MODE: '1'
               run: |
-                  pnpm --filter=@crossbind/e2e-desktop-app run build
                   xvfb-run -a pnpm --filter=@crossbind/e2e-desktop-app run e2e:prod
+                  xvfb-run -a node e2e/desktop-app/e2e/run.mjs --installed
     app-windows:
         # A hosted Windows runner cannot run crossbind's windows image, a Linux one, so this runner builds the app in it,
         # against the Hermes and the WebView2 SDK headers the image carries.
@@ -244,6 +250,7 @@ jobs:
                   path: |
                       e2e/desktop-app/dist/crossbind-e2e-desktop-app-win32-x64/
                       e2e/desktop-app/dist/crossbind-e2e-desktop-app-win32-arm64/
+                      e2e/desktop-app/dist/crossbind-e2e-desktop-app-win32-*-setup.exe
                   retention-days: 1
     app-windows-run:
         # Each Windows runner opens the app built for it, on its own WebView2 Runtime. The checkout's directory has a
@@ -285,6 +292,23 @@ jobs:
                   path: ünicode/e2e/desktop-app/dist
             - name: Run the conformance suite in the app
               run: node e2e/desktop-app/e2e/run.mjs
+            - name: Install the app with its setup program
+              run: |
+                  $setup = Start-Process -Wait -PassThru -FilePath e2e\desktop-app\dist\crossbind-e2e-desktop-app-win32-${{ matrix.arch }}-setup.exe -ArgumentList /S
+                  if ($setup.ExitCode -ne 0) { throw "the setup program exited with $($setup.ExitCode)" }
+            - name: Run the conformance suite in the installed app
+              run: node e2e/desktop-app/e2e/run.mjs --installed
+            - name: Uninstall the app, which takes its shortcut, its files and its entry in Settings
+              run: |
+                  $app = "$env:LOCALAPPDATA\Programs\crossbind-e2e-desktop-app"
+                  $shortcut = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\crossbind-e2e-desktop-app.lnk"
+                  $entry = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\dev.crossbind.crossbind-e2e-desktop-app'
+                  foreach ($path in $shortcut, $entry) { if (-not (Test-Path $path)) { throw "the setup program left out $path" } }
+                  $uninstall = Start-Process -Wait -PassThru -FilePath "$app\uninstall.exe" -ArgumentList /S
+                  if ($uninstall.ExitCode -ne 0) { throw "the uninstaller exited with $($uninstall.ExitCode)" }
+                  # It finishes from a copy of itself, whose last step removes the folder.
+                  for ($i = 0; $i -lt 30 -and (Test-Path $app); $i++) { Start-Sleep -Seconds 1 }
+                  foreach ($path in $app, $shortcut, $entry) { if (Test-Path $path) { throw "the uninstaller left $path" } }
     app-android:
         # The Android app's host and Rust build in crossbind's android-app image, its bridges in the web image, and Gradle
         # packages the app in the android-app image too; it runs on an emulator.
