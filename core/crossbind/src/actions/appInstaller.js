@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import run from './run.js';
+import { appleSigning } from './appleSigning.js';
 import state from '../state/index.js';
 import { appDisplayName, appId } from '../utils/appOptions.js';
 import { readAppIcon, windowsIcon } from '../utils/appIcon.js';
@@ -64,7 +65,8 @@ export function desktopEntry({ label, command, hasIcon }) {
 }
 
 // A disk image of a macOS app beside a link to /Applications, onto which its user drags it. hdiutil copies a link
-// inside the folder it is given as a link, where it would copy all of /Applications for the link itself.
+// inside the folder it is given as a link, where it would copy all of /Applications for the link itself. The image is
+// not signed: Gatekeeper would then judge it as well, where the app in it is what Apple notarizes.
 function diskImage(app, target) {
     const image = app.replace(/\.app$/, '.dmg');
     const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-dmg-'));
@@ -136,9 +138,11 @@ function windowsSetup(app, target) {
     ], null, target, { params: ['-e', 'LC_ALL=C.UTF-8'] });
 }
 
-// The names an app's installer takes from the app's, checked before anything compiles.
+// What an app's installer takes from the app and the environment, checked before anything compiles: the names, and on
+// macOS the identity and key that sign and notarize the app.
 export function checkInstaller(target) {
-    if (target.platform === 'linux') debianName(state.config.general.name);
+    if (target.platform === 'darwin') appleSigning();
+    else if (target.platform === 'linux') debianName(state.config.general.name);
     else if (target.platform === 'win32') windowsName();
 }
 

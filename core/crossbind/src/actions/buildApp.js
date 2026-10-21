@@ -21,6 +21,7 @@ import writeGradleProject, { ANDROID_ABIS } from './gradleProject.js';
 import { attachedDevice } from './androidDevice.js';
 import { packageAndroidRelease } from './androidGradle.js';
 import writeInstaller, { assertUnderBase } from './appInstaller.js';
+import { APPLE_SIGNING, appleSigning, notarizeApp } from './appleSigning.js';
 import state from '../state/index.js';
 import logger from '../utils/logger.js';
 import findFiles from '../utils/findFiles.js';
@@ -279,10 +280,20 @@ function archiveApp(app, target) {
 }
 
 // Apple silicon runs signed code only, and a bundle's signature covers every file in it, so an app is signed once the
-// page is in: ad hoc, which runs on the machine that built it.
-function signApp(app, target) {
-    run(null, ['codesign', '--force', '--sign', '-', '--timestamp=none', `${app}/Contents/Frameworks/hermesvm.framework`], null, target);
-    run(null, ['codesign', '--force', '--sign', '-', '--timestamp=none', app], null, target);
+// page is in: with the Developer ID the environment names, in the hardened runtime notarizing asks for, or else ad hoc,
+// which runs on the machine that built it.
+function signApp(app, target, signing) {
+    const sign = signing ? ['--sign', signing.identity, '--options', 'runtime', '--timestamp'] : ['--sign', '-', '--timestamp=none'];
+    run(null, ['codesign', '--force', ...sign, `${app}/Contents/Frameworks/hermesvm.framework`], null, target);
+    run(null, ['codesign', '--force', ...sign, app], null, target);
+}
+
+// A macOS app with its page is the one that ships: Apple notarizes it, or the build says why another Mac refuses it.
+function shipMacApp(app, signing) {
+    const notarize = `${APPLE_SIGNING.key}, ${APPLE_SIGNING.keyId} and ${APPLE_SIGNING.issuer} to have Apple notarize it`;
+    if (signing?.notary) notarizeApp(app, signing.notary);
+    else if (signing) console.warn(`crossbind: ${path.basename(app)} is signed with your Developer ID but not notarized, so another Mac opens it only once its user allows it in System Settings. Set ${notarize}.`);
+    else console.warn(`crossbind: ${path.basename(app)} is signed ad hoc, which opens it on this Mac alone. Set ${APPLE_SIGNING.identity} to sign it with your Developer ID, and ${notarize}.`);
 }
 
 // Where a build without a bundler puts an app: under its own name, or for iOS and Android as the project of its build
@@ -322,8 +333,11 @@ export function publishApp(target, { to = appOutputPath(target), page = null } =
             fs.cpSync(`${page}/${entry}`, `${to}/${appLayout(target).resources}/page/${entry}`, { recursive: true });
         });
     }
-    if (target.platform === 'darwin') signApp(to, target);
-    else if (target.platform === 'android' && target.buildType === 'release') packageAndroidRelease(to);
+    if (target.platform === 'darwin') {
+        const signing = appleSigning();
+        signApp(to, target, signing);
+        if (page) shipMacApp(to, signing);
+    } else if (target.platform === 'android' && target.buildType === 'release') packageAndroidRelease(to);
     else if (!['ios', 'android'].includes(target.platform)) archiveApp(to, target);
     // A desktop app with its page ships with what installs it.
     if (page && ['darwin', 'linux', 'win32'].includes(target.platform)) writeInstaller(to, target);

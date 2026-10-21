@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, test, vi } from 'vitest';
+import {
+    afterEach, beforeEach, describe, expect, test, vi,
+} from 'vitest';
 
 const state = { config: { general: { name: 'demo' }, app: {}, target: {} }, targets: [] };
 vi.mock('../src/state/index.js', () => ({ default: state }));
@@ -169,6 +171,95 @@ describe("a desktop app's page", () => {
             expect(() => publishApp(x64, { to: elsewhere })).toThrow(`the Windows app ${elsewhere} is outside ${base}`);
         } finally {
             fs.rmSync(root, { recursive: true, force: true });
+        }
+    });
+});
+
+// A macOS app builds on a Mac alone, and its disk image links to /Applications, which Windows writes its own way.
+describe.skipIf(process.platform === 'win32')("a macOS app's signature", () => {
+    const DEVELOPER_ID = 'Developer ID Application: Ada Lovelace (ABCDE12345)';
+    const HASH = '89ABCDEF0123456789ABCDEF0123456789ABCDEF';
+    const arm64 = { platform: 'darwin', arch: 'arm64', runtimeEnv: 'app', appName: 'demo.darwin-arm64' };
+    // When the last call of a mock that matches came, among the calls of every mock.
+    const when = (mock, match) => mock.mock.invocationCallOrder[mock.mock.calls.findLastIndex(match)];
+
+    // A macOS app built beside its page, published with it.
+    function publish() {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-page-'));
+        const dist = path.join(root, 'dist');
+        state.config.paths = { base: root, build: path.join(root, 'build') };
+        state.targets = [arm64];
+        fs.mkdirSync(path.join(root, 'build', arm64.appName, 'Contents/Frameworks/hermesvm.framework'), { recursive: true });
+        fs.mkdirSync(dist, { recursive: true });
+        fs.writeFileSync(path.join(dist, 'index.html'), 'index.html');
+        try {
+            publishApp(arm64, { to: path.join(dist, 'demo.app'), page: dist });
+        } finally {
+            state.targets = [];
+            fs.rmSync(root, { recursive: true, force: true });
+        }
+        return path.join(dist, 'demo.app');
+    }
+
+    // The keychain holds the Developer ID, and Apple accepts what it is sent.
+    function developerId(env) {
+        Object.entries({ CROSSBIND_APPLE_SIGNING_IDENTITY: DEVELOPER_ID, ...env }).forEach(([name, value]) => vi.stubEnv(name, value));
+        spawnSync.mockImplementation((command, args) => {
+            if (command === 'security') return { status: 0, stdout: `  1) ${HASH} "${DEVELOPER_ID}"\n`, stderr: '' };
+            if (args[1] === 'submit') return { status: 0, stdout: JSON.stringify({ id: 'submission-id', status: 'Accepted' }), stderr: '' };
+            return { status: 0, stdout: '', stderr: '' };
+        });
+    }
+
+    let warn;
+    let log;
+    beforeEach(() => {
+        warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    });
+    afterEach(() => {
+        warn.mockRestore();
+        log.mockRestore();
+        vi.unstubAllEnvs();
+        spawnSync.mockImplementation(() => ({ status: 0, stdout: '', stderr: '' }));
+    });
+
+    test('is ad hoc without a Developer ID, which the build says opens the app on this Mac alone', () => {
+        const app = publish();
+
+        expect(run).toHaveBeenCalledWith(null, ['codesign', '--force', '--sign', '-', '--timestamp=none', app], null, arm64);
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('demo.app is signed ad hoc, which opens it on this Mac alone'));
+    });
+
+    test('is the Developer ID\'s without a key, which the build says another Mac opens only once its user allows it', () => {
+        developerId({});
+
+        const app = publish();
+
+        expect(run).toHaveBeenCalledWith(null, ['codesign', '--force', '--sign', HASH, '--options', 'runtime', '--timestamp', app], null, arm64);
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('demo.app is signed with your Developer ID but not notarized'));
+        expect(spawnSync.mock.calls.some(([command]) => command === 'ditto')).toBe(false);
+    });
+
+    test("is the Developer ID's, in the hardened runtime, then Apple's ticket, before the unsigned disk image is made of it", () => {
+        const key = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-key-')), 'AuthKey.p8');
+        fs.writeFileSync(key, 'key');
+        developerId({ CROSSBIND_APPLE_API_KEY: key, CROSSBIND_APPLE_API_KEY_ID: 'ABC123', CROSSBIND_APPLE_API_ISSUER: 'issuer-uuid' });
+        try {
+            const app = publish();
+
+            const sign = ['--sign', HASH, '--options', 'runtime', '--timestamp'];
+            const framework = when(run, ([, args]) => args.join(' ') === ['codesign', '--force', ...sign, `${app}/Contents/Frameworks/hermesvm.framework`].join(' '));
+            const signed = when(run, ([, args]) => args.join(' ') === ['codesign', '--force', ...sign, app].join(' '));
+            const zipped = when(spawnSync, ([command, args]) => command === 'ditto' && args.includes(app));
+            const stapled = when(spawnSync, ([, args]) => args.join(' ') === `stapler staple ${app}`);
+            const imaged = when(run, ([, args]) => args[0] === 'hdiutil' && args.at(-1) === app.replace(/\.app$/, '.dmg'));
+            expect([framework, signed, zipped, stapled, imaged].every(Number.isInteger)).toBe(true);
+            expect([framework, signed, zipped, stapled, imaged]).toEqual([framework, signed, zipped, stapled, imaged].toSorted((a, b) => a - b));
+            expect(run.mock.calls.some(([, args]) => args[0] === 'codesign' && args.at(-1).endsWith('.dmg'))).toBe(false);
+            expect(warn).not.toHaveBeenCalled();
+        } finally {
+            fs.rmSync(path.dirname(key), { recursive: true, force: true });
         }
     });
 });
