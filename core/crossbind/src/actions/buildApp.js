@@ -21,6 +21,7 @@ import writeGradleProject, { ANDROID_ABIS } from './gradleProject.js';
 import { attachedDevice } from './androidDevice.js';
 import { packageAndroidRelease } from './androidGradle.js';
 import writeInstaller, { assertUnderBase } from './appInstaller.js';
+import writeUpdate from './appUpdate.js';
 import { APPLE_SIGNING, appleSigning, notarizeApp } from './appleSigning.js';
 import { WINDOWS_SIGNING, signWindows, windowsSigning } from './windowsSigning.js';
 import state from '../state/index.js';
@@ -336,9 +337,10 @@ export function publishApp(target, { to = appOutputPath(target), page = null } =
     if (page) {
         // The app may land inside the page's own directory, which it then leaves out, with every app built there and what
         // packages it.
-        const apps = new Set([path.basename(to), ...state.targets.filter((t) => t.runtimeEnv === 'app').map(appOutputName)]);
+        const apps = new Set([path.basename(to), ...state.targets.filter((t) => t.runtimeEnv === 'app')
+            .flatMap((t) => [appOutputName(t), `${state.config.general.name}-${t.platform}-${t.arch}`])]);
         const isApp = (entry) => entry.endsWith('.app') || apps.has(entry.replace(/\.dmg$/, '.app'))
-            || apps.has(entry.replace(/(\.tar\.gz|\.zip|\.apk|\.aab|\.deb|-setup\.exe)$/, ''));
+            || apps.has(entry.replace(/(\.tar\.gz|\.app\.zip|\.zip|\.apk|\.aab|\.deb|-setup\.exe|\.update\.json)$/, ''));
         fs.readdirSync(page).filter((entry) => !isApp(entry)).forEach((entry) => {
             fs.cpSync(`${page}/${entry}`, `${to}/${appLayout(target).resources}/page/${entry}`, { recursive: true });
         });
@@ -353,8 +355,11 @@ export function publishApp(target, { to = appOutputPath(target), page = null } =
         if (target.platform === 'win32') signWindowsApp(to, target, page);
         archiveApp(to, target);
     }
-    // A desktop app with its page ships with what installs it.
-    if (page && ['darwin', 'linux', 'win32'].includes(target.platform)) writeInstaller(to, target);
+    // A desktop app with its page ships with what installs it, and with an updater's key with its update too.
+    if (page && ['darwin', 'linux', 'win32'].includes(target.platform)) {
+        writeInstaller(to, target);
+        writeUpdate(to, target);
+    }
     return to;
 }
 

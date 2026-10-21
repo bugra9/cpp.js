@@ -19,13 +19,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
         src/darwin/navigation.mm)
 elseif(APPLE)
     set(PLATFORM_SOURCES src/darwin/app_api.mm src/darwin/bundle.mm src/darwin/channels.mm src/darwin/dialogs.mm src/darwin/menu.mm
-        src/darwin/navigation.mm)
+        src/darwin/navigation.mm src/darwin/update.mm)
 elseif(ANDROID)
     set(PLATFORM_SOURCES src/android/jni.cpp)
 elseif(WIN32)
     enable_language(RC)
     set(PLATFORM_SOURCES src/windows/app.cpp src/windows/app_api.cpp src/windows/channels.cpp src/windows/com.cpp
-        src/windows/navigation.cpp src/windows/app.rc)
+        src/windows/navigation.cpp src/windows/update.cpp src/windows/app.rc)
     # llvm-windres reads a script as Windows-1252, whatever #pragma code_page it holds, and the app's name is UTF-8. It
     # reports no headers either, so a new name, version, manifest or icon would leave the old resources.
     set(RESOURCE_INPUTS "${CMAKE_BINARY_DIR}/crossbind_app.h;${CMAKE_CURRENT_SOURCE_DIR}/src/windows/app.manifest")
@@ -34,16 +34,23 @@ elseif(WIN32)
     endif()
     set_source_files_properties(src/windows/app.rc PROPERTIES COMPILE_OPTIONS --codepage=65001 OBJECT_DEPENDS "${RESOURCE_INPUTS}")
 else()
-    set(PLATFORM_SOURCES src/linux/app.cpp src/linux/app_api.cpp src/linux/channels.cpp src/linux/navigation.cpp)
+    set(PLATFORM_SOURCES src/linux/app.cpp src/linux/app_api.cpp src/linux/channels.cpp src/linux/navigation.cpp src/linux/update.cpp)
 endif()
 if(APPLE)
     set(CMAKE_OBJCXX_STANDARD 20)
+endif()
+# A desktop app checks its updates' signatures with Monocypher, which compiles as C++ as well.
+if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    set(MONOCYPHER_SOURCES "${THIRD_PARTY}/monocypher/monocypher.c" "${THIRD_PARTY}/monocypher/monocypher-ed25519.c")
+    set_source_files_properties(${MONOCYPHER_SOURCES} PROPERTIES LANGUAGE CXX)
 endif()
 
 set(SOURCES
     src/app.cpp
     src/app_api.cpp
     src/host_core.cpp
+    src/updater.cpp
+    ${MONOCYPHER_SOURCES}
     ${PLATFORM_SOURCES}
     "${CROSSBIND_JSI_ROOT}/cpp/src/emscripten/bind.cpp"
     ${CROSSBIND_EXTRA_SOURCES})
@@ -69,7 +76,8 @@ target_include_directories(app PRIVATE
     "${CMAKE_BINARY_DIR}"
     "${CROSSBIND_HERMES}/include"
     "${CROSSBIND_JSI_ROOT}/cpp/src"
-    "${THIRD_PARTY}/webview/core/include")
+    "${THIRD_PARTY}/webview/core/include"
+    "${THIRD_PARTY}/monocypher")
 if(APPLE)
     set_source_files_properties(${PLATFORM_SOURCES} PROPERTIES COMPILE_OPTIONS -fobjc-arc)
 endif()
@@ -103,7 +111,7 @@ elseif(WIN32)
     # loader DLL ships. WebView2's headers come from crossbind's windows image.
     target_include_directories(app SYSTEM PRIVATE "${CROSSBIND_WEBVIEW2_INCLUDE}")
     target_link_libraries(app PRIVATE "${CROSSBIND_HERMES}/lib/libhermesvm_a.a"
-        ole32 oleaut32 uuid shell32 shlwapi user32 gdi32 advapi32 version dwmapi winmm)
+        ole32 oleaut32 uuid shell32 shlwapi user32 gdi32 advapi32 version dwmapi winmm winhttp)
     set_target_properties(app PROPERTIES WIN32_EXECUTABLE ON)
     target_link_options(app PRIVATE -static "LINKER:--gc-sections" "$<$<CONFIG:Release>:LINKER:-s>")
 else()

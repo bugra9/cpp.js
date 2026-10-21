@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { app, dialog, shell } from '../src/app/index.js';
+import {
+    app, dialog, shell, updater,
+} from '../src/app/index.js';
 
 // The host of an app, as page.js hands it the page's calls.
 const host = vi.fn(async () => null);
@@ -50,6 +52,11 @@ describe("crossbind/app, an app's own functions", () => {
         await expect(app.paths()).resolves.toEqual(folders);
         await app.quit();
         expect(host).toHaveBeenLastCalledWith('app.quit', {});
+        host.mockResolvedValueOnce({ version: '1.3.0' });
+        await expect(updater.check()).resolves.toEqual({ version: '1.3.0' });
+        expect(host).toHaveBeenLastCalledWith('updater.check', {});
+        await updater.install();
+        expect(host).toHaveBeenLastCalledWith('updater.install', {});
     });
 
     test('refuses an option it does not know or of another kind before the host sees it', async () => {

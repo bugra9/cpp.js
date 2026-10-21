@@ -240,6 +240,15 @@ export default {
     icon: 'icon.png',
       // A square PNG, at best 1024 × 1024, from which the build makes each platform's icon (see app.md).
       // Default: the system's.
+    updater: {
+      url: 'https://example.com/updates/<name>-{platform}-{arch}.update.json',
+        // The manifest a desktop app checks for a newer version: https, or http on localhost. {platform} and {arch}
+        // stand for darwin, linux or win32 and x64 or arm64; the update's file goes beside it (see app.md).
+      publicKey: '…',
+        // The Ed25519 key that checks an update's signature, which `crossbind app updater-key` prints. Its private
+        // half, in CROSSBIND_UPDATER_PRIVATE_KEY, signs the updates the build writes.
+    },
+      // Default: none, and the app does not update itself.
   },
 
   targetSpecs: [

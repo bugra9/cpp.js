@@ -93,8 +93,60 @@ function appOpenPath(config) {
     return places;
 }
 
-// The header an app's host compiles where its page opens files from, a desktop host its title and window, and a Windows
-// host its version resource.
+// Semver's version: three numbers, then a prerelease and build metadata of dot-separated identifiers.
+const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$/;
+// What an update's files are named after: characters an address carries as they are, and no leading dot.
+const UPDATE_NAME = /^[A-Za-z0-9_~-][A-Za-z0-9._~-]*$/;
+// The Ed25519 public keys of the points of small order, whatever the sign of x, whose signatures anyone can forge: the
+// list libsodium's ge25519_has_small_order checks.
+const SMALL_ORDER_KEYS = [
+    '0000000000000000000000000000000000000000000000000000000000000000',
+    '0100000000000000000000000000000000000000000000000000000000000000',
+    '26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05',
+    'c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a',
+    'ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f',
+    'edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f',
+    'eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f',
+].map((hex) => Buffer.from(hex, 'hex'));
+
+const isSmallOrder = (key) => SMALL_ORDER_KEYS.some((point) => key.subarray(0, 31).equals(point.subarray(0, 31)) && (key[31] & 0x7f) === point[31]);
+
+// Where a desktop app finds its updates, the key their signatures are checked with, and the version they are newer than:
+// package.json's, which semver orders. Null without app.updater.
+export function appUpdater(config) {
+    const updater = config.app.updater;
+    if (updater === undefined) return null;
+    const keys = 'url and publicKey';
+    if (updater === null || typeof updater !== 'object' || Array.isArray(updater)) {
+        throw new Error(`crossbind: app.updater ${JSON.stringify(updater)} is no object of ${keys}, as { url: 'https://example.com/updates/<name>-{platform}-{arch}.update.json', publicKey: '…' } is.`);
+    }
+    const unknown = Object.keys(updater).filter((key) => !['url', 'publicKey'].includes(key));
+    if (unknown.length > 0) throw new Error(`crossbind: app.updater takes ${keys}; ${unknown.join(', ')} is none of them.`);
+    const url = URL.canParse(updater.url) ? new URL(updater.url) : null;
+    const isLocal = url?.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+    // The host takes the address as a C string, as it is written, and the update's file from beside the manifest.
+    if (!url || !(url.protocol === 'https:' || isLocal) || /[^\x21-\x7e]|["\\]/.test(updater.url) || url.pathname.endsWith('/')) {
+        throw new Error(`crossbind: app.updater.url ${JSON.stringify(updater.url)} is no https address of a manifest, as https://example.com/updates/<name>-{platform}-{arch}.update.json is; http serves localhost alone.`);
+    }
+    const publicKey = Buffer.from(typeof updater.publicKey === 'string' ? updater.publicKey : '', 'base64');
+    if (publicKey.length !== 32 || publicKey.toString('base64') !== updater.publicKey) {
+        throw new Error(`crossbind: app.updater.publicKey ${JSON.stringify(updater.publicKey)} is no Ed25519 public key, which \`crossbind app updater-key\` prints.`);
+    }
+    if (isSmallOrder(publicKey)) {
+        throw new Error(`crossbind: app.updater.publicKey ${JSON.stringify(updater.publicKey)} is a key anyone can forge signatures for, which no key pair has. Use the one \`crossbind app updater-key\` prints.`);
+    }
+    const version = config.package?.version ?? '1.0.0';
+    if (typeof version !== 'string' || !SEMVER.test(version)) {
+        throw new Error(`crossbind: package.json's version ${JSON.stringify(version)} is no semver version, as 1.2.3 and 1.2.3-beta.1 are, which an app that updates needs to tell a newer one.`);
+    }
+    if (!UPDATE_NAME.test(config.general.name)) {
+        throw new Error(`crossbind: general.name ${JSON.stringify(config.general.name)} names an app's update files, which an app fetches by name: letters, digits, and . _ ~ - alone, not starting with a dot. Change general.name in crossbind.config.js.`);
+    }
+    return { url: updater.url, publicKey, version };
+}
+
+// The header an app's host compiles where its page opens files from, a desktop host its title, window and updates, and
+// a Windows host its version resource.
 export function appHeader(config, platform) {
     const comment = '// crossbind writes this file from crossbind.config.js and package.json.';
     const openPath = `#define CROSSBIND_APP_OPEN_PATH {${appOpenPath(config).map((place) => `"${place}"`).join(', ')}}`;
@@ -111,6 +163,14 @@ export function appHeader(config, platform) {
         `#define CROSSBIND_APP_WINDOW_MIN_HEIGHT ${window.minHeight}`,
         `#define CROSSBIND_APP_WINDOW_RESIZABLE ${window.resizable ? 1 : 0}`,
     ];
+    const updater = appUpdater(config);
+    if (updater) {
+        lines.push(
+            `#define CROSSBIND_APP_UPDATER_URL "${updater.url}"`,
+            `#define CROSSBIND_APP_UPDATER_KEY {${[...updater.publicKey].map((byte) => `0x${byte.toString(16).padStart(2, '0')}`).join(', ')}}`,
+            `#define CROSSBIND_APP_UPDATER_VERSION "${updater.version}"`,
+        );
+    }
     if (platform === 'win32') {
         const version = windowsVersion(config);
         lines.push(`#define CROSSBIND_APP_VERSION "${version.text}"`, `#define CROSSBIND_APP_VERSION_NUMBERS ${version.numbers}`);

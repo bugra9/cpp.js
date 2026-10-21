@@ -266,6 +266,21 @@ describe('collectLicenseRows for an app', () => {
         rows.forEach((row) => expect(validateSpdx(row.license).isValid).toBe(true));
     });
 
+    test('names Monocypher for a desktop app that checks its updates with it, and for no other', async () => {
+        state.config = { allDependencies: [], app: { updater: { url: 'https://example.com/u.json', publicKey: 'key' } } };
+
+        const rows = await collectLicenseRows('darwin', { runtimeEnv: 'app' });
+        const monocypher = rows.find((row) => row.name === 'monocypher');
+
+        expect(monocypher.license).toBe('BSD-2-Clause OR CC0-1.0');
+        expect(validateSpdx(monocypher.license).isValid).toBe(true);
+        expect(monocypher.sha256).toMatch(/^[0-9a-f]{64}$/);
+        expect(monocypher.licenseText).toContain('Copyright (c) 2017-2023, Loup Vaillant');
+        expect((await collectLicenseRows('ios', { runtimeEnv: 'app' })).map((row) => row.name)).not.toContain('monocypher');
+        state.config = { allDependencies: [], app: {} };
+        expect((await collectLicenseRows('linux', { runtimeEnv: 'app' })).map((row) => row.name)).not.toContain('monocypher');
+    });
+
     test('leaves webview/webview out of an iOS app, whose window UIKit makes', async () => {
         const rows = await collectLicenseRows('ios', { runtimeEnv: 'app' });
 

@@ -1,12 +1,13 @@
 #pragma once
 
 // What an app's host does for the app's own code: the dialogs that pick files, opening an address or a file outside
-// the app, the app's folders and quitting. The page reaches the same through crossbind/app, where openPath() opens
-// files where app.openPath lets it alone and revealInFolder() shows the app's folders and what a dialog picked alone;
-// here they reach any path. Call them from the module's code, which an app builds with CROSSBIND_APP defined, once the
-// module has started and never on the app's main thread: the dialogs and the functions that open something wait for
-// that thread, and throw when called before it can answer, as from a static initializer, or once the app quits. An
-// iOS app has paths() and openExternal() alone, and an Android app paths(): the others throw there.
+// the app, the app's folders, quitting and a desktop app's updates. The page reaches the same through crossbind/app,
+// where openPath() opens files where app.openPath lets it alone and revealInFolder() shows the app's folders and what a
+// dialog picked alone; here they reach any path. Call them from the module's code, which an app builds with
+// CROSSBIND_APP defined, once the module has started and never on the app's main thread: the dialogs and the functions
+// that open something wait for that thread, and throw when called before it can answer, as from a static initializer,
+// or once the app quits. An iOS app has paths() and openExternal() alone, and an Android app paths(): the others throw
+// there.
 #include <optional>
 #include <string>
 #include <vector>
@@ -57,5 +58,11 @@ void revealInFolder(const std::string &path);
 Paths paths();
 // Ends the app as closing its window does.
 void quit();
+// The version app.updater.url in crossbind.config.js offers when it is newer than this app's, or nothing. It waits for
+// the download, and throws while another check or install runs.
+std::optional<std::string> checkForUpdate();
+// Downloads that version, checks that the key of app.updater.publicKey signed it and installs it in place of this app,
+// which then quits and opens the new version. It throws when the app is up to date or the update fails.
+void installUpdate();
 
 }  // namespace crossbind::app

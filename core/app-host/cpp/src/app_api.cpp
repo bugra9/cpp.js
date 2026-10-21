@@ -14,9 +14,12 @@
 #include <memory>
 #include <mutex>
 #include <stdexcept>
+#include <thread>
 #include <type_traits>
 
 namespace crossbind::app {
+
+std::filesystem::path pathOf(const std::string &text) { return std::filesystem::path(std::u8string(text.begin(), text.end())); }
 
 namespace {
 
@@ -61,9 +64,6 @@ std::string checkedUrl(const std::string &url) {
     }
     return escaped;
 }
-
-// A path from UTF-8, which Windows would read in its ANSI code page otherwise.
-fs::path pathOf(const std::string &text) { return fs::path(std::u8string(text.begin(), text.end())); }
 
 // A relative path would mean the host's own working folder.
 void checkPath(const std::string &path, const char *function) {
@@ -193,6 +193,27 @@ std::function<void(Failure)> answered(ReplyFn reply) {
     return [reply = std::move(reply)](Failure failure) { reply(failure ? errorReply(*failure) : ok("null")); };
 }
 
+// The updater downloads, so the page's calls of it run on a thread of their own, which answers them. Without one they
+// fail at once on the module's thread: an Android app answers from threads Java knows alone.
+void inBackground(ReplyFn reply, std::function<std::string()> work) {
+    auto answer = [reply = std::move(reply), work = std::move(work)] {
+        std::string result;
+        try {
+            result = work();
+        } catch (const std::exception &error) {
+            result = errorReply(error.what());
+        } catch (...) {
+            result = errorReply("crossbind: the updater failed");
+        }
+        reply(result);
+    };
+#ifdef CROSSBIND_APP_UPDATER_URL
+    std::thread(std::move(answer)).detach();
+#else
+    answer();
+#endif
+}
+
 jsi::Value property(jsi::Runtime &rt, const jsi::Value &options, const char *key) {
     return options.isObject() ? options.asObject(rt).getProperty(rt, key) : jsi::Value::undefined();
 }
@@ -290,6 +311,16 @@ void callApp(jsi::Runtime &rt, const std::string &name, const jsi::Value &option
             // A platform whose apps do not quit themselves throws, and the page hears that alone.
             quitApp();
             reply(ok("null"));
+        } else if (name == "updater.check") {
+            inBackground(reply, [] {
+                const std::optional<std::string> version = checkForUpdate();
+                return ok(version ? "{\"version\":" + json(*version) + "}" : "null");
+            });
+        } else if (name == "updater.install") {
+            inBackground(reply, [] {
+                installUpdate();
+                return ok("null");
+            });
         } else {
             throw std::invalid_argument("crossbind: an app has no function " + name);
         }

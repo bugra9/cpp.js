@@ -43,13 +43,16 @@ defaults and current limits (macOS, Linux, Windows, iOS and Android for now).
 - `js/page.js` — what the page loads as `crossbind.js`: `initNative()` over the webview's messages, or on Android its
   message port, and the calls of `crossbind/app`.
 - `cpp/include/crossbind/app.h` — the host's functions for an app's own code: dialogs, opening outside the app, the
-  app's folders and quitting. `src/app_api.cpp` answers them and the page's `crossbind/app`, and each platform's
-  `app_api` does the work.
+  app's folders, quitting and a desktop app's updates. `src/app_api.cpp` answers them and the page's `crossbind/app`,
+  and each platform's `app_api` does the work; `src/updater.cpp` checks and installs updates, which each platform's
+  `update` downloads.
 - `third_party/webview/` — webview/webview (MIT), vendored at a pinned commit; provenance and the local patch are in
   its README.
 - `third_party/jsi/` — JSI's `jsi.cpp` (MIT) from the Hermes release the host links, and on Android its headers.
 - `third_party/webview2/` — the license of the WebView2 SDK (BSD-3-Clause), whose headers crossbind's windows image
   carries for a Windows host.
+- `third_party/monocypher/` — Monocypher 4.0.3 (BSD-2-Clause or CC0-1.0), whose Ed25519 and SHA-512 check a desktop
+  app's updates; provenance in its README.
 
 Hermes itself (MIT) is React Native's published build: on macOS and iOS downloaded once into `~/.crossbind/hermes/`
 and checked against the sha256 crossbind pins, and on Android carried by crossbind's android-app image. Linux and

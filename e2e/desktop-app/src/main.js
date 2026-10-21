@@ -1,7 +1,7 @@
 // The conformance suite inside an app: the page reaches the module the app's host runs as a worker-backed web build
 // reaches its worker, and the host runs embind-jsi as React Native does.
 import { runConformance } from '@crossbind/conformance/spec/run.mjs';
-import { app as host, shell } from 'crossbind/app';
+import { app as host, shell, updater } from 'crossbind/app';
 // Constants bind only for the names imported here; the header also defines one no leg imports.
 import {
     initNative, AllSymbols as confConstantsModule, CONF_BASE, CONF_BASE_NAME, CONF_CHAR, CONF_DOUBLE, CONF_EXPRESSION,
@@ -65,6 +65,17 @@ async function askFromSameOriginFrame(m) {
     if (area !== 6) throw new Error(`after a frame asked for a port, an object of the page answered ${area}`);
 }
 
+// e2e/run.mjs serves a newer version whose file its signature covers, then the same version with that file changed: the
+// app gets past the first one's signature to find it unpacks to no app, and refuses the second.
+async function checkUpdates() {
+    const offered = await updater.check();
+    if (offered?.version !== '99.0.0') throw new Error(`updater.check() found ${JSON.stringify(offered)}, not the 99.0.0 e2e/run.mjs serves`);
+    const signed = await updater.install().then(() => 'installed', (error) => error.message);
+    if (!signed.includes('cannot install the update')) throw new Error(`a signed update did not get past its signature: ${signed}`);
+    const tampered = await updater.install().then(() => 'installed', (error) => error.message);
+    if (!tampered.includes('app.updater.publicKey')) throw new Error(`a tampered update was not refused: ${tampered}`);
+}
+
 initNative().then(async (m) => {
     try {
         // Markup can make a crossbind:// request as well, so one without the page's token must be refused. On Android the
@@ -94,10 +105,14 @@ initNative().then(async (m) => {
         if (listed === 'opened' || listed.includes('app.openPath')) throw new Error(`a missing file where app.openPath lets the page: ${listed}`);
         const inside = await shell.revealInFolder(`${folders.data}${separator}crossbind-missing`).then(() => 'shown', (error) => error.message);
         if (inside === 'shown' || inside.includes("reaches the app's folders")) throw new Error(`a missing file in the app's folder: ${inside}`);
-        // A phone's system ends its apps.
+        // A phone's system ends its apps, and its store updates them.
         if (!isDesktop) {
             const quit = await host.quit().then(() => 'quit', (error) => error.message);
             if (!quit.includes('does not quit itself')) throw new Error(`app.quit() did not refuse on a phone: ${quit}`);
+            const checked = await updater.check().then(() => 'checked', (error) => error.message);
+            if (!checked.includes('does not update itself')) throw new Error(`updater.check() did not refuse on a phone: ${checked}`);
+        } else if (!import.meta.env.DEV) {
+            await checkUpdates();
         }
         if (!isAndroid || !import.meta.env.DEV) {
             const { status } = await fetch(isAndroid ? '/b/result?id=1' : 'crossbind://app/b/result?id=1');

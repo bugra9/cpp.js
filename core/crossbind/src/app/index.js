@@ -1,6 +1,6 @@
 // What an app's host does for its page: the dialogs that pick files, opening an address or a file outside the app, the
-// app's folders and quitting. Each call goes to the host of an app (target.runtimeEnv: 'app'); in any other build it
-// rejects. The app's native code calls the same through <crossbind/app.h>.
+// app's folders, quitting and a desktop app's updates. Each call goes to the host of an app (target.runtimeEnv: 'app');
+// in any other build it rejects. The app's native code calls the same through <crossbind/app.h>.
 
 const OPEN = { title: 'string', defaultPath: 'string', filters: 'filters', directory: 'boolean', multiple: 'boolean' };
 const SAVE = { title: 'string', defaultPath: 'string', defaultName: 'string', filters: 'filters' };
@@ -63,4 +63,13 @@ export const app = {
     paths: async () => call('app.paths', {}),
     // Ends the app as closing its window does.
     quit: async () => call('app.quit', {}),
+};
+
+// One check or install runs at a time, and another rejects meanwhile.
+export const updater = {
+    // The version app.updater.url in crossbind.config.js offers when it is newer than the app's, as { version }, or null.
+    check: async () => call('updater.check', {}),
+    // Downloads that version, checks that the key of app.updater.publicKey signed it and installs it in place of the app,
+    // which then quits and opens the new version. It rejects when that fails.
+    install: async () => call('updater.install', {}),
 };
