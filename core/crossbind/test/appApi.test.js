@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import {
-    app, dialog, events, shell, updater,
+    app, dialog, events, menu, shell, updater,
 } from '../src/app/index.js';
 
 // The host of an app, as page.js hands it the page's calls.
@@ -87,6 +87,73 @@ describe("crossbind/app, an app's own functions", () => {
         await expect(shell.openPath('')).rejects.toThrow('takes a path');
         await expect(shell.openExternal()).rejects.toThrow('takes an address');
         await expect(shell.openExternal(42)).rejects.toThrow('takes an address');
+        expect(host).not.toHaveBeenCalled();
+    });
+});
+
+describe("crossbind/app's menus", () => {
+    test('go to the host as the page gives them', async () => {
+        inApp();
+        const menus = [
+            {
+                label: 'File',
+                items: [
+                    { id: 'open', label: 'Open…', accelerator: 'CmdOrCtrl+Shift+O' },
+                    { type: 'separator' },
+                    { label: 'Recent', items: [{ id: 'recent-1', label: 'a.txt' }] },
+                    { role: 'quit', label: 'Exit' },
+                ],
+            },
+            { role: 'editMenu' },
+            { label: 'View', items: [{ id: 'grid', label: 'Grid', checked: true, enabled: false, accelerator: 'F5' }, { role: 'windowMenu' }] },
+        ];
+
+        await menu.set(menus);
+
+        expect(host).toHaveBeenLastCalledWith('menu.set', { menus });
+    });
+
+    test('take no menus, a standard item without a label and a function key with any modifiers', async () => {
+        inApp();
+        const file = (...items) => [{ label: 'File', items }];
+
+        await menu.set([]);
+        await menu.set(file({ role: 'copy' }, { role: 'quit', accelerator: 'Ctrl+Q' }));
+        for (const accelerator of ['Shift+F5', 'Alt+Shift+F5', 'CmdOrCtrl+Plus']) await menu.set(file({ label: 'Run', accelerator }));
+
+        expect(host).toHaveBeenCalledTimes(5);
+    });
+
+    test('are refused before the host sees them where it could not build them, naming the item', async () => {
+        inApp();
+        const set = (menus) => menu.set(menus);
+        const file = (...items) => [{ label: 'File', items }];
+
+        await expect(set({})).rejects.toThrow('menu.set takes a list of menus');
+        await expect(set([{ id: 'x', label: 'X' }])).rejects.toThrow("menus[0] is a menu, which takes a label and items, or the role editMenu or windowMenu");
+        await expect(set([{ role: 'copy' }])).rejects.toThrow('menus[0] has no role "copy", which is one of editMenu, windowMenu');
+        await expect(set(file({ role: 'print' }))).rejects.toThrow('menus[0].items[0] has no role "print"');
+        await expect(set(file({ role: 'quit', id: 'quit' }))).rejects.toThrow('has a role, which takes a label and an accelerator alone');
+        await expect(set(file({ role: 'copy', enabled: false }))).rejects.toThrow('has a role, which takes a label and an accelerator alone');
+        await expect(set(file({ role: 'copy', accelerator: 'CmdOrCtrl+C' }))).rejects.toThrow("is an editing item, which keeps the platform's keys");
+        await expect(set(file({ role: 'editMenu', accelerator: 'F1' }))).rejects.toThrow('is a standard menu, which takes a label alone');
+        await expect(set([{ role: 'editMenu', items: [] }])).rejects.toThrow('menus[0] is a standard menu, which takes a label alone');
+        await expect(set(file({ type: 'separator', label: '-' }))).rejects.toThrow("is no separator, which is { type: 'separator' } alone, inside a menu");
+        await expect(set(file({ type: 'checkbox', label: 'Grid' }))).rejects.toThrow('menus[0].items[0] is no separator');
+        await expect(set([{ type: 'separator' }])).rejects.toThrow('menus[0] is no separator');
+        await expect(set(file(null))).rejects.toThrow('menus[0].items[0] is no object');
+        const sparse = [];
+        sparse[1] = { label: 'Open' };
+        await expect(set([{ label: 'File', items: sparse }])).rejects.toThrow('menus[0].items[0] is no object');
+        await expect(set([{ label: 'File', items: {} }])).rejects.toThrow('menus[0].items is no list');
+        await expect(set(file({ label: '' }))).rejects.toThrow('menus[0].items[0] has no label');
+        await expect(set(file({ label: 'Recent', items: [], id: 'recent' }))).rejects.toThrow('is a menu, which takes a label and items alone');
+        await expect(set(file({ label: 'Open', onClick: () => {} }))).rejects.toThrow('onClick is none of them');
+        await expect(set(file({ label: 'Open', toString: 'x' }))).rejects.toThrow('toString is none of them');
+        await expect(set(file({ label: 'Open', checked: 'yes' }))).rejects.toThrow('menus[0].items[0].checked is no boolean');
+        for (const accelerator of ['Cmd+O', 'CmdOrCtrl+o', 'Ctrl+Ctrl+O', 'CmdOrCtrl+', 'F13', 'Ctrl+Alt', 'O', 'Shift+O', 'Enter']) {
+            await expect(set(file({ label: 'Open', accelerator }))).rejects.toThrow(`menus[0].items[0].accelerator ${JSON.stringify(accelerator)} is none`);
+        }
         expect(host).not.toHaveBeenCalled();
     });
 });

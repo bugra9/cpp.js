@@ -45,8 +45,8 @@ defaults and current limits (macOS, Linux, Windows, iOS and Android for now).
   app's C++ and the calls of the functions the page passed.
 - `cpp/include/crossbind/app.h` — the host's functions for an app's own code: dialogs, opening outside the app, the
   app's folders, quitting, events for the page and a desktop app's updates. `src/app_api.cpp` answers them and the
-  page's `crossbind/app`, and each platform's `app_api` does the work; `src/updater.cpp` checks and installs updates,
-  which each platform's `update` downloads.
+  page's `crossbind/app`, and each platform's `app_api` does the work, and its `menu` the page's menus;
+  `src/updater.cpp` checks and installs updates, which each platform's `update` downloads.
 - `third_party/webview/` — webview/webview (MIT), vendored at a pinned commit; provenance and the local patch are in
   its README.
 - `third_party/jsi/` — JSI's `jsi.cpp` (MIT) from the Hermes release the host links, and on Android its headers.

@@ -60,6 +60,9 @@ int main() {
 #ifndef __APPLE__
         registerSchemeHandler(webView, "crossbind", schemeHandler);
 #endif
+#ifdef _WIN32
+        setMenuWebView(webView);
+#endif
         const std::string url = app::attach(core, webView, devUrl);
         // Quitting from the Dock or the system ends the app as closing its window does.
         onQuit([&core] { app::quit(core, 0); });

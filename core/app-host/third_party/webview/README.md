@@ -24,6 +24,8 @@ Only `core/include` is kept.
 - `detail/backends/win32_edge.hh` takes the minimum and maximum sizes as the content's, in logical pixels, as the size
   itself, and turns them into frame sizes at the window's DPI when Windows asks; upstream passed the numbers to Windows
   as frame pixels.
+- `detail/platform/windows/dpi.hh` counts a window's menu bar in its frame, so the page's minimum size and its size
+  after a change of DPI leave the bar out, as the size `set_size` gives does.
 - `detail/native_library.hh` loads a library named without a path from System32 alone. webview first tries
   `WebView2Loader.dll`, which no crossbind app ships, so otherwise a copy in the working directory or on `PATH` would
   load into the app.

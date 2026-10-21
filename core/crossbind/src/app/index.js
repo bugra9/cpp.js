@@ -1,7 +1,7 @@
 // What an app's host does for its page: the dialogs that pick files, opening an address or a file outside the app, the
-// app's folders, quitting, the events of the app's native code and a desktop app's updates. Each call goes to the host
-// of an app (target.runtimeEnv: 'app'); in any other build it rejects, or events.on throws. The app's native code calls
-// the same through <crossbind/app.h>.
+// app's folders, quitting, its menus, the events of the app's native code and a desktop app's updates. Each call goes
+// to the host of an app (target.runtimeEnv: 'app'); in any other build it rejects, or events.on throws. The app's
+// native code calls the same through <crossbind/app.h>, but for the menus and events.on.
 
 const OPEN = { title: 'string', defaultPath: 'string', filters: 'filters', directory: 'boolean', multiple: 'boolean' };
 const SAVE = { title: 'string', defaultPath: 'string', defaultName: 'string', filters: 'filters' };
@@ -41,6 +41,67 @@ function checkedPath(name, path) {
     return { path };
 }
 
+// A menu of the bar is { label, items } or a standard one by its role. An item is { label, id, accelerator, enabled,
+// checked }, a submenu { label, items }, { type: 'separator' }, or a standard item by its role, which a label may
+// rename and, but for an editing one, which keeps the platform's keys, an accelerator change.
+const MENU_ROLES = ['editMenu', 'windowMenu'];
+const EDITING_ROLES = ['undo', 'redo', 'cut', 'copy', 'paste', 'selectAll'];
+const ITEM_ROLES = [...EDITING_ROLES, 'minimize', 'close', 'quit'];
+const ITEM_KINDS = {
+    label: 'string', id: 'string', accelerator: 'string', enabled: 'boolean', checked: 'boolean', items: 'list', role: 'string', type: 'string',
+};
+const MODIFIERS = ['CmdOrCtrl', 'Ctrl', 'Alt', 'Shift'];
+const KEY = /^([A-Z0-9]|F([1-9]|1[0-2])|Enter|Escape|Tab|Space|Backspace|Delete|Up|Down|Left|Right|Home|End|PageUp|PageDown|Plus|Minus|Comma|Period)$/;
+
+// Typing uses neither a key with CmdOrCtrl, Ctrl or Alt nor a function key.
+function checkAccelerator(accelerator, where) {
+    const modifiers = accelerator.split('+');
+    const key = modifiers.pop();
+    const isKnown = KEY.test(key) && modifiers.every((modifier) => MODIFIERS.includes(modifier)) && new Set(modifiers).size === modifiers.length;
+    if (!isKnown || !(/^F\d+$/.test(key) || modifiers.some((modifier) => modifier !== 'Shift'))) {
+        throw new TypeError(`crossbind: menu.set's ${where}.accelerator ${JSON.stringify(accelerator)} is none, which is a key with CmdOrCtrl, Ctrl or Alt and maybe Shift, joined by +, as CmdOrCtrl+Shift+O is, or F1 to F12, alone or with any of them.`);
+    }
+}
+
+function checkMenuItem(item, where, isMenu) {
+    if (item === null || typeof item !== 'object' || Array.isArray(item)) throw new TypeError(`crossbind: menu.set's ${where} is no object.`);
+    for (const [key, value] of Object.entries(item)) {
+        if (!Object.hasOwn(ITEM_KINDS, key)) throw new TypeError(`crossbind: menu.set's ${where} takes ${Object.keys(ITEM_KINDS).join(', ')}; ${key} is none of them.`);
+        const kind = ITEM_KINDS[key];
+        if (value !== undefined && !(kind === 'list' ? Array.isArray(value) : typeof value === kind)) {
+            throw new TypeError(`crossbind: menu.set's ${where}.${key} is no ${kind}.`);
+        }
+    }
+    const has = (...keys) => keys.filter((key) => item[key] !== undefined);
+    const refuse = (what) => {
+        throw new TypeError(`crossbind: menu.set's ${where} ${what}.`);
+    };
+    if (item.type !== undefined) {
+        if (item.type !== 'separator' || isMenu || has(...Object.keys(ITEM_KINDS)).length > 1) refuse("is no separator, which is { type: 'separator' } alone, inside a menu");
+    } else if (item.role !== undefined) {
+        const roles = isMenu ? MENU_ROLES : [...ITEM_ROLES, ...MENU_ROLES];
+        if (!roles.includes(item.role)) refuse(`has no role ${JSON.stringify(item.role)}, which is one of ${roles.join(', ')}`);
+        if (MENU_ROLES.includes(item.role) && has('id', 'accelerator', 'enabled', 'checked', 'items').length > 0) refuse('is a standard menu, which takes a label alone');
+        if (EDITING_ROLES.includes(item.role) && item.accelerator !== undefined) refuse("is an editing item, which keeps the platform's keys and takes a label alone");
+        if (has('id', 'enabled', 'checked', 'items').length > 0) refuse('has a role, which takes a label and an accelerator alone');
+    } else if (!item.label) {
+        refuse('has no label');
+    } else if (item.items !== undefined) {
+        if (has('id', 'accelerator', 'enabled', 'checked').length > 0) refuse('is a menu, which takes a label and items alone');
+        // entries() reads a hole as undefined, which forEach skips.
+        for (const [index, child] of item.items.entries()) checkMenuItem(child, `${where}.items[${index}]`, false);
+    } else if (isMenu) {
+        refuse('is a menu, which takes a label and items, or the role editMenu or windowMenu');
+    }
+    if (item.accelerator !== undefined) checkAccelerator(item.accelerator, where);
+}
+
+function checkedMenus(menus) {
+    if (!Array.isArray(menus)) throw new TypeError('crossbind: menu.set takes a list of menus.');
+    for (const [index, item] of menus.entries()) checkMenuItem(item, `menus[${index}]`, true);
+    return { menus };
+}
+
 export const dialog = {
     // The paths of the files or folders the user picked, or null when they cancelled.
     open: async (options = {}) => call('dialog.open', checked('dialog.open', options, OPEN)),
@@ -66,6 +127,13 @@ export const app = {
     paths: async () => call('app.paths', {}),
     // Ends the app as closing its window does.
     quit: async () => call('app.quit', {}),
+};
+
+export const menu = {
+    // Sets the app's menus: on macOS after its app menu, which the app keeps, and on Windows and Linux in a bar of its
+    // window. A click of an item with an id is an event, menu, of { id }, and of { id, checked } for an item it checked
+    // or unchecked; a standard item does what its role says.
+    set: async (menus) => call('menu.set', checkedMenus(menus)),
 };
 
 export const events = {

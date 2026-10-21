@@ -81,6 +81,10 @@ void revealFile(std::string, std::function<void(Failure)>) {
 
 void quitApp() { throw std::runtime_error("crossbind: an iOS app does not quit itself: the system ends it"); }
 
+void setMenu(std::vector<MenuItem>, MenuClicked, std::function<void(Failure)>) {
+    throw std::runtime_error("crossbind: an iOS app has no menu bar");
+}
+
 void setMainWindow(void *) {}
 
 #else
