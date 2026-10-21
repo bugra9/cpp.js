@@ -1,6 +1,7 @@
 import { conformanceExport } from '@crossbind/conformance/config.mjs';
 import embindRustDemo from '@crossbind/embind-rust-demo/crossbind.config.mjs';
 import conformanceRust from '@crossbind/conformance-rust/crossbind.config.mjs';
+import { UPDATER } from './e2e/updates.mjs';
 
 export default {
     general: {
@@ -27,6 +28,8 @@ export default {
         openPath: ['data'],
         // e2e/run.mjs checks the app has it.
         icon: 'icon.png',
+        // e2e/run.mjs serves the updates src/main.js checks a desktop app for.
+        updater: UPDATER,
     },
     paths: {
         config: import.meta.url,

@@ -16,6 +16,7 @@ import buildNode, { addonsInPackages, bundleNodeLoader, publishNodeData } from '
 import buildNativeCommand from './actions/buildNativeCommand.js';
 import buildApp, { appOutputPath, assertAppRunner, publishApp } from './actions/buildApp.js';
 import { releaseSigning } from './actions/androidGradle.js';
+import { UPDATER_KEY, newUpdaterKey } from './actions/appUpdate.js';
 import buildExternal from './actions/buildExternal.js';
 import buildPackageTypes from './actions/buildTypes.js';
 import buildLib from './actions/buildLib.js';
@@ -139,6 +140,14 @@ const commandApp = program.command('app').description('build the project as an a
         ['SIGINT', 'SIGTERM', 'SIGHUP'].forEach((signal) => process.prependListener(signal, () => vite.kill(signal)));
         vite.on('exit', (code, signal) => process.exit(code ?? 128 + os.constants.signals[signal]));
     }));
+
+commandApp.command('updater-key')
+    .description("make the key pair that signs a desktop app's updates")
+    .action(() => {
+        const { publicKey, privateKey } = newUpdaterKey();
+        console.log(`crossbind: app.updater.publicKey in crossbind.config.js: ${publicKey}`);
+        console.log(`crossbind: ${UPDATER_KEY}, kept secret where the app is built: ${privateKey}`);
+    });
 
 program.command('licenses')
     .description('list bundled native dependencies with SPDX license, versions and source URL')

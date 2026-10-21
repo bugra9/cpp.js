@@ -219,6 +219,15 @@ describe('the names an installer takes', () => {
         expect(() => checkInstaller({ platform: 'win32', arch: 'x64' })).toThrow("is a hardware token, which crossbind's windows container does not reach");
     });
 
+    test("stop a desktop build whose update key could not sign the app's updates, before anything compiles", () => {
+        project({});
+        vi.stubEnv('CROSSBIND_UPDATER_PRIVATE_KEY', Buffer.alloc(32).toString('base64'));
+        ['darwin', 'linux', 'win32'].forEach((platform) => {
+            expect(() => checkInstaller({ platform, arch: 'x64' })).toThrow('crossbind.config.js has no app.updater');
+        });
+        expect(() => checkInstaller({ platform: 'android', arch: 'arm64-v8a' })).not.toThrow();
+    });
+
     test('stop a macOS build whose notarization could not be, before anything compiles', () => {
         project({});
         vi.stubEnv('CROSSBIND_APPLE_API_KEY_ID', 'ABC123');

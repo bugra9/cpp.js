@@ -214,6 +214,7 @@ function nodeRuntimeRows({ isAddon }) {
 const WEBVIEW = { version: 'cbbdee44afff22867de9fd88a9fc8350d9bdd399', sha256: '10e972a2327b5681474f4aa4499e505eaa4ff659aa995380386f08fd6fc1b763' };
 const WEBVIEW2_SDK = { version: '1.0.4258.31', sha256: '56f7f4b8bf9aee4b8efefbbdd4f67d5f74ebd1b100ed0806da71bf76af481aa9' };
 const JSI_SHA256 = 'cb6274a22abc93ecc970066539815e716d3e47716e8f93a9971cf4eb5918ffc1';
+const MONOCYPHER = { version: '4.0.3', sha256: '8cc9bc341a66249016db9bd70e9142d8d0aef9945973744b1ac05dbc55d8ee66' };
 // The fbjni the Hermes release for Android depends on.
 const FBJNI_VERSION = '0.7.0';
 
@@ -348,6 +349,21 @@ function appRuntimeRows(platform) {
             sourceUrl: 'https://github.com/webview/webview',
             licenseNotes: 'webview/webview, with the local patch @crossbind/core-app-host lists',
             licenseText: textOf(path.join(hostRoot, 'third_party', 'webview', 'LICENSE')),
+        }]),
+        // A desktop host checks its updates with Monocypher, which the linker leaves out of one without app.updater.
+        ...(['ios', 'android'].includes(platform) || state.config.app?.updater === undefined ? [] : [{
+            npmName: '@crossbind/core-app-host',
+            name: 'monocypher',
+            version: MONOCYPHER.version,
+            nativeVersion: MONOCYPHER.version,
+            sha256: MONOCYPHER.sha256,
+            license: 'BSD-2-Clause OR CC0-1.0',
+            licenseDeclared: 'BSD-2-Clause OR CC0-1.0',
+            licenseSelected: null,
+            isCopyleft: false,
+            sourceUrl: `https://monocypher.org/download/monocypher-${MONOCYPHER.version}.tar.gz`,
+            licenseNotes: "Monocypher's Ed25519 and SHA-512, compiled into the host, which check the app's updates",
+            licenseText: textOf(path.join(hostRoot, 'third_party', 'monocypher', 'LICENCE.md')),
         }]),
     ];
 }

@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { appDisplayName, appHeader, appId, appWindow } from '../src/utils/appOptions.js';
+import {
+    appDisplayName, appHeader, appId, appUpdater, appWindow,
+} from '../src/utils/appOptions.js';
 
 const config = (app = {}, version = '1.2.3') => ({ general: { name: 'demo-app' }, app, package: { version } });
 
@@ -71,6 +73,66 @@ describe("an app's window", () => {
     });
 });
 
+describe("a desktop app's updater", () => {
+    const publicKey = Buffer.alloc(32, 7).toString('base64');
+    const url = 'https://example.com/updates/demo-app-{platform}-{arch}.update.json';
+
+    test('is none without app.updater', () => {
+        expect(appUpdater(config())).toBeNull();
+    });
+
+    test("takes where the updates are and the key that checks them, with package.json's version", () => {
+        expect(appUpdater(config({ updater: { url, publicKey } }, '1.2.3-beta.4'))).toEqual({ url, publicKey: Buffer.alloc(32, 7), version: '1.2.3-beta.4' });
+    });
+
+    test('takes an https address, or http on this machine alone', () => {
+        for (const local of ['http://localhost:8080/u.json', 'http://127.0.0.1/u.json', 'http://[::1]/u.json']) {
+            expect(appUpdater(config({ updater: { url: local, publicKey } })).url).toBe(local);
+        }
+        for (const bad of ['http://example.com/u.json', 'ftp://example.com/u.json', 'example.com/u.json', 'https://example.com/a b.json', 'https://example.com/"u".json', 42]) {
+            expect(() => appUpdater(config({ updater: { url: bad, publicKey } }))).toThrow('is no https address');
+        }
+    });
+
+    test("takes a manifest's address, beside which its file is, as the host can take it", () => {
+        for (const bad of ['https://example.com', 'https://example.com?x=1', 'https://example.com/updates/', 'https://example.com/güncelleme.json']) {
+            expect(() => appUpdater(config({ updater: { url: bad, publicKey } }))).toThrow('is no https address of a manifest');
+        }
+    });
+
+    test('refuses a key of small order, whose signatures anyone can forge, whatever the sign of x', () => {
+        const identity = Buffer.alloc(32);
+        identity[0] = 1;
+        identity[31] = 0x80;
+        for (const key of [Buffer.alloc(32), identity]) {
+            expect(() => appUpdater(config({ updater: { url, publicKey: key.toString('base64') } }))).toThrow('anyone can forge signatures for');
+        }
+    });
+
+    test('takes the Ed25519 public key `crossbind app updater-key` prints, as it prints it', () => {
+        for (const bad of [Buffer.alloc(31).toString('base64'), `${publicKey} `, publicKey.replace(/=$/, ''), undefined]) {
+            expect(() => appUpdater(config({ updater: { url, publicKey: bad } }))).toThrow('is no Ed25519 public key');
+        }
+    });
+
+    test('refuses an option it does not take', () => {
+        expect(() => appUpdater(config({ updater: { url, publicKey, interval: 60 } }))).toThrow('interval is none of them');
+        expect(() => appUpdater(config({ updater: url }))).toThrow('is no object of url and publicKey');
+        expect(() => appUpdater(config({ updater: null }))).toThrow('is no object of url and publicKey');
+    });
+
+    test('needs a semver version in package.json to tell a newer one by', () => {
+        for (const version of ['1.2', '1.2.3.4', '1.2.3-', '1.2.3-a..b', '1.2.3+', 'v1.2.3']) {
+            expect(() => appUpdater(config({ updater: { url, publicKey } }, version))).toThrow('is no semver version');
+        }
+    });
+
+    test('needs a general.name an app can fetch its update files by', () => {
+        expect(() => appUpdater({ general: { name: 'my app' }, app: { updater: { url, publicKey } } })).toThrow('general.name "my app" names');
+        expect(() => appUpdater({ general: { name: '.hidden' }, app: { updater: { url, publicKey } } })).toThrow('not starting with a dot');
+    });
+});
+
 describe("the header a desktop app's host builds with", () => {
     test('defines the name and the window', () => {
         expect(appHeader(config({ name: 'Demo App', window: { width: 800, height: 600, minWidth: 400 } }), 'darwin')).toBe([
@@ -110,6 +172,16 @@ describe("the header a desktop app's host builds with", () => {
     test('refuses anything but a list of data, cache, logs and picked', () => {
         expect(() => appHeader(config({ openPath: 'data' }), 'ios')).toThrow('app.openPath "data" is no list');
         expect(() => appHeader(config({ openPath: ['data', 'home'] }), 'darwin')).toThrow('"home" is none of them');
+    });
+
+    test("defines where a desktop app's updates are, the key that checks them and the version they are newer than", () => {
+        const updater = { url: 'https://example.com/{platform}-{arch}.json', publicKey: Buffer.alloc(32, 7).toString('base64') };
+        const header = appHeader(config({ updater }), 'linux');
+        expect(header).toContain('#define CROSSBIND_APP_UPDATER_URL "https://example.com/{platform}-{arch}.json"\n');
+        expect(header).toContain(`#define CROSSBIND_APP_UPDATER_KEY {${Array(32).fill('0x07').join(', ')}}\n`);
+        expect(header).toContain('#define CROSSBIND_APP_UPDATER_VERSION "1.2.3"\n');
+        expect(appHeader(config(), 'darwin')).not.toContain('UPDATER');
+        expect(appHeader(config({ updater }), 'ios')).not.toContain('UPDATER');
     });
 
     test('names the icon a Windows executable carries, which the build writes beside the header', () => {

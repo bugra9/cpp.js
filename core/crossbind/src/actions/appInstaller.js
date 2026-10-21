@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import run from './run.js';
 import { appleSigning } from './appleSigning.js';
+import { updaterSigning } from './appUpdate.js';
 import { inWindowsImage, jsignScript, windowsSigning } from './windowsSigning.js';
 import state from '../state/index.js';
 import { appDisplayName, appId } from '../utils/appOptions.js';
@@ -141,8 +142,8 @@ function windowsSetup(app) {
     ], path.dirname(app), signing);
 }
 
-// What an app's installer takes from the app and the environment, checked before anything compiles: the names, and the
-// keys that sign a macOS or Windows app.
+// What an app's installer takes from the app and the environment, checked before anything compiles: the names, the keys
+// that sign a macOS or Windows app, and the one that signs a desktop app's update.
 export function checkInstaller(target) {
     if (target.platform === 'darwin') appleSigning();
     else if (target.platform === 'linux') debianName(state.config.general.name);
@@ -150,6 +151,7 @@ export function checkInstaller(target) {
         windowsName();
         windowsSigning();
     }
+    if (['darwin', 'linux', 'win32'].includes(target.platform)) updaterSigning();
 }
 
 // What installs a desktop app, written beside it: a disk image on macOS, a Debian package on Linux and a setup program

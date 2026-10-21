@@ -1,7 +1,7 @@
 ; A crossbind app's setup program. It installs the app for the user who runs it, with no administrator's approval, in
 ; %LOCALAPPDATA%\Programs, puts it in the Start menu and among the apps Settings lists, and installs the WebView2
 ; Runtime the app runs on when the system has none. crossbind defines NAME, EXE, ID, VERSION, APP and OUTFILE, ICON for
-; an app with an icon, and SIGNER with a signing key.
+; an app with an icon, and SIGNER with a signing key. The app's updater runs it with /S /UPDATE /D=<the app's folder>.
 Unicode true
 ManifestDPIAware true
 RequestExecutionLevel user
@@ -16,6 +16,7 @@ SetCompressor /SOLID zlib
 
 !include MUI2.nsh
 !include LogicLib.nsh
+!include FileFunc.nsh
 
 Name "${NAME}"
 OutFile "${OUTFILE}"
@@ -36,15 +37,43 @@ InstallDir "$LOCALAPPDATA\Programs\${NAME}"
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "English"
 
-; The app holds its executable while it runs, so an update or an uninstall then stops before it changes anything.
-!macro StopWhileRunning
+; Set by /UPDATE.
+Var Updating
+; How many half seconds an update waits for the app that started it to quit.
+!define QUIT_WAIT 60
+
+Function .onInit
+  ${GetParameters} $0
   ClearErrors
-  FileOpen $0 "$INSTDIR\${EXE}" a
-  ${If} ${Errors}
-    MessageBox MB_ICONSTOP "${NAME} is running. Close it and try again." /SD IDOK
-    Abort
+  ${GetOptions} $0 "/UPDATE" $1
+  ${IfNot} ${Errors}
+    StrCpy $Updating 1
   ${EndIf}
-  FileClose $0
+FunctionEnd
+
+; The app holds its executable while it runs. An update the app started waits for it to quit; another one or an
+; uninstall stops before it changes anything.
+!macro StopWhileRunning
+  StrCpy $1 0
+  ${Do}
+    ClearErrors
+    FileOpen $0 "$INSTDIR\${EXE}" a
+    ${IfNot} ${Errors}
+      FileClose $0
+      ${Break}
+    ${EndIf}
+    IntOp $1 $1 + 1
+    ${If} $Updating != 1
+    ${OrIf} $1 > ${QUIT_WAIT}
+      ; An update that waited in vain opens the app it leaves, which quit to let it run.
+      ${If} $Updating == 1
+        Exec '"$INSTDIR\${EXE}"'
+      ${EndIf}
+      MessageBox MB_ICONSTOP "${NAME} is running. Close it and try again." /SD IDOK
+      Abort
+    ${EndIf}
+    Sleep 500
+  ${Loop}
 !macroend
 
 Section
@@ -68,6 +97,13 @@ Section
   WriteRegDWORD HKCU "${UNINSTALL}" "NoModify" 1
   WriteRegDWORD HKCU "${UNINSTALL}" "NoRepair" 1
 SectionEnd
+
+; An update opens the app anew once it is installed.
+Function .onInstSuccess
+  ${If} $Updating == 1
+    Exec '"$INSTDIR\${EXE}"'
+  ${EndIf}
+FunctionEnd
 
 ; Microsoft's Evergreen Bootstrapper, behind this link, downloads the runtime and installs it for the user.
 Function InstallWebView2

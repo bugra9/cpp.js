@@ -320,6 +320,28 @@ jobs:
                   }
             - name: Run the conformance suite in the installed app
               run: node e2e/desktop-app/e2e/run.mjs --installed
+            - name: Update the installed app as its updater does, which waits for the app to quit and opens it again
+              run: |
+                  $app = "$env:LOCALAPPDATA\Programs\crossbind-e2e-desktop-app"
+                  $exe = "$app\crossbind-e2e-desktop-app.exe"
+                  $running = Start-Process -PassThru -FilePath $exe
+                  $setup = Start-Process -PassThru -FilePath e2e\desktop-app\dist\crossbind-e2e-desktop-app-win32-${{ matrix.arch }}-setup.exe -ArgumentList "/S /UPDATE /D=$app"
+                  # PowerShell reads a process's exit code through a handle it took while the process ran.
+                  $null = $setup.Handle
+                  Start-Sleep -Seconds 3
+                  if ($setup.HasExited) { throw "the update did not wait for the app to quit" }
+                  Stop-Process -Id $running.Id -Force
+                  if (-not $setup.WaitForExit(60000)) { throw 'the update did not finish once the app had quit' }
+                  if ($setup.ExitCode -ne 0) { throw "the update exited with $($setup.ExitCode)" }
+                  $opened = $null
+                  for ($i = 0; $i -lt 30 -and -not $opened; $i++) {
+                      Start-Sleep -Seconds 1
+                      $opened = Get-Process -Name crossbind-e2e-desktop-app -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $exe -and $_.Id -ne $running.Id }
+                  }
+                  if (-not $opened) { throw 'the update did not open the app again' }
+                  # The uninstaller stops while the app runs.
+                  $opened | Stop-Process -Force
+                  $opened | Wait-Process -Timeout 30
             - name: Uninstall the app, which takes its shortcut, its files and its entry in Settings
               run: |
                   $app = "$env:LOCALAPPDATA\Programs\crossbind-e2e-desktop-app"

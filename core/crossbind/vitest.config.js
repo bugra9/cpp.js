@@ -40,6 +40,7 @@ export default defineConfig({
             CROSSBIND_WINDOWS_SIGNING_KEYPASS: '',
             CROSSBIND_WINDOWS_SIGNING_CERTFILE: '',
             CROSSBIND_WINDOWS_SIGNING_TSAURL: '',
+            CROSSBIND_UPDATER_PRIVATE_KEY: '',
         },
         coverage: {
             provider: 'v8',

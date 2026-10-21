@@ -10,6 +10,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <deque>
+#include <filesystem>
 #include <functional>
 #include <map>
 #include <memory>
@@ -24,6 +25,10 @@ namespace jsi = facebook::jsi;
 using Clock = std::chrono::steady_clock;
 
 std::string readFile(const std::string &path);
+std::string toBase64(const uint8_t *bytes, size_t length);
+std::vector<uint8_t> fromBase64(const std::string &text);
+// A path from UTF-8, which Windows would read in its ANSI code page otherwise.
+std::filesystem::path pathOf(const std::string &text);
 // The reply of a call that failed, as the page decodes it.
 std::string errorReply(const std::string &message);
 // A call of the page to one of the app's functions through crossbind/app, which reply answers once it is done.

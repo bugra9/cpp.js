@@ -6,6 +6,7 @@
 #include "crossbind/app.h"
 
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <optional>
 #include <string>
@@ -74,6 +75,9 @@ crossbind::app::Paths appPaths();
 void quitApp();
 // The window the app's dialogs belong to.
 void setMainWindow(void *window);
+// Fetches an address into a file for a desktop app's updater, on the thread that calls it, which is not the main one,
+// and throws why it could not, as when the answer runs past maxBytes.
+void download(const std::string &url, const std::filesystem::path &file, std::uintmax_t maxBytes);
 
 #ifdef __APPLE__
 // macOS sends the standard shortcuts, ⌘C and ⌘Q among them, through the menu bar, so a window without the app, Edit,
@@ -85,4 +89,6 @@ void installAppMenu();
 // The ICoreWebView2EnvironmentOptions WebView2's environment is made with: they register the scheme, which pages of
 // these other origins may request as well.
 void *schemeEnvironmentOptions(const char *scheme, const std::vector<std::string> &origins);
+// Starts an update's setup program, which installs it where the app is once the app has quit, and opens it anew.
+void runSetup(const std::filesystem::path &setup);
 #endif

@@ -1,8 +1,10 @@
 import { execFileSync, spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import config from '../crossbind.config.mjs';
+import { UPDATE_PORT, signUpdate } from './updates.mjs';
 
 // Opens the app `pnpm build` made, whose page runs the conformance suite and logs its summary last, and closes it
 // once the summary is in. With CROSSBIND_APP_PLATFORM=ios the app is an Xcode project, built and opened in the Simulator,
@@ -84,8 +86,36 @@ function installedApp() {
     return { executable: `/usr/bin/${name}`, close: () => {} };
 }
 
+// The update app.updater finds, which src/main.js installs twice: a newer version whose file its signature covers, which
+// unpacks to no app, then the same version with that file changed, as one tampered with would be.
+function serveUpdates() {
+    const target = `${process.platform}-${process.arch}`;
+    const file = Buffer.from('an update that unpacks to no app');
+    // The app's id: app.id's default, which the e2e app keeps.
+    const id = `dev.crossbind.${name}`;
+    const manifest = JSON.stringify({ version: '99.0.0', file: 'update.bin', signature: signUpdate(id, target, '99.0.0', file) });
+    let downloads = 0;
+    const server = createServer((request, response) => {
+        if (request.url === `/${target}.update.json`) {
+            response.end(manifest);
+        } else if (request.url === '/update.bin') {
+            downloads += 1;
+            response.end(downloads === 1 ? file : Buffer.from('a tampered update'));
+        } else {
+            response.statusCode = 404;
+            response.end();
+        }
+    });
+    return new Promise((resolve, reject) => {
+        server.once('error', reject);
+        server.listen(UPDATE_PORT, '127.0.0.1', resolve);
+    });
+}
+
 let out = '';
 checkIcon();
+// A phone's app does not update itself.
+if (!platform) await serveUpdates();
 const { child: app, close } = await open();
 
 function finish(problem) {

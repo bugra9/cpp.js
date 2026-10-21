@@ -47,6 +47,7 @@ export default defineConfig({ plugins: [viteCrossbindPlugin()] });
 | `crossbind app dev -p android` | Builds the host for the attached Android device or emulator, installs the app as a debug APK and opens it on the dev server, which the device reaches through `adb reverse`. Edits reload the page or rebuild the host as on the desktop; the page's console shows in the terminal, and the end of the app's process, as when it is swiped away, ends the session (Back leaves the process running). crossbind starts no emulator: start one, or connect a phone with USB debugging on, and with several attached set `ANDROID_SERIAL`. |
 | `crossbind app build -p android` | Builds the page and the host for arm64-v8a and x86_64, writes the app's Gradle project, `dist/<name>-android/`, and packages it: `dist/<name>-android.apk`, and with an upload key `dist/<name>-android.aab` too (see [Android](#android)). |
 | `crossbind build -p android -e app` | Writes the Gradle project with no page in it: `<paths.output>/<name>-android`, or `<name>-android.debug` for a debug build. A release build packages it as `crossbind app build -p android` does. |
+| `crossbind app updater-key` | Prints a new key pair for a desktop app's updates: the public key for `app.updater.publicKey`, the private one for `CROSSBIND_UPDATER_PRIVATE_KEY` (see [Updates](#updates)). |
 
 `crossbind app` runs the project's Vite with `CROSSBIND_APP_PLATFORM` set to the platform `-p` names, `macos`, `linux`,
 `windows`, `ios` or `android`; without `-p` it keeps the variable the environment sets, and without that builds this
@@ -199,6 +200,62 @@ A variable without the store type, a store type jsign does not take, a key file 
 token, which the container does not reach, stops `crossbind app build` before anything compiles. SmartScreen trusts a signed app as its certificate's
 downloads build a reputation, so the first downloads of a new certificate may still warn.
 
+## Updates
+
+A desktop app updates itself from where `app.updater` says, with updates the key it names has signed:
+
+```js
+app: {
+    updater: {
+        url: 'https://example.com/updates/<name>-{platform}-{arch}.update.json',
+        publicKey: '<what crossbind app updater-key prints>',
+    },
+},
+```
+
+`crossbind app updater-key` makes the key pair. The public key goes in `app.updater.publicKey`; the private one goes in
+`CROSSBIND_UPDATER_PRIVATE_KEY` where the app is built, and nowhere else, as whoever has it can sign an update the app
+installs. With it, `crossbind app build` writes each desktop app's update beside the app, signed with Ed25519:
+
+- `dist/<name>-<platform>-<arch>.update.json`, the manifest: package.json's version, the update's file and its
+  signature.
+- The file: on macOS `dist/<name>-darwin-<arch>.app.zip`, the app as signed and notarized, zipped with ditto; on Linux
+  the app's `.tar.gz`; on Windows its setup program.
+
+Both go where `app.updater.url` points, with `{platform}` as `darwin`, `linux` or `win32` and `{arch}` as `x64` or
+`arm64`, and the file beside the manifest. The page asks for an update and installs it when it decides to, as once its
+user agrees; the host asks no one:
+
+```js
+import { updater } from 'crossbind/app';
+
+const update = await updater.check();
+if (update && confirm(`Install ${update.version}?`)) await updater.install();
+```
+
+`updater.check()` gives `{ version }` when the manifest's version is newer than the app's, as semver orders them, and
+`null` otherwise. `updater.install()` downloads the file into the app's cache folder and installs it only when the
+signature covers the app's id, its platform and architecture, its version and its SHA-512. The app then quits and
+opens the new version, so it saves what it needs first; the promise rejects when installing fails. One check or
+install runs at a time, and another rejects meanwhile. A manifest past 64 KiB or a file past 2 GiB fails.
+
+- macOS: the bundle in the zip takes the app's place, and opens.
+- Linux: the folder in the archive takes the app's place, and its executable opens.
+- Windows: the setup program waits up to 30 seconds for the app to quit, installs the update in the app's folder and
+  opens it, or opens the app as it was once it has waited in vain.
+
+On macOS and Linux the app's folder swaps the app for its update in one step, which local file systems such as APFS
+and ext4 do; where it cannot, as on a network share, the update fails and leaves the app as it is. An app updates where
+its user can change it, too: a macOS app opened from its disk image, or from where it was downloaded to, updates once
+it is moved to Applications, and a Linux app installed from its Debian package updates with the package manager. The
+C++ of an app calls the same as `crossbind::app::checkForUpdate()` and `crossbind::app::installUpdate()`, which wait
+for the download. An iOS or Android app updates through its store, and `updater.check()` rejects there.
+
+An `app.updater.url` that is neither https nor http on localhost or names no manifest, a public key that is none or
+one anyone can forge signatures for, a package.json version that is not semver, and a private key that is not the
+public key's pair stop `crossbind app build` before anything compiles. The host checks signatures with Monocypher,
+which it compiles in.
+
 ## The app's functions
 
 The page imports what the app's host does for it from `crossbind/app`, and the app's C++ calls the same through
@@ -229,6 +286,8 @@ std::string databasePath() { return crossbind::app::paths().data + "/notes.sqlit
 | `shell.revealInFolder(path)` | A file, selected, in the system's file manager, or on Linux without one its folder | ✓ | | |
 | `app.paths()` | `{ data, cache, logs }`, the app's own folders, made when first asked for | ✓ | ✓ | ✓ |
 | `app.quit()` | Ends the app as closing its window does | ✓ | | |
+| `updater.check()` | `{ version }`, the newer version `app.updater.url` offers, or `null` | ✓ | | |
+| `updater.install()` | Installs that version once its signature holds, then quits the app and opens the new one | ✓ | | |
 
 In the page each returns a promise once `initNative()` has run, as what it loads carries the calls to the host; in C++
 each waits for its answer, a dialog for its user's. A function a platform has not got rejects, or throws, saying so,
@@ -320,6 +379,11 @@ delivers one ABI.
   files where `app.openPath` lets it alone, nowhere by default, and its `shell.revealInFolder` shows the app's folders
   and what its dialogs picked alone.
 - Only the debug host the dev server opens reads `CROSSBIND_APP_URL`; a release build always loads its own page.
+- An update installs only when the key of `app.updater.publicKey` signed it, over the app's id, its platform and
+  architecture, its version and its file. A server can offer any version to `updater.check()`, and can serve an older
+  signed update that is still newer than the installed app, but it installs nothing unsigned, nothing built for another
+  platform, and no other app the same key signs. Whoever holds `CROSSBIND_UPDATER_PRIVATE_KEY` can sign any update, so
+  it stays where the app is built; the app checks no Apple or Authenticode signature of the update besides.
 - On Android the page comes from `https://appassets.androidplatform.net`, which the app serves from its files, and
   the top frame loads that origin alone. Android does not let an app refuse a frame's page, but no frame reaches the
   module: calls and their bytes travel over a message port the app hands the top frame alone, with the token, and

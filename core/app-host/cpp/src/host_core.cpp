@@ -26,6 +26,8 @@ private:
 
 constexpr char B64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+}  // namespace
+
 std::string toBase64(const uint8_t *bytes, size_t length) {
     std::string out;
     out.reserve((length + 2) / 3 * 4);
@@ -65,6 +67,8 @@ std::vector<uint8_t> fromBase64(const std::string &text) {
     }
     return bytes;
 }
+
+namespace {
 
 std::vector<uint8_t> bytesOf(const std::string &text) { return std::vector<uint8_t>(text.begin(), text.end()); }
 
