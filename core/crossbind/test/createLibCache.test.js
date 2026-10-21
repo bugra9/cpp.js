@@ -3,8 +3,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { run, state, getData, getCmakeParameters } = vi.hoisted(() => ({
-    run: vi.fn(), state: { config: {} }, getData: vi.fn(), getCmakeParameters: vi.fn(() => []),
+const { run, state, getData, getCmakeParameters, resolveAppHostRoot } = vi.hoisted(() => ({
+    run: vi.fn(), state: { config: {} }, getData: vi.fn(), getCmakeParameters: vi.fn(() => []), resolveAppHostRoot: vi.fn(),
 }));
 
 vi.mock('../src/actions/run.js', () => ({ default: run }));
@@ -17,6 +17,7 @@ vi.mock('../src/utils/logger.js', () => ({
     default: { info() {}, error() {}, startStep() {}, doneStep() {}, cachedStep() {} },
 }));
 vi.mock('../src/state/index.js', () => ({ default: state }));
+vi.mock('../src/utils/resolveAppHost.js', () => ({ default: resolveAppHostRoot }));
 
 const { default: createLib } = await import('../src/actions/createLib.js');
 const { default: buildCargo } = await import('../src/actions/buildCargo.js');
@@ -162,5 +163,82 @@ describe('createLib wasi source', () => {
         fs.writeFileSync(header, '// api v2');
 
         expect(build()).toBe(true);
+    });
+});
+
+describe('createLib app source', () => {
+    const linux = {
+        platform: 'linux', arch: 'x64', runtime: 'mt', buildType: 'release', path: 'linux-x64-mt-release',
+    };
+    let work;
+    let header;
+
+    const build = (target) => {
+        run.mockClear();
+        getCmakeParameters.mockClear();
+        createLib(target, 'Source', { buildSource: true });
+        fs.mkdirSync(`${work}/build/Source-Release/prebuilt/${target.path}/lib`, { recursive: true });
+        return run.mock.calls.length > 0;
+    };
+    const headerDirs = () => getCmakeParameters.mock.calls.at(-1)[1].headerDirs;
+
+    beforeEach(() => {
+        work = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-createlib-app-'));
+        header = `${work}/app-host/cpp/include/crossbind/app.h`;
+        fs.mkdirSync(path.dirname(header), { recursive: true });
+        fs.writeFileSync(header, '// api v1');
+        resolveAppHostRoot.mockReset();
+        resolveAppHostRoot.mockReturnValue(`${work}/app-host`);
+        getData.mockReset();
+        getData.mockReturnValue({});
+        state.config = {
+            paths: {
+                build: `${work}/build`, cmakeDir: `${work}/cmake`, cli: `${work}/cli`, native: [],
+            },
+            build: {},
+            export: {},
+            target: { runtimeEnv: 'app' },
+            allDependencyPaths: { [linux.path]: {}, 'wasm-wasm32-st-release': {} },
+        };
+    });
+
+    afterEach(() => {
+        fs.rmSync(work, { recursive: true, force: true });
+    });
+
+    test("a library's app-flavoured archives need no app host", () => {
+        state.config.target = { runtimeEnv: 'browser' };
+        resolveAppHostRoot.mockImplementation(() => {
+            throw new Error('crossbind: apps need @crossbind/core-app-host - add it to your devDependencies.');
+        });
+
+        expect(build({ ...linux, runtimeEnv: 'app' })).toBe(true);
+        expect(headerDirs()).toEqual([]);
+    });
+
+    test("an app's code compiles against a staged <crossbind/app.h> in every flavour of an app platform", () => {
+        expect(build({ ...linux, runtimeEnv: 'node' })).toBe(true);
+        expect(headerDirs()).toEqual([`${work}/build/Source-Release/${linux.path}/crossbind-app/include`]);
+        expect(fs.readFileSync(`${headerDirs()[0]}/crossbind/app.h`, 'utf8')).toBe('// api v1');
+
+        // The flavours share one build, so the next one finds it built.
+        expect(build({ ...linux, runtimeEnv: 'app' })).toBe(false);
+    });
+
+    test("an app's web build gets no <crossbind/app.h>", () => {
+        build({
+            platform: 'wasm', arch: 'wasm32', runtime: 'st', buildType: 'release', path: 'wasm-wasm32-st-release', runtimeEnv: 'browser',
+        });
+
+        expect(headerDirs()).toEqual([]);
+    });
+
+    test('rebuilds when the app host brings a new <crossbind/app.h>', () => {
+        const app = { ...linux, runtimeEnv: 'app' };
+        expect(build(app)).toBe(true);
+        expect(build(app)).toBe(false);
+        fs.writeFileSync(header, '// api v2');
+
+        expect(build(app)).toBe(true);
     });
 });

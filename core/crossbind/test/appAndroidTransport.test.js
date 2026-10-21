@@ -92,6 +92,17 @@ describe('the page of an Android app', () => {
         expect(await Promise.all([1, 2, 3, 4].map((n) => m.add(n, n)))).toEqual([2, 4, 6, 8]);
     });
 
+    test("calls one of the app's own functions, which the host answers itself", async () => {
+        // As the host does once the main thread has done the work.
+        globalThis.__app_call = (call, name, options) => {
+            const answer = name === 'app.paths' ? [0, { data: '/data', asked: options }] : [1, { name: 'Error', message: `no ${name}` }];
+            globalThis.__host_reply(call, JSON.stringify(answer));
+        };
+
+        await expect(globalThis.Crossbind.app('app.paths', { a: 1 })).resolves.toEqual({ data: '/data', asked: { a: 1 } });
+        await expect(globalThis.Crossbind.app('app.none', {})).rejects.toThrow('no app.none');
+    });
+
     test('rejects a call whose frame the activity refuses, with what it answered, and goes on', async () => {
         refusesFrames = true;
         try {

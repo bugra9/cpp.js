@@ -99,6 +99,56 @@ page's history first, and leaves the app when there is none.
 An app that cannot start, for want of the WebView2 Runtime or of a file it carries, writes why to its output; a desktop
 app its user opened says so in a message box as well.
 
+## The app's functions
+
+The page imports what the app's host does for it from `crossbind/app`, and the app's C++ calls the same through
+`<crossbind/app.h>`, which an app's own code finds as it builds, with `CROSSBIND_APP` defined:
+
+```js
+import { app, dialog, shell } from 'crossbind/app';
+
+const file = await dialog.save({ defaultName: 'report.csv', filters: [{ name: 'CSV', extensions: ['csv'] }] });
+if (file) await Native.exportReport(file);
+const { data, cache, logs } = await app.paths();
+```
+
+```cpp
+#ifdef CROSSBIND_APP
+#include <crossbind/app.h>
+
+std::string databasePath() { return crossbind::app::paths().data + "/notes.sqlite"; }
+#endif
+```
+
+| Function | What it does | macOS, Linux, Windows | iOS | Android |
+|---|---|---|---|---|
+| `dialog.open({ title, defaultPath, filters, directory, multiple })` | The paths of the files or folders its user picks, or `null` | ✓ | | |
+| `dialog.save({ title, defaultPath, defaultName, filters })` | The path its user chooses to save to, or `null` | ✓ | | |
+| `shell.openExternal(url)` | An http, https or mailto address in the default browser or mail app | ✓ | ✓ | |
+| `shell.openPath(path)` | A file in the app the system opens its kind with | ✓ | | |
+| `shell.revealInFolder(path)` | A file, selected, in the system's file manager, or on Linux without one its folder | ✓ | | |
+| `app.paths()` | `{ data, cache, logs }`, the app's own folders, made when first asked for | ✓ | ✓ | ✓ |
+| `app.quit()` | Ends the app as closing its window does | ✓ | | |
+
+In the page each returns a promise once `initNative()` has run, as what it loads carries the calls to the host; in C++
+each waits for its answer, a dialog for its user's. A function a platform has not got rejects, or throws, saying so,
+and in a web or Node.js build every one rejects. A filter's extensions go with or without their dot, `"*"` for any
+file, paths are absolute, and an option the page misspells fails before the host sees it. The dialogs are modal: to the
+app on macOS, to its window elsewhere; one shows at a time, and another rejects while it does.
+
+The page's `shell.openPath` opens files where `app.openPath` in `crossbind.config.js` lets it alone, and nowhere
+without it: in `data`, `cache` or `logs`, the app's folders, and in `picked`, what a dialog picked during this run, a
+picked folder with what is in it. Opening a program runs it, and a script that found its way into the page could
+name any path: list no folder the module writes a file to that the page names or fills. Its `shell.revealInFolder`
+shows the app's folders and what a dialog picked during this run. The app's C++ reaches any path. It calls these
+functions once the module has started and never on the app's main thread, which the dialogs and the functions that
+open something wait for: called before that, as from a static initializer, or once the app quits, they throw.
+
+On the desktop the folders take the name of `app.id`: under `~/Library` on macOS, under `$XDG_DATA_HOME`,
+`$XDG_CACHE_HOME` and `$XDG_STATE_HOME` on Linux, and under `%APPDATA%` and `%LOCALAPPDATA%` on Windows. An iOS
+app's are its own `Library/Application Support`, `Library/Caches` and `Library/Logs`, and an Android app's its
+`files`, `cache` and `files/logs`.
+
 ## What the app holds
 
 ```
@@ -161,6 +211,11 @@ delivers one ABI.
   origin, which WebKitGTK does not tell.
 - Responses from `crossbind://` let another origin read them only during development, when the page comes from the
   dev server.
+- The app's functions (`crossbind/app`) travel with the same token, so the top frame of the page reaches them, and so
+  does a frame of the page's own origin, which can read the top frame's globals: the page and such frames are the
+  app's own code. `shell.openExternal` opens http, https and mailto addresses alone, the page's `shell.openPath` opens
+  files where `app.openPath` lets it alone, nowhere by default, and its `shell.revealInFolder` shows the app's folders
+  and what its dialogs picked alone.
 - Only the debug host the dev server opens reads `CROSSBIND_APP_URL`; a release build always loads its own page.
 - On Android the page comes from `https://appassets.androidplatform.net`, which the app serves from its files, and
   the top frame loads that origin alone. Android does not let an app refuse a frame's page, but no frame reaches the
@@ -280,6 +335,10 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
 - A Windows app is not signed, so SmartScreen warns about it once it is downloaded. Authenticode signing is not wired
   yet.
 - On the desktop, one window.
+- On macOS the file dialogs, `shell.revealInFolder`, `app.paths` and `app.quit` have been measured, and so has
+  `shell.openExternal` refusing other addresses; `shell.openExternal` opening one and `shell.openPath` opening a file
+  have not. On Linux and Windows the dialogs, `shell.openExternal` opening an address, `shell.openPath`,
+  `shell.revealInFolder` and `app.quit` are built, not measured yet.
 - A download the page starts saves where its user picks on macOS, when it is a `Blob` or other data the page holds: an
   `<a download>` link to one of the app's own files saves nothing yet, so the page fetches the file and saves it as a
   `Blob`. WebView2 and WebKitGTK handle downloads themselves on Windows and Linux, which has not been measured yet; an

@@ -53,5 +53,7 @@ LPWSTR give(const std::wstring &text);
 ICoreWebView2 *coreWebView(void *controller);
 // Runs fn on the UI thread: at once when the caller is on it, else when the thread's message loop gets to it.
 void onMainThread(std::function<void()> fn);
+// An http, https or mailto address in the default browser or mail app; false when it is none or nothing opened it.
+bool openOutside(const std::string &uri);
 
 }  // namespace crossbind::windows

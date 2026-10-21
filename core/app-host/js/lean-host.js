@@ -1,7 +1,7 @@
 // The lean protocol's host side, with the contract a worker-backed web build has: objects as handles the page releases,
 // enum values with their identity, vectors returned as arrays, plain arrays coerced into vector parameters, errors
 // with their own fields, and large byte arrays as attachments of a crossbind:// request.
-/* global __host_reply */
+/* global __host_reply, __app_call */
 import { pack, unpack, CODEC_TAG as TAG } from './codec.js';
 import { setCoercionModule, unwrapCoercionProxy, wrapWithVectorCoercion } from 'crossbind/runtime/adapters/vector-coercion.js';
 import { UNBOUND_MESSAGE } from 'crossbind/runtime/adapters/unboundMessage.js';
@@ -208,7 +208,12 @@ export function installHost(embindModule, env) {
     }
     setEnv(env, false);
 
-    globalThis.__crossbind_receive = (call, text) => __host_reply(call, answer(JSON.parse(text), []));
+    globalThis.__crossbind_receive = (call, text) => {
+        const message = JSON.parse(text);
+        // One of the app's own functions, which the host answers once the main thread has done it.
+        if (message[0] === 'app') __app_call(call, message[2][0], message[3][0]);
+        else __host_reply(call, answer(message, []));
+    };
 
     // A new page replaced the one that held these, and its garbage collector will never release them.
     globalThis.__crossbind_reset = () => {

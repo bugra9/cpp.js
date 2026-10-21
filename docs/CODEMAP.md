@@ -125,6 +125,7 @@ Index + template: [`docs/adr/README.md`](./adr/README.md).
 | The bridges a native binary binds: own headers, headers bound whole, imported headers | `src/actions/nativeBridges.js` |
 | Node import hooks: the native imports of an app without a bundler (`dist/node/<format>.register.mjs`) | `src/actions/createImportedBridges.js`, `src/actions/writeRuntimeEntry.js`, `src/assets/node-import-hooks.mjs` |
 | `crossbind/node/dev`: build this machine's Node binary when its native inputs changed, then load those hooks | `src/node/dev.mjs`, `src/utils/nodeDevBuild.js` |
+| `crossbind/app`: the app host's functions for the page (dialogs, opening outside, folders, quitting); `<crossbind/app.h>` for an app's own code | `src/app/index.js`, `src/utils/appApiHeader.js` |
 | Archives of a final link and what stays whole (wasm and addon) | `src/actions/getLinkInputs.js` |
 | WASI command and HTTP component link (single .wasm) | `src/actions/buildWasiCommand.js` |
 | Rust crate build (`export.type: 'cargo'`) | `src/actions/buildCargo.js` |

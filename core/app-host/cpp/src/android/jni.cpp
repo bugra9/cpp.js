@@ -9,7 +9,9 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <filesystem>
 #include <future>
+#include <stdexcept>
 #include <thread>
 
 namespace {
@@ -23,6 +25,9 @@ jclass activityClass;
 jmethodID onReply;
 jmethodID onReplyBytes;
 std::string resources;
+// The app's own folders, which the activity names.
+std::string dataDir;
+std::string cacheDir;
 app::Core *core;
 
 JNIEnv *attachedEnv() {
@@ -101,6 +106,39 @@ std::string resourceDir() { return resources; }
 // The app's output goes to logcat, which has the reason already.
 void showError(const std::string &) {}
 
+// An Android app's folders are its own already.
+crossbind::app::Paths appPaths() {
+    const std::string logs = dataDir + "/logs";
+    std::error_code error;
+    std::filesystem::create_directories(logs, error);
+    if (error) throw std::runtime_error("crossbind: cannot make the app's folder " + logs + ": " + error.message());
+    return {dataDir, cacheDir, logs};
+}
+
+void showOpenDialog(crossbind::app::OpenOptions, std::function<void(Picked)>) {
+    throw std::runtime_error("crossbind: an Android app has no file dialogs yet");
+}
+
+void showSaveDialog(crossbind::app::SaveOptions, std::function<void(std::optional<std::string>)>) {
+    throw std::runtime_error("crossbind: an Android app has no file dialogs yet");
+}
+
+void openUrl(std::string, std::function<void(Failure)>) {
+    throw std::runtime_error("crossbind: an Android app opens no address outside itself yet");
+}
+
+void openFile(std::string, std::function<void(Failure)>) {
+    throw std::runtime_error("crossbind: an Android app opens no file in another app yet");
+}
+
+void revealFile(std::string, std::function<void(Failure)>) {
+    throw std::runtime_error("crossbind: an Android app has no file manager to show a file in");
+}
+
+void quitApp() { throw std::runtime_error("crossbind: an Android app does not quit itself: the system ends it"); }
+
+void setMainWindow(void *) {}
+
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *) {
     vm = jvm;
     forward(STDOUT_FILENO, ANDROID_LOG_INFO);
@@ -113,12 +151,14 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *) {
 // Starts the module once per process; a new activity of the same process gets the module it left, which its first page
 // frees of the old page's objects. Returns the page's token and the dev server's page a debug host opens, or "".
 extern "C" JNIEXPORT jobjectArray JNICALL Java_dev_crossbind_app_CrossbindActivity_nativeStart(JNIEnv *env, jclass type,
-    jstring files, jstring url) {
+    jstring files, jstring url, jstring data, jstring cache) {
     if (!core) {
         activityClass = static_cast<jclass>(env->NewGlobalRef(type));
         onReply = env->GetStaticMethodID(type, "onReply", "(IZ[B)V");
         onReplyBytes = env->GetStaticMethodID(type, "onReplyBytes", "(I[B)V");
         resources = asciiOf(env, files);
+        dataDir = asciiOf(env, data);
+        cacheDir = asciiOf(env, cache);
         if (url) setenv("CROSSBIND_APP_URL", asciiOf(env, url).c_str(), 1);
         core = &app::start(app::devUrl());
     }

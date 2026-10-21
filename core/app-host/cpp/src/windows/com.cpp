@@ -1,5 +1,8 @@
 #include "windows/com.h"
 
+#include <shellapi.h>
+
+#include <algorithm>
 #include <cstring>
 #include <deque>
 #include <mutex>
@@ -9,7 +12,8 @@ namespace crossbind::windows {
 namespace {
 
 constexpr UINT RUN = WM_APP + 1;
-DWORD uiThread = 0;
+std::atomic<DWORD> uiThread{0};
+// Set once, under queueMutex, which other threads read it under.
 HWND dispatcher = nullptr;
 std::mutex queueMutex;
 std::deque<std::function<void()>> queue;
@@ -33,7 +37,11 @@ void startDispatcher() {
     type.hInstance = GetModuleHandleW(nullptr);
     type.lpszClassName = L"crossbind_dispatcher";
     RegisterClassW(&type);
-    dispatcher = CreateWindowExW(0, type.lpszClassName, L"", 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr, type.hInstance, nullptr);
+    HWND window = CreateWindowExW(0, type.lpszClassName, L"", 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr, type.hInstance, nullptr);
+    // The module's code can post before the window exists; what it posted runs now.
+    std::lock_guard<std::mutex> lock(queueMutex);
+    dispatcher = window;
+    if (!queue.empty()) PostMessageW(dispatcher, RUN, 0, 0);
 }
 
 }  // namespace
@@ -80,13 +88,20 @@ void onMainThread(std::function<void()> fn) {
         fn();
         return;
     }
-    bool isIdle;
-    {
-        std::lock_guard<std::mutex> lock(queueMutex);
-        isIdle = queue.empty();
-        queue.push_back(std::move(fn));
-    }
-    if (isIdle) PostMessageW(dispatcher, RUN, 0, 0);
+    std::lock_guard<std::mutex> lock(queueMutex);
+    const bool isIdle = queue.empty();
+    queue.push_back(std::move(fn));
+    if (isIdle && dispatcher) PostMessageW(dispatcher, RUN, 0, 0);
+}
+
+bool openOutside(const std::string &uri) {
+    std::string scheme = uri.substr(0, uri.find(':'));
+    // ASCII alone, whatever the locale.
+    std::transform(scheme.begin(), scheme.end(), scheme.begin(), [](char c) { return c >= 'A' && c <= 'Z' ? static_cast<char>(c - 'A' + 'a') : c; });
+    if (scheme != "http" && scheme != "https" && scheme != "mailto") return false;
+    // The URL goes into the command line of its scheme's handler, where a quote or a space would split it.
+    if (std::any_of(uri.begin(), uri.end(), [](unsigned char c) { return c <= ' ' || c == '"' || c == 0x7f; })) return false;
+    return reinterpret_cast<INT_PTR>(ShellExecuteW(nullptr, L"open", wide(uri).c_str(), nullptr, nullptr, SW_SHOWNORMAL)) > 32;
 }
 
 }  // namespace crossbind::windows

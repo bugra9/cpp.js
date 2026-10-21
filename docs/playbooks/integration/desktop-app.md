@@ -22,7 +22,9 @@ now.
 
 3. Add `viteCrossbindPlugin()` to `vite.config.js` if it is not there yet.
 4. Write the page as for a worker-backed web build: `await initNative()`, then await every call. Do not pass
-   JavaScript functions to the module.
+   JavaScript functions to the module. What the app's host does, the file dialogs, opening a link in the browser, the
+   app's folders and quitting, the page imports from `crossbind/app` after `initNative()`, and the C++ includes from
+   `<crossbind/app.h>`.
 5. Run `pnpm crossbind app dev` to develop, `pnpm crossbind app build` to get `dist/<name>.app`.
 6. For iOS, add `-p ios`: `crossbind app dev -p ios` opens the app in the Simulator and `crossbind app build -p ios`
    writes the Xcode project `dist/<name>-ios/`. To run it on a device, give the app its bundle id and Apple team in
@@ -54,6 +56,9 @@ now.
   configs.
 - Navigation to another origin is refused; links the user follows open in the default browser. Embed no third-party
   page in an iframe.
+- The page's `shell.openPath` opens nothing until `app.openPath` lists where it may, and its `shell.revealInFolder`
+  refuses a path outside the app's folders that no dialog picked during this run; the C++ reaches any path through
+  `<crossbind/app.h>`.
 - `crossbind app dev` and `crossbind app build` make the app of the machine they run on, macOS, Linux or Windows,
   unless `-p` names another; `crossbind app build -p linux` builds the Linux app on a Mac too, but its development
   session runs on Linux alone. A Linux app needs Docker to build and WebKitGTK 4.1 (2.40 or later) to run.

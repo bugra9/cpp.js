@@ -16,6 +16,10 @@
     "exports": {
         ".": "./src/index.js",
         "./node/dev": "./src/node/dev.mjs",
+        "./app": {
+            "types": "./src/app/index.d.ts",
+            "default": "./src/app/index.js"
+        },
         "./*": "./*"
     },
     "scripts": {

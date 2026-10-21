@@ -41,7 +41,10 @@ defaults and current limits (macOS, Linux, Windows, iOS and Android for now).
   `gradle wrapper` writes it; `gradle-wrapper.jar` matches the sha256 Gradle publishes for the release.
 - `js/host.js` — what runs in Hermes: the embind runtime and the side of the protocol that answers the page.
 - `js/page.js` — what the page loads as `crossbind.js`: `initNative()` over the webview's messages, or on Android its
-  message port.
+  message port, and the calls of `crossbind/app`.
+- `cpp/include/crossbind/app.h` — the host's functions for an app's own code: dialogs, opening outside the app, the
+  app's folders and quitting. `src/app_api.cpp` answers them and the page's `crossbind/app`, and each platform's
+  `app_api` does the work.
 - `third_party/webview/` — webview/webview (MIT), vendored at a pinned commit; provenance and the local patch are in
   its README.
 - `third_party/jsi/` — JSI's `jsi.cpp` (MIT) from the Hermes release the host links, and on Android its headers.

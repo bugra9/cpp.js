@@ -1,0 +1,196 @@
+#include "crossbind_app.h"
+#include "platform.h"
+#include "windows/com.h"
+
+#include <knownfolders.h>
+#include <shellapi.h>
+#include <shlobj.h>
+#include <shobjidl.h>
+
+#include <algorithm>
+#include <cstdio>
+#include <stdexcept>
+
+using namespace crossbind::windows;
+
+namespace {
+
+HWND mainWindow = nullptr;
+
+// A dialog's file types, as COMDLG_FILTERSPECs pointing into the strings beside them.
+struct FileTypes {
+    std::vector<std::wstring> names;
+    std::vector<std::wstring> patterns;
+    std::vector<COMDLG_FILTERSPEC> specs;
+};
+
+FileTypes fileTypesOf(const std::vector<crossbind::app::FileFilter> &filters) {
+    FileTypes types;
+    for (const auto &filter : filters) {
+        std::wstring pattern;
+        for (const auto &extension : filter.extensions) pattern += (pattern.empty() ? L"*." : L";*.") + wide(extension);
+        types.names.push_back(wide(filter.name));
+        types.patterns.push_back(pattern);
+    }
+    for (size_t i = 0; i < filters.size(); i += 1) types.specs.push_back({types.names[i].c_str(), types.patterns[i].c_str()});
+    return types;
+}
+
+void setUp(IFileDialog *dialog, const std::string &title, const std::string &folder, const FileTypes &types) {
+    if (!title.empty()) dialog->SetTitle(wide(title).c_str());
+    IShellItem *start = nullptr;
+    if (!folder.empty() && SUCCEEDED(SHCreateItemFromParsingName(wide(folder).c_str(), nullptr, IID_PPV_ARGS(&start)))) {
+        dialog->SetFolder(start);
+        start->Release();
+    }
+    if (!types.specs.empty()) dialog->SetFileTypes(static_cast<UINT>(types.specs.size()), types.specs.data());
+}
+
+std::string pathOf(IShellItem *item) {
+    PWSTR path = nullptr;
+    if (FAILED(item->GetDisplayName(SIGDN_FILESYSPATH, &path))) return {};
+    std::string out = utf8(path);
+    CoTaskMemFree(path);
+    return out;
+}
+
+std::string knownFolder(REFKNOWNFOLDERID id) {
+    PWSTR path = nullptr;
+    if (FAILED(SHGetKnownFolderPath(id, KF_FLAG_CREATE, nullptr, &path))) throw std::runtime_error("crossbind: Windows names no folder for the app's files");
+    std::string out = utf8(path);
+    CoTaskMemFree(path);
+    return out;
+}
+
+std::string made(const std::string &path) {
+    const int result = SHCreateDirectoryExW(nullptr, wide(path).c_str(), nullptr);
+    if (result != ERROR_SUCCESS && result != ERROR_ALREADY_EXISTS && result != ERROR_FILE_EXISTS) {
+        throw std::runtime_error("crossbind: cannot make the app's folder " + path);
+    }
+    return path;
+}
+
+bool exists(const std::string &path) { return GetFileAttributesW(wide(path).c_str()) != INVALID_FILE_ATTRIBUTES; }
+
+// The caller of a dialog that could not show hears no more than of one cancelled, so the reason goes to the output.
+void report(const char *dialog, HRESULT result) {
+    if (FAILED(result) && result != HRESULT_FROM_WIN32(ERROR_CANCELLED)) {
+        std::fprintf(stderr, "crossbind: the %s dialog failed: 0x%08lx\n", dialog, static_cast<unsigned long>(result));
+    }
+}
+
+}  // namespace
+
+// What the app keeps roams with its user, as Windows apps do; its cache and logs stay on the machine.
+crossbind::app::Paths appPaths() {
+    const std::string id = CROSSBIND_APP_ID;
+    const std::string local = knownFolder(FOLDERID_LocalAppData) + "\\" + id;
+    return {made(knownFolder(FOLDERID_RoamingAppData) + "\\" + id), made(local + "\\Cache"), made(local + "\\Logs")};
+}
+
+// Modal to the app's window, as the system's file dialogs are.
+void showOpenDialog(crossbind::app::OpenOptions options, std::function<void(Picked)> done) {
+    onMainThread([options = std::move(options), done = std::move(done)] {
+        IFileOpenDialog *dialog = nullptr;
+        if (const HRESULT made = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&dialog)); FAILED(made)) {
+            report("open", made);
+            done(std::nullopt);
+            return;
+        }
+        FILEOPENDIALOGOPTIONS flags = 0;
+        dialog->GetOptions(&flags);
+        dialog->SetOptions(flags | FOS_FORCEFILESYSTEM | (options.directory ? FOS_PICKFOLDERS : 0) | (options.multiple ? FOS_ALLOWMULTISELECT : 0));
+        const FileTypes types = fileTypesOf(options.filters);
+        setUp(dialog, options.title, options.defaultPath, types);
+        Picked picked;
+        IShellItemArray *items = nullptr;
+        const HRESULT shown = dialog->Show(mainWindow);
+        report("open", shown);
+        if (SUCCEEDED(shown) && SUCCEEDED(dialog->GetResults(&items))) {
+            picked.emplace();
+            DWORD count = 0;
+            items->GetCount(&count);
+            for (DWORD i = 0; i < count; i += 1) {
+                IShellItem *item = nullptr;
+                if (FAILED(items->GetItemAt(i, &item))) continue;
+                picked->push_back(pathOf(item));
+                item->Release();
+            }
+            items->Release();
+        }
+        dialog->Release();
+        done(std::move(picked));
+    });
+}
+
+void showSaveDialog(crossbind::app::SaveOptions options, std::function<void(std::optional<std::string>)> done) {
+    onMainThread([options = std::move(options), done = std::move(done)] {
+        IFileSaveDialog *dialog = nullptr;
+        if (const HRESULT made = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&dialog)); FAILED(made)) {
+            report("save", made);
+            done(std::nullopt);
+            return;
+        }
+        FILEOPENDIALOGOPTIONS flags = 0;
+        dialog->GetOptions(&flags);
+        dialog->SetOptions(flags | FOS_FORCEFILESYSTEM | FOS_OVERWRITEPROMPT);
+        const FileTypes types = fileTypesOf(options.filters);
+        setUp(dialog, options.title, options.defaultPath, types);
+        if (!options.defaultName.empty()) dialog->SetFileName(wide(options.defaultName).c_str());
+        // A name typed without an extension takes the first file type's.
+        if (!options.filters.empty() && !options.filters[0].extensions.empty()) {
+            dialog->SetDefaultExtension(wide(options.filters[0].extensions[0]).c_str());
+        }
+        std::optional<std::string> file;
+        IShellItem *item = nullptr;
+        const HRESULT shown = dialog->Show(mainWindow);
+        report("save", shown);
+        if (SUCCEEDED(shown) && SUCCEEDED(dialog->GetResult(&item))) {
+            file = pathOf(item);
+            item->Release();
+        }
+        dialog->Release();
+        done(std::move(file));
+    });
+}
+
+void openUrl(std::string url, std::function<void(Failure)> done) {
+    onMainThread([url = std::move(url), done = std::move(done)] {
+        done(openOutside(url) ? Failure() : Failure("crossbind: nothing opens " + url));
+    });
+}
+
+void openFile(std::string path, std::function<void(Failure)> done) {
+    onMainThread([path = std::move(path), done = std::move(done)] {
+        if (!exists(path)) {
+            done("crossbind: there is no " + path);
+            return;
+        }
+        const auto opened = reinterpret_cast<INT_PTR>(ShellExecuteW(nullptr, L"open", wide(path).c_str(), nullptr, nullptr, SW_SHOWNORMAL));
+        done(opened > 32 ? Failure() : Failure("crossbind: nothing opens " + path));
+    });
+}
+
+void revealFile(std::string path, std::function<void(Failure)> done) {
+    onMainThread([path = std::move(path), done = std::move(done)] {
+        // The shell reads a path with backslashes alone.
+        std::wstring native = wide(path);
+        std::replace(native.begin(), native.end(), L'/', L'\\');
+        PIDLIST_ABSOLUTE item = exists(path) ? ILCreateFromPathW(native.c_str()) : nullptr;
+        if (!item) {
+            done("crossbind: there is no " + path);
+            return;
+        }
+        const HRESULT shown = SHOpenFolderAndSelectItems(item, 0, nullptr, 0);
+        ILFree(item);
+        done(SUCCEEDED(shown) ? Failure() : Failure("crossbind: Explorer cannot show " + path));
+    });
+}
+
+void quitApp() {
+    onMainThread([] {
+        if (mainWindow) PostMessageW(mainWindow, WM_CLOSE, 0, 0);
+    });
+}
+
+void setMainWindow(void *window) { mainWindow = static_cast<HWND>(window); }
