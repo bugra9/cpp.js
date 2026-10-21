@@ -1,11 +1,14 @@
-import { spawn } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { execFileSync, spawn } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import config from '../crossbind.config.mjs';
 
 // Opens the app `pnpm build` made, whose page runs the conformance suite and logs its summary last, and closes it
 // once the summary is in. With CROSSBIND_APP_PLATFORM=ios the app is an Xcode project, built and opened in the Simulator,
-// and with android a Gradle project, built and opened on the attached device.
+// and with android a Gradle project, built and opened on the attached device. With --installed a desktop app opens
+// from where its installer put it: from its disk image on macOS, and on Linux and Windows from where its Debian package
+// or setup program, which the runner ran first, installed it.
 const RUN_TIMEOUT_MS = 300000;
 // Shared conformance list: pass must equal run (backreference); skips are explicit lines.
 const CONFORMANCE = /^CONFORMANCE (\d+)\/\1\b.*$/m;
@@ -51,11 +54,34 @@ async function open() {
         return platform === 'ios' ? openInSimulator(buildForSimulator(project), { env }) : openOnDevice(buildApk(project), { env });
     }
     // A macOS app is a bundle; a Linux or Windows app a directory named after its platform and arch.
-    const executable = process.platform === 'darwin'
-        ? `${root}/dist/${name}.app/Contents/MacOS/${name}`
-        : `${root}/dist/${name}-${process.platform}-${process.arch}/${name}${process.platform === 'win32' ? '.exe' : ''}`;
+    const { executable, close } = process.argv.includes('--installed') ? installedApp() : {
+        executable: process.platform === 'darwin'
+            ? `${root}/dist/${name}.app/Contents/MacOS/${name}`
+            : `${root}/dist/${name}-${process.platform}-${process.arch}/${name}${process.platform === 'win32' ? '.exe' : ''}`,
+        close: () => {},
+    };
     if (!existsSync(executable)) missing(executable);
-    return { child: spawn(executable, [], { env: { ...process.env, ...env } }), close: () => {} };
+    return { child: spawn(executable, [], { env: { ...process.env, ...env } }), close };
+}
+
+// Where the installer put the app: in the disk image, mounted until the run ends, in /usr/bin, or in the user's
+// programs.
+function installedApp() {
+    if (process.platform === 'darwin') {
+        const image = `${root}/dist/${name}.dmg`;
+        if (!existsSync(image)) missing(image);
+        const mount = mkdtempSync(join(tmpdir(), 'crossbind-dmg-'));
+        execFileSync('hdiutil', ['attach', '-quiet', '-nobrowse', '-readonly', '-mountpoint', mount, image]);
+        const executable = `${mount}/${name}.app/Contents/MacOS/${name}`;
+        const close = () => execFileSync('hdiutil', ['detach', '-quiet', '-force', mount]);
+        if (!existsSync(executable)) {
+            close();
+            missing(executable);
+        }
+        return { executable, close };
+    }
+    if (process.platform === 'win32') return { executable: join(process.env.LOCALAPPDATA, 'Programs', config.app.name ?? name, `${name}.exe`), close: () => {} };
+    return { executable: `/usr/bin/${name}`, close: () => {} };
 }
 
 let out = '';
@@ -64,8 +90,13 @@ const { child: app, close } = await open();
 
 function finish(problem) {
     clearTimeout(timer);
-    close();
     app.kill();
+    // The disk image an app ran from detaches once the app is stopped; a failure to does not change the suite's result.
+    try {
+        close();
+    } catch (error) {
+        console.error(`warning: ${error.message}`);
+    }
     const summary = out.match(CONFORMANCE);
     if (problem || !summary) {
         console.error(`FAIL: ${problem ?? 'the app failed the conformance suite'}:\n${out}`);

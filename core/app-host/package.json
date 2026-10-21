@@ -9,7 +9,8 @@
         "android",
         "cpp",
         "js",
-        "third_party"
+        "third_party",
+        "windows"
     ],
     "dependencies": {
         "@crossbind/core-embind-jsi": "workspace:^"

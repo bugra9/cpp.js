@@ -272,8 +272,8 @@ function androidAppRows() {
     ];
 }
 
-// The WebView2 SDK headers a Windows host compiles against. webview/webview loads the WebView2 Runtime itself, without
-// the SDK's loader.
+// The WebView2 SDK headers a Windows host compiles against, and the NSIS its setup program carries. webview/webview
+// loads the WebView2 Runtime itself, without the SDK's loader.
 function windowsAppRows(hostRoot) {
     const license = 'BSD-3-Clause';
     return [{
@@ -289,6 +289,19 @@ function windowsAppRows(hostRoot) {
         sourceUrl: `https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/${WEBVIEW2_SDK.version}/microsoft.web.webview2.${WEBVIEW2_SDK.version}.nupkg`,
         licenseNotes: "the WebView2 SDK's headers from the windows toolchain image, whose interface IDs the host compiles in",
         licenseText: textOf(path.join(hostRoot, 'third_party', 'webview2', 'LICENSE')),
+    }, {
+        npmName: '@crossbind/core-app-host',
+        name: 'nsis',
+        version: '3.11',
+        nativeVersion: '3.11',
+        sha256: null,
+        license: 'Zlib AND MIT',
+        licenseDeclared: 'Zlib AND MIT',
+        licenseSelected: null,
+        isCopyleft: false,
+        sourceUrl: 'https://sources.debian.org/src/nsis/3.11-1/',
+        licenseNotes: "the installer stub and plugins the app's setup program carries, from Debian's nsis in the windows toolchain image: zlib/libpng, but for the System plugin's Call.S, MIT",
+        licenseText: textOf(path.join(hostRoot, 'third_party', 'nsis', 'LICENSE')),
     }];
 }
 

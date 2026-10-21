@@ -249,13 +249,16 @@ describe('collectLicenseRows for an app', () => {
         expect(byName['llvm-runtimes'].license).toBe('Apache-2.0 WITH LLVM-exception');
     });
 
-    test('names, for a Windows app, the Hermes source it builds, the WebView2 SDK it compiles against and the runtimes it links', async () => {
+    test('names, for a Windows app, the Hermes source it builds, the WebView2 SDK it compiles against, the runtimes it links and the NSIS its setup program carries', async () => {
         const rows = await collectLicenseRows('win32', { runtimeEnv: 'app' });
         const byName = Object.fromEntries(rows.map((row) => [row.name, row]));
 
         expect(rows.map((row) => row.name)).toEqual([
-            'crossbind', 'emscripten-embind', 'hermes', 'jsi', 'llvm-runtimes', 'mingw-w64-runtime', 'webview', 'webview2-sdk',
+            'crossbind', 'emscripten-embind', 'hermes', 'jsi', 'llvm-runtimes', 'mingw-w64-runtime', 'nsis', 'webview', 'webview2-sdk',
         ]);
+        expect(byName.nsis.license).toBe('Zlib AND MIT');
+        expect(byName.nsis.licenseText).toContain('ZLIB/LIBPNG LICENSE');
+        expect(byName.nsis.licenseText).toContain('Copyright (c) 2008 Thomas Gaugler');
         expect(byName.hermes.sourceUrl).toMatch(/^https:\/\/github\.com\/facebook\/hermes\/archive\/refs\/tags\/hermes-v.+\.tar\.gz$/);
         expect(byName['webview2-sdk'].license).toBe('BSD-3-Clause');
         expect(byName['webview2-sdk'].sha256).toMatch(/^[0-9a-f]{64}$/);

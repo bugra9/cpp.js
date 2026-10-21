@@ -37,9 +37,9 @@ export default defineConfig({ plugins: [viteCrossbindPlugin()] });
 | Command | What it does |
 |---|---|
 | `crossbind app dev` | Builds the host for this machine and opens the app on the dev server. An edit to the page reloads it; an edit to native code, or to what the page imports from it, rebuilds the host and opens the app again. The page's console shows in the terminal, and closing the window ends the session. |
-| `crossbind app build` | Builds the page and the host and writes the app: `dist/<name>.app`, signed ad hoc, on macOS; `dist/<name>-linux-<arch>/` and the same as a `.tar.gz` on Linux. |
-| `crossbind app build -p linux` | Writes the Linux app for x64 and arm64, on a Mac as well: `dist/<name>-linux-x64/` and `dist/<name>-linux-arm64/`, each with its `.tar.gz`. A Linux app's development session runs on Linux. |
-| `crossbind app build -p windows` | Writes the Windows app for x64 and arm64, on a Mac or a Linux machine as well: `dist/<name>-win32-x64/` and `dist/<name>-win32-arm64/`, each with its `.zip`. A Windows app's development session runs on Windows. |
+| `crossbind app build` | Builds the page and the host and writes the app with what installs it (see [Installers](#installers)): `dist/<name>.app`, signed ad hoc, and `dist/<name>.dmg` on macOS; `dist/<name>-linux-<arch>/`, the same as a `.tar.gz`, and its `.deb` on Linux. |
+| `crossbind app build -p linux` | Writes the Linux app for x64 and arm64, on a Mac as well: `dist/<name>-linux-x64/` and `dist/<name>-linux-arm64/`, each with its `.tar.gz` and `.deb`. A Linux app's development session runs on Linux. |
+| `crossbind app build -p windows` | Writes the Windows app for x64 and arm64, on a Mac or a Linux machine as well: `dist/<name>-win32-x64/` and `dist/<name>-win32-arm64/`, each with its `.zip` and `-setup.exe`. A Windows app's development session runs on Windows. |
 | `crossbind build -p host -e app` | Builds the host alone, with no page in it: `<paths.output>/<name>.darwin-<arch>.app` on macOS, `<paths.output>/<name>.linux-<arch>` and its `.tar.gz` on Linux. `-p linux` or `-p win32` builds a Linux app, or a Windows app with its `.zip`, from a Mac as well. |
 | `crossbind app dev -p ios` | Builds the host for the iOS Simulator and opens the app there on the dev server: in the Simulator already booted, else in an iPhone of the newest iOS. Edits reload the page or rebuild the host as on the desktop, and ending the app in the Simulator ends the session. |
 | `crossbind app build -p ios` | Builds the page and the host for devices and the Simulator and writes the app's Xcode project, `dist/<name>-ios/` (see [iOS](#ios)). |
@@ -112,8 +112,8 @@ app: {
 - macOS: `icon.icns` in the bundle, 16 to 1024 pixels, which the Dock and Finder show as the PNG is: a Mac icon keeps
   a transparent margin of its own.
 - Windows: the executable's icon, 16 to 256 pixels, which Explorer, the taskbar and the window show.
-- Linux: the window's icon, 512 pixels. GNOME on Wayland shows an installed app's desktop entry instead, which
-  crossbind does not write yet.
+- Linux: the window's icon, 512 pixels, and the menu's, which the Debian package installs. GNOME on Wayland shows the
+  menu's for the window too.
 - iOS: one 1024 × 1024 image, its transparent parts white, from which Xcode makes every size and whose corners iOS
   rounds: the App Store takes no transparent icon.
 - Android: an adaptive icon, the whole PNG, its margin too, in the middle two thirds of a white square, which the
@@ -121,6 +121,29 @@ app: {
 
 Without `app.icon` an app has the system's default icon. A path that names no square PNG stops the build. Each size is
 resampled from the PNG, so a small one blurs when enlarged.
+
+## Installers
+
+`crossbind app build` writes what installs a desktop app beside it:
+
+- macOS: `dist/<name>.dmg`, a disk image that holds the app beside a link to Applications, onto which its user drags
+  it.
+- Linux: `dist/<name>-linux-<arch>.deb`, a Debian package that puts the app in `/usr/lib/<package>`, its command in
+  `/usr/bin` and its entry and icon in the menu. It depends on WebKitGTK 4.1, release 2.40 or later, and GTK 3, which
+  `apt install ./<name>-linux-<arch>.deb` installs with it. The package is named after `general.name`, in lower case
+  with a hyphen for each underscore, from its first letter or digit; package.json's `author` and `description` are its
+  maintainer and description, and the app's name stands for both without them.
+- Windows: `dist/<name>-win32-<arch>-setup.exe`, which installs the app for the user who runs it, with no
+  administrator's approval, in `%LOCALAPPDATA%\Programs\<app name>`. It adds the app to the Start menu and to the apps
+  Settings lists, whose Uninstall removes it again and leaves its data, and when the system has no WebView2 Runtime it
+  downloads Microsoft's bootstrapper, which installs it. While the app runs, an update or Uninstall asks to close it
+  and changes nothing. `/S` installs without a window. NSIS, in crossbind's windows image, builds it.
+
+The Debian package and the shortcut and folder take their names from the app's, so a `general.name` that makes no
+Debian name, or an app name with any of `< > : / | ? *` or a space or dot at its end, stops `crossbind app build` before
+anything compiles.
+
+None of them is signed yet (see [Limits](#limits)).
 
 ## The app's functions
 
@@ -333,7 +356,7 @@ linked in and no DLL beside it: webview/webview loads the system's WebView2 Runt
 `jsi.cpp` from the same release and webview/webview, each with its version, its sha256 and its license text; with
 `--platform linux`, the Hermes source and the libc++ a Linux app links; with `--platform win32`, the Hermes source, the
 WebView2 SDK and the llvm-mingw and mingw-w64 runtimes a Windows app links, whose notices its build copies out of the
-image; with `--platform ios`, no webview/webview, which an iOS app does not use; with `--platform android`, Hermes'
+image, and the NSIS its setup program carries; with `--platform ios`, no webview/webview, which an iOS app does not use; with `--platform android`, Hermes'
 AAR, the fbjni and androidx.webkit Gradle adds and the NDK's libc++ the app carries. `--notices` writes them to a file
 to ship with the app.
 
@@ -353,13 +376,17 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
 - Linux: a glibc system with WebKitGTK 4.1, release 2.40 or later (`libwebkit2gtk-4.1-0` on Debian and Ubuntu),
   measured on Ubuntu 22.04. A Linux app builds in crossbind's linux image, so it needs Docker (`RUNNER=DOCKER_RUN` or
   `DOCKER_EXEC`), on a Mac as well.
-- The ad hoc signature opens the app on the Mac that built it. Developer ID signing and notarization are not wired yet.
+- The ad hoc signature opens the app on the Mac that built it, from its disk image as well. Developer ID signing and
+  notarization are not wired yet.
 - Windows, x64 and arm64, with the WebView2 Runtime, which Windows 11 includes; measured on GitHub's Windows Server
   2025 runner with WebView2 154 and its Windows 11 arm64 runner with 155. A Windows app builds in crossbind's windows
   image, so it needs Docker (`RUNNER=DOCKER_RUN` or `DOCKER_EXEC`), on a Mac or a Linux machine as well. Building
   one or developing it on a Windows machine has not been measured yet.
-- A Windows app is not signed, so SmartScreen warns about it once it is downloaded. Authenticode signing is not wired
-  yet.
+- A Windows app and its setup program are not signed, so SmartScreen warns about them once they are downloaded.
+  Authenticode signing is not wired yet.
+- The Windows setup program has been built, not yet run on Windows. Its install of the WebView2 Runtime, for a system
+  that has none, cannot be measured on the Windows machines crossbind is tested on, which have the runtime; the
+  bootstrapper it downloads over HTTPS runs with no check of its own.
 - On the desktop, one window.
 - On macOS the file dialogs, `shell.revealInFolder`, `app.paths` and `app.quit` have been measured, and so has
   `shell.openExternal` refusing other addresses; `shell.openExternal` opening one and `shell.openPath` opening a file

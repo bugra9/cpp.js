@@ -6,6 +6,7 @@ export { default as buildWasm } from './actions/buildWasm.js';
 export {
     default as buildApp, buildProjectApp, publishApp, appLayout, appOutputName, appTargetParams,
 } from './actions/buildApp.js';
+export { checkInstaller } from './actions/appInstaller.js';
 export { default as openInSimulator, buildForSimulator } from './actions/iosSimulator.js';
 export { default as openOnDevice } from './actions/androidDevice.js';
 export { buildApk } from './actions/androidGradle.js';
