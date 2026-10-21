@@ -14,12 +14,12 @@
     {
       "source": "docs/api/README.md",
       "output": "api/README.md",
-      "sha256": "4ad8f70599ada6db00bdd5572c46d613e9100f6575c1d6cff45f515e6ff8ac0f"
+      "sha256": "1d6aa1a9029cccbe9e8fee2f6276006a04a0146e201ce5d50e24f144090113ec"
     },
     {
       "source": "docs/api/app.md",
       "output": "api/app.md",
-      "sha256": "de3ea44b55275da148d546b779fbdc9fe6499b0f78a34ad86947bfbb40e31bca"
+      "sha256": "20d4f60826332f15e176855d279a4130080f1a69cbff1924b3da0fd93ed85496"
     },
     {
       "source": "docs/api/build-state.md",
@@ -44,7 +44,7 @@
     {
       "source": "docs/api/crossbind-config.md",
       "output": "api/crossbind-config.md",
-      "sha256": "6fb7dd8499d29b92672a9de2a9974752e6b36878f852be690b87f2d3be2c283a"
+      "sha256": "2b165fb98c67f7028d432159db0bcb57a51b6215bf340899052ff7d84ce4fc84"
     },
     {
       "source": "docs/api/filesystem.md",
@@ -119,7 +119,7 @@
     {
       "source": "docs/playbooks/integration/desktop-app.md",
       "output": "integration/desktop-app.md",
-      "sha256": "185410bd009c9660ccf1cc0aa8458b43c558ee5b3b4335ba54bcc5823dbd6492"
+      "sha256": "a89638733fa210a2f36141f02df4b110627259425adf8db576f6322088d78d44"
     },
     {
       "source": "docs/playbooks/integration/nextjs.md",

@@ -15,20 +15,23 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(THIRD_PARTY "${CMAKE_CURRENT_SOURCE_DIR}/../third_party")
 if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    set(PLATFORM_SOURCES src/ios/main.mm src/ios/bundle.mm src/darwin/channels.mm src/darwin/dialogs.mm src/darwin/navigation.mm)
+    set(PLATFORM_SOURCES src/ios/main.mm src/ios/bundle.mm src/darwin/app_api.mm src/darwin/channels.mm src/darwin/dialogs.mm
+        src/darwin/navigation.mm)
 elseif(APPLE)
-    set(PLATFORM_SOURCES src/darwin/bundle.mm src/darwin/channels.mm src/darwin/dialogs.mm src/darwin/menu.mm src/darwin/navigation.mm)
+    set(PLATFORM_SOURCES src/darwin/app_api.mm src/darwin/bundle.mm src/darwin/channels.mm src/darwin/dialogs.mm src/darwin/menu.mm
+        src/darwin/navigation.mm)
 elseif(ANDROID)
     set(PLATFORM_SOURCES src/android/jni.cpp)
 elseif(WIN32)
     enable_language(RC)
-    set(PLATFORM_SOURCES src/windows/app.cpp src/windows/channels.cpp src/windows/com.cpp src/windows/navigation.cpp src/windows/app.rc)
+    set(PLATFORM_SOURCES src/windows/app.cpp src/windows/app_api.cpp src/windows/channels.cpp src/windows/com.cpp
+        src/windows/navigation.cpp src/windows/app.rc)
     # llvm-windres reads a script as Windows-1252, whatever #pragma code_page it holds, and the app's name is UTF-8. It
     # reports no headers either, so a new name, version or manifest would leave the old resources.
     set_source_files_properties(src/windows/app.rc PROPERTIES COMPILE_OPTIONS --codepage=65001 OBJECT_DEPENDS
         "${CMAKE_BINARY_DIR}/crossbind_app.h;${CMAKE_CURRENT_SOURCE_DIR}/src/windows/app.manifest")
 else()
-    set(PLATFORM_SOURCES src/linux/app.cpp src/linux/channels.cpp src/linux/navigation.cpp)
+    set(PLATFORM_SOURCES src/linux/app.cpp src/linux/app_api.cpp src/linux/channels.cpp src/linux/navigation.cpp)
 endif()
 if(APPLE)
     set(CMAKE_OBJCXX_STANDARD 20)
@@ -36,6 +39,7 @@ endif()
 
 set(SOURCES
     src/app.cpp
+    src/app_api.cpp
     src/host_core.cpp
     ${PLATFORM_SOURCES}
     "${CROSSBIND_JSI_ROOT}/cpp/src/emscripten/bind.cpp"
@@ -56,7 +60,9 @@ target_compile_definitions(app PRIVATE "$<$<CONFIG:Debug>:CROSSBIND_APP_DEV>")
 
 target_include_directories(app PRIVATE
     src
-    # crossbind_app.h, the app's name and window, which crossbind writes here.
+    # <crossbind/app.h>, which the app's own code includes as well.
+    include
+    # crossbind_app.h, where the page opens files and a desktop app's name and window, which crossbind writes here.
     "${CMAKE_BINARY_DIR}"
     "${CROSSBIND_HERMES}/include"
     "${CROSSBIND_JSI_ROOT}/cpp/src"
@@ -78,7 +84,8 @@ if(APPLE)
     # initializers reach stays, without the local symbols of a release build.
     target_link_options(app PRIVATE "-F${CROSSBIND_HERMES}/Library/Frameworks/macosx" "LINKER:-rpath,@executable_path/../Frameworks"
         "LINKER:-dead_strip" "$<$<CONFIG:Release>:LINKER:-x>")
-    target_link_libraries(app PRIVATE "-framework hermesvm" "-framework WebKit" "-framework Cocoa" "-framework CoreServices")
+    target_link_libraries(app PRIVATE "-framework hermesvm" "-framework WebKit" "-framework Cocoa" "-framework CoreServices"
+        "-framework UniformTypeIdentifiers")
 elseif(ANDROID)
     # Hermes comes with the app from its own package; the C++ runtime the host shares with it is this NDK's, which goes
     # beside the host, stripped.

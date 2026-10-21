@@ -3,8 +3,11 @@
 // What a platform gives the host: the webview's channels, its URL scheme, its navigation rule and where the app's
 // files are. darwin/ implements it with WKWebView on macOS and iOS (ios/ has the iOS app's own parts), linux/ with
 // WebKitGTK, windows/ with WebView2.
+#include "crossbind/app.h"
+
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -53,6 +56,24 @@ void showPageDialogs(void *webView);
 void showError(const std::string &message);
 // Where the app's files are.
 std::string resourceDir();
+
+// The app's functions behind crossbind/app and <crossbind/app.h>. Each is called on the module's thread, works on the
+// main thread and calls done there: a dialog with what its user picked, or nothing when they cancelled; the others with
+// why they failed, or nothing. A platform that has no such function throws.
+using Picked = std::optional<std::vector<std::string>>;
+using Failure = std::optional<std::string>;
+void showOpenDialog(crossbind::app::OpenOptions options, std::function<void(Picked)> done);
+void showSaveDialog(crossbind::app::SaveOptions options, std::function<void(std::optional<std::string>)> done);
+// An http, https or mailto address, which the caller has checked.
+void openUrl(std::string url, std::function<void(Failure)> done);
+void openFile(std::string path, std::function<void(Failure)> done);
+void revealFile(std::string path, std::function<void(Failure)> done);
+// The app's folders, made if missing; on any thread.
+crossbind::app::Paths appPaths();
+// Ends the app on the main thread, as closing its window does.
+void quitApp();
+// The window the app's dialogs belong to.
+void setMainWindow(void *window);
 
 #ifdef __APPLE__
 // macOS sends the standard shortcuts, ⌘C and ⌘Q among them, through the menu bar, so a window without the app, Edit,

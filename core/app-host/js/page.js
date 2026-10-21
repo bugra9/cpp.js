@@ -76,4 +76,12 @@ initNative.terminate = () => {
     booted = null;
 };
 
-globalThis.Crossbind = { initNative };
+// One of the app's own functions, which crossbind/app calls: its answer, or the error the host gave.
+async function callApp(name, options) {
+    if (!token) throw new Error("crossbind: only the top frame of an app's own page reaches the app's functions");
+    const [failed, value] = JSON.parse(await (await transport).send(token + JSON.stringify(['app', 0, [name], [options]])));
+    if (failed) throw Object.assign(new Error(value.message), { name: value.name });
+    return value;
+}
+
+globalThis.Crossbind = { initNative, app: callApp };

@@ -76,20 +76,6 @@ std::string randomToken() {
     return token;
 }
 
-// A reply the page decodes as a failed call.
-std::string errorReply(const std::string &message) {
-    std::string escaped;
-    for (const char c : message) {
-        if (static_cast<unsigned char>(c) < 0x20) {
-            escaped += ' ';
-            continue;
-        }
-        if (c == '"' || c == '\\') escaped += '\\';
-        escaped += c;
-    }
-    return "[1,{\"name\":\"Error\",\"message\":\"" + escaped + "\"}]";
-}
-
 void setFunction(jsi::Runtime &rt, const char *name, unsigned params, jsi::HostFunctionType fn) {
     rt.global().setProperty(rt, name, jsi::Function::createFromHostFunction(rt, jsi::PropNameID::forAscii(rt, name), params, std::move(fn)));
 }
@@ -151,6 +137,19 @@ SchemeResponse pageFile(const std::string &pageDir, const std::string &path) {
 }
 
 }  // namespace
+
+std::string errorReply(const std::string &message) {
+    std::string escaped;
+    for (const char c : message) {
+        if (static_cast<unsigned char>(c) < 0x20) {
+            escaped += ' ';
+            continue;
+        }
+        if (c == '"' || c == '\\') escaped += '\\';
+        escaped += c;
+    }
+    return "[1,{\"name\":\"Error\",\"message\":\"" + escaped + "\"}]";
+}
 
 std::string readFile(const std::string &path) {
     std::ifstream file(path, std::ios::binary);
@@ -255,6 +254,16 @@ void Core::installHostFunctions(jsi::Runtime &rt) {
         auto bytes = fromBase64(args[0].asString(rt).utf8(rt));
         return jsi::Value(rt, jsi::ArrayBuffer(rt, std::make_shared<VectorBuffer>(std::move(bytes))));
     });
+    // A call of the page to one of the app's functions, which callApp answers once the main thread has done it.
+    setFunction(rt, "__app_call", 3, [this](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args, size_t) {
+        const auto pending = replies_.find(args[0].asString(rt).utf8(rt));
+        if (pending != replies_.end()) {
+            ReplyFn reply = std::move(pending->second);
+            replies_.erase(pending);
+            callApp(rt, args[1].asString(rt).utf8(rt), args[2], std::move(reply));
+        }
+        return jsi::Value::undefined();
+    });
     setFunction(rt, "__host_reply", 2, [this](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args, size_t) {
         const auto pending = replies_.find(args[0].asString(rt).utf8(rt));
         if (pending != replies_.end()) {
@@ -275,6 +284,8 @@ std::string Core::boot(std::string bundle, const std::string &sourceUrl, const s
             rt.evaluateJavaScript(std::make_shared<jsi::StringBuffer>(std::move(bundle)), sourceUrl);
             emscripten::internal::_embind_initialize_bindings(rt, dataPath);
             rt.global().getPropertyAsFunction(rt, "__crossbind_start").call(rt);
+            // The main thread waits for this boot, so it answers the module's waits from now on alone.
+            answerWaits(true);
             booted.set_value("");
         } catch (const jsi::JSError &error) {
             booted.set_value(error.getMessage() + "\n" + error.getStack());

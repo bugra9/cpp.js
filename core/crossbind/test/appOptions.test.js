@@ -1,7 +1,24 @@
 import { describe, expect, test } from 'vitest';
-import { appDisplayName, appHeader, appWindow } from '../src/utils/appOptions.js';
+import { appDisplayName, appHeader, appId, appWindow } from '../src/utils/appOptions.js';
 
 const config = (app = {}, version = '1.2.3') => ({ general: { name: 'demo-app' }, app, package: { version } });
+
+describe("an app's id", () => {
+    test("is app.id, else one made from the project's name", () => {
+        expect(appId(config({ id: 'com.example.demo' }))).toBe('com.example.demo');
+        expect(appId({ general: { name: '@scope/my app' }, app: {} })).toBe('dev.crossbind.-scope-my-app');
+    });
+
+    test('takes letters, digits, hyphens and dots alone, as it names folders as well', () => {
+        expect(() => appId(config({ id: 'com.example/demo' }))).toThrow('app.id');
+    });
+
+    test('has no empty part, which would name the folder above the app\'s own', () => {
+        ['.', '..', 'com..example', '.com.example', 'com.example.'].forEach((id) => {
+            expect(() => appId(config({ id }))).toThrow(`app.id ${JSON.stringify(id)} is no bundle id`);
+        });
+    });
+});
 
 describe("an app's name", () => {
     test("is app.name, else the project's name", () => {
@@ -58,6 +75,8 @@ describe("the header a desktop app's host builds with", () => {
     test('defines the name and the window', () => {
         expect(appHeader(config({ name: 'Demo App', window: { width: 800, height: 600, minWidth: 400 } }), 'darwin')).toBe([
             '// crossbind writes this file from crossbind.config.js and package.json.',
+            '#define CROSSBIND_APP_OPEN_PATH {}',
+            '#define CROSSBIND_APP_ID "dev.crossbind.demo-app"',
             '#define CROSSBIND_APP_NAME "Demo App"',
             '#define CROSSBIND_APP_WINDOW_WIDTH 800',
             '#define CROSSBIND_APP_WINDOW_HEIGHT 600',
@@ -73,6 +92,24 @@ describe("the header a desktop app's host builds with", () => {
         expect(appHeader(config({}, '1.2.3.4+build.5'), 'win32')).toContain('#define CROSSBIND_APP_VERSION_NUMBERS 1,2,3,4\n');
         expect(appHeader(config({}, '2.1'), 'win32')).toContain('#define CROSSBIND_APP_VERSION_NUMBERS 2,1,0,0\n');
         expect(appHeader({ general: { name: 'demo' }, app: {} }, 'win32')).toContain('#define CROSSBIND_APP_VERSION_NUMBERS 1,0,0,0\n');
+    });
+
+    test("lists where the page's shell.openPath opens files: nowhere without app.openPath", () => {
+        expect(appHeader(config(), 'linux')).toContain('#define CROSSBIND_APP_OPEN_PATH {}\n');
+        expect(appHeader(config({ openPath: ['logs', 'picked'] }), 'win32')).toContain('#define CROSSBIND_APP_OPEN_PATH {"logs", "picked"}\n');
+    });
+
+    test("gives a phone's host that list alone, so the desktop's options do not stop its build", () => {
+        expect(appHeader(config({ openPath: ['data'], id: 'com.example.my_app', window: 800 }), 'android')).toBe([
+            '// crossbind writes this file from crossbind.config.js and package.json.',
+            '#define CROSSBIND_APP_OPEN_PATH {"data"}',
+            '',
+        ].join('\n'));
+    });
+
+    test('refuses anything but a list of data, cache, logs and picked', () => {
+        expect(() => appHeader(config({ openPath: 'data' }), 'ios')).toThrow('app.openPath "data" is no list');
+        expect(() => appHeader(config({ openPath: ['data', 'home'] }), 'darwin')).toThrow('"home" is none of them');
     });
 
     test('refuses a version Windows cannot carry on Windows alone', () => {

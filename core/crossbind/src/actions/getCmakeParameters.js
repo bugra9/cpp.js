@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import state from '../state/index.js';
 import getData from './getData.js';
+import { compilesAsApp } from '../utils/appApiHeader.js';
 
 export default function getCmakeParameters(target, options = {}) {
     if (!options || typeof options !== 'object' || Array.isArray(options)) {
@@ -37,7 +38,9 @@ export default function getCmakeParameters(target, options = {}) {
     const buildType = sharedPlatforms.includes(target.platform) && target.runtimeEnv !== 'app' ? 'SHARED' : 'STATIC';
     const otherBuildType = buildType === 'STATIC' ? 'SHARED' : 'STATIC';
 
-    const cmakeCompileOptions = [...new Set(getData('cmake', target)?.compileOptions || [])];
+    // An app's own code can tell it is one, to reach <crossbind/app.h>.
+    const appOptions = compilesAsApp(target) ? ['-DCROSSBIND_APP'] : [];
+    const cmakeCompileOptions = [...new Set([...(getData('cmake', target)?.compileOptions || []), ...appOptions])];
 
     params.push(...[
         `-DPROJECT_NAME=${options.name || state.config.general.name}`,

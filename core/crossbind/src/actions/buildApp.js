@@ -25,7 +25,7 @@ import logger from '../utils/logger.js';
 import findFiles from '../utils/findFiles.js';
 import { getContentHash, getFilesFingerprint } from '../utils/hash.js';
 import { xmlPlist } from '../utils/plist.js';
-import { appDisplayName, appHeader } from '../utils/appOptions.js';
+import { appDisplayName, appHeader, appId } from '../utils/appOptions.js';
 import writeIfChanged from '../utils/writeIfChanged.js';
 import { writeNativeSourceStamp } from '../utils/nativeSourceStamp.js';
 import resetCMakeCacheForSource from '../utils/resetCMakeCacheForSource.js';
@@ -104,15 +104,6 @@ export function appTargetParams({ dev = false } = {}, env = process.env) {
     return getTargetParams({ platform: ['ios'], arch: dev ? ['iphonesimulator'] : IOS_SDKS, runtime: ['mt'], runtimeEnv: ['app'] }, true);
 }
 
-// An app's bundle id: the project's app.id, else one made from the project's name.
-function appId() {
-    const id = state.config.app.id ?? `dev.crossbind.${state.config.general.name.replace(/[^A-Za-z0-9.-]/g, '-')}`;
-    if (!/^[A-Za-z0-9.-]+$/.test(id)) {
-        throw new Error(`crossbind: app.id ${JSON.stringify(id)} is no bundle id, which takes letters, digits, hyphens and dots, as com.example.app does.`);
-    }
-    return id;
-}
-
 // The Apple team that signs an iOS app: the project's app.team, else the machine's XCODE_DEVELOPMENT_TEAM, else none.
 function appTeam() {
     const team = state.config.app.team ?? state.config.system.XCODE_DEVELOPMENT_TEAM ?? '';
@@ -187,7 +178,7 @@ async function bundle(input, file, plugins) {
 const infoPlist = (name, version) => xmlPlist({
     CFBundleDisplayName: appDisplayName(state.config),
     CFBundleExecutable: name,
-    CFBundleIdentifier: appId(),
+    CFBundleIdentifier: appId(state.config),
     CFBundleName: appDisplayName(state.config),
     CFBundlePackageType: 'APPL',
     CFBundleShortVersionString: version,
@@ -304,7 +295,7 @@ export function publishApp(target, { to = appOutputPath(target), page = null } =
     const built = `${state.config.paths.build}/${target.appName}`;
     if (target.platform === 'ios') {
         const parts = appParts(target).map(({ arch, dir }) => ({ sdk: arch, dir }));
-        writeXcodeProject(to, { parts, identity: { id: appId(), team: appTeam() }, label: appDisplayName(state.config), version: appVersion() });
+        writeXcodeProject(to, { parts, identity: { id: appId(state.config), team: appTeam() }, label: appDisplayName(state.config), version: appVersion() });
     } else if (target.platform === 'android') {
         writeGradleProject(to, { parts: appParts(target), id: androidAppId(), label: appDisplayName(state.config), version: androidVersion() });
     } else if (path.resolve(to) !== path.resolve(built)) {
@@ -337,9 +328,9 @@ export default async function buildApp(target, { bridges = [], force = false } =
         logger.info(`[${target.path}] app skipped (cargo package - staticlib only)`);
         return false;
     }
-    // A desktop host's title and window, and a Windows one's version: a bad app section stops the build before anything
-    // compiles.
-    const header = ['darwin', 'linux', 'win32'].includes(target.platform) ? appHeader(state.config, target.platform) : null;
+    // Where the page opens files, a desktop host's title and window, and a Windows one's version: a bad app section stops
+    // the build before anything compiles.
+    const header = appHeader(state.config, target.platform);
 
     const buildType = target.buildType === 'release' ? 'Release' : 'Debug';
     const { build } = state.config.paths;
@@ -396,7 +387,7 @@ export default async function buildApp(target, { bridges = [], force = false } =
     logger.startStep(target, 'app');
     resetCMakeCacheForSource(workDir, `${appHostRoot}/cpp`, target);
     // The host includes it from its build directory; written only when it changed, it recompiles nothing otherwise.
-    if (header) writeIfChanged(`${workDir}/crossbind_app.h`, header);
+    writeIfChanged(`${workDir}/crossbind_app.h`, header);
     run(null, [
         // An iOS host builds with crossbind's iOS toolchain file rather than as an Xcode project of its own.
         target.platform === 'ios' ? 'ios-cmake' : 'cmake', `${appHostRoot}/cpp`,

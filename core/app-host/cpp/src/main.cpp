@@ -55,6 +55,7 @@ int main() {
 #ifdef __APPLE__
         installAppMenu();
 #endif
+        setMainWindow(view.window().value());
         void *webView = view.browser_controller().value();
 #ifndef __APPLE__
         registerSchemeHandler(webView, "crossbind", schemeHandler);

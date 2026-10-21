@@ -11,6 +11,7 @@ import state from '../state/index.js';
 import logger from '../utils/logger.js';
 import { WASI_EMULATION_LIBS, WASI_LINK_LIBS, wasiCFlags, wasiCxxFlags } from '../utils/wasiToolchain.js';
 import { stageWasiHttpInclude, wasiHttpHeader } from '../utils/wasiHttp.js';
+import { appApiHeader, compilesAsApp, stageAppApiInclude } from '../utils/appApiHeader.js';
 import { getFilesFingerprint, getContentHash } from '../utils/hash.js';
 import { withDependencyBridges } from '../utils/dependencyBridges.js';
 import { targetArchiveFlags } from '../utils/archiveFlags.js';
@@ -65,7 +66,9 @@ export default function createLib(target, fileType, options = {}) {
         : null;
     // An Android app links the project's archives from the build where React Native's shared library comes from.
     const appArchives = target.platform === 'android' && target.runtimeEnv === 'app' ? 'archives' : null;
-    const extraKeys = [httpHeader, appArchives].filter(Boolean);
+    // An app's own code compiles against <crossbind/app.h>, with CROSSBIND_APP defined.
+    const appApi = compilesAsApp(target) ? getFilesFingerprint([appApiHeader()]) : null;
+    const extraKeys = [httpHeader, appArchives, appApi].filter(Boolean);
     const flagsFingerprint = getContentHash(JSON.stringify(extraKeys.length ? [keyInputs, ...extraKeys] : keyInputs));
     const flagsChanged = !fs.existsSync(flagsFingerprintFile)
         || fs.readFileSync(flagsFingerprintFile, { encoding: 'utf8' }) !== flagsFingerprint;
@@ -152,10 +155,12 @@ export default function createLib(target, fileType, options = {}) {
             buildEnv.params.push('-e', e);
         });
     } else {
-        // The source of an http build includes <crossbind/http.h>.
-        const headerDirs = target.platform === 'wasi'
-            ? [...(options.headerDirs ?? []), stageWasiHttpInclude(state.config.paths.cli, `${buildPath}/crossbind-wasi-http`)]
-            : options.headerDirs;
+        // The source of an http build includes <crossbind/http.h>, and an app's own code <crossbind/app.h>.
+        const headerDirs = [
+            ...(options.headerDirs ?? []),
+            ...(target.platform === 'wasi' ? [stageWasiHttpInclude(state.config.paths.cli, `${buildPath}/crossbind-wasi-http`)] : []),
+            ...(compilesAsApp(target) ? [stageAppApiInclude(`${buildPath}/crossbind-app`)] : []),
+        ];
         buildParams = getCmakeParameters(target, { ...options, nativeGlob, headerDirs });
 
         triggerExtensions('createLib', 'setFlagWithoutBuildConfig', [buildEnv]);

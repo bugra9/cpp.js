@@ -24,6 +24,12 @@ namespace jsi = facebook::jsi;
 using Clock = std::chrono::steady_clock;
 
 std::string readFile(const std::string &path);
+// The reply of a call that failed, as the page decodes it.
+std::string errorReply(const std::string &message);
+// A call of the page to one of the app's functions through crossbind/app, which reply answers once it is done.
+void callApp(jsi::Runtime &rt, const std::string &name, const jsi::Value &options, ReplyFn reply);
+// Whether the main thread answers the waits of <crossbind/app.h>: from the module's start until the app quits.
+void answerWaits(bool answer);
 
 // Runs every JS task on one thread, as JSI requires, and drains Hermes' microtasks after each, so a reply that waits
 // on a promise goes out before the next message.
@@ -63,7 +69,11 @@ public:
     void serve(SchemeRequest request, SchemeRespond respond);
     // A new page replaced the one that held the module's objects.
     void reset();
-    void stop() { js_.stop(); }
+    void stop() {
+        // A wait of the module's code would hold the join below forever.
+        answerWaits(false);
+        js_.stop();
+    }
     const std::string &token() const { return token_; }
 
     // Every response lets any origin read it, as a page from a dev server needs.

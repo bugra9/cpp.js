@@ -1,8 +1,6 @@
 #include "platform.h"
 #include "windows/com.h"
 
-#include <shellapi.h>
-
 #include <algorithm>
 
 using namespace crossbind::windows;
@@ -28,14 +26,6 @@ bool allows(const Lock &lock, const std::string &uri) {
     // A blob URL carries the origin of the page that made it.
     if (uri.rfind("blob:", 0) == 0) return allows(lock, uri.substr(5));
     return std::find(lock.origins.begin(), lock.origins.end(), originOf(uri)) != lock.origins.end();
-}
-
-void openOutside(const std::string &uri) {
-    const std::string scheme = uri.substr(0, uri.find(':'));
-    if (scheme != "http" && scheme != "https" && scheme != "mailto") return;
-    // The URL goes into the command line of its scheme's handler, where a quote or a space would split it.
-    if (std::any_of(uri.begin(), uri.end(), [](unsigned char c) { return c <= ' ' || c == '"' || c == 0x7f; })) return;
-    ShellExecuteW(nullptr, L"open", wide(uri).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 using Starting = Handler<ICoreWebView2NavigationStartingEventHandler, ICoreWebView2 *, ICoreWebView2NavigationStartingEventArgs *>;

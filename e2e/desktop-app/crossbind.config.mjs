@@ -23,6 +23,8 @@ export default {
     // Smaller than every runner's display, which would hold the window to less; src/main.js checks the page has it.
     app: {
         window: { width: 800, height: 600 },
+        // src/main.js checks the page opens files in the data folder alone.
+        openPath: ['data'],
     },
     paths: {
         config: import.meta.url,

@@ -1,4 +1,5 @@
-// What a user sees of an app, from the app section of crossbind.config.js: its name and, on the desktop, its window.
+// The app section of crossbind.config.js: what a user sees of an app, its name and, on the desktop, its window, and where
+// its page opens files.
 
 const WINDOW_DEFAULTS = { width: 1024, height: 768, minWidth: 0, minHeight: 0, resizable: true };
 // Larger than any display, and far within the int a host takes a size as.
@@ -7,6 +8,19 @@ const MAX_WINDOW_SIZE = 16384;
 const MAX_VERSION_NUMBER = 65535;
 // Up to four numbers, then a semver prerelease or build part; none of its characters needs escaping in C or RC.
 const WINDOWS_VERSION = /^(\d+(?:\.\d+){0,3})(?:[-+][0-9A-Za-z.+-]*)?$/;
+// What app.openPath can let the page's shell.openPath open: the app's folders as app.paths() names them, and what a
+// dialog picked during this run.
+const OPEN_PATH_PLACES = ['data', 'cache', 'logs', 'picked'];
+
+// An app's bundle id, which also names its folders on the desktop: app.id, else one made from the project's name.
+export function appId(config) {
+    const id = config.app.id ?? `dev.crossbind.${config.general.name.replace(/[^A-Za-z0-9.-]/g, '-')}`;
+    // An empty part would let "." or ".." name the folder above the app's own.
+    if (typeof id !== 'string' || !/^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*$/.test(id)) {
+        throw new Error(`crossbind: app.id ${JSON.stringify(id)} is no bundle id, which takes dot-separated parts of letters, digits and hyphens, as com.example.app does.`);
+    }
+    return id;
+}
 
 // The name the app shows: its window's title, its macOS menus, its Windows file description and the label under its
 // icon. The project's name, without app.name.
@@ -66,11 +80,30 @@ function windowsVersion(config) {
     return { text: version, numbers: [...numbers, 0, 0, 0].slice(0, 4).join(',') };
 }
 
-// The header a desktop host compiles its title and window from, and a Windows host its version resource.
+// Where the page's shell.openPath opens a file: nowhere unless app.openPath lists it, as opening a program runs it.
+function appOpenPath(config) {
+    const places = config.app.openPath ?? [];
+    if (!Array.isArray(places)) {
+        throw new Error(`crossbind: app.openPath ${JSON.stringify(places)} is no list of ${OPEN_PATH_PLACES.join(', ')}, as ['logs', 'picked'] is.`);
+    }
+    const unknown = places.filter((place) => !OPEN_PATH_PLACES.includes(place));
+    if (unknown.length > 0) {
+        throw new Error(`crossbind: app.openPath takes ${OPEN_PATH_PLACES.join(', ')}; ${unknown.map((place) => JSON.stringify(place)).join(', ')} is none of them.`);
+    }
+    return places;
+}
+
+// The header an app's host compiles where its page opens files from, a desktop host its title and window, and a Windows
+// host its version resource.
 export function appHeader(config, platform) {
+    const comment = '// crossbind writes this file from crossbind.config.js and package.json.';
+    const openPath = `#define CROSSBIND_APP_OPEN_PATH {${appOpenPath(config).map((place) => `"${place}"`).join(', ')}}`;
+    if (!['darwin', 'linux', 'win32'].includes(platform)) return [comment, openPath, ''].join('\n');
     const window = appWindow(config);
     const lines = [
-        '// crossbind writes this file from crossbind.config.js and package.json.',
+        comment,
+        openPath,
+        `#define CROSSBIND_APP_ID "${appId(config)}"`,
         `#define CROSSBIND_APP_NAME "${appDisplayName(config)}"`,
         `#define CROSSBIND_APP_WINDOW_WIDTH ${window.width}`,
         `#define CROSSBIND_APP_WINDOW_HEIGHT ${window.height}`,

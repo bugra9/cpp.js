@@ -89,8 +89,9 @@ public class CrossbindActivity extends Activity {
     private final OnBackInvokedCallback back = () -> webView.goBack();
     private boolean isBackTaken;
 
-    // Starts the module, once per process, and returns the page's token and the dev server's page, or "".
-    private static native String[] nativeStart(String files, String devUrl);
+    // Starts the module, once per process, and returns the page's token and the dev server's page, or "". data and cache
+    // are the app's folders, which crossbind/app's paths() names.
+    private static native String[] nativeStart(String files, String devUrl, String data, String cache);
 
     private static native void nativeMessage(int call, byte[] text);
 
@@ -159,7 +160,7 @@ public class CrossbindActivity extends Activity {
             url = null;
         }
         boolean isDebuggable = (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
-        String[] started = nativeStart(installFiles().getPath(), url);
+        String[] started = nativeStart(installFiles().getPath(), url, getFilesDir().getPath(), getCacheDir().getPath());
         token = started[0];
         String devUrl = started[1];
         origins.add(APP_ORIGIN);
