@@ -34,6 +34,15 @@ let waitingEvents = 0;
 let poll = null;
 let isListening = false;
 const STOP = '[0,null]';
+// The links of app.urlSchemes the page has not been handed: those that came before it asked for them since it loaded, the
+// one the app was launched with among them. Each reaches the page once, in the answer or as the event open-url.
+const launchUrls = [];
+const MAX_LAUNCH_URLS = 1000;
+let isAskedForLinks = false;
+
+function holdLink(url) {
+    if (launchUrls.length < MAX_LAUNCH_URLS) launchUrls.push(url);
+}
 
 let module = null;
 let root = null;
@@ -260,7 +269,10 @@ export function installHost(embindModule, env) {
     globalThis.__crossbind_receive = (call, text) => {
         const message = JSON.parse(text);
         // One of the app's own functions, which the host answers once the main thread has done it.
-        if (message[0] === 'app') {
+        if (message[0] === 'app' && message[2][0] === 'app.launchUrls') {
+            isAskedForLinks = true;
+            __host_reply(call, JSON.stringify([0, launchUrls.splice(0)]));
+        } else if (message[0] === 'app') {
             __app_call(call, message[2][0], message[3][0]);
         } else if (message[0] === 'events') {
             // The page's request for pushes waits for them. A second one, as from a second copy of the page's script,
@@ -287,13 +299,26 @@ export function installHost(embindModule, env) {
             // The JS thread prints it, after crossbind's name.
             throw new Error(`the event ${name} carries no JSON text: ${error.message}`, { cause: error });
         }
+        // The host's own event, which carries a link: held until the page has asked for those that came before.
+        if (name === 'open-url') {
+            if (typeof value?.url !== 'string') return;
+            if (!isAskedForLinks || !isListening) {
+                holdLink(value.url);
+                return;
+            }
+        }
         if (isListening) push(['event', name, value]);
     };
 
     // A new page replaced the one that held these, and its garbage collector will never release them. What was pushed
     // for it reaches no page, and the new one listens once it asks.
     globalThis.__crossbind_reset = () => {
+        // A link pushed for the page the new one replaced, which may not have got it, waits for the new one to ask.
+        for (const [kind, name, value] of pushes) {
+            if (kind === 'event' && name === 'open-url') holdLink(value.url);
+        }
         pushes.length = 0;
+        isAskedForLinks = false;
         waitingEvents = 0;
         if (poll !== null) __host_reply(poll, STOP);
         poll = null;

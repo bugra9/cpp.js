@@ -93,6 +93,33 @@ function appOpenPath(config) {
     return places;
 }
 
+// Schemes the web, the system or crossbind owns, which no app takes, and the keys of Windows' own classes, whose name a
+// scheme's registry key would take.
+const RESERVED_SCHEMES = [
+    'about', 'blob', 'content', 'crossbind', 'data', 'file', 'ftp', 'http', 'https', 'intent', 'javascript', 'mailto', 'sms', 'tel', 'ws', 'wss',
+    'appid', 'applications', 'clsid', 'directory', 'drive', 'folder', 'interface', 'mime', 'protocols', 'systemfileassociations', 'typelib', 'unknown',
+    'wow6432node',
+];
+
+// The schemes whose links open the app, as myapp://… does: lowercase, which is how Android matches them, and of two
+// characters at least, as one would take a Windows path's drive for a scheme.
+export function appUrlSchemes(config) {
+    const schemes = config.app.urlSchemes ?? [];
+    if (!Array.isArray(schemes)) {
+        throw new Error(`crossbind: app.urlSchemes ${JSON.stringify(schemes)} is no list of schemes, as ['myapp'] is.`);
+    }
+    for (const scheme of schemes) {
+        if (typeof scheme !== 'string' || !/^[a-z][a-z0-9+.-]+$/.test(scheme)) {
+            throw new Error(`crossbind: app.urlSchemes takes schemes of a lowercase letter, then one or more lowercase letters, digits, +, - and ., as myapp is; ${JSON.stringify(scheme)} is none.`);
+        }
+        if (RESERVED_SCHEMES.includes(scheme)) {
+            throw new Error(`crossbind: app.urlSchemes cannot take ${scheme}, which the web or the system owns: pick a scheme of the app's own.`);
+        }
+    }
+    if (new Set(schemes).size !== schemes.length) throw new Error(`crossbind: app.urlSchemes lists a scheme twice: ${JSON.stringify(schemes)}.`);
+    return schemes;
+}
+
 // Semver's version: three numbers, then a prerelease and build metadata of dot-separated identifiers.
 const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$/;
 // What an update's files are named after: characters an address carries as they are, and no leading dot.
@@ -163,9 +190,13 @@ export function appHeader(config, platform) {
         `#define CROSSBIND_APP_WINDOW_MIN_HEIGHT ${window.minHeight}`,
         `#define CROSSBIND_APP_WINDOW_RESIZABLE ${window.resizable ? 1 : 0}`,
     ];
-    const singleInstance = config.app.singleInstance ?? false;
+    const urlSchemes = appUrlSchemes(config);
+    if (urlSchemes.length > 0) lines.push(`#define CROSSBIND_APP_URL_SCHEMES {${urlSchemes.map((scheme) => `"${scheme}"`).join(', ')}}`);
+    // A link the system opens a Windows or Linux app with starts it again, which reaches the app that runs this way; macOS
+    // hands the link to the app that runs.
+    const singleInstance = config.app.singleInstance ?? (urlSchemes.length > 0 && platform !== 'darwin');
     if (typeof singleInstance !== 'boolean') {
-        throw new Error(`crossbind: app.singleInstance ${JSON.stringify(singleInstance)} is no boolean: set it to true to keep a desktop app to one instance, or drop it to let each launch run.`);
+        throw new Error(`crossbind: app.singleInstance ${JSON.stringify(singleInstance)} is no boolean: set it to true to keep a desktop app to one instance, or to false to let each launch run.`);
     }
     if (singleInstance) lines.push('#define CROSSBIND_APP_SINGLE_INSTANCE 1');
     const updater = appUpdater(config);

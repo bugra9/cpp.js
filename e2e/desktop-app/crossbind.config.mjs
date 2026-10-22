@@ -32,6 +32,8 @@ export default {
         updater: UPDATER,
         // e2e/run.mjs launches a desktop app again, which hands src/main.js the launch.
         singleInstance: true,
+        // e2e/run.mjs launches a desktop app with a link of it, and again with another, which src/main.js gets.
+        urlSchemes: ['crossbind-e2e'],
     },
     paths: {
         config: import.meta.url,

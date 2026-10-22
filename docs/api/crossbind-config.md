@@ -234,7 +234,11 @@ export default {
       // shrinks to (0: no limit) and whether it resizes. A minimum needs a window that resizes.
     singleInstance: true,
       // Keeps a desktop app to one instance for each user: a later launch hands it its arguments, and it brings its
-      // window to the front and tells its page (see app.md). Default: false.
+      // window to the front and tells its page (see app.md). Default: false, or on Windows and Linux true with
+      // app.urlSchemes.
+    urlSchemes: ['myapp'],
+      // The schemes whose links open the app, as myapp://… does: lowercase, and none the web or the system owns. The
+      // page gets them from app.launchUrls() and as the event open-url (see app.md). Default: [], none.
     openPath: ['logs', 'picked'],
       // Where the page's shell.openPath opens files (see app.md): 'data', 'cache' and 'logs', the app's folders,
       // and 'picked', what a dialog picked during this run. Opening a program runs it. Default: [], nowhere.

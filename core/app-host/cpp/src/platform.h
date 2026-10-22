@@ -117,6 +117,8 @@ void setMenu(std::vector<MenuItem> menus, MenuClicked clicked, std::function<voi
 // macOS sends the standard shortcuts, ⌘C and ⌘Q among them, through the menu bar, so a window without the app, Edit,
 // View and Window menus never sees them.
 void installAppMenu();
+// Hears of the links of app.urlSchemes macOS opens the app with, the launch's own as well, which come as Apple Events.
+void listenForUrls();
 #endif
 
 #ifdef _WIN32

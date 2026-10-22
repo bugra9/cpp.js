@@ -4,8 +4,9 @@
     <!-- Back reaches the activity's OnBackInvokedCallback on every Android it runs on, not from Android 16 on alone. -->
     <application android:label="${appName}" android:icon="${appIcon}" android:networkSecurityConfig="@xml/network_security_config"
         android:enableOnBackInvokedCallback="true">
-        <!-- The page keeps its WebView, and its state, when the screen turns or the keyboard comes and goes. -->
-        <activity android:name="dev.crossbind.app.CrossbindActivity" android:exported="true"
+        <!-- The page keeps its WebView, and its state, when the screen turns or the keyboard comes and goes, and in an app
+             with app.urlSchemes, singleTask, when a link opens the app again, which reaches it in onNewIntent. -->
+        <activity android:name="dev.crossbind.app.CrossbindActivity" android:exported="true" android:launchMode="${launchMode}"
             android:theme="@android:style/Theme.DeviceDefault.DayNight"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|density">
             <intent-filter>

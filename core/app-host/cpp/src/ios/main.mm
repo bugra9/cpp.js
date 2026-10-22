@@ -21,6 +21,9 @@ const char *devUrl;
 @implementation CBSceneDelegate
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)options {
+    // A scene that connects again, in a process that outlived the last one, gets a page of its own: what the module
+    // pushed for the last page goes to none, and a link that launched the scene waits for the new one to ask.
+    core->reset();
     WKWebViewConfiguration *configuration = [WKWebViewConfiguration new];
     registerSchemeHandler((__bridge void *)configuration, "crossbind", [](SchemeRequest request, SchemeRespond respond) {
         core->serve(std::move(request), std::move(respond));
@@ -37,6 +40,12 @@ const char *devUrl;
     self.window.rootViewController = controller;
     [self.window makeKeyAndVisible];
     [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@(url.c_str())]]];
+    // A link of app.urlSchemes that launched the app waits for the page to ask for it.
+    [self scene:scene openURLContexts:options.URLContexts];
+}
+
+- (void)scene:(UIScene *)scene openURLContexts:(NSSet<UIOpenURLContext *> *)contexts {
+    for (UIOpenURLContext *context in contexts) app::openedUrl(context.URL.absoluteString.UTF8String);
 }
 
 @end

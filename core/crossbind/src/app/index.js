@@ -127,6 +127,9 @@ export const app = {
     paths: async () => call('app.paths', {}),
     // Ends the app as closing its window does.
     quit: async () => call('app.quit', {}),
+    // The links of app.urlSchemes that opened the app and have not reached the page yet, the one it was launched with
+    // among them; later ones come as the event open-url. Listening first, then asking, misses none.
+    launchUrls: async () => call('app.launchUrls', {}),
 };
 
 export const menu = {

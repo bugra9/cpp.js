@@ -1,10 +1,10 @@
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, realpathSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import config from '../crossbind.config.mjs';
-import { LAUNCH_ARGS } from './launch.mjs';
+import { LAUNCH_ARGS, LAUNCH_URL, PHONE_URL } from './launch.mjs';
 import { UPDATE_PORT, signUpdate } from './updates.mjs';
 
 // Opens the app `pnpm build` made, whose page runs the conformance suite and logs its summary last, and closes it
@@ -17,8 +17,9 @@ const RUN_TIMEOUT_MS = 300000;
 const CONFORMANCE = /^CONFORMANCE (\d+)\/\1\b.*$/m;
 const FINISHED = /^(CONFORMANCE .*|CONFORMANCE ERR: .*)$/m;
 const LAUNCH_AGAIN = /^LAUNCH AGAIN$/m;
-// Below the page's wait for the launch, so a launch that stays says so.
-const LAUNCH_AGAIN_TIMEOUT_MS = 20000;
+const OPEN_LINK = /^OPEN LINK$/m;
+// Below the page's wait for the launch or the link, so a launch that stays or an adb that hangs says so.
+const ASKED_TIMEOUT_MS = 20000;
 
 const root = resolve(import.meta.dirname, '..');
 const { name } = config.general;
@@ -52,6 +53,16 @@ function checkIcon() {
     }
 }
 
+// The build declared app.urlSchemes where macOS and iOS read them from the app; an Android app is opened with a link,
+// and the installers' registrations are checked where they run.
+function checkUrlSchemes() {
+    const plist = { darwin: `${root}/dist/${name}.app/Contents/Info.plist`, ios: `${root}/dist/${name}-ios/Info.plist` }[platform ?? process.platform];
+    if (plist && !(existsSync(plist) && readFileSync(plist, 'utf8').includes(`<string>${config.app.urlSchemes[0]}</string>`))) {
+        console.error(`FAIL: the ${platform ?? process.platform} app declares no scheme of app.urlSchemes.`);
+        process.exit(1);
+    }
+}
+
 async function open() {
     if (platform) {
         const project = `${root}/dist/${name}-${platform}`;
@@ -67,7 +78,8 @@ async function open() {
         close: () => {},
     };
     if (!existsSync(executable)) missing(executable);
-    return { child: spawn(executable, [], { env: { ...process.env, ...env } }), close, executable };
+    // The link, as Windows and Linux hand an app one, which src/main.js asks the app for.
+    return { child: spawn(executable, [LAUNCH_URL], { env: { ...process.env, ...env } }), close, executable };
 }
 
 // Where the installer put the app: in the disk image, mounted until the run ends, in /usr/bin, or in the user's
@@ -118,9 +130,12 @@ function serveUpdates() {
 
 let out = '';
 checkIcon();
+checkUrlSchemes();
 // A phone's app does not update itself.
 if (!platform) await serveUpdates();
 const { child: app, close, executable } = await open();
+// The adb crossbind opened the Android app with, which opens it with a link as well.
+const adb = platform === 'android' ? (await import('crossbind')).adbPath() : undefined;
 
 // The page asks for it once it listens: the app, launched again with LAUNCH_ARGS and the folder it is launched in,
 // which the first app does not share, hands them to that app and leaves.
@@ -135,7 +150,7 @@ function launchAgain() {
         const timeout = setTimeout(() => {
             again.kill();
             finish('the app launched again did not leave');
-        }, LAUNCH_AGAIN_TIMEOUT_MS);
+        }, ASKED_TIMEOUT_MS);
         again.stderr.on('data', (chunk) => {
             out += `[launched again] ${chunk}`;
         });
@@ -148,6 +163,16 @@ function launchAgain() {
     } catch (error) {
         finish(`the app cannot be launched again: ${error.message}`);
     }
+}
+
+// The page of an Android app asks for it once it listens: the system opens the app with a link, as when its user taps
+// one.
+let isLinkOpened = false;
+function openLink() {
+    if (isLinkOpened || platform !== 'android' || !OPEN_LINK.test(out)) return;
+    isLinkOpened = true;
+    const opened = spawnSync(adb, ['shell', `am start -W -a android.intent.action.VIEW -d '${PHONE_URL}'`], { encoding: 'utf8', timeout: ASKED_TIMEOUT_MS });
+    if (opened.status !== 0) finish(`the app cannot be opened with a link: ${opened.error?.message ?? `${opened.stdout}${opened.stderr}`.trim()}`);
 }
 
 function finish(problem) {
@@ -173,11 +198,13 @@ const timer = setTimeout(() => finish('the suite did not finish in time'), RUN_T
 app.stdout.on('data', (chunk) => {
     out += chunk;
     launchAgain();
+    openLink();
     if (FINISHED.test(out)) finish();
 });
 app.stderr.on('data', (chunk) => {
     out += chunk;
     launchAgain();
+    openLink();
     if (FINISHED.test(out)) finish();
 });
 // An app that leaves at once, having said nothing, handed its launch to another instance of it.

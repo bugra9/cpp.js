@@ -4,16 +4,32 @@
 
 #include "crossbind_app.h"
 
-#ifdef CROSSBIND_APP_SINGLE_INSTANCE
+#if defined(CROSSBIND_APP_SINGLE_INSTANCE) || defined(CROSSBIND_APP_URL_SCHEMES)
 #include "windows/com.h"
 
 #include <shellapi.h>
 
+#include <filesystem>
+#include <system_error>
+
+Launch launchOf(int, char **) {
+    Launch launch;
+    int count = 0;
+    if (LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &count)) {
+        for (int i = 1; i < count; i += 1) launch.args.push_back(crossbind::windows::utf8(args[i]));
+        LocalFree(args);
+    }
+    std::error_code error;
+    const std::u8string cwd = std::filesystem::current_path(error).u8string();
+    launch.cwd.assign(cwd.begin(), cwd.end());
+    return launch;
+}
+#endif
+
+#ifdef CROSSBIND_APP_SINGLE_INSTANCE
 #include <atomic>
 #include <cstdio>
-#include <filesystem>
 #include <future>
-#include <system_error>
 #include <thread>
 
 using namespace crossbind::windows;
@@ -88,19 +104,6 @@ bool handOver(const std::wstring &name, const std::string &bytes, std::chrono::s
 }
 
 }  // namespace
-
-Launch launchOf(int, char **) {
-    Launch launch;
-    int count = 0;
-    if (LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &count)) {
-        for (int i = 1; i < count; i += 1) launch.args.push_back(utf8(args[i]));
-        LocalFree(args);
-    }
-    std::error_code error;
-    const std::u8string cwd = std::filesystem::current_path(error).u8string();
-    launch.cwd.assign(cwd.begin(), cwd.end());
-    return launch;
-}
 
 Claim claimInstance(const Launch &launch) {
     // Each signed-in user's session has its own; the name also sets a development session apart.

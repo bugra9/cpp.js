@@ -93,6 +93,22 @@ describe('an iOS app\'s Xcode project', () => {
         fs.rmSync(root, { recursive: true, force: true });
     });
 
+    test('opens the links of app.urlSchemes', () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-xcode-'));
+        const to = path.join(root, 'demo-ios');
+        writeXcodeProject(to, { parts: [part(root, 'iphoneos')], identity: { id: 'com.example.demo', team: '' }, label: 'Demo', version: '1', urlSchemes: ['myapp'] });
+
+        const plist = fs.readFileSync(path.join(to, 'Info.plist'), 'utf8');
+        expect(plist).toContain('<key>CFBundleURLSchemes</key>');
+        expect(plist).toContain('<string>myapp</string>');
+        if (process.platform === 'darwin') {
+            const schemeOf = (key) => execFileSync('plutil', ['-extract', key, 'raw', path.join(to, 'Info.plist')], { encoding: 'utf8' }).trim();
+            expect(schemeOf('CFBundleURLTypes.0.CFBundleURLSchemes.0')).toBe('myapp');
+            expect(schemeOf('CFBundleURLTypes.0.CFBundleURLName')).toBe('$(PRODUCT_BUNDLE_IDENTIFIER)');
+        }
+        fs.rmSync(root, { recursive: true, force: true });
+    });
+
     test('is not written from no part at all', () => {
         expect(() => writeXcodeProject(path.join(os.tmpdir(), 'crossbind-none'), { parts: [], identity: { id: 'a', team: '' }, version: '1' }))
             .toThrow('no part of the iOS app demo is built');

@@ -51,6 +51,8 @@ export declare const app: {
     paths(): Promise<AppPaths>;
     /** Ends the app as closing its window does. */
     quit(): Promise<void>;
+    /** The links of app.urlSchemes in crossbind.config.js that opened the app and have not reached the page yet, the one it was launched with among them. Once the page has asked, each later link comes as the event open-url while it listens, so listening first, then asking, misses none. */
+    launchUrls(): Promise<string[]>;
 };
 
 /** A key with CmdOrCtrl, Ctrl or Alt and maybe Shift, joined by +, as CmdOrCtrl+Shift+O is, or F1–F12, alone or with any of them. The key is A–Z, 0–9, F1–F12, Enter, Escape, Tab, Space, Backspace, Delete, Up, Down, Left, Right, Home, End, PageUp, PageDown, Plus, Minus, Comma or Period. */
@@ -85,9 +87,16 @@ export interface SecondInstance {
     cwd: string;
 }
 
+/** What the event open-url carries: a link of one of app.urlSchemes that the system opened the app with. */
+export interface OpenUrl {
+    url: string;
+}
+
 export declare const events: {
     /** Calls listener with each click of an item with an id in the menus menu.set sets, until the function it returns is called. */
     on(name: 'menu', listener: (click: MenuClick) => void): () => void;
+    /** Calls listener with each link of app.urlSchemes the system opens the app with once the page has called app.launchUrls(), until the function it returns is called. */
+    on(name: 'open-url', listener: (open: OpenUrl) => void): () => void;
     /** Calls listener with each later launch of a desktop app that app.singleInstance keeps to one instance, which brings its window to the front as far as the system lets it, until the function it returns is called. */
     on(name: 'second-instance', listener: (launch: SecondInstance) => void): () => void;
     /** Calls listener with the value of each event of this name the app's native code emits from now on, until the function it returns is called. */

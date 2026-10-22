@@ -1,7 +1,8 @@
 ; A crossbind app's setup program. It installs the app for the user who runs it, with no administrator's approval, in
 ; %LOCALAPPDATA%\Programs, puts it in the Start menu and among the apps Settings lists, and installs the WebView2
 ; Runtime the app runs on when the system has none. crossbind defines NAME, EXE, ID, VERSION, APP and OUTFILE, ICON for
-; an app with an icon, and SIGNER with a signing key. The app's updater runs it with /S /UPDATE /D=<the app's folder>.
+; an app with an icon, SCHEMES for one with URL schemes, and SIGNER with a signing key. The app's updater runs it with
+; /S /UPDATE /D=<the app's folder>.
 Unicode true
 ManifestDPIAware true
 RequestExecutionLevel user
@@ -17,6 +18,50 @@ SetCompressor /SOLID zlib
 !include MUI2.nsh
 !include LogicLib.nsh
 !include FileFunc.nsh
+
+; With app.urlSchemes, crossbind defines SCHEMES, a file whose CROSSBIND_URL_SCHEMES macro calls the one it is given on
+; each scheme: a link of the scheme opens the app with the link as its argument.
+!ifdef SCHEMES
+  !include "${SCHEMES}"
+
+  ; A class of the name that is no URL scheme, as a file type's, keeps what it opens: its key has subkeys or values, but
+  ; no "URL Protocol".
+  !macro RegisterScheme SCHEME
+    StrCpy $1 ""
+    ClearErrors
+    ReadRegStr $0 HKCR "${SCHEME}" "URL Protocol"
+    ${If} ${Errors}
+      ClearErrors
+      EnumRegKey $0 HKCR "${SCHEME}" 0
+      ${IfNot} ${Errors}
+      ${AndIf} $0 != ""
+        StrCpy $1 "taken"
+      ${EndIf}
+      ClearErrors
+      EnumRegValue $0 HKCR "${SCHEME}" 0
+      ${IfNot} ${Errors}
+      ${AndIf} $0 != ""
+        StrCpy $1 "taken"
+      ${EndIf}
+    ${EndIf}
+    ${If} $1 == "taken"
+      DetailPrint "${SCHEME} is the name of a class that is no URL scheme, which keeps what it opens"
+    ${Else}
+      WriteRegStr HKCU "Software\Classes\${SCHEME}" "" "URL:${NAME}"
+      WriteRegStr HKCU "Software\Classes\${SCHEME}" "URL Protocol" ""
+      WriteRegStr HKCU "Software\Classes\${SCHEME}\DefaultIcon" "" '"$INSTDIR\${EXE}",0'
+      WriteRegStr HKCU "Software\Classes\${SCHEME}\shell\open\command" "" '"$INSTDIR\${EXE}" "%1"'
+    ${EndIf}
+  !macroend
+
+  ; A scheme another app took over since stays its own.
+  !macro UnregisterScheme SCHEME
+    ReadRegStr $0 HKCU "Software\Classes\${SCHEME}\shell\open\command" ""
+    ${If} $0 == '"$INSTDIR\${EXE}" "%1"'
+      DeleteRegKey HKCU "Software\Classes\${SCHEME}"
+    ${EndIf}
+  !macroend
+!endif
 
 Name "${NAME}"
 OutFile "${OUTFILE}"
@@ -96,6 +141,9 @@ Section
   WriteRegStr HKCU "${UNINSTALL}" "QuietUninstallString" '"$INSTDIR\uninstall.exe" /S'
   WriteRegDWORD HKCU "${UNINSTALL}" "NoModify" 1
   WriteRegDWORD HKCU "${UNINSTALL}" "NoRepair" 1
+!ifdef SCHEMES
+  !insertmacro CROSSBIND_URL_SCHEMES RegisterScheme
+!endif
 SectionEnd
 
 ; An update opens the app anew once it is installed.
@@ -136,6 +184,9 @@ Section Uninstall
     RMDir /r "$INSTDIR\resources"
   ${EndIf}
   Delete "$SMPROGRAMS\${NAME}.lnk"
+!ifdef SCHEMES
+  !insertmacro CROSSBIND_URL_SCHEMES UnregisterScheme
+!endif
   DeleteRegKey HKCU "${UNINSTALL}"
   Delete "$INSTDIR\uninstall.exe"
   RMDir "$INSTDIR"

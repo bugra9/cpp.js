@@ -246,6 +246,51 @@ describe('what the host pushes to the page', () => {
         expect(JSON.parse(await second)).toEqual([0, [['event', 'now', 3]]]);
     });
 
+    const askForLinks = () => transport.send(TOKEN + JSON.stringify(['app', 0, ['app.launchUrls'], [{}]]));
+    // The page listens, and the request for pushes it makes takes the next one.
+    const listenAgain = async () => {
+        const next = askForPushes();
+        await new Promise(setImmediate);
+        globalThis.__crossbind_event('resumed', '1');
+        expect(JSON.parse(await next)).toEqual([0, [['event', 'resumed', 1]]]);
+    };
+
+    test('holds the links that come before the page asks for them, whatever else it listens to, and hands each over once', async () => {
+        globalThis.__crossbind_reset();
+        globalThis.__crossbind_event('open-url', '{"url":"myapp://launch"}');
+        const waiting = askForPushes();
+        await new Promise(setImmediate);
+        globalThis.__crossbind_event('open-url', '{"url":"myapp://before"}');
+        globalThis.__crossbind_event('other', '1');
+        expect(JSON.parse(await waiting)).toEqual([0, [['event', 'other', 1]]]);
+
+        expect(JSON.parse(await askForLinks())).toEqual([0, ['myapp://launch', 'myapp://before']]);
+        expect(JSON.parse(await askForLinks())).toEqual([0, []]);
+        const next = askForPushes();
+        await new Promise(setImmediate);
+        globalThis.__crossbind_event('open-url', '{"url":"myapp://later"}');
+        expect(JSON.parse(await next)).toEqual([0, [['event', 'open-url', { url: 'myapp://later' }]]]);
+    });
+
+    test('holds a link pushed for a page another replaced before it got it, for the new one to ask for', async () => {
+        globalThis.__crossbind_event('open-url', '{"url":"myapp://unseen"}');
+        globalThis.__crossbind_reset();
+        expect(JSON.parse(await askForLinks())).toEqual([0, ['myapp://unseen']]);
+        await listenAgain();
+    });
+
+    test('takes an open-url without a link for none, and holds a thousand links at most', async () => {
+        expect(() => globalThis.__crossbind_event('open-url', 'null')).not.toThrow();
+        globalThis.__crossbind_event('open-url', '{}');
+        expect(JSON.parse(await askForLinks())).toEqual([0, []]);
+
+        globalThis.__crossbind_reset();
+        for (let i = 0; i < 1001; i += 1) globalThis.__crossbind_event('open-url', JSON.stringify({ url: `myapp://${i}` }));
+        const [, links] = JSON.parse(await askForLinks());
+        expect([links.length, links[0], links.at(-1)]).toEqual([1000, 'myapp://0', 'myapp://999']);
+        await listenAgain();
+    });
+
     test('keeps the latest events for a page that asks no more, up to a limit', async () => {
         for (let i = 0; i < 1005; i += 1) globalThis.__crossbind_event('tick', String(i));
 

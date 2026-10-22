@@ -212,3 +212,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_dev_crossbind_app_CrossbindActivity
 
 // A new page replaced the one that held the module's objects.
 extern "C" JNIEXPORT void JNICALL Java_dev_crossbind_app_CrossbindActivity_nativeNewPage(JNIEnv *, jclass) { core->reset(); }
+
+extern "C" JNIEXPORT void JNICALL Java_dev_crossbind_app_CrossbindActivity_nativeOpenUrl(JNIEnv *env, jclass, jbyteArray url) {
+    app::openedUrl(textOf(env, url));
+}

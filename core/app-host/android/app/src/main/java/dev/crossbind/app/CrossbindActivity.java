@@ -104,6 +104,9 @@ public class CrossbindActivity extends Activity {
 
     private static native void nativeNewPage();
 
+    // A link of app.urlSchemes the system opened the app with, in UTF-8.
+    private static native void nativeOpenUrl(byte[] url);
+
     // The module's answer to a call, from whichever thread gives it.
     static void onReply(int call, boolean ok, byte[] text) {
         Call to = calls.remove(call);
@@ -189,6 +192,30 @@ public class CrossbindActivity extends Activity {
         setContentView(frame);
         matchSystemBars();
         webView.loadUrl(devUrl.isEmpty() ? APP_ORIGIN + "/" : devUrl);
+        // A link that launched the activity waits for the page to ask for it. The module may have outlived an activity
+        // before this one, whose page it forgets first; an activity the system restores, or Recents reopens, brings its
+        // old link, which the page had.
+        nativeNewPage();
+        if (state == null && (getIntent().getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0) openUrlOf(getIntent());
+    }
+
+    // A link that opens the app while it runs comes here, as an app with app.urlSchemes keeps the activity its task's
+    // one, which keeps the page.
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        openUrlOf(intent);
+    }
+
+    private void openUrlOf(Intent intent) {
+        // An activity that could not start the module, for want of a WebView, takes no link.
+        if (token == null || !Intent.ACTION_VIEW.equals(intent.getAction()) || intent.getData() == null) return;
+        // Any app may start the activity with any link: the page hears of those of app.urlSchemes alone, which the
+        // activity's intent filter matches.
+        Intent own = new Intent(Intent.ACTION_VIEW, intent.getData()).addCategory(Intent.CATEGORY_BROWSABLE).setPackage(getPackageName());
+        if (getPackageManager().queryIntentActivities(own, 0).isEmpty()) return;
+        nativeOpenUrl(intent.getData().toString().getBytes(StandardCharsets.UTF_8));
     }
 
     @Override

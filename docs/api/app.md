@@ -261,8 +261,8 @@ which it compiles in.
 ## The app's functions
 
 The page imports what the app's host does for it from `crossbind/app`. The app's C++ calls the same, but for
-`menu.set` and `events.on`, through `<crossbind/app.h>`, which an app's own code finds as it builds, with
-`CROSSBIND_APP` defined:
+`menu.set`, `app.launchUrls` and `events.on`, through `<crossbind/app.h>`, which an app's own code finds as it builds,
+with `CROSSBIND_APP` defined:
 
 ```js
 import { app, dialog, shell } from 'crossbind/app';
@@ -289,6 +289,7 @@ std::string databasePath() { return crossbind::app::paths().data + "/notes.sqlit
 | `shell.revealInFolder(path)` | A file, selected, in the system's file manager, or on Linux without one its folder | ✓ | | |
 | `app.paths()` | `{ data, cache, logs }`, the app's own folders, made if missing | ✓ | ✓ | ✓ |
 | `app.quit()` | Ends the app as closing its window does | ✓ | | |
+| `app.launchUrls()` | The links of `app.urlSchemes` that opened the app and have not reached the page yet; the page alone | ✓ | ✓ | ✓ |
 | `menu.set(menus)` | Sets the app's menus, whose clicks are the event `menu`; the page alone | ✓ | | |
 | `events.on(name, listener)` | Calls `listener` with each event of this name the app's C++ emits; returns what stops it | ✓ | ✓ | ✓ |
 | `updater.check()` | `{ version }`, the newer version `app.updater.url` offers, or `null` | ✓ | | |
@@ -417,7 +418,8 @@ events.on('second-instance', ({ args, cwd }) => {
 ```
 
 `args` leaves out the program's own path, and a relative one resolves against `cwd`. They are whatever the launch was
-given, so the page takes them as it would any command line. The first launch's own arguments do not reach the page. A
+given, so the page takes them as it would any command line. The first launch's own arguments do not reach the page,
+but for its links of `app.urlSchemes`, as [Links](#links) tells. A
 launch that arrives before the page listens still brings the window to the front, and its event reaches no page. The
 event `second-instance` is the host's alone: the app's C++ emits others.
 
@@ -431,6 +433,53 @@ desktop's launcher gives it; a terminal's launch carries none. On macOS, Finder,
 runs to the front themselves, so only a launch that starts the program anew, as a terminal or `open -n` does, reaches
 it. A development session keeps one instance of its own, apart from the built app. iOS and Android keep every app to
 one instance themselves.
+
+## Links
+
+`app.urlSchemes` names the schemes whose links open the app, as `myapp://open?id=7` does. A scheme is a lowercase
+letter, then lowercase letters, digits, `+`, `-` and `.`, and none the web or the system owns, such as `http` or `file`:
+
+```js
+app: {
+    urlSchemes: ['myapp'],
+},
+```
+
+The page asks for the links that opened the app, the one it was launched with among them, with `app.launchUrls()`, and
+from then on hears of each as the event `open-url` while it listens:
+
+```js
+import { app, events } from 'crossbind/app';
+
+events.on('open-url', ({ url }) => show(new URL(url)));
+for (const url of await app.launchUrls()) show(new URL(url));
+```
+
+Each link reaches the page once. The host keeps it until the page has asked since it loaded, and `app.launchUrls()`
+hands over what it kept, so listening first, then asking, misses none. A link that comes while the page does not
+listen, or whose event a reload cut off, waits for the page's next `app.launchUrls()`. The host keeps 1,000 links at
+most, and drops a link longer than 64 KiB, saying so in the app's output. A link is whatever the system hands the app, so the
+page takes it as it would any address from outside; macOS hands characters beyond ASCII over percent-encoded, Windows
+and Linux as the link that opened the app has them. The event `open-url` is the host's alone: the app's C++ emits
+others.
+
+The app as built tells each system its schemes:
+
+- macOS: its Info.plist. A development session's app claims none, so the built app, of the same id, keeps them.
+- iOS: its Info.plist. iOS can ask its user before a link from outside opens the app, as it does for
+  `xcrun simctl openurl`.
+- Android: its activity's intent filter. The activity is its task's one, so a link that comes while the app runs reaches
+  its page.
+- Windows: the setup program registers each scheme for its user, under `HKEY_CURRENT_USER\Software\Classes\<scheme>`,
+  and the uninstaller removes one the app still owns. A name Windows gives a file type or another class that is no
+  scheme keeps what it opens, as the setup program says. The zip registers none.
+- Linux: the Debian package's desktop entry, with `x-scheme-handler/<scheme>` among its MIME types, which the system's
+  MIME tools take in as the package installs. The tar.gz registers none.
+
+A link starts a Windows or Linux app again, with the link as its argument, so `app.urlSchemes` keeps a Windows or Linux
+app to one instance unless `app.singleInstance` is `false`: the launch reaches the app that runs as
+[One instance](#one-instance) tells, as the event `second-instance` too. macOS hands a link to the app that runs, and
+brings its window to the front.
 
 ## What the app holds
 
@@ -634,6 +683,11 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
 - On the desktop, one window.
 - One instance has been measured on macOS and Linux: the hand-over, and the window coming back to the front from
   minimized. On Windows the conformance runs in CI check the hand-over alone.
+- Links have been measured on macOS, from the command line and as the Apple Events `open -a` sends, to a launch and to
+  the app that runs; on Linux from the command line, and the Debian package's scheme as `xdg-mime` reports it; on an
+  Android emulator, to the app that runs. On Windows the conformance runs in CI check links from the command line and
+  the command the setup program registers for the scheme, not a link the system opens. On iOS the app is built with its
+  scheme, and no run answers the question iOS asks before a link opens it.
 - The functions the page passes have been measured on macOS and Linux, and the events of C++ on macOS alone; on
   Windows, iOS and Android the conformance runs in CI check the functions.
 - On macOS the file dialogs, `shell.revealInFolder`, `app.paths` and `app.quit` have been measured, and so has

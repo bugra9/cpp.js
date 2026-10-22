@@ -6,7 +6,7 @@ import { appleSigning } from './appleSigning.js';
 import { updaterSigning } from './appUpdate.js';
 import { inWindowsImage, jsignScript, windowsSigning } from './windowsSigning.js';
 import state from '../state/index.js';
-import { appDisplayName, appId } from '../utils/appOptions.js';
+import { appDisplayName, appId, appUrlSchemes } from '../utils/appOptions.js';
 import { readAppIcon, windowsIcon } from '../utils/appIcon.js';
 import { imageRoleFor } from '../utils/pullDockerImage.js';
 import { isUnderBase } from '../utils/replaceBasePathForDocker.js';
@@ -61,9 +61,13 @@ export function debianControl({ name, version, arch, author, description, label 
 
 // The desktop entry a Linux menu shows an app by. GTK names the app's window after the command that started it, and
 // GNOME on Wayland shows the icon of the entry whose file has that name.
-export function desktopEntry({ label, command, hasIcon }) {
-    return ['[Desktop Entry]', 'Type=Application', `Name=${label}`, `Exec=${command}`, ...(hasIcon ? [`Icon=${command}`] : []), 'Terminal=false', '']
-        .join('\n');
+// A link of one of its schemes opens it with the link as its argument, %u.
+export function desktopEntry({ label, command, hasIcon, urlSchemes = [] }) {
+    const isLinked = urlSchemes.length > 0;
+    return [
+        '[Desktop Entry]', 'Type=Application', `Name=${label}`, `Exec=${command}${isLinked ? ' %u' : ''}`, ...(hasIcon ? [`Icon=${command}`] : []),
+        ...(isLinked ? [`MimeType=${urlSchemes.map((scheme) => `x-scheme-handler/${scheme};`).join('')}`] : []), 'Terminal=false', '',
+    ].join('\n');
 }
 
 // A disk image of a macOS app beside a link to /Applications, onto which its user drags it. hdiutil copies a link
@@ -102,7 +106,7 @@ function debianPackage(app, target) {
     const icon = `${app}/resources/icon.png`;
     const hasIcon = fs.existsSync(icon);
     if (hasIcon) fs.copyFileSync(icon, `${dir('usr/share/icons/hicolor/512x512/apps')}/${name}.png`);
-    fs.writeFileSync(`${dir('usr/share/applications')}/${name}.desktop`, desktopEntry({ label, command: name, hasIcon }));
+    fs.writeFileSync(`${dir('usr/share/applications')}/${name}.desktop`, desktopEntry({ label, command: name, hasIcon, urlSchemes: appUrlSchemes(state.config) }));
     const { author, description } = state.config.package ?? {};
     fs.writeFileSync(`${dir('DEBIAN')}/control`, debianControl({ name, version: packageVersion(), arch: target.arch, author, description, label }));
     run(null, ['dpkg-deb', '--build', '--root-owner-group', root, `${app}.deb`], null, target);
@@ -121,6 +125,9 @@ function windowsName() {
 // A Windows setup program reads a dollar sign in its text as the start of a variable.
 const nsisText = (text) => text.replaceAll('$', () => '$$');
 
+// The schemes a Windows app's setup program registers, as a macro that calls the one it is given on each.
+const schemesMacro = (schemes) => ['!macro CROSSBIND_URL_SCHEMES DO', ...schemes.map((scheme) => `  !insertmacro \${DO} "${scheme}"`), '!macroend', ''].join('\n');
+
 // A Windows app's setup program, which NSIS builds in the windows image from the host's installer.nsi; with a key in
 // the environment, jsign signs it and its uninstaller as NSIS writes them.
 function windowsSetup(app) {
@@ -128,6 +135,9 @@ function windowsSetup(app) {
     const icon = readAppIcon(state.config);
     const iconFile = `${state.config.paths.build}/${path.basename(app)}.ico`;
     if (icon) fs.writeFileSync(iconFile, windowsIcon(icon));
+    const urlSchemes = appUrlSchemes(state.config);
+    const schemesFile = `${state.config.paths.build}/${path.basename(app)}.schemes.nsh`;
+    if (urlSchemes.length > 0) fs.writeFileSync(schemesFile, schemesMacro(urlSchemes));
     inWindowsImage([
         'makensis', '-V2', '-INPUTCHARSET', 'UTF8',
         `-DNAME=${nsisText(windowsName())}`,
@@ -137,6 +147,7 @@ function windowsSetup(app) {
         `-DAPP=${app}`,
         `-DOUTFILE=${app}-setup.exe`,
         ...(icon ? [`-DICON=${iconFile}`] : []),
+        ...(urlSchemes.length > 0 ? [`-DSCHEMES=${schemesFile}`] : []),
         ...(signing ? [`-DSIGNER=${jsignScript()}`] : []),
         `${resolveAppHostRoot()}/windows/installer.nsi`,
     ], path.dirname(app), signing);

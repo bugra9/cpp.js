@@ -14,7 +14,7 @@ import {
     allocBuffer, cstring, readCString, readNumberAt, readPointerAt, writeNumberAt, writePointerAt,
 } from '@crossbind/conformance/native/confextras.h';
 import { Counter } from './native/counter.rs';
-import { LAUNCH_ARGS } from '../e2e/launch.mjs';
+import { LAUNCH_ARGS, LAUNCH_URL, PHONE_URL } from '../e2e/launch.mjs';
 // Direct crate imports: bridged from the crates' own sources, no surface file.
 import { Uuid } from 'cargo:uuid';
 import { Version, VersionReq } from 'cargo:semver';
@@ -120,26 +120,49 @@ async function checkUpdates() {
 
 const LAUNCH_TIMEOUT_MS = 30000;
 
-// e2e/run.mjs launches the app again, from a folder that is not this app's, with LAUNCH_ARGS and that folder once the
-// page listens: the app that runs takes the launch, and the one launched leaves.
-async function checkSecondInstance() {
+// The next event of this name, which comes within LAUNCH_TIMEOUT_MS.
+function nextEvent(name) {
     let stop;
     let timer;
-    const launch = new Promise((resolve, reject) => {
-        stop = events.on('second-instance', resolve);
-        timer = setTimeout(() => reject(new Error('the app launched again did not reach the page')), LAUNCH_TIMEOUT_MS);
+    return new Promise((resolve, reject) => {
+        stop = events.on(name, resolve);
+        timer = setTimeout(() => reject(new Error(`no event ${name} reached the page`)), LAUNCH_TIMEOUT_MS);
     }).finally(() => {
         stop?.();
         clearTimeout(timer);
     });
+}
+
+// e2e/run.mjs launches a desktop app with LAUNCH_URL, which reached the app before the page listened; a phone's opens
+// with none. The page listens first, then asks, as a page does to miss no link.
+async function checkLaunchUrls(expected) {
+    const stop = events.on('open-url', () => {});
+    const urls = await host.launchUrls();
+    stop();
+    if (JSON.stringify(urls) !== JSON.stringify(expected)) throw new Error(`app.launchUrls() is ${JSON.stringify(urls)}, not ${JSON.stringify(expected)}`);
+}
+
+// e2e/run.mjs opens an Android app with PHONE_URL once the page listens, as a link a user taps does.
+async function checkOpenedUrl() {
+    const opened = nextEvent('open-url');
+    console.log('OPEN LINK');
+    const { url } = await opened;
+    if (url !== PHONE_URL) throw new Error(`the link the app was opened with reached the page as ${JSON.stringify(url)}, not ${PHONE_URL}`);
+}
+
+// e2e/run.mjs launches the app again, from a folder that is not this app's, with LAUNCH_ARGS and that folder once the
+// page listens: the app that runs takes the launch, and its link, and the one launched leaves.
+async function checkSecondInstance() {
+    const launched = Promise.all([nextEvent('second-instance'), nextEvent('open-url')]);
     console.log('LAUNCH AGAIN');
-    const { args, cwd } = await launch;
+    const [{ args, cwd }, { url }] = await launched;
     const folder = args.at(-1);
     // Windows takes a folder's name in any case.
     const isSameFolder = cwd.includes('\\') ? folder?.toLowerCase() === cwd.toLowerCase() : folder === cwd;
     if (JSON.stringify(args.slice(0, -1)) !== JSON.stringify(LAUNCH_ARGS) || !isSameFolder) {
         throw new Error(`the app launched again handed over ${JSON.stringify({ args, cwd })}`);
     }
+    if (url !== LAUNCH_ARGS.at(-1)) throw new Error(`the link the app was launched again with reached the page as ${JSON.stringify(url)}`);
 }
 
 initNative().then(async (m) => {
@@ -172,12 +195,16 @@ initNative().then(async (m) => {
         const inside = await shell.revealInFolder(`${folders.data}${separator}crossbind-missing`).then(() => 'shown', (error) => error.message);
         if (inside === 'shown' || inside.includes("reaches the app's folders")) throw new Error(`a missing file in the app's folder: ${inside}`);
         await checkMenus(isDesktop);
+        // A development session opens the app with no link.
+        await checkLaunchUrls(isDesktop && !import.meta.env.DEV ? [LAUNCH_URL] : []);
         // A phone's system ends its apps, and its store updates them.
         if (!isDesktop) {
             const quit = await host.quit().then(() => 'quit', (error) => error.message);
             if (!quit.includes('does not quit itself')) throw new Error(`app.quit() did not refuse on a phone: ${quit}`);
             const checked = await updater.check().then(() => 'checked', (error) => error.message);
             if (!checked.includes('does not update itself')) throw new Error(`updater.check() did not refuse on a phone: ${checked}`);
+            // iOS asks its user before a link from outside opens the app, which no run can answer.
+            if (isAndroid && !import.meta.env.DEV) await checkOpenedUrl();
         } else if (!import.meta.env.DEV) {
             await checkUpdates();
             await checkSecondInstance();
