@@ -132,8 +132,9 @@ void installAppMenu();
 void listenForUrls();
 // The page of the webview made from this configuration keeps running while its window is hidden.
 void keepRunningWhenHidden(void *configuration);
-// Shows an iOS alert controller over whatever the window shows on top; false when it has nothing to show it over.
-bool presentAlert(void *alert, void *window);
+// Shows an iOS view controller, such as an alert, over whatever the window shows on top; false when it has nothing to
+// show it over.
+bool presentOnTop(void *controller, void *window);
 #endif
 
 #ifdef _WIN32

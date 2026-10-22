@@ -19,11 +19,12 @@ import android.os.HandlerThread;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowInsets;
-import android.view.WindowManager;
 import android.view.WindowInsetsController;
+import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.GeolocationPermissions;
 import android.webkit.PermissionRequest;
+import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -44,6 +45,9 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayDeque;
@@ -56,6 +60,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.json.JSONObject;
 
 // An app's one activity: its page in a WebView, its module in Hermes behind JNI (libcrossbind_app.so). The page comes
 // from an https origin the activity serves from the app's files, or in a debug app from a dev server; calls and their
@@ -70,9 +76,76 @@ public class CrossbindActivity extends Activity {
     private static final String APP_ORIGIN = "https://" + HOST;
     // The object a page of the app's origins asks for its port with.
     private static final String READY = "__crossbind_ready";
+    // The object the page hands a download's name and bytes to, and the function the host asks for them with.
+    private static final String DOWNLOAD = "__crossbind_download";
+    private static final String TAKE_DOWNLOAD = "__crossbind_take_download";
+    // How long a download link waits for WebView to start its download.
+    private static final int LINK_KEPT_MS = 60000;
+    // In the top frame. WebView hands no one a download link's name, and the page may revoke a blob: URL at once, or
+    // keep its CSP from fetching blob: and data: URLs. So the page keeps the Blob behind each blob: URL it makes, and a
+    // link's name as it is followed, a link outside the document by its click() or dispatchEvent(), which no window
+    // hears. The host asks for both by a download's id once WebView starts the download, and gets them framed.
+    private static final String DOWNLOAD_SCRIPT = "if (window.top === window) {"
+            + " const blobs = new Map();"
+            + " const createObjectURL = URL.createObjectURL;"
+            + " const revokeObjectURL = URL.revokeObjectURL;"
+            + " URL.createObjectURL = (object) => {"
+            + "  const url = createObjectURL.call(URL, object);"
+            + "  if (object instanceof Blob) blobs.set(url, object);"
+            + "  return url;"
+            + " };"
+            + " URL.revokeObjectURL = (url) => {"
+            + "  blobs.delete(url);"
+            + "  revokeObjectURL.call(URL, url);"
+            + " };"
+            + " const kept = new Map();"
+            + " const keep = (link) => {"
+            + "  if (!(link instanceof HTMLAnchorElement) || !link.hasAttribute('download')) return;"
+            + "  const href = link.href;"
+            + "  const entry = { name: link.download, blob: blobs.get(href) };"
+            + "  kept.set(href, entry);"
+            + "  setTimeout(() => { if (kept.get(href) === entry) kept.delete(href); }, " + LINK_KEPT_MS + ");"
+            + " };"
+            + " addEventListener('click', (event) => keep(event.target.closest?.('a')), true);"
+            + " const click = HTMLElement.prototype.click;"
+            + " HTMLAnchorElement.prototype.click = function () { if (!this.isConnected) keep(this); return click.call(this); };"
+            + " const dispatch = EventTarget.prototype.dispatchEvent;"
+            + " HTMLAnchorElement.prototype.dispatchEvent = function (event) {"
+            + "  if (!this.isConnected && event.type === 'click') keep(this);"
+            + "  return dispatch.call(this, event);"
+            + " };"
+            + " const fromData = (url) => {"
+            + "  const comma = url.indexOf(',');"
+            + "  const body = unescape(url.slice(comma + 1));"
+            + "  const text = /;base64$/i.test(url.slice(0, comma)) ? atob(body) : body;"
+            + "  return Uint8Array.from(text, (c) => c.charCodeAt(0)).buffer;"
+            + " };"
+            + " const read = (url, blob) => blob ? blob.arrayBuffer()"
+            + "  : url.startsWith('data:') ? Promise.resolve().then(() => fromData(url))"
+            + "  : fetch(url).then((response) => {"
+            + "   if (!response.ok) throw new Error(response.status + ' ' + response.statusText);"
+            + "   return response.arrayBuffer();"
+            + "  });"
+            + " Object.defineProperty(globalThis, '" + TAKE_DOWNLOAD + "', { value: (id, url) => {"
+            + "  const entry = kept.get(url);"
+            + "  kept.delete(url);"
+            + "  read(url, entry?.blob ?? blobs.get(url)).then((bytes) => {"
+            + "   const name = new TextEncoder().encode(entry?.name ?? '');"
+            + "   const frame = new Uint8Array(8 + name.length + bytes.byteLength);"
+            + "   const view = new DataView(frame.buffer);"
+            + "   view.setUint32(0, id, true);"
+            + "   view.setUint32(4, name.length, true);"
+            + "   frame.set(name, 8);"
+            + "   frame.set(new Uint8Array(bytes), 8 + name.length);"
+            + "   " + DOWNLOAD + ".postMessage(frame.buffer);"
+            + "  }).catch((error) => " + DOWNLOAD + ".postMessage(id + '|' + error));"
+            + " } });"
+            + "}";
     // The relative luminance of a color that black and white contrast with as much.
     private static final float EVEN_CONTRAST = 0.179f;
     private static final int PERMISSIONS_REQUEST = 1;
+    // A download's save picker answers under the one code a file input's pickers, which count up, never reach.
+    private static final int SAVE_REQUEST = Integer.MAX_VALUE;
     // The Android permission behind each device a page asks for.
     private static final Map<String, String> PAGE_DEVICES = Map.of(
             PermissionRequest.RESOURCE_VIDEO_CAPTURE, Manifest.permission.CAMERA,
@@ -111,6 +184,25 @@ public class CrossbindActivity extends Activity {
     private final OnBackInvokedCallback back = () -> webView.goBack();
     private boolean isBackTaken;
     private AlertDialog messageDialog;
+    // The downloads the page started, in turn for the save picker, which shows one at a time.
+    private final ArrayDeque<Download> downloads = new ArrayDeque<>();
+    private int nextDownload;
+    private boolean isPicking;
+
+    private static final class Download {
+        final int id;
+        final String mime;
+        String name;
+        // What the page handed over, with the download's bytes from offset on; null until it has.
+        byte[] frame;
+        int offset;
+
+        Download(int id, String name, String mime) {
+            this.id = id;
+            this.name = name;
+            this.mime = mime;
+        }
+    }
 
     // Starts the module, once per process, and returns the page's token and the dev server's page, or "". data and cache
     // are the app's folders, which crossbind/app's paths() names.
@@ -243,8 +335,15 @@ public class CrossbindActivity extends Activity {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
         WebViewCompat.addDocumentStartJavaScript(webView, topFrameScript(token), origins);
+        WebViewCompat.addDocumentStartJavaScript(webView, DOWNLOAD_SCRIPT, origins);
         WebViewCompat.addWebMessageListener(webView, READY, origins, (view, message, origin, isMainFrame, reply) -> {
             if (isMainFrame) handOverPort(origin, message.getData());
+        });
+        WebViewCompat.addWebMessageListener(webView, DOWNLOAD, origins, (view, message, origin, isMainFrame, reply) -> {
+            if (isMainFrame) handedOver(message);
+        });
+        webView.setDownloadListener((address, userAgent, disposition, mime, length) -> {
+            download(address, URLUtil.guessFileName(address, disposition, mime), mime);
         });
         webView.setWebViewClient(new PageClient());
         webView.setWebChromeClient(new PageChrome(!devUrl.isEmpty() || (isDebuggable && getIntent().hasExtra("CROSSBIND_APP_CONSOLE"))));
@@ -304,9 +403,106 @@ public class CrossbindActivity extends Activity {
     @Override
     protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
+        if (request == SAVE_REQUEST) {
+            save(result == RESULT_OK && data != null ? data.getData() : null);
+            return;
+        }
         if (request != pickRequest || pendingFiles == null) return;
         pendingFiles.onReceiveValue(pickedFiles(result, data));
         pendingFiles = null;
+    }
+
+    // A download the page starts saves where its user picks, as a browser asks: the page hands over its name and bytes,
+    // as only the page knows them, and the system's save picker takes them in turn. A download that is no link of the
+    // page's is named after its address.
+    private void download(String url, String name, String mime) {
+        Download download = new Download(nextDownload++, name, mime);
+        downloads.add(download);
+        // A page yet to run DOWNLOAD_SCRIPT hands over nothing.
+        String take = TAKE_DOWNLOAD + "(" + download.id + ", " + JSONObject.quote(url) + ")";
+        webView.evaluateJavascript("typeof " + TAKE_DOWNLOAD + " === 'function' && (" + take + ", true)", (taken) -> {
+            if (!"true".equals(taken)) notSaved(download, "the page went away");
+        });
+    }
+
+    // What DOWNLOAD_SCRIPT hands over: a download's id and why the page could not read it, or a frame of its id and its
+    // name's length, little-endian, its name and its bytes. Anything else goes unheard.
+    private void handedOver(WebMessageCompat message) {
+        if (message.getType() != WebMessageCompat.TYPE_ARRAY_BUFFER) {
+            String text = String.valueOf(message.getData());
+            int bar = text.indexOf('|');
+            Download failed = bar < 0 ? null : downloadOf(text.substring(0, bar));
+            if (failed != null && failed.frame == null) notSaved(failed, text.substring(bar + 1));
+            return;
+        }
+        byte[] frame = message.getArrayBuffer();
+        ByteBuffer read = ByteBuffer.wrap(frame).order(ByteOrder.LITTLE_ENDIAN);
+        if (read.remaining() < 8) return;
+        Download download = downloadOf(read.getInt());
+        int nameLength = read.getInt();
+        if (download == null || download.frame != null || nameLength < 0 || nameLength > read.remaining()) return;
+        if (nameLength > 0) download.name = new String(frame, 8, nameLength, StandardCharsets.UTF_8);
+        download.frame = frame;
+        download.offset = 8 + nameLength;
+        pickNext();
+    }
+
+    private Download downloadOf(int id) {
+        for (Download download : downloads) {
+            if (download.id == id) return download;
+        }
+        return null;
+    }
+
+    private Download downloadOf(String id) {
+        try {
+            return downloadOf(Integer.parseInt(id));
+        } catch (NumberFormatException none) {
+            return null;
+        }
+    }
+
+    // The save picker for the first download, once the page has handed it over.
+    private void pickNext() {
+        Download first = downloads.peek();
+        if (isPicking || first == null || first.frame == null) return;
+        Intent picker = new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                .setType(first.mime == null || first.mime.isEmpty() ? "application/octet-stream" : first.mime)
+                .putExtra(Intent.EXTRA_TITLE, first.name);
+        try {
+            startActivityForResult(picker, SAVE_REQUEST);
+            isPicking = true;
+        } catch (ActivityNotFoundException none) {
+            notSaved(first, "nothing on this device saves a file");
+        }
+    }
+
+    // Writes the first download where its user picked, on a thread of its own, as the ipc thread carries the page's
+    // calls; or drops it when they cancelled.
+    private void save(Uri place) {
+        isPicking = false;
+        Download saving = downloads.poll();
+        if (saving != null && saving.frame != null && place != null) {
+            new Thread(() -> {
+                try (OutputStream out = getContentResolver().openOutputStream(place, "wt")) {
+                    out.write(saving.frame, saving.offset, saving.frame.length - saving.offset);
+                } catch (IOException | RuntimeException error) {
+                    runOnUiThread(() -> tellNotSaved(saving.name, error.toString()));
+                }
+            }).start();
+        }
+        pickNext();
+    }
+
+    private void notSaved(Download download, String reason) {
+        if (!downloads.remove(download)) return;
+        tellNotSaved(download.name, reason);
+        pickNext();
+    }
+
+    private void tellNotSaved(String name, String reason) {
+        if (isFinishing() || isDestroyed()) return;
+        new AlertDialog.Builder(this).setMessage(name + " was not saved\n\n" + reason).setPositiveButton(android.R.string.ok, null).show();
     }
 
     // The permissions the app's manifest asks for, which crossbind writes from app.permissions.
@@ -482,6 +678,10 @@ public class CrossbindActivity extends Activity {
     private void handOverPort(Uri origin, String ask) {
         if (port != null) close(port);
         nativeNewPage();
+        // What the last page had yet to hand over went with it.
+        for (Download pending : new ArrayList<>(downloads)) {
+            if (pending.frame == null) notSaved(pending, "the page went away");
+        }
         WebMessagePortCompat[] channel = WebViewCompat.createWebMessageChannel(webView);
         port = channel[0];
         port.setWebMessageCallback(ipc, new WebMessagePortCompat.WebMessageCallbackCompat() {

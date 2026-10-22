@@ -107,8 +107,9 @@ fills the screen until the page leaves it. On Windows and Linux a menu bar the p
 A macOS app opens with the app, Edit, View and Window menus every Mac app has, so ⌘C, ⌘V, ⌘Z, ⌘A, ⌘W and ⌘Q reach
 it, and the page may set its own, as [Menus](#menus) tells. The
 page's `alert()`, `confirm()` and `prompt()` show as they do in a browser, and so does the picker of a file input. A
-download the page starts, such as an `<a download>` link, asks where to save on macOS. On Android, Back goes back in the
-page's history first, and leaves the app when there is none.
+download the page starts, such as an `<a download>` link, asks where to save: in a save panel on macOS, in the system's
+export sheet on iOS and in its save picker on Android. On Android, Back goes back in the page's history first, and
+leaves the app when there is none.
 
 An app that cannot start, for want of the WebView2 Runtime or of a file it carries, writes why to its output; a desktop
 app its user opened says so in a message box as well.
@@ -770,10 +771,18 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
   dialog itself is built there, not measured yet.
 - The icon has been seen in macOS's Finder, in the icon files of an iOS Simulator build and on Android's launcher;
   Windows and Linux apps carry it, but nobody has looked at it there yet.
-- A download the page starts saves where its user picks on macOS, when it is a `Blob` or other data the page holds: an
-  `<a download>` link to one of the app's own files saves nothing yet, so the page fetches the file and saves it as a
-  `Blob`. WebView2 and WebKitGTK handle downloads themselves on Windows and Linux, which has not been measured yet; an
-  iOS or Android app does not save one yet.
+- A download the page starts saves where its user picks on macOS, iOS and Android when it is a `Blob` or a `data:` URL
+  the page holds. On macOS and iOS an `<a download>` link to one of the app's own files saves nothing yet, so the page
+  fetches the file and saves it as a `Blob`; Android saves it. Of several downloads a page starts at once WebKit keeps
+  the last, as each replaces the one before; started one after another, each saves in turn.
+- Android's WebView hands the app neither a download link's name nor its bytes. So the host keeps, in the page's top
+  frame, the `Blob` behind each `blob:` URL and each download link's name as it is followed, which a page's CSP does
+  not hinder, and holds the download in memory while its user picks where it goes. A download that is no link of the
+  page's takes its name from its address.
+- Downloads have been measured in the iOS Simulator and on an Android emulator, under a CSP of `default-src 'self'`:
+  a `Blob`, every byte value, a `data:` URL, a non-ASCII name, a `blob:` URL the page revoked at once, a link tapped,
+  one clicked outside the document, three in a row and a picker cancelled. On macOS a `Blob` has been. WebView2 and
+  WebKitGTK handle downloads themselves on Windows and Linux, which has not been measured yet.
 - iOS 15.1 or later, arm64 alone: devices, and the Simulator of an Apple silicon Mac. It builds on macOS with Xcode.
 - During development an iOS app runs in the Simulator; a device runs the Xcode project's build.
 - Android 13 (API 33) or later, the level crossbind's Android libraries build against, with Android System WebView
