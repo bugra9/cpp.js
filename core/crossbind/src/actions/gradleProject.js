@@ -22,7 +22,18 @@ const ADAPTIVE_ICON = `<?xml version="1.0" encoding="utf-8"?>
 </adaptive-icon>
 `;
 
-const buildGradle = ({ id, label, version, abis, icon }) => `// crossbind writes this project anew on every build: the module comes prebuilt in src/main/jniLibs/, and the app's
+// The links of app.urlSchemes the activity opens, from a browser as well, before the end of the activity's element.
+const ACTIVITY_END = '        </activity>';
+const urlFilter = (schemes) => [
+    '            <intent-filter>',
+    '                <action android:name="android.intent.action.VIEW" />',
+    '                <category android:name="android.intent.category.DEFAULT" />',
+    '                <category android:name="android.intent.category.BROWSABLE" />',
+    ...schemes.map((scheme) => `                <data android:scheme="${scheme}" />`),
+    '            </intent-filter>',
+].join('\n');
+
+const buildGradle = ({ id, label, version, abis, icon, launchMode }) => `// crossbind writes this project anew on every build: the module comes prebuilt in src/main/jniLibs/, and the app's
 // files are in src/main/assets/app/.
 plugins {
     id 'com.android.application'
@@ -39,7 +50,7 @@ android {
         targetSdk ${TARGET_SDK}
         versionCode ${version.code}
         versionName ${groovyString(version.name)}
-        manifestPlaceholders = [appName: ${groovyString(label)}, appIcon: ${groovyString(icon)}]
+        manifestPlaceholders = [appName: ${groovyString(label)}, appIcon: ${groovyString(icon)}, launchMode: ${groovyString(launchMode)}]
         ndk {
             abiFilters ${abis.map(groovyString).join(', ')}
         }
@@ -104,12 +115,20 @@ dependencies {
 // An Android app as a Gradle project, written anew from the parts its ABI targets built: each brings its libraries,
 // the first also the app's files. Gradle adds Hermes and androidx.webkit from Maven, and makes the APK or the bundle.
 // The icons given are the files of the app's launcher icon under res/; without them it has the system's.
-export default function writeGradleProject(to, { parts, id, label, version, icons = null }) {
+export default function writeGradleProject(to, { parts, id, label, version, icons = null, urlSchemes = [] }) {
     const { name } = state.config.general;
     if (parts.length === 0) throw new Error(`crossbind: no part of the Android app ${name} is built, so there is no Gradle project to write.`);
     fs.rmSync(to, { recursive: true, force: true });
     fs.cpSync(path.join(resolveAppHostRoot(), 'android'), to, { recursive: true });
     const main = path.join(to, 'app', 'src', 'main');
+    if (urlSchemes.length > 0) {
+        const manifest = path.join(main, 'AndroidManifest.xml');
+        const text = fs.readFileSync(manifest, 'utf8');
+        if (!text.includes(ACTIVITY_END)) {
+            throw new Error(`crossbind: ${manifest}, from the app host, has no activity to give the intent filter of app.urlSchemes: update @crossbind/core-app-host to match crossbind.`);
+        }
+        fs.writeFileSync(manifest, text.replace(ACTIVITY_END, `${urlFilter(urlSchemes)}\n${ACTIVITY_END}`));
+    }
     parts.forEach(({ arch, dir }) => fs.cpSync(path.join(dir, 'lib'), path.join(main, 'jniLibs', arch), { recursive: true }));
     fs.cpSync(path.join(parts[0].dir, 'app'), path.join(main, 'assets', 'app'), { recursive: true });
     if (icons) {
@@ -120,6 +139,7 @@ export default function writeGradleProject(to, { parts, id, label, version, icon
     }
     fs.writeFileSync(path.join(to, 'app', 'build.gradle'), buildGradle({
         id, label, version, abis: parts.map(({ arch }) => arch), icon: icons ? '@mipmap/ic_launcher' : '@android:drawable/sym_def_app_icon',
+        launchMode: urlSchemes.length > 0 ? 'singleTask' : 'standard',
     }));
     return to;
 }

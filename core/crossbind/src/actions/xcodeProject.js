@@ -36,7 +36,7 @@ const PROJECT_SETTINGS = {
 
 const ORIENTATIONS = ['UIInterfaceOrientationPortrait', 'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'];
 
-const infoPlist = (name) => xmlPlist({
+const infoPlist = (name, urlSchemes) => xmlPlist({
     CFBundleDevelopmentRegion: 'en',
     CFBundleDisplayName: name,
     CFBundleExecutable: '$(EXECUTABLE_NAME)',
@@ -45,6 +45,7 @@ const infoPlist = (name) => xmlPlist({
     CFBundleName: '$(PRODUCT_NAME)',
     CFBundlePackageType: 'APPL',
     CFBundleShortVersionString: '$(MARKETING_VERSION)',
+    ...(urlSchemes.length > 0 ? { CFBundleURLTypes: [{ CFBundleURLName: '$(PRODUCT_BUNDLE_IDENTIFIER)', CFBundleURLSchemes: urlSchemes }] } : {}),
     CFBundleVersion: '$(CURRENT_PROJECT_VERSION)',
     LSRequiresIPhoneOS: true,
     UIApplicationSceneManifest: { UIApplicationSupportsMultipleScenes: false },
@@ -122,7 +123,7 @@ function objects(name, targetSettings, hasIcon) {
 // An iOS app as an Xcode project, written anew from the parts its SDK targets built: each brings its archives and
 // their link line, and its slice of Hermes; the first also the app's files. Xcode signs the app and runs it, in the
 // Simulator or on a device, and makes every size of its icon from the one PNG given.
-export default function writeXcodeProject(to, { parts, identity, label, version, icon = null }) {
+export default function writeXcodeProject(to, { parts, identity, label, version, icon = null, urlSchemes = [] }) {
     const { name } = state.config.general;
     if (parts.length === 0) throw new Error(`crossbind: no part of the iOS app ${name} is built, so there is no Xcode project to write.`);
     fs.rmSync(to, { recursive: true, force: true });
@@ -141,7 +142,7 @@ export default function writeXcodeProject(to, { parts, identity, label, version,
     if (result.status !== 0) throw new Error(`crossbind: cannot make Hermes' xcframework for ${to}: ${result.stderr || result.error?.message}`);
 
     fs.writeFileSync(`${to}/main.m`, MAIN);
-    fs.writeFileSync(`${to}/Info.plist`, infoPlist(label));
+    fs.writeFileSync(`${to}/Info.plist`, infoPlist(label, urlSchemes));
     if (icon) {
         const info = { author: 'xcode', version: 1 };
         const set = `${to}/Assets.xcassets/AppIcon.appiconset`;

@@ -51,6 +51,9 @@ Claim claimInstance(const Launch &launch);
 void leaveInstance();
 
 namespace crossbind::app {
-// What the instance does with a later launch, on any thread: it brings its window to the front and tells the page.
+// What the instance does with a later launch, on any thread: it brings its window to the front and tells the page. One
+// that comes while the module starts waits for startTakingLaunches.
 void launchedAgain(Launch launch);
+// The module has started: the launches handed over meanwhile reach the page now, after the app's own.
+void startTakingLaunches();
 }  // namespace crossbind::app

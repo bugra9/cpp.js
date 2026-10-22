@@ -19,5 +19,10 @@ Core &start(const char *devUrl);
 std::string attach(Core &core, void *webView, const char *devUrl);
 // The scheme and authority of a URL: the origin a webview names a page by.
 std::string originOf(const std::string &url);
+// A link of app.urlSchemes the system opened the app with, on any thread: the page gets it from app.launchUrls(), or as
+// the event open-url once it has asked.
+void openedUrl(const std::string &url);
+// The arguments that are links of app.urlSchemes, as Windows and Linux hand an app its link.
+void openUrlsIn(const std::vector<std::string> &args);
 
 }  // namespace crossbind::app

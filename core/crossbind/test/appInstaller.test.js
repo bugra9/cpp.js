@@ -85,11 +85,15 @@ describe("a Linux app's Debian package", () => {
             '[Desktop Entry]\nType=Application\nName=My Demo\nExec=demo\nIcon=demo\nTerminal=false\n',
         );
         expect(desktopEntry({ label: 'My Demo', command: 'demo', hasIcon: false })).not.toContain('Icon=');
+        // A link of one of its schemes opens it, with the link as its argument.
+        expect(desktopEntry({ label: 'My Demo', command: 'demo', hasIcon: false, urlSchemes: ['myapp', 'other'] })).toBe(
+            '[Desktop Entry]\nType=Application\nName=My Demo\nExec=demo %u\nMimeType=x-scheme-handler/myapp;x-scheme-handler/other;\nTerminal=false\n',
+        );
     });
 
     // Windows writes a link's target with backslashes, and a drive for /Applications.
-    test.skipIf(process.platform === 'win32')('holds the app in /usr/lib, its command in /usr/bin, and the desktop entry and icon of a menu', () => {
-        const root = project({ 'demo-linux-x64/demo': 'elf', 'demo-linux-x64/resources/icon.png': 'png' }, { name: 'Demo_App', appOptions: { name: 'My Demo' } });
+    test.skipIf(process.platform === 'win32')('holds the app in /usr/lib, its command in /usr/bin, and the desktop entry, which opens its links, and icon of a menu', () => {
+        const root = project({ 'demo-linux-x64/demo': 'elf', 'demo-linux-x64/resources/icon.png': 'png' }, { name: 'Demo_App', appOptions: { name: 'My Demo', urlSchemes: ['myapp'] } });
         fs.renameSync(path.join(root, 'dist/demo-linux-x64/demo'), path.join(root, 'dist/demo-linux-x64/Demo_App'));
         const target = { platform: 'linux', arch: 'x64' };
         let tree;
@@ -113,7 +117,7 @@ describe("a Linux app's Debian package", () => {
             command: '../lib/demo-app/Demo_App',
             app: ['Demo_App', 'resources'],
             icon: 'png',
-            entry: desktopEntry({ label: 'My Demo', command: 'demo-app', hasIcon: true }),
+            entry: desktopEntry({ label: 'My Demo', command: 'demo-app', hasIcon: true, urlSchemes: ['myapp'] }),
             control: debianControl({ name: 'demo-app', version: '1.2.0-beta.3', arch: 'x64', label: 'My Demo' }),
         });
         // What it packaged is gone once the package is made.
@@ -172,10 +176,18 @@ describe("a Windows app's setup program", () => {
         expect(fs.readFileSync(path.join(root, 'build/demo-win32-x64.ico')).readUInt16LE(2)).toBe(1);
     });
 
-    test('has no icon of its own without app.icon', () => {
+    test('has no icon of its own without app.icon, and registers no scheme without app.urlSchemes', () => {
         const root = project({ 'demo-win32-x64/demo.exe': 'MZ' });
         writeInstaller(path.join(root, 'dist/demo-win32-x64'), { platform: 'win32', arch: 'x64' });
         expect(inWindowsImage.mock.calls[0][0].some((param) => param.startsWith('-DICON='))).toBe(false);
+        expect(inWindowsImage.mock.calls[0][0].some((param) => param.startsWith('-DSCHEMES='))).toBe(false);
+    });
+
+    test('registers the schemes of app.urlSchemes, which a file of macros names for its script', () => {
+        const root = project({ 'demo-win32-x64/demo.exe': 'MZ' }, { appOptions: { urlSchemes: ['myapp', 'other'] } });
+        writeInstaller(path.join(root, 'dist/demo-win32-x64'), { platform: 'win32', arch: 'x64' });
+        const schemes = inWindowsImage.mock.calls[0][0].find((param) => param.startsWith('-DSCHEMES=')).slice('-DSCHEMES='.length);
+        expect(fs.readFileSync(schemes, 'utf8')).toBe('!macro CROSSBIND_URL_SCHEMES DO\n  !insertmacro ${DO} "myapp"\n  !insertmacro ${DO} "other"\n!macroend\n');
     });
 
     test('is signed with its uninstaller as NSIS writes them, by the script that signs the app, with a key in the environment', () => {

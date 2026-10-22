@@ -29,7 +29,7 @@ import logger from '../utils/logger.js';
 import findFiles from '../utils/findFiles.js';
 import { getContentHash, getFilesFingerprint } from '../utils/hash.js';
 import { xmlPlist } from '../utils/plist.js';
-import { appDisplayName, appHeader, appId } from '../utils/appOptions.js';
+import { appDisplayName, appHeader, appId, appUrlSchemes } from '../utils/appOptions.js';
 import { androidIcons, iosIcon, linuxIcon, macIcon, readAppIcon, windowsIcon } from '../utils/appIcon.js';
 import writeIfChanged from '../utils/writeIfChanged.js';
 import { writeNativeSourceStamp } from '../utils/nativeSourceStamp.js';
@@ -179,7 +179,10 @@ async function bundle(input, file, plugins) {
     await build.close();
 }
 
-const infoPlist = (name, version, hasIcon) => xmlPlist({
+// A development build claims no scheme: the built app, of the same id, owns them, and a link it opens shows its own page.
+const urlSchemesOf = (target) => (target.buildType === 'release' ? appUrlSchemes(state.config) : []);
+
+const infoPlist = (name, version, hasIcon, urlSchemes) => xmlPlist({
     CFBundleDisplayName: appDisplayName(state.config),
     CFBundleExecutable: name,
     // Contents/Resources/icon.icns.
@@ -188,6 +191,7 @@ const infoPlist = (name, version, hasIcon) => xmlPlist({
     CFBundleName: appDisplayName(state.config),
     CFBundlePackageType: 'APPL',
     CFBundleShortVersionString: version,
+    ...(urlSchemes.length > 0 ? { CFBundleURLTypes: [{ CFBundleURLName: appId(state.config), CFBundleURLSchemes: urlSchemes }] } : {}),
     CFBundleVersion: version,
     LSMinimumSystemVersion: DARWIN_DEPLOYMENT_TARGET,
     NSPrincipalClass: 'NSApplication',
@@ -215,7 +219,7 @@ function assembleApp(target, { executable, hbc, hermes, icon }) {
     copyAppFiles(`${app}/${layout.resources}`, hbc, target);
     if (target.platform === 'linux' && icon) fs.writeFileSync(`${app}/${layout.resources}/icon.png`, linuxIcon(icon));
     if (target.platform !== 'darwin') return;
-    fs.writeFileSync(`${app}/Contents/Info.plist`, infoPlist(name, appVersion(), Boolean(icon)));
+    fs.writeFileSync(`${app}/Contents/Info.plist`, infoPlist(name, appVersion(), Boolean(icon), urlSchemesOf(target)));
     if (icon) fs.writeFileSync(`${app}/Contents/Resources/icon.icns`, macIcon(icon));
     const framework = `${app}/Contents/Frameworks/hermesvm.framework`;
     fs.cpSync(`${hermes}/Library/Frameworks/macosx/hermesvm.framework`, framework, { recursive: true, verbatimSymlinks: true });
@@ -324,11 +328,13 @@ export function publishApp(target, { to = appOutputPath(target), page = null } =
         const icon = readAppIcon(state.config);
         writeXcodeProject(to, {
             parts, identity: { id: appId(state.config), team: appTeam() }, label: appDisplayName(state.config), version: appVersion(), icon: icon && iosIcon(icon),
+            urlSchemes: appUrlSchemes(state.config),
         });
     } else if (target.platform === 'android') {
         const icon = readAppIcon(state.config);
         writeGradleProject(to, {
             parts: appParts(target), id: androidAppId(), label: appDisplayName(state.config), version: androidVersion(), icons: icon && androidIcons(icon),
+            urlSchemes: appUrlSchemes(state.config),
         });
     } else if (path.resolve(to) !== path.resolve(built)) {
         fs.rmSync(to, { recursive: true, force: true });
@@ -404,7 +410,7 @@ export default async function buildApp(target, { bridges = [], force = false } =
         // A desktop app carries its icon; an iOS or Android one gets it as its project is written.
         icon: ['ios', 'android'].includes(target.platform) ? null : icon?.hash ?? null,
         // A macOS app's bundle takes its id, name and version from it.
-        infoPlist: target.platform === 'darwin' ? infoPlist(state.config.general.name, appVersion(), Boolean(icon)) : null,
+        infoPlist: target.platform === 'darwin' ? infoPlist(state.config.general.name, appVersion(), Boolean(icon), urlSchemesOf(target)) : null,
         hermes: HERMES.version,
         inputs,
         linkArgs,

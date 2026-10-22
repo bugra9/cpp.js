@@ -34,8 +34,33 @@ std::optional<Launch> decodeLaunch(std::string_view bytes) {
     if (parts.size() < 2) return std::nullopt;
     return Launch{{parts.begin() + 2, parts.end()}, std::move(parts[1]), std::move(parts[0])};
 }
+#endif
 
-#ifndef _WIN32
+#if !defined(_WIN32) && (defined(CROSSBIND_APP_SINGLE_INSTANCE) || defined(CROSSBIND_APP_URL_SCHEMES))
+#include <cstdlib>
+#include <filesystem>
+#include <system_error>
+
+Launch launchOf(int argc, char **argv) {
+    Launch launch;
+    for (int i = 1; i < argc; i += 1) launch.args.emplace_back(argv[i]);
+    std::error_code error;
+    const std::u8string cwd = std::filesystem::current_path(error).u8string();
+    launch.cwd.assign(cwd.begin(), cwd.end());
+#ifdef __linux__
+    for (const char *name : {"XDG_ACTIVATION_TOKEN", "DESKTOP_STARTUP_ID"}) {
+        const char *token = std::getenv(name);
+        if (token && *token) {
+            launch.token = token;
+            break;
+        }
+    }
+#endif
+    return launch;
+}
+#endif
+
+#if !defined(_WIN32) && defined(CROSSBIND_APP_SINGLE_INSTANCE)
 #include "platform.h"
 
 #include <fcntl.h>
@@ -302,24 +327,6 @@ bool handOver(const std::string &bytes, Deadline deadline) {
 
 }  // namespace
 
-Launch launchOf(int argc, char **argv) {
-    Launch launch;
-    for (int i = 1; i < argc; i += 1) launch.args.emplace_back(argv[i]);
-    std::error_code error;
-    const std::u8string cwd = std::filesystem::current_path(error).u8string();
-    launch.cwd.assign(cwd.begin(), cwd.end());
-#ifdef __linux__
-    for (const char *name : {"XDG_ACTIVATION_TOKEN", "DESKTOP_STARTUP_ID"}) {
-        const char *token = std::getenv(name);
-        if (token && *token) {
-            launch.token = token;
-            break;
-        }
-    }
-#endif
-    return launch;
-}
-
 Claim claimInstance(const Launch &launch) {
     try {
         folder = openFolder();
@@ -364,6 +371,4 @@ void leaveInstance() {
     // A later launch then finds no socket, and waits for the lock.
     if (isListening) unlinkat(folder, SOCKET_NAME.c_str(), 0);
 }
-#endif
-
 #endif

@@ -1,5 +1,6 @@
 // The app's functions as its code and its page call them: the module's code through <crossbind/app.h>, which waits for
 // the main thread to do the work, and the page through crossbind/app, which the host answers once the work is done.
+#include "app.h"
 #include "host_core.h"
 // Where app.openPath lets the page open files, which crossbind writes for every app's host.
 #include "crossbind_app.h"
@@ -371,10 +372,61 @@ void quit() { quitApp(); }
 
 void emitEvent(const std::string &event, const std::string &json) { postEvent(event, json); }
 
+// Far longer than a link: a system that hands over more opens the app on no link.
+constexpr size_t MAX_URL = 1 << 16;
+
+void openedUrl(const std::string &url) {
+    if (url.size() > MAX_URL) {
+        std::fprintf(stderr, "crossbind: a link of %zu bytes is longer than the app takes\n", url.size());
+        return;
+    }
+    postEvent("open-url", "{\"url\":" + json(url) + "}");
+}
+
+#ifdef CROSSBIND_APP_URL_SCHEMES
+void openUrlsIn(const std::vector<std::string> &args) {
+    static const std::vector<std::string> schemes = CROSSBIND_APP_URL_SCHEMES;
+    for (const auto &arg : args) {
+        const size_t colon = arg.find(':');
+        if (colon == std::string::npos) continue;
+        std::string scheme = arg.substr(0, colon);
+        std::transform(scheme.begin(), scheme.end(), scheme.begin(), lower);
+        if (std::find(schemes.begin(), schemes.end(), scheme) != schemes.end()) openedUrl(arg);
+    }
+}
+#endif
+
 #ifdef CROSSBIND_APP_SINGLE_INSTANCE
+namespace {
+// The launches handed over while the module started, which nothing could tell the page of yet.
+std::mutex earlyMutex;
+std::vector<Launch> earlyLaunches;
+bool isTakingLaunches = false;
+}  // namespace
+
 void launchedAgain(Launch launch) {
+    {
+        std::lock_guard<std::mutex> lock(earlyMutex);
+        if (!isTakingLaunches) {
+            earlyLaunches.push_back(std::move(launch));
+            return;
+        }
+    }
     showWindow(launch.token);
     postEvent("second-instance", "{\"args\":" + json(launch.args) + ",\"cwd\":" + json(launch.cwd) + "}");
+#ifdef CROSSBIND_APP_URL_SCHEMES
+    openUrlsIn(launch.args);
+#endif
+}
+
+void startTakingLaunches() {
+    std::vector<Launch> early;
+    {
+        std::lock_guard<std::mutex> lock(earlyMutex);
+        isTakingLaunches = true;
+        early.swap(earlyLaunches);
+    }
+    for (auto &launch : early) launchedAgain(std::move(launch));
 }
 #endif
 

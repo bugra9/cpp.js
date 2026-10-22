@@ -52,6 +52,9 @@ describe("crossbind/app, an app's own functions", () => {
         await expect(app.paths()).resolves.toEqual(folders);
         await app.quit();
         expect(host).toHaveBeenLastCalledWith('app.quit', {});
+        host.mockResolvedValueOnce(['myapp://open?id=1']);
+        await expect(app.launchUrls()).resolves.toEqual(['myapp://open?id=1']);
+        expect(host).toHaveBeenLastCalledWith('app.launchUrls', {});
         host.mockResolvedValueOnce({ version: '1.3.0' });
         await expect(updater.check()).resolves.toEqual({ version: '1.3.0' });
         expect(host).toHaveBeenLastCalledWith('updater.check', {});

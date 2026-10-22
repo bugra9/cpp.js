@@ -342,17 +342,21 @@ jobs:
                   # The uninstaller stops while the app runs.
                   $opened | Stop-Process -Force
                   $opened | Wait-Process -Timeout 30
-            - name: Uninstall the app, which takes its shortcut, its files and its entry in Settings
+            - name: Uninstall the app, which takes its shortcut, its files, its entry in Settings and its URL scheme
               run: |
                   $app = "$env:LOCALAPPDATA\Programs\crossbind-e2e-desktop-app"
                   $shortcut = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\crossbind-e2e-desktop-app.lnk"
                   $entry = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\dev.crossbind.crossbind-e2e-desktop-app'
-                  foreach ($path in $shortcut, $entry) { if (-not (Test-Path $path)) { throw "the setup program left out $path" } }
+                  $scheme = 'HKCU:\Software\Classes\crossbind-e2e'
+                  foreach ($path in $shortcut, $entry, $scheme) { if (-not (Test-Path $path)) { throw "the setup program left out $path" } }
+                  # A link of app.urlSchemes opens the app with the link as its argument, as the suite launches it.
+                  $command = (Get-Item -LiteralPath "$scheme\shell\open\command").GetValue('')
+                  if ($command -ne "`"$app\crossbind-e2e-desktop-app.exe`" `"%1`"") { throw "a link of the scheme runs $command" }
                   $uninstall = Start-Process -Wait -PassThru -FilePath "$app\uninstall.exe" -ArgumentList /S
                   if ($uninstall.ExitCode -ne 0) { throw "the uninstaller exited with $($uninstall.ExitCode)" }
                   # It finishes from a copy of itself, whose last step removes the folder.
                   for ($i = 0; $i -lt 30 -and (Test-Path $app); $i++) { Start-Sleep -Seconds 1 }
-                  foreach ($path in $app, $shortcut, $entry) { if (Test-Path $path) { throw "the uninstaller left $path" } }
+                  foreach ($path in $app, $shortcut, $entry, $scheme) { if (Test-Path $path) { throw "the uninstaller left $path" } }
     app-android:
         # The Android app's host and Rust build in crossbind's android-app image, its bridges in the web image, and Gradle
         # packages the app in the android-app image too; it runs on an emulator.

@@ -60,7 +60,8 @@ Paths paths();
 void quit();
 // Sends the page an event, whose listeners through crossbind/app's events.on get the value json holds, a JSON text. It
 // waits for nothing, so any thread may call it. A page gets the events emitted once it listens: one emitted before,
-// as before the module starts or once the app quits, reaches none.
+// as before the module starts or once the app quits, reaches none. The events menu, second-instance and open-url are the
+// host's own.
 void emitEvent(const std::string &event, const std::string &json = "null");
 // The version app.updater.url in crossbind.config.js offers when it is newer than this app's, or nothing. It waits for
 // the download, and throws while another check or install runs.

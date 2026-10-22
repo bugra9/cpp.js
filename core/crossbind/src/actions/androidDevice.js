@@ -9,7 +9,7 @@ const ACTIVITY = 'dev.crossbind.app.CrossbindActivity';
 
 // The adb that reaches the device: the one on PATH, else the platform tools of ANDROID_HOME's SDK or Android Studio's.
 // crossbind installs none.
-function adbPath() {
+export function adbPath() {
     const sdk = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT
         || path.join(os.homedir(), process.platform === 'darwin' ? 'Library/Android/sdk' : 'Android/Sdk');
     const found = [...(process.env.PATH ?? '').split(path.delimiter).map((dir) => path.join(dir, 'adb')), path.join(sdk, 'platform-tools', 'adb')]

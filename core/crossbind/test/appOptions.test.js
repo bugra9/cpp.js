@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
-    appDisplayName, appHeader, appId, appUpdater, appWindow,
+    appDisplayName, appHeader, appId, appUpdater, appUrlSchemes, appWindow,
 } from '../src/utils/appOptions.js';
 
 const config = (app = {}, version = '1.2.3') => ({ general: { name: 'demo-app' }, app, package: { version } });
@@ -133,6 +133,28 @@ describe("a desktop app's updater", () => {
     });
 });
 
+describe("an app's URL schemes", () => {
+    test('are none without app.urlSchemes, and the ones it lists', () => {
+        expect(appUrlSchemes(config())).toEqual([]);
+        expect(appUrlSchemes(config({ urlSchemes: ['myapp', 'my-app.dev+1'] }))).toEqual(['myapp', 'my-app.dev+1']);
+    });
+
+    test('take lowercase scheme names alone, which is how Android matches them', () => {
+        expect(() => appUrlSchemes(config({ urlSchemes: 'myapp' }))).toThrow("is no list of schemes, as ['myapp'] is");
+        // One letter would take a Windows path's drive, as C:\, for a link.
+        for (const scheme of ['MyApp', '1app', 'my app', 'myapp:', '', 'c', 7]) {
+            expect(() => appUrlSchemes(config({ urlSchemes: [scheme] }))).toThrow('takes schemes of a lowercase letter');
+        }
+    });
+
+    test("refuse a scheme the web, the system or crossbind owns, and one listed twice", () => {
+        for (const scheme of ['http', 'https', 'file', 'mailto', 'crossbind', 'javascript', 'clsid']) {
+            expect(() => appUrlSchemes(config({ urlSchemes: [scheme] }))).toThrow(`cannot take ${scheme}`);
+        }
+        expect(() => appUrlSchemes(config({ urlSchemes: ['myapp', 'myapp'] }))).toThrow('lists a scheme twice');
+    });
+});
+
 describe("the header a desktop app's host builds with", () => {
     test('defines the name and the window', () => {
         expect(appHeader(config({ name: 'Demo App', window: { width: 800, height: 600, minWidth: 400 } }), 'darwin')).toBe([
@@ -182,6 +204,17 @@ describe("the header a desktop app's host builds with", () => {
         expect(header).toContain('#define CROSSBIND_APP_UPDATER_VERSION "1.2.3"\n');
         expect(appHeader(config(), 'darwin')).not.toContain('UPDATER');
         expect(appHeader(config({ updater }), 'ios')).not.toContain('UPDATER');
+    });
+
+    test("lists a desktop app's URL schemes, which keep a Windows or Linux app to one instance unless app.singleInstance is false", () => {
+        const header = appHeader(config({ urlSchemes: ['myapp', 'other'] }), 'win32');
+        expect(header).toContain('#define CROSSBIND_APP_URL_SCHEMES {"myapp", "other"}\n');
+        expect(header).toContain('#define CROSSBIND_APP_SINGLE_INSTANCE 1\n');
+        expect(appHeader(config({ urlSchemes: ['myapp'], singleInstance: false }), 'linux')).not.toContain('SINGLE_INSTANCE');
+        // macOS hands a link to the app that runs.
+        expect(appHeader(config({ urlSchemes: ['myapp'] }), 'darwin')).not.toContain('SINGLE_INSTANCE');
+        expect(appHeader(config(), 'darwin')).not.toContain('URL_SCHEMES');
+        expect(appHeader(config({ urlSchemes: ['myapp'] }), 'android')).not.toContain('URL_SCHEMES');
     });
 
     test('keeps a desktop app to one instance with app.singleInstance, as a phone keeps every app itself', () => {

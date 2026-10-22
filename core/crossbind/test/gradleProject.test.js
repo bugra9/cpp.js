@@ -40,7 +40,7 @@ describe("an Android app's Gradle project", () => {
         expect(gradle).toContain('versionCode 1002003');
         expect(gradle).toContain("versionName '1.2.3-beta.1'");
         expect(gradle).toContain("abiFilters 'arm64-v8a', 'x86_64'");
-        expect(gradle).toContain("manifestPlaceholders = [appName: 'Demo\\'s App', appIcon: '@android:drawable/sym_def_app_icon']");
+        expect(gradle).toContain("manifestPlaceholders = [appName: 'Demo\\'s App', appIcon: '@android:drawable/sym_def_app_icon', launchMode: 'standard']");
         expect(fs.existsSync(path.join(main, 'res', 'mipmap-anydpi'))).toBe(false);
         expect(gradle).toMatch(/implementation\('com\.facebook\.hermes:hermes-android:\d+\.\d+\.\d+'\)/);
         // Android's default pattern would leave out the page's _app and .well-known directories.
@@ -80,6 +80,34 @@ describe("an Android app's Gradle project", () => {
             .toContain('<foreground android:drawable="@mipmap/ic_launcher_foreground" />');
         expect(fs.readFileSync(path.join(to, 'app', 'build.gradle'), 'utf8')).toContain("appIcon: '@mipmap/ic_launcher'");
         expect(fs.readFileSync(path.join(to, 'app', 'src', 'main', 'AndroidManifest.xml'), 'utf8')).toContain('android:icon="${appIcon}"');
+        fs.rmSync(root, { recursive: true, force: true });
+    });
+
+    test('opens the links of app.urlSchemes in its one activity, which a link that comes while it runs reaches as well', () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-gradle-'));
+        const projectOf = (urlSchemes) => {
+            const to = path.join(root, `demo-${urlSchemes.length}`);
+            writeGradleProject(to, { parts: [part(root, 'x86_64')], id: 'com.example.demo', label: 'Demo', version: { name: '1.0.0', code: 1 }, urlSchemes });
+            return {
+                manifest: fs.readFileSync(path.join(to, 'app', 'src', 'main', 'AndroidManifest.xml'), 'utf8'),
+                gradle: fs.readFileSync(path.join(to, 'app', 'build.gradle'), 'utf8'),
+            };
+        };
+        const { manifest, gradle } = projectOf(['myapp', 'other']);
+        expect(manifest).toContain('android:launchMode="${launchMode}"');
+        expect(gradle).toContain("launchMode: 'singleTask'");
+        expect(manifest).toContain([
+            '                <action android:name="android.intent.action.VIEW" />',
+            '                <category android:name="android.intent.category.DEFAULT" />',
+            '                <category android:name="android.intent.category.BROWSABLE" />',
+            '                <data android:scheme="myapp" />',
+            '                <data android:scheme="other" />',
+            '            </intent-filter>',
+            '        </activity>',
+        ].join('\n'));
+        const plain = projectOf([]);
+        expect(plain.manifest).not.toContain('android.intent.action.VIEW');
+        expect(plain.gradle).toContain("launchMode: 'standard'");
         fs.rmSync(root, { recursive: true, force: true });
     });
 

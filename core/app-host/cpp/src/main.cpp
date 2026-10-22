@@ -38,8 +38,11 @@ constexpr const char *WEBVIEW2_MISSING = "the app needs the Microsoft Edge WebVi
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
     const char *devUrl = app::devUrl();
+#if defined(CROSSBIND_APP_SINGLE_INSTANCE) || defined(CROSSBIND_APP_URL_SCHEMES)
+    const Launch launch = launchOf(argc, argv);
+#endif
 #ifdef CROSSBIND_APP_SINGLE_INSTANCE
-    if (const Claim claim = claimInstance(launchOf(argc, argv)); claim != Claim::Instance) {
+    if (const Claim claim = claimInstance(launch); claim != Claim::Instance) {
 #ifdef CROSSBIND_APP_DEV
         if (claim == Claim::HandedOver) std::fprintf(stderr, "crossbind: another development session of the app runs, which took this launch\n");
 #endif
@@ -54,6 +57,17 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 #endif
     app::Core &core = app::start(devUrl);
     schemeHandler = [&core](SchemeRequest request, SchemeRespond respond) { core.serve(std::move(request), std::move(respond)); };
+#ifdef CROSSBIND_APP_URL_SCHEMES
+    // The links this launch was given wait for the page to ask for them.
+    app::openUrlsIn(launch.args);
+#ifdef __APPLE__
+    // macOS hands the app its links as it finishes launching, which the window starts.
+    listenForUrls();
+#endif
+#endif
+#ifdef CROSSBIND_APP_SINGLE_INSTANCE
+    app::startTakingLaunches();
+#endif
 
 #ifdef __APPLE__
     webview::detail::cocoa_webkit::cocoa_configure_hook = configureWebView;
