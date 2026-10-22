@@ -32,6 +32,41 @@ void onQuit(std::function<void()>) {}
 // WebView2 shows the page's dialogs, file inputs and downloads itself.
 void showPageDialogs(void *) {}
 
+// The page gets the devices app.permissions lists, and no other, without a question of WebView2's; WebView2 decides the
+// rest.
+void answerPermissions(void *webView) {
+    auto *asked = new Handler<ICoreWebView2PermissionRequestedEventHandler, ICoreWebView2 *, ICoreWebView2PermissionRequestedEventArgs *>(
+        IID_ICoreWebView2PermissionRequestedEventHandler, [](ICoreWebView2 *, ICoreWebView2PermissionRequestedEventArgs *args) -> HRESULT {
+            COREWEBVIEW2_PERMISSION_KIND kind = COREWEBVIEW2_PERMISSION_KIND_UNKNOWN_PERMISSION;
+            args->get_PermissionKind(&kind);
+            bool isAllowed = false;
+            switch (kind) {
+            case COREWEBVIEW2_PERMISSION_KIND_CAMERA:
+                isAllowed = CROSSBIND_APP_PERMISSION_CAMERA;
+                break;
+            case COREWEBVIEW2_PERMISSION_KIND_MICROPHONE:
+                isAllowed = CROSSBIND_APP_PERMISSION_MICROPHONE;
+                break;
+            case COREWEBVIEW2_PERMISSION_KIND_GEOLOCATION:
+                isAllowed = CROSSBIND_APP_PERMISSION_LOCATION;
+                break;
+            default:
+                return S_OK;
+            }
+            // A decision WebView2 kept would outlive an update that changes the list.
+            ICoreWebView2PermissionRequestedEventArgs3 *kept = nullptr;
+            if (SUCCEEDED(args->QueryInterface(IID_ICoreWebView2PermissionRequestedEventArgs3, reinterpret_cast<void **>(&kept)))) {
+                kept->put_SavesInProfile(FALSE);
+                kept->Release();
+            }
+            args->put_State(isAllowed ? COREWEBVIEW2_PERMISSION_STATE_ALLOW : COREWEBVIEW2_PERMISSION_STATE_DENY);
+            return S_OK;
+        });
+    EventRegistrationToken token;
+    coreWebView(webView)->add_PermissionRequested(asked, &token);
+    asked->Release();
+}
+
 void showError(const std::string &message) {
     MessageBoxW(nullptr, wide(message).c_str(), wide(CROSSBIND_APP_NAME " cannot open").c_str(), MB_OK | MB_ICONERROR);
 }

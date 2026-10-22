@@ -1,5 +1,6 @@
 package dev.crossbind.app;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
@@ -19,6 +20,8 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.webkit.ConsoleMessage;
+import android.webkit.GeolocationPermissions;
+import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -41,7 +44,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -65,6 +70,11 @@ public class CrossbindActivity extends Activity {
     private static final String READY = "__crossbind_ready";
     // The relative luminance of a color that black and white contrast with as much.
     private static final float EVEN_CONTRAST = 0.179f;
+    private static final int PERMISSIONS_REQUEST = 1;
+    // The Android permission behind each device a page asks for.
+    private static final Map<String, String> PAGE_DEVICES = Map.of(
+            PermissionRequest.RESOURCE_VIDEO_CAPTURE, Manifest.permission.CAMERA,
+            PermissionRequest.RESOURCE_AUDIO_CAPTURE, Manifest.permission.RECORD_AUDIO);
 
     // A call of a page, answered on the port of the page that made it: a page that went away gets no answer.
     private static final class Call {
@@ -88,6 +98,11 @@ public class CrossbindActivity extends Activity {
     // A file input's picker answers in onActivityResult, under the request code of the latest one.
     private int pickRequest;
     private ValueCallback<Uri[]> pendingFiles;
+    // What waits for the answer the app's user is giving for permissions, and what waits to ask: Android asks one question
+    // at a time, and answers one asked meanwhile with nothing.
+    private Runnable answering;
+    private final ArrayDeque<Runnable> waiting = new ArrayDeque<>();
+    private Set<String> declared;
     // Back walks the page's history first, as in a browser; with none left, the system's own back leaves the app.
     private final OnBackInvokedCallback back = () -> webView.goBack();
     private boolean isBackTaken;
@@ -246,6 +261,48 @@ public class CrossbindActivity extends Activity {
         if (request != pickRequest || pendingFiles == null) return;
         pendingFiles.onReceiveValue(pickedFiles(result, data));
         pendingFiles = null;
+    }
+
+    // The permissions the app's manifest asks for, which crossbind writes from app.permissions.
+    private boolean isDeclared(String permission) {
+        if (declared == null) {
+            try {
+                String[] requested = getPackageManager()
+                        .getPackageInfo(getPackageName(), PackageManager.PackageInfoFlags.of(PackageManager.GET_PERMISSIONS)).requestedPermissions;
+                declared = requested == null ? Set.of() : new HashSet<>(Arrays.asList(requested));
+            } catch (PackageManager.NameNotFoundException none) {
+                declared = Set.of();
+            }
+        }
+        return permission != null && declared.contains(permission);
+    }
+
+    private boolean isGranted(String permission) {
+        return checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    // Asks the app's user for whichever of these permissions it lacks, then runs then, which checks what it was given.
+    private void afterAsking(String[] permissions, Runnable then) {
+        if (answering != null) {
+            waiting.add(() -> afterAsking(permissions, then));
+            return;
+        }
+        String[] missing = Arrays.stream(permissions).filter((permission) -> !isGranted(permission)).toArray(String[]::new);
+        if (missing.length == 0) {
+            then.run();
+            return;
+        }
+        answering = then;
+        requestPermissions(missing, PERMISSIONS_REQUEST);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int request, String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(request, permissions, results);
+        Runnable then = answering;
+        answering = null;
+        if (then != null) then.run();
+        while (answering == null && !waiting.isEmpty()) waiting.poll().run();
     }
 
     // What the picker chose, several files as clip data, and as content URIs alone: a file URI, such as one of this app's
@@ -421,6 +478,41 @@ public class CrossbindActivity extends Activity {
             if (pendingFiles != null) pendingFiles.onReceiveValue(null);
             pendingFiles = files;
             return true;
+        }
+
+        // The page gets the camera and microphone the manifest asks for, once the app's user gives them; the WebView asks
+        // nothing of its own. A frame of another origin, which Android lets the page hold, gets none.
+        @Override
+        public void onPermissionRequest(PermissionRequest request) {
+            String[] resources = request.getResources();
+            String[] permissions = Arrays.stream(resources).map(PAGE_DEVICES::get).toArray(String[]::new);
+            if (!origins.contains(originOf(request.getOrigin())) || !Arrays.stream(permissions).allMatch(CrossbindActivity.this::isDeclared)) {
+                request.deny();
+                return;
+            }
+            afterAsking(permissions, () -> {
+                if (Arrays.stream(permissions).allMatch(CrossbindActivity.this::isGranted)) {
+                    request.grant(resources);
+                } else {
+                    request.deny();
+                }
+            });
+        }
+
+        // The page gets the location the manifest asks for, the approximate one at least, which its user may give alone.
+        @Override
+        public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+            if (!origins.contains(originOf(Uri.parse(origin))) || !isDeclared(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                callback.invoke(origin, false, false);
+                return;
+            }
+            // Asked for the precise location again, a user who gave the approximate one is asked to change it.
+            if (isGranted(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                callback.invoke(origin, true, false);
+                return;
+            }
+            afterAsking(new String[] {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION},
+                    () -> callback.invoke(origin, isGranted(Manifest.permission.ACCESS_COARSE_LOCATION), false));
         }
     }
 

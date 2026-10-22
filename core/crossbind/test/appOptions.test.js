@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
-    appBackgroundColor, appDisplayName, appHeader, appId, appUpdater, appUrlSchemes, appWindow,
+    appBackgroundColor, appDisplayName, appHeader, appId, appPermissions, appUpdater, appUrlSchemes, appWindow, usageDescriptions,
 } from '../src/utils/appOptions.js';
 
 const config = (app = {}, version = '1.2.3') => ({ general: { name: 'demo-app' }, app, package: { version } });
@@ -83,6 +83,33 @@ describe("an app's window", () => {
 
     test('takes true or false alone for whether it opens full screen', () => {
         expect(() => appWindow(config({ window: { fullscreen: 'yes' } }))).toThrow('app.window.fullscreen "yes" is no boolean');
+    });
+});
+
+describe("an app's permissions", () => {
+    test('are none without app.permissions, and the devices it lists with their reasons', () => {
+        expect(appPermissions(config())).toEqual({});
+        expect(appPermissions(config({ permissions: { camera: 'To scan barcodes', location: 'To find the nearest store' } })))
+            .toEqual({ camera: 'To scan barcodes', location: 'To find the nearest store' });
+    });
+
+    test('take the camera, the microphone and the location alone, each with a reason its user can read', () => {
+        for (const permissions of [['camera'], 'camera']) {
+            expect(() => appPermissions(config({ permissions }))).toThrow('is no object of camera, microphone, location');
+        }
+        expect(() => appPermissions(config({ permissions: { contacts: 'To invite friends' } }))).toThrow('contacts is none of them');
+        for (const reason of ['', '  ', 'two\nlines', true]) {
+            expect(() => appPermissions(config({ permissions: { camera: reason } }))).toThrow('app.permissions.camera');
+        }
+    });
+
+    test('give macOS and iOS their reasons under the keys each reads, macOS the older location one as well', () => {
+        const app = { permissions: { camera: 'To scan', microphone: 'To record', location: 'To find' } };
+        expect(usageDescriptions(config(app), 'ios')).toEqual({
+            NSCameraUsageDescription: 'To scan', NSMicrophoneUsageDescription: 'To record', NSLocationWhenInUseUsageDescription: 'To find',
+        });
+        expect(usageDescriptions(config(app), 'darwin')).toMatchObject({ NSLocationWhenInUseUsageDescription: 'To find', NSLocationUsageDescription: 'To find' });
+        expect(usageDescriptions(config(), 'darwin')).toEqual({});
     });
 });
 
@@ -188,6 +215,9 @@ describe("the header a desktop app's host builds with", () => {
         expect(appHeader(config({ name: 'Demo App', window: { width: 800, height: 600, minWidth: 400 } }), 'darwin')).toBe([
             '// crossbind writes this file from crossbind.config.js and package.json.',
             '#define CROSSBIND_APP_OPEN_PATH {}',
+            '#define CROSSBIND_APP_PERMISSION_CAMERA 0',
+            '#define CROSSBIND_APP_PERMISSION_MICROPHONE 0',
+            '#define CROSSBIND_APP_PERMISSION_LOCATION 0',
             '#define CROSSBIND_APP_ID "dev.crossbind.demo-app"',
             '#define CROSSBIND_APP_NAME "Demo App"',
             '#define CROSSBIND_APP_WINDOW_WIDTH 800',
@@ -213,6 +243,15 @@ describe("the header a desktop app's host builds with", () => {
         expect(appHeader(config(app), 'android')).not.toContain('BACKGROUND_COLOR');
         expect(appHeader(config(), 'linux')).not.toContain('BACKGROUND_COLOR');
         expect(() => appHeader(config({ window: { backgroundColor: 'black' } }), 'ios')).toThrow('app.window.backgroundColor "black"');
+    });
+
+    test("defines the devices the page may use on the desktop and on iOS, while an Android app's manifest lists them", () => {
+        const app = { permissions: { camera: 'To scan' } };
+        expect(appHeader(config(app), 'linux')).toContain(
+            '#define CROSSBIND_APP_PERMISSION_CAMERA 1\n#define CROSSBIND_APP_PERMISSION_MICROPHONE 0\n#define CROSSBIND_APP_PERMISSION_LOCATION 0\n',
+        );
+        expect(appHeader(config(app), 'ios')).toContain('#define CROSSBIND_APP_PERMISSION_CAMERA 1\n');
+        expect(appHeader(config(app), 'android')).not.toContain('PERMISSION');
     });
 
     test("adds the version a Windows executable carries: package.json's, else 1.0.0", () => {

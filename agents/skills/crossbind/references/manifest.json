@@ -19,7 +19,7 @@
     {
       "source": "docs/api/app.md",
       "output": "api/app.md",
-      "sha256": "b83d515803846c002e87a59d1707b727898fb11475e37bd61edf27b783250715"
+      "sha256": "9a473d682d20c0c4c86655343b16f9d104f78499e75b0152e4e296920022ac51"
     },
     {
       "source": "docs/api/build-state.md",
@@ -44,7 +44,7 @@
     {
       "source": "docs/api/crossbind-config.md",
       "output": "api/crossbind-config.md",
-      "sha256": "cbdb280d158bfdc3781fe90df25b1e00cc358269508671ba3c0105db637bd1cb"
+      "sha256": "c79a4072bca3c619506700e676909b5e5827a4b34033c8c7b305047d08309aca"
     },
     {
       "source": "docs/api/filesystem.md",

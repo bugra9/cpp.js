@@ -35,6 +35,12 @@ export default {
         singleInstance: true,
         // e2e/run.mjs launches a desktop app with a link of it, and again with another, which src/main.js gets.
         urlSchemes: ['crossbind-e2e'],
+        // src/main.js checks the page has the camera and the microphone.
+        permissions: {
+            camera: 'To check the page reaches the camera',
+            microphone: 'To check the page reaches the microphone',
+            location: 'To check the page reaches the location',
+        },
     },
     paths: {
         config: import.meta.url,

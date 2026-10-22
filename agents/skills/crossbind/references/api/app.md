@@ -492,6 +492,32 @@ app to one instance unless `app.singleInstance` is `false`: the launch reaches t
 [One instance](#one-instance) tells, as the event `second-instance` too. macOS hands a link to the app that runs, and
 brings its window to the front.
 
+## Devices
+
+The page reaches the camera, the microphone and the location through the web's own APIs, `getUserMedia()` and
+`navigator.geolocation`, for those `app.permissions` lists, each with the reason for it:
+
+```js
+app: {
+    permissions: {
+        camera: 'To scan barcodes',
+        microphone: 'To record voice notes',
+        location: 'To find the nearest store',
+    },
+},
+```
+
+The build writes them where each platform reads them: the reasons into the Info.plist of a macOS or iOS app, the
+devices into the entitlements a macOS app's signature claims and into an Android app's manifest. The page gets a device
+it asks for once the system's user gives it: macOS and iOS ask the first time, with the reason, and so does Android,
+without it; on Windows and Linux the page gets it at once. The webview asks nothing of its own, and the page gets no
+device the list leaves out, nor does a frame of another origin on Android, which lets the page hold one. Without its
+reason, WebKit gives a macOS page no camera or microphone at all.
+
+macOS asks for the app that opened on its own, from the Finder, the Dock or `open`. An app a terminal or an editor
+starts, as `crossbind app dev` does, is theirs to macOS, which asks for their permission instead. A macOS page gets no
+location: WebKit starts none for an app without a location provider of its own, which the host has not.
+
 ## What the app holds
 
 ```
@@ -697,6 +723,14 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
   compositor places a window itself, and with WebKitGTK before 2.44 a window that opened full screen leaves it when an
   element does. The background has been measured on Linux, iOS and Android. On macOS and Windows the conformance runs
   check that the page may show an element full screen; the rest is built there, not measured yet.
+- Devices have been measured on Linux, with WebKitGTK's mock devices; on an Android emulator, with its questions
+  answered both ways, with a page that asks for a device the app does not list, and with a frame of another origin; in
+  the iOS Simulator, which asks for the location with the reason and gives the camera and the microphone at once; and
+  on macOS, whose questions named the app and its reasons when `open` started it, and the terminal when the terminal
+  did, and were answered both ways. The conformance runs check on every platform that the page has `getUserMedia()`;
+  Windows has not been measured yet. Before macOS and iOS 27, WebKit asks for the location through a selector Apple does
+  not publish, which only an app that lists the location answers; App Store review of one has not been tried. Linux
+  takes the location from GeoClue, which the system has to run.
 - One instance has been measured on macOS and Linux: the hand-over, and the window coming back to the front from
   minimized. On Windows the conformance runs in CI check the hand-over alone.
 - Links have been measured on macOS, from the command line and as the Apple Events `open -a` sends, to a launch and to

@@ -34,6 +34,8 @@ std::string attach(Core &core, void *webView, const char *devUrl) {
     });
     if (devUrl || std::getenv("CROSSBIND_APP_CONSOLE")) forwardConsole(webView);
     showPageDialogs(webView);
+    // The navigation rule keeps the page, in every frame, to the app's own origins.
+    answerPermissions(webView);
     restrictNavigation(webView, origins, [&core] { core.reset(); });
     return devUrl ? devUrl : APP_URL;
 }

@@ -29,7 +29,9 @@ import logger from '../utils/logger.js';
 import findFiles from '../utils/findFiles.js';
 import { getContentHash, getFilesFingerprint } from '../utils/hash.js';
 import { xmlPlist } from '../utils/plist.js';
-import { appBackgroundColor, appDisplayName, appHeader, appId, appUrlSchemes } from '../utils/appOptions.js';
+import {
+    appBackgroundColor, appDisplayName, appHeader, appId, appPermissions, appUrlSchemes, usageDescriptions,
+} from '../utils/appOptions.js';
 import { androidIcons, iosIcon, linuxIcon, macIcon, readAppIcon, windowsIcon } from '../utils/appIcon.js';
 import writeIfChanged from '../utils/writeIfChanged.js';
 import { writeNativeSourceStamp } from '../utils/nativeSourceStamp.js';
@@ -196,6 +198,7 @@ const infoPlist = (name, version, hasIcon, urlSchemes) => xmlPlist({
     LSMinimumSystemVersion: DARWIN_DEPLOYMENT_TARGET,
     NSPrincipalClass: 'NSApplication',
     NSHighResolutionCapable: true,
+    ...usageDescriptions(state.config, 'darwin'),
 });
 
 // The host's bytecode and the data the packages ship, beside the page's folder.
@@ -285,13 +288,23 @@ function archiveApp(app, target) {
     if (result.status !== 0) throw new Error(`crossbind: cannot archive ${app}: ${result.stderr || result.error?.message}`);
 }
 
+const ENTITLEMENTS = {
+    camera: 'com.apple.security.device.camera',
+    microphone: 'com.apple.security.device.audio-input',
+    location: 'com.apple.security.personal-information.location',
+};
+
 // Apple silicon runs signed code only, and a bundle's signature covers every file in it, so an app is signed once the
 // page is in: with the Developer ID the environment names, in the hardened runtime notarizing asks for, or else ad hoc,
 // which runs on the machine that built it.
 function signApp(app, target, signing) {
     const sign = signing ? ['--sign', signing.identity, '--options', 'runtime', '--timestamp'] : ['--sign', '-', '--timestamp=none'];
     run(null, ['codesign', '--force', ...sign, `${app}/Contents/Frameworks/hermesvm.framework`], null, target);
-    run(null, ['codesign', '--force', ...sign, app], null, target);
+    // The hardened runtime keeps the app from the devices of app.permissions unless its signature claims them.
+    const claims = Object.keys(appPermissions(state.config)).map((name) => ENTITLEMENTS[name]);
+    const entitlements = claims.length > 0 ? `${state.config.paths.build}/${path.basename(app)}.entitlements` : null;
+    if (entitlements) fs.writeFileSync(entitlements, xmlPlist(Object.fromEntries(claims.map((claim) => [claim, true]))));
+    run(null, ['codesign', '--force', ...sign, ...(entitlements ? ['--entitlements', entitlements] : []), app], null, target);
 }
 
 // A Windows app is signed before its zip and its setup program are made of it; one with its page that is not, the build
@@ -328,13 +341,13 @@ export function publishApp(target, { to = appOutputPath(target), page = null } =
         const icon = readAppIcon(state.config);
         writeXcodeProject(to, {
             parts, identity: { id: appId(state.config), team: appTeam() }, label: appDisplayName(state.config), version: appVersion(), icon: icon && iosIcon(icon),
-            urlSchemes: appUrlSchemes(state.config), background: appBackgroundColor(state.config),
+            urlSchemes: appUrlSchemes(state.config), background: appBackgroundColor(state.config), usage: usageDescriptions(state.config, 'ios'),
         });
     } else if (target.platform === 'android') {
         const icon = readAppIcon(state.config);
         writeGradleProject(to, {
             parts: appParts(target), id: androidAppId(), label: appDisplayName(state.config), version: androidVersion(), icons: icon && androidIcons(icon),
-            urlSchemes: appUrlSchemes(state.config), background: appBackgroundColor(state.config),
+            urlSchemes: appUrlSchemes(state.config), background: appBackgroundColor(state.config), permissions: Object.keys(appPermissions(state.config)),
         });
     } else if (path.resolve(to) !== path.resolve(built)) {
         fs.rmSync(to, { recursive: true, force: true });
