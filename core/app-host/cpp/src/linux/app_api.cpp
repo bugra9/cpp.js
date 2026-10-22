@@ -128,6 +128,28 @@ void showSaveDialog(crossbind::app::SaveOptions options, std::function<void(std:
     });
 }
 
+// Modal to the app's window, its buttons in GNOME's order: the first, the default, on the right.
+void showMessageDialog(crossbind::app::MessageOptions options, std::function<void(int)> done) {
+    onMainThread([options = std::move(options), done = std::move(done)] {
+        const GtkMessageType type = options.kind == crossbind::app::MessageKind::error     ? GTK_MESSAGE_ERROR
+                                    : options.kind == crossbind::app::MessageKind::warning ? GTK_MESSAGE_WARNING
+                                                                                           : GTK_MESSAGE_INFO;
+        GtkWidget *dialog = gtk_message_dialog_new(mainWindow, GTK_DIALOG_MODAL, type, options.buttons.empty() ? GTK_BUTTONS_OK : GTK_BUTTONS_NONE,
+                                                   "%s", options.message.c_str());
+        if (!options.detail.empty()) gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), "%s", options.detail.c_str());
+        gtk_window_set_title(GTK_WINDOW(dialog), CROSSBIND_APP_NAME);
+        for (int i = static_cast<int>(options.buttons.size()) - 1; i >= 0; i -= 1) {
+            // A label's underscores stay as they are.
+            gtk_button_set_use_underline(GTK_BUTTON(gtk_dialog_add_button(GTK_DIALOG(dialog), options.buttons[i].c_str(), i)), FALSE);
+        }
+        gtk_dialog_set_default_response(GTK_DIALOG(dialog), options.buttons.empty() ? GTK_RESPONSE_OK : 0);
+        const int response = gtk_dialog_run(GTK_DIALOG(dialog));
+        gtk_widget_destroy(dialog);
+        // Escape and closing the dialog answer GTK_RESPONSE_DELETE_EVENT.
+        done(response >= 0 ? response : response == GTK_RESPONSE_OK ? 0 : NO_BUTTON);
+    });
+}
+
 void openUrl(std::string url, std::function<void(Failure)> done) {
     onMainThread([url = std::move(url), done = std::move(done)] { done(launch(url, url)); });
 }

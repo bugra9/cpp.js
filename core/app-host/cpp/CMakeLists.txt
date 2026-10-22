@@ -112,7 +112,7 @@ elseif(WIN32)
     # loader DLL ships. WebView2's headers come from crossbind's windows image.
     target_include_directories(app SYSTEM PRIVATE "${CROSSBIND_WEBVIEW2_INCLUDE}")
     target_link_libraries(app PRIVATE "${CROSSBIND_HERMES}/lib/libhermesvm_a.a"
-        ole32 oleaut32 uuid shell32 shlwapi user32 gdi32 advapi32 version dwmapi winmm winhttp)
+        ole32 oleaut32 uuid shell32 shlwapi user32 gdi32 advapi32 version dwmapi winmm winhttp comctl32)
     set_target_properties(app PROPERTIES WIN32_EXECUTABLE ON)
     target_link_options(app PRIVATE -static "LINKER:--gc-sections" "$<$<CONFIG:Release>:LINKER:-s>")
 else()

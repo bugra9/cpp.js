@@ -94,6 +94,54 @@ describe("crossbind/app, an app's own functions", () => {
     });
 });
 
+describe("crossbind/app's message dialog", () => {
+    test('goes to the host with its options and answers the index of the button clicked', async () => {
+        inApp();
+        const options = {
+            message: 'Save changes to report.csv?', detail: "Your changes are lost if you don't save them.", kind: 'warning', buttons: ['Save', "Don't Save", 'Cancel'],
+        };
+        host.mockResolvedValueOnce(2);
+
+        await expect(dialog.message(options)).resolves.toBe(2);
+        expect(host).toHaveBeenCalledWith('dialog.message', options);
+        await dialog.message({ message: 'Exported.' });
+        expect(host).toHaveBeenLastCalledWith('dialog.message', { message: 'Exported.' });
+    });
+
+    test('takes each kind, one to three labels and options left undefined', async () => {
+        inApp();
+        const kinds = ['info', 'warning', 'error'];
+        const lists = [['OK'], ['Yes', 'No'], ['Save', "Don't Save", 'Cancel']];
+
+        for (const kind of kinds) await dialog.message({ message: 'Saved.', kind });
+        for (const buttons of lists) await dialog.message({ message: 'Saved.', buttons });
+        await dialog.message({ message: 'Saved.', detail: undefined, kind: undefined, buttons: undefined });
+
+        expect(host).toHaveBeenCalledTimes(kinds.length + lists.length + 1);
+        for (const kind of kinds) expect(host).toHaveBeenCalledWith('dialog.message', { message: 'Saved.', kind });
+        for (const buttons of lists) expect(host).toHaveBeenCalledWith('dialog.message', { message: 'Saved.', buttons });
+    });
+
+    test('is refused before the host sees it without a message, of another kind or without one to three labels', async () => {
+        inApp();
+        const message = (options) => dialog.message(options);
+        const sparse = ['OK'];
+        sparse[2] = 'Cancel';
+
+        await expect(message()).rejects.toThrow('dialog.message takes an object of message, detail, kind, buttons');
+        await expect(message('Exported.')).rejects.toThrow('takes an object');
+        await expect(message({})).rejects.toThrow('dialog.message takes a message');
+        await expect(message({ message: '' })).rejects.toThrow('dialog.message takes a message');
+        await expect(message({ message: 42 })).rejects.toThrow("dialog.message's message is no string");
+        await expect(message({ message: 'Exported.', title: 'Export' })).rejects.toThrow('title is none of them');
+        await expect(message({ message: 'Exported.', kind: 'question' })).rejects.toThrow('kind is info, warning or error, not "question"');
+        for (const buttons of [[], ['A', 'B', 'C', 'D'], ['OK', ''], ['OK', 1], 'OK', sparse]) {
+            await expect(message({ message: 'Exported.', buttons })).rejects.toThrow("dialog.message's buttons is no list of one to three labels");
+        }
+        expect(host).not.toHaveBeenCalled();
+    });
+});
+
 describe("crossbind/app's menus", () => {
     test('go to the host as the page gives them', async () => {
         inApp();

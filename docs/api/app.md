@@ -293,6 +293,7 @@ std::string databasePath() { return crossbind::app::paths().data + "/notes.sqlit
 |---|---|---|---|---|
 | `dialog.open({ title, defaultPath, filters, directory, multiple })` | The paths of the files or folders its user picks, or `null` | ✓ | | |
 | `dialog.save({ title, defaultPath, defaultName, filters })` | The path its user chooses to save to, or `null` | ✓ | | |
+| `dialog.message({ message, detail, kind, buttons })` | The index of the button its user clicks | ✓ | ✓ | ✓ |
 | `shell.openExternal(url)` | An http, https or mailto address in the default browser or mail app | ✓ | ✓ | |
 | `shell.openPath(path)` | A file in the app the system opens its kind with | ✓ | | |
 | `shell.revealInFolder(path)` | A file, selected, in the system's file manager, or on Linux without one its folder | ✓ | | |
@@ -310,6 +311,25 @@ a dialog for its user's, but `emitEvent`. A function a platform has not got reje
 or Node.js build every one fails. A filter's extensions go with or without their dot, `"*"` for any
 file, paths are absolute, and an option the page misspells fails before the host sees it. The dialogs are modal: to the
 app on macOS, to its window elsewhere; one shows at a time, and another rejects while it does.
+
+A message dialog shows `message`, `detail` in smaller text under it, and one to three `buttons`, or OK without them,
+and answers the index of the button its user clicks:
+
+```js
+const choice = await dialog.message({
+    message: 'Save changes to report.csv?',
+    detail: "Your changes are lost if you don't save them.",
+    kind: 'warning',
+    buttons: ['Save', "Don't Save", 'Cancel'],
+});
+if (choice === 0) await Native.saveReport();
+```
+
+Return clicks the first button, the default. Escape, closing the dialog, Android's Back and a tap outside it give the
+last, which iOS and Android place where their apps put Cancel: the choice that changes nothing goes last. macOS takes
+Escape for two buttons or more. Windows shows the buttons in their order, the other platforms as their own dialogs
+place them, and Android shows the message and the detail as one text. `kind` is `info`, the default, `warning` or
+`error`: Windows shows its icon for each, and macOS a caution sign for `error`; Linux, iOS and Android show none.
 
 The page's `shell.openPath` opens files where `app.openPath` in `crossbind.config.js` lets it alone, and nowhere
 without it: in `data`, `cache` or `logs`, the app's folders, and in `picked`, what a dialog picked during this run, a
@@ -740,8 +760,12 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
   Windows, iOS and Android the conformance runs in CI check the functions.
 - On macOS the file dialogs, `shell.revealInFolder`, `app.paths` and `app.quit` have been measured, and so has
   `shell.openExternal` refusing other addresses; `shell.openExternal` opening one and `shell.openPath` opening a file
-  have not. On Linux and Windows the dialogs, `shell.openExternal` opening an address, `shell.openPath`,
+  have not. On Linux and Windows the file dialogs, `shell.openExternal` opening an address, `shell.openPath`,
   `shell.revealInFolder` and `app.quit` are built, not measured yet.
+- Message dialogs have been measured from the page and from C++: on macOS, and on Linux under Xvfb with openbox, with
+  their buttons, Return and Escape; in the iOS Simulator with their buttons; on an Android emulator with their buttons,
+  Back and a tap outside. On Windows the conformance runs in CI check that the host refuses one no platform shows; the
+  dialog itself is built there, not measured yet.
 - The icon has been seen in macOS's Finder, in the icon files of an iOS Simulator build and on Android's launcher;
   Windows and Linux apps carry it, but nobody has looked at it there yet.
 - A download the page starts saves where its user picks on macOS, when it is a `Blob` or other data the page holds: an

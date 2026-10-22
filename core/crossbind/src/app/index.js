@@ -1,10 +1,14 @@
-// What an app's host does for its page: the dialogs that pick files, opening an address or a file outside the app, the
-// app's folders, quitting, its menus, the events of the app's native code and a desktop app's updates. Each call goes
-// to the host of an app (target.runtimeEnv: 'app'); in any other build it rejects, or events.on throws. The app's
-// native code calls the same through <crossbind/app.h>, but for the menus and events.on.
+// What an app's host does for its page: the dialogs that pick files or show a message, opening an address or a file
+// outside the app, the app's folders, quitting, its menus, the events of the app's native code and a desktop app's
+// updates. Each call goes to the host of an app (target.runtimeEnv: 'app'); in any other build it rejects, or events.on
+// throws. The app's native code calls the same through <crossbind/app.h>, but for the menus and events.on.
 
 const OPEN = { title: 'string', defaultPath: 'string', filters: 'filters', directory: 'boolean', multiple: 'boolean' };
 const SAVE = { title: 'string', defaultPath: 'string', defaultName: 'string', filters: 'filters' };
+const MESSAGE = { message: 'string', detail: 'string', kind: 'string', buttons: 'buttons' };
+const MESSAGE_KINDS = ['info', 'warning', 'error'];
+// Android's dialogs take three buttons at most.
+const MAX_BUTTONS = 3;
 
 // The app's crossbind.js, which initNative() loads, hands the calls to the host.
 function hostOf(member, name) {
@@ -20,6 +24,16 @@ const call = (name, options) => hostOf('app', name)(name, options);
 const isFilters = (value) => Array.isArray(value) && value.every((filter) => typeof filter?.name === 'string'
     && Array.isArray(filter.extensions) && filter.extensions.every((extension) => typeof extension === 'string'));
 
+// Spread reads a hole as undefined, which every() skips.
+const isButtons = (value) => Array.isArray(value) && value.length >= 1 && value.length <= MAX_BUTTONS
+    && [...value].every((label) => typeof label === 'string' && label !== '');
+
+// The lists an option may be, beside what typeof tells: how each is checked, and what it is called.
+const LISTS = {
+    filters: { isFitting: isFilters, name: 'list of { name, extensions }' },
+    buttons: { isFitting: isButtons, name: 'list of one to three labels' },
+};
+
 // The options as the host takes them, so a misspelt or mistyped one fails here, saying which.
 function checked(name, options, kinds) {
     const keys = Object.keys(kinds).join(', ');
@@ -28,10 +42,19 @@ function checked(name, options, kinds) {
     }
     for (const [key, value] of Object.entries(options)) {
         if (!Object.hasOwn(kinds, key)) throw new TypeError(`crossbind: ${name} takes ${keys}; ${key} is none of them.`);
-        const isFitting = kinds[key] === 'filters' ? isFilters(value) : typeof value === kinds[key];
-        if (value !== undefined && !isFitting) {
-            throw new TypeError(`crossbind: ${name}'s ${key} is no ${kinds[key] === 'filters' ? 'list of { name, extensions }' : kinds[key]}.`);
+        const list = LISTS[kinds[key]];
+        if (value !== undefined && !(list ? list.isFitting(value) : typeof value === kinds[key])) {
+            throw new TypeError(`crossbind: ${name}'s ${key} is no ${list ? list.name : kinds[key]}.`);
         }
+    }
+    return options;
+}
+
+function checkedMessage(options) {
+    checked('dialog.message', options, MESSAGE);
+    if (!options.message) throw new TypeError('crossbind: dialog.message takes a message.');
+    if (options.kind !== undefined && !MESSAGE_KINDS.includes(options.kind)) {
+        throw new TypeError(`crossbind: dialog.message's kind is info, warning or error, not ${JSON.stringify(options.kind)}.`);
     }
     return options;
 }
@@ -107,6 +130,8 @@ export const dialog = {
     open: async (options = {}) => call('dialog.open', checked('dialog.open', options, OPEN)),
     // The path the user chose to save to, or null when they cancelled.
     save: async (options = {}) => call('dialog.save', checked('dialog.save', options, SAVE)),
+    // The index of the button the user clicked: Return gives the first, and Escape or closing the dialog the last.
+    message: async (options) => call('dialog.message', checkedMessage(options)),
 };
 
 export const shell = {
