@@ -202,3 +202,67 @@ void showWindow(const std::string &) {
         SetForegroundWindow(mainWindow);
     });
 }
+
+namespace {
+
+// The window's frame and place before it filled the screen, to which it goes back.
+LONG_PTR windowedStyle = 0;
+WINDOWPLACEMENT windowedPlace{};
+bool isFullScreen = false;
+// app.window.fullscreen, to which the window goes back once the page's element leaves the screen.
+bool opensFullScreen = false;
+
+// A window that fills the screen is a popup without a frame, whose size Windows does not hold to app.window's limits.
+void setFullScreen(bool isFull) {
+    if (!mainWindow || isFull == isFullScreen) return;
+    if (isFull) {
+        MONITORINFO monitor{};
+        monitor.cbSize = sizeof(monitor);
+        windowedPlace.length = sizeof(windowedPlace);
+        if (!GetWindowPlacement(mainWindow, &windowedPlace) || !GetMonitorInfoW(MonitorFromWindow(mainWindow, MONITOR_DEFAULTTONEAREST), &monitor)) {
+            return;
+        }
+        // Windows keeps the taskbar over a maximized window; the placement maximizes it again after.
+        if (IsZoomed(mainWindow)) ShowWindow(mainWindow, SW_RESTORE);
+        windowedStyle = GetWindowLongPtrW(mainWindow, GWL_STYLE);
+        SetWindowLongPtrW(mainWindow, GWL_STYLE, (windowedStyle & ~WS_OVERLAPPEDWINDOW) | WS_POPUP);
+        const RECT &screen = monitor.rcMonitor;
+        SetWindowPos(mainWindow, HWND_TOP, screen.left, screen.top, screen.right - screen.left, screen.bottom - screen.top,
+                     SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+    } else {
+        // A window minimized meanwhile stays so.
+        if (IsIconic(mainWindow)) windowedPlace.showCmd = SW_SHOWMINNOACTIVE;
+        SetWindowLongPtrW(mainWindow, GWL_STYLE, windowedStyle);
+        SetWindowPlacement(mainWindow, &windowedPlace);
+        SetWindowPos(mainWindow, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+    }
+    isFullScreen = isFull;
+}
+
+}  // namespace
+
+void setBackgroundColor(void *, void *webView, std::uint32_t color) {
+    ICoreWebView2Controller2 *controller = nullptr;
+    if (FAILED(static_cast<ICoreWebView2Controller *>(webView)->QueryInterface(IID_ICoreWebView2Controller2, reinterpret_cast<void **>(&controller)))) {
+        return;
+    }
+    controller->put_DefaultBackgroundColor({255, static_cast<BYTE>(color >> 16), static_cast<BYTE>(color >> 8), static_cast<BYTE>(color)});
+    controller->Release();
+}
+
+void fillScreen() {
+    opensFullScreen = true;
+    setFullScreen(true);
+}
+
+void followPageFullScreen(void *controller) {
+    auto *changed = new Handler<ICoreWebView2ContainsFullScreenElementChangedEventHandler, ICoreWebView2 *, IUnknown *>(
+        IID_ICoreWebView2ContainsFullScreenElementChangedEventHandler, [](ICoreWebView2 *sender, IUnknown *) -> HRESULT {
+            BOOL hasElement = FALSE;
+            if (SUCCEEDED(sender->get_ContainsFullScreenElement(&hasElement))) setFullScreen(hasElement || opensFullScreen);
+            return S_OK;
+        });
+    EventRegistrationToken token;
+    coreWebView(controller)->add_ContainsFullScreenElementChanged(changed, &token);
+    changed->Release();
+}

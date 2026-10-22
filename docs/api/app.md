@@ -79,19 +79,28 @@ the process already has keeps its value.
 `app.name` in `crossbind.config.js` is the name the app shows: its window's title, its macOS menus, its Windows file
 description and the label under its icon on iOS and Android; without it, the app shows `general.name`. A Windows app's
 executable also carries `package.json`'s version, which Windows takes as up to four numbers from 0 to 65535 and a
-prerelease part, as 1.2.3-beta.1. `app.window` sizes the desktop window:
+prerelease part, as 1.2.3-beta.1. `app.window` sizes the desktop window, and colors what the app shows behind its page:
 
 ```js
 app: {
     name: 'My App',
-    window: { width: 1024, height: 768, minWidth: 640, minHeight: 480, resizable: true },
+    window: { width: 1024, height: 768, minWidth: 640, minHeight: 480, maxWidth: 1920, maxHeight: 1080, backgroundColor: '#1e1e1e' },
 },
 ```
 
 The sizes are the page's, in whole pixels up to 16384, whatever frame the window adds around it; a display too small for
-the window holds it to its own size. The window opens at 1024 × 768 and
-resizes without app.window, and shrinks to any size without a minimum, which needs a window that resizes. An option the
-build cannot honour stops it, naming the option.
+the window holds it to its own size. The window opens at 1024 × 768 in the middle of the screen and resizes without
+app.window, unless `resizable` is false, and shrinks and grows to any size without `minWidth`, `minHeight`, `maxWidth`
+and `maxHeight`, which need a window that resizes. `fullscreen: true` opens it full screen, which macOS's View menu
+leaves; on Windows and Linux the app gives no way out of it. An option the build cannot honour stops it, naming the
+option.
+
+`backgroundColor`, as `#rrggbb`, is what the app shows until its page paints, and behind a page without a background of
+its own: in the window on the desktop, and from the launch screen on iOS and Android, where the system bars' icons turn
+light on a dark color and dark on a light one. Without it, each platform shows its own.
+
+On the desktop the page shows an element full screen with `element.requestFullscreen()`, as in a browser: the window
+fills the screen until the page leaves it. On Windows and Linux a menu bar the page set stays above the element.
 
 A macOS app opens with the app, Edit, View and Window menus every Mac app has, so ⌘C, ⌘V, ⌘Z, ⌘A, ⌘W and ⌘Q reach
 it, and the page may set its own, as [Menus](#menus) tells. The
@@ -681,6 +690,11 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
   that has none, cannot be measured on the Windows machines crossbind is tested on, which have the runtime; the
   bootstrapper it downloads over HTTPS runs with no check of its own.
 - On the desktop, one window.
+- `app.window`'s place, limits and full screen have been measured on Linux, under Xvfb with openbox, for a window that
+  resizes and one that does not: an element's full screen, which Escape leaves, and `fullscreen: true`. A Wayland
+  compositor places a window itself, and with WebKitGTK before 2.44 a window that opened full screen leaves it when an
+  element does. The background has been measured on Linux, iOS and Android. On macOS and Windows the conformance runs
+  check that the page may show an element full screen; the rest is built there, not measured yet.
 - One instance has been measured on macOS and Linux: the hand-over, and the window coming back to the front from
   minimized. On Windows the conformance runs in CI check the hand-over alone.
 - Links have been measured on macOS, from the command line and as the Apple Events `open -a` sends, to a launch and to

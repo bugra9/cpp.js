@@ -80,6 +80,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 #endif
     try {
         webview::webview view(devUrl != nullptr, nullptr);
+#ifdef CROSSBIND_APP_BACKGROUND_COLOR
+        setBackgroundColor(view.window().value(), view.browser_controller().value(), CROSSBIND_APP_BACKGROUND_COLOR);
+#endif
         view.set_title(CROSSBIND_APP_NAME);
         // The sizes are the page's, whatever frame the window adds around it.
         view.set_size(CROSSBIND_APP_WINDOW_WIDTH, CROSSBIND_APP_WINDOW_HEIGHT,
@@ -87,6 +90,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
         if (CROSSBIND_APP_WINDOW_MIN_WIDTH || CROSSBIND_APP_WINDOW_MIN_HEIGHT) {
             view.set_size(CROSSBIND_APP_WINDOW_MIN_WIDTH, CROSSBIND_APP_WINDOW_MIN_HEIGHT, WEBVIEW_HINT_MIN);
         }
+#ifdef CROSSBIND_APP_WINDOW_MAX_WIDTH
+        view.set_size(CROSSBIND_APP_WINDOW_MAX_WIDTH, CROSSBIND_APP_WINDOW_MAX_HEIGHT, WEBVIEW_HINT_MAX);
+#endif
 #ifdef __APPLE__
         installAppMenu();
 #endif
@@ -97,6 +103,10 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 #endif
 #ifdef _WIN32
         setMenuWebView(webView);
+        followPageFullScreen(webView);
+#endif
+#ifdef CROSSBIND_APP_WINDOW_FULLSCREEN
+        fillScreen();
 #endif
         const std::string url = app::attach(core, webView, devUrl);
         // Quitting from the Dock or the system ends the app as closing its window does.

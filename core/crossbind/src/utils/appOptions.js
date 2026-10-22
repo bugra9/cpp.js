@@ -1,7 +1,7 @@
 // The app section of crossbind.config.js: what a user sees of an app, its name and, on the desktop, its window, and where
 // its page opens files.
 
-const WINDOW_DEFAULTS = { width: 1024, height: 768, minWidth: 0, minHeight: 0, resizable: true };
+const WINDOW_DEFAULTS = { width: 1024, height: 768, minWidth: 0, minHeight: 0, maxWidth: 0, maxHeight: 0, resizable: true, fullscreen: false, backgroundColor: null };
 // Larger than any display, and far within the int a host takes a size as.
 const MAX_WINDOW_SIZE = 16384;
 // Windows keeps each of a file version's four numbers in 16 bits.
@@ -38,7 +38,8 @@ export function appDisplayName(config) {
     return name;
 }
 
-// The desktop window: the size of its page, the least it shrinks to and whether it resizes.
+// The desktop window: the size of its page, the least it shrinks to and the most it grows to, whether it resizes and
+// whether it opens full screen. Its backgroundColor, which a phone takes as well, is appBackgroundColor's.
 export function appWindow(config) {
     const window = config.app.window ?? {};
     const keys = Object.keys(WINDOW_DEFAULTS).join(', ');
@@ -48,25 +49,38 @@ export function appWindow(config) {
     const unknown = Object.keys(window).filter((key) => !(key in WINDOW_DEFAULTS));
     if (unknown.length > 0) throw new Error(`crossbind: app.window takes ${keys}; ${unknown.join(', ')} is none of them.`);
     const options = { ...WINDOW_DEFAULTS, ...window };
-    ['width', 'height', 'minWidth', 'minHeight'].forEach((key) => {
-        const least = key.startsWith('min') ? 0 : 1;
+    ['width', 'height', 'minWidth', 'minHeight', 'maxWidth', 'maxHeight'].forEach((key) => {
+        const least = /^(min|max)/.test(key) ? 0 : 1;
         if (!Number.isInteger(options[key]) || options[key] < least || options[key] > MAX_WINDOW_SIZE) {
             throw new Error(`crossbind: app.window.${key} ${JSON.stringify(options[key])} is no size, which is a whole number of pixels from ${least} to ${MAX_WINDOW_SIZE}.`);
         }
     });
-    if (typeof options.resizable !== 'boolean') {
-        throw new Error(`crossbind: app.window.resizable ${JSON.stringify(options.resizable)} is no boolean.`);
+    ['resizable', 'fullscreen'].forEach((key) => {
+        if (typeof options[key] !== 'boolean') throw new Error(`crossbind: app.window.${key} ${JSON.stringify(options[key])} is no boolean: set it to true or false.`);
+    });
+    if (!options.resizable && (options.minWidth || options.minHeight || options.maxWidth || options.maxHeight)) {
+        throw new Error('crossbind: app.window.minWidth, minHeight, maxWidth and maxHeight limit a window that resizes: drop them, or set app.window.resizable to true.');
     }
-    if (!options.resizable && (options.minWidth || options.minHeight)) {
-        throw new Error('crossbind: app.window.minWidth and minHeight limit a window that resizes: drop them, or set app.window.resizable to true.');
-    }
-    if (options.minWidth > options.width) {
-        throw new Error(`crossbind: app.window.minWidth ${options.minWidth} is above the width the window opens with, ${options.width}: lower it, or raise app.window.width.`);
-    }
-    if (options.minHeight > options.height) {
-        throw new Error(`crossbind: app.window.minHeight ${options.minHeight} is above the height the window opens with, ${options.height}: lower it, or raise app.window.height.`);
-    }
+    [['width', 'Width'], ['height', 'Height']].forEach(([size, side]) => {
+        const [least, most] = [options[`min${side}`], options[`max${side}`]];
+        if (least > options[size]) {
+            throw new Error(`crossbind: app.window.min${side} ${least} is above the ${size} the window opens with, ${options[size]}: lower it, or raise app.window.${size}.`);
+        }
+        if (most && most < options[size]) {
+            throw new Error(`crossbind: app.window.max${side} ${most} is below the ${size} the window opens with, ${options[size]}: raise it, or lower app.window.${size}.`);
+        }
+    });
     return options;
+}
+
+// The color an app shows until its page paints, and behind a page without a background of its own, on iOS and Android as
+// well: app.window.backgroundColor, else null, which leaves the system's.
+export function appBackgroundColor(config) {
+    const color = config.app.window?.backgroundColor ?? null;
+    if (color !== null && (typeof color !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(color))) {
+        throw new Error(`crossbind: app.window.backgroundColor ${JSON.stringify(color)} is no color of the form #rrggbb, as #1e1e1e is.`);
+    }
+    return color;
 }
 
 // The version a Windows app's executable carries: package.json's, whose numbers are its file version.
@@ -172,23 +186,41 @@ export function appUpdater(config) {
     return { url: updater.url, publicKey, version };
 }
 
-// The header an app's host compiles where its page opens files from, a desktop host its title, window, whether it keeps
-// one instance and its updates, and a Windows host its version resource.
-export function appHeader(config, platform) {
-    const comment = '// crossbind writes this file from crossbind.config.js and package.json.';
-    const openPath = `#define CROSSBIND_APP_OPEN_PATH {${appOpenPath(config).map((place) => `"${place}"`).join(', ')}}`;
-    if (!['darwin', 'linux', 'win32'].includes(platform)) return [comment, openPath, ''].join('\n');
-    const window = appWindow(config);
-    const lines = [
-        comment,
-        openPath,
-        `#define CROSSBIND_APP_ID "${appId(config)}"`,
-        `#define CROSSBIND_APP_NAME "${appDisplayName(config)}"`,
+// A desktop host's window: its page's size and limits, whether it resizes and whether it opens full screen. A maximum of
+// one side alone leaves the other as large as any display.
+function windowDefines(window) {
+    const most = window.maxWidth || window.maxHeight ? [
+        `#define CROSSBIND_APP_WINDOW_MAX_WIDTH ${window.maxWidth || MAX_WINDOW_SIZE}`,
+        `#define CROSSBIND_APP_WINDOW_MAX_HEIGHT ${window.maxHeight || MAX_WINDOW_SIZE}`,
+    ] : [];
+    return [
         `#define CROSSBIND_APP_WINDOW_WIDTH ${window.width}`,
         `#define CROSSBIND_APP_WINDOW_HEIGHT ${window.height}`,
         `#define CROSSBIND_APP_WINDOW_MIN_WIDTH ${window.minWidth}`,
         `#define CROSSBIND_APP_WINDOW_MIN_HEIGHT ${window.minHeight}`,
         `#define CROSSBIND_APP_WINDOW_RESIZABLE ${window.resizable ? 1 : 0}`,
+        ...most,
+        ...(window.fullscreen ? ['#define CROSSBIND_APP_WINDOW_FULLSCREEN 1'] : []),
+    ];
+}
+
+// The header an app's host compiles where its page opens files from, an iOS or desktop host the color it shows until
+// its page paints, a desktop host its title, window, whether it keeps one instance and its updates, and a Windows host
+// its version resource.
+export function appHeader(config, platform) {
+    const comment = '// crossbind writes this file from crossbind.config.js and package.json.';
+    const openPath = `#define CROSSBIND_APP_OPEN_PATH {${appOpenPath(config).map((place) => `"${place}"`).join(', ')}}`;
+    const color = appBackgroundColor(config);
+    // An Android app's activity takes the color from its Gradle project.
+    const background = color && platform !== 'android' ? [`#define CROSSBIND_APP_BACKGROUND_COLOR 0x${color.slice(1).toLowerCase()}`] : [];
+    if (!['darwin', 'linux', 'win32'].includes(platform)) return [comment, openPath, ...background, ''].join('\n');
+    const lines = [
+        comment,
+        openPath,
+        ...background,
+        `#define CROSSBIND_APP_ID "${appId(config)}"`,
+        `#define CROSSBIND_APP_NAME "${appDisplayName(config)}"`,
+        ...windowDefines(appWindow(config)),
     ];
     const urlSchemes = appUrlSchemes(config);
     if (urlSchemes.length > 0) lines.push(`#define CROSSBIND_APP_URL_SCHEMES {${urlSchemes.map((scheme) => `"${scheme}"`).join(', ')}}`);

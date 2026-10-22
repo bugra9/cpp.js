@@ -7,7 +7,7 @@
         <!-- The page keeps its WebView, and its state, when the screen turns or the keyboard comes and goes, and in an app
              with app.urlSchemes, singleTask, when a link opens the app again, which reaches it in onNewIntent. -->
         <activity android:name="dev.crossbind.app.CrossbindActivity" android:exported="true" android:launchMode="${launchMode}"
-            android:theme="@android:style/Theme.DeviceDefault.DayNight"
+            android:theme="${appTheme}"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|density">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

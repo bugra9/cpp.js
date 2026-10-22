@@ -21,9 +21,10 @@ export default {
     target: {
         runtimeEnv: 'app',
     },
-    // Smaller than every runner's display, which would hold the window to less; src/main.js checks the page has it.
+    // Smaller than every runner's display, which would hold the window to less; src/main.js checks the page has it. The
+    // page has no background of its own, for backgroundColor to show behind it.
     app: {
-        window: { width: 800, height: 600 },
+        window: { width: 800, height: 600, maxWidth: 1000, maxHeight: 700, backgroundColor: '#d4e6f6' },
         // src/main.js checks the page opens files in the data folder alone.
         openPath: ['data'],
         // e2e/run.mjs checks the app has it.

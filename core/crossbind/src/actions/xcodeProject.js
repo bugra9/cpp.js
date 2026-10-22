@@ -36,7 +36,10 @@ const PROJECT_SETTINGS = {
 
 const ORIENTATIONS = ['UIInterfaceOrientationPortrait', 'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'];
 
-const infoPlist = (name, urlSchemes) => xmlPlist({
+// The color set of app.window.backgroundColor, which the launch screen shows.
+const LAUNCH_COLOR = 'LaunchBackground';
+
+const infoPlist = (name, urlSchemes, hasBackground) => xmlPlist({
     CFBundleDevelopmentRegion: 'en',
     CFBundleDisplayName: name,
     CFBundleExecutable: '$(EXECUTABLE_NAME)',
@@ -49,20 +52,20 @@ const infoPlist = (name, urlSchemes) => xmlPlist({
     CFBundleVersion: '$(CURRENT_PROJECT_VERSION)',
     LSRequiresIPhoneOS: true,
     UIApplicationSceneManifest: { UIApplicationSupportsMultipleScenes: false },
-    UILaunchScreen: {},
+    UILaunchScreen: hasBackground ? { UIColorName: LAUNCH_COLOR } : {},
     UISupportedInterfaceOrientations: ORIENTATIONS,
     'UISupportedInterfaceOrientations~ipad': [...ORIENTATIONS, 'UIInterfaceOrientationPortraitUpsideDown'],
 });
 
-function objects(name, targetSettings, hasIcon) {
+function objects(name, targetSettings, hasAssets) {
     const file = (path, type) => ({ isa: 'PBXFileReference', lastKnownFileType: type, path, sourceTree: '<group>' });
     const phase = (isa, files, extra = {}) => ({ isa, buildActionMask: 2147483647, files, runOnlyForDeploymentPostprocessing: 0, ...extra });
     const configuration = (configurationName, buildSettings) => ({ isa: 'XCBuildConfiguration', buildSettings, name: configurationName });
     const configurations = (debug, release) => ({
         isa: 'XCConfigurationList', buildConfigurations: [debug, release], defaultConfigurationIsVisible: 0, defaultConfigurationName: 'Release',
     });
-    // The app's icon, in an asset catalog.
-    const assets = hasIcon ? {
+    // The app's icon and launch screen color, in an asset catalog.
+    const assets = hasAssets ? {
         [ID.assets]: file('Assets.xcassets', 'folder.assetcatalog'),
         [ID.assetsBuild]: { isa: 'PBXBuildFile', fileRef: ID.assets },
     } : {};
@@ -81,10 +84,10 @@ function objects(name, targetSettings, hasIcon) {
         [ID.hermesEmbed]: { isa: 'PBXBuildFile', fileRef: ID.hermes, settings: { ATTRIBUTES: ['CodeSignOnCopy', 'RemoveHeadersOnCopy'] } },
         [ID.sources]: phase('PBXSourcesBuildPhase', [ID.mainBuild]),
         [ID.frameworks]: phase('PBXFrameworksBuildPhase', [ID.hermesLink]),
-        [ID.resources]: phase('PBXResourcesBuildPhase', [ID.appBuild, ...(hasIcon ? [ID.assetsBuild] : [])]),
+        [ID.resources]: phase('PBXResourcesBuildPhase', [ID.appBuild, ...(hasAssets ? [ID.assetsBuild] : [])]),
         [ID.embed]: phase('PBXCopyFilesBuildPhase', [ID.hermesEmbed], { dstPath: '', dstSubfolderSpec: 10, name: 'Embed Frameworks' }),
         [ID.mainGroup]: {
-            isa: 'PBXGroup', children: [ID.main, ID.info, ID.app, ...(hasIcon ? [ID.assets] : []), ID.hermes, ID.products], sourceTree: '<group>',
+            isa: 'PBXGroup', children: [ID.main, ID.info, ID.app, ...(hasAssets ? [ID.assets] : []), ID.hermes, ID.products], sourceTree: '<group>',
         },
         [ID.products]: { isa: 'PBXGroup', children: [ID.product], name: 'Products', sourceTree: '<group>' },
         [ID.target]: {
@@ -120,10 +123,28 @@ function objects(name, targetSettings, hasIcon) {
     };
 }
 
+// The asset catalog: the app's icon, from which Xcode makes every size, and the launch screen's color.
+function writeAssets(catalog, icon, background) {
+    const info = { author: 'xcode', version: 1 };
+    const assetSet = (set, contents) => {
+        fs.mkdirSync(`${catalog}/${set}`, { recursive: true });
+        fs.writeFileSync(`${catalog}/Contents.json`, JSON.stringify({ info }, null, 2));
+        fs.writeFileSync(`${catalog}/${set}/Contents.json`, JSON.stringify({ ...contents, info }, null, 2));
+    };
+    if (icon) {
+        assetSet('AppIcon.appiconset', { images: [{ filename: 'icon.png', idiom: 'universal', platform: 'ios', size: '1024x1024' }] });
+        fs.writeFileSync(`${catalog}/AppIcon.appiconset/icon.png`, icon);
+    }
+    if (background) {
+        const [red, green, blue] = [1, 3, 5].map((at) => `0x${background.slice(at, at + 2).toUpperCase()}`);
+        assetSet(`${LAUNCH_COLOR}.colorset`, { colors: [{ color: { 'color-space': 'srgb', components: { alpha: '1.000', red, green, blue } }, idiom: 'universal' }] });
+    }
+}
+
 // An iOS app as an Xcode project, written anew from the parts its SDK targets built: each brings its archives and
 // their link line, and its slice of Hermes; the first also the app's files. Xcode signs the app and runs it, in the
 // Simulator or on a device, and makes every size of its icon from the one PNG given.
-export default function writeXcodeProject(to, { parts, identity, label, version, icon = null, urlSchemes = [] }) {
+export default function writeXcodeProject(to, { parts, identity, label, version, icon = null, urlSchemes = [], background = null }) {
     const { name } = state.config.general;
     if (parts.length === 0) throw new Error(`crossbind: no part of the iOS app ${name} is built, so there is no Xcode project to write.`);
     fs.rmSync(to, { recursive: true, force: true });
@@ -142,17 +163,8 @@ export default function writeXcodeProject(to, { parts, identity, label, version,
     if (result.status !== 0) throw new Error(`crossbind: cannot make Hermes' xcframework for ${to}: ${result.stderr || result.error?.message}`);
 
     fs.writeFileSync(`${to}/main.m`, MAIN);
-    fs.writeFileSync(`${to}/Info.plist`, infoPlist(label, urlSchemes));
-    if (icon) {
-        const info = { author: 'xcode', version: 1 };
-        const set = `${to}/Assets.xcassets/AppIcon.appiconset`;
-        fs.mkdirSync(set, { recursive: true });
-        fs.writeFileSync(`${to}/Assets.xcassets/Contents.json`, JSON.stringify({ info }, null, 2));
-        fs.writeFileSync(`${set}/Contents.json`, JSON.stringify({
-            images: [{ filename: 'icon.png', idiom: 'universal', platform: 'ios', size: '1024x1024' }], info,
-        }, null, 2));
-        fs.writeFileSync(`${set}/icon.png`, icon);
-    }
+    fs.writeFileSync(`${to}/Info.plist`, infoPlist(label, urlSchemes, Boolean(background)));
+    writeAssets(`${to}/Assets.xcassets`, icon, background);
     const targetSettings = {
         ...(icon ? { ASSETCATALOG_COMPILER_APPICON_NAME: 'AppIcon' } : {}),
         PRODUCT_NAME: name,
@@ -166,7 +178,7 @@ export default function writeXcodeProject(to, { parts, identity, label, version,
         ...linkFlags,
     };
     fs.writeFileSync(`${to}/${name}.xcodeproj/project.pbxproj`, textPlist({
-        archiveVersion: 1, classes: {}, objectVersion: 56, objects: objects(name, targetSettings, Boolean(icon)), rootObject: ID.project,
+        archiveVersion: 1, classes: {}, objectVersion: 56, objects: objects(name, targetSettings, Boolean(icon || background)), rootObject: ID.project,
     }));
     return to;
 }

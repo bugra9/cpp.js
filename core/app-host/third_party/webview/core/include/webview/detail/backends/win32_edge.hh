@@ -55,6 +55,7 @@
 #include "../user_script.hh"
 #include "../utility/string.hh"
 
+#include <algorithm>
 #include <atomic>
 #include <cstdlib>
 #include <functional>
@@ -437,9 +438,19 @@ protected:
           scale_size(width, height, get_default_window_dpi(), dpi);
       auto frame_size =
           make_window_frame_size(m_window, scaled_size.cx, scaled_size.cy, dpi);
-      SetWindowPos(m_window, nullptr, 0, 0, frame_size.cx, frame_size.cy,
-                   SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE |
-                       SWP_FRAMECHANGED);
+      // crossbind: the window opens in the middle of its monitor's work
+      // area, as on macOS.
+      MONITORINFO monitor{};
+      monitor.cbSize = sizeof(monitor);
+      GetMonitorInfoW(MonitorFromWindow(m_window, MONITOR_DEFAULTTONEAREST),
+                      &monitor);
+      const auto &work = monitor.rcWork;
+      SetWindowPos(
+          m_window, nullptr,
+          work.left + (std::max)(0L, (work.right - work.left - frame_size.cx) / 2),
+          work.top + (std::max)(0L, (work.bottom - work.top - frame_size.cy) / 2),
+          frame_size.cx, frame_size.cy,
+          SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
     }
     return window_show();
   }
@@ -578,8 +589,12 @@ private:
             return POINT{framed.cx, framed.cy};
           };
           if (w->m_maxsz.x > 0 && w->m_maxsz.y > 0) {
-            lpmmi->ptMaxSize = frame(w->m_maxsz);
-            lpmmi->ptMaxTrackSize = lpmmi->ptMaxSize;
+            // crossbind: maximized, the window keeps to its monitor on a side
+            // whose limit is larger.
+            auto most = frame(w->m_maxsz);
+            lpmmi->ptMaxSize.x = (std::min)(lpmmi->ptMaxSize.x, most.x);
+            lpmmi->ptMaxSize.y = (std::min)(lpmmi->ptMaxSize.y, most.y);
+            lpmmi->ptMaxTrackSize = most;
           }
           if (w->m_minsz.x > 0 || w->m_minsz.y > 0) {
             lpmmi->ptMinTrackSize = frame(w->m_minsz);

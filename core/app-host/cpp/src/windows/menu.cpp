@@ -193,11 +193,13 @@ void addItem(HMENU menu, const MenuItem &page, Built &into) {
     AppendMenuW(menu, flags, FIRST_COMMAND + index, label.c_str());
 }
 
-// The page keeps the height app.window gives it, so the window takes the bar's height on, unless it is maximized.
+// The page keeps the height app.window gives it, so the window takes the bar's height on, unless it is maximized or
+// fills the screen, which takes its caption away.
 void keepPageHeight(LONG pageHeight) {
     RECT client{};
     RECT frame{};
-    if (IsZoomed(window) || !GetClientRect(window, &client) || !GetWindowRect(window, &frame)) return;
+    const bool fillsScreen = !(GetWindowLongPtrW(window, GWL_STYLE) & WS_CAPTION);
+    if (IsZoomed(window) || fillsScreen || !GetClientRect(window, &client) || !GetWindowRect(window, &frame)) return;
     const LONG grow = pageHeight - (client.bottom - client.top);
     if (grow == 0) return;
     SetWindowPos(window, nullptr, 0, 0, frame.right - frame.left, frame.bottom - frame.top + grow, SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);

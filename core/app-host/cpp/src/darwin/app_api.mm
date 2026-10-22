@@ -186,4 +186,24 @@ void showWindow(const std::string &) {
     });
 }
 
+void setBackgroundColor(void *window, void *webView, std::uint32_t color) {
+    ((__bridge NSWindow *)window).backgroundColor = [NSColor colorWithSRGBRed:((color >> 16) & 0xff) / 255.0
+                                                                         green:((color >> 8) & 0xff) / 255.0
+                                                                          blue:(color & 0xff) / 255.0
+                                                                         alpha:1];
+    // Without this, WKWebView draws white of its own until the page paints, and behind it. The setter is WebKit's own,
+    // which a later macOS may take away.
+    id view = (__bridge id)webView;
+    if ([view respondsToSelector:NSSelectorFromString(@"_setDrawsBackground:")]) [view setValue:@NO forKey:@"drawsBackground"];
+}
+
+// macOS takes the window full screen, into a Space of its own, once the app runs.
+void fillScreen() {
+    onMain(^{
+      // A window that does not resize goes full screen only when it says it can.
+      mainWindow.collectionBehavior |= NSWindowCollectionBehaviorFullScreenPrimary;
+      [mainWindow toggleFullScreen:nil];
+    });
+}
+
 #endif

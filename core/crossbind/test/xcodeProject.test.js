@@ -87,8 +87,28 @@ describe('an iOS app\'s Xcode project', () => {
             .toEqual([{ filename: 'icon.png', idiom: 'universal', platform: 'ios', size: '1024x1024' }]);
         expect(project).toContain('"path" = "Assets.xcassets";');
         expect(project).toContain('"ASSETCATALOG_COMPILER_APPICON_NAME" = "AppIcon";');
+        // The launch screen keeps the system's color.
+        expect(fs.existsSync(path.join(to, 'Assets.xcassets', 'LaunchBackground.colorset'))).toBe(false);
+        expect(fs.readFileSync(path.join(to, 'Info.plist'), 'utf8')).toContain('<key>UILaunchScreen</key>\n    <dict/>');
         if (process.platform === 'darwin') {
             expect(execFileSync('plutil', ['-lint', path.join(to, 'demo.xcodeproj', 'project.pbxproj')], { encoding: 'utf8' })).toContain(': OK');
+        }
+        fs.rmSync(root, { recursive: true, force: true });
+    });
+
+    test('launches on app.window.backgroundColor, from a color set of its asset catalog', () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-xcode-'));
+        const to = path.join(root, 'demo-ios');
+        writeXcodeProject(to, { parts: [part(root, 'iphoneos')], identity: { id: 'com.example.demo', team: '' }, label: 'Demo', version: '1', background: '#1e2a3b' });
+
+        const set = JSON.parse(fs.readFileSync(path.join(to, 'Assets.xcassets', 'LaunchBackground.colorset', 'Contents.json'), 'utf8'));
+        const project = fs.readFileSync(path.join(to, 'demo.xcodeproj', 'project.pbxproj'), 'utf8');
+        expect(set.colors).toEqual([{ color: { 'color-space': 'srgb', components: { alpha: '1.000', red: '0x1E', green: '0x2A', blue: '0x3B' } }, idiom: 'universal' }]);
+        expect(fs.readFileSync(path.join(to, 'Info.plist'), 'utf8')).toContain('<key>UILaunchScreen</key>\n    <dict>\n        <key>UIColorName</key>\n        <string>LaunchBackground</string>');
+        expect(project).toContain('"path" = "Assets.xcassets";');
+        expect(project).not.toContain('ASSETCATALOG_COMPILER_APPICON_NAME');
+        if (process.platform === 'darwin') {
+            expect(execFileSync('plutil', ['-extract', 'UILaunchScreen.UIColorName', 'raw', path.join(to, 'Info.plist')], { encoding: 'utf8' }).trim()).toBe('LaunchBackground');
         }
         fs.rmSync(root, { recursive: true, force: true });
     });

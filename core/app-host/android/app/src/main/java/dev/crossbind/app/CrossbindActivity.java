@@ -8,6 +8,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.Insets;
 import android.net.Uri;
 import android.os.Bundle;
@@ -62,6 +63,8 @@ public class CrossbindActivity extends Activity {
     private static final String APP_ORIGIN = "https://" + HOST;
     // The object a page of the app's origins asks for its port with.
     private static final String READY = "__crossbind_ready";
+    // The relative luminance of a color that black and white contrast with as much.
+    private static final float EVEN_CONTRAST = 0.179f;
 
     // A call of a page, answered on the port of the page that made it: a page that went away gets no answer.
     private static final class Call {
@@ -173,6 +176,9 @@ public class CrossbindActivity extends Activity {
         thread.start();
         ipc = new Handler(thread.getLooper());
         webView = new WebView(this);
+        // app.window.backgroundColor, which the theme shows until the page paints, goes behind the page as well.
+        int background = getColor(R.color.crossbind_background);
+        if (Color.alpha(background) != 0) webView.setBackgroundColor(background);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
         WebViewCompat.addDocumentStartJavaScript(webView, topFrameScript(token), origins);
@@ -224,9 +230,12 @@ public class CrossbindActivity extends Activity {
         matchSystemBars();
     }
 
-    // The system bars lie over the window, so their icons are dark in the light theme and light in the dark one.
+    // The system bars lie over the window, so their icons are dark in the light theme and light in the dark one, or on
+    // app.window.backgroundColor, dark on a light color and light on a dark one.
     private void matchSystemBars() {
-        boolean isDark = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        int background = getColor(R.color.crossbind_background);
+        boolean isDark = Color.alpha(background) != 0 ? Color.luminance(background) < EVEN_CONTRAST
+                : (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
         int light = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
         getWindow().getInsetsController().setSystemBarsAppearance(isDark ? 0 : light, light);
     }
