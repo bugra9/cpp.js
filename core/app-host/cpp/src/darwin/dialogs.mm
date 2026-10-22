@@ -19,6 +19,16 @@ NSString *appTitle() {
 
 }  // namespace
 
+#if TARGET_OS_IPHONE
+bool presentAlert(void *alert, void *window) {
+    UIViewController *top = ((__bridge UIWindow *)window).rootViewController;
+    while (top.presentedViewController) top = top.presentedViewController;
+    if (!top || top.isBeingDismissed) return false;
+    [top presentViewController:(__bridge UIAlertController *)alert animated:YES completion:nil];
+    return true;
+}
+#endif
+
 // WKWebView leaves the page's dialogs to its UI delegate: without one, alert() returns at once, confirm() answers false
 // and prompt() null.
 @interface CBPageDialogs : NSObject <WKUIDelegate>
@@ -28,14 +38,10 @@ NSString *appTitle() {
 
 #if TARGET_OS_IPHONE
 
-// Over whatever the app shows on top. With nothing to show it over, the caller answers at once, as if the dialog were
-// cancelled: WebKit wants an answer to every one.
+// With nothing to show it over, the caller answers at once, as if the dialog were cancelled: WebKit wants an answer to
+// every one.
 - (BOOL)show:(UIAlertController *)alert over:(WKWebView *)webView {
-    UIViewController *top = webView.window.rootViewController;
-    while (top.presentedViewController) top = top.presentedViewController;
-    if (!top || top.isBeingDismissed) return NO;
-    [top presentViewController:alert animated:YES completion:nil];
-    return YES;
+    return presentAlert((__bridge void *)alert, (__bridge void *)webView.window);
 }
 
 - (UIAlertController *)alertWithText:(NSString *)message {

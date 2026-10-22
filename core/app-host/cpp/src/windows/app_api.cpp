@@ -2,6 +2,7 @@
 #include "platform.h"
 #include "windows/com.h"
 
+#include <commctrl.h>
 #include <knownfolders.h>
 #include <shellapi.h>
 #include <shlobj.h>
@@ -16,6 +17,8 @@ using namespace crossbind::windows;
 namespace {
 
 HWND mainWindow = nullptr;
+// A message dialog's own buttons are numbered past the common ones, IDOK to IDCONTINUE.
+constexpr int FIRST_BUTTON = 100;
 
 // A dialog's file types, as COMDLG_FILTERSPECs pointing into the strings beside them.
 struct FileTypes {
@@ -151,6 +154,43 @@ void showSaveDialog(crossbind::app::SaveOptions options, std::function<void(std:
         }
         dialog->Release();
         done(std::move(file));
+    });
+}
+
+// Modal to the app's window, as a message box is.
+void showMessageDialog(crossbind::app::MessageOptions options, std::function<void(int)> done) {
+    onMainThread([options = std::move(options), done = std::move(done)] {
+        const std::wstring title = wide(CROSSBIND_APP_NAME);
+        const std::wstring message = wide(options.message);
+        const std::wstring detail = wide(options.detail);
+        std::vector<std::wstring> labels;
+        for (const auto &label : options.buttons) {
+            // A label's ampersands stay as they are, as no access key takes them.
+            std::wstring text;
+            for (const wchar_t c : wide(label)) text += c == L'&' ? L"&&" : std::wstring(1, c);
+            labels.push_back(text);
+        }
+        std::vector<TASKDIALOG_BUTTON> buttons;
+        for (size_t i = 0; i < labels.size(); i += 1) buttons.push_back({FIRST_BUTTON + static_cast<int>(i), labels[i].c_str()});
+        TASKDIALOGCONFIG config{};
+        config.cbSize = sizeof config;
+        config.hwndParent = mainWindow;
+        // Escape and closing the dialog answer IDCANCEL.
+        config.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION | TDF_POSITION_RELATIVE_TO_WINDOW;
+        config.dwCommonButtons = buttons.empty() ? TDCBF_OK_BUTTON : 0;
+        config.pszWindowTitle = title.c_str();
+        config.pszMainIcon = options.kind == crossbind::app::MessageKind::error     ? TD_ERROR_ICON
+                             : options.kind == crossbind::app::MessageKind::warning ? TD_WARNING_ICON
+                                                                                    : TD_INFORMATION_ICON;
+        config.pszMainInstruction = message.c_str();
+        if (!detail.empty()) config.pszContent = detail.c_str();
+        config.cButtons = static_cast<UINT>(buttons.size());
+        config.pButtons = buttons.data();
+        config.nDefaultButton = buttons.empty() ? IDOK : FIRST_BUTTON;
+        int clicked = IDCANCEL;
+        const HRESULT shown = TaskDialogIndirect(&config, &clicked, nullptr, nullptr);
+        report("message", shown);
+        done(FAILED(shown) || clicked == IDCANCEL ? NO_BUTTON : clicked == IDOK ? 0 : clicked - FIRST_BUTTON);
     });
 }
 

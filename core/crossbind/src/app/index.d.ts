@@ -24,6 +24,16 @@ export interface SaveOptions {
     filters?: FileFilter[];
 }
 
+export interface MessageOptions {
+    message: string;
+    /** Smaller text under the message. */
+    detail?: string;
+    /** info by default. Windows shows its icon for each, and macOS a caution sign for error; Linux, iOS and Android show none. */
+    kind?: 'info' | 'warning' | 'error';
+    /** One to three labels, the first the default; without them OK. */
+    buttons?: string[];
+}
+
 /** The app's own folders, made when first asked for: what it keeps, what it can lose, and its logs. */
 export interface AppPaths {
     data: string;
@@ -36,6 +46,8 @@ export declare const dialog: {
     open(options?: OpenOptions): Promise<string[] | null>;
     /** The path the user chose to save to, or null when they cancelled. */
     save(options?: SaveOptions): Promise<string | null>;
+    /** The index of the button the user clicked: Return gives the first, and Escape or closing the dialog the last. */
+    message(options: MessageOptions): Promise<number>;
 };
 
 export declare const shell: {

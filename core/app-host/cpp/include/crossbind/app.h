@@ -1,13 +1,13 @@
 #pragma once
 
-// What an app's host does for the app's own code: the dialogs that pick files, opening an address or a file outside
-// the app, the app's folders, quitting, events for the page and a desktop app's updates. The page reaches the same
-// through crossbind/app, where openPath() opens files where app.openPath lets it alone and revealInFolder() shows the
-// app's folders and what a dialog picked alone; here they reach any path. Call them from the module's code, which an
-// app builds with CROSSBIND_APP defined, once the module has started and never on the app's main thread: the dialogs
-// and the functions that open something wait for that thread, and throw when called before it can answer, as from a
-// static initializer, or once the app quits. An iOS app has paths(), openExternal() and emitEvent() alone, and an
-// Android app paths() and emitEvent(): the others throw there.
+// What an app's host does for the app's own code: the dialogs that pick files or show a message, opening an address or
+// a file outside the app, the app's folders, quitting, events for the page and a desktop app's updates. The page
+// reaches the same through crossbind/app, where openPath() opens files where app.openPath lets it alone and
+// revealInFolder() shows the app's folders and what a dialog picked alone; here they reach any path. Call them from the
+// module's code, which an app builds with CROSSBIND_APP defined, once the module has started and never on the app's main
+// thread: the dialogs and the functions that open something wait for that thread, and throw when called before it can
+// answer, as from a static initializer, or once the app quits. An iOS app has messageDialog(), paths(), openExternal()
+// and emitEvent() alone, and an Android app messageDialog(), paths() and emitEvent(): the others throw there.
 #include <optional>
 #include <string>
 #include <vector>
@@ -38,6 +38,18 @@ struct SaveOptions {
     std::vector<FileFilter> filters;
 };
 
+enum class MessageKind { info, warning, error };
+
+struct MessageOptions {
+    std::string message;
+    // Smaller text under the message.
+    std::string detail;
+    // Windows shows its icon for each, and macOS a caution sign for error; Linux, iOS and Android show none.
+    MessageKind kind = MessageKind::info;
+    // One to three labels, the first the default; none is OK.
+    std::vector<std::string> buttons;
+};
+
 // The app's own folders, made when first asked for: what it keeps, what it can lose, and its logs.
 struct Paths {
     std::string data;
@@ -49,6 +61,8 @@ struct Paths {
 std::optional<std::vector<std::string>> openDialog(const OpenOptions &options = {});
 // The file the user chose to save to, or nothing when they cancelled.
 std::optional<std::string> saveDialog(const SaveOptions &options = {});
+// The index of the button the user clicked: Return gives the first, and Escape or closing the dialog the last.
+int messageDialog(const MessageOptions &options);
 // A web or mail address in the default browser or mail app: http, https and mailto alone.
 void openExternal(const std::string &url);
 // A file in the app the system opens its kind with, at an absolute path.

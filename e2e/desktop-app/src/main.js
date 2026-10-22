@@ -188,6 +188,18 @@ initNative().then(async (m) => {
         }
         const opened = await shell.openExternal('javascript:void 0').then(() => 'opened', (error) => error.message);
         if (!opened.includes('http, https and mailto')) throw new Error(`a javascript: address was not refused: ${opened}`);
+        // The host refuses a message dialog no platform shows to a page that went around crossbind/app, before showing one.
+        const unshowable = [
+            [{ message: '' }, 'takes a message'],
+            [{ message: 'Saved.', buttons: ['A', 'B', 'C', 'D'] }, 'three buttons at most'],
+            [{ message: 'Saved.', buttons: ['OK', ''] }, 'each with a label'],
+            [{ message: 'Saved.', kind: 'question' }, 'the kind question'],
+        ];
+        for (const [options, refusal] of unshowable) {
+            const asked = globalThis.Crossbind.app('dialog.message', options).then(() => 'answered', (error) => error.message);
+            const answer = await Promise.race([asked, new Promise((resolve) => { setTimeout(() => resolve('a dialog showed'), 3000); })]);
+            if (!answer.includes(refusal)) throw new Error(`a message dialog no platform shows was not refused: ${answer}`);
+        }
         // The page opens files where app.openPath lets it, the data folder here, and shows the app's folders and what a
         // dialog picked alone.
         const separator = folders.data.includes('\\') ? '\\' : '/';

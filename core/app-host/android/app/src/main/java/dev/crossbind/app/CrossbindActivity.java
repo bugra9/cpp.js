@@ -2,6 +2,7 @@ package dev.crossbind.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Intent;
@@ -18,6 +19,7 @@ import android.os.HandlerThread;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowInsets;
+import android.view.WindowManager;
 import android.view.WindowInsetsController;
 import android.webkit.ConsoleMessage;
 import android.webkit.GeolocationPermissions;
@@ -89,6 +91,8 @@ public class CrossbindActivity extends Activity {
 
     private static final Map<Integer, Call> calls = new ConcurrentHashMap<>();
     private static final AtomicInteger nextCall = new AtomicInteger();
+    // The activity that shows the module's message dialogs while it lives.
+    private static volatile CrossbindActivity current;
 
     private WebView webView;
     private Handler ipc;
@@ -106,6 +110,7 @@ public class CrossbindActivity extends Activity {
     // Back walks the page's history first, as in a browser; with none left, the system's own back leaves the app.
     private final OnBackInvokedCallback back = () -> webView.goBack();
     private boolean isBackTaken;
+    private AlertDialog messageDialog;
 
     // Starts the module, once per process, and returns the page's token and the dev server's page, or "". data and cache
     // are the app's folders, which crossbind/app's paths() names.
@@ -124,6 +129,46 @@ public class CrossbindActivity extends Activity {
 
     // A link of app.urlSchemes the system opened the app with, in UTF-8.
     private static native void nativeOpenUrl(byte[] url);
+
+    // The index of the button the user clicked in the module's message dialog, or -1 when it went without one.
+    private static native void nativeMessageAnswered(int button);
+
+    // The module's message dialog, its text in UTF-8, from the module's thread.
+    static void showMessage(byte[] message, byte[] detail, byte[][] buttons) {
+        CrossbindActivity activity = current;
+        if (activity == null) {
+            nativeMessageAnswered(-1);
+            return;
+        }
+        String[] labels = Arrays.stream(buttons).map((label) -> new String(label, StandardCharsets.UTF_8)).toArray(String[]::new);
+        activity.runOnUiThread(() -> activity.showMessageDialog(new String(message, StandardCharsets.UTF_8),
+                new String(detail, StandardCharsets.UTF_8), labels));
+    }
+
+    // Android has a positive, a neutral and a negative button: the first label is the positive one, and the last of
+    // several the negative, which Android places where its apps put Cancel. Back and a tap outside close the dialog. The
+    // message goes in the dialog's text with the detail, as a title stops after two lines.
+    private void showMessageDialog(String message, String detail, String[] labels) {
+        if (isFinishing() || isDestroyed()) {
+            nativeMessageAnswered(-1);
+            return;
+        }
+        String[] names = labels.length == 0 ? new String[] {getString(android.R.string.ok)} : labels;
+        int[] clicked = {-1};
+        AlertDialog.Builder builder = new AlertDialog.Builder(this).setMessage(detail.isEmpty() ? message : message + "\n\n" + detail)
+                .setPositiveButton(names[0], (dialog, which) -> clicked[0] = 0)
+                .setOnDismissListener((dialog) -> {
+                    messageDialog = null;
+                    nativeMessageAnswered(clicked[0]);
+                });
+        if (names.length == 3) builder.setNeutralButton(names[1], (dialog, which) -> clicked[0] = 1);
+        if (names.length > 1) builder.setNegativeButton(names[names.length - 1], (dialog, which) -> clicked[0] = names.length - 1);
+        try {
+            messageDialog = builder.show();
+        } catch (WindowManager.BadTokenException gone) {
+            nativeMessageAnswered(-1);
+        }
+    }
 
     // The module's answer to a call, from whichever thread gives it.
     static void onReply(int call, boolean ok, byte[] text) {
@@ -159,6 +204,7 @@ public class CrossbindActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        current = this;
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         // The page sends byte arrays as ArrayBuffer messages, which Android System WebView passes from 116 on.
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_ARRAY_BUFFER)
@@ -329,6 +375,9 @@ public class CrossbindActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        // A message dialog that goes with its activity answers as one closed.
+        if (messageDialog != null) messageDialog.dismiss();
+        if (current == this) current = null;
         if (port != null) close(port);
         if (webView != null) webView.destroy();
         if (ipc != null) ipc.getLooper().quitSafely();

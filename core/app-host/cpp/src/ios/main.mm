@@ -79,6 +79,7 @@ bool isDark(std::uint32_t color) {
     controller.view = webView;
     self.window = [[UIWindow alloc] initWithWindowScene:(UIWindowScene *)scene];
     self.window.rootViewController = controller;
+    setMainWindow((__bridge void *)self.window);
     [self.window makeKeyAndVisible];
     [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@(url.c_str())]]];
     // A link of app.urlSchemes that launched the app waits for the page to ask for it.

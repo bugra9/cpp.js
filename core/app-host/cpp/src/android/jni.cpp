@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <future>
+#include <mutex>
 #include <stdexcept>
 #include <thread>
 
@@ -24,6 +25,10 @@ JavaVM *vm;
 jclass activityClass;
 jmethodID onReply;
 jmethodID onReplyBytes;
+jmethodID showMessage;
+// What the message dialog the activity shows answers: crossbind shows one dialog at a time.
+std::mutex messageMutex;
+std::function<void(int)> messageAnswer;
 std::string resources;
 // The app's own folders, which the activity names.
 std::string dataDir;
@@ -32,7 +37,14 @@ app::Core *core;
 
 JNIEnv *attachedEnv() {
     JNIEnv *env = nullptr;
-    if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) == JNI_EDETACHED) vm->AttachCurrentThread(&env, nullptr);
+    if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) == JNI_EDETACHED) {
+        vm->AttachCurrentThread(&env, nullptr);
+        // ART aborts the app when a thread it attached ends attached, as a thread of the app's that called
+        // messageDialog() would.
+        thread_local const struct Detach {
+            ~Detach() { vm->DetachCurrentThread(); }
+        } detach;
+    }
     return env;
 }
 
@@ -43,10 +55,16 @@ void clearException(JNIEnv *env) {
     env->ExceptionClear();
 }
 
-void answer(jint call, bool ok, const std::string &text) {
-    JNIEnv *env = attachedEnv();
+// Text goes to Java as UTF-8 bytes, which modified UTF-8 would not carry whole.
+jbyteArray bytesOf(JNIEnv *env, const std::string &text) {
     jbyteArray bytes = env->NewByteArray(static_cast<jsize>(text.size()));
     env->SetByteArrayRegion(bytes, 0, static_cast<jsize>(text.size()), reinterpret_cast<const jbyte *>(text.data()));
+    return bytes;
+}
+
+void answer(jint call, bool ok, const std::string &text) {
+    JNIEnv *env = attachedEnv();
+    jbyteArray bytes = bytesOf(env, text);
     env->CallStaticVoidMethod(activityClass, onReply, call, static_cast<jboolean>(ok), bytes);
     clearException(env);
     env->DeleteLocalRef(bytes);
@@ -123,6 +141,45 @@ void showSaveDialog(crossbind::app::SaveOptions, std::function<void(std::optiona
     throw std::runtime_error("crossbind: an Android app has no file dialogs yet");
 }
 
+namespace {
+
+void messageAnswered(int button) {
+    std::function<void(int)> done;
+    {
+        std::lock_guard<std::mutex> lock(messageMutex);
+        done.swap(messageAnswer);
+    }
+    if (done) done(button);
+}
+
+}  // namespace
+
+// The activity in front shows it, and answers through nativeMessageAnswered.
+void showMessageDialog(crossbind::app::MessageOptions options, std::function<void(int)> done) {
+    {
+        std::lock_guard<std::mutex> lock(messageMutex);
+        messageAnswer = std::move(done);
+    }
+    JNIEnv *env = attachedEnv();
+    jclass bytesClass = env->FindClass("[B");
+    jobjectArray buttons = env->NewObjectArray(static_cast<jsize>(options.buttons.size()), bytesClass, nullptr);
+    for (size_t i = 0; i < options.buttons.size(); i += 1) {
+        jbyteArray label = bytesOf(env, options.buttons[i]);
+        env->SetObjectArrayElement(buttons, static_cast<jsize>(i), label);
+        env->DeleteLocalRef(label);
+    }
+    jbyteArray message = bytesOf(env, options.message);
+    jbyteArray detail = bytesOf(env, options.detail);
+    env->CallStaticVoidMethod(activityClass, showMessage, message, detail, buttons);
+    const bool hasFailed = env->ExceptionCheck();
+    clearException(env);
+    env->DeleteLocalRef(detail);
+    env->DeleteLocalRef(message);
+    env->DeleteLocalRef(buttons);
+    env->DeleteLocalRef(bytesClass);
+    if (hasFailed) messageAnswered(-1);
+}
+
 void openUrl(std::string, std::function<void(Failure)>) {
     throw std::runtime_error("crossbind: an Android app opens no address outside itself yet");
 }
@@ -160,6 +217,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_dev_crossbind_app_CrossbindActivi
         activityClass = static_cast<jclass>(env->NewGlobalRef(type));
         onReply = env->GetStaticMethodID(type, "onReply", "(IZ[B)V");
         onReplyBytes = env->GetStaticMethodID(type, "onReplyBytes", "(I[B)V");
+        showMessage = env->GetStaticMethodID(type, "showMessage", "([B[B[[B)V");
         resources = asciiOf(env, files);
         dataDir = asciiOf(env, data);
         cacheDir = asciiOf(env, cache);
@@ -215,4 +273,8 @@ extern "C" JNIEXPORT void JNICALL Java_dev_crossbind_app_CrossbindActivity_nativ
 
 extern "C" JNIEXPORT void JNICALL Java_dev_crossbind_app_CrossbindActivity_nativeOpenUrl(JNIEnv *env, jclass, jbyteArray url) {
     app::openedUrl(textOf(env, url));
+}
+
+extern "C" JNIEXPORT void JNICALL Java_dev_crossbind_app_CrossbindActivity_nativeMessageAnswered(JNIEnv *, jclass, jint button) {
+    messageAnswered(button);
 }

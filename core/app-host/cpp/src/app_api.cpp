@@ -130,14 +130,13 @@ Options withoutDots(Options options) {
     return options;
 }
 
-// Shows a dialog unless one is open, and lets the page reach what its user picked.
+// Shows a dialog unless one is open.
 template <typename Options, typename T>
 void showDialog(void (*show)(Options, std::function<void(T)>), std::type_identity_t<Options> options,
                 std::type_identity_t<std::function<void(T)>> done) {
     if (dialogOpen.exchange(true)) throw std::runtime_error("crossbind: another dialog is open");
     try {
-        show(withoutDots(std::move(options)), [done = std::move(done)](T result) {
-            if (result) grant(*result);
+        show(std::move(options), [done = std::move(done)](T result) {
             dialogOpen = false;
             done(std::move(result));
         });
@@ -145,6 +144,30 @@ void showDialog(void (*show)(Options, std::function<void(T)>), std::type_identit
         dialogOpen = false;
         throw;
     }
+}
+
+// A file dialog, whose user's picks the page may reach then.
+template <typename Options, typename T>
+void showFileDialog(void (*show)(Options, std::function<void(T)>), std::type_identity_t<Options> options,
+                    std::type_identity_t<std::function<void(T)>> done) {
+    showDialog(show, withoutDots(std::move(options)), [done = std::move(done)](T result) {
+        if (result) grant(*result);
+        done(std::move(result));
+    });
+}
+
+// Android's dialogs take three buttons at most.
+constexpr size_t MAX_BUTTONS = 3;
+
+// A message dialog, which a page that went around crossbind/app is held to as well; closing it clicks its last button.
+void showMessage(MessageOptions options, std::function<void(int)> done) {
+    if (options.message.empty()) throw std::invalid_argument("crossbind: a message dialog takes a message");
+    const bool hasEmptyLabel = std::any_of(options.buttons.begin(), options.buttons.end(), [](const std::string &label) { return label.empty(); });
+    if (options.buttons.size() > MAX_BUTTONS || hasEmptyLabel) {
+        throw std::invalid_argument("crossbind: a message dialog takes three buttons at most, each with a label");
+    }
+    const int last = std::max(static_cast<int>(options.buttons.size()) - 1, 0);
+    showDialog(showMessageDialog, std::move(options), [last, done = std::move(done)](int button) { done(button < 0 ? last : button); });
 }
 
 // Waits for what the main thread hands done. The promise is shared, as done may run after the wait has given up, and a
@@ -338,17 +361,28 @@ std::vector<FileFilter> filters(jsi::Runtime &rt, const jsi::Value &options) {
     return out;
 }
 
+MessageKind kindOf(const std::string &kind) {
+    if (kind.empty() || kind == "info") return MessageKind::info;
+    if (kind == "warning") return MessageKind::warning;
+    if (kind == "error") return MessageKind::error;
+    throw std::invalid_argument("crossbind: no message dialog has the kind " + kind);
+}
+
 }  // namespace
 
 void answerWaits(bool answer) { answering = answer; }
 
 std::optional<std::vector<std::string>> openDialog(const OpenOptions &options) {
-    return wait<Picked>([&](std::function<void(Picked)> done) { showDialog(showOpenDialog, options, std::move(done)); });
+    return wait<Picked>([&](std::function<void(Picked)> done) { showFileDialog(showOpenDialog, options, std::move(done)); });
 }
 
 std::optional<std::string> saveDialog(const SaveOptions &options) {
     return wait<std::optional<std::string>>(
-        [&](std::function<void(std::optional<std::string>)> done) { showDialog(showSaveDialog, options, std::move(done)); });
+        [&](std::function<void(std::optional<std::string>)> done) { showFileDialog(showSaveDialog, options, std::move(done)); });
+}
+
+int messageDialog(const MessageOptions &options) {
+    return wait<int>([&](std::function<void(int)> done) { showMessage(options, std::move(done)); });
 }
 
 void openExternal(const std::string &url) {
@@ -435,11 +469,15 @@ void callApp(jsi::Runtime &rt, const std::string &name, const jsi::Value &option
         if (name == "dialog.open") {
             OpenOptions open{text(rt, options, "title"), text(rt, options, "defaultPath"), filters(rt, options),
                              flag(rt, options, "directory"), flag(rt, options, "multiple")};
-            showDialog(showOpenDialog, std::move(open), [reply](Picked picked) { reply(ok(picked ? json(*picked) : "null")); });
+            showFileDialog(showOpenDialog, std::move(open), [reply](Picked picked) { reply(ok(picked ? json(*picked) : "null")); });
         } else if (name == "dialog.save") {
             SaveOptions save{text(rt, options, "title"), text(rt, options, "defaultPath"), text(rt, options, "defaultName"),
                              filters(rt, options)};
-            showDialog(showSaveDialog, std::move(save), [reply](std::optional<std::string> file) { reply(ok(file ? json(*file) : "null")); });
+            showFileDialog(showSaveDialog, std::move(save), [reply](std::optional<std::string> file) { reply(ok(file ? json(*file) : "null")); });
+        } else if (name == "dialog.message") {
+            showMessage({text(rt, options, "message"), text(rt, options, "detail"), kindOf(text(rt, options, "kind")),
+                         texts(rt, property(rt, options, "buttons"))},
+                        [reply](int button) { reply(ok(std::to_string(button))); });
         } else if (name == "shell.openExternal") {
             openUrl(checkedUrl(text(rt, options, "url")), answered(reply));
         } else if (name == "shell.openPath") {

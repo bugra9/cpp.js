@@ -62,12 +62,15 @@ void showError(const std::string &message);
 std::string resourceDir();
 
 // The app's functions behind crossbind/app and <crossbind/app.h>. Each is called on the module's thread, works on the
-// main thread and calls done there: a dialog with what its user picked, or nothing when they cancelled; the others with
-// why they failed, or nothing. A platform that has no such function throws.
+// main thread and calls done there: a file dialog with what its user picked, or nothing when they cancelled; a message
+// dialog with the index of the button clicked, or NO_BUTTON when its user closed it without one; the others with why
+// they failed, or nothing. A platform that has no such function throws.
 using Picked = std::optional<std::vector<std::string>>;
 using Failure = std::optional<std::string>;
+constexpr int NO_BUTTON = -1;
 void showOpenDialog(crossbind::app::OpenOptions options, std::function<void(Picked)> done);
 void showSaveDialog(crossbind::app::SaveOptions options, std::function<void(std::optional<std::string>)> done);
+void showMessageDialog(crossbind::app::MessageOptions options, std::function<void(int)> done);
 // An http, https or mailto address, which the caller has checked.
 void openUrl(std::string url, std::function<void(Failure)> done);
 void openFile(std::string path, std::function<void(Failure)> done);
@@ -129,6 +132,8 @@ void installAppMenu();
 void listenForUrls();
 // The page of the webview made from this configuration keeps running while its window is hidden.
 void keepRunningWhenHidden(void *configuration);
+// Shows an iOS alert controller over whatever the window shows on top; false when it has nothing to show it over.
+bool presentAlert(void *alert, void *window);
 #endif
 
 #ifdef _WIN32

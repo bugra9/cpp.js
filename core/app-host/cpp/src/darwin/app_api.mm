@@ -8,6 +8,7 @@
 
 #include "platform.h"
 
+#include <memory>
 #include <stdexcept>
 
 namespace {
@@ -85,7 +86,48 @@ void setMenu(std::vector<MenuItem>, MenuClicked, std::function<void(Failure)>) {
     throw std::runtime_error("crossbind: an iOS app has no menu bar");
 }
 
-void setMainWindow(void *) {}
+namespace {
+
+__weak UIWindow *mainWindow;
+
+// A message dialog's answer, given once. UIKit can let an alert go without a click, as when its scene goes, and then
+// the last of its actions to go answers it as closed.
+struct MessageAnswer {
+    std::function<void(int)> done;
+    bool isGiven = false;
+
+    void give(int button) {
+        if (isGiven) return;
+        isGiven = true;
+        done(button);
+    }
+    ~MessageAnswer() { give(NO_BUTTON); }
+};
+
+}  // namespace
+
+// The last of several buttons is the one a keyboard's Escape clicks, which iOS places where its apps put Cancel.
+void showMessageDialog(crossbind::app::MessageOptions options, std::function<void(int)> done) {
+    onMain(^{
+      auto answer = std::make_shared<MessageAnswer>();
+      answer->done = done;
+      UIAlertController *alert = [UIAlertController alertControllerWithTitle:ns(options.message)
+                                                                     message:options.detail.empty() ? nil : ns(options.detail)
+                                                              preferredStyle:UIAlertControllerStyleAlert];
+      const std::vector<std::string> labels = options.buttons.empty() ? std::vector<std::string>{"OK"} : options.buttons;
+      for (size_t i = 0; i < labels.size(); i += 1) {
+          const bool isCancel = labels.size() > 1 && i == labels.size() - 1;
+          UIAlertAction *action = [UIAlertAction actionWithTitle:ns(labels[i])
+                                                           style:isCancel ? UIAlertActionStyleCancel : UIAlertActionStyleDefault
+                                                         handler:^(UIAlertAction *) { answer->give(static_cast<int>(i)); }];
+          [alert addAction:action];
+          if (i == 0) alert.preferredAction = action;
+      }
+      if (!presentAlert((__bridge void *)alert, (__bridge void *)mainWindow)) answer->give(NO_BUTTON);
+    });
+}
+
+void setMainWindow(void *window) { mainWindow = (__bridge UIWindow *)window; }
 
 #else
 
@@ -139,6 +181,27 @@ void showSaveDialog(crossbind::app::SaveOptions options, std::function<void(std:
           return;
       }
       done(std::string(panel.URL.path.UTF8String));
+    });
+}
+
+// App-modal, as the panels are. Return clicks the first button and Escape the last of several, as closing the dialog
+// does elsewhere; NSAlert would give Escape to one named Cancel instead, wherever it is.
+void showMessageDialog(crossbind::app::MessageOptions options, std::function<void(int)> done) {
+    onMain(^{
+      NSAlert *alert = [NSAlert new];
+      alert.messageText = ns(options.message);
+      alert.informativeText = ns(options.detail);
+      alert.alertStyle = options.kind == crossbind::app::MessageKind::error     ? NSAlertStyleCritical
+                         : options.kind == crossbind::app::MessageKind::warning ? NSAlertStyleWarning
+                                                                                : NSAlertStyleInformational;
+      for (const auto &label : options.buttons) [alert addButtonWithTitle:ns(label)];
+      NSString *escape = @"\x1b";
+      for (NSButton *button in alert.buttons) {
+          if ([button.keyEquivalent isEqualToString:escape]) button.keyEquivalent = @"";
+      }
+      alert.buttons.firstObject.keyEquivalent = @"\r";
+      if (alert.buttons.count > 1) alert.buttons.lastObject.keyEquivalent = escape;
+      done(static_cast<int>([alert runModal] - NSAlertFirstButtonReturn));
     });
 }
 
