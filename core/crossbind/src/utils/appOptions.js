@@ -145,8 +145,8 @@ export function appUpdater(config) {
     return { url: updater.url, publicKey, version };
 }
 
-// The header an app's host compiles where its page opens files from, a desktop host its title, window and updates, and
-// a Windows host its version resource.
+// The header an app's host compiles where its page opens files from, a desktop host its title, window, whether it keeps
+// one instance and its updates, and a Windows host its version resource.
 export function appHeader(config, platform) {
     const comment = '// crossbind writes this file from crossbind.config.js and package.json.';
     const openPath = `#define CROSSBIND_APP_OPEN_PATH {${appOpenPath(config).map((place) => `"${place}"`).join(', ')}}`;
@@ -163,6 +163,11 @@ export function appHeader(config, platform) {
         `#define CROSSBIND_APP_WINDOW_MIN_HEIGHT ${window.minHeight}`,
         `#define CROSSBIND_APP_WINDOW_RESIZABLE ${window.resizable ? 1 : 0}`,
     ];
+    const singleInstance = config.app.singleInstance ?? false;
+    if (typeof singleInstance !== 'boolean') {
+        throw new Error(`crossbind: app.singleInstance ${JSON.stringify(singleInstance)} is no boolean: set it to true to keep a desktop app to one instance, or drop it to let each launch run.`);
+    }
+    if (singleInstance) lines.push('#define CROSSBIND_APP_SINGLE_INSTANCE 1');
     const updater = appUpdater(config);
     if (updater) {
         lines.push(

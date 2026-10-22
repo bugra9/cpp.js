@@ -216,6 +216,14 @@ void setMainWindow(void *window) {
     gtk_widget_grab_focus(webView);
 }
 
+void showWindow(const std::string &token) {
+    onMainThread([token] {
+        if (!mainWindow) return;
+        if (!token.empty()) gtk_window_set_startup_id(mainWindow, token.c_str());
+        gtk_window_present(mainWindow);
+    });
+}
+
 GtkWindow *appWindow() { return mainWindow; }
 
 GtkBox *appWindowBox() { return windowBox; }

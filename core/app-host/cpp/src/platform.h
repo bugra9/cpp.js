@@ -75,6 +75,9 @@ crossbind::app::Paths appPaths();
 void quitApp();
 // The window the app's dialogs belong to.
 void setMainWindow(void *window);
+// Brings a desktop app's window to the front, restored if it was minimized; token is what lets a Linux window take the
+// front from another app. On any thread.
+void showWindow(const std::string &token);
 // Fetches an address into a file for a desktop app's updater, on the thread that calls it, which is not the main one,
 // and throws why it could not, as when the answer runs past maxBytes.
 void download(const std::string &url, const std::filesystem::path &file, std::uintmax_t maxBytes);
