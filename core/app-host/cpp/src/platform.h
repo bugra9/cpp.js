@@ -78,6 +78,11 @@ void setMainWindow(void *window);
 // Brings a desktop app's window to the front, restored if it was minimized; token is what lets a Linux window take the
 // front from another app. On any thread.
 void showWindow(const std::string &token);
+// A desktop app's window and webview show this color, 0xRRGGBB, until the page paints and behind a page without a
+// background of its own. On the main thread, before the window shows.
+void setBackgroundColor(void *window, void *webView, std::uint32_t color);
+// The window fills the screen, as app.window.fullscreen asks. On the main thread.
+void fillScreen();
 // Fetches an address into a file for a desktop app's updater, on the thread that calls it, which is not the main one,
 // and throws why it could not, as when the answer runs past maxBytes.
 void download(const std::string &url, const std::filesystem::path &file, std::uintmax_t maxBytes);
@@ -131,4 +136,7 @@ void *schemeEnvironmentOptions(const char *scheme, const std::vector<std::string
 void runSetup(const std::filesystem::path &setup);
 // The webview whose key presses reach the menus' accelerators first, as it holds the keyboard.
 void setMenuWebView(void *controller);
+// The window fills the screen while the page shows an element full screen, which WebView2 leaves to its host. On the
+// main thread.
+void followPageFullScreen(void *controller);
 #endif

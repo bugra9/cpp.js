@@ -29,7 +29,7 @@ import logger from '../utils/logger.js';
 import findFiles from '../utils/findFiles.js';
 import { getContentHash, getFilesFingerprint } from '../utils/hash.js';
 import { xmlPlist } from '../utils/plist.js';
-import { appDisplayName, appHeader, appId, appUrlSchemes } from '../utils/appOptions.js';
+import { appBackgroundColor, appDisplayName, appHeader, appId, appUrlSchemes } from '../utils/appOptions.js';
 import { androidIcons, iosIcon, linuxIcon, macIcon, readAppIcon, windowsIcon } from '../utils/appIcon.js';
 import writeIfChanged from '../utils/writeIfChanged.js';
 import { writeNativeSourceStamp } from '../utils/nativeSourceStamp.js';
@@ -328,13 +328,13 @@ export function publishApp(target, { to = appOutputPath(target), page = null } =
         const icon = readAppIcon(state.config);
         writeXcodeProject(to, {
             parts, identity: { id: appId(state.config), team: appTeam() }, label: appDisplayName(state.config), version: appVersion(), icon: icon && iosIcon(icon),
-            urlSchemes: appUrlSchemes(state.config),
+            urlSchemes: appUrlSchemes(state.config), background: appBackgroundColor(state.config),
         });
     } else if (target.platform === 'android') {
         const icon = readAppIcon(state.config);
         writeGradleProject(to, {
             parts: appParts(target), id: androidAppId(), label: appDisplayName(state.config), version: androidVersion(), icons: icon && androidIcons(icon),
-            urlSchemes: appUrlSchemes(state.config),
+            urlSchemes: appUrlSchemes(state.config), background: appBackgroundColor(state.config),
         });
     } else if (path.resolve(to) !== path.resolve(built)) {
         fs.rmSync(to, { recursive: true, force: true });

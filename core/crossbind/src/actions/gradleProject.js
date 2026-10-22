@@ -22,6 +22,18 @@ const ADAPTIVE_ICON = `<?xml version="1.0" encoding="utf-8"?>
 </adaptive-icon>
 `;
 
+const DAY_NIGHT = '@android:style/Theme.DeviceDefault.DayNight';
+// The activity's theme shows app.window.backgroundColor until the page paints, and the activity puts it behind the page,
+// whose WebView would be white; transparent, which the activity takes for none, without it.
+const backgroundValues = (color) => `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="crossbind_background">${color ?? '#00000000'}</color>
+    <style name="CrossbindBackground" parent="${DAY_NIGHT}">
+        <item name="android:windowBackground">@color/crossbind_background</item>
+    </style>
+</resources>
+`;
+
 // The links of app.urlSchemes the activity opens, from a browser as well, before the end of the activity's element.
 const ACTIVITY_END = '        </activity>';
 const urlFilter = (schemes) => [
@@ -33,7 +45,7 @@ const urlFilter = (schemes) => [
     '            </intent-filter>',
 ].join('\n');
 
-const buildGradle = ({ id, label, version, abis, icon, launchMode }) => `// crossbind writes this project anew on every build: the module comes prebuilt in src/main/jniLibs/, and the app's
+const buildGradle = ({ id, label, version, abis, icon, launchMode, theme }) => `// crossbind writes this project anew on every build: the module comes prebuilt in src/main/jniLibs/, and the app's
 // files are in src/main/assets/app/.
 plugins {
     id 'com.android.application'
@@ -50,7 +62,7 @@ android {
         targetSdk ${TARGET_SDK}
         versionCode ${version.code}
         versionName ${groovyString(version.name)}
-        manifestPlaceholders = [appName: ${groovyString(label)}, appIcon: ${groovyString(icon)}, launchMode: ${groovyString(launchMode)}]
+        manifestPlaceholders = [appName: ${groovyString(label)}, appIcon: ${groovyString(icon)}, launchMode: ${groovyString(launchMode)}, appTheme: ${groovyString(theme)}]
         ndk {
             abiFilters ${abis.map(groovyString).join(', ')}
         }
@@ -115,7 +127,7 @@ dependencies {
 // An Android app as a Gradle project, written anew from the parts its ABI targets built: each brings its libraries,
 // the first also the app's files. Gradle adds Hermes and androidx.webkit from Maven, and makes the APK or the bundle.
 // The icons given are the files of the app's launcher icon under res/; without them it has the system's.
-export default function writeGradleProject(to, { parts, id, label, version, icons = null, urlSchemes = [] }) {
+export default function writeGradleProject(to, { parts, id, label, version, icons = null, urlSchemes = [], background = null }) {
     const { name } = state.config.general;
     if (parts.length === 0) throw new Error(`crossbind: no part of the Android app ${name} is built, so there is no Gradle project to write.`);
     fs.rmSync(to, { recursive: true, force: true });
@@ -137,9 +149,11 @@ export default function writeGradleProject(to, { parts, id, label, version, icon
             fs.writeFileSync(path.join(main, 'res', file), content);
         });
     }
+    fs.mkdirSync(path.join(main, 'res', 'values'), { recursive: true });
+    fs.writeFileSync(path.join(main, 'res', 'values', 'background.xml'), backgroundValues(background));
     fs.writeFileSync(path.join(to, 'app', 'build.gradle'), buildGradle({
         id, label, version, abis: parts.map(({ arch }) => arch), icon: icons ? '@mipmap/ic_launcher' : '@android:drawable/sym_def_app_icon',
-        launchMode: urlSchemes.length > 0 ? 'singleTask' : 'standard',
+        launchMode: urlSchemes.length > 0 ? 'singleTask' : 'standard', theme: background ? '@style/CrossbindBackground' : DAY_NIGHT,
     }));
     return to;
 }

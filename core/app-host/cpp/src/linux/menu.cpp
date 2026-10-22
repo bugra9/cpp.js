@@ -1,3 +1,4 @@
+#include "crossbind_app.h"
 #include "linux/main_thread.h"
 #include "linux/window.h"
 #include "platform.h"
@@ -11,6 +12,8 @@ namespace {
 
 GtkWidget *bar = nullptr;
 GtkAccelGroup *barAccelerators = nullptr;
+// What the bar adds to the page's height.
+int menuBarHeight = 0;
 MenuClicked onClick;
 
 // What a click of an item does: one of the page's tells the page its id, a standard one does what its role says.
@@ -146,6 +149,20 @@ void keepPageHeight(GtkWindow *window, int barHeight) {
 
 }  // namespace
 
+void keepSizeLimits() {
+    GtkWindow *window = appWindow();
+    if (!window) return;
+    GdkWindow *shown = gtk_widget_get_window(GTK_WIDGET(window));
+    const bool fillsScreen = shown && (gdk_window_get_state(shown) & GDK_WINDOW_STATE_FULLSCREEN);
+    gtk_window_set_resizable(window, fillsScreen || CROSSBIND_APP_WINDOW_RESIZABLE);
+#ifdef CROSSBIND_APP_WINDOW_MAX_WIDTH
+    GdkGeometry most{};
+    most.max_width = CROSSBIND_APP_WINDOW_MAX_WIDTH;
+    most.max_height = CROSSBIND_APP_WINDOW_MAX_HEIGHT + menuBarHeight;
+    gtk_window_set_geometry_hints(window, nullptr, &most, fillsScreen ? static_cast<GdkWindowHints>(0) : GDK_HINT_MAX_SIZE);
+#endif
+}
+
 // The bar goes above the webview, in the box setMainWindow made, and its accelerators come before the webview's keys;
 // no menus hide it.
 void setMenu(std::vector<MenuItem> menus, MenuClicked clicked, std::function<void(Failure)> done) {
@@ -174,17 +191,18 @@ void setMenu(std::vector<MenuItem> menus, MenuClicked clicked, std::function<voi
             g_object_unref(barAccelerators);
         }
         gtk_box_pack_start(box, next, FALSE, FALSE, 0);
-        int barHeight = 0;
+        menuBarHeight = 0;
         if (!menus.empty()) {
             gtk_widget_show_all(next);
-            gtk_widget_get_preferred_height(next, nullptr, &barHeight);
+            gtk_widget_get_preferred_height(next, nullptr, &menuBarHeight);
         }
         g_object_unref(next);
         gtk_window_add_accel_group(window, accelerators);
         bar = next;
         barAccelerators = accelerators;
         onClick = clicked;
-        keepPageHeight(window, barHeight);
+        keepSizeLimits();
+        keepPageHeight(window, menuBarHeight);
         done(std::nullopt);
     });
 }

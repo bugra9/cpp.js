@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
-    appDisplayName, appHeader, appId, appUpdater, appUrlSchemes, appWindow,
+    appBackgroundColor, appDisplayName, appHeader, appId, appUpdater, appUrlSchemes, appWindow,
 } from '../src/utils/appOptions.js';
 
 const config = (app = {}, version = '1.2.3') => ({ general: { name: 'demo-app' }, app, package: { version } });
@@ -46,12 +46,14 @@ describe("an app's name", () => {
 
 describe("an app's window", () => {
     test('opens a 1024 × 768 page that resizes, without app.window', () => {
-        expect(appWindow(config())).toEqual({ width: 1024, height: 768, minWidth: 0, minHeight: 0, resizable: true });
+        expect(appWindow(config())).toEqual({
+            width: 1024, height: 768, minWidth: 0, minHeight: 0, maxWidth: 0, maxHeight: 0, resizable: true, fullscreen: false, backgroundColor: null,
+        });
     });
 
-    test('takes the page size, the minimum size and whether it resizes from app.window', () => {
-        expect(appWindow(config({ window: { width: 800, height: 600, minWidth: 400, minHeight: 300 } })))
-            .toEqual({ width: 800, height: 600, minWidth: 400, minHeight: 300, resizable: true });
+    test('takes the page size, its limits, whether it resizes or opens full screen, and its background from app.window', () => {
+        const window = { width: 800, height: 600, minWidth: 400, minHeight: 300, maxWidth: 1200, maxHeight: 900, fullscreen: true, backgroundColor: '#1E1E1E' };
+        expect(appWindow(config({ window }))).toEqual({ ...window, resizable: true });
         expect(appWindow(config({ window: { resizable: false } }))).toMatchObject({ resizable: false });
     });
 
@@ -70,6 +72,32 @@ describe("an app's window", () => {
         expect(() => appWindow(config({ window: { width: 800, minWidth: 900 } }))).toThrow('raise app.window.width');
         expect(() => appWindow(config({ window: { minHeight: 800 } }))).toThrow('app.window.minHeight 800');
         expect(() => appWindow(config({ window: { resizable: false, minHeight: 300 } }))).toThrow('resizable');
+    });
+
+    test('refuses a maximum below the size it opens with, or on a window that does not resize', () => {
+        expect(() => appWindow(config({ window: { width: 800, maxWidth: 700 } }))).toThrow('lower app.window.width');
+        expect(() => appWindow(config({ window: { maxHeight: 700 } }))).toThrow('app.window.maxHeight 700 is below the height the window opens with, 768');
+        expect(() => appWindow(config({ window: { resizable: false, maxWidth: 2000 } }))).toThrow('maxWidth and maxHeight limit a window that resizes');
+        expect(() => appWindow(config({ window: { maxWidth: 16385 } }))).toThrow('app.window.maxWidth');
+    });
+
+    test('takes true or false alone for whether it opens full screen', () => {
+        expect(() => appWindow(config({ window: { fullscreen: 'yes' } }))).toThrow('app.window.fullscreen "yes" is no boolean');
+    });
+});
+
+describe("an app's background color", () => {
+    test("is app.window.backgroundColor, which a phone shows as well, else the system's", () => {
+        expect(appBackgroundColor(config({ window: { backgroundColor: '#12abEF' } }))).toBe('#12abEF');
+        expect(appBackgroundColor(config())).toBe(null);
+        // A phone's build takes the color without the desktop's options, whatever they are.
+        expect(appBackgroundColor(config({ window: 800 }))).toBe(null);
+    });
+
+    test('takes #rrggbb alone', () => {
+        for (const backgroundColor of ['red', '#fff', '#12345g', '#1e1e1e80', 'rgb(0, 0, 0)', 0x1e1e1e]) {
+            expect(() => appBackgroundColor(config({ window: { backgroundColor } }))).toThrow('no color of the form #rrggbb');
+        }
     });
 });
 
@@ -169,6 +197,22 @@ describe("the header a desktop app's host builds with", () => {
             '#define CROSSBIND_APP_WINDOW_RESIZABLE 1',
             '',
         ].join('\n'));
+    });
+
+    test('defines the most the window grows to, any size on the side without a maximum, and whether it opens full screen', () => {
+        const header = appHeader(config({ window: { maxWidth: 1600, fullscreen: true } }), 'win32');
+        expect(header).toContain('#define CROSSBIND_APP_WINDOW_MAX_WIDTH 1600\n#define CROSSBIND_APP_WINDOW_MAX_HEIGHT 16384\n');
+        expect(header).toContain('#define CROSSBIND_APP_WINDOW_FULLSCREEN 1\n');
+        expect(appHeader(config(), 'linux')).not.toMatch(/MAX_WIDTH|FULLSCREEN/);
+    });
+
+    test("defines the background color on the desktop and on iOS, while an Android app's comes with its project", () => {
+        const app = { window: { backgroundColor: '#1E1E1E' } };
+        expect(appHeader(config(app), 'darwin')).toContain('#define CROSSBIND_APP_OPEN_PATH {}\n#define CROSSBIND_APP_BACKGROUND_COLOR 0x1e1e1e\n');
+        expect(appHeader(config(app), 'ios')).toContain('#define CROSSBIND_APP_BACKGROUND_COLOR 0x1e1e1e\n');
+        expect(appHeader(config(app), 'android')).not.toContain('BACKGROUND_COLOR');
+        expect(appHeader(config(), 'linux')).not.toContain('BACKGROUND_COLOR');
+        expect(() => appHeader(config({ window: { backgroundColor: 'black' } }), 'ios')).toThrow('app.window.backgroundColor "black"');
     });
 
     test("adds the version a Windows executable carries: package.json's, else 1.0.0", () => {

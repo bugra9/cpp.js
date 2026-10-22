@@ -176,6 +176,8 @@ initNative().then(async (m) => {
         if (isDesktop && (innerWidth !== 800 || innerHeight !== 600)) {
             throw new Error(`the page is ${innerWidth} × ${innerHeight}, not the 800 × 600 app.window gives`);
         }
+        // A desktop page may show an element full screen.
+        if (isDesktop && !(document.fullscreenEnabled ?? document.webkitFullscreenEnabled)) throw new Error('the page cannot show an element full screen');
         // The app's own functions answer over the page's channel on every platform, and the host checks what it opens.
         const folders = await host.paths();
         if (![folders.data, folders.cache, folders.logs].every((folder) => /^(\/|[A-Za-z]:\\)/.test(folder))) {

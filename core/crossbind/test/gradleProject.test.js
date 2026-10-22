@@ -40,7 +40,7 @@ describe("an Android app's Gradle project", () => {
         expect(gradle).toContain('versionCode 1002003');
         expect(gradle).toContain("versionName '1.2.3-beta.1'");
         expect(gradle).toContain("abiFilters 'arm64-v8a', 'x86_64'");
-        expect(gradle).toContain("manifestPlaceholders = [appName: 'Demo\\'s App', appIcon: '@android:drawable/sym_def_app_icon', launchMode: 'standard']");
+        expect(gradle).toContain("manifestPlaceholders = [appName: 'Demo\\'s App', appIcon: '@android:drawable/sym_def_app_icon', launchMode: 'standard', appTheme: '@android:style/Theme.DeviceDefault.DayNight']");
         expect(fs.existsSync(path.join(main, 'res', 'mipmap-anydpi'))).toBe(false);
         expect(gradle).toMatch(/implementation\('com\.facebook\.hermes:hermes-android:\d+\.\d+\.\d+'\)/);
         // Android's default pattern would leave out the page's _app and .well-known directories.
@@ -80,6 +80,30 @@ describe("an Android app's Gradle project", () => {
             .toContain('<foreground android:drawable="@mipmap/ic_launcher_foreground" />');
         expect(fs.readFileSync(path.join(to, 'app', 'build.gradle'), 'utf8')).toContain("appIcon: '@mipmap/ic_launcher'");
         expect(fs.readFileSync(path.join(to, 'app', 'src', 'main', 'AndroidManifest.xml'), 'utf8')).toContain('android:icon="${appIcon}"');
+        fs.rmSync(root, { recursive: true, force: true });
+    });
+
+    test('shows app.window.backgroundColor in its theme until the page paints, and none without it', () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-gradle-'));
+        const projectOf = (background) => {
+            const to = path.join(root, `demo-${background ?? 'none'}`);
+            writeGradleProject(to, { parts: [part(root, 'x86_64')], id: 'com.example.demo', label: 'Demo', version: { name: '1.0.0', code: 1 }, background });
+            const main = path.join(to, 'app', 'src', 'main');
+            return {
+                manifest: fs.readFileSync(path.join(main, 'AndroidManifest.xml'), 'utf8'),
+                gradle: fs.readFileSync(path.join(to, 'app', 'build.gradle'), 'utf8'),
+                values: fs.readFileSync(path.join(main, 'res', 'values', 'background.xml'), 'utf8'),
+            };
+        };
+        const colored = projectOf('#1e1e1e');
+        expect(colored.manifest).toContain('android:theme="${appTheme}"');
+        expect(colored.gradle).toContain("appTheme: '@style/CrossbindBackground'");
+        expect(colored.values).toContain('<color name="crossbind_background">#1e1e1e</color>');
+        expect(colored.values).toContain('<style name="CrossbindBackground" parent="@android:style/Theme.DeviceDefault.DayNight">');
+        expect(colored.values).toContain('<item name="android:windowBackground">@color/crossbind_background</item>');
+        const plain = projectOf(null);
+        expect(plain.gradle).toContain("appTheme: '@android:style/Theme.DeviceDefault.DayNight'");
+        expect(plain.values).toContain('<color name="crossbind_background">#00000000</color>');
         fs.rmSync(root, { recursive: true, force: true });
     });
 
@@ -127,5 +151,12 @@ describe("an Android app's Gradle project", () => {
         state.config.general.name = '3d-viewer';
         expect(() => publishApp(android, { to })).toThrow('"dev.crossbind.3d_viewer" (app.id, else made');
         state.config.general.name = 'demo-app';
+    });
+
+    test('takes app.window.backgroundColor as #rrggbb alone, before it writes the project', () => {
+        const android = { platform: 'android', arch: 'x86_64', buildType: 'release' };
+        state.config.app = { window: { backgroundColor: 'red' } };
+        expect(() => publishApp(android, { to: path.join(os.tmpdir(), 'crossbind-android-color') })).toThrow('app.window.backgroundColor "red" is no color');
+        state.config.app = {};
     });
 });

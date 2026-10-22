@@ -4,6 +4,7 @@
 #include "platform.h"
 
 #include <gtk/gtk.h>
+#include <webkit2/webkit2.h>
 
 #include <cerrno>
 #include <cstdlib>
@@ -214,6 +215,20 @@ void setMainWindow(void *window) {
     g_object_unref(webView);
     gtk_widget_show(GTK_WIDGET(windowBox));
     gtk_widget_grab_focus(webView);
+    g_signal_connect(mainWindow, "window-state-event", G_CALLBACK(+[](GtkWidget *, GdkEventWindowState *event, gpointer) -> gboolean {
+                         if (event->changed_mask & GDK_WINDOW_STATE_FULLSCREEN) keepSizeLimits();
+                         return FALSE;
+                     }),
+                     nullptr);
+}
+
+void setBackgroundColor(void *, void *view, std::uint32_t color) {
+    const GdkRGBA rgba{((color >> 16) & 0xff) / 255.0, ((color >> 8) & 0xff) / 255.0, (color & 0xff) / 255.0, 1};
+    webkit_web_view_set_background_color(WEBKIT_WEB_VIEW(view), &rgba);
+}
+
+void fillScreen() {
+    if (mainWindow) gtk_window_fullscreen(mainWindow);
 }
 
 void showWindow(const std::string &token) {

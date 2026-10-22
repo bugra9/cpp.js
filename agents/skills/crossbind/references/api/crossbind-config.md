@@ -231,9 +231,12 @@ export default {
       // The name the app shows: its window's title, its macOS menus, its Windows file description and the label
       // under its icon on iOS and Android. Text without a quotation mark, a backslash or a control character.
       // Default: general.name.
-    window: { width: 1024, height: 768, minWidth: 0, minHeight: 0, resizable: true },
-      // The desktop window, these being the defaults: the size of its page in pixels (up to 16384), the least it
-      // shrinks to (0: no limit) and whether it resizes. A minimum needs a window that resizes.
+    window: { width: 1024, height: 768, minWidth: 0, minHeight: 0, maxWidth: 0, maxHeight: 0, resizable: true, fullscreen: false, backgroundColor: '#1e1e1e' },
+      // The desktop window, these being the defaults but for backgroundColor: the size of its page in pixels (up to
+      // 16384), the least it shrinks to and the most it grows to (0: no limit), whether it resizes and whether it
+      // opens full screen. A limit needs a window that resizes. backgroundColor, as #rrggbb, is what the app shows
+      // until its page paints and behind a page without a background of its own, on iOS and Android as well; without
+      // it, the system's.
     singleInstance: true,
       // Keeps a desktop app to one instance for each user: a later launch hands it its arguments, and it brings its
       // window to the front and tells its page (see app.md). Default: false, or on Windows and Linux true with

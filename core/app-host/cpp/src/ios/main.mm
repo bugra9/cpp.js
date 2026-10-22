@@ -4,6 +4,10 @@
 #import <WebKit/WebKit.h>
 
 #include "app.h"
+#include "crossbind_app.h"
+
+#include <cmath>
+#include <cstdint>
 
 namespace {
 
@@ -12,7 +16,38 @@ namespace app = crossbind::app;
 app::Core *core;
 const char *devUrl;
 
+#ifdef CROSSBIND_APP_BACKGROUND_COLOR
+// The relative luminance of a color that black and white contrast with as much.
+constexpr double EVEN_CONTRAST = 0.179;
+
+UIColor *colorOf(std::uint32_t color) {
+    return [UIColor colorWithRed:((color >> 16) & 0xff) / 255.0 green:((color >> 8) & 0xff) / 255.0 blue:(color & 0xff) / 255.0 alpha:1];
+}
+
+bool isDark(std::uint32_t color) {
+    const auto linear = [](std::uint32_t channel) {
+        const double value = (channel & 0xff) / 255.0;
+        return value <= 0.04045 ? value / 12.92 : std::pow((value + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * linear(color >> 16) + 0.7152 * linear(color >> 8) + 0.0722 * linear(color) < EVEN_CONTRAST;
+}
+#endif
+
 }  // namespace
+
+// The status bar lies over the page: on app.window.backgroundColor, light on a dark color and dark on a light one.
+@interface CBPageController : UIViewController
+@end
+
+@implementation CBPageController
+
+#ifdef CROSSBIND_APP_BACKGROUND_COLOR
+- (UIStatusBarStyle)preferredStatusBarStyle {
+    return isDark(CROSSBIND_APP_BACKGROUND_COLOR) ? UIStatusBarStyleLightContent : UIStatusBarStyleDarkContent;
+}
+#endif
+
+@end
 
 @interface CBSceneDelegate : UIResponder <UIWindowSceneDelegate>
 @property(nonatomic, strong) UIWindow *window;
@@ -29,12 +64,18 @@ const char *devUrl;
         core->serve(std::move(request), std::move(respond));
     });
     WKWebView *webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:configuration];
+#ifdef CROSSBIND_APP_BACKGROUND_COLOR
+    // app.window.backgroundColor, which the launch screen shows as well, until the page paints and behind it.
+    webView.opaque = NO;
+    webView.backgroundColor = colorOf(CROSSBIND_APP_BACKGROUND_COLOR);
+    webView.scrollView.backgroundColor = webView.backgroundColor;
+#endif
 #ifdef CROSSBIND_APP_DEV
     if (@available(iOS 16.4, *)) webView.inspectable = YES;
 #endif
     const std::string url = app::attach(*core, (__bridge void *)webView, devUrl);
 
-    UIViewController *controller = [UIViewController new];
+    UIViewController *controller = [CBPageController new];
     controller.view = webView;
     self.window = [[UIWindow alloc] initWithWindowScene:(UIWindowScene *)scene];
     self.window.rootViewController = controller;
