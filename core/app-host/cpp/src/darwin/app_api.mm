@@ -175,8 +175,25 @@ namespace {
 __weak NSWindow *mainWindow;
 }  // namespace
 
-// A panel asks for its app, not a window of it; showWindow needs the window.
-void setMainWindow(void *window) { mainWindow = (__bridge NSWindow *)window; }
+// A panel asks for its app, not a window of it; showWindow needs the window. The window fills the screen whatever
+// app.window's limits, which it holds to again after: AppKit keeps a window that does not resize, or one with a
+// maximum, to its size there.
+void setMainWindow(void *window) {
+    mainWindow = (__bridge NSWindow *)window;
+    const NSSize most = mainWindow.contentMaxSize;
+    const NSWindowStyleMask style = mainWindow.styleMask;
+    NSNotificationCenter *center = NSNotificationCenter.defaultCenter;
+    [center addObserverForName:NSWindowWillEnterFullScreenNotification object:mainWindow queue:nil usingBlock:^(NSNotification *note) {
+        NSWindow *filling = note.object;
+        filling.styleMask |= NSWindowStyleMaskResizable;
+        filling.contentMaxSize = NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX);
+    }];
+    [center addObserverForName:NSWindowDidExitFullScreenNotification object:mainWindow queue:nil usingBlock:^(NSNotification *note) {
+        NSWindow *windowed = note.object;
+        windowed.styleMask = style;
+        windowed.contentMaxSize = most;
+    }];
+}
 
 void showWindow(const std::string &) {
     onMain(^{

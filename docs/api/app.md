@@ -716,11 +716,11 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
   that has none, cannot be measured on the Windows machines crossbind is tested on, which have the runtime; the
   bootstrapper it downloads over HTTPS runs with no check of its own.
 - On the desktop, one window.
-- `app.window`'s place, limits and full screen have been measured on Linux, under Xvfb with openbox, for a window that
-  resizes and one that does not: an element's full screen, which Escape leaves, and `fullscreen: true`. A Wayland
-  compositor places a window itself, and with WebKitGTK before 2.44 a window that opened full screen leaves it when an
-  element does. The background has been measured on Linux, iOS and Android. On macOS and Windows the conformance runs
-  check that the page may show an element full screen; the rest is built there, not measured yet.
+- `app.window`'s place, limits and full screen have been measured on macOS, and on Linux under Xvfb with openbox, for a
+  window that resizes and one that does not: an element's full screen, which Escape leaves, and `fullscreen: true`. A
+  Wayland compositor places a window itself, and with WebKitGTK before 2.44 a window that opened full screen leaves it
+  when an element does. The background has been measured on macOS, Linux, iOS and Android. On Windows the conformance
+  runs check that the page may show an element full screen; the rest is built there, not measured yet.
 - Devices have been measured on Linux, with WebKitGTK's mock devices; on an Android emulator, with its questions
   answered both ways, with a page that asks for a device the app does not list, and with a frame of another origin; in
   the iOS Simulator, which asks for the location with the reason and gives the camera and the microphone at once; and
