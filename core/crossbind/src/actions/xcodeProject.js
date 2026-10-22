@@ -39,7 +39,7 @@ const ORIENTATIONS = ['UIInterfaceOrientationPortrait', 'UIInterfaceOrientationL
 // The color set of app.window.backgroundColor, which the launch screen shows.
 const LAUNCH_COLOR = 'LaunchBackground';
 
-const infoPlist = (name, urlSchemes, hasBackground) => xmlPlist({
+const infoPlist = (name, urlSchemes, hasBackground, usage) => xmlPlist({
     CFBundleDevelopmentRegion: 'en',
     CFBundleDisplayName: name,
     CFBundleExecutable: '$(EXECUTABLE_NAME)',
@@ -55,6 +55,8 @@ const infoPlist = (name, urlSchemes, hasBackground) => xmlPlist({
     UILaunchScreen: hasBackground ? { UIColorName: LAUNCH_COLOR } : {},
     UISupportedInterfaceOrientations: ORIENTATIONS,
     'UISupportedInterfaceOrientations~ipad': [...ORIENTATIONS, 'UIInterfaceOrientationPortraitUpsideDown'],
+    // The reasons of app.permissions, without which iOS lets the app use none of those devices.
+    ...usage,
 });
 
 function objects(name, targetSettings, hasAssets) {
@@ -144,7 +146,7 @@ function writeAssets(catalog, icon, background) {
 // An iOS app as an Xcode project, written anew from the parts its SDK targets built: each brings its archives and
 // their link line, and its slice of Hermes; the first also the app's files. Xcode signs the app and runs it, in the
 // Simulator or on a device, and makes every size of its icon from the one PNG given.
-export default function writeXcodeProject(to, { parts, identity, label, version, icon = null, urlSchemes = [], background = null }) {
+export default function writeXcodeProject(to, { parts, identity, label, version, icon = null, urlSchemes = [], background = null, usage = {} }) {
     const { name } = state.config.general;
     if (parts.length === 0) throw new Error(`crossbind: no part of the iOS app ${name} is built, so there is no Xcode project to write.`);
     fs.rmSync(to, { recursive: true, force: true });
@@ -163,7 +165,7 @@ export default function writeXcodeProject(to, { parts, identity, label, version,
     if (result.status !== 0) throw new Error(`crossbind: cannot make Hermes' xcframework for ${to}: ${result.stderr || result.error?.message}`);
 
     fs.writeFileSync(`${to}/main.m`, MAIN);
-    fs.writeFileSync(`${to}/Info.plist`, infoPlist(label, urlSchemes, Boolean(background)));
+    fs.writeFileSync(`${to}/Info.plist`, infoPlist(label, urlSchemes, Boolean(background), usage));
     writeAssets(`${to}/Assets.xcassets`, icon, background);
     const targetSettings = {
         ...(icon ? { ASSETCATALOG_COMPILER_APPICON_NAME: 'AppIcon' } : {}),

@@ -3,6 +3,7 @@
 
 #include <gtk/gtk.h>
 #include <unistd.h>
+#include <webkit2/webkit2.h>
 
 #include <climits>
 
@@ -27,6 +28,35 @@ void onQuit(std::function<void()>) {}
 
 // WebKitGTK shows the page's dialogs, file inputs and downloads itself.
 void showPageDialogs(void *) {}
+
+// The page gets the devices app.permissions lists, and no other, without a question; WebKitGTK decides the rest. A page
+// has neither camera nor microphone without WebKitGTK's media streams, which are off by default.
+void answerPermissions(void *webView) {
+    if (CROSSBIND_APP_PERMISSION_CAMERA || CROSSBIND_APP_PERMISSION_MICROPHONE) {
+        webkit_settings_set_enable_media_stream(webkit_web_view_get_settings(WEBKIT_WEB_VIEW(webView)), TRUE);
+    }
+    g_signal_connect(webView, "permission-request", G_CALLBACK(+[](WebKitWebView *, WebKitPermissionRequest *request, gpointer) -> gboolean {
+                         bool isAllowed = false;
+                         if (WEBKIT_IS_USER_MEDIA_PERMISSION_REQUEST(request)) {
+                             auto *media = WEBKIT_USER_MEDIA_PERMISSION_REQUEST(request);
+                             const bool isVideo = webkit_user_media_permission_is_for_video_device(media);
+                             const bool isAudio = webkit_user_media_permission_is_for_audio_device(media);
+                             isAllowed = (isVideo || isAudio) && !webkit_user_media_permission_is_for_display_device(media) &&
+                                         (!isVideo || CROSSBIND_APP_PERMISSION_CAMERA) && (!isAudio || CROSSBIND_APP_PERMISSION_MICROPHONE);
+                         } else if (WEBKIT_IS_GEOLOCATION_PERMISSION_REQUEST(request)) {
+                             isAllowed = CROSSBIND_APP_PERMISSION_LOCATION;
+                         } else {
+                             return FALSE;
+                         }
+                         if (isAllowed) {
+                             webkit_permission_request_allow(request);
+                         } else {
+                             webkit_permission_request_deny(request);
+                         }
+                         return TRUE;
+                     }),
+                     nullptr);
+}
 
 // Without a display GTK cannot show it either, and the output alone tells it.
 void showError(const std::string &message) {

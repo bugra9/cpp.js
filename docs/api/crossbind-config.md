@@ -242,6 +242,9 @@ export default {
     urlSchemes: ['myapp'],
       // The schemes whose links open the app, as myapp://… does: lowercase, and none the web or the system owns. The
       // page gets them from app.launchUrls() and as the event open-url (see app.md). Default: [], none.
+    permissions: { camera: 'To scan barcodes', microphone: 'To record voice notes', location: 'To find the nearest store' },
+      // The devices the page may use through getUserMedia() and navigator.geolocation, each with the reason for it,
+      // which iOS shows its user when it asks (see app.md). Default: {}, none.
     openPath: ['logs', 'picked'],
       // Where the page's shell.openPath opens files (see app.md): 'data', 'cache' and 'logs', the app's folders,
       // and 'picked', what a dialog picked during this run. Opening a program runs it. Default: [], nowhere.

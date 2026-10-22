@@ -113,6 +113,18 @@ describe('an iOS app\'s Xcode project', () => {
         fs.rmSync(root, { recursive: true, force: true });
     });
 
+    test('gives iOS the reasons of app.permissions, without which it lets the app use none of those devices', () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-xcode-'));
+        const to = path.join(root, 'demo-ios');
+        writeXcodeProject(to, {
+            parts: [part(root, 'iphoneos')], identity: { id: 'com.example.demo', team: '' }, label: 'Demo', version: '1',
+            usage: { NSCameraUsageDescription: 'To scan & read barcodes' },
+        });
+
+        expect(fs.readFileSync(path.join(to, 'Info.plist'), 'utf8')).toContain('<key>NSCameraUsageDescription</key>\n    <string>To scan &amp; read barcodes</string>');
+        fs.rmSync(root, { recursive: true, force: true });
+    });
+
     test('opens the links of app.urlSchemes', () => {
         const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-xcode-'));
         const to = path.join(root, 'demo-ios');

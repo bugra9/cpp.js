@@ -178,6 +178,9 @@ initNative().then(async (m) => {
         }
         // A desktop page may show an element full screen.
         if (isDesktop && !(document.fullscreenEnabled ?? document.webkitFullscreenEnabled)) throw new Error('the page cannot show an element full screen');
+        // The page has getUserMedia() for the camera and the microphone of app.permissions, which WebKit keeps from an
+        // app without their reasons, and WebKitGTK without its media streams.
+        if (!navigator.mediaDevices?.getUserMedia) throw new Error('the page has no camera or microphone, which app.permissions lists');
         // The app's own functions answer over the page's channel on every platform, and the host checks what it opens.
         const folders = await host.paths();
         if (![folders.data, folders.cache, folders.logs].every((folder) => /^(\/|[A-Za-z]:\\)/.test(folder))) {

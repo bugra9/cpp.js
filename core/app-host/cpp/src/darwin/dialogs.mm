@@ -7,6 +7,7 @@
 #import <WebKit/WebKit.h>
 #import <objc/runtime.h>
 
+#include "crossbind_app.h"
 #include "platform.h"
 
 namespace {
@@ -145,7 +146,47 @@ NSString *appTitle() {
 
 #endif
 
+// The camera and microphone of app.permissions, which the system asks the app's user for; WebKit would ask as well.
+- (void)webView:(WKWebView *)webView
+    requestMediaCapturePermissionForOrigin:(WKSecurityOrigin *)origin
+                          initiatedByFrame:(WKFrameInfo *)frame
+                                      type:(WKMediaCaptureType)type
+                           decisionHandler:(void (^)(WKPermissionDecision))decide API_AVAILABLE(macos(12.0), ios(15.0)) {
+    bool isAllowed = false;
+    switch (type) {
+    case WKMediaCaptureTypeCamera:
+        isAllowed = CROSSBIND_APP_PERMISSION_CAMERA;
+        break;
+    case WKMediaCaptureTypeMicrophone:
+        isAllowed = CROSSBIND_APP_PERMISSION_MICROPHONE;
+        break;
+    case WKMediaCaptureTypeCameraAndMicrophone:
+        isAllowed = CROSSBIND_APP_PERMISSION_CAMERA && CROSSBIND_APP_PERMISSION_MICROPHONE;
+        break;
+    }
+    decide(isAllowed ? WKPermissionDecisionGrant : WKPermissionDecisionDeny);
+}
+
+// The location of app.permissions, which the system asks the app's user for.
+- (void)webView:(WKWebView *)webView
+    requestGeolocationPermissionForOrigin:(WKSecurityOrigin *)origin
+                         initiatedByFrame:(WKFrameInfo *)frame
+                          decisionHandler:(void (^)(WKPermissionDecision))decide API_AVAILABLE(macos(27.0), ios(27.0)) {
+    decide(CROSSBIND_APP_PERMISSION_LOCATION ? WKPermissionDecisionGrant : WKPermissionDecisionDeny);
+}
+
+#if CROSSBIND_APP_PERMISSION_LOCATION
+// Before macOS and iOS 27 WebKit asks a private selector of the UI delegate instead, which only an app that lists the
+// location answers. Another carries no reason for it, without which CoreLocation asks the app's user nothing.
+- (void)_webView:(WKWebView *)webView requestGeolocationPermissionForFrame:(WKFrameInfo *)frame decisionHandler:(void (^)(BOOL))decide {
+    decide(YES);
+}
+#endif
+
 @end
+
+// CBPageDialogs, the page's UI delegate, answers them.
+void answerPermissions(void *) {}
 
 void showPageDialogs(void *webView) {
     WKWebView *view = (__bridge WKWebView *)webView;

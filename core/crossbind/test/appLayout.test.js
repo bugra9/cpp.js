@@ -292,6 +292,29 @@ describe.skipIf(process.platform === 'win32')("a macOS app's signature", () => {
         expect(spawnSync.mock.calls.some(([command]) => command === 'ditto')).toBe(false);
     });
 
+    test('claims the devices of app.permissions, which the hardened runtime keeps the app from otherwise', () => {
+        developerId({});
+        state.config.app = { permissions: { camera: 'To scan barcodes', location: 'To find the nearest store' } };
+        let entitlements = '';
+        run.mockImplementation((_, args) => {
+            const at = args.indexOf('--entitlements');
+            if (at > 0) entitlements = fs.readFileSync(args[at + 1], 'utf8');
+        });
+        try {
+            const app = publish();
+
+            const sign = ['--sign', HASH, '--options', 'runtime', '--timestamp'];
+            expect(run).toHaveBeenCalledWith(null, ['codesign', '--force', ...sign, '--entitlements', expect.stringMatching(/demo\.app\.entitlements$/), app], null, arm64);
+            expect(run).toHaveBeenCalledWith(null, ['codesign', '--force', ...sign, `${app}/Contents/Frameworks/hermesvm.framework`], null, arm64);
+            expect(entitlements).toContain('<key>com.apple.security.device.camera</key>\n    <true/>');
+            expect(entitlements).toContain('<key>com.apple.security.personal-information.location</key>\n    <true/>');
+            expect(entitlements).not.toContain('audio-input');
+        } finally {
+            state.config.app = {};
+            run.mockImplementation(() => undefined);
+        }
+    });
+
     test("is the Developer ID's, in the hardened runtime, then Apple's ticket, before the unsigned disk image is made of it", () => {
         const key = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'crossbind-key-')), 'AuthKey.p8');
         fs.writeFileSync(key, 'key');

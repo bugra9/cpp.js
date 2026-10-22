@@ -53,6 +53,9 @@ void onQuit(std::function<void()> quit);
 // The page's alert(), confirm() and prompt(), and on macOS its file inputs, as a browser shows them. WebKitGTK and
 // WebView2 show them themselves.
 void showPageDialogs(void *webView);
+// The page gets the camera, microphone and location app.permissions lists, once the system's user gives them where the
+// system asks, and is denied them otherwise; the webview asks nothing of its own.
+void answerPermissions(void *webView);
 // Tells the user why the app cannot go on: in a message box on the desktop, in the system's log on iOS and Android.
 void showError(const std::string &message);
 // Where the app's files are.

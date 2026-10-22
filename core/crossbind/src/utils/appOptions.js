@@ -83,6 +83,37 @@ export function appBackgroundColor(config) {
     return color;
 }
 
+const PERMISSIONS = ['camera', 'microphone', 'location'];
+
+// The devices the page may use, each with the reason for it, which macOS and iOS read from the Info.plist:
+// app.permissions.
+export function appPermissions(config) {
+    const permissions = config.app.permissions ?? {};
+    const names = PERMISSIONS.join(', ');
+    if (typeof permissions !== 'object' || Array.isArray(permissions)) {
+        throw new Error(`crossbind: app.permissions ${JSON.stringify(permissions)} is no object of ${names}, each with the reason the app uses it, as { camera: 'To scan barcodes' } is.`);
+    }
+    const unknown = Object.keys(permissions).filter((name) => !PERMISSIONS.includes(name));
+    if (unknown.length > 0) throw new Error(`crossbind: app.permissions takes ${names}; ${unknown.join(', ')} is none of them.`);
+    Object.entries(permissions).forEach(([name, reason]) => {
+        if (typeof reason !== 'string' || !reason.trim() || /\p{Cc}/u.test(reason)) {
+            throw new Error(`crossbind: app.permissions.${name} ${JSON.stringify(reason)} is no reason, which is text without control characters that the app's user reads when it asks for the ${name}, as 'To scan barcodes' is.`);
+        }
+    });
+    return permissions;
+}
+
+// The reasons of app.permissions under the Info.plist keys macOS or iOS reads them from; macOS reads location's older
+// key as well.
+export function usageDescriptions(config, platform) {
+    const keys = {
+        camera: ['NSCameraUsageDescription'],
+        microphone: ['NSMicrophoneUsageDescription'],
+        location: ['NSLocationWhenInUseUsageDescription', ...(platform === 'darwin' ? ['NSLocationUsageDescription'] : [])],
+    };
+    return Object.fromEntries(Object.entries(appPermissions(config)).flatMap(([name, reason]) => keys[name].map((key) => [key, reason])));
+}
+
 // The version a Windows app's executable carries: package.json's, whose numbers are its file version.
 function windowsVersion(config) {
     const version = config.package?.version ?? '1.0.0';
@@ -205,19 +236,23 @@ function windowDefines(window) {
 }
 
 // The header an app's host compiles where its page opens files from, an iOS or desktop host the color it shows until
-// its page paints, a desktop host its title, window, whether it keeps one instance and its updates, and a Windows host
-// its version resource.
+// its page paints and the devices the page may use, a desktop host its title, window, whether it keeps one instance and
+// its updates, and a Windows host its version resource.
 export function appHeader(config, platform) {
     const comment = '// crossbind writes this file from crossbind.config.js and package.json.';
     const openPath = `#define CROSSBIND_APP_OPEN_PATH {${appOpenPath(config).map((place) => `"${place}"`).join(', ')}}`;
     const color = appBackgroundColor(config);
-    // An Android app's activity takes the color from its Gradle project.
-    const background = color && platform !== 'android' ? [`#define CROSSBIND_APP_BACKGROUND_COLOR 0x${color.slice(1).toLowerCase()}`] : [];
-    if (!['darwin', 'linux', 'win32'].includes(platform)) return [comment, openPath, ...background, ''].join('\n');
+    const permissions = appPermissions(config);
+    // An Android app's activity takes the color and the permissions from its Gradle project.
+    const page = platform === 'android' ? [] : [
+        ...(color ? [`#define CROSSBIND_APP_BACKGROUND_COLOR 0x${color.slice(1).toLowerCase()}`] : []),
+        ...PERMISSIONS.map((name) => `#define CROSSBIND_APP_PERMISSION_${name.toUpperCase()} ${name in permissions ? 1 : 0}`),
+    ];
+    if (!['darwin', 'linux', 'win32'].includes(platform)) return [comment, openPath, ...page, ''].join('\n');
     const lines = [
         comment,
         openPath,
-        ...background,
+        ...page,
         `#define CROSSBIND_APP_ID "${appId(config)}"`,
         `#define CROSSBIND_APP_NAME "${appDisplayName(config)}"`,
         ...windowDefines(appWindow(config)),

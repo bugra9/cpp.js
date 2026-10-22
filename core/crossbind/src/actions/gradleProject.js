@@ -34,6 +34,18 @@ const backgroundValues = (color) => `<?xml version="1.0" encoding="utf-8"?>
 </resources>
 `;
 
+// The Android permissions behind each of app.permissions, after the one every app asks for; the activity asks its user
+// for them when the page first uses the device.
+const INTERNET = '    <uses-permission android:name="android.permission.INTERNET" />';
+const ANDROID_PERMISSIONS = {
+    camera: ['CAMERA'],
+    microphone: ['RECORD_AUDIO', 'MODIFY_AUDIO_SETTINGS'],
+    location: ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION'],
+};
+const usesPermissions = (permissions) => permissions
+    .flatMap((name) => ANDROID_PERMISSIONS[name])
+    .map((permission) => `    <uses-permission android:name="android.permission.${permission}" />`);
+
 // The links of app.urlSchemes the activity opens, from a browser as well, before the end of the activity's element.
 const ACTIVITY_END = '        </activity>';
 const urlFilter = (schemes) => [
@@ -127,20 +139,20 @@ dependencies {
 // An Android app as a Gradle project, written anew from the parts its ABI targets built: each brings its libraries,
 // the first also the app's files. Gradle adds Hermes and androidx.webkit from Maven, and makes the APK or the bundle.
 // The icons given are the files of the app's launcher icon under res/; without them it has the system's.
-export default function writeGradleProject(to, { parts, id, label, version, icons = null, urlSchemes = [], background = null }) {
+export default function writeGradleProject(to, { parts, id, label, version, icons = null, urlSchemes = [], background = null, permissions = [] }) {
     const { name } = state.config.general;
     if (parts.length === 0) throw new Error(`crossbind: no part of the Android app ${name} is built, so there is no Gradle project to write.`);
     fs.rmSync(to, { recursive: true, force: true });
     fs.cpSync(path.join(resolveAppHostRoot(), 'android'), to, { recursive: true });
     const main = path.join(to, 'app', 'src', 'main');
-    if (urlSchemes.length > 0) {
-        const manifest = path.join(main, 'AndroidManifest.xml');
-        const text = fs.readFileSync(manifest, 'utf8');
-        if (!text.includes(ACTIVITY_END)) {
-            throw new Error(`crossbind: ${manifest}, from the app host, has no activity to give the intent filter of app.urlSchemes: update @crossbind/core-app-host to match crossbind.`);
-        }
-        fs.writeFileSync(manifest, text.replace(ACTIVITY_END, `${urlFilter(urlSchemes)}\n${ACTIVITY_END}`));
+    const manifest = path.join(main, 'AndroidManifest.xml');
+    const text = fs.readFileSync(manifest, 'utf8');
+    if (!text.includes(ACTIVITY_END) || !text.includes(INTERNET)) {
+        throw new Error(`crossbind: ${manifest}, from the app host, has no activity or permissions to give app.urlSchemes and app.permissions: update @crossbind/core-app-host to match crossbind.`);
     }
+    fs.writeFileSync(manifest, text
+        .replace(INTERNET, [INTERNET, ...usesPermissions(permissions)].join('\n'))
+        .replace(ACTIVITY_END, urlSchemes.length > 0 ? `${urlFilter(urlSchemes)}\n${ACTIVITY_END}` : ACTIVITY_END));
     parts.forEach(({ arch, dir }) => fs.cpSync(path.join(dir, 'lib'), path.join(main, 'jniLibs', arch), { recursive: true }));
     fs.cpSync(path.join(parts[0].dir, 'app'), path.join(main, 'assets', 'app'), { recursive: true });
     if (icons) {
