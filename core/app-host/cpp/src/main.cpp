@@ -18,8 +18,11 @@ namespace app = crossbind::app;
 SchemeHandler schemeHandler;
 
 #ifdef __APPLE__
-// WKWebView takes its scheme handlers from the configuration it is made from.
-void configureWebView(void *configuration) { registerSchemeHandler(configuration, "crossbind", schemeHandler); }
+// WKWebView takes its scheme handlers, and how it runs a hidden page, from the configuration it is made from.
+void configureWebView(void *configuration) {
+    registerSchemeHandler(configuration, "crossbind", schemeHandler);
+    keepRunningWhenHidden(configuration);
+}
 #elif defined(_WIN32)
 // WebView2 takes its schemes from the environment the webview is made in; a dev server's page requests the scheme too.
 // webview asks again on every attempt to make the environment, which keeps what it needs of them.

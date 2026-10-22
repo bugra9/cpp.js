@@ -194,3 +194,13 @@ void registerSchemeHandler(void *target, const char *scheme, SchemeHandler handl
     CBSchemeHandler *schemeHandler = [[CBSchemeHandler alloc] initWithHandler:std::move(handler)];
     [config setURLSchemeHandler:schemeHandler forURLScheme:[NSString stringWithUTF8String:scheme]];
 }
+
+#if !TARGET_OS_IPHONE
+void keepRunningWhenHidden(void *target) {
+    // WebKit may suspend the page of a hidden window, as behind a locked screen, while a call of the page waits for the
+    // host's answer, which then reaches it no more.
+    if (@available(macOS 14.0, *)) {
+        ((__bridge WKWebViewConfiguration *)target).preferences.inactiveSchedulingPolicy = WKInactiveSchedulingPolicyNone;
+    }
+}
+#endif
