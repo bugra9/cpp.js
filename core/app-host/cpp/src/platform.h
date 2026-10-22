@@ -119,6 +119,8 @@ void setMenu(std::vector<MenuItem> menus, MenuClicked clicked, std::function<voi
 void installAppMenu();
 // Hears of the links of app.urlSchemes macOS opens the app with, the launch's own as well, which come as Apple Events.
 void listenForUrls();
+// The page of the webview made from this configuration keeps running while its window is hidden.
+void keepRunningWhenHidden(void *configuration);
 #endif
 
 #ifdef _WIN32
