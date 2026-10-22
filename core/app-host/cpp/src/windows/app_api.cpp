@@ -194,3 +194,11 @@ void quitApp() {
 }
 
 void setMainWindow(void *window) { mainWindow = static_cast<HWND>(window); }
+
+void showWindow(const std::string &) {
+    onMainThread([] {
+        if (!mainWindow) return;
+        if (IsIconic(mainWindow)) ShowWindow(mainWindow, SW_RESTORE);
+        SetForegroundWindow(mainWindow);
+    });
+}

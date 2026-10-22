@@ -184,6 +184,17 @@ describe("the header a desktop app's host builds with", () => {
         expect(appHeader(config({ updater }), 'ios')).not.toContain('UPDATER');
     });
 
+    test('keeps a desktop app to one instance with app.singleInstance, as a phone keeps every app itself', () => {
+        expect(appHeader(config({ singleInstance: true }), 'linux')).toContain('#define CROSSBIND_APP_SINGLE_INSTANCE 1\n');
+        expect(appHeader(config({ singleInstance: false }), 'win32')).not.toContain('SINGLE_INSTANCE');
+        expect(appHeader(config(), 'darwin')).not.toContain('SINGLE_INSTANCE');
+        expect(appHeader(config({ singleInstance: true }), 'ios')).not.toContain('SINGLE_INSTANCE');
+    });
+
+    test('refuses an app.singleInstance that is no boolean, naming the values it takes', () => {
+        expect(() => appHeader(config({ singleInstance: 'yes' }), 'darwin')).toThrow('app.singleInstance "yes" is no boolean');
+    });
+
     test('names the icon a Windows executable carries, which the build writes beside the header', () => {
         expect(appHeader(config({ icon: 'icon.png' }), 'win32')).toContain('#define CROSSBIND_APP_ICON 1\n');
         expect(appHeader(config(), 'win32')).not.toContain('CROSSBIND_APP_ICON');

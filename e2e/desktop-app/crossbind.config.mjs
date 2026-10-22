@@ -30,6 +30,8 @@ export default {
         icon: 'icon.png',
         // e2e/run.mjs serves the updates src/main.js checks a desktop app for.
         updater: UPDATER,
+        // e2e/run.mjs launches a desktop app again, which hands src/main.js the launch.
+        singleInstance: true,
     },
     paths: {
         config: import.meta.url,

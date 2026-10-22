@@ -287,7 +287,7 @@ std::string databasePath() { return crossbind::app::paths().data + "/notes.sqlit
 | `shell.openExternal(url)` | An http, https or mailto address in the default browser or mail app | ✓ | ✓ | |
 | `shell.openPath(path)` | A file in the app the system opens its kind with | ✓ | | |
 | `shell.revealInFolder(path)` | A file, selected, in the system's file manager, or on Linux without one its folder | ✓ | | |
-| `app.paths()` | `{ data, cache, logs }`, the app's own folders, made when first asked for | ✓ | ✓ | ✓ |
+| `app.paths()` | `{ data, cache, logs }`, the app's own folders, made if missing | ✓ | ✓ | ✓ |
 | `app.quit()` | Ends the app as closing its window does | ✓ | | |
 | `menu.set(menus)` | Sets the app's menus, whose clicks are the event `menu`; the page alone | ✓ | | |
 | `events.on(name, listener)` | Calls `listener` with each event of this name the app's C++ emits; returns what stops it | ✓ | ✓ | ✓ |
@@ -392,6 +392,45 @@ its size, as the window grows by the bar's height unless it fills the screen; `e
 standard items of that platform's apps, and `menu.set([])` takes the bar away. iOS and Android apps have no menu bar,
 and `menu.set` rejects there. The event `menu` is the menus' alone: the app's C++ sets no menus, and the events it
 emits, one of which the page may set them on, go by other names.
+
+## One instance
+
+`app.singleInstance` keeps a desktop app to one instance for each user:
+
+```js
+app: {
+    singleInstance: true,
+},
+```
+
+A later launch, as when its user opens the app again, hands its arguments and the folder it was launched in to the
+instance that runs, and leaves with exit status 0 before it opens a window or starts the module; static initializers of
+the app's code run in it all the same. The instance brings its window to the front, restored if it was minimized, as
+far as the system lets it, and its page hears of the launch as the event `second-instance`:
+
+```js
+import { events } from 'crossbind/app';
+
+events.on('second-instance', ({ args, cwd }) => {
+    if (args.length > 0) openFiles(args, cwd);
+});
+```
+
+`args` leaves out the program's own path, and a relative one resolves against `cwd`. They are whatever the launch was
+given, so the page takes them as it would any command line. The first launch's own arguments do not reach the page. A
+launch that arrives before the page listens still brings the window to the front, and its event reaches no page. The
+event `second-instance` is the host's alone: the app's C++ emits others.
+
+On macOS and Linux only a launch by the same user reaches the instance, and on Windows any launch in the same signed-in
+session. A launch that comes while the instance quits waits for it to end, ten seconds at most, and becomes the next
+instance. One the instance does not take in that time, as when it has stopped answering, leaves with exit status 1 and
+says why, in a message box as well when its user opened it; where the app cannot make its lock, it runs as one more
+instance and says so. On Linux, Wayland and
+some window managers bring the window forward only for a launch that carries an activation token or a startup id, as a
+desktop's launcher gives it; a terminal's launch carries none. On macOS, Finder, the Dock and `open` bring the app that
+runs to the front themselves, so only a launch that starts the program anew, as a terminal or `open -n` does, reaches
+it. A development session keeps one instance of its own, apart from the built app. iOS and Android keep every app to
+one instance themselves.
 
 ## What the app holds
 
@@ -593,6 +632,8 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
   that has none, cannot be measured on the Windows machines crossbind is tested on, which have the runtime; the
   bootstrapper it downloads over HTTPS runs with no check of its own.
 - On the desktop, one window.
+- One instance has been measured on macOS and Linux: the hand-over, and the window coming back to the front from
+  minimized. On Windows the conformance runs in CI check the hand-over alone.
 - The functions the page passes have been measured on macOS and Linux, and the events of C++ on macOS alone; on
   Windows, iOS and Android the conformance runs in CI check the functions.
 - On macOS the file dialogs, `shell.revealInFolder`, `app.paths` and `app.quit` have been measured, and so has

@@ -25,7 +25,7 @@ elseif(ANDROID)
 elseif(WIN32)
     enable_language(RC)
     set(PLATFORM_SOURCES src/windows/app.cpp src/windows/app_api.cpp src/windows/channels.cpp src/windows/com.cpp
-        src/windows/menu.cpp src/windows/navigation.cpp src/windows/update.cpp src/windows/app.rc)
+        src/windows/instance.cpp src/windows/menu.cpp src/windows/navigation.cpp src/windows/update.cpp src/windows/app.rc)
     # llvm-windres reads a script as Windows-1252, whatever #pragma code_page it holds, and the app's name is UTF-8. It
     # reports no headers either, so a new name, version, manifest or icon would leave the old resources.
     set(RESOURCE_INPUTS "${CMAKE_BINARY_DIR}/crossbind_app.h;${CMAKE_CURRENT_SOURCE_DIR}/src/windows/app.manifest")
@@ -62,7 +62,7 @@ elseif(ANDROID)
     target_include_directories(jsi PUBLIC "${THIRD_PARTY}/jsi/include")
     add_library(app SHARED ${SOURCES})
 else()
-    add_executable(app src/main.cpp src/attach.cpp "${THIRD_PARTY}/jsi/jsi.cpp" ${SOURCES})
+    add_executable(app src/main.cpp src/attach.cpp src/instance.cpp "${THIRD_PARTY}/jsi/jsi.cpp" ${SOURCES})
 endif()
 
 set_target_properties(app PROPERTIES OUTPUT_NAME "${CROSSBIND_APP_FILE}")

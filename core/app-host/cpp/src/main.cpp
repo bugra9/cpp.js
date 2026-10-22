@@ -4,8 +4,12 @@
 #include "app.h"
 // The app's name and window, which crossbind writes into the build directory from crossbind.config.js.
 #include "crossbind_app.h"
+#include "instance.h"
 #include "platform.h"
 #include "webview/webview.h"
+
+#include <cstdio>
+#include <cstdlib>
 
 namespace {
 
@@ -32,8 +36,22 @@ constexpr const char *WEBVIEW2_MISSING = "the app needs the Microsoft Edge WebVi
 
 }  // namespace
 
-int main() {
+int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
     const char *devUrl = app::devUrl();
+#ifdef CROSSBIND_APP_SINGLE_INSTANCE
+    if (const Claim claim = claimInstance(launchOf(argc, argv)); claim != Claim::Instance) {
+#ifdef CROSSBIND_APP_DEV
+        if (claim == Claim::HandedOver) std::fprintf(stderr, "crossbind: another development session of the app runs, which took this launch\n");
+#endif
+        // A user who opened the app reads no output.
+        if (claim == Claim::NotTaken && !devUrl && !std::getenv("CROSSBIND_APP_CONSOLE")) {
+            showError("the app runs already, but did not answer this launch: close it, then open the app again");
+        }
+        // The app's static destructors are the instance's, which runs on.
+        std::fflush(nullptr);
+        std::_Exit(claim == Claim::HandedOver ? 0 : 1);
+    }
+#endif
     app::Core &core = app::start(devUrl);
     schemeHandler = [&core](SchemeRequest request, SchemeRespond respond) { core.serve(std::move(request), std::move(respond)); };
 

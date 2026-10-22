@@ -19,7 +19,7 @@
     {
       "source": "docs/api/app.md",
       "output": "api/app.md",
-      "sha256": "def5bbec294fd15c7d743ac0850de655b7b74420a35876bd4e7569f0c2b2c80a"
+      "sha256": "54d731ec61e02fcb04929e70c750422ffa02560d2121e07baa5a716e5728468a"
     },
     {
       "source": "docs/api/build-state.md",
@@ -44,7 +44,7 @@
     {
       "source": "docs/api/crossbind-config.md",
       "output": "api/crossbind-config.md",
-      "sha256": "4354999c2e41159ff0155f190cb46a7acf5bb9732c193665a0522ecc2a41a926"
+      "sha256": "88ccfa5f566053dda615ea6123ef3adbca77e79ab64f7890ef238abef64b0964"
     },
     {
       "source": "docs/api/filesystem.md",
@@ -119,7 +119,7 @@
     {
       "source": "docs/playbooks/integration/desktop-app.md",
       "output": "integration/desktop-app.md",
-      "sha256": "5b2599e57a1845e9ae7a86c6ebd2fd9611f98a72f1711f7901e07ea3236bb963"
+      "sha256": "ffe08f4f21d270c3f0424ea7e2998ba4843c95546d7c3768ed4743a32d5e7c4e"
     },
     {
       "source": "docs/playbooks/integration/nextjs.md",

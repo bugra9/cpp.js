@@ -79,9 +79,17 @@ export declare const menu: {
     set(menus: Menu[]): Promise<void>;
 };
 
+/** What the event second-instance carries: a later launch's arguments, the program's own left out, and the folder it was launched in. */
+export interface SecondInstance {
+    args: string[];
+    cwd: string;
+}
+
 export declare const events: {
     /** Calls listener with each click of an item with an id in the menus menu.set sets, until the function it returns is called. */
     on(name: 'menu', listener: (click: MenuClick) => void): () => void;
+    /** Calls listener with each later launch of a desktop app that app.singleInstance keeps to one instance, which brings its window to the front as far as the system lets it, until the function it returns is called. */
+    on(name: 'second-instance', listener: (launch: SecondInstance) => void): () => void;
     /** Calls listener with the value of each event of this name the app's native code emits from now on, until the function it returns is called. */
     on(name: string, listener: (value: unknown) => void): () => void;
 };

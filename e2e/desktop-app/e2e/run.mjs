@@ -1,9 +1,10 @@
 import { execFileSync, spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, realpathSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import config from '../crossbind.config.mjs';
+import { LAUNCH_ARGS } from './launch.mjs';
 import { UPDATE_PORT, signUpdate } from './updates.mjs';
 
 // Opens the app `pnpm build` made, whose page runs the conformance suite and logs its summary last, and closes it
@@ -15,6 +16,9 @@ const RUN_TIMEOUT_MS = 300000;
 // Shared conformance list: pass must equal run (backreference); skips are explicit lines.
 const CONFORMANCE = /^CONFORMANCE (\d+)\/\1\b.*$/m;
 const FINISHED = /^(CONFORMANCE .*|CONFORMANCE ERR: .*)$/m;
+const LAUNCH_AGAIN = /^LAUNCH AGAIN$/m;
+// Below the page's wait for the launch, so a launch that stays says so.
+const LAUNCH_AGAIN_TIMEOUT_MS = 20000;
 
 const root = resolve(import.meta.dirname, '..');
 const { name } = config.general;
@@ -63,7 +67,7 @@ async function open() {
         close: () => {},
     };
     if (!existsSync(executable)) missing(executable);
-    return { child: spawn(executable, [], { env: { ...process.env, ...env } }), close };
+    return { child: spawn(executable, [], { env: { ...process.env, ...env } }), close, executable };
 }
 
 // Where the installer put the app: in the disk image, mounted until the run ends, in /usr/bin, or in the user's
@@ -116,7 +120,35 @@ let out = '';
 checkIcon();
 // A phone's app does not update itself.
 if (!platform) await serveUpdates();
-const { child: app, close } = await open();
+const { child: app, close, executable } = await open();
+
+// The page asks for it once it listens: the app, launched again with LAUNCH_ARGS and the folder it is launched in,
+// which the first app does not share, hands them to that app and leaves.
+let isLaunchedAgain = false;
+let hasLeft = false;
+function launchAgain() {
+    if (isLaunchedAgain || !executable || !LAUNCH_AGAIN.test(out)) return;
+    isLaunchedAgain = true;
+    try {
+        const cwd = realpathSync.native(join(root, 'dist'));
+        const again = spawn(executable, [...LAUNCH_ARGS, cwd], { cwd, env: { ...process.env, ...env }, stdio: ['ignore', 'ignore', 'pipe'] });
+        const timeout = setTimeout(() => {
+            again.kill();
+            finish('the app launched again did not leave');
+        }, LAUNCH_AGAIN_TIMEOUT_MS);
+        again.stderr.on('data', (chunk) => {
+            out += `[launched again] ${chunk}`;
+        });
+        again.once('error', (error) => finish(`the app cannot be launched again: ${error.message}`));
+        again.on('exit', (code) => {
+            clearTimeout(timeout);
+            if (code !== 0) finish(`the app launched again exited with ${code}, not 0`);
+            hasLeft = true;
+        });
+    } catch (error) {
+        finish(`the app cannot be launched again: ${error.message}`);
+    }
+}
 
 function finish(problem) {
     clearTimeout(timer);
@@ -128,8 +160,9 @@ function finish(problem) {
         console.error(`warning: ${error.message}`);
     }
     const summary = out.match(CONFORMANCE);
-    if (problem || !summary) {
-        console.error(`FAIL: ${problem ?? 'the app failed the conformance suite'}:\n${out}`);
+    const failure = problem ?? (isLaunchedAgain && !hasLeft ? 'the app launched again had not left when the suite finished' : undefined);
+    if (failure || !summary) {
+        console.error(`FAIL: ${failure ?? 'the app failed the conformance suite'}:\n${out}`);
         process.exit(1);
     }
     console.log(`ok: ${platform ?? `${process.platform}-${process.arch}`} app: ${summary[0]}`);
@@ -139,10 +172,13 @@ function finish(problem) {
 const timer = setTimeout(() => finish('the suite did not finish in time'), RUN_TIMEOUT_MS);
 app.stdout.on('data', (chunk) => {
     out += chunk;
+    launchAgain();
     if (FINISHED.test(out)) finish();
 });
 app.stderr.on('data', (chunk) => {
     out += chunk;
+    launchAgain();
     if (FINISHED.test(out)) finish();
 });
-app.on('exit', (code) => finish(`the app exited with ${code} before the suite finished`));
+// An app that leaves at once, having said nothing, handed its launch to another instance of it.
+app.on('exit', (code) => finish(code === 0 && !out ? 'the app handed its launch to an instance of it that runs already: close that one' : `the app exited with ${code} before the suite finished`));

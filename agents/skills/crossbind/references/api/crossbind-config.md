@@ -234,6 +234,9 @@ export default {
     window: { width: 1024, height: 768, minWidth: 0, minHeight: 0, resizable: true },
       // The desktop window, these being the defaults: the size of its page in pixels (up to 16384), the least it
       // shrinks to (0: no limit) and whether it resizes. A minimum needs a window that resizes.
+    singleInstance: true,
+      // Keeps a desktop app to one instance for each user: a later launch hands it its arguments, and it brings its
+      // window to the front and tells its page (see app.md). Default: false.
     openPath: ['logs', 'picked'],
       // Where the page's shell.openPath opens files (see app.md): 'data', 'cache' and 'logs', the app's folders,
       // and 'picked', what a dialog picked during this run. Opening a program runs it. Default: [], nowhere.

@@ -3,6 +3,7 @@
 #include "host_core.h"
 // Where app.openPath lets the page open files, which crossbind writes for every app's host.
 #include "crossbind_app.h"
+#include "instance.h"
 
 #include <algorithm>
 #include <atomic>
@@ -369,6 +370,13 @@ Paths paths() { return appPaths(); }
 void quit() { quitApp(); }
 
 void emitEvent(const std::string &event, const std::string &json) { postEvent(event, json); }
+
+#ifdef CROSSBIND_APP_SINGLE_INSTANCE
+void launchedAgain(Launch launch) {
+    showWindow(launch.token);
+    postEvent("second-instance", "{\"args\":" + json(launch.args) + ",\"cwd\":" + json(launch.cwd) + "}");
+}
+#endif
 
 void callApp(jsi::Runtime &rt, const std::string &name, const jsi::Value &options, ReplyFn reply) {
     try {

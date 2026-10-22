@@ -10,6 +10,8 @@ import fs from 'node:fs';
 import { spawn } from 'node:child_process';
 
 const isApp = state.config.target.runtimeEnv === 'app';
+// How long the app that runs gets to end before a new host opens.
+const STOP_TIMEOUT_MS = 5000;
 // An app's targets are what runs it during development, which appDevPlugin finds as the session starts.
 const targetParams = isApp ? null : getTargetParams({ platform: ['wasm'], arch: ['wasm32'], runtime: ['st'], runtimeEnv: ['browser'] }, true);
 let buildTargetRelease = isApp ? null : getFilteredBuildTargets(targetParams, { buildType: 'release' })?.[0];
@@ -80,28 +82,37 @@ function appDevPlugin() {
         });
     }
 
+    // Resolves once the app that runs has ended: a new one that met it would hand its launch over to it, as an app that
+    // app.singleInstance keeps to one instance does, and leave.
     function stop() {
         const running = app;
         app = null;
         closeApp?.();
         closeApp = null;
-        running?.kill();
+        if (!running || running.exitCode !== null || running.signalCode !== null) return Promise.resolve();
+        const ended = new Promise((resolve) => running.once('exit', resolve));
+        running.kill();
+        // A host SIGTERM cannot end, as one stopped in a debugger, does not hold the session up.
+        const killer = setTimeout(() => running.kill('SIGKILL'), STOP_TIMEOUT_MS);
+        return ended.finally(() => clearTimeout(killer));
     }
 
     // One build at a time, so an edit during a build waits for it. The window keeps running until a new host is ready,
     // and a build that changed nothing leaves it alone, unless no app runs because the last one failed to open.
     // Resolves to whether the app opened anew.
     function refresh({ always = false } = {}) {
-        const next = building.catch(() => {}).then(build);
-        building = next;
-        return next.then((changed) => {
+        // The app opens anew within the same turn as its build, so a second edit meanwhile opens no second app.
+        const next = building.catch(() => {}).then(async () => {
+            const changed = await build();
             if (!changed && !always && app) return false;
             // A new host may bind other names, so its page transforms the header modules again.
             server.moduleGraph.invalidateAll();
-            stop();
+            await stop();
             launch();
             return true;
         });
+        building = next;
+        return next;
     }
 
     return {

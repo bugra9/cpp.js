@@ -1,7 +1,7 @@
 // The conformance suite inside an app: the page reaches the module the app's host runs as a worker-backed web build
 // reaches its worker, and the host runs embind-jsi as React Native does.
 import { runConformance } from '@crossbind/conformance/spec/run.mjs';
-import { app as host, menu, shell, updater } from 'crossbind/app';
+import { app as host, events, menu, shell, updater } from 'crossbind/app';
 // Constants bind only for the names imported here; the header also defines one no leg imports.
 import {
     initNative, AllSymbols as confConstantsModule, CONF_BASE, CONF_BASE_NAME, CONF_CHAR, CONF_DOUBLE, CONF_EXPRESSION,
@@ -14,6 +14,7 @@ import {
     allocBuffer, cstring, readCString, readNumberAt, readPointerAt, writeNumberAt, writePointerAt,
 } from '@crossbind/conformance/native/confextras.h';
 import { Counter } from './native/counter.rs';
+import { LAUNCH_ARGS } from '../e2e/launch.mjs';
 // Direct crate imports: bridged from the crates' own sources, no surface file.
 import { Uuid } from 'cargo:uuid';
 import { Version, VersionReq } from 'cargo:semver';
@@ -117,6 +118,30 @@ async function checkUpdates() {
     if (!tampered.includes('app.updater.publicKey')) throw new Error(`a tampered update was not refused: ${tampered}`);
 }
 
+const LAUNCH_TIMEOUT_MS = 30000;
+
+// e2e/run.mjs launches the app again, from a folder that is not this app's, with LAUNCH_ARGS and that folder once the
+// page listens: the app that runs takes the launch, and the one launched leaves.
+async function checkSecondInstance() {
+    let stop;
+    let timer;
+    const launch = new Promise((resolve, reject) => {
+        stop = events.on('second-instance', resolve);
+        timer = setTimeout(() => reject(new Error('the app launched again did not reach the page')), LAUNCH_TIMEOUT_MS);
+    }).finally(() => {
+        stop?.();
+        clearTimeout(timer);
+    });
+    console.log('LAUNCH AGAIN');
+    const { args, cwd } = await launch;
+    const folder = args.at(-1);
+    // Windows takes a folder's name in any case.
+    const isSameFolder = cwd.includes('\\') ? folder?.toLowerCase() === cwd.toLowerCase() : folder === cwd;
+    if (JSON.stringify(args.slice(0, -1)) !== JSON.stringify(LAUNCH_ARGS) || !isSameFolder) {
+        throw new Error(`the app launched again handed over ${JSON.stringify({ args, cwd })}`);
+    }
+}
+
 initNative().then(async (m) => {
     try {
         // Markup can make a crossbind:// request as well, so one without the page's token must be refused. On Android the
@@ -155,6 +180,7 @@ initNative().then(async (m) => {
             if (!checked.includes('does not update itself')) throw new Error(`updater.check() did not refuse on a phone: ${checked}`);
         } else if (!import.meta.env.DEV) {
             await checkUpdates();
+            await checkSecondInstance();
         }
         if (!isAndroid || !import.meta.env.DEV) {
             const { status } = await fetch(isAndroid ? '/b/result?id=1' : 'crossbind://app/b/result?id=1');

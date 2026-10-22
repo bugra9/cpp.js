@@ -171,7 +171,19 @@ void quitApp() {
     });
 }
 
-// A panel that asks for its app, not a window of it, needs none.
-void setMainWindow(void *) {}
+namespace {
+__weak NSWindow *mainWindow;
+}  // namespace
+
+// A panel asks for its app, not a window of it; showWindow needs the window.
+void setMainWindow(void *window) { mainWindow = (__bridge NSWindow *)window; }
+
+void showWindow(const std::string &) {
+    onMain(^{
+      if (mainWindow.miniaturized) [mainWindow deminiaturize:nil];
+      [mainWindow makeKeyAndOrderFront:nil];
+      [NSApp activateIgnoringOtherApps:YES];
+    });
+}
 
 #endif
