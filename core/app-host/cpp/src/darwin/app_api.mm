@@ -123,7 +123,7 @@ void showMessageDialog(crossbind::app::MessageOptions options, std::function<voi
           [alert addAction:action];
           if (i == 0) alert.preferredAction = action;
       }
-      if (!presentAlert((__bridge void *)alert, (__bridge void *)mainWindow)) answer->give(NO_BUTTON);
+      if (!presentOnTop((__bridge void *)alert, (__bridge void *)mainWindow)) answer->give(NO_BUTTON);
     });
 }
 

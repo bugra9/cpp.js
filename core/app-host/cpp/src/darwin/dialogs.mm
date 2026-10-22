@@ -20,11 +20,11 @@ NSString *appTitle() {
 }  // namespace
 
 #if TARGET_OS_IPHONE
-bool presentAlert(void *alert, void *window) {
+bool presentOnTop(void *controller, void *window) {
     UIViewController *top = ((__bridge UIWindow *)window).rootViewController;
     while (top.presentedViewController) top = top.presentedViewController;
     if (!top || top.isBeingDismissed) return false;
-    [top presentViewController:(__bridge UIAlertController *)alert animated:YES completion:nil];
+    [top presentViewController:(__bridge UIViewController *)controller animated:YES completion:nil];
     return true;
 }
 #endif
@@ -41,7 +41,7 @@ bool presentAlert(void *alert, void *window) {
 // With nothing to show it over, the caller answers at once, as if the dialog were cancelled: WebKit wants an answer to
 // every one.
 - (BOOL)show:(UIAlertController *)alert over:(WKWebView *)webView {
-    return presentAlert((__bridge void *)alert, (__bridge void *)webView.window);
+    return presentOnTop((__bridge void *)alert, (__bridge void *)webView.window);
 }
 
 - (UIAlertController *)alertWithText:(NSString *)message {

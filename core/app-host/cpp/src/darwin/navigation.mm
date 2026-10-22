@@ -12,7 +12,113 @@
 
 #include <algorithm>
 
-#if !TARGET_OS_IPHONE
+#if TARGET_OS_IPHONE
+namespace {
+
+// The page names a download, and WebKit passes the name on.
+NSString *fileName(NSString *name) {
+    NSString *last = name.lastPathComponent;
+    return last.length == 0 || [@[ @"/", @".", @".." ] containsObject:last] ? @"download" : last;
+}
+
+}  // namespace
+
+// What the page downloads arrives in a folder of its own among the app's temporary files, and the system's export sheet
+// moves it where its user picks; the folder goes once the sheet does. UIKit shows one sheet at a time, so downloads
+// that finish meanwhile wait their turn.
+API_AVAILABLE(ios(14.5))
+@interface CBDownloads : NSObject <WKDownloadDelegate, UIDocumentPickerDelegate> {
+    // Each download's folder and file; the folder, file and window of each one waiting for the sheet; the folder of the
+    // one it shows.
+    NSMapTable<WKDownload *, NSArray<NSURL *> *> *places;
+    NSMutableArray<NSArray *> *waiting;
+    NSURL *shown;
+}
+@end
+
+@implementation CBDownloads
+
+- (instancetype)init {
+    if ((self = [super init])) {
+        places = [NSMapTable weakToStrongObjectsMapTable];
+        waiting = [NSMutableArray new];
+    }
+    return self;
+}
+
+- (void)download:(WKDownload *)download
+    decideDestinationUsingResponse:(NSURLResponse *)response
+                 suggestedFilename:(NSString *)name
+                 completionHandler:(void (^)(NSURL *))done {
+    NSFileManager *manager = NSFileManager.defaultManager;
+    NSURL *folder = [manager.temporaryDirectory URLByAppendingPathComponent:NSUUID.UUID.UUIDString isDirectory:YES];
+    NSError *error = nil;
+    if (![manager createDirectoryAtURL:folder withIntermediateDirectories:YES attributes:nil error:&error]) {
+        [self tell:fileName(name) error:error over:download.webView.window];
+        done(nil);
+        return;
+    }
+    NSURL *file = [folder URLByAppendingPathComponent:fileName(name) isDirectory:NO];
+    [places setObject:@[ folder, file ] forKey:download];
+    done(file);
+}
+
+- (void)downloadDidFinish:(WKDownload *)download {
+    NSArray<NSURL *> *place = [places objectForKey:download];
+    [places removeObjectForKey:download];
+    if (!place) return;
+    UIWindow *window = download.webView.window;
+    [waiting addObject:@[ place[0], place[1], window ? (id)window : NSNull.null ]];
+    [self showNext];
+}
+
+- (void)download:(WKDownload *)download didFailWithError:(NSError *)error resumeData:(NSData *)resumeData {
+    NSArray<NSURL *> *place = [places objectForKey:download];
+    [places removeObjectForKey:download];
+    if (!place) return;
+    [NSFileManager.defaultManager removeItemAtURL:place[0] error:nil];
+    [self tell:place[1].lastPathComponent error:error over:download.webView.window];
+}
+
+- (void)showNext {
+    while (!shown && waiting.count > 0) {
+        NSArray *next = waiting.firstObject;
+        [waiting removeObjectAtIndex:0];
+        UIDocumentPickerViewController *sheet = [[UIDocumentPickerViewController alloc] initForExportingURLs:@[ next[1] ] asCopy:NO];
+        sheet.delegate = self;
+        UIWindow *window = next[2] == NSNull.null ? nil : next[2];
+        if (presentOnTop((__bridge void *)sheet, (__bridge void *)window)) {
+            shown = next[0];
+        } else {
+            [NSFileManager.defaultManager removeItemAtURL:next[0] error:nil];
+        }
+    }
+}
+
+- (void)documentPicker:(UIDocumentPickerViewController *)sheet didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    [self sheetWentAway];
+}
+
+- (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)sheet {
+    [self sheetWentAway];
+}
+
+- (void)sheetWentAway {
+    if (shown) [NSFileManager.defaultManager removeItemAtURL:shown error:nil];
+    shown = nil;
+    [self showNext];
+}
+
+- (void)tell:(NSString *)name error:(NSError *)error over:(UIWindow *)window {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:[NSString stringWithFormat:@"%@ was not saved", name]
+                                                                   message:error.localizedDescription
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+    presentOnTop((__bridge void *)alert, (__bridge void *)window);
+}
+
+@end
+#else
 // What the page downloads goes where its user picks, as a browser asks. It arrives in a file of its own beside that
 // place and takes it once whole, so a download that fails leaves the file it was to replace as it was.
 API_AVAILABLE(macos(11.3))
@@ -99,9 +205,7 @@ API_AVAILABLE(macos(11.3))
 @public
     std::vector<std::string> origins;
     std::function<void()> newPage;
-#if !TARGET_OS_IPHONE
     id downloads;
-#endif
 }
 @end
 
@@ -121,18 +225,15 @@ API_AVAILABLE(macos(11.3))
     decidePolicyForNavigationAction:(WKNavigationAction *)action
                     decisionHandler:(void (^)(WKNavigationActionPolicy))decide {
     NSURL *url = action.request.URL;
-    if ([self allows:url]) {
-        if (@available(macOS 11.3, iOS 14.5, *)) {
-            if (action.shouldPerformDownload) {
-#if TARGET_OS_IPHONE
-                // An iOS app saves no download yet, and following the link would replace the page with the file.
-                decide(WKNavigationActionPolicyCancel);
-#else
-                decide(WKNavigationActionPolicyDownload);
-#endif
-                return;
-            }
+    if (@available(macOS 11.3, iOS 14.5, *)) {
+        // A link's download attribute saves what it points at instead of showing it: the page's own files, and data
+        // the page holds as a data: URL.
+        if (action.shouldPerformDownload && ([self allows:url] || [url.scheme.lowercaseString isEqualToString:@"data"])) {
+            decide(WKNavigationActionPolicyDownload);
+            return;
         }
+    }
+    if ([self allows:url]) {
         decide(WKNavigationActionPolicyAllow);
         return;
     }
@@ -151,12 +252,11 @@ API_AVAILABLE(macos(11.3))
     newPage();
 }
 
-#if !TARGET_OS_IPHONE
 // A response the webview cannot show, such as a zip, downloads as it does in a browser.
 - (void)webView:(WKWebView *)webView
     decidePolicyForNavigationResponse:(WKNavigationResponse *)response
                       decisionHandler:(void (^)(WKNavigationResponsePolicy))decide {
-    if (@available(macOS 11.3, *)) {
+    if (@available(macOS 11.3, iOS 14.5, *)) {
         if (!response.canShowMIMEType) {
             decide(WKNavigationResponsePolicyDownload);
             return;
@@ -166,21 +266,20 @@ API_AVAILABLE(macos(11.3))
 }
 
 - (void)webView:(WKWebView *)webView navigationAction:(WKNavigationAction *)action didBecomeDownload:(WKDownload *)download
-    API_AVAILABLE(macos(11.3)) {
+    API_AVAILABLE(macos(11.3), ios(14.5)) {
     [self save:download];
 }
 
 - (void)webView:(WKWebView *)webView navigationResponse:(WKNavigationResponse *)response didBecomeDownload:(WKDownload *)download
-    API_AVAILABLE(macos(11.3)) {
+    API_AVAILABLE(macos(11.3), ios(14.5)) {
     [self save:download];
 }
 
 // A download holds its delegate weakly.
-- (void)save:(WKDownload *)download API_AVAILABLE(macos(11.3)) {
+- (void)save:(WKDownload *)download API_AVAILABLE(macos(11.3), ios(14.5)) {
     if (!downloads) downloads = [CBDownloads new];
     download.delegate = downloads;
 }
-#endif
 
 @end
 
