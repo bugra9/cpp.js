@@ -18,13 +18,55 @@ const CONFORMANCE = /^CONFORMANCE (\d+)\/\1\b.*$/m;
 const FINISHED = /^(CONFORMANCE .*|CONFORMANCE ERR: .*)$/m;
 const LAUNCH_AGAIN = /^LAUNCH AGAIN$/m;
 const OPEN_LINK = /^OPEN LINK$/m;
+const FILL_SCREEN = /^FILL SCREEN$/m;
 // Below the page's wait for the launch or the link, so a launch that stays or an adb that hangs says so.
 const ASKED_TIMEOUT_MS = 20000;
+// WebView2's DevTools, through which the run does on Windows what only a user's click could.
+const DEVTOOLS_PORT = 9223;
+// How long a window takes to fill the screen once the page asks.
+const SETTLE_MS = 1000;
+// Tells the window the scale of its screen went up by half, as Windows does when its user changes it, reads where the
+// window is, and goes back. Anything that fails stops the script, and a window that takes 5 s to answer fails.
+const SCALE_SCRIPT = `
+$ErrorActionPreference = 'Stop'
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class Screen {
+    [DllImport("user32.dll")] static extern IntPtr SendMessageTimeout(IntPtr window, uint message, IntPtr w, IntPtr l, uint flags, uint timeout, out IntPtr result);
+    [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr window, out Rect rect);
+    [DllImport("user32.dll")] static extern IntPtr MonitorFromWindow(IntPtr window, uint flags);
+    [DllImport("user32.dll")] static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
+    [DllImport("user32.dll")] static extern uint GetDpiForWindow(IntPtr window);
+    public struct Rect { public int Left, Top, Right, Bottom; }
+    [StructLayout(LayoutKind.Sequential)] public struct MonitorInfo { public int Size; public Rect Monitor; public Rect Work; public uint Flags; }
+    static void Scale(IntPtr window, int dpi) {
+        IntPtr result;
+        if (SendMessageTimeout(window, 0x02E0, (IntPtr)(dpi * 65536 + dpi), IntPtr.Zero, 2, 5000, out result) == IntPtr.Zero) throw new Exception("the window did not take the new scale");
+    }
+    public static string Check(IntPtr window) {
+        int dpi = (int)GetDpiForWindow(window);
+        if (dpi == 0) throw new Exception("the window has no scale");
+        Scale(window, dpi * 3 / 2);
+        Rect rect;
+        MonitorInfo info = new MonitorInfo();
+        info.Size = Marshal.SizeOf(info);
+        if (!GetWindowRect(window, out rect) || !GetMonitorInfo(MonitorFromWindow(window, 2), ref info)) throw new Exception("where the window is cannot be read");
+        Scale(window, dpi);
+        Rect m = info.Monitor;
+        if (rect.Left == m.Left && rect.Top == m.Top && rect.Right == m.Right && rect.Bottom == m.Bottom) return "covered";
+        return string.Format("is at {0},{1},{2},{3}, not the screen's {4},{5},{6},{7}", rect.Left, rect.Top, rect.Right, rect.Bottom, m.Left, m.Top, m.Right, m.Bottom);
+    }
+}
+'@
+[Screen]::Check((Get-Process -Id APP_PID).MainWindowHandle)
+`;
 
 const root = resolve(import.meta.dirname, '..');
 const { name } = config.general;
 const platform = process.env.CROSSBIND_APP_PLATFORM;
 const env = { CROSSBIND_APP_CONSOLE: '1' };
+if (process.platform === 'win32' && !platform) env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = `--remote-debugging-port=${DEVTOOLS_PORT}`;
 
 function missing(file) {
     console.error(`FAIL: ${file} is missing - run \`pnpm build\` first.`);
@@ -175,6 +217,47 @@ function openLink() {
     if (opened.status !== 0) finish(`the app cannot be opened with a link: ${opened.error?.message ?? `${opened.stdout}${opened.stderr}`.trim()}`);
 }
 
+// Runs an expression in the page as a user's click would, through WebView2's DevTools.
+async function inPage(expression) {
+    const signal = AbortSignal.timeout(ASKED_TIMEOUT_MS);
+    const targets = await (await fetch(`http://127.0.0.1:${DEVTOOLS_PORT}/json`, { signal })).json();
+    const page = targets.find((target) => target.type === 'page');
+    if (!page) throw new Error('WebView2 lists no page');
+    const socket = new WebSocket(page.webSocketDebuggerUrl);
+    try {
+        const { error, result } = await new Promise((done, fail) => {
+            signal.addEventListener('abort', () => fail(new Error('DevTools did not answer in time')));
+            socket.onerror = () => fail(new Error('DevTools refused the connection'));
+            socket.onopen = () => socket.send(JSON.stringify({ id: 1, method: 'Runtime.evaluate', params: { expression, userGesture: true, awaitPromise: true } }));
+            socket.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                if (message.id === 1) done(message);
+            };
+        });
+        if (error || result?.exceptionDetails) throw new Error(JSON.stringify(error ?? result.exceptionDetails));
+    } finally {
+        socket.close();
+    }
+}
+
+// The page asks for it on Windows once it listens: its element full screen, then a new scale of the screen, after which
+// the window must cover the screen still, then the page out of full screen.
+let isScreenFilled = false;
+async function fillScreen() {
+    if (isScreenFilled || !FILL_SCREEN.test(out)) return;
+    isScreenFilled = true;
+    try {
+        await inPage('document.documentElement.requestFullscreen()');
+        await new Promise((done) => { setTimeout(done, SETTLE_MS); });
+        const script = SCALE_SCRIPT.replace('APP_PID', String(app.pid));
+        const covered = execFileSync('powershell', ['-NoProfile', '-Command', script], { encoding: 'utf8', timeout: ASKED_TIMEOUT_MS }).trim();
+        if (covered !== 'covered') finish(`after a new scale of its screen, the window that fills the screen ${covered}`);
+        await inPage('document.exitFullscreen()');
+    } catch (error) {
+        finish(`the window full screen could not be checked: ${error.message}`);
+    }
+}
+
 function finish(problem) {
     clearTimeout(timer);
     app.kill();
@@ -199,12 +282,14 @@ app.stdout.on('data', (chunk) => {
     out += chunk;
     launchAgain();
     openLink();
+    fillScreen();
     if (FINISHED.test(out)) finish();
 });
 app.stderr.on('data', (chunk) => {
     out += chunk;
     launchAgain();
     openLink();
+    fillScreen();
     if (FINISHED.test(out)) finish();
 });
 // An app that leaves at once, having said nothing, handed its launch to another instance of it.

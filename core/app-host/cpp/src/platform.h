@@ -150,4 +150,6 @@ void setMenuWebView(void *controller);
 // The window fills the screen while the page shows an element full screen, which WebView2 leaves to its host. On the
 // main thread.
 void followPageFullScreen(void *controller);
+// A window that fills its screen fills it again once Windows changes the screen's size or scale. On the main thread.
+void fitFullScreen();
 #endif
