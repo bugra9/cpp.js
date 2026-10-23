@@ -252,23 +252,30 @@ bool isFullScreen = false;
 // app.window.fullscreen, to which the window goes back once the page's element leaves the screen.
 bool opensFullScreen = false;
 
+// The whole of the screen the window is on.
+std::optional<RECT> screenOf(HWND window) {
+    MONITORINFO monitor{};
+    monitor.cbSize = sizeof(monitor);
+    if (!GetMonitorInfoW(MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST), &monitor)) return std::nullopt;
+    return monitor.rcMonitor;
+}
+
+void cover(const RECT &screen, UINT flags) {
+    SetWindowPos(mainWindow, HWND_TOP, screen.left, screen.top, screen.right - screen.left, screen.bottom - screen.top, flags);
+}
+
 // A window that fills the screen is a popup without a frame, whose size Windows does not hold to app.window's limits.
 void setFullScreen(bool isFull) {
     if (!mainWindow || isFull == isFullScreen) return;
     if (isFull) {
-        MONITORINFO monitor{};
-        monitor.cbSize = sizeof(monitor);
         windowedPlace.length = sizeof(windowedPlace);
-        if (!GetWindowPlacement(mainWindow, &windowedPlace) || !GetMonitorInfoW(MonitorFromWindow(mainWindow, MONITOR_DEFAULTTONEAREST), &monitor)) {
-            return;
-        }
+        const std::optional<RECT> screen = screenOf(mainWindow);
+        if (!GetWindowPlacement(mainWindow, &windowedPlace) || !screen) return;
         // Windows keeps the taskbar over a maximized window; the placement maximizes it again after.
         if (IsZoomed(mainWindow)) ShowWindow(mainWindow, SW_RESTORE);
         windowedStyle = GetWindowLongPtrW(mainWindow, GWL_STYLE);
         SetWindowLongPtrW(mainWindow, GWL_STYLE, (windowedStyle & ~WS_OVERLAPPEDWINDOW) | WS_POPUP);
-        const RECT &screen = monitor.rcMonitor;
-        SetWindowPos(mainWindow, HWND_TOP, screen.left, screen.top, screen.right - screen.left, screen.bottom - screen.top,
-                     SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+        cover(*screen, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
     } else {
         // A window minimized meanwhile stays so.
         if (IsIconic(mainWindow)) windowedPlace.showCmd = SW_SHOWMINNOACTIVE;
@@ -293,6 +300,11 @@ void setBackgroundColor(void *, void *webView, std::uint32_t color) {
 void fillScreen() {
     opensFullScreen = true;
     setFullScreen(true);
+}
+
+void fitFullScreen() {
+    const std::optional<RECT> screen = isFullScreen ? screenOf(mainWindow) : std::nullopt;
+    if (screen) cover(*screen, SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
 void followPageFullScreen(void *controller) {

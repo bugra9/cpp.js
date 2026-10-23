@@ -119,6 +119,28 @@ async function checkUpdates() {
 }
 
 const LAUNCH_TIMEOUT_MS = 30000;
+// Longer than e2e/run.mjs's steps may take together, so a failure of its own says what went wrong.
+const FULL_SCREEN_TIMEOUT_MS = 90000;
+
+// e2e/run.mjs shows the page's element full screen, as only a user's click could, gives the window's screen a new
+// scale, checks the window still covers it, and leaves full screen: the page waits for both changes.
+function checkScaledFullScreen() {
+    let counted;
+    let timer;
+    return new Promise((resolve, reject) => {
+        let changes = 0;
+        counted = () => {
+            changes += 1;
+            if (changes === 2) resolve();
+        };
+        document.addEventListener('fullscreenchange', counted);
+        timer = setTimeout(() => reject(new Error('the page was not shown full screen and back')), FULL_SCREEN_TIMEOUT_MS);
+        console.log('FILL SCREEN');
+    }).finally(() => {
+        document.removeEventListener('fullscreenchange', counted);
+        clearTimeout(timer);
+    });
+}
 
 // The next event of this name, which comes within LAUNCH_TIMEOUT_MS.
 function nextEvent(name) {
@@ -229,6 +251,7 @@ initNative().then(async (m) => {
         } else if (!import.meta.env.DEV) {
             await checkUpdates();
             await checkSecondInstance();
+            if (navigator.userAgent.includes('Windows')) await checkScaledFullScreen();
         }
         if (!isAndroid || !import.meta.env.DEV) {
             const { status } = await fetch(isAndroid ? '/b/result?id=1' : 'crossbind://app/b/result?id=1');

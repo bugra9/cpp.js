@@ -744,7 +744,8 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
   window that resizes and one that does not: an element's full screen, which Escape leaves, and `fullscreen: true`. A
   Wayland compositor places a window itself, and with WebKitGTK before 2.44 a window that opened full screen leaves it
   when an element does. The background has been measured on macOS, Linux, iOS and Android. On Windows the conformance
-  runs check that the page may show an element full screen; the rest is built there, not measured yet.
+  runs check that the page may show an element full screen, and that a window filling its screen covers it again after
+  the message of a new scale, which the runs send it as Windows would; the rest is built there, not measured yet.
 - Devices have been measured on Linux, with WebKitGTK's mock devices; on an Android emulator, with its questions
   answered both ways, with a page that asks for a device the app does not list, and with a frame of another origin; in
   the iOS Simulator, which asks for the location with the reason and gives the camera and the microphone at once; and

@@ -153,6 +153,13 @@ LRESULT CALLBACK menuProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         }
         return 0;
     }
+    // webview sizes the window anew for a new scale, and Windows leaves it as it was for a new screen size: a window that
+    // filled its screen fills it again.
+    if (message == WM_DPICHANGED || message == WM_DISPLAYCHANGE) {
+        const LRESULT result = CallWindowProcW(windowProcedure, hwnd, message, wParam, lParam);
+        fitFullScreen();
+        return result;
+    }
     return CallWindowProcW(windowProcedure, hwnd, message, wParam, lParam);
 }
 
