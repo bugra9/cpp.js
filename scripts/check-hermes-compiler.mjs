@@ -7,7 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SAMPLES = ['examples/mobile-reactnative-cli', 'e2e/mobile-reactnative-cli'];
+const SAMPLES = ['examples/mobile-reactnative-cli', 'examples/mobile-reactnative-expo', 'e2e/mobile-reactnative-cli'];
 
 const mismatches = SAMPLES.flatMap((sample) => {
     const require = createRequire(path.join(ROOT, sample, 'package.json'));

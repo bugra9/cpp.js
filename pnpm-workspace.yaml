@@ -5,7 +5,6 @@ packages:
   - 'plugins/*'
   - 'ports/*/*'
   - 'examples/*'
-  - '!examples/mobile-reactnative-expo'
   - 'e2e/*'
   - 'landing'
   - '!**/test/**'
@@ -39,12 +38,14 @@ overrides:
   'js-yaml@4': '^4.3.2'
   'launch-editor@2': '^2.14.1'
   'mermaid@11': '^11.16.1'
-  # The examples decide the React Native line. Both plugins declare `react-native` and `metro` as
-  # `*` peers, and autoInstallPeers then materialises a second copy of each beside the app's, so
-  # the wrong metro ends up serving. Pinning them here keeps this workspace's graph single-valued
-  # without narrowing what the published packages accept.
+  # The Expo sample's SDK decides these three, and the CLI samples follow it: move them together with
+  # an SDK upgrade. The plugins take them as peers, and a plugin's own copy beside the app's means the
+  # wrong metro ends up serving and the Expo config plugin runs on another SDK's helpers. Pinning them
+  # here keeps this workspace's graph single-valued without narrowing what the published packages
+  # accept.
+  '@expo/config-plugins': '~58.0.10'
   metro: '^0.87.1'
-  react-native: '0.87.1'
+  react-native: '0.88.0'
   'minimatch@3': '^3.1.4'
   'nanoid@3': '^3.3.18'
   'on-headers@1': '^1.1.0'

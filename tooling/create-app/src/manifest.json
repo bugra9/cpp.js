@@ -56,8 +56,7 @@
         "label": "Expo",
         "kind": "app",
         "source": "examples/mobile-reactnative-expo",
-        "nativeFolders": false,
-        "keepLockfile": true
+        "nativeFolders": false
     },
     {
         "key": "desktop-app",

@@ -23,10 +23,10 @@
         "e2e:android": "npm run run:android && npm run maestro:android"
     },
     "dependencies": {
-        "@crossbind/core-embind-jsi": "2.0.0-beta.66",
-        "@crossbind/plugin-react-native": "2.0.0-beta.66",
-        "@crossbind/plugin-react-native-ios-helper": "2.0.0-beta.66",
-        "@crossbind/example-lib-prebuilt-matrix": "2.0.0-beta.66",
+        "@crossbind/core-embind-jsi": "workspace:^",
+        "@crossbind/plugin-react-native": "workspace:^",
+        "@crossbind/plugin-react-native-ios-helper": "workspace:^",
+        "@crossbind/example-lib-prebuilt-matrix": "workspace:^",
         "hermes-compiler": "260318099.0.4",
         "expo": "~58.0.14",
         "expo-constants": "~58.0.12",
@@ -54,21 +54,9 @@
     "devDependencies": {
         "@types/react": "~19.3.0",
         "typescript": "~6.0.3",
-        "@crossbind/typescript-config": "2.0.0-beta.66",
-        "@crossbind/plugin-metro": "2.0.0-beta.66"
-    },
-    "overrides": {
-        "uuid": "11.1.1",
-        "replace": {
-            "minimatch": "3.1.4"
-        },
-        "brace-expansion@5": "^5.0.12",
-        "shell-quote": "^1.12.0",
-        "js-yaml@4": "^4.3.1",
-        "nanoid@3": "^3.3.18",
-        "postcss": "^8.5.26",
-        "ws@7": "^7.5.13",
-        "@babel/core@7": "^7.29.7"
+        "metro-config": "^0.87.1",
+        "@crossbind/typescript-config": "workspace:^",
+        "@crossbind/plugin-metro": "workspace:^"
     },
     "keywords": [
         "crossbind-sample",

@@ -517,8 +517,7 @@ test('daily workflows keep write authority after validation and pin every action
         dependabot,
         /react-native:\n\s+applies-to: version-updates\n\s+patterns:\n\s+- react-native\n\s+- '@react-native\/\*'\n\s+- '@react-native-community\/\*'/,
     );
-    assert.match(dependabot, /directory: \/examples\/mobile-reactnative-expo\n(?:.*\n){1,6}?\s+open-pull-requests-limit: 0/);
-    assert.match(dependabot, /dependency-name: 'expo-\*'/);
+    assert.match(dependabot, /exclude-paths:\n\s+- examples\/mobile-reactnative-expo\/\*\*/);
 });
 
 test('a rejected candidate becomes a reported finding instead of a failed watch', () => {

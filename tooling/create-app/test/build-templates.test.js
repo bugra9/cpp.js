@@ -54,6 +54,14 @@ test('every example is a template', () => {
     assert.deepEqual(examples.filter((example) => !sources.has(example)), []);
 });
 
+test('no template ships a lockfile', () => {
+    for (const entry of MANIFEST) {
+        for (const lockfile of ['package-lock.json', 'pnpm-lock.yaml']) {
+            assert.equal(makeFilter(entry)(path.join(REPO_ROOT, entry.source, lockfile)), false, `${entry.key} ships ${lockfile}`);
+        }
+    }
+});
+
 test('a packaged app stays out of its template', () => {
     const electron = entryOf('desktop-electron');
     assert.equal(makeFilter(electron)(path.join(REPO_ROOT, electron.source, 'out')), false);
