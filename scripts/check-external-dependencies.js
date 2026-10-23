@@ -78,7 +78,7 @@ const PINNED = [
             '@crossbind/plugin-metro',
             '@crossbind/plugin-react-native',
         ],
-        deps: ['react', 'react-dom', 'react-test-renderer', 'react-native', 'eslint', 'jest', '@types/jest', 'typescript'],
+        deps: ['react', 'react-dom', 'react-test-renderer', 'react-native', 'metro-config', 'eslint', 'jest', '@types/jest', 'typescript'],
         scopes: ['@babel/', '@react-native/', '@react-native-community/', 'react-native-', 'expo'],
         reason: 'React Native / Expo SDK toolchain',
     },
@@ -315,8 +315,7 @@ async function main() {
             if (!block || typeof block !== 'object') continue;
             for (const [name, spec] of Object.entries(block)) {
                 if (workspaceNames.has(name)) {
-                    // A workspace package pinned to a registry version (the expo sample is excluded
-                    // from the workspace, so it installs published tarballs) must track the release
+                    // A workspace package pinned to a registry version must track the release
                     // train - otherwise it silently ships releases-old packages to its consumers.
                     const local = workspaceVersions.get(name);
                     const used = parseRange(spec);

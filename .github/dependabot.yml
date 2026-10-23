@@ -10,8 +10,8 @@ updates:
           time: '02:11'
           timezone: Europe/Istanbul
       open-pull-requests-limit: 10
-      # This entry reaches the Expo sample too, and it is the one that opens the grouped
-      # PRs, so the entry below is what governs that directory - not this one.
+      # Expo SDK packages move together through `npx expo install --fix`; a per-package bump
+      # desynchronises the SDK, so the Expo sample's manifest is left to that.
       exclude-paths:
           - examples/mobile-reactnative-expo/**
       versioning-strategy: increase-if-necessary
@@ -19,7 +19,7 @@ updates:
           - dependencies
           - javascript
       ignore:
-          # React Native 0.87 compiles with Babel 7. Inside the workspace @crossbind/plugin-metro
+          # React Native 0.88 compiles with Babel 7. Inside the workspace @crossbind/plugin-metro
           # keeps its own Babel 7, so a Babel 8 major passes CI while it breaks every React Native
           # project create-crossbind scaffolds. Lift this once React Native moves to Babel 8.
           - dependency-name: '@babel/*'
@@ -31,10 +31,10 @@ updates:
           - dependency-name: eslint
             update-types:
                 - version-update:semver-major
-          # The React Native CLI samples, the only workspace packages on TypeScript, take the one
-          # React Native's own template pins. TypeScript 7 ships no compiler API, and the
-          # @typescript-eslint behind its eslint-config accepts TypeScript below 6.1 only. Lift this
-          # once React Native's template moves to TypeScript 7.
+          # The React Native CLI samples, the only workspace packages on TypeScript besides the Expo
+          # sample this entry leaves alone, take the one React Native's own template pins. TypeScript 7
+          # ships no compiler API, and the @typescript-eslint behind its eslint-config accepts
+          # TypeScript below 6.1 only. Lift this once React Native's template moves to TypeScript 7.
           - dependency-name: typescript
             update-types:
                 - version-update:semver-major
@@ -80,30 +80,6 @@ updates:
               dependency-type: development
               patterns:
                   - '*'
-
-    # The Expo sample sits outside the workspace with its own lockfile, so Dependabot's security
-    # scans reach it. Expo SDK packages move together through `npx expo install --fix`; a
-    # per-package major bump desynchronises the SDK, so they are ignored and version updates are
-    # off for this directory.
-    - package-ecosystem: npm
-      directory: /examples/mobile-reactnative-expo
-      schedule:
-          interval: daily
-          time: '02:17'
-          timezone: Europe/Istanbul
-      open-pull-requests-limit: 0
-      labels:
-          - dependencies
-          - javascript
-      ignore:
-          - dependency-name: expo
-          - dependency-name: 'expo-*'
-          - dependency-name: '@expo/*'
-          - dependency-name: react-native
-          - dependency-name: '@react-native/*'
-          - dependency-name: react
-          - dependency-name: react-dom
-          - dependency-name: 'react-native-*'
 
     # Actions remain full-SHA pinned. Dependabot moves the SHA and its human-readable
     # version comment together; repository release tests reject floating references.

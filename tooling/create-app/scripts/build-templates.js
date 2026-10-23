@@ -5,9 +5,8 @@
 //   - lines containing the marker "Delete this line for create-crossbind" are
 //     stripped from crossbind.config.{js,mjs} and metro.config.js (these are
 //     workspace-only knobs that don't belong in scaffolded projects).
-// Build artifacts (node_modules, .crossbind, dist, native build outputs, lockfiles
-// when not whitelisted) and the files an entry lists as workspaceOnly are
-// filtered out during copy. Ignore files ship as
+// Build artifacts (node_modules, .crossbind, dist, native build outputs, lockfiles)
+// and the files an entry lists as workspaceOnly are filtered out during copy. Ignore files ship as
 // _gitignore / _npmignore (see src/dotfiles.js).
 
 import fs from 'node:fs';
@@ -80,8 +79,7 @@ export function makeFilter(entry) {
     // a fresh `pod install` fail when it drifts. The official RN template ships only the Podfile.
     // .xcode.env.local pins an absolute NODE_BINARY from the author's machine; shipping it breaks
     // every consumer's Xcode build and leaks the author's home path — the portable .xcode.env stays.
-    const skipFiles = new Set(['.DS_Store', '.xcode.env.local', 'pnpm-lock.yaml', 'Podfile.lock']);
-    if (!entry.keepLockfile) skipFiles.add('package-lock.json');
+    const skipFiles = new Set(['.DS_Store', '.xcode.env.local', 'pnpm-lock.yaml', 'package-lock.json', 'Podfile.lock']);
     return (src) => {
         if (workspaceOnly.has(src)) return false;
         const base = path.basename(src);
