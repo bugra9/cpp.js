@@ -33,20 +33,20 @@ Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
 public static class Screen {
-    [DllImport("user32.dll", SetLastError = true)] static extern bool PostMessage(IntPtr window, uint message, IntPtr w, IntPtr l);
-    [DllImport("user32.dll", SetLastError = true)] static extern IntPtr SendMessageTimeout(IntPtr window, uint message, IntPtr w, IntPtr l, uint flags, uint timeout, out IntPtr result);
+    [DllImport("user32.dll", SetLastError = true)] static extern IntPtr SendMessageTimeout(IntPtr window, uint message, IntPtr w, ref Rect l, uint flags, uint timeout, out IntPtr result);
     [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr window, out Rect rect);
     [DllImport("user32.dll")] static extern IntPtr MonitorFromWindow(IntPtr window, uint flags);
     [DllImport("user32.dll")] static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
     [DllImport("user32.dll")] static extern uint GetDpiForWindow(IntPtr window);
     public struct Rect { public int Left, Top, Right, Bottom; }
     [StructLayout(LayoutKind.Sequential)] public struct MonitorInfo { public int Size; public Rect Monitor; public Rect Work; public uint Flags; }
-    // WM_DPICHANGED goes through the window's queue, which the window has handled once it answers a WM_NULL sent after.
+    // WM_DPICHANGED carries the place Windows suggests for the window, which webview leaves aside, and which Windows
+    // copies into the window's process: the window's own place.
     static void Scale(IntPtr window, int dpi) {
+        Rect suggested;
         IntPtr result;
-        if (!PostMessage(window, 0x02E0, (IntPtr)(dpi * 65536 + dpi), IntPtr.Zero)) throw new Exception("the new scale could not be posted: error " + Marshal.GetLastWin32Error());
-        System.Threading.Thread.Sleep(500);
-        if (SendMessageTimeout(window, 0, IntPtr.Zero, IntPtr.Zero, 0, 5000, out result) == IntPtr.Zero) throw new Exception("the window did not answer after the new scale: error " + Marshal.GetLastWin32Error());
+        if (!GetWindowRect(window, out suggested)) throw new Exception("where the window is cannot be read");
+        if (SendMessageTimeout(window, 0x02E0, (IntPtr)(dpi * 65536 + dpi), ref suggested, 2, 5000, out result) == IntPtr.Zero) throw new Exception("the window did not take the new scale: error " + Marshal.GetLastWin32Error());
     }
     public static string Check(IntPtr window) {
         int dpi = (int)GetDpiForWindow(window);
