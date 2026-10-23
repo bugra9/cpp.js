@@ -734,9 +734,11 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
 - Signing a Windows app has been measured with a throwaway PKCS#12 key, whose signatures and timestamp on the app, its
   zip's copy and the setup program jsign reads back; not yet with a cloud's key service. Windows itself checks them,
   and the uninstaller's, in CI alone.
-- The Windows setup program has been built, not yet run on Windows. Its install of the WebView2 Runtime, for a system
-  that has none, cannot be measured on the Windows machines crossbind is tested on, which have the runtime; the
-  bootstrapper it downloads over HTTPS runs with no check of its own.
+- The Windows setup program runs in CI on x64 and arm64: it installs the app with `/S`, the app it installed passes the
+  conformance runs, `/UPDATE` waits for the app to quit and opens it again, and the uninstaller takes the app, its
+  shortcut, its entry in Settings and its scheme. Its install of the WebView2 Runtime, for a system that has none,
+  cannot be measured on the Windows machines crossbind is tested on, which have the runtime; the bootstrapper it
+  downloads over HTTPS runs with no check of its own.
 - On the desktop, one window.
 - `app.window`'s place, limits and full screen have been measured on macOS, and on Linux under Xvfb with openbox, for a
   window that resizes and one that does not: an element's full screen, which Escape leaves, and `fullscreen: true`. A
