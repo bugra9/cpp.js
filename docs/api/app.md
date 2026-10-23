@@ -534,8 +534,9 @@ device the list leaves out, nor does a frame of another origin on Android, which
 reason, WebKit gives a macOS page no camera or microphone at all.
 
 macOS asks for the app that opened on its own, from the Finder, the Dock or `open`. An app a terminal or an editor
-starts, as `crossbind app dev` does, is theirs to macOS, which asks for their permission instead. A macOS page gets no
-location: WebKit starts none for an app without a location provider of its own, which the host has not.
+starts, as `crossbind app dev` does, is theirs to macOS, which asks for their permission instead. WebKit gives a macOS
+page no location of its own, so the host answers the top frame's `navigator.geolocation` from CoreLocation, which
+asks with the reason; a frame inside the page gets none there.
 
 ## What the app holds
 
@@ -747,9 +748,11 @@ writes to logcat, under the tag `Crossbind`: the URL only on `localhost`, and th
   the iOS Simulator, which asks for the location with the reason and gives the camera and the microphone at once; and
   on macOS, whose questions named the app and its reasons when `open` started it, and the terminal when the terminal
   did, and were answered both ways. The conformance runs check on every platform that the page has `getUserMedia()`;
-  Windows has not been measured yet. Before macOS and iOS 27, WebKit asks for the location through a selector Apple does
-  not publish, which only an app that lists the location answers; App Store review of one has not been tried. Linux
-  takes the location from GeoClue, which the system has to run.
+  Windows has not been measured yet. Before iOS 27, WebKit asks for the location through a selector Apple does not
+  publish, which only an app that lists the location answers; App Store review of one has not been tried. Linux takes
+  the location from GeoClue, which the system has to run. On macOS the system's question for the location, with the
+  app's name and reason, has been measured; a position reaching the page has not, as the Mac it ran on found none, nor
+  did its Maps.
 - One instance has been measured on macOS and Linux: the hand-over, and the window coming back to the front from
   minimized. On Windows the conformance runs in CI check the hand-over alone.
 - Links have been measured on macOS, from the command line and as the Apple Events `open -a` sends, to a launch and to

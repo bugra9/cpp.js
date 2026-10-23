@@ -135,6 +135,8 @@ void keepRunningWhenHidden(void *configuration);
 // Shows an iOS view controller, such as an alert, over whatever the window shows on top; false when it has nothing to
 // show it over.
 bool presentOnTop(void *controller, void *window);
+// A macOS page's navigator.geolocation, to which WKWebView gives no position there, answered from CoreLocation.
+void provideLocation(void *webView);
 #endif
 
 #ifdef _WIN32
