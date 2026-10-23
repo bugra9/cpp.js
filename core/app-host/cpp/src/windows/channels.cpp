@@ -7,6 +7,7 @@
 #include <shlwapi.h>
 
 #include <cstdio>
+#include <cstdlib>
 #include <map>
 #include <memory>
 
@@ -213,8 +214,11 @@ public:
         AddRef();
         return S_OK;
     }
+    // WebView2's own loader passes WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS on to the browser; webview's, which the host
+    // uses, does not.
     HRESULT STDMETHODCALLTYPE get_AdditionalBrowserArguments(LPWSTR *value) override {
-        *value = nullptr;
+        const wchar_t *arguments = _wgetenv(L"WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS");
+        *value = arguments ? give(arguments) : nullptr;
         return S_OK;
     }
     HRESULT STDMETHODCALLTYPE put_AdditionalBrowserArguments(LPCWSTR) override { return E_NOTIMPL; }
