@@ -18,8 +18,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
     set(PLATFORM_SOURCES src/ios/main.mm src/ios/bundle.mm src/darwin/app_api.mm src/darwin/channels.mm src/darwin/dialogs.mm
         src/darwin/navigation.mm)
 elseif(APPLE)
-    set(PLATFORM_SOURCES src/darwin/app_api.mm src/darwin/bundle.mm src/darwin/channels.mm src/darwin/dialogs.mm src/darwin/menu.mm
-        src/darwin/navigation.mm src/darwin/update.mm)
+    set(PLATFORM_SOURCES src/darwin/app_api.mm src/darwin/bundle.mm src/darwin/channels.mm src/darwin/dialogs.mm src/darwin/location.mm
+        src/darwin/menu.mm src/darwin/navigation.mm src/darwin/update.mm)
 elseif(ANDROID)
     set(PLATFORM_SOURCES src/android/jni.cpp)
 elseif(WIN32)
@@ -97,7 +97,7 @@ if(APPLE)
     target_link_options(app PRIVATE "-F${CROSSBIND_HERMES}/Library/Frameworks/macosx" "LINKER:-rpath,@executable_path/../Frameworks"
         "LINKER:-dead_strip" "$<$<CONFIG:Release>:LINKER:-x>")
     target_link_libraries(app PRIVATE "-framework hermesvm" "-framework WebKit" "-framework Cocoa" "-framework CoreServices"
-        "-framework UniformTypeIdentifiers")
+        "-framework UniformTypeIdentifiers" "-framework CoreLocation")
 elseif(ANDROID)
     # Hermes comes with the app from its own package; the C++ runtime the host shares with it is this NDK's, which goes
     # beside the host, stripped.

@@ -181,6 +181,10 @@ initNative().then(async (m) => {
         // The page has getUserMedia() for the camera and the microphone of app.permissions, which WebKit keeps from an
         // app without their reasons, and WebKitGTK without its media streams.
         if (!navigator.mediaDevices?.getUserMedia) throw new Error('the page has no camera or microphone, which app.permissions lists');
+        // A macOS page's location, which app.permissions lists, comes from the host, as WKWebView gives none there.
+        if (isDesktop && navigator.userAgent.includes('Macintosh') && /\[native code\]/.test(String(navigator.geolocation.getCurrentPosition))) {
+            throw new Error("the macOS page's navigator.geolocation is WebKit's, which gives no position there");
+        }
         // The app's own functions answer over the page's channel on every platform, and the host checks what it opens.
         const folders = await host.paths();
         if (![folders.data, folders.cache, folders.logs].every((folder) => /^(\/|[A-Za-z]:\\)/.test(folder))) {
