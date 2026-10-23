@@ -33,16 +33,20 @@ Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
 public static class Screen {
-    [DllImport("user32.dll")] static extern IntPtr SendMessageTimeout(IntPtr window, uint message, IntPtr w, IntPtr l, uint flags, uint timeout, out IntPtr result);
+    [DllImport("user32.dll", SetLastError = true)] static extern bool PostMessage(IntPtr window, uint message, IntPtr w, IntPtr l);
+    [DllImport("user32.dll", SetLastError = true)] static extern IntPtr SendMessageTimeout(IntPtr window, uint message, IntPtr w, IntPtr l, uint flags, uint timeout, out IntPtr result);
     [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr window, out Rect rect);
     [DllImport("user32.dll")] static extern IntPtr MonitorFromWindow(IntPtr window, uint flags);
     [DllImport("user32.dll")] static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
     [DllImport("user32.dll")] static extern uint GetDpiForWindow(IntPtr window);
     public struct Rect { public int Left, Top, Right, Bottom; }
     [StructLayout(LayoutKind.Sequential)] public struct MonitorInfo { public int Size; public Rect Monitor; public Rect Work; public uint Flags; }
+    // WM_DPICHANGED goes through the window's queue, which the window has handled once it answers a WM_NULL sent after.
     static void Scale(IntPtr window, int dpi) {
         IntPtr result;
-        if (SendMessageTimeout(window, 0x02E0, (IntPtr)(dpi * 65536 + dpi), IntPtr.Zero, 2, 5000, out result) == IntPtr.Zero) throw new Exception("the window did not take the new scale");
+        if (!PostMessage(window, 0x02E0, (IntPtr)(dpi * 65536 + dpi), IntPtr.Zero)) throw new Exception("the new scale could not be posted: error " + Marshal.GetLastWin32Error());
+        System.Threading.Thread.Sleep(500);
+        if (SendMessageTimeout(window, 0, IntPtr.Zero, IntPtr.Zero, 0, 5000, out result) == IntPtr.Zero) throw new Exception("the window did not answer after the new scale: error " + Marshal.GetLastWin32Error());
     }
     public static string Check(IntPtr window) {
         int dpi = (int)GetDpiForWindow(window);
