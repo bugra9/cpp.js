@@ -54,10 +54,11 @@ RUN set -eu; \
         done; \
     done
 
-# Alpine keeps every release on its mirrors. Every package is checked against the SHA-256 recorded
-# in linuxmusl-sysroot.txt; gcc gives up only its startup files and runtime libraries. The packages
-# carry no license texts, so those come from the exact upstream revisions. musl's server is slow and
-# now and then answers with an error, so its text is fetched with retries.
+# Alpine's mirrors keep only the newest build of each package, so a pin needs updating once Alpine
+# rebuilds one. Every package is checked against the SHA-256 recorded in linuxmusl-sysroot.txt; gcc
+# gives up only its startup files and runtime libraries. The packages carry no license texts, so
+# those come from the exact upstream revisions. musl's server is slow and now and then answers with
+# an error, so its text is fetched with retries.
 ARG ALPINE_MIRROR=https://dl-cdn.alpinelinux.org/alpine
 COPY linuxmusl-sysroot.txt /tmp/linuxmusl-sysroot.txt
 RUN set -eu; \
