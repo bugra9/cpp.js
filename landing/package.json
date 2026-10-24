@@ -26,8 +26,8 @@
     },
     "devDependencies": {
         "@preact/preset-vite": "2.10.6",
-        "vite": "8.3.4",
+        "vite": "8.3.5",
         "vite-prerender-plugin": "0.5.14",
-        "wrangler": "4.151.2"
+        "wrangler": "4.152.0"
     }
 }
