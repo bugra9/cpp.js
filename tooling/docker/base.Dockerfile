@@ -104,12 +104,12 @@ RUN wget -q "https://registry.npmjs.org/npm/-/npm-${NPM_VERSION}.tgz" -O /tmp/np
     rm -f /tmp/npm.tgz && \
     test "$(npm -v)" = "${NPM_VERSION}"
 # npm 11.19.1 still vendors brace-expansion 5.0.9 and undici 6.28.0, whose fixable HIGH CVEs no npm
-# release has picked up yet (11.21.0 and 12.2.0 ship the same copies). Swap in the patched versions
-# from hash-verified tarballs; drop this once the npm of the Node image carries them.
+# release has fully picked up yet (11.21.1 and 12.2.1 ship undici 6.29.0; the fix is 6.29.1). Swap in
+# the patched versions from hash-verified tarballs; drop this once the npm of the Node image carries them.
 ARG BRACE_EXPANSION_VERSION=5.0.12
 ARG BRACE_EXPANSION_SHA256=ef8448ec78f20b692f04fa6d01f39b5ab34c66404bea3429f5a39c6c9e0be8b4
-ARG UNDICI_VERSION=6.28.1
-ARG UNDICI_SHA256=e18191aac9c0ff43dac7fe9b10b7041a22d07addb7b66a6e8ac14a52a5b69b74
+ARG UNDICI_VERSION=6.29.1
+ARG UNDICI_SHA256=29c4b8e0b2d86cb8795571c1959012ce057a14ecfd34858335f47c31e770a04f
 RUN set -eu; \
     vendored=/usr/local/lib/node_modules/npm/node_modules; \
     for package in "brace-expansion ${BRACE_EXPANSION_VERSION} ${BRACE_EXPANSION_SHA256}" "undici ${UNDICI_VERSION} ${UNDICI_SHA256}"; do \
