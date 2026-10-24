@@ -10,6 +10,11 @@ updates:
           time: '02:11'
           timezone: Europe/Istanbul
       open-pull-requests-limit: 10
+      # Dependabot waits this long before proposing a release and passes the same age to pnpm as
+      # minimumReleaseAge. Left unset it is 3 days, longer than pnpm's 1-day default, so Dependabot
+      # moves direct dependencies we locked at 1 to 3 days old back to older releases.
+      cooldown:
+          default-days: 1
       # Expo SDK packages move together through `npx expo install --fix`; a per-package bump
       # desynchronises the SDK, so the Expo sample's manifest is left to that.
       exclude-paths:
