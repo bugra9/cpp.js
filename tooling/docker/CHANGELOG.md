@@ -1,5 +1,17 @@
 # @crossbind/docker
 
+## Image family 1.0.17
+
+### Patch Changes
+
+- Updated undici, which npm vendors, to 6.29.1 in `base` and every image built on it. undici
+  6.23.0 to 6.29.0 have CVE-2026-109869 (GHSA-xjj6-f33q-929c, HIGH), a denial of service through
+  an unhandled error on excessive content-encodings, and the latest npm releases, 11.21.1 and
+  12.2.1, still ship 6.29.0.
+- Rebuilding brings the Debian packages up to date: libbrotli1 1.1.0-2+deb13u1 fixes
+  CVE-2026-111497 (HIGH), an out-of-bounds write in the Brotli decoder. The daily scan has found
+  both CVEs in every published 1.0.16 image built on `base` since 24 October.
+
 ## Image family 1.0.16
 
 ### Patch Changes
