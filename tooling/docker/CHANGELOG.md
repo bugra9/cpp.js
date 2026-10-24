@@ -11,6 +11,9 @@
 - Rebuilding brings the Debian packages up to date: libbrotli1 1.1.0-2+deb13u1 fixes
   CVE-2026-111497 (HIGH), an out-of-bounds write in the Brotli decoder. The daily scan has found
   both CVEs in every published 1.0.16 image built on `base` since 24 October.
+- Updated musl to 1.2.5-r24 in the musl sysroots of `linux`, Alpine 3.23's fix for CVE-2026-107891,
+  an integer overflow in `regcomp`. Alpine's mirrors no longer serve 1.2.5-r23. Each new package
+  was verified against the signed APKINDEX, as before.
 
 ## Image family 1.0.16
 
